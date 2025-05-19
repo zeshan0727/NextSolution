@@ -24,7 +24,7 @@
       min-height: 180px;
       display: flex;
       align-items: center;
-      justify-content: center; /* No text or logo, so center empty space */
+      justify-content: center;
     }
 
     nav#top-links {
@@ -138,33 +138,57 @@
       text-decoration: underline;
     }
 
+    /* New styles for the Contact section */
     #contact {
+      width: 100%;
       max-width: 1100px;
-      margin: 2rem auto;
-      padding: 1rem 1.5rem;
-      background-color: #ffffff;
-      border-top: 2px solid #007bff;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      font-size: 1rem;
+      margin: 3rem auto 4rem;
+      padding: 2rem 3rem;
+      background: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
+      color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,123,255,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
     }
 
     #contact h2 {
-      color: #007bff;
       margin-bottom: 1rem;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #e0f7ff;
+      text-align: center;
+      text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
     }
 
     #contact p {
-      margin: 0.5rem 0;
+      margin: 0;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: color 0.3s ease;
+    }
+
+    #contact p strong {
+      min-width: 90px;
+      font-weight: 700;
+      color: #cceeff;
     }
 
     #contact a {
-      color: #007bff;
-      text-decoration: none;
+      color: #d6f4ff;
+      text-decoration: underline;
+      transition: color 0.3s ease;
     }
 
     #contact a:hover {
-      text-decoration: underline;
+      color: #fffffc;
+      text-decoration: none;
     }
 
     footer {
@@ -189,13 +213,18 @@
       #article {
         margin-top: 2rem;
       }
+
+      #contact {
+        padding: 1.5rem 2rem;
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
 
   <header>
-    <!-- Header intentionally left empty (no logo or text) to show background image -->
+    <!-- Empty header to show background -->
   </header>
 
   <nav id="top-links">
@@ -260,9 +289,9 @@
 
   <section id="contact">
     <h2>Contact</h2>
-    <p><strong>Email:</strong> <a href="mailto:zeshanbarvi@gmail.com">Email</a></p>
-    <p><strong>WhatsApp:</strong> <a href="https://wa.me/97471277905" target="_blank">Message on WhatsApp</a></p>
-    <p><strong>YouTube Channel:</strong> <a href="https://youtube.com/@zeshan0727" target="_blank">Next Solution</a></p>
+    <p><strong>Email:</strong> <a href="mailto:zeshanbarvi@gmail.com">zeshanbarvi@gmail.com</a></p>
+    <p><strong>WhatsApp:</strong> <a href="https://wa.me/97471277905" target="_blank">+974 7127 7905</a></p>
+    <p><strong>YouTube:</strong> <a href="https://youtube.com/@zeshan0727" target="_blank">Next Solution</a></p>
     <p><strong>X (Twitter):</strong> <a href="https://x.com/nextsoluti0n?s=21" target="_blank">@nextsoluti0n</a></p>
     <p><strong>Instagram:</strong> <a href="https://www.instagram.com/nextsolut1on?igsh=ODlvcjNhYTc4MzBy&utm_source=qr" target="_blank">@nextsolut1on</a></p>
   </section>
