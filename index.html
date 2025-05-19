@@ -10,9 +10,6 @@
       margin: 0;
       background-color: #f8f9fa;
       color: #333;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
     }
 
     header {
@@ -22,147 +19,95 @@
       text-align: center;
     }
 
-    nav.top-links {
-      background: #fff;
-      padding: 10px 0;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    nav.top-links a {
-      margin: 0 15px;
-      color: #007bff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    nav.top-links a:hover {
-      text-decoration: underline;
-    }
-
-    .container {
-      flex: 1;
-      display: flex;
-      max-width: 1000px;
-      margin: 20px auto;
-      gap: 20px;
-      padding: 0 10px;
-    }
-
     main {
-      flex: 3;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.1);
-    }
-
-    aside.articles-list {
-      flex: 1;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.1);
-      text-align: left;
-    }
-
-    aside.articles-list h3 {
-      margin-top: 0;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #007bff;
-      padding-bottom: 5px;
-    }
-
-    aside.articles-list ul {
-      list-style: none;
-      padding-left: 0;
-      margin: 0;
-    }
-
-    aside.articles-list ul li {
-      margin-bottom: 10px;
-    }
-
-    aside.articles-list ul li a {
-      color: #007bff;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    aside.articles-list ul li a:hover {
-      text-decoration: underline;
+      padding: 2rem;
+      max-width: 1000px;
+      margin: auto;
+      text-align: center;
     }
 
     footer {
       text-align: center;
       padding: 1rem;
       background-color: #e9ecef;
-      margin-top: auto;
+      margin-top: 40px;
     }
 
-    /* Ad styles */
-    .adsense-ad {
+    .video-item {
+      display: inline-block;
+      width: 320px;
+      margin: 10px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       text-align: center;
-      margin: 20px 0;
+      padding: 10px;
     }
 
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-      aside.articles-list {
-        order: 2;
-      }
-      main {
-        order: 1;
+    .video-item iframe {
+      width: 100%;
+      height: 180px;
+      border-radius: 8px;
+    }
+
+    .video-item h4 {
+      font-size: 1.1rem;
+      margin: 10px 0;
+    }
+
+    .video-item p {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    @media (max-width: 600px) {
+      .video-item {
+        width: 90%;
       }
     }
   </style>
-
-  <!-- Google AdSense script -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214"
-     crossorigin="anonymous"></script>
 </head>
 <body>
-
-  <nav class="top-links">
-    <a href="mailto:zeshanbarvi@gmail.com">Email Me</a>
-    <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube Channel</a>
-    <a href="https://wa.me/97471277905" target="_blank">WhatsApp</a>
-  </nav>
 
   <header>
     <h1>Next Solution</h1>
     <p>Official Website of Zeeshan Barvi</p>
   </header>
 
-  <!-- AdSense ad unit -->
-  <div class="adsense-ad">
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-4770123899731214"
-         data-ad-slot="1234567890"  <!-- Replace with your actual Ad Slot ID -->
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-  </div>
+  <main>
+    <h2>Latest Videos from Zeshan0727</h2>
 
-  <div class="container">
-    <main>
-      <p>Welcome to the official website of the <strong>Next Solution YouTube Channel</strong>.</p>
-      <p>This is the main content area where you can add your latest updates, videos, or any other content.</p>
-    </main>
+    <div class="video-item">
+      <iframe src="https://www.youtube.com/embed/BVBe_ysluos" title="How to Downgrade iPhone Backup - iOS 16 to Any Version"></iframe>
+      <h4>How to Downgrade iPhone Backup - iOS 16 to Any Version</h4>
+      <p>Learn how to downgrade your iPhone backup from iOS 16 to any earlier version using simple steps.</p>
+    </div>
 
-    <aside class="articles-list">
-      <h3>Articles</h3>
-      <ul>
-        <li><a href="article1.html">1. Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
-        <!-- Add more articles here -->
-      </ul>
-    </aside>
-  </div>
+    <div class="video-item">
+      <iframe src="https://www.youtube.com/embed/DPHCEcoAa-E" title="How to Convert Rootful Jailbreak Tweaks to Rootless"></iframe>
+      <h4>How to Convert Rootful Jailbreak Tweaks to Rootless</h4>
+      <p>Step-by-step guide on converting rootful jailbreak tweaks to rootless for better compatibility.</p>
+    </div>
+
+    <div class="video-item">
+      <iframe src="https://www.youtube.com/embed/onOs0B8rJJk" title="New Semi Untethered Dopamine Jailbreak iOS 15.0 - 16.6.1"></iframe>
+      <h4>New Semi Untethered Dopamine Jailbreak iOS 15.0 - 16.6.1</h4>
+      <p>Explore the latest semi-untethered Dopamine jailbreak method for iOS versions 15.0 to 16.6.1.</p>
+    </div>
+
+    <div class="video-item">
+      <iframe src="https://www.youtube.com/embed/GBRDmnqpaE8" title="Fix iPhone Battery Health | Remove Maximum Capacity Warning"></iframe>
+      <h4>Fix iPhone Battery Health | Remove Maximum Capacity Warning</h4>
+      <p>Tips and tricks to fix iPhone battery health issues and remove the maximum capacity warning.</p>
+    </div>
+
+    <div class="video-item">
+      <iframe src="https://www.youtube.com/embed/7YkAzBH4yMg" title="Jailbreak iOS 16.5 and Fix Error 256"></iframe>
+      <h4>Jailbreak iOS 16.5 and Fix Error 256</h4>
+      <p>Comprehensive guide to jailbreak iOS 16.5 and resolve the common Error 256 issue.</p>
+    </div>
+
+  </main>
 
   <footer>
     &copy; 2025 Zeeshan Barvi. All rights reserved.
