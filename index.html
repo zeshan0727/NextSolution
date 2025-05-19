@@ -27,17 +27,17 @@
       margin-bottom: 10px;
     }
 
-    /* Top links bar below header */
-    #top-links {
+    /* Top nav bar */
+    nav#top-links {
       background-color: #007bff;
       color: white;
       padding: 0.5rem 1rem;
       display: flex;
       justify-content: center;
-      gap: 20px;
-      font-size: 1rem;
       flex-wrap: wrap;
+      gap: 15px;
     }
+
     #top-links a {
       color: white;
       text-decoration: none;
@@ -47,6 +47,7 @@
       background-color: #0056b3;
       transition: background-color 0.3s ease;
     }
+
     #top-links a:hover {
       background-color: #003d80;
     }
@@ -60,7 +61,7 @@
       padding: 0 1rem;
     }
 
-    /* Left side videos */
+    /* Left - videos */
     #videos {
       flex: 2;
       display: flex;
@@ -77,22 +78,25 @@
       padding: 10px;
       text-align: center;
     }
+
     .video-item iframe {
       width: 100%;
       height: 180px;
       border-radius: 6px;
     }
+
     .video-item h4 {
       margin: 10px 0 5px;
       font-size: 1.1rem;
       color: #222;
     }
+
     .video-item p {
       font-size: 0.9rem;
       color: #555;
     }
 
-    /* Right side article */
+    /* Right - articles */
     #article {
       flex: 1;
       background-color: #fff;
@@ -104,23 +108,28 @@
       font-size: 1rem;
       line-height: 1.5;
     }
+
     #article h2 {
       margin-top: 0;
       color: #007bff;
     }
+
     #article p {
       margin-bottom: 1rem;
       color: #444;
     }
+
     #article strong {
       color: #222;
     }
+
     #article iframe {
       width: 100%;
       height: 220px;
       border-radius: 6px;
       margin: 1rem 0;
     }
+
     #article ul {
       margin-left: 20px;
       color: #444;
@@ -130,21 +139,21 @@
       text-align: center;
       padding: 1rem;
       background-color: #e9ecef;
-      margin-top: auto;
       font-size: 0.9rem;
       color: #555;
     }
 
-    /* Responsive */
     @media (max-width: 900px) {
       main {
         flex-direction: column;
         max-width: 90%;
       }
+
       #videos, #article {
         width: 100%;
         max-height: none;
       }
+
       #article {
         margin-top: 2rem;
       }
@@ -160,98 +169,81 @@
   </header>
 
   <nav id="top-links">
-    <a href="mailto:zeshanbarvi@gmail.com">Email Me</a>
-    <a href="https://wa.me/97471277905" target="_blank" rel="noopener">Chat on WhatsApp</a>
-    <a href="https://www.youtube.com/zeshan0727" target="_blank" rel="noopener">YouTube Channel</a>
+    <a href="index.html">Home</a>
+    <a href="mailto:zeshanbarvi@gmail.com">Email</a>
+    <a href="https://wa.me/97471277905" target="_blank">WhatsApp</a>
+    <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube</a>
+    <a href="#">Website: nextsolution.tech</a>
   </nav>
 
   <main>
     <section id="videos">
       <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/BVBe_ysluos" title="How to Downgrade iPhone Backup - iOS 16 to Any Version" frameborder="0" allowfullscreen></iframe>
-        <h4>How to Downgrade iPhone Backup - iOS 16 to Any Version</h4>
-        <p>Learn how to downgrade your iPhone backup from iOS 16 to any earlier version using simple steps.</p>
+        <iframe src="https://www.youtube.com/embed/BVBe_ysluos" title="Downgrade iPhone Backup - iOS 16"></iframe>
+        <h4>How to Downgrade iPhone Backup</h4>
+        <p>Learn how to downgrade your iPhone backup from iOS 16 to any earlier version.</p>
       </div>
 
       <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/DPHCEcoAa-E" title="How to Convert Rootful Jailbreak Tweaks to Rootless" frameborder="0" allowfullscreen></iframe>
-        <h4>How to Convert Rootful Jailbreak Tweaks to Rootless</h4>
-        <p>Step-by-step guide on converting rootful jailbreak tweaks to rootless for better compatibility.</p>
+        <iframe src="https://www.youtube.com/embed/DPHCEcoAa-E" title="Convert Rootful Jailbreak Tweaks"></iframe>
+        <h4>Convert Rootful Jailbreak Tweaks</h4>
+        <p>Guide to converting rootful jailbreak tweaks to rootless for better compatibility.</p>
       </div>
 
       <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/onOs0B8rJJk" title="New Semi Untethered Dopamine Jailbreak iOS 15.0 - 16.6.1" frameborder="0" allowfullscreen></iframe>
-        <h4>New Semi Untethered Dopamine Jailbreak iOS 15.0 - 16.6.1</h4>
-        <p>Explore the latest semi-untethered Dopamine jailbreak method for iOS versions 15.0 to 16.6.1.</p>
+        <iframe src="https://www.youtube.com/embed/onOs0B8rJJk" title="Dopamine Jailbreak iOS 15.0 - 16.6.1"></iframe>
+        <h4>Semi Untethered Dopamine Jailbreak</h4>
+        <p>Explore the latest jailbreak method for iOS versions 15.0 to 16.6.1.</p>
       </div>
 
       <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/GBRDmnqpaE8" title="Fix iPhone Battery Health | Remove Maximum Capacity Warning" frameborder="0" allowfullscreen></iframe>
-        <h4>Fix iPhone Battery Health | Remove Maximum Capacity Warning</h4>
-        <p>Tips and tricks to fix iPhone battery health issues and remove the maximum capacity warning.</p>
+        <iframe src="https://www.youtube.com/embed/GBRDmnqpaE8" title="Fix iPhone Battery Health"></iframe>
+        <h4>Fix iPhone Battery Health</h4>
+        <p>Tips to fix iPhone battery issues and remove the service warning.</p>
       </div>
 
       <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/7YkAzBH4yMg" title="Jailbreak iOS 16.5 and Fix Error 256" frameborder="0" allowfullscreen></iframe>
-        <h4>Jailbreak iOS 16.5 and Fix Error 256</h4>
-        <p>Comprehensive guide to jailbreak iOS 16.5 and resolve the common Error 256 issue.</p>
+        <iframe src="https://www.youtube.com/embed/7YkAzBH4yMg" title="Jailbreak iOS 16.5 and Fix Error 256"></iframe>
+        <h4>Jailbreak iOS 16.5 and Fix Error</h4>
+        <p>Guide to jailbreak iOS 16.5 and resolve Error 256.</p>
       </div>
     </section>
 
     <section id="article">
-      <!-- Article 1 -->
       <h2>1. Discover Creativity and Passion on YouTube: Meet Zeshan0727</h2>
-      <p>In an ever-expanding digital world, content creators are shaping the way we consume information, entertainment, and inspiration. One such creator making a mark on YouTube is Muhammad Zeeshan Barvi, the visionary behind the channel Zeshan0727.</p>
+      <p>In an ever-expanding digital world, content creators are shaping the way we consume information and inspiration. One such creator is Muhammad Zeeshan Barvi of the YouTube channel Zeshan0727.</p>
 
-      <p>Whether you're seeking engaging vlogs, thoughtful insights, or a behind-the-scenes look at entrepreneurial life in Qatar, this channel offers a unique blend of authenticity and storytelling. Zeshan0727 is not just about videos—it's about connection, creativity, and community.</p>
+      <p>Whether you're seeking vlogs, tutorials, or business insights, Zeshan0727 blends authenticity and storytelling. The channel showcases not only creativity but the reality of life as an entrepreneur in Qatar.</p>
 
       <h3>What You’ll Find on Zeshan0727</h3>
-      <p>Zeshan0727 is a versatile channel where real-life experiences meet creative expression. From lifestyle content and business journeys to travel explorations and motivational moments, each video reflects Muhammad Zeeshan Barvi’s passion for quality and originality.</p>
-
-      <p>His entrepreneurial background—most notably through Stone Speciality Coffee in Doha—adds a unique edge to the content, offering viewers a first-hand glimpse into building a business, overcoming challenges, and staying inspired in a competitive environment.</p>
-
-      <h3>Why Subscribe?</h3>
       <ul>
-        <li><strong>Authenticity:</strong> Real stories. Real passion. Real people.</li>
-        <li><strong>Diverse Content:</strong> From everyday vlogs to special event highlights.</li>
-        <li><strong>Entrepreneurial Insights:</strong> Learn from a growing business in Qatar.</li>
-        <li><strong>Consistency:</strong> Regular uploads keep the content fresh and relevant.</li>
-        <li><strong>Community Focused:</strong> A channel that listens, interacts, and grows with its viewers.</li>
+        <li><strong>Authenticity:</strong> Real stories. Real people.</li>
+        <li><strong>Diverse Content:</strong> Vlogs, events, and tutorials.</li>
+        <li><strong>Entrepreneurial Insights:</strong> Behind-the-scenes of running a coffee business in Doha.</li>
+        <li><strong>Community Focused:</strong> Interactive and engaging content for viewers.</li>
       </ul>
 
       <h3>Join the Journey</h3>
-      <p>If you’re someone who appreciates authenticity, values creativity, or is simply looking for refreshing, real-life content with heart, then subscribing to Zeshan0727 is a must.</p>
-
+      <p>If you value genuine content, subscribe to <strong>Zeshan0727</strong> on YouTube.</p>
       <p>
-        🎥 Watch now, subscribe, and be part of the journey.<br />
-        📍 <a href="https://www.youtube.com/zeshan0727" target="_blank" rel="noopener">youtube.com/zeshan0727</a>
+        🎥 <a href="https://www.youtube.com/zeshan0727" target="_blank">youtube.com/zeshan0727</a>
       </p>
 
       <p style="margin-top:1.5rem; font-weight:bold;">
-        Read article 2 here: 
-        <a href="remove-service-message-iphone.html" style="color:#007bff; text-decoration:none;" target="_blank" rel="noopener">
-          Fix iPhone Battery Health | Remove Service Message
-        </a>
+        Read article 2 here:
+        <a href="remove-service-message-iphone.html" target="_blank" style="color:#007bff;">Fix iPhone Battery Health</a>
       </p>
 
-      <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #ccc;" />
+      <hr style="margin: 2rem 0; border-top: 1px solid #ccc;" />
 
-      <!-- Article 2 -->
       <h2>2. Fix iPhone Battery Health | Remove Service Message</h2>
-      <p>If you're facing the frustrating "Service" message in your iPhone's battery settings and seeing reduced battery health after battery replacement or repair, you're not alone. Fortunately, there's an easy way to remove that message and improve the battery health reading—without complex hardware work or Apple diagnostics.</p>
+      <p>If you're seeing the "Service" warning in iPhone battery settings after replacing the battery, here's a fix. <strong>Zeshan0727</strong> explains how to remove the message using 3uTools — no hardware needed!</p>
 
-      <p>In this tutorial video, <strong>Zeshan0727</strong> shows you how to fix this issue using a free tool called <strong>3uTools</strong>. It’s a simple and effective method to reset the battery health values and remove the warning message from your iPhone’s settings.</p>
+      <iframe src="https://www.youtube.com/embed/GBRDmnqpaE8" title="Battery Health Fix Tutorial"></iframe>
 
-      <h3>How It Works</h3>
-      <p>This video walks you through the step-by-step process of using 3uTools to remove the service message and restore battery health status on iPhones. No need for hardware tools or advanced knowledge—just follow the easy tutorial and get your iPhone back to optimal condition.</p>
+      <p>This method helps you reset the health values and improve battery status. Great for technicians or users of secondhand iPhones.</p>
 
-      <iframe src="https://www.youtube.com/embed/GBRDmnqpaE8" title="Fix iPhone Battery Health | Remove Service Message" allowfullscreen></iframe>
-
-      <h3>Who Is This For?</h3>
-      <p>This guide is ideal for anyone who has recently changed their iPhone battery or purchased a used iPhone showing the "Service" warning—even if the battery is in good shape. It's especially useful for technicians, refurbishers, and iPhone users looking to improve resale value.</p>
-
-      <h3>Final Thoughts</h3>
-      <p>Don't let a software-generated warning make you doubt your iPhone's battery. With this method, you can easily clean up the service message and bring back a proper battery health reading. Follow the steps in the video, and you're good to go.</p>
+      <p>Follow the steps in the video and restore battery confidence.</p>
     </section>
   </main>
 
