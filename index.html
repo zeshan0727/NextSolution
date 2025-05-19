@@ -8,59 +8,89 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background-image: url('background.jpg'); /* Replace with your image filename */
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      background-color: #f9f9f9;
       color: #333;
     }
 
     header {
-      background-color: rgba(0, 0, 0, 0.85);
+      background-color: #222;
       color: #fff;
       padding: 1rem;
       text-align: center;
     }
 
-    main {
-      padding: 2rem;
-      max-width: 800px;
-      margin: auto;
+    .top-links {
+      background-color: #e9ecef;
       text-align: center;
-      background-color: rgba(255, 255, 255, 0.9);
-      border-radius: 10px;
+      padding: 1rem;
     }
 
-    a.button {
+    .top-links a {
       display: inline-block;
-      padding: 12px 20px;
-      margin: 10px;
-      background-color: #007bff;
-      color: white;
+      margin: 0 15px;
+      color: #007bff;
       text-decoration: none;
-      border-radius: 8px;
-      transition: background-color 0.3s ease;
+      font-weight: bold;
     }
 
-    a.button:hover {
-      background-color: #0056b3;
+    .top-links a:hover {
+      text-decoration: underline;
     }
 
-    .logo {
-      width: 100px;
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 2rem;
+    }
+
+    .main-content {
+      flex: 2;
+      padding-right: 2rem;
+    }
+
+    .sidebar {
+      flex: 1;
+      background-color: #f1f1f1;
+      padding: 1rem;
+      border-left: 2px solid #ddd;
+    }
+
+    .sidebar h3 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .sidebar ul {
+      list-style-type: decimal;
+      padding-left: 1.2rem;
+    }
+
+    .sidebar li {
       margin-bottom: 10px;
+    }
+
+    .sidebar a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      text-decoration: underline;
     }
 
     footer {
       text-align: center;
       padding: 1rem;
       background-color: #e9ecef;
-      margin-top: 40px;
+      margin-top: auto;
     }
 
-    @media (max-width: 600px) {
-      main {
-        padding: 1rem;
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .main-content {
+        padding-right: 0;
       }
     }
   </style>
@@ -68,19 +98,29 @@
 <body>
 
   <header>
-    <img src="logo.png" alt="Next Solution Logo" class="logo"> <!-- Replace with your logo filename -->
     <h1>Next Solution</h1>
     <p>Official Website of Zeeshan Barvi</p>
   </header>
 
-  <main>
-    <p>Welcome to the official website of the <strong>Next Solution YouTube Channel</strong>.</p>
-    
-    <a class="button" href="https://www.youtube.com/zeshan0727" target="_blank">Visit Our YouTube Channel</a>
-    <a class="button" href="https://wa.me/97471277905" target="_blank">Chat on WhatsApp</a>
-    <a class="button" href="mailto:zeshanbarvi@gmail.com">Email Me</a>
-    <a class="button" href="article1.html">Read Our Articles</a>
-  </main>
+  <div class="top-links">
+    <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube Channel</a>
+    <a href="https://wa.me/97471277905" target="_blank">WhatsApp</a>
+    <a href="mailto:zeshanbarvi@gmail.com">Email Me</a>
+  </div>
+
+  <div class="container">
+    <div class="main-content">
+      <p>Welcome to the official website of the <strong>Next Solution YouTube Channel</strong>, your home for creativity, entrepreneurship, and storytelling from Qatar. Stay tuned for updates and blog posts.</p>
+    </div>
+
+    <aside class="sidebar">
+      <h3>Articles</h3>
+      <ul>
+        <li><a href="article1.html">Discover Creativity and Passion on YouTube</a></li>
+        <!-- Add more articles here -->
+      </ul>
+    </aside>
+  </div>
 
   <footer>
     &copy; 2025 Zeeshan Barvi. All rights reserved.
