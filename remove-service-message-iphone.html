@@ -15,24 +15,32 @@
       flex-direction: column;
     }
 
-    header {
-      background-image: url('header-bg.png');
-      background-size: cover;
-      background-position: center;
-      color: #fff;
-      padding: 1rem;
-      text-align: center;
+    /* Navigation bar */
+    nav#top-links {
+      background-color: #007bff;
+      color: white;
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
 
-    header h1 {
-      margin: 0;
-      font-weight: normal;
+    nav#top-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 5px;
+      background-color: #0056b3;
+      transition: background-color 0.3s ease;
     }
 
-    header p {
-      margin-top: 0.5rem;
-      font-size: 1.1rem;
-      font-weight: 500;
+    nav#top-links a:hover {
+      background-color: #003d80;
     }
 
     main {
@@ -43,6 +51,8 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       flex: 1;
+      /* Add top padding so content does not go under nav bar */
+      padding-top: 3rem;
     }
 
     h2 {
@@ -94,13 +104,14 @@
 </head>
 <body>
 
-  <header>
-    <h1>Fix iPhone Battery Health</h1>
-    <p>Remove Service Message Easily with 3uTools</p>
-  </header>
+  <nav id="top-links">
+    <a href="index.html">Home</a>
+    <a href="#contact">Contact</a>
+    <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube</a>
+  </nav>
 
   <main>
-    <h2>Overview</h2>
+    <h2>Fix iPhone Battery Health</h2>
     <p>If you're facing the frustrating "Service" message in your iPhone's battery settings and seeing reduced battery health after battery replacement or repair, you're not alone. Fortunately, there's an easy way to remove that message and improve the battery health reading—without complex hardware work or Apple diagnostics.</p>
 
     <p>In this tutorial video, <strong>Zeshan0727</strong> shows you how to fix this issue using a free tool called <strong>3uTools</strong>. It’s a simple and effective method to reset the battery health values and remove the warning message from your iPhone’s settings.</p>
