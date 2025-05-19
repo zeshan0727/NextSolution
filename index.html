@@ -20,11 +20,18 @@
       background-size: cover;
       background-position: center;
       color: #fff;
-      padding: 1.5rem 2rem;
-      min-height: 180px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 3rem 1rem 2rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      margin: 0;
     }
 
     nav#top-links {
@@ -49,15 +56,6 @@
 
     #top-links a:hover {
       background-color: #003d80;
-    }
-
-    #intro {
-      text-align: center;
-      margin: 2rem auto;
-      max-width: 600px;
-      font-size: 1.2rem;
-      color: #444;
-      line-height: 1.4;
     }
 
     main {
@@ -138,57 +136,30 @@
       text-decoration: underline;
     }
 
-    /* New styles for the Contact section */
     #contact {
       width: 100%;
       max-width: 1100px;
-      margin: 3rem auto 4rem;
-      padding: 2rem 3rem;
+      margin: 2rem auto;
+      padding: 1rem 2rem;
       background: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
       color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,123,255,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
-      font-size: 1.1rem;
-      font-weight: 500;
-      letter-spacing: 0.03em;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
     }
 
     #contact h2 {
-      margin-bottom: 1rem;
-      font-size: 2rem;
-      font-weight: 700;
-      color: #e0f7ff;
-      text-align: center;
-      text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
     }
 
-    #contact p {
-      margin: 0;
-      line-height: 1.5;
+    .contact-row {
       display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      transition: color 0.3s ease;
-    }
-
-    #contact p strong {
-      min-width: 90px;
-      font-weight: 700;
-      color: #cceeff;
-    }
-
-    #contact a {
-      color: #d6f4ff;
-      text-decoration: underline;
-      transition: color 0.3s ease;
-    }
-
-    #contact a:hover {
-      color: #fffffc;
-      text-decoration: none;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 1rem;
+      font-weight: 500;
     }
 
     footer {
@@ -214,9 +185,9 @@
         margin-top: 2rem;
       }
 
-      #contact {
-        padding: 1.5rem 2rem;
-        font-size: 1rem;
+      .contact-row {
+        flex-direction: column;
+        align-items: center;
       }
     }
   </style>
@@ -224,7 +195,8 @@
 <body>
 
   <header>
-    <!-- Empty header to show background -->
+    <h1>Next Solution</h1>
+    <p>Official Website of Zeeshan Barvi</p>
   </header>
 
   <nav id="top-links">
@@ -233,10 +205,6 @@
     <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube</a>
   </nav>
 
-  <section id="intro">
-    <p><strong>Next Solution</strong> - Official Website of Zeeshan Barvi</p>
-  </section>
-
   <main>
     <section id="videos">
       <div class="video-item">
@@ -244,25 +212,21 @@
         <h4>How to Downgrade iPhone Backup</h4>
         <p>Learn how to downgrade your iPhone backup from iOS 16 to any earlier version.</p>
       </div>
-
       <div class="video-item">
         <iframe src="https://www.youtube.com/embed/DPHCEcoAa-E" title="Convert Rootful Jailbreak Tweaks"></iframe>
         <h4>Convert Rootful Jailbreak Tweaks</h4>
         <p>Guide to converting rootful jailbreak tweaks to rootless for better compatibility.</p>
       </div>
-
       <div class="video-item">
         <iframe src="https://www.youtube.com/embed/onOs0B8rJJk" title="Dopamine Jailbreak iOS 15.0 - 16.6.1"></iframe>
         <h4>Semi Untethered Dopamine Jailbreak</h4>
         <p>Explore the latest jailbreak method for iOS versions 15.0 to 16.6.1.</p>
       </div>
-
       <div class="video-item">
         <iframe src="https://www.youtube.com/embed/GBRDmnqpaE8" title="Fix iPhone Battery Health"></iframe>
         <h4>Fix iPhone Battery Health</h4>
         <p>Tips to fix iPhone battery issues and remove the service warning.</p>
       </div>
-
       <div class="video-item">
         <iframe src="https://www.youtube.com/embed/7YkAzBH4yMg" title="Jailbreak iOS 16.5 and Fix Error 256"></iframe>
         <h4>Jailbreak iOS 16.5 and Fix Error</h4>
@@ -289,11 +253,13 @@
 
   <section id="contact">
     <h2>Contact</h2>
-    <p><strong>Email:</strong> <a href="mailto:zeshanbarvi@gmail.com">zeshanbarvi@gmail.com</a></p>
-    <p><strong>WhatsApp:</strong> <a href="https://wa.me/97471277905" target="_blank">+974 7127 7905</a></p>
-    <p><strong>YouTube:</strong> <a href="https://youtube.com/@zeshan0727" target="_blank">Next Solution</a></p>
-    <p><strong>X (Twitter):</strong> <a href="https://x.com/nextsoluti0n?s=21" target="_blank">@nextsoluti0n</a></p>
-    <p><strong>Instagram:</strong> <a href="https://www.instagram.com/nextsolut1on?igsh=ODlvcjNhYTc4MzBy&utm_source=qr" target="_blank">@nextsolut1on</a></p>
+    <div class="contact-row">
+      <span>WhatsApp -</span>
+      <span>Instagram -</span>
+      <span>X -</span>
+      <span>YouTube -</span>
+      <span>Email -</span>
+    </div>
   </section>
 
   <footer>
