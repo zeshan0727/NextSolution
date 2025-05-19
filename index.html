@@ -8,7 +8,7 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background-color: #f9f9f9;
+      background-color: #f8f9fa;
       color: #333;
     }
 
@@ -19,81 +19,45 @@
       text-align: center;
     }
 
-    .top-links {
-      background-color: #e9ecef;
-      text-align: center;
-      padding: 1rem;
-    }
-
-    .top-links a {
-      display: inline-block;
-      margin: 0 15px;
-      color: #007bff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .top-links a:hover {
-      text-decoration: underline;
-    }
-
-    .container {
-      display: flex;
-      flex-wrap: wrap;
+    main {
       padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+      text-align: center;
     }
 
-    .main-content {
-      flex: 2;
-      padding-right: 2rem;
-    }
-
-    .sidebar {
-      flex: 1;
-      background-color: #f1f1f1;
-      padding: 1rem;
-      border-left: 2px solid #ddd;
-    }
-
-    .sidebar h3 {
-      margin-top: 0;
-      color: #333;
-    }
-
-    .sidebar ul {
-      list-style-type: decimal;
-      padding-left: 1.2rem;
-    }
-
-    .sidebar li {
-      margin-bottom: 10px;
-    }
-
-    .sidebar a {
-      color: #007bff;
+    a.button {
+      display: inline-block;
+      padding: 12px 20px;
+      margin: 10px;
+      background-color: #007bff;
+      color: white;
       text-decoration: none;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
     }
 
-    .sidebar a:hover {
-      text-decoration: underline;
+    a.button:hover {
+      background-color: #0056b3;
     }
 
     footer {
       text-align: center;
       padding: 1rem;
       background-color: #e9ecef;
-      margin-top: auto;
+      margin-top: 40px;
     }
 
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-      .main-content {
-        padding-right: 0;
+    @media (max-width: 600px) {
+      main {
+        padding: 1rem;
       }
     }
   </style>
+
+  <!-- Google AdSense script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214"
+     crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -102,25 +66,26 @@
     <p>Official Website of Zeeshan Barvi</p>
   </header>
 
-  <div class="top-links">
-    <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube Channel</a>
-    <a href="https://wa.me/97471277905" target="_blank">WhatsApp</a>
-    <a href="mailto:zeshanbarvi@gmail.com">Email Me</a>
+  <!-- AdSense ad unit -->
+  <div style="text-align:center; margin: 20px 0;">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-4770123899731214"
+         data-ad-slot="1234567890"  <!-- Replace this with your actual Ad Slot ID -->
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
   </div>
 
-  <div class="container">
-    <div class="main-content">
-      <p>Welcome to the official website of the <strong>Next Solution YouTube Channel</strong>, your home for creativity, entrepreneurship, and storytelling from Qatar. Stay tuned for updates and blog posts.</p>
-    </div>
-
-    <aside class="sidebar">
-      <h3>Articles</h3>
-      <ul>
-        <li><a href="article1.html">Discover Creativity and Passion on YouTube</a></li>
-        <!-- Add more articles here -->
-      </ul>
-    </aside>
-  </div>
+  <main>
+    <p>Welcome to the official website of the <strong>Next Solution YouTube Channel</strong>.</p>
+    
+    <a class="button" href="https://www.youtube.com/zeshan0727" target="_blank">Visit Our YouTube Channel</a>
+    <a class="button" href="https://wa.me/97471277905" target="_blank">Chat on WhatsApp</a>
+    <a class="button" href="mailto:zeshanbarvi@gmail.com">Email Me</a>
+  </main>
 
   <footer>
     &copy; 2025 Zeeshan Barvi. All rights reserved.
