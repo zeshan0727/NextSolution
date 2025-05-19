@@ -19,26 +19,16 @@
       background-image: url('header-bg.png');
       background-size: cover;
       background-position: center;
-      color: #fff;
-      padding: 4rem 1rem 3rem;
+      padding: 4rem 1rem;
       text-align: center;
-      position: relative;
     }
 
-    .site-branding {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .site-branding h1 {
-      font-size: 2.2rem;
-      margin: 0;
-    }
-
-    .site-branding p {
-      font-size: 1.2rem;
-      margin: 0;
+    .intro-banner {
+      text-align: center;
+      background-color: #ffffff;
+      padding: 1rem;
+      font-size: 1.3rem;
+      color: #007bff;
     }
 
     nav#top-links {
@@ -143,38 +133,34 @@
     }
 
     #contact {
-      width: 100%;
       max-width: 1100px;
       margin: 2rem auto;
-      padding: 1rem 2rem;
-      background: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
-      color: #fff;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    }
-
-    #contact h2 {
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .contact-row {
+      padding: 1rem 1.5rem;
+      background-color: #ffffff;
+      border-top: 2px solid #007bff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      font-size: 1rem;
       display: flex;
       justify-content: center;
-      gap: 1.5rem;
+      gap: 1rem;
       flex-wrap: wrap;
+      text-align: center;
+    }
+
+    .contact-item {
       font-size: 1rem;
-      font-weight: 500;
+      color: #007bff;
     }
 
     footer {
       text-align: center;
-      padding: 0.5rem;
+      padding: 0.4rem 0;
       background-color: #e9ecef;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #555;
-      height: 1.5rem;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     @media (max-width: 900px) {
@@ -187,25 +173,25 @@
         width: 100%;
       }
 
-      .contact-row {
-        flex-direction: column;
-        align-items: center;
+      #article {
+        margin-top: 2rem;
       }
 
-      footer {
-        height: auto;
+      #contact {
+        flex-direction: column;
+        align-items: center;
       }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="site-branding">
-      <h1>Next Solution</h1>
-      <p>Official Website of Zeeshan Barvi</p>
-    </div>
-  </header>
+  <header></header>
+
+  <div class="intro-banner">
+    <div><strong>Next Solution</strong></div>
+    <div>Official Website of Zeeshan</div>
+  </div>
 
   <nav id="top-links">
     <a href="index.html">Home</a>
@@ -245,29 +231,17 @@
     <section id="article">
       <h2>Article Index</h2>
       <ol>
-        <li>
-          <a href="discover-creativity-zeshan0727.html" target="_blank">
-            Discover Creativity and Passion on YouTube: Meet Zeshan0727
-          </a>
-        </li>
-        <li>
-          <a href="remove-service-message-iphone.html" target="_blank">
-            Fix iPhone Battery Health | Remove Service Message
-          </a>
-        </li>
+        <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
+        <li><a href="remove-service-message-iphone.html" target="_blank">Fix iPhone Battery Health | Remove Service Message</a></li>
       </ol>
     </section>
   </main>
 
   <section id="contact">
-    <h2>Contact</h2>
-    <div class="contact-row">
-      <span>WhatsApp -</span>
-      <span>Instagram -</span>
-      <span>X -</span>
-      <span>YouTube -</span>
-      <span>Email -</span>
-    </div>
+    <div class="contact-item">WhatsApp -</div>
+    <div class="contact-item">Instagram -</div>
+    <div class="contact-item">X (Twitter) -</div>
+    <div class="contact-item">YouTube -</div>
   </section>
 
   <footer>
