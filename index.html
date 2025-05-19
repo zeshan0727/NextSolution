@@ -10,6 +10,9 @@
       margin: 0;
       background-color: #f8f9fa;
       color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     header {
@@ -19,38 +22,99 @@
       text-align: center;
     }
 
-    main {
-      padding: 2rem;
-      max-width: 800px;
-      margin: auto;
+    nav.top-links {
+      background: #fff;
+      padding: 10px 0;
       text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    a.button {
-      display: inline-block;
-      padding: 12px 20px;
-      margin: 10px;
-      background-color: #007bff;
-      color: white;
+    nav.top-links a {
+      margin: 0 15px;
+      color: #007bff;
       text-decoration: none;
-      border-radius: 8px;
-      transition: background-color 0.3s ease;
+      font-weight: bold;
     }
 
-    a.button:hover {
-      background-color: #0056b3;
+    nav.top-links a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      max-width: 1000px;
+      margin: 20px auto;
+      gap: 20px;
+      padding: 0 10px;
+    }
+
+    main {
+      flex: 3;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+    }
+
+    aside.articles-list {
+      flex: 1;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+
+    aside.articles-list h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 5px;
+    }
+
+    aside.articles-list ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    aside.articles-list ul li {
+      margin-bottom: 10px;
+    }
+
+    aside.articles-list ul li a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    aside.articles-list ul li a:hover {
+      text-decoration: underline;
     }
 
     footer {
       text-align: center;
       padding: 1rem;
       background-color: #e9ecef;
-      margin-top: 40px;
+      margin-top: auto;
     }
 
-    @media (max-width: 600px) {
+    /* Ad styles */
+    .adsense-ad {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      aside.articles-list {
+        order: 2;
+      }
       main {
-        padding: 1rem;
+        order: 1;
       }
     }
   </style>
@@ -61,17 +125,23 @@
 </head>
 <body>
 
+  <nav class="top-links">
+    <a href="mailto:zeshanbarvi@gmail.com">Email Me</a>
+    <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube Channel</a>
+    <a href="https://wa.me/97471277905" target="_blank">WhatsApp</a>
+  </nav>
+
   <header>
     <h1>Next Solution</h1>
     <p>Official Website of Zeeshan Barvi</p>
   </header>
 
   <!-- AdSense ad unit -->
-  <div style="text-align:center; margin: 20px 0;">
+  <div class="adsense-ad">
     <ins class="adsbygoogle"
          style="display:block"
          data-ad-client="ca-pub-4770123899731214"
-         data-ad-slot="1234567890"  <!-- Replace this with your actual Ad Slot ID -->
+         data-ad-slot="1234567890"  <!-- Replace with your actual Ad Slot ID -->
          data-ad-format="auto"
          data-full-width-responsive="true"></ins>
     <script>
@@ -79,13 +149,20 @@
     </script>
   </div>
 
-  <main>
-    <p>Welcome to the official website of the <strong>Next Solution YouTube Channel</strong>.</p>
-    
-    <a class="button" href="https://www.youtube.com/zeshan0727" target="_blank">Visit Our YouTube Channel</a>
-    <a class="button" href="https://wa.me/97471277905" target="_blank">Chat on WhatsApp</a>
-    <a class="button" href="mailto:zeshanbarvi@gmail.com">Email Me</a>
-  </main>
+  <div class="container">
+    <main>
+      <p>Welcome to the official website of the <strong>Next Solution YouTube Channel</strong>.</p>
+      <p>This is the main content area where you can add your latest updates, videos, or any other content.</p>
+    </main>
+
+    <aside class="articles-list">
+      <h3>Articles</h3>
+      <ul>
+        <li><a href="article1.html">1. Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
+        <!-- Add more articles here -->
+      </ul>
+    </aside>
+  </div>
 
   <footer>
     &copy; 2025 Zeeshan Barvi. All rights reserved.
