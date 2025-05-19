@@ -19,7 +19,7 @@
       background-image: url('header-bg.png');
       background-size: cover;
       background-position: center;
-      padding: 4rem 1rem;
+      padding: 6rem 1rem; /* Increased header height */
       text-align: center;
     }
 
@@ -134,8 +134,8 @@
 
     #contact {
       max-width: 1100px;
-      margin: 2rem auto;
-      padding: 1rem 1.5rem;
+      margin: 1rem auto 2rem;
+      padding: 0.5rem 1.5rem;
       background-color: #ffffff;
       border-top: 2px solid #007bff;
       border-radius: 8px;
@@ -143,14 +143,19 @@
       font-size: 1rem;
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: 1.2rem;
       flex-wrap: wrap;
       text-align: center;
     }
 
-    .contact-item {
-      font-size: 1rem;
+    .contact-item a {
+      text-decoration: none;
       color: #007bff;
+      font-weight: bold;
+    }
+
+    .contact-item a:hover {
+      text-decoration: underline;
     }
 
     footer {
@@ -238,10 +243,10 @@
   </main>
 
   <section id="contact">
-    <div class="contact-item">WhatsApp -</div>
-    <div class="contact-item">Instagram -</div>
-    <div class="contact-item">X (Twitter) -</div>
-    <div class="contact-item">YouTube -</div>
+    <div class="contact-item"><a href="https://wa.me/qr/YO4NSNY3KZ5RO1">WhatsApp -</a></div>
+    <div class="contact-item"><a href="https://www.instagram.com/zeshan0727">Instagram -</a></div>
+    <div class="contact-item"><a href="https://x.com/zeshan0727">X (Twitter) -</a></div>
+    <div class="contact-item"><a href="https://www.youtube.com/zeshan0727">YouTube -</a></div>
   </section>
 
   <footer>
