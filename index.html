@@ -3,124 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Next Solution - Official Website</title>
+  <title>Next Solution - Zeeshan Barvi</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background-color: #f8f9fa;
+      background-color: #f5f7fa;
       color: #333;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      scroll-behavior: smooth;
+    }
+
+    /* Animation */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 1s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     header {
-      background-image: url('header-bg.png');
-      background-size: cover;
-      background-position: center;
-      padding: 6rem 1rem; /* Increased header height */
-      text-align: center;
-    }
-
-    .intro-banner {
-      text-align: center;
-      background-color: #ffffff;
-      padding: 1rem;
-      font-size: 1.3rem;
-      color: #007bff;
-    }
-
-    nav#top-links {
-      background-color: #007bff;
+      background: linear-gradient(to right, #007bff, #0056b3);
       color: white;
-      padding: 0.5rem 1rem;
+      padding: 4rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.2rem;
+    }
+
+    nav {
+      background-color: #007bff;
       display: flex;
       justify-content: center;
+      gap: 1rem;
       flex-wrap: wrap;
-      gap: 15px;
+      padding: 0.75rem 1rem;
     }
 
-    #top-links a {
+    nav a {
       color: white;
       text-decoration: none;
       font-weight: bold;
-      padding: 6px 12px;
+      padding: 0.5rem 1rem;
       border-radius: 5px;
       background-color: #0056b3;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.3s;
     }
 
-    #top-links a:hover {
+    nav a:hover {
       background-color: #003d80;
     }
 
-    main {
-      flex: 1;
-      display: flex;
+    section {
       max-width: 1100px;
       margin: 2rem auto;
-      gap: 2rem;
-      padding: 0 1rem;
+      padding: 1rem 1.5rem;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
 
-    #videos {
-      flex: 2;
+    #services {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 2rem;
       justify-content: center;
     }
 
-    .video-item {
-      background-color: #fff;
+    .service-item {
+      flex: 1 1 300px;
+      background-color: #f1f9ff;
+      padding: 1rem;
       border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      width: 320px;
-      padding: 10px;
       text-align: center;
+      box-shadow: 0 0 8px rgba(0,0,0,0.08);
     }
 
-    .video-item iframe {
-      width: 100%;
-      height: 180px;
-      border-radius: 6px;
-    }
-
-    .video-item h4 {
-      margin: 10px 0 5px;
-      font-size: 1.1rem;
-      color: #222;
-    }
-
-    .video-item p {
-      font-size: 0.9rem;
-      color: #555;
-    }
-
-    #article {
-      flex: 1;
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      padding: 1rem 1.5rem;
-      font-size: 1rem;
-      line-height: 1.5;
-      overflow: hidden;
-    }
-
-    #article h2 {
-      margin-top: 0;
+    .service-item h3 {
       color: #007bff;
+      margin-bottom: 0.5rem;
+    }
+
+    #why-jailbreak ul {
+      padding-left: 1.5rem;
+    }
+
+    #why-jailbreak li {
+      margin-bottom: 0.5rem;
     }
 
     #article ol {
       padding-left: 1.5rem;
-      color: #444;
-    }
-
-    #article li {
-      margin-bottom: 0.8rem;
     }
 
     #article a {
@@ -132,57 +117,23 @@
       text-decoration: underline;
     }
 
-    #contact {
-      max-width: 1100px;
-      margin: 1rem auto 2rem;
-      padding: 0.5rem 1.5rem;
-      background-color: #ffffff;
-      border-top: 2px solid #007bff;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      font-size: 1rem;
-      display: flex;
-      justify-content: center;
-      gap: 1.2rem;
-      flex-wrap: wrap;
-      text-align: center;
-    }
-
-    .contact-item a {
-      text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
-    }
-
-    .contact-item a:hover {
-      text-decoration: underline;
+    #disclaimer {
+      font-size: 0.9rem;
+      color: #555;
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
     }
 
     footer {
       text-align: center;
-      padding: 0.4rem 0;
-      background-color: #e9ecef;
+      padding: 1rem;
       font-size: 0.85rem;
+      background-color: #e9ecef;
       color: #555;
-      width: 100%;
-      box-sizing: border-box;
     }
 
-    @media (max-width: 900px) {
-      main {
-        flex-direction: column;
-        max-width: 90%;
-      }
-
-      #videos, #article {
-        width: 100%;
-      }
-
-      #article {
-        margin-top: 2rem;
-      }
-
-      #contact {
+    @media (max-width: 768px) {
+      #services {
         flex-direction: column;
         align-items: center;
       }
@@ -191,63 +142,57 @@
 </head>
 <body>
 
-  <header></header>
+  <header class="fade-in">
+    <h1>Next Solution</h1>
+    <p>Official Website of Zeeshan Barvi</p>
+  </header>
 
-  <div class="intro-banner">
-    <div><strong>Next Solution</strong></div>
-    <div>Official Website of Zeeshan Barvi</div>
-  </div>
-
-  <nav id="top-links">
+  <nav>
     <a href="index.html">Home</a>
-    <a href="videos.html">Videos</a>
-    <a href="#contact">Contact</a>
+    <a href="#article">Articles</a>
+    <a href="#disclaimer">Disclaimer</a>
     <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube</a>
   </nav>
 
-  <main>
-    <section id="videos">
-      <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/BVBe_ysluos" title="Downgrade iPhone Backup - iOS 16"></iframe>
-        <h4>How to Downgrade iPhone Backup</h4>
-        <p>Learn how to downgrade your iPhone backup from iOS 16 to any earlier version.</p>
-      </div>
-      <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/DPHCEcoAa-E" title="Convert Rootful Jailbreak Tweaks"></iframe>
-        <h4>Convert Rootful Jailbreak Tweaks</h4>
-        <p>Guide to converting rootful jailbreak tweaks to rootless for better compatibility.</p>
-      </div>
-      <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/onOs0B8rJJk" title="Dopamine Jailbreak iOS 15.0 - 16.6.1"></iframe>
-        <h4>Semi Untethered Dopamine Jailbreak</h4>
-        <p>Explore the latest jailbreak method for iOS versions 15.0 to 16.6.1.</p>
-      </div>
-      <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/GBRDmnqpaE8" title="Fix iPhone Battery Health"></iframe>
-        <h4>Fix iPhone Battery Health</h4>
-        <p>Tips to fix iPhone battery issues and remove the service warning.</p>
-      </div>
-      <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/7YkAzBH4yMg" title="Jailbreak iOS 16.5 and Fix Error 256"></iframe>
-        <h4>Jailbreak iOS 16.5 and Fix Error</h4>
-        <p>Guide to jailbreak iOS 16.5 and resolve Error 256.</p>
-      </div>
-    </section>
+  <section id="services" class="fade-in">
+    <div class="service-item">
+      <h3>iPhone Customization</h3>
+      <p>Personalize your iPhone using expert tweaks and tools.</p>
+    </div>
+    <div class="service-item">
+      <h3>Tech Tutorials</h3>
+      <p>Step-by-step guides for iOS, jailbreaking, and optimization.</p>
+    </div>
+    <div class="service-item">
+      <h3>1-on-1 Support</h3>
+      <p>Get expert help for your iPhone or jailbreak-related issue.</p>
+    </div>
+  </section>
 
-    <section id="article">
-      <h2>Article Index</h2>
-      <ol>
-        <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
-        <li><a href="remove-service-message-iphone.html" target="_blank">Fix iPhone Battery Health | Remove Service Message</a></li>
-      </ol>
-    </section>
-  </main>
+  <section id="why-jailbreak" class="fade-in">
+    <h2>Why Jailbreak Your iPhone?</h2>
+    <p>Jailbreaking unlocks full control over your iPhone. It allows you to:</p>
+    <ul>
+      <li>Install custom apps not available on the App Store</li>
+      <li>Apply advanced tweaks and visual themes</li>
+      <li>Access system files for full control</li>
+      <li>Enhance productivity and system performance</li>
+    </ul>
+  </section>
 
-  <section id="contact">
-    <div class="contact-item"><a href="https://wa.me/qr/YO4NSNY3KZ5RO1">WhatsApp -</a></div>
-    <div class="contact-item"><a href="https://www.instagram.com/zeshan0727">Instagram -</a></div>
-    <div class="contact-item"><a href="https://x.com/zeshan0727">X (Twitter) -</a></div>
-    <div class="contact-item"><a href="https://www.youtube.com/zeshan0727">YouTube -</a></div>
+  <section id="article" class="fade-in">
+    <h2>Recent Articles</h2>
+    <ol>
+      <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
+      <li><a href="remove-service-message-iphone.html" target="_blank">Fix iPhone Battery Health | Remove Service Message</a></li>
+    </ol>
+  </section>
+
+  <section id="disclaimer" class="fade-in">
+    <h2>Disclaimer</h2>
+    <p>The content available on this YouTube channel is for educational and informational purposes only. This YouTube channel does not provide, advise or cause any loss or damage to the viewer and all of the content is intended for educational purposes only under fair use. I do not intend to promote stealing or to promote illegal activities.</p>
+    <p>Jailbreaking is 100% legal and is covered under the Digital Millennium Copyright Act (DMCA). Under this act, you can Jailbreak your device legally.</p>
+    <p>In this video, nothing illicit is shown and does not promote piracy. In Copyright Disclaimer Under Section 107 of the Copyright Act 1976, allowance is made for “fair use” for purposes such as criticism, comment, news reporting, teaching, scholarship, and research. Fair use is a use permitted by copyright statute that might otherwise be infringing. Non-profit, educational or personal use tips the balance in favor of fair use.</p>
   </section>
 
   <footer>
@@ -256,4 +201,3 @@
 
 </body>
 </html>
-
