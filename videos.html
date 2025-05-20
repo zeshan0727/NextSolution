@@ -7,130 +7,101 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
+      background-color: #f4f4f4;
       padding: 20px;
+      margin: 0;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      color: #007bff;
     }
 
-    .video-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    #video-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
+      margin-top: 30px;
     }
 
-    .video {
+    .video-card {
       background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .video:hover {
-      transform: scale(1.02);
-    }
-
-    .thumbnail {
-      width: 100%;
-      display: block;
-    }
-
-    .video-title {
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 10px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #333;
+      width: 320px;
     }
 
-    .player-container iframe {
+    iframe {
       width: 100%;
-      height: 300px;
-      border: none;
+      height: 180px;
+      border-radius: 8px;
     }
 
-    .loading {
+    h3 {
+      font-size: 16px;
+      margin: 10px 0 5px;
+      color: #222;
+    }
+
+    p {
+      font-size: 14px;
+      color: #555;
+    }
+
+    #error {
+      color: red;
       text-align: center;
-      font-size: 18px;
-      color: #666;
-    }
-
-    @media (max-width: 500px) {
-      .player-container iframe {
-        height: 200px;
-      }
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
+
   <h1>Zeshan's YouTube Videos</h1>
-  <div class="video-grid" id="video-list"></div>
-  <div class="loading" id="loading">Loading all videos...</div>
+  <div id="video-grid"></div>
+  <div id="error"></div>
 
   <script>
-    const apiKey = 'AIzaSyDx-6w-3NTP2jO6IkUIoy-y60GgnfHDowM'; // Your real API key
-    const channelId = 'UCyEJ2u1ESb2ZinGzjOZstzA'; // Your channel ID
-    const videoList = document.getElementById('video-list');
-    const loadingText = document.getElementById('loading');
+    const apiKey = 'AIzaSyDYe_SEtiDPtOd09aVOd4wR362jyC3cIRc';
+    const channelId = 'UC3HJMgxH2NwT0VzJcYbjHhw'; // zeshan0727 channel ID
+    const maxResults = 10;
 
-    let nextPageToken = '';
-    let allVideos = [];
+    const url = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet&order=date&maxResults=${maxResults}`;
 
-    function fetchVideos(pageToken = '') {
-      fetch(`https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=50&pageToken=${pageToken}`)
-        .then(response => response.json())
-        .then(data => {
-          allVideos = allVideos.concat(data.items.filter(item => item.id.kind === 'youtube#video'));
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        const videos = data.items;
+        const container = document.getElementById('video-grid');
 
-          if (data.nextPageToken) {
-            fetchVideos(data.nextPageToken); // Fetch next page
-          } else {
-            renderVideos(); // All done
-          }
-        })
-        .catch(error => {
-          loadingText.textContent = 'Failed to load videos. Check API key or quota.';
-          console.error('YouTube API Error:', error);
-        });
-    }
+        if (!videos || videos.length === 0) {
+          document.getElementById('error').textContent = 'No videos found.';
+          return;
+        }
 
-    function renderVideos() {
-      loadingText.style.display = 'none';
+        videos.forEach(video => {
+          if (video.id.kind === 'youtube#video') {
+            const videoId = video.id.videoId;
+            const title = video.snippet.title;
+            const description = video.snippet.description;
 
-      allVideos.forEach(video => {
-        const videoId = video.id.videoId;
-        const title = video.snippet.title;
-        const thumbnail = video.snippet.thumbnails.medium.url;
-
-        const videoDiv = document.createElement('div');
-        videoDiv.className = 'video';
-        videoDiv.innerHTML = `
-          <img src="${thumbnail}" class="thumbnail" alt="${title}">
-          <div class="video-title">${title}</div>
-        `;
-
-        videoDiv.addEventListener('click', () => {
-          videoDiv.innerHTML = `
-            <div class="player-container">
+            const videoCard = document.createElement('div');
+            videoCard.className = 'video-card';
+            videoCard.innerHTML = `
               <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-            </div>
-            <div class="video-title">${title}</div>
-          `;
+              <h3>${title}</h3>
+              <p>${description.substring(0, 80)}...</p>
+            `;
+            container.appendChild(videoCard);
+          }
         });
-
-        videoList.appendChild(videoDiv);
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('error').textContent = 'Failed to load videos. Check API key or quota.';
       });
-    }
-
-    // Start fetching all videos
-    fetchVideos();
   </script>
 </body>
 </html>
