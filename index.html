@@ -1,271 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Next Solution - Zeeshan Barvi</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    background-color: #f5f7fa;
-    color: #333;
-    scroll-behavior: smooth;
-  }
-
-  /* Subtle animated gradient background for header */
-  header {
-    padding: 6rem 1rem 4rem;
-    text-align: center;
-    background: linear-gradient(270deg, #243B55, #141E30, #243B55);
-    background-size: 600% 600%;
-    animation: smoothGradient 15s ease infinite;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-  }
-
-  @keyframes smoothGradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  /* White text with gradient outline */
-  .gradient-outline-text {
-    font-size: 4rem;
-    font-weight: 900;
-    color: white;
-    position: relative;
-    display: inline-block;
-    -webkit-text-stroke-width: 2px;
-    -webkit-text-stroke-color: transparent;
-    text-stroke-width: 2px; /* For non-webkit browsers */
-    text-stroke-color: transparent;
-    /* Gradient outline */
-    background: linear-gradient(45deg, #00e5ff, #0055ff, #6a0dad);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  /* Trick for gradient outline instead of fill: using filter and -webkit-text-stroke */
-  .gradient-outline-text::before {
-    content: attr(data-text);
-    position: absolute;
-    top: 0; left: 0;
-    -webkit-text-stroke-width: 2px;
-    -webkit-text-stroke-color: transparent;
-    text-stroke-width: 2px;
-    text-stroke-color: transparent;
-    background: linear-gradient(45deg, #00e5ff, #0055ff, #6a0dad);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    z-index: -1;
-    filter: drop-shadow(0 0 3px #00e5ff);
-  }
-
-  /* The above is a neat trick but might not work perfectly in all browsers, so fallback */
-  /* Fallback simpler white text with a subtle glowing outline */
-  .gradient-outline-text {
-    color: white;
-    text-shadow:
-      0 0 3px #00e5ff,
-      0 0 8px #0055ff,
-      0 0 15px #6a0dad;
-  }
-
-  header p {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    margin-top: 0.3rem;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  }
-
-  .glow-underline {
-    width: 80px;
-    height: 4px;
-    margin: 1rem auto 0;
-    border-radius: 50px;
-    background: linear-gradient(270deg, #00e5ff, #0055ff, #6a0dad);
-    background-size: 600% 600%;
-    animation: smoothGradient 15s ease infinite;
-    box-shadow:
-      0 0 10px #00e5ff,
-      0 0 20px #0055ff,
-      0 0 30px #6a0dad;
-  }
-
-  nav {
-    background-color: #007bff;
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 0.75rem 1rem;
-    align-items: center;
-    position: relative;
-    z-index: 100;
-  }
-
-  nav a, nav .dropdown-btn {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    background-color: #0056b3;
-    transition: background-color 0.3s;
-    cursor: pointer;
-    display: inline-block;
-  }
-
-  nav a:hover, nav .dropdown-btn:hover {
-    background-color: #003d80;
-  }
-
-  .dropdown {
-    position: relative;
-    display: inline-block;
-  }
-
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #0056b3;
-    min-width: 180px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    border-radius: 5px;
-    top: 100%;
-    left: 0;
-    z-index: 200;
-  }
-
-  .dropdown-content a {
-    color: white;
-    padding: 10px 15px;
-    text-decoration: none;
-    display: block;
-    font-weight: normal;
-    border-bottom: 1px solid rgba(255,255,255,0.15);
-    transition: background-color 0.3s;
-  }
-
-  .dropdown-content a:last-child {
-    border-bottom: none;
-  }
-
-  .dropdown-content a:hover {
-    background-color: #003d80;
-  }
-
-  .dropdown:hover .dropdown-content {
-    display: block;
-  }
-
-  section {
-    max-width: 1100px;
-    margin: 2rem auto;
-    padding: 1rem 1.5rem;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
-  }
-
-  #services {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    justify-content: center;
-  }
-
-  .service-item {
-    flex: 1 1 300px;
-    background-color: #f1f9ff;
-    padding: 1rem;
-    border-radius: 8px;
-    text-align: center;
-    box-shadow: 0 0 8px rgba(0,0,0,0.08);
-  }
-
-  .service-item h3 {
-    color: #007bff;
-    margin-bottom: 0.5rem;
-  }
-
-  #why-jailbreak ul {
-    padding-left: 1.5rem;
-  }
-
-  #why-jailbreak li {
-    margin-bottom: 0.5rem;
-  }
-
-  #article ol {
-    padding-left: 1.5rem;
-  }
-
-  #article a {
-    color: #007bff;
-    text-decoration: none;
-  }
-
-  #article a:hover {
-    text-decoration: underline;
-  }
-
-  #disclaimer {
-    font-size: 0.9rem;
-    color: #555;
-    background-color: #fff3cd;
-    border: 1px solid #ffeeba;
-    padding: 1rem;
-    white-space: pre-line;
-  }
-
-  .typing {
-    border-right: 2px solid #555;
-    animation: blink 0.7s step-end infinite;
-  }
-
-  @keyframes blink {
-    50% {
-      border-color: transparent;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Next Solution - Zeeshan Barvi</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background-color: #f5f7fa;
+      color: #333;
+      scroll-behavior: smooth;
     }
-  }
 
-  footer {
-    text-align: center;
-    padding: 1rem;
-    font-size: 0.85rem;
-    background-color: #e9ecef;
-    color: #555;
-  }
+    header {
+      padding: 6rem 1rem 4rem;
+      text-align: center;
+      background: linear-gradient(270deg, #243B55, #141E30, #243B55);
+      background-size: 600% 600%;
+      animation: smoothGradient 15s ease infinite;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
 
-  @media (max-width: 768px) {
-    #services {
-      flex-direction: column;
-      align-items: center;
+    @keyframes smoothGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .gradient-outline-text {
+      font-size: 4rem;
+      font-weight: 900;
+      color: white;
+      position: relative;
+      display: inline-block;
+      text-shadow:
+        0 0 3px #00e5ff,
+        0 0 8px #0055ff,
+        0 0 15px #6a0dad;
+    }
+
+    header p {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #e0e0e0;
+      margin-top: 0.3rem;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    .glow-underline {
+      width: 80px;
+      height: 4px;
+      margin: 1rem auto 0;
+      border-radius: 50px;
+      background: linear-gradient(270deg, #00e5ff, #0055ff, #6a0dad);
+      background-size: 600% 600%;
+      animation: smoothGradient 15s ease infinite;
+      box-shadow: 0 0 10px #00e5ff, 0 0 20px #0055ff, 0 0 30px #6a0dad;
     }
 
     nav {
+      background-color: #007bff;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
       flex-wrap: wrap;
+      padding: 0.75rem 1rem;
+      align-items: center;
+      position: relative;
+      z-index: 100;
     }
 
     nav a, nav .dropdown-btn {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.9rem;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      background-color: #0056b3;
+      transition: background-color 0.3s;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    nav a:hover, nav .dropdown-btn:hover {
+      background-color: #003d80;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
     }
 
     .dropdown-content {
-      min-width: 150px;
+      display: none;
+      position: absolute;
+      background-color: #0056b3;
+      min-width: 180px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 5px;
+      top: 100%;
+      left: 0;
+      z-index: 200;
     }
-  }
-</style>
+
+    .dropdown-content a {
+      color: white;
+      padding: 10px 15px;
+      text-decoration: none;
+      display: block;
+      font-weight: normal;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      transition: background-color 0.3s;
+    }
+
+    .dropdown-content a:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #003d80;
+    }
+
+    section {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 1rem 1.5rem;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    #services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+    }
+
+    .service-item {
+      flex: 1 1 300px;
+      background-color: #f1f9ff;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 0 8px rgba(0,0,0,0.08);
+    }
+
+    .service-item h3 {
+      color: #007bff;
+      margin-bottom: 0.5rem;
+    }
+
+    #why-jailbreak ul {
+      padding-left: 1.5rem;
+    }
+
+    #why-jailbreak li {
+      margin-bottom: 0.5rem;
+    }
+
+    #article ol {
+      padding-left: 1.5rem;
+    }
+
+    #article a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    #article a:hover {
+      text-decoration: underline;
+    }
+
+    #disclaimer {
+      font-size: 0.9rem;
+      color: #555;
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 1rem;
+      white-space: pre-line;
+    }
+
+    .typing {
+      border-right: 2px solid #555;
+      animation: blink 0.7s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.85rem;
+      background-color: #e9ecef;
+      color: #555;
+    }
+
+    @media (max-width: 768px) {
+      #services {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      nav {
+        flex-wrap: wrap;
+      }
+
+      nav a, nav .dropdown-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .dropdown-content {
+        min-width: 150px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<header class="fade-in">
+<header>
   <h1 class="gradient-outline-text" data-text="Next Solution">Next Solution</h1>
   <p>Official Website of Zeeshan Barvi</p>
   <div class="glow-underline"></div>
@@ -276,8 +233,8 @@
   <a href="videos.html">Videos</a>
   <a href="#article">Articles</a>
   <div class="dropdown">
-    <div class="dropdown-btn">Contacts ▼</div>
-    <div class="dropdown-content">
+    <div class="dropdown-btn" onclick="toggleDropdown()">Contacts ▼</div>
+    <div class="dropdown-content" id="dropdownMenu">
       <a href="mailto:zeshanbarvi@gmail.com">Email</a>
       <a href="https://wa.me/97471277905" target="_blank" rel="noopener">WhatsApp</a>
       <a href="https://youtube.com/@zeshan0727?si=RZC_H_WyuZsqY4zm" target="_blank" rel="noopener">YouTube (Next Solution)</a>
@@ -288,7 +245,7 @@
   <a href="https://www.youtube.com/zeshan0727" target="_blank" rel="noopener">YouTube</a>
 </nav>
 
-<section id="services" class="fade-in">
+<section id="services">
   <div class="service-item">
     <h3>iPhone Customization</h3>
     <p>Personalize your iPhone using expert tweaks and tools.</p>
@@ -303,7 +260,7 @@
   </div>
 </section>
 
-<section id="why-jailbreak" class="fade-in">
+<section id="why-jailbreak">
   <h2>Why Jailbreak Your iPhone?</h2>
   <p>Jailbreaking unlocks full control over your iPhone. It allows you to:</p>
   <ul>
@@ -314,21 +271,21 @@
   </ul>
 </section>
 
-<section id="article" class="fade-in">
+<section id="article">
   <h2>Recent Articles</h2>
   <ol>
-    <li><a href="discover-creativity-zeshan0727.html" target="_blank" rel="noopener">Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
-    <li><a href="remove-service-message-iphone.html" target="_blank" rel="noopener">Fix iPhone Battery Health | Remove Service Message</a></li>
+    <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
+    <li><a href="remove-service-message-iphone.html" target="_blank">Fix iPhone Battery Health | Remove Service Message</a></li>
   </ol>
 </section>
 
-<section id="cta" class="fade-in" style="text-align:center; max-width: 600px; margin: 2rem auto; background: #e0f0ff; border-radius: 10px; padding: 2rem;">
+<section id="cta" style="text-align:center; max-width: 600px; margin: 2rem auto; background: #e0f0ff; border-radius: 10px; padding: 2rem;">
   <h2>Ready to Customize Your iPhone?</h2>
   <p>Contact me today for personalized jailbreaking and tech support.</p>
   <a href="mailto:zeshanbarvi@gmail.com" style="background-color:#007bff; color:white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration:none; font-weight:bold; display:inline-block; margin-top: 1rem; box-shadow: 0 0 10px #007bff;">Get in Touch</a>
 </section>
 
-<section id="disclaimer" class="fade-in">
+<section id="disclaimer">
   <h2>Disclaimer</h2>
   <p id="disclaimer-text" class="typing"></p>
 </section>
@@ -338,6 +295,23 @@
 </footer>
 
 <script>
+  // Dropdown toggle logic for touch support
+  function toggleDropdown() {
+    const dropdown = document.getElementById("dropdownMenu");
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  }
+
+  // Close dropdown if clicking outside
+  window.addEventListener('click', function(e) {
+    if (!e.target.matches('.dropdown-btn')) {
+      const dropdown = document.getElementById("dropdownMenu");
+      if (dropdown && dropdown.style.display === "block") {
+        dropdown.style.display = "none";
+      }
+    }
+  });
+
+  // Typing effect
   const disclaimer = `The content available on this YouTube channel is for educational and informational purposes only. 
 This YouTube channel does not provide, advise or cause any loss or damage to the viewer and all of the content is intended for educational purposes only under fair use. 
 I do not intend to promote stealing or to promote illegal activities.
@@ -364,6 +338,5 @@ Non-profit, educational or personal use tips the balance in favor of fair use.
 
   window.onload = typeText;
 </script>
-
 </body>
 </html>
