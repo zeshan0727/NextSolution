@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zeshan's YouTube Videos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .video {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .video:hover {
+      transform: scale(1.02);
+    }
+
+    .thumbnail {
+      width: 100%;
+      display: block;
+    }
+
+    .video-title {
+      padding: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .player-container iframe {
+      width: 100%;
+      height: 300px;
+      border: none;
+    }
+
+    .loading {
+      text-align: center;
+      font-size: 18px;
+      color: #666;
+    }
+
+    @media (max-width: 500px) {
+      .player-container iframe {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Zeshan's YouTube Videos</h1>
+  <div class="video-grid" id="video-list"></div>
+  <div class="loading" id="loading">Loading all videos...</div>
+
+  <script>
+    const apiKey = 'AIzaSyDx-6w-3NTP2jO6IkUIoy-y60GgnfHDowM'; // Your real API key
+    const channelId = 'UCyEJ2u1ESb2ZinGzjOZstzA'; // Your channel ID
+    const videoList = document.getElementById('video-list');
+    const loadingText = document.getElementById('loading');
+
+    let nextPageToken = '';
+    let allVideos = [];
+
+    function fetchVideos(pageToken = '') {
+      fetch(`https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=50&pageToken=${pageToken}`)
+        .then(response => response.json())
+        .then(data => {
+          allVideos = allVideos.concat(data.items.filter(item => item.id.kind === 'youtube#video'));
+
+          if (data.nextPageToken) {
+            fetchVideos(data.nextPageToken); // Fetch next page
+          } else {
+            renderVideos(); // All done
+          }
+        })
+        .catch(error => {
+          loadingText.textContent = 'Failed to load videos. Check API key or quota.';
+          console.error('YouTube API Error:', error);
+        });
+    }
+
+    function renderVideos() {
+      loadingText.style.display = 'none';
+
+      allVideos.forEach(video => {
+        const videoId = video.id.videoId;
+        const title = video.snippet.title;
+        const thumbnail = video.snippet.thumbnails.medium.url;
+
+        const videoDiv = document.createElement('div');
+        videoDiv.className = 'video';
+        videoDiv.innerHTML = `
+          <img src="${thumbnail}" class="thumbnail" alt="${title}">
+          <div class="video-title">${title}</div>
+        `;
+
+        videoDiv.addEventListener('click', () => {
+          videoDiv.innerHTML = `
+            <div class="player-container">
+              <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+            </div>
+            <div class="video-title">${title}</div>
+          `;
+        });
+
+        videoList.appendChild(videoDiv);
+      });
+    }
+
+    // Start fetching all videos
+    fetchVideos();
+  </script>
+</body>
+</html>
