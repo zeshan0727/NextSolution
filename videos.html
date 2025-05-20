@@ -3,96 +3,189 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Zeshan's YouTube Videos</title>
+  <title>Videos - Next Solution</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 0;
       background-color: #f8f9fa;
       color: #333;
-      margin: 0;
-      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-image: url('header-bg.png');
+      background-size: cover;
+      background-position: center;
+      padding: 6rem 1rem;
+      text-align: center;
+    }
+
+    nav#top-links {
+      background-color: #007bff;
+      color: white;
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    #top-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 5px;
+      background-color: #0056b3;
+      transition: background-color 0.3s ease;
+    }
+
+    #top-links a:hover {
+      background-color: #003d80;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 1100px;
+      margin: 2rem auto;
+      gap: 2rem;
+      padding: 0 1rem;
+    }
+
+    #videos {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       gap: 1rem;
+      justify-content: center;
     }
+
     .video-item {
-      background: white;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      background-color: #fff;
       border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
       width: 320px;
       padding: 10px;
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
-    iframe {
+
+    .video-item iframe {
       width: 100%;
       height: 180px;
       border-radius: 6px;
     }
-    h4 {
-      margin: 0;
+
+    .video-item h4 {
+      margin: 10px 0 5px;
       font-size: 1.1rem;
       color: #222;
     }
-    p {
+
+    .video-item p {
       font-size: 0.9rem;
       color: #555;
-      margin: 0;
-      min-height: 45px;
     }
-    #videos {
+
+    #load-more {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      margin: 1rem auto;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: block;
+    }
+
+    #load-more:hover {
+      background-color: #0056b3;
+    }
+
+    footer {
+      text-align: center;
+      padding: 0.4rem 0;
+      background-color: #e9ecef;
+      font-size: 0.85rem;
+      color: #555;
       width: 100%;
-      max-width: 1100px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <h1 style="width:100%; text-align:center; color:#007bff;">Zeshan's YouTube Videos</h1>
-  <div id="videos">Loading videos...</div>
+
+  <header></header>
+
+  <nav id="top-links">
+    <a href="index.html">Home</a>
+    <a href="#contact">Contact</a>
+    <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube</a>
+  </nav>
+
+  <main>
+    <section id="videos">
+      <!-- Dynamic videos load here -->
+    </section>
+    <button id="load-more">Load More</button>
+  </main>
+
+  <footer>
+    &copy; 2025 Next Solution | All rights reserved.
+  </footer>
 
   <script>
-    const apiKey = 'AIzaSyDYe_SEtiDPtOd09aVOd4wR362jyC3cIRc';
-    const channelId = 'UCyj0U_7r0gcQgL-fNvf9NYg';
+    const apiKey = "AIzaSyDYe_SEtiDPtOd09aVOd4wR362jyC3cIRc";
+    const channelId = "UCyj0U_7r0gcQgL-fNvf9NYg";
+    const maxResults = 6;
+    let nextPageToken = "";
 
-    fetch(`https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=10`)
-      .then(response => response.json())
-      .then(data => {
-        const videoContainer = document.getElementById('videos');
-        videoContainer.innerHTML = '';
+    async function loadVideos() {
+      const url = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=${maxResults}&pageToken=${nextPageToken}`;
 
-        if (!data.items || data.items.length === 0) {
-          videoContainer.innerHTML = "<p>No videos found.</p>";
-          return;
-        }
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        nextPageToken = data.nextPageToken || "";
+
+        const videoContainer = document.getElementById("videos");
 
         data.items.forEach(item => {
           if (item.id.kind === "youtube#video") {
             const videoId = item.id.videoId;
             const title = item.snippet.title;
-            const description = item.snippet.description;
+            const description = item.snippet.description.substring(0, 90);
 
-            const videoHTML = `
-              <div class="video-item">
-                <iframe src="https://www.youtube.com/embed/${videoId}" title="${title}" allowfullscreen></iframe>
-                <h4>${title}</h4>
-                <p>${description.substring(0, 100)}${description.length > 100 ? '...' : ''}</p>
-              </div>
+            const videoEl = document.createElement("div");
+            videoEl.className = "video-item";
+            videoEl.innerHTML = `
+              <iframe src="https://www.youtube.com/embed/${videoId}" title="${title}" allowfullscreen></iframe>
+              <h4>${title}</h4>
+              <p>${description}...</p>
             `;
-            videoContainer.innerHTML += videoHTML;
+            videoContainer.appendChild(videoEl);
           }
         });
-      })
-      .catch(error => {
-        document.getElementById('videos').innerHTML = "<p>Failed to load videos. Please check the API key or quota.</p>";
-        console.error("YouTube API error:", error);
-      });
+
+        if (!nextPageToken) {
+          document.getElementById("load-more").style.display = "none";
+        }
+
+      } catch (err) {
+        console.error("Error loading videos:", err);
+      }
+    }
+
+    document.getElementById("load-more").addEventListener("click", loadVideos);
+
+    // Load first batch
+    loadVideos();
   </script>
+
 </body>
 </html>
