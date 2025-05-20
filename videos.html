@@ -7,100 +7,91 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
       margin: 0;
-    }
-
-    h1 {
-      text-align: center;
-      color: #007bff;
-    }
-
-    #video-grid {
+      padding: 1rem;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 20px;
-      margin-top: 30px;
+      gap: 1rem;
     }
-
-    .video-card {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 10px;
+    .video-item {
+      background: white;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
       width: 320px;
+      padding: 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-
     iframe {
       width: 100%;
       height: 180px;
-      border-radius: 8px;
+      border-radius: 6px;
     }
-
-    h3 {
-      font-size: 16px;
-      margin: 10px 0 5px;
+    h4 {
+      margin: 0;
+      font-size: 1.1rem;
       color: #222;
     }
-
     p {
-      font-size: 14px;
+      font-size: 0.9rem;
       color: #555;
+      margin: 0;
+      min-height: 45px;
     }
-
-    #error {
-      color: red;
-      text-align: center;
-      margin-top: 20px;
+    #videos {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
     }
   </style>
 </head>
 <body>
-
-  <h1>Zeshan's YouTube Videos</h1>
-  <div id="video-grid"></div>
-  <div id="error"></div>
+  <h1 style="width:100%; text-align:center; color:#007bff;">Zeshan's YouTube Videos</h1>
+  <div id="videos">Loading videos...</div>
 
   <script>
     const apiKey = 'AIzaSyDYe_SEtiDPtOd09aVOd4wR362jyC3cIRc';
-    const channelId = 'UC3HJMgxH2NwT0VzJcYbjHhw'; // zeshan0727 channel ID
-    const maxResults = 10;
+    const channelId = 'UCyj0U_7r0gcQgL-fNvf9NYg';
 
-    const url = `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet&order=date&maxResults=${maxResults}`;
-
-    fetch(url)
+    fetch(`https://www.googleapis.com/youtube/v3/search?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=10`)
       .then(response => response.json())
       .then(data => {
-        const videos = data.items;
-        const container = document.getElementById('video-grid');
+        const videoContainer = document.getElementById('videos');
+        videoContainer.innerHTML = '';
 
-        if (!videos || videos.length === 0) {
-          document.getElementById('error').textContent = 'No videos found.';
+        if (!data.items || data.items.length === 0) {
+          videoContainer.innerHTML = "<p>No videos found.</p>";
           return;
         }
 
-        videos.forEach(video => {
-          if (video.id.kind === 'youtube#video') {
-            const videoId = video.id.videoId;
-            const title = video.snippet.title;
-            const description = video.snippet.description;
+        data.items.forEach(item => {
+          if (item.id.kind === "youtube#video") {
+            const videoId = item.id.videoId;
+            const title = item.snippet.title;
+            const description = item.snippet.description;
 
-            const videoCard = document.createElement('div');
-            videoCard.className = 'video-card';
-            videoCard.innerHTML = `
-              <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-              <h3>${title}</h3>
-              <p>${description.substring(0, 80)}...</p>
+            const videoHTML = `
+              <div class="video-item">
+                <iframe src="https://www.youtube.com/embed/${videoId}" title="${title}" allowfullscreen></iframe>
+                <h4>${title}</h4>
+                <p>${description.substring(0, 100)}${description.length > 100 ? '...' : ''}</p>
+              </div>
             `;
-            container.appendChild(videoCard);
+            videoContainer.innerHTML += videoHTML;
           }
         });
       })
-      .catch(err => {
-        console.error(err);
-        document.getElementById('error').textContent = 'Failed to load videos. Check API key or quota.';
+      .catch(error => {
+        document.getElementById('videos').innerHTML = "<p>Failed to load videos. Please check the API key or quota.</p>";
+        console.error("YouTube API error:", error);
       });
   </script>
 </body>
