@@ -13,7 +13,6 @@
       scroll-behavior: smooth;
     }
 
-    /* Animation */
     .fade-in {
       opacity: 0;
       transform: translateY(30px);
@@ -122,6 +121,19 @@
       color: #555;
       background-color: #fff3cd;
       border: 1px solid #ffeeba;
+      padding: 1rem;
+    }
+
+    .typing {
+      white-space: pre-line;
+      border-right: 2px solid #555;
+      animation: blink 0.7s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        border-color: transparent;
+      }
     }
 
     #contact {
@@ -216,14 +228,41 @@
 
   <section id="disclaimer" class="fade-in">
     <h2>Disclaimer</h2>
-    <p>The content available on this YouTube channel is for educational and informational purposes only. This YouTube channel does not provide, advise or cause any loss or damage to the viewer and all of the content is intended for educational purposes only under fair use. I do not intend to promote stealing or to promote illegal activities.</p>
-    <p>Jailbreaking is 100% legal and is covered under the Digital Millennium Copyright Act (DMCA). Under this act, you can Jailbreak your device legally.</p>
-    <p>In this video, nothing illicit is shown and does not promote piracy. In Copyright Disclaimer Under Section 107 of the Copyright Act 1976, allowance is made for “fair use” for purposes such as criticism, comment, news reporting, teaching, scholarship, and research. Fair use is a use permitted by copyright statute that might otherwise be infringing. Non-profit, educational or personal use tips the balance in favor of fair use.</p>
+    <p id="disclaimer-text" class="typing"></p>
   </section>
 
   <footer>
     &copy; 2025 Next Solution | All rights reserved.
   </footer>
+
+  <script>
+    const disclaimer = `
+The content available on this YouTube channel is for educational and informational purposes only. 
+This YouTube channel does not provide, advise or cause any loss or damage to the viewer and all of the content is intended for educational purposes only under fair use. 
+I do not intend to promote stealing or to promote illegal activities.
+
+Jailbreaking is 100% legal and is covered under the Digital Millennium Copyright Act (DMCA).
+Under this act, you can Jailbreak your device legally.
+
+In this video, nothing illicit is shown and does not promote piracy. 
+
+In Copyright Disclaimer Under Section 107 of the Copyright Act 1976, allowance is made for “fair use” for purposes such as criticism, comment, news reporting, teaching, scholarship, and research. 
+Fair use is a use permitted by copyright statute that might otherwise be infringing. 
+Non-profit, educational or personal use tips the balance in favor of fair use.
+    `;
+
+    let i = 0;
+    const speed = 15;
+    function typeText() {
+      if (i < disclaimer.length) {
+        document.getElementById("disclaimer-text").innerHTML += disclaimer.charAt(i);
+        i++;
+        setTimeout(typeText, speed);
+      }
+    }
+
+    window.onload = typeText;
+  </script>
 
 </body>
 </html>
