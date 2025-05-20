@@ -28,9 +28,9 @@
     }
 
     header {
-      background: linear-gradient(to right, #007bff, #0056b3);
+      background: url('header-bg.png') center center / cover no-repeat;
       color: white;
-      padding: 4rem 1rem;
+      padding: 5rem 1rem;
       text-align: center;
     }
 
@@ -124,6 +124,24 @@
       border: 1px solid #ffeeba;
     }
 
+    #contact {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .contact-item a {
+      text-decoration: none;
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .contact-item a:hover {
+      text-decoration: underline;
+    }
+
     footer {
       text-align: center;
       padding: 1rem;
@@ -149,8 +167,9 @@
 
   <nav>
     <a href="index.html">Home</a>
+    <a href="videos.html">Videos</a>
     <a href="#article">Articles</a>
-    <a href="#disclaimer">Disclaimer</a>
+    <a href="#contact">Contact</a>
     <a href="https://www.youtube.com/zeshan0727" target="_blank">YouTube</a>
   </nav>
 
@@ -186,6 +205,13 @@
       <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
       <li><a href="remove-service-message-iphone.html" target="_blank">Fix iPhone Battery Health | Remove Service Message</a></li>
     </ol>
+  </section>
+
+  <section id="contact" class="fade-in">
+    <div class="contact-item"><a href="https://wa.me/qr/YO4NSNY3KZ5RO1">WhatsApp -</a></div>
+    <div class="contact-item"><a href="https://www.instagram.com/zeshan0727">Instagram -</a></div>
+    <div class="contact-item"><a href="https://x.com/zeshan0727">X (Twitter) -</a></div>
+    <div class="contact-item"><a href="https://www.youtube.com/zeshan0727">YouTube -</a></div>
   </section>
 
   <section id="disclaimer" class="fade-in">
