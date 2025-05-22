@@ -73,21 +73,53 @@
     }
 
     .hero {
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       padding: 4rem 2rem;
-      background: linear-gradient(rgba(106, 17, 203, 0.9), rgba(37, 117, 252, 0.9));
+      background: linear-gradient(135deg, rgba(106, 17, 203, 0.9), rgba(37, 117, 252, 0.9));
       color: white;
+      position: relative;
+      overflow: hidden;
     }
 
-    .hero h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') center/cover;
+      opacity: 0.15;
+      z-index: 1;
     }
 
-    .hero p {
-      font-size: 1.2rem;
-      max-width: 700px;
-      margin: 0 auto 2rem;
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      max-width: 600px;
+    }
+
+    .iphone-mockup {
+      position: relative;
+      z-index: 2;
+      margin-left: 2rem;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .iphone-mockup img {
+      width: 100%;
+      max-width: 250px;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+      border-radius: 30px;
+      border: 8px solid #111;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
     }
 
     .cta-button {
@@ -297,6 +329,16 @@
         gap: 1rem;
       }
 
+      .hero {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .iphone-mockup {
+        margin: 2rem 0 0;
+        max-width: 200px;
+      }
+
       #why-jailbreak ul {
         columns: 1;
       }
@@ -343,9 +385,14 @@
 </header>
 
 <section class="hero">
-  <h1>iPhone Customization Expert</h1>
-  <p>Professional jailbreaking, tweaks, and 1-on-1 support from Zeeshan Barvi</p>
-  <a href="#cta" class="cta-button">Get Started</a>
+  <div class="hero-content">
+    <h1>iPhone Customization Expert</h1>
+    <p>Professional jailbreaking, tweaks, and 1-on-1 support from Zeeshan Barvi</p>
+    <a href="#cta" class="cta-button">Get Started</a>
+  </div>
+  <div class="iphone-mockup">
+    <img src="https://via.placeholder.com/300x600/f5f7fa/6a11cb?text=Custom+iOS+Example" alt="Customized iPhone Example">
+  </div>
 </section>
 
 <section id="services">
