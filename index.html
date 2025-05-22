@@ -1,3 +1,5 @@
+Update above in my code and returb full code updatwd 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,9 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Next Solution - Zeeshan Barvi</title>
 
-  <!-- Google AdSense Script -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214"
-     crossorigin="anonymous"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214" crossorigin="anonymous"></script>
 
   <style>
     body {
@@ -19,12 +19,52 @@
     }
 
     header {
-      padding: 6rem 1rem 4rem;
-      text-align: center;
-      background: linear-gradient(270deg, #243B55, #141E30, #243B55);
-      background-size: 600% 600%;
-      animation: smoothGradient 15s ease infinite;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, 
+        #6a11cb 0%, 
+        #2575fc 25%, 
+        #6a11cb 50%, 
+        #00d2ff 75%, 
+        #2575fc 100%);
+      background-size: 400% 400%;
+      animation: smoothGradient 20s ease infinite;
+      box-shadow:
+        inset 0 1px 0 0 rgba(255,255,255,0.7),
+        0 4px 15px rgba(0,0,0,0.25);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        60deg,
+        rgba(255, 255, 255, 0.25) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0.25) 100%
+      );
+      animation: shine 6s linear infinite;
+      pointer-events: none;
+      transform: rotate(25deg);
+      z-index: 1;
+    }
+
+    @keyframes shine {
+      0% {
+        transform: rotate(25deg) translateX(-100%);
+      }
+      100% {
+        transform: rotate(25deg) translateX(100%);
+      }
     }
 
     @keyframes smoothGradient {
@@ -33,98 +73,64 @@
       100% { background-position: 0% 50%; }
     }
 
-    .gradient-outline-text {
-      font-size: 4rem;
+    .site-title {
+      font-size: 2rem;
       font-weight: 900;
       color: white;
+      text-shadow: 0 0 3px #00e5ff, 0 0 8px #0055ff, 0 0 15px #6a0dad;
       position: relative;
-      display: inline-block;
-      text-shadow:
-        0 0 3px #00e5ff,
-        0 0 8px #0055ff,
-        0 0 15px #6a0dad;
-    }
-
-    header p {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #e0e0e0;
-      margin-top: 0.3rem;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    }
-
-    .glow-underline {
-      width: 80px;
-      height: 4px;
-      margin: 1rem auto 0;
-      border-radius: 50px;
-      background: linear-gradient(270deg, #00e5ff, #0055ff, #6a0dad);
-      background-size: 600% 600%;
-      animation: smoothGradient 15s ease infinite;
-      box-shadow: 0 0 10px #00e5ff, 0 0 20px #0055ff, 0 0 30px #6a0dad;
+      z-index: 2;
     }
 
     nav {
-      background-color: #007bff;
       display: flex;
-      justify-content: center;
       gap: 1rem;
       flex-wrap: wrap;
-      padding: 0.75rem 1rem;
       align-items: center;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      background: linear-gradient(
+        270deg,
+        #ff4e50,
+        #f9d423,
+        #24c6dc,
+        #514a9d,
+        #ff6a00,
+        #e94057,
+        #8a2387,
+        #2980b9
+      );
+      background-size: 1600% 1600%;
+      animation: navGradient 20s ease infinite;
       position: relative;
-      z-index: 100;
+      z-index: 2;
     }
 
-    nav a, nav .dropdown-btn {
+    @keyframes navGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    nav a {
       color: white;
       text-decoration: none;
       font-weight: bold;
-      padding: 0.5rem 1rem;
+      padding: 0.4rem 0.8rem;
       border-radius: 5px;
-      background-color: #0056b3;
-      transition: background-color 0.3s;
-      cursor: pointer;
-      display: inline-block;
-    }
-
-    nav a:hover, nav .dropdown-btn:hover {
-      background-color: #003d80;
-    }
-
-    .dropdown {
-      position: relative;
-      display: inline-block;
-    }
-
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      background-color: #0056b3;
-      min-width: 180px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      border-radius: 5px;
-      top: 100%;
-      left: 0;
-      z-index: 200;
-    }
-
-    .dropdown-content a {
-      color: white;
-      padding: 10px 15px;
-      text-decoration: none;
-      display: block;
-      font-weight: normal;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
+      background-color: rgba(255,255,255,0.1);
       transition: background-color 0.3s;
     }
 
-    .dropdown-content a:last-child {
-      border-bottom: none;
+    nav a:hover {
+      background-color: rgba(255,255,255,0.2);
     }
 
-    .dropdown-content a:hover {
-      background-color: #003d80;
+    .description {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      color: #555;
     }
 
     section {
@@ -154,28 +160,6 @@
 
     .service-item h3 {
       color: #007bff;
-      margin-bottom: 0.5rem;
-    }
-
-    #why-jailbreak ul {
-      padding-left: 1.5rem;
-    }
-
-    #why-jailbreak li {
-      margin-bottom: 0.5rem;
-    }
-
-    #article ol {
-      padding-left: 1.5rem;
-    }
-
-    #article a {
-      color: #007bff;
-      text-decoration: none;
-    }
-
-    #article a:hover {
-      text-decoration: underline;
     }
 
     #disclaimer {
@@ -204,23 +188,43 @@
       color: #555;
     }
 
+    .social-float {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 5px;
+      z-index: 1000;
+    }
+
+    .social-float a img {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+
+    .social-float a img:hover {
+      transform: scale(1.1);
+    }
+
     @media (max-width: 768px) {
-      #services {
+      header {
         flex-direction: column;
-        align-items: center;
+        text-align: center;
       }
 
       nav {
+        justify-content: center;
         flex-wrap: wrap;
       }
 
-      nav a, nav .dropdown-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.9rem;
-      }
-
-      .dropdown-content {
-        min-width: 150px;
+      .social-float {
+        right: 5px;
       }
     }
   </style>
@@ -228,27 +232,15 @@
 <body>
 
 <header>
-  <h1 class="gradient-outline-text" data-text="Next Solution">Next Solution</h1>
-  <p>Official Website of Zeeshan Barvi</p>
-  <div class="glow-underline"></div>
+  <div class="site-title">Next Solution</div>
+  <nav>
+    <a href="./">Home</a>
+    <a href="videos.html">Videos</a>
+    <a href="#tutorials">Tutorials</a>
+  </nav>
 </header>
 
-<nav>
-  <a href="./">Home</a>
-  <a href="videos.html">Videos</a>
-  <a href="#article">Articles</a>
-  <div class="dropdown">
-    <div class="dropdown-btn" onclick="toggleDropdown()">Contacts ▼</div>
-    <div class="dropdown-content" id="dropdownMenu">
-      <a href="mailto:zeshanbarvi@gmail.com">Email</a>
-      <a href="https://wa.me/97471277905" target="_blank" rel="noopener">WhatsApp</a>
-      <a href="https://youtube.com/@zeshan0727?si=RZC_H_WyuZsqY4zm" target="_blank" rel="noopener">YouTube (Next Solution)</a>
-      <a href="https://x.com/nextsoluti0n?s=21" target="_blank" rel="noopener">Twitter (@nextsoluti0n)</a>
-      <a href="https://www.instagram.com/nextsolut1on?igsh=ODlvcjNhYTc4MzBy&utm_source=qr" target="_blank" rel="noopener">Instagram (@nextsolut1on)</a>
-    </div>
-  </div>
-  <a href="https://www.youtube.com/zeshan0727" target="_blank" rel="noopener">YouTube</a>
-</nav>
+<div class="description">Official Website of Zeeshan Barvi</div>
 
 <section id="services">
   <div class="service-item">
@@ -267,19 +259,18 @@
 
 <section id="why-jailbreak">
   <h2>Why Jailbreak Your iPhone?</h2>
-  <p>Jailbreaking unlocks full control over your iPhone. It allows you to:</p>
   <ul>
-    <li>Install custom apps not available on the App Store</li>
+    <li>Install custom apps not on the App Store</li>
     <li>Apply advanced tweaks and visual themes</li>
     <li>Access system files for full control</li>
-    <li>Enhance productivity and system performance</li>
+    <li>Enhance productivity and performance</li>
   </ul>
 </section>
 
-<section id="article">
-  <h2>Recent Articles</h2>
+<section id="tutorials">
+  <h2>Recent Tutorials</h2>
   <ol>
-    <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube: Meet Zeshan0727</a></li>
+    <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube</a></li>
     <li><a href="remove-service-message-iphone.html" target="_blank">Fix iPhone Battery Health | Remove Service Message</a></li>
   </ol>
 </section>
@@ -299,34 +290,19 @@
   &copy; 2025 Next Solution | All rights reserved.
 </footer>
 
+<div class="social-float">
+  <a href="mailto:zeshanbarvi@gmail.com" target="_blank"><img src="https://img.icons8.com/ios-filled/50/000000/email.png" alt="Email" /></a>
+  <a href="https://youtube.com/@zeshan0727" target="_blank"><img src="https://img.icons8.com/ios-filled/50/fa314a/youtube-play.png" alt="YouTube" /></a>
+  <a href="https://x.com/nextsoluti0n" target="_blank"><img src="https://img.icons8.com/ios-filled/50/1DA1F2/twitter.png" alt="Twitter" /></a>
+  <a href="https://instagram.com/nextsolut1on" target="_blank"><img src="https://img.icons8.com/ios-filled/50/e1306c/instagram-new.png" alt="Instagram" /></a>
+</div>
+
 <script>
-  function toggleDropdown() {
-    const dropdown = document.getElementById("dropdownMenu");
-    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-  }
-
-  window.addEventListener('click', function(e) {
-    if (!e.target.matches('.dropdown-btn')) {
-      const dropdown = document.getElementById("dropdownMenu");
-      if (dropdown && dropdown.style.display === "block") {
-        dropdown.style.display = "none";
-      }
-    }
-  });
-
-  const disclaimer = `The content available on this YouTube channel is for educational and informational purposes only. 
-This YouTube channel does not provide, advise or cause any loss or damage to the viewer and all of the content is intended for educational purposes only under fair use. 
-I do not intend to promote stealing or to promote illegal activities.
-
-Jailbreaking is 100% legal and is covered under the Digital Millennium Copyright Act (DMCA).
-Under this act, you can Jailbreak your device legally.
-
-In this video, nothing illicit is shown and does not promote piracy. 
-
-In Copyright Disclaimer Under Section 107 of the Copyright Act 1976, allowance is made for “fair use” for purposes such as criticism, comment, news reporting, teaching, scholarship, and research. 
-Fair use is a use permitted by copyright statute that might otherwise be infringing. 
-Non-profit, educational or personal use tips the balance in favor of fair use.
-`;
+  const disclaimer = `The content available on this YouTube channel is for educational and informational purposes only.
+This channel does not provide, advise or cause any loss or damage to the viewer. All content is for educational purposes under fair use.
+Jailbreaking is 100% legal and is covered under the DMCA.
+Nothing illicit is shown nor is piracy promoted.
+Under Section 107 of the Copyright Act 1976, fair use is allowed for criticism, comment, news reporting, teaching, scholarship, and research.`;
 
   let i = 0;
   const speed = 15;
@@ -340,5 +316,6 @@ Non-profit, educational or personal use tips the balance in favor of fair use.
 
   window.onload = typeText;
 </script>
+
 </body>
 </html>
