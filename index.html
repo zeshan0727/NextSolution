@@ -16,6 +16,7 @@
       --accent-color: #00d2ff;
       --text-color: #333;
       --light-bg: #f5f7fa;
+      --warning-color: #ff6b35;
     }
 
     body {
@@ -34,7 +35,6 @@
       padding: 1rem 2rem;
       background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      border-radius: 0 0 12px 12px;
       position: relative;
       overflow: hidden;
     }
@@ -75,9 +75,7 @@
     .hero {
       text-align: center;
       padding: 4rem 2rem;
-      background: linear-gradient(rgba(106, 17, 203, 0.9), rgba(37, 117, 252, 0.9)), url('https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
-      background-size: cover;
-      background-position: center;
+      background: linear-gradient(rgba(106, 17, 203, 0.9), rgba(37, 117, 252, 0.9));
       color: white;
     }
 
@@ -174,6 +172,47 @@
       color: var(--secondary-color);
     }
 
+    #tutorials {
+      position: relative;
+    }
+
+    .tutorial-preview {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin-top: 2rem;
+      border-left: 4px solid var(--primary-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .tutorial-preview img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .read-more {
+      display: inline-block;
+      margin-top: 1rem;
+      color: var(--primary-color);
+      font-weight: bold;
+      text-decoration: none;
+      transition: all 0.3s;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      background: rgba(106, 17, 203, 0.1);
+    }
+
+    .read-more:hover {
+      color: white;
+      background: var(--primary-color);
+      transform: translateX(5px);
+    }
+
     #faq .faq-item {
       margin-bottom: 1rem;
     }
@@ -208,7 +247,7 @@
       font-size: 0.9rem;
       color: #555;
       background-color: #fff3cd;
-      border: 1px solid #ffeeba;
+      border-left: 4px solid #ffc107;
     }
 
     footer {
@@ -339,10 +378,17 @@
 <section id="tutorials">
   <h2>Recent Tutorials</h2>
   <ol>
-    <li><a href="discover-creativity-zeshan0727.html" target="_blank">Discover Creativity and Passion on YouTube</a></li>
-    <li><a href="remove-service-message-iphone.html" target="_blank">Fix iPhone Battery Health | Remove Service Message</a></li>
-    <li><a href="#" target="_blank">Ultimate iOS Theming Guide (Coming Soon)</a></li>
+    <li><a href="lynx2-jailbreak-tweak-review.html">Lynx 2 iOS Jailbreak Tweak - Complete Review & Guide</a></li>
+    <li><a href="discover-creativity-zeshan0727.html">Discover Creativity and Passion on YouTube</a></li>
+    <li><a href="remove-service-message-iphone.html">Fix iPhone Battery Health | Remove Service Message</a></li>
   </ol>
+  
+  <div class="tutorial-preview">
+    <h3>Featured: Lynx 2 Jailbreak Tweak</h3>
+    <img src="https://via.placeholder.com/600x400/6a11cb/ffffff?text=Lynx2+Tweak+Preview" alt="Lynx 2 tweak preview">
+    <p>Complete guide to installing and using the powerful Lynx 2 customization tweak for jailbroken iOS devices.</p>
+    <a href="lynx2-jailbreak-tweak-review.html" class="read-more">Read Full Review →</a>
+  </div>
 </section>
 
 <section id="testimonials">
