@@ -1,47 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Upload Files | Next Solutions </title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f3f4f6;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .box {
-      background: white;
-      padding: 40px;
-      border-radius: 16px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-      text-align: center;
-      max-width: 400px;
-    }
-    button {
-      background: #d9272e;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    button:hover {
-      background: #b51f25;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Upload Files | Next Solutions</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f3f4f6; height: 100vh; display: flex; justify-content: center; align-items: center; }
+  .box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); text-align: center; max-width: 420px; }
+  h2 { margin-bottom: 10px; }
+  p { margin-bottom: 20px; color: #444; }
+  button { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 8px; width: 80%; transition: 0.3s; }
+  button:hover { transform: scale(1.03); }
+  .mega { background: #d9272e; color: white; }
+  .mega:hover { background: #b51f25; }
+  .gdrive { background: #34a853; color: white; }
+  .gdrive:hover { background: #2c8b45; }
+  input[type=file] { margin: 20px 0; width: 80%; }
+  #progress-container { display:none; margin-top:20px; }
+  #progress-bar { width:100%; height:20px; background:#ddd; border-radius:10px; overflow:hidden; }
+  #progress { height:100%; width:0%; background:#34a853; text-align:center; color:white; line-height:20px; font-weight:bold; }
+</style>
 </head>
 <body>
-  <div class="box">
-    <h2>Upload Files to Stone Speciality Coffee</h2>
-    <p>Your files are uploaded securely to our MEGA Drive.</p>
-    <button onclick="window.open('https://mega.nz/filerequest/Yowlf1O18Oc', '_blank')">
-      Upload Now
-    </button>
+<div class="box">
+  <h2>Upload Files to Stone Speciality Coffee</h2>
+  <p>Select where you want to upload:</p>
+
+  <!-- MEGA Upload Button -->
+  <button class="mega" onclick="window.open('https://mega.nz/filerequest/Yowlf1O18Oc', '_blank')">
+    📤 Upload to MEGA
+  </button>
+
+  <hr style="margin:20px 0;">
+
+  <!-- Google Drive Upload Section -->
+  <input type="file" id="file-input" />
+  <br/>
+  <button class="gdrive" onclick="uploadFile()">
+    ☁️ Upload to Google Drive
+  </button>
+
+  <div id="progress-container">
+    <div id="progress-bar">
+      <div id="progress">0%</div>
+    </div>
   </div>
+</div>
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script>
+  const CLIENT_ID = '588839540461-efk22odufeoflhknkhigirg9drbufmma.apps.googleusercontent.com';
+  const FOLDER_ID = '1v81_YsItG_7eBMjD6fbZKfbnwP_car6D';
+
+  function uploadFile() {
+    const file = document.getElementById('file-input').files[0];
+    if (!file) { alert('Please select a file'); return; }
+
+    gapi.load('client:auth2', initClient);
+
+    function initClient() {
+      gapi.client.init({
+        apiKey: '', // Not needed for OAuth
+        clientId: CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+      }).then(() => {
+        if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+          gapi.auth2.getAuthInstance().signIn();
+        }
+        uploadToDrive(file);
+      });
+    }
+
+    function uploadToDrive(file) {
+      const metadata = {
+        'name': file.name,
+        'parents': [FOLDER_ID]
+      };
+
+      const accessToken = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+      form.append('file', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+
+      xhr.upload.onprogress = (e) => {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        document.getElementById('progress-container').style.display = 'block';
+        document.getElementById('progress').style.width = percent + '%';
+        document.getElementById('progress').textContent = percent + '%';
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          alert('File uploaded successfully!');
+          document.getElementById('progress').textContent = '100%';
+        } else {
+          alert('Upload failed: ' + xhr.responseText);
+        }
+      };
+
+      xhr.send(form);
+    }
+  }
+</script>
 </body>
 </html>
-
