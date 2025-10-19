@@ -104,42 +104,27 @@ h1 {
 <main>
   <h1>Available Downloads</h1>
   <div id="downloads">
-    <p>Loading files from MEGA folder...</p>
+    <p>Loading files...</p>
   </div>
 </main>
 
-<!-- MEGA JS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/megajs@0.4.0/dist/mega.min.js"></script>
 <script>
-  const storage = new mega.Storage({
-      email: "guest86760727@gmail.com",       // <-- Replace with your MEGA email
-      password: "MmMr@0727"  // <-- Replace with your MEGA password
-  });
-
-  storage.on('ready', () => {
-      // Replace the folder ID with your public folder link or ID
-      const folder = storage.get('https://mega.nz/folder/uhdWiSjJ#FmV8yeAw_6GToybpyFoBbw');
-
-      folder.children.forEach(file => {
-          const container = document.getElementById('downloads');
-          container.innerHTML = ''; // Clear loading text
-
-          folder.children.forEach(f => {
-              const div = document.createElement('div');
-              div.classList.add('download-item');
-              div.innerHTML = `
-                  <span>${f.name}</span>
-                  <a href="${f.downloadLink()}" target="_blank">Download</a>
-              `;
-              container.appendChild(div);
-          });
+  const container = document.getElementById('downloads');
+  fetch('https://your-server.com/files') // <-- replace with your server URL
+    .then(res => res.json())
+    .then(files => {
+      container.innerHTML = '';
+      files.forEach(f => {
+        const div = document.createElement('div');
+        div.classList.add('download-item');
+        div.innerHTML = `<span>${f.name}</span> <a href="${f.link}" target="_blank">Download</a>`;
+        container.appendChild(div);
       });
-  });
-
-  storage.on('error', err => {
-      document.getElementById('downloads').innerHTML = `<p style="color:red;">Failed to load MEGA folder. Check credentials or folder link.</p>`;
+    })
+    .catch(err => {
       console.error(err);
-  });
+      container.innerHTML = '<p style="color:red;">Failed to load files.</p>';
+    });
 </script>
 
 </body>
