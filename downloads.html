@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Next Solution Downloads</title>
+<style>
+:root {
+  --primary-color: #6a11cb;
+  --secondary-color: #2575fc;
+  --text-color: #333;
+  --light-bg: #f5f7fa;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background-color: var(--light-bg);
+  color: var(--text-color);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+}
+
+.site-title {
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: all 0.3s;
+}
+
+nav a:hover {
+  background-color: rgba(255,255,255,0.3);
+}
+
+main {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+h1 {
+  color: var(--primary-color);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+#downloads {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.download-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.download-item a {
+  background: var(--primary-color);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.download-item a:hover {
+  background: var(--secondary-color);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="site-title">Next Solution</div>
+  <nav>
+    <a href="./">Home</a>
+    <a href="Mega.html">Uploads</a>
+    <a href="downloads.html">Downloads</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Available Downloads</h1>
+  <div id="downloads">
+    <p>Loading files from MEGA folder...</p>
+  </div>
+</main>
+
+<!-- MEGA JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/megajs@0.4.0/dist/mega.min.js"></script>
+<script>
+  const storage = new mega.Storage({
+      email: "guest86760727@gmail.com",       // <-- Replace with your MEGA email
+      password: "MmMr@0727"  // <-- Replace with your MEGA password
+  });
+
+  storage.on('ready', () => {
+      // Replace the folder ID with your public folder link or ID
+      const folder = storage.get('https://mega.nz/folder/uhdWiSjJ#FmV8yeAw_6GToybpyFoBbw');
+
+      folder.children.forEach(file => {
+          const container = document.getElementById('downloads');
+          container.innerHTML = ''; // Clear loading text
+
+          folder.children.forEach(f => {
+              const div = document.createElement('div');
+              div.classList.add('download-item');
+              div.innerHTML = `
+                  <span>${f.name}</span>
+                  <a href="${f.downloadLink()}" target="_blank">Download</a>
+              `;
+              container.appendChild(div);
+          });
+      });
+  });
+
+  storage.on('error', err => {
+      document.getElementById('downloads').innerHTML = `<p style="color:red;">Failed to load MEGA folder. Check credentials or folder link.</p>`;
+      console.error(err);
+  });
+</script>
+
+</body>
+</html>
