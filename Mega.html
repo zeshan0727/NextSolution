@@ -2,49 +2,197 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Upload Files | Next Solutions</title>
+<title>Upload Files | Next Solution</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body { font-family: system-ui, sans-serif; background: #f3f4f6; height: 100vh; display: flex; justify-content: center; align-items: center; }
-  .box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); text-align: center; max-width: 420px; }
-  h2 { margin-bottom: 10px; }
-  p { margin-bottom: 20px; color: #444; }
-  button { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 8px; width: 80%; transition: 0.3s; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+  }
+
+  /* Header */
+  header {
+    background-color: #0d47a1;
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header .site-title {
+    font-size: 22px;
+    font-weight: bold;
+  }
+
+  nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 16px;
+    transition: color 0.3s;
+  }
+
+  nav a:hover {
+    color: #ffeb3b;
+  }
+
+  /* Upload Box Section */
+  main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 15px;
+    min-height: calc(100vh - 160px);
+  }
+
+  .box {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+  }
+
+  h2 { 
+    margin-bottom: 10px;
+    color: #0d47a1;
+  }
+
+  p {
+    margin-bottom: 20px;
+    color: #444;
+  }
+
+  button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 8px;
+    width: 80%;
+    transition: 0.3s;
+  }
+
   button:hover { transform: scale(1.03); }
-  .mega { background: #d9272e; color: white; }
-  .mega:hover { background: #b51f25; }
-  .gdrive { background: #34a853; color: white; }
-  .gdrive:hover { background: #2c8b45; }
-  input[type=file] { margin: 20px 0; width: 80%; }
-  #progress-container { display:none; margin-top:20px; }
-  #progress-bar { width:100%; height:20px; background:#ddd; border-radius:10px; overflow:hidden; }
-  #progress { height:100%; width:0%; background:#34a853; text-align:center; color:white; line-height:20px; font-weight:bold; }
+
+  .mega {
+    background: #d9272e;
+    color: white;
+  }
+
+  .mega:hover {
+    background: #b51f25;
+  }
+
+  .gdrive {
+    background: #34a853;
+    color: white;
+  }
+
+  .gdrive:hover {
+    background: #2c8b45;
+  }
+
+  input[type=file] {
+    margin: 20px 0;
+    width: 80%;
+  }
+
+  #progress-container {
+    display: none;
+    margin-top: 20px;
+  }
+
+  #progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  #progress {
+    height: 100%;
+    width: 0%;
+    background: #34a853;
+    text-align: center;
+    color: white;
+    line-height: 20px;
+    font-weight: bold;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #0d47a1;
+    color: white;
+    font-size: 14px;
+  }
+
+  @media (max-width: 768px) {
+    header {
+      flex-direction: column;
+      text-align: center;
+    }
+    nav {
+      margin-top: 10px;
+    }
+    nav a {
+      display: inline-block;
+      margin: 5px 10px;
+    }
+  }
 </style>
 </head>
 <body>
-<div class="box">
-  <h2>Upload Files to Next Solution</h2>
-  <p>Select where you want to upload:</p>
 
-  <!-- MEGA Upload Button -->
-  <button class="mega" onclick="window.open('https://mega.nz/filerequest/Yowlf1O18Oc', '_blank')">
-    📤 Upload to MEGA
-  </button>
+  <header>
+    <div class="site-title">Next Solution</div>
+    <nav>
+      <a href="./">Home</a>
+      <a href="videos.html">Videos</a>
+      <a href="Mega.html">Uploads</a>
+      <a href="downloads.html">Downloads</a>
+    </nav>
+  </header>
 
-  <hr style="margin:20px 0;">
+  <main>
+    <div class="box">
+      <h2>Upload Files to Next Solution</h2>
+      <p>Select where you want to upload:</p>
 
-  <!-- Google Drive Upload Section -->
-  <input type="file" id="file-input" />
-  <br/>
-  <button class="gdrive" onclick="uploadFile()">
-    ☁️ Upload to Google Drive
-  </button>
+      <!-- MEGA Upload Button -->
+      <button class="mega" onclick="window.open('https://mega.nz/filerequest/Yowlf1O18Oc', '_blank')">
+        📤 Upload to MEGA
+      </button>
 
-  <div id="progress-container">
-    <div id="progress-bar">
-      <div id="progress">0%</div>
+      <hr style="margin:20px 0;">
+
+      <!-- Google Drive Upload Section -->
+      <input type="file" id="file-input" />
+      <br/>
+      <button class="gdrive" onclick="uploadFile()">
+        ☁️ Upload to Google Drive
+      </button>
+
+      <div id="progress-container">
+        <div id="progress-bar">
+          <div id="progress">0%</div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+  </main>
+
+  <footer>
+    © 2025 Next Solution — All rights reserved.
+  </footer>
 
 <script src="https://apis.google.com/js/api.js"></script>
 <script>
@@ -107,4 +255,3 @@
 </script>
 </body>
 </html>
-
