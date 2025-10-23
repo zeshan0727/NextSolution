@@ -16,7 +16,6 @@
       --success-color: #28a745;
     }
 
-    /* Dark mode variables */
     @media (prefers-color-scheme: dark) {
       :root {
         --light-bg: #1a1a1a;
@@ -43,7 +42,6 @@
       min-height: 100vh;
     }
 
-    /* Loading animation */
     .loading-bar {
       position: fixed;
       top: 0;
@@ -450,7 +448,6 @@
       transform: scale(1.1) translateX(-5px);
     }
 
-    /* Back to Top Button */
     .back-to-top {
       position: fixed;
       bottom: 20px;
@@ -609,8 +606,8 @@
   </div>
 
   <script>
-    // Your Google Apps Script URL
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGRkhEfXJwlvV3kGqlx29a4AtRM-4oKr64zQKtGcy5uZbKuQ5HfiEpBUExJ7YeBRxAcw/exec';
+    // Updated with your new Google Apps Script URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyuIQVqf5-pbSNRY4Vf1tJ0nx7TbzFHI1yU62lVwQJLJdDYEKKgi2rnF12BJf2nLInU/exec';
     const DRIVE_FOLDER_ID = '1Fke9LbrAEgr3lrUfNpXSlB_inSvve_PK';
     const DRIVE_FOLDER_URL = `https://drive.google.com/drive/folders/${DRIVE_FOLDER_ID}`;
     
@@ -691,6 +688,27 @@
       return iconMap[extension] || iconMap.default;
     }
 
+    // Format file size
+    function formatFileSize(bytes) {
+      if (!bytes || bytes === 0) return 'Unknown size';
+      
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+      return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Format date
+    function formatDate(dateString) {
+      if (!dateString) return 'Unknown date';
+      
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+
     // Show status message
     function showStatus(message, type) {
       statusMessage.textContent = message;
@@ -723,24 +741,28 @@
         loadingBar.style.opacity = '1';
         loadingBar.style.width = '30%';
 
-        // Use Google Apps Script Web App to fetch files
-        const response = await fetch(`${SCRIPT_URL}?folderId=${DRIVE_FOLDER_ID}`);
+        // Use Google Apps Script Web App to fetch files with timestamp to avoid caching
+        const timestamp = new Date().getTime();
+        const response = await fetch(`${SCRIPT_URL}?folderId=${DRIVE_FOLDER_ID}&t=${timestamp}`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch files from Google Drive');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const files = await response.json();
+        const result = await response.json();
         loadingBar.style.width = '90%';
 
-        if (files && files.length > 0) {
-          displayFiles(files);
-          showStatus(`Loaded ${files.length} files from Google Drive`, 'success');
+        // Check if we got files array
+        if (result && result.files && result.files.length > 0) {
+          displayFiles(result.files);
+          showStatus(`Successfully loaded ${result.files.length} files from Google Drive`, 'success');
+        } else if (result && result.error) {
+          throw new Error(result.error);
         } else {
           noFiles.innerHTML = `
             <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem;"></i>
             <h3>No Files Found</h3>
-            <p>The Google Drive folder is empty or there was an error loading files.</p>
+            <p>The Google Drive folder appears to be empty or there was an issue loading files.</p>
             <p style="margin-top: 1rem;">
               <a href="${DRIVE_FOLDER_URL}" target="_blank" class="refresh-button" style="text-decoration: none; display: inline-block;" rel="noopener noreferrer">
                 Check Folder on Google Drive
@@ -748,6 +770,7 @@
             </p>
           `;
           noFiles.style.display = 'block';
+          showStatus('No files found in the Google Drive folder', 'error');
         }
 
         loadingBar.style.width = '100%';
@@ -759,7 +782,8 @@
         noFiles.innerHTML = `
           <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem; color: var(--warning-color);"></i>
           <h3>Failed to Load Files</h3>
-          <p>There was an error connecting to Google Drive. Please try again later.</p>
+          <p>Error: ${error.message}</p>
+          <p>Please try the manual option below:</p>
           <p style="margin-top: 1rem;">
             <a href="${DRIVE_FOLDER_URL}" target="_blank" class="refresh-button" style="text-decoration: none; display: inline-block;" rel="noopener noreferrer">
               Open Google Drive Folder
@@ -768,7 +792,7 @@
         `;
         noFiles.style.display = 'block';
         
-        showStatus('Failed to load files from Google Drive', 'error');
+        showStatus(`Failed to load files: ${error.message}`, 'error');
         loadingBar.style.opacity = '0';
       } finally {
         refreshButton.disabled = false;
@@ -787,6 +811,8 @@
         const fileIcon = getFileIcon(file.name);
         const downloadUrl = createDownloadLink(file.id);
         const viewUrl = createViewLink(file.id);
+        const fileSize = file.size ? formatFileSize(file.size) : 'Unknown size';
+        const modifiedDate = file.modifiedTime ? formatDate(file.modifiedTime) : 'Unknown date';
         
         fileElement.innerHTML = `
           <div class="file-icon">
@@ -795,11 +821,11 @@
           <div class="file-info">
             <h3 title="${file.name}">${file.name}</h3>
             <div class="file-meta">
-              <span>${file.size || 'Unknown size'}</span>
-              <span>${file.modified || 'Recent'}</span>
+              <span>${fileSize}</span>
+              <span>${modifiedDate}</span>
             </div>
             <div style="display: flex; gap: 10px;">
-              <a href="${downloadUrl}" class="download-button" download style="flex: 2;">
+              <a href="${downloadUrl}" class="download-button" download="${file.name}" style="flex: 2;">
                 <i class="fas fa-download"></i>
                 Download
               </a>
