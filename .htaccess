@@ -1,16 +1,18 @@
 RewriteEngine On
 
-# Option A: Remove .html extension from URLs (works with existing .html links)
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}\.html -f
-RewriteRule ^(.*)$ $1.html [NC,L]
-
-# Option B: Redirect .html URLs to clean URLs
-RewriteCond %{THE_REQUEST} \s/+(.*?)\.html[\s?] [NC]
-RewriteRule ^ /%1 [R=301,L,NE]
-
-# Option C: Handle both with and without .html automatically
-RewriteCond %{REQUEST_FILENAME} !-f
+# Remove .html extension from URLs
+# This automatically serves .html files without the extension
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.html -f
 RewriteRule ^(.*)$ $1.html [L]
+
+# Redirect .html URLs to clean versions (301 permanent redirect)
+RewriteCond %{THE_REQUEST} \s/+(.*?)\.html[\s?] [NC]
+RewriteRule ^ /%1 [R=301,L,NE]
+
+# Handle home page specifically
+RewriteRule ^$ index.html [L]
+
+# Handle trailing slashes
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)/$ /$1 [R=301,L]
