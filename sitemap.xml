@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  
+  <!-- Home Page - HIGHEST PRIORITY -->
+  <url>
+    <loc>https://www.nextsolution.app/</loc>
+    <lastmod>2024-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Blog Tutorial - HIGH PRIORITY -->
+  <url>
+    <loc>https://www.nextsolution.app/how-to-jailbreak.html</loc>
+    <lastmod>2024-10-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dadcpknu5/image/upload/f_auto,q_auto,w_1200,h_630/v1761658813/WhatsApp_Image_2025-10-28_at_16.40.02_517ad2c4_xvuf5d.jpg</image:loc>
+      <image:title>iOS 16 Jailbreak Tutorial</image:title>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/pC8jHhGH4wA/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>iOS 16 Jailbreak Tutorial</video:title>
+      <video:description>Complete step-by-step iOS 16 jailbreak tutorial using palera1n method</video:description>
+      <video:content_loc>https://www.youtube.com/watch?v=pC8jHhGH4wA</video:content_loc>
+    </video:video>
+  </url>
+  
+  <!-- Videos Page -->
+  <url>
+    <loc>https://www.nextsolution.app/videos</loc>
+    <lastmod>2024-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Downloads Page -->
+  <url>
+    <loc>https://www.nextsolution.app/downloads</loc>
+    <lastmod>2024-10-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Uploads Page -->
+  <url>
+    <loc>https://www.nextsolution.app/Mega</loc>
+    <lastmod>2024-10-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://www.nextsolution.app/privacy</loc>
+    <lastmod>2024-10-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- Terms of Service -->
+  <url>
+    <loc>https://www.nextsolution.app/terms</loc>
+    <lastmod>2024-10-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>
