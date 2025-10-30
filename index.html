@@ -740,6 +740,39 @@
       transform: translateY(-2px) scale(1.05) !important;
     }
 
+    /* NEW: Blog Post Card Styles */
+    .blog-post-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 2px solid var(--primary-color) !important;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .blog-post-card::after {
+      content: '🔄 CONVERSION GUIDE';
+      position: absolute;
+      top: 10px;
+      right: -35px;
+      background: var(--primary-color);
+      color: white;
+      padding: 5px 35px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      transform: rotate(45deg);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .blog-post-btn {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+      color: white !important;
+      border: none !important;
+    }
+
+    .blog-post-btn:hover {
+      background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)) !important;
+      transform: translateY(-2px) scale(1.05) !important;
+    }
+
     #faq .faq-item {
       margin-bottom: 1rem;
       border: 1px solid #e9ecef;
@@ -1024,9 +1057,10 @@
         display: none;
       }
 
-      .written-guide-card::after {
-        font-size: 0.7rem;
-        right: -35px;
+      .written-guide-card::after,
+      .blog-post-card::after {
+        font-size: 0.6rem;
+        right: -40px;
       }
     }
 
@@ -1160,6 +1194,26 @@
     <h2>Latest Video Tutorials</h2>
     <div class="content-grid">
       
+      <!-- NEW: Rootful to Rootless Conversion Blog Post Card -->
+      <div class="content-card blog-post-card">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+          <i class="fas fa-sync-alt" style="color: var(--primary-color); font-size: 2rem;"></i>
+          <div>
+            <h3>Convert Rootful to Rootless Tweaks</h3>
+            <p style="color: #666; font-size: 0.9rem;">🔄 Complete Conversion Guide</p>
+          </div>
+        </div>
+        <p><strong>Dopamine 2, XinaA15 & palera1n compatible.</strong> Step-by-step guide to convert rootful jailbreak tweaks into rootless format with tools and troubleshooting.</p>
+        <div style="display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap;">
+          <a href="convert-rootful-to-rootless.html" class="read-more blog-post-btn">
+            Read Full Guide <i class="fas fa-arrow-right"></i>
+          </a>
+          <a href="https://youtu.be/DPHCEcoAa-E" target="_blank" class="youtube-link" rel="noopener noreferrer">
+            <i class="fab fa-youtube"></i> Watch Video
+          </a>
+        </div>
+      </div>
+
       <!-- NEW: Rootless Tweaks Guide Card -->
       <div class="content-card written-guide-card">
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
