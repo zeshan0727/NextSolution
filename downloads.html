@@ -565,7 +565,7 @@
       <h2>Available Files</h2>
       
       <div class="folder-info">
-        <h3>Google Drive Folder</h3>
+        <h3>Shared Drive</h3>
         <p>All files from our shared folder are automatically displayed below</p>
         <button class="refresh-button" id="refreshButton">
           <i class="fas fa-sync-alt"></i>
@@ -578,7 +578,7 @@
         <div class="no-files" id="noFiles">
           <i class="fas fa-cloud-download-alt" style="font-size: 3rem; margin-bottom: 1rem;"></i>
           <h3>Loading Files...</h3>
-          <p>Fetching files from Google Drive folder</p>
+          <p>Fetching files from Shared Drive</p>
         </div>
       </div>
     </section>
@@ -762,7 +762,7 @@
           noFiles.innerHTML = `
             <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem;"></i>
             <h3>No Files Found</h3>
-            <p>The Google Drive folder appears to be empty or there was an issue loading files.</p>
+            <p>The Shared Drive appears to be empty or there was an issue loading files.</p>
             <p style="margin-top: 1rem;">
               <a href="${DRIVE_FOLDER_URL}" target="_blank" class="refresh-button" style="text-decoration: none; display: inline-block;" rel="noopener noreferrer">
                 Check Folder on Google Drive
@@ -770,7 +770,7 @@
             </p>
           `;
           noFiles.style.display = 'block';
-          showStatus('No files found in the Google Drive folder', 'error');
+          showStatus('No files found in the Shared Drive', 'error');
         }
 
         loadingBar.style.width = '100%';
@@ -786,7 +786,7 @@
           <p>Please try the manual option below:</p>
           <p style="margin-top: 1rem;">
             <a href="${DRIVE_FOLDER_URL}" target="_blank" class="refresh-button" style="text-decoration: none; display: inline-block;" rel="noopener noreferrer">
-              Open Google Drive Folder
+              Open Shared Drive
             </a>
           </p>
         `;
@@ -861,3 +861,4 @@
 
 </body>
 </html>
+
