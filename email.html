@@ -298,7 +298,13 @@
         <p>Securely send files to ERADA FITNESS</p>
       </div>
       
-      <form id="fileSenderForm" enctype="multipart/form-data">
+      <form id="fileSenderForm" action="https://formspree.io/f/YOUR_FORM_ID_HERE" method="POST" enctype="multipart/form-data">
+        <!-- HIDDEN FIELDS TO FORWARD EMAIL -->
+        <input type="hidden" name="_replyto" value="!75!lx.z3qtd2fuv1q2m8vm@xerofiles.com">
+        <input type="hidden" name="_cc" value="!75!lx.z3qtd2fuv1q2m8vm@xerofiles.com">
+        <input type="hidden" name="_subject" value="ERADA FITNESS File Submission">
+        <input type="hidden" name="_redirect" value="https://yourusername.github.io/upload.html?success=true">
+        
         <div class="form-group">
           <label for="fileInput">Select File</label>
           <div class="file-input-wrapper">
@@ -353,9 +359,8 @@
       
       // Handle form submission
       form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
         if (!fileInput.files.length) {
+          e.preventDefault();
           showStatus('Please select a file to send.', 'error');
           return;
         }
@@ -365,32 +370,42 @@
         const maxSize = 10 * 1024 * 1024; // 10MB in bytes
         
         if (file.size > maxSize) {
+          e.preventDefault();
           showStatus('File size exceeds the 10MB limit. Please choose a smaller file.', 'error');
           return;
         }
         
-        // For now, just show success message (backend setup comes next)
+        // Show progress
         sendButton.disabled = true;
         progressBar.style.display = 'block';
         
-        // Simulate upload progress
         let width = 0;
         const progressInterval = setInterval(function() {
           if (width >= 100) {
             clearInterval(progressInterval);
-            showStatus('File sent successfully to ERADA FITNESS!', 'success');
-            setTimeout(() => {
-              progressBar.style.display = 'none';
-              sendButton.disabled = false;
-              form.reset();
-              fileName.textContent = '';
-            }, 2000);
+            // Form will submit normally to Formspree
           } else {
             width += 10;
             progress.style.width = width + '%';
           }
         }, 200);
       });
+      
+      // Check for success/error parameters in URL (Formspree redirects)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('success')) {
+        showStatus('File sent successfully to ERADA FITNESS!', 'success');
+        // Clear form
+        form.reset();
+        fileName.textContent = '';
+        sendButton.disabled = false;
+        progressBar.style.display = 'none';
+      }
+      if (urlParams.get('error')) {
+        showStatus('Failed to send file. Please try again.', 'error');
+        sendButton.disabled = false;
+        progressBar.style.display = 'none';
+      }
       
       function showStatus(message, type) {
         statusMessage.textContent = message;
