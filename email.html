@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>File Upload - Next Solution</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+      --primary-color: #6a11cb;
+      --secondary-color: #2575fc;
+      --accent-color: #00d2ff;
+      --text-color: #333;
+      --light-bg: #f5f7fa;
+      --gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --light-bg: #1a1a1a;
+        --text-color: #ffffff;
+      }
+    }
+
+    body {
+      background: var(--light-bg);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: var(--gradient);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .site-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    nav a:hover {
+      background-color: rgba(255,255,255,0.3);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      flex: 1;
+    }
+
+    .upload-card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      padding: 2rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .upload-card {
+        background-color: #2d2d2d;
+      }
+    }
+
+    .upload-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--gradient);
+    }
+
+    .upload-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .upload-header h1 {
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-header p {
+      color: #666;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border: 2px dashed #d1d8e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .file-input-label {
+        background-color: #3d3d3d;
+        border-color: #555;
+      }
+    }
+
+    .file-input-label:hover {
+      border-color: var(--primary-color);
+      background-color: #f0f4ff;
+    }
+
+    .file-name {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .recipient-display {
+      background-color: #f0f7f0;
+      border: 1px solid #c8e6c9;
+      border-radius: 8px;
+      padding: 1rem;
+      color: #2c5530;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .recipient-display {
+        background-color: #1a2a1a;
+        border-color: #2c5530;
+        color: #8bc34a;
+      }
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 0.8rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    .btn:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .btn:disabled {
+      background-color: #a0aec0;
+      cursor: not-allowed;
+    }
+
+    .status-message {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+
+    .success {
+      background-color: #e6fffa;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .error {
+      background-color: #fed7d7;
+      color: #c53030;
+      border: 1px solid #feb2b2;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .success {
+        background-color: #0f2a22;
+        color: #a7f3d0;
+        border-color: #065f46;
+      }
+      
+      .error {
+        background-color: #2a0f0f;
+        color: #feb2b2;
+        border-color: #c53030;
+      }
+    }
+
+    .progress-bar {
+      height: 6px;
+      background-color: #e2e8f0;
+      border-radius: 3px;
+      margin-top: 1rem;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress {
+      height: 100%;
+      background-color: var(--primary-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      background-color: #343a40;
+      color: white;
+      margin-top: auto;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+      
+      .container {
+        margin: 1rem auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="site-title">Next Solution</div>
+    <nav>
+      <a href="./">Back to Home</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="upload-card">
+      <div class="upload-header">
+        <h1>File Upload</h1>
+        <p>Securely send files to ERADA FITNESS</p>
+      </div>
+      
+      <form id="fileSenderForm" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="fileInput">Select File</label>
+          <div class="file-input-wrapper">
+            <input type="file" id="fileInput" name="file" class="file-input" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt">
+            <div class="file-input-label">
+              <span>Choose a file (PDF, JPG, PNG, DOC, TXT)</span>
+              <span>📁</span>
+            </div>
+          </div>
+          <div id="fileName" class="file-name"></div>
+        </div>
+        
+        <div class="form-group">
+          <label>Recipient</label>
+          <div class="recipient-display">ERADA FITNESS</div>
+        </div>
+        
+        <button type="submit" id="sendButton" class="btn">Send File</button>
+        
+        <div class="progress-bar" id="progressBar">
+          <div class="progress" id="progress"></div>
+        </div>
+        
+        <div id="statusMessage" class="status-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; <span id="current-year">2025</span> Next Solution | Secure File Upload</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('fileInput');
+      const fileName = document.getElementById('fileName');
+      const sendButton = document.getElementById('sendButton');
+      const form = document.getElementById('fileSenderForm');
+      const statusMessage = document.getElementById('statusMessage');
+      const progressBar = document.getElementById('progressBar');
+      const progress = document.getElementById('progress');
+      
+      // Update file name when a file is selected
+      fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+          const file = this.files[0];
+          fileName.textContent = `${file.name} (${formatFileSize(file.size)})`;
+        } else {
+          fileName.textContent = '';
+        }
+      });
+      
+      // Handle form submission
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!fileInput.files.length) {
+          showStatus('Please select a file to send.', 'error');
+          return;
+        }
+        
+        // Check file size (limit to 10MB)
+        const file = fileInput.files[0];
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        
+        if (file.size > maxSize) {
+          showStatus('File size exceeds the 10MB limit. Please choose a smaller file.', 'error');
+          return;
+        }
+        
+        // For now, just show success message (backend setup comes next)
+        sendButton.disabled = true;
+        progressBar.style.display = 'block';
+        
+        // Simulate upload progress
+        let width = 0;
+        const progressInterval = setInterval(function() {
+          if (width >= 100) {
+            clearInterval(progressInterval);
+            showStatus('File sent successfully to ERADA FITNESS!', 'success');
+            setTimeout(() => {
+              progressBar.style.display = 'none';
+              sendButton.disabled = false;
+              form.reset();
+              fileName.textContent = '';
+            }, 2000);
+          } else {
+            width += 10;
+            progress.style.width = width + '%';
+          }
+        }, 200);
+      });
+      
+      function showStatus(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.className = 'status-message ' + type;
+        statusMessage.style.display = 'block';
+        
+        // Hide status message after 5 seconds
+        setTimeout(function() {
+          statusMessage.style.display = 'none';
+        }, 5000);
+      }
+      
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+      
+      // Update copyright year
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+    });
+  </script>
+</body>
+</html>
