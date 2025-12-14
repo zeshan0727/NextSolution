@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload to Email</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .email-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .email-option {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .email-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .email-option.selected {
+            background: #f0f4ff;
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .email-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-indicator.configured {
+            background-color: #10b981;
+        }
+
+        .status-indicator.pending {
+            background-color: #f59e0b;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            margin: 25px 0;
+            background: #fafbff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 50px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .submit-btn {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .selected-info {
+            background: #e8f4ff;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .selected-info.active {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📤 Upload & Send File</h1>
+        
+        <div class="selected-info" id="selectedInfo">
+            <strong>Selected:</strong> <span id="selectedName"></span>
+        </div>
+        
+        <div class="email-grid" id="emailGrid">
+            <!-- Email options populated by JavaScript -->
+        </div>
+        
+        <div class="upload-area" id="dropArea" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📁</div>
+            <p style="color: #666; margin-bottom: 10px; font-size: 1.1em;">
+                <strong>Click to select file</strong><br>
+                or drag & drop here
+            </p>
+            <p style="color: #888; font-size: 0.9em;">Max file size: 25MB</p>
+            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+        </div>
+        
+        <div class="file-info" id="fileInfo"></div>
+        
+        <div class="form-group">
+            <label for="subject">Email Subject:</label>
+            <input type="text" id="subject" value="File Upload" placeholder="Email subject">
+        </div>
+        
+        <div class="form-group">
+            <label for="message">Message:</label>
+            <textarea id="message" rows="3" placeholder="Optional message..."></textarea>
+        </div>
+        
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Sending file via email...</p>
+        </div>
+        
+        <button class="submit-btn" id="submitBtn" onclick="sendFile()">Send File via Email</button>
+        
+        <div class="message" id="messageBox"></div>
+    </div>
+
+    <script>
+        // 🔐 YOUR GOOGLE APPS SCRIPT URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKj9coeqnpCkaGd58axm8iZtewzFWl8W0xpUnPCvxF5pVoEvIfAHKqPLk6wbfAptwiBQ/exec';
+        
+        // Email recipients configuration
+        const emailRecipients = [
+            { title: "Stone Cafe", email: "bills.o0vs23.zmawp5ohzxfxuntf@xerofiles.com" },
+            { title: "Erada Fitness", email: "bills.!75!lx.z3qtd2fuv1q2m8vm@xerofiles.com" },
+            { title: "Barjous", email: "bills.c2plg.4e7ynjb0gdlus3bi@xerofiles.com" },
+            { title: "Graphitees", email: "", placeholder: true },
+            { title: "Atelier", email: "", placeholder: true },
+            { title: "North Sports", email: "", placeholder: true }
+        ];
+
+        let selectedFile = null;
+        let selectedRecipient = null;
+
+        // Initialize email grid
+        function initEmailGrid() {
+            const grid = document.getElementById('emailGrid');
+            grid.innerHTML = '';
+            
+            emailRecipients.forEach((recipient, index) => {
+                const div = document.createElement('div');
+                div.className = 'email-option';
+                div.onclick = () => selectRecipient(recipient);
+                
+                const statusClass = recipient.email ? 'configured' : 'pending';
+                
+                div.innerHTML = `
+                    <div class="email-title">${recipient.title}</div>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                        <span class="status-indicator ${statusClass}"></span>
+                        ${recipient.email ? 'Ready' : 'Click to select'}
+                    </div>
+                `;
+                
+                grid.appendChild(div);
+            });
+        }
+
+        // Select recipient
+        function selectRecipient(recipient) {
+            if (recipient.placeholder) {
+                showMessage('This recipient needs email configuration', 'error');
+                return;
+            }
+            
+            selectedRecipient = recipient;
+            
+            // Update UI
+            document.querySelectorAll('.email-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.target.closest('.email-option').classList.add('selected');
+            
+            document.getElementById('selectedName').textContent = recipient.title;
+            document.getElementById('selectedInfo').classList.add('active');
+            
+            updateSubmitButton();
+        }
+
+        // Handle file selection
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                displayFileInfo(file);
+                updateSubmitButton();
+            }
+        }
+
+        // Drag and drop functionality
+        const dropArea = document.getElementById('dropArea');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.style.background = '#f0f4ff';
+            dropArea.style.borderColor = '#764ba2';
+        }
+
+        function unhighlight() {
+            dropArea.style.background = '#fafbff';
+            dropArea.style.borderColor = '#667eea';
+        }
+
+        dropArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                displayFileInfo(selectedFile);
+                updateSubmitButton();
+            }
+            unhighlight();
+        }, false);
+
+        // Display file info
+        function displayFileInfo(file) {
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            document.getElementById('fileInfo').innerHTML = `
+                <strong>📎 Selected File:</strong> ${file.name}<br>
+                <strong>📏 Size:</strong> ${sizeMB} MB<br>
+                <strong>📄 Type:</strong> ${file.type || 'Unknown'}
+            `;
+            document.getElementById('fileInfo').classList.add('active');
+        }
+
+        // Update submit button state
+        function updateSubmitButton() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = !(selectedFile && selectedRecipient);
+        }
+
+        // Send file via Google Apps Script
+        async function sendFile() {
+            if (!selectedFile || !selectedRecipient) {
+                showMessage('Please select both a file and a recipient', 'error');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('progressBar').style.display = 'block';
+            document.getElementById('progressFill').style.width = '30%';
+            document.getElementById('submitBtn').disabled = true;
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('recipientEmail', selectedRecipient.email);
+            formData.append('recipientName', selectedRecipient.title);
+            formData.append('subject', document.getElementById('subject').value || 'File Upload');
+            formData.append('message', document.getElementById('message').value || 'Please find attached file.');
+
+            try {
+                // Update progress
+                document.getElementById('progressFill').style.width = '60%';
+                
+                // Send to Google Apps Script (using no-cors mode)
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors' // Important for CORS with Google Apps Script
+                });
+
+                document.getElementById('progressFill').style.width = '90%';
+                
+                // Since we're using 'no-cors', we can't read the response
+                // But if it reaches this point, the request was sent
+                
+                // Wait a moment for processing
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                showMessage(`✅ File sent successfully to ${selectedRecipient.title}!`, 'success');
+                resetForm();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(`❌ Error: ${error.message || 'Failed to send email'}`, 'error');
+            } finally {
+                // Reset UI
+                document.getElementById('progressFill').style.width = '100%';
+                setTimeout(() => {
+                    document.getElementById('loading').classList.remove('active');
+                    document.getElementById('progressBar').style.display = 'none';
+                    document.getElementById('progressFill').style.width = '0%';
+                    document.getElementById('submitBtn').disabled = false;
+                }, 1000);
+            }
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const box = document.getElementById('messageBox');
+            box.textContent = text;
+            box.className = `message ${type}`;
+            box.style.display = 'block';
+            
+            setTimeout(() => {
+                box.style.display = 'none';
+            }, 5000);
+        }
+
+        // Reset form
+        function resetForm() {
+            selectedFile = null;
+            selectedRecipient = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').classList.remove('active');
+            document.getElementById('selectedInfo').classList.remove('active');
+            document.getElementById('subject').value = 'File Upload';
+            document.getElementById('message').value = '';
+            document.querySelectorAll('.email-option.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initEmailGrid();
+            updateSubmitButton();
+        });
+    </script>
+</body>
+</html>
