@@ -600,7 +600,7 @@
         const TMDB_API_KEY = 'ae6b05317cb0a2c1620279a7a70f05ca';
         const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
         
-        // Your movie list with direct MP4 links
+        // Your movie list with direct MP4 links - FIXED: Added missing comma
         const movies = [
             { title: "120 Bahadur (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/120 Bahadur %282025%29/120 Bahadur.mp4" },
             { title: "A Stranger by the Hill (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/A Stranger by the Hill %282024%29/A Stranger by the Hill.mp4" },
@@ -705,7 +705,7 @@
             { title: "The Taj Story (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Taj Story %282025%29/The Taj Story.mp4" },
             { title: "Tumko Meri Kasam (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Tumko Meri Kasam %282025%29/Tumko Meri Kasam.mp4" },
             { title: "UI (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/UI %282024%29/UI.mp4" },
-            { title: "War 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/War 2 %282025%29/War 2.mp4" }
+            { title: "War 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/War 2 %282025%29/War 2.mp4" },  // FIXED: Added comma here
             {title: "Aakhir Palaayan Kab Tak..", year: "2024", url: "http://103.145.232.246/Data/movies/Bollywood/2024/Aakhir Palaayan Kab Tak.. %282024%29/Aakhir%20Palaayan%20Kab%20Tak...mp4"},
 {title: "Aayushmati Geeta Matric Pass", year: "2024", url: "http://103.145.232.246/Data/movies/Bollywood/2024/Aayushmati Geeta Matric Pass %282024%29/Aayushmati%20Geeta%20Matric%20Pass.mp4"},
 {title: "Accident or Conspiracy Godhra", year: "2024", url: "http://103.145.232.246/Data/movies/Bollywood/2024/Accident or Conspiracy Godhra %282024%29/Accident%20or%20Conspiracy%20Godhra.mp4"},
@@ -924,7 +924,7 @@
                     <div class="movie-info">
                         <h3 class="movie-title">${titleWithoutYear}</h3>
                         <div class="movie-year">${year}</div>
-                        <a href="${movie.link}" target="_blank" class="watch-btn">
+                        <a href="${movie.link || movie.url}" target="_blank" class="watch-btn">
                             <i class="fas fa-play"></i> Watch Now
                         </a>
                     </div>
@@ -932,60 +932,113 @@
             `;
         }
 
-        // Load all movies with posters
+        // Load movies incrementally
         async function loadMovies() {
             moviesGrid.innerHTML = `
                 <div class="loading">
                     <div class="loading-spinner"></div>
-                    <p>Loading movies and fetching posters...</p>
-                    <p style="font-size: 0.9rem; margin-top: 10px;">Fetching ${movies.length} posters from TMDb</p>
+                    <p>Loading movies...</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px;">Loading first 20 movies immediately</p>
                 </div>
             `;
             
-            let movieCardsHTML = '';
-            let posterPromises = [];
+            // Step 1: Load first 20 movies immediately with placeholders
+            const firstBatch = movies.slice(0, 20);
+            let initialHTML = '';
             
-            // Create array of promises for poster fetching
-            movies.forEach((movie, index) => {
+            firstBatch.forEach(movie => {
+                initialHTML += createMovieCard(movie, null); // Start with placeholder
+            });
+            
+            moviesGrid.innerHTML = initialHTML + `
+                <div class="loading" id="remainingLoading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading remaining movies... 20/${movies.length}</p>
+                </div>
+            `;
+            
+            // Update stats
+            document.getElementById('totalMovies').textContent = movies.length;
+            
+            // Step 2: Fetch posters for first 20 movies in background
+            const firstBatchPromises = firstBatch.map((movie, index) => {
                 const year = extractYear(movie.title);
-                const posterPromise = fetchMoviePoster(movie.title, year)
+                return fetchMoviePoster(movie.title, year)
                     .then(posterUrl => {
+                        const cards = document.querySelectorAll('.movie-card');
+                        if (cards[index]) {
+                            const img = cards[index].querySelector('.movie-poster');
+                            if (img && posterUrl) {
+                                img.src = posterUrl;
+                            }
+                        }
                         return { movie, posterUrl };
                     })
                     .catch(error => {
                         console.error(`Failed to fetch poster for ${movie.title}:`, error);
                         return { movie, posterUrl: null };
                     });
-                
-                posterPromises.push(posterPromise);
             });
             
-            // Process in batches to avoid overwhelming the API
+            // Step 3: Load remaining movies in batches
+            const remainingMovies = movies.slice(20);
             const batchSize = 20;
-            for (let i = 0; i < posterPromises.length; i += batchSize) {
-                const batch = posterPromises.slice(i, i + batchSize);
-                const batchResults = await Promise.all(batch);
+            
+            for (let i = 0; i < remainingMovies.length; i += batchSize) {
+                const batch = remainingMovies.slice(i, i + batchSize);
                 
-                batchResults.forEach(({ movie, posterUrl }) => {
-                    movieCardsHTML += createMovieCard(movie, posterUrl);
-                });
-                
-                // Update UI incrementally
-                if (i + batchSize < posterPromises.length) {
-                    moviesGrid.innerHTML = movieCardsHTML + `
-                        <div class="loading">
-                            <div class="loading-spinner"></div>
-                            <p>Loading more movies... ${Math.min(i + batchSize, movies.length)}/${movies.length}</p>
-                        </div>
+                // Show loading progress
+                const loadingDiv = document.getElementById('remainingLoading');
+                if (loadingDiv) {
+                    loadingDiv.innerHTML = `
+                        <div class="loading-spinner"></div>
+                        <p>Loading movies... ${Math.min(i + 20 + batchSize, movies.length)}/${movies.length}</p>
                     `;
                 }
+                
+                // Create cards for this batch with placeholders
+                let batchHTML = '';
+                const batchPromises = [];
+                
+                batch.forEach((movie, batchIndex) => {
+                    const globalIndex = 20 + i + batchIndex;
+                    batchHTML += createMovieCard(movie, null);
+                    
+                    // Queue poster fetch for this movie
+                    const year = extractYear(movie.title);
+                    const posterPromise = fetchMoviePoster(movie.title, year)
+                        .then(posterUrl => {
+                            const allCards = document.querySelectorAll('.movie-card');
+                            if (allCards[globalIndex]) {
+                                const img = allCards[globalIndex].querySelector('.movie-poster');
+                                if (img && posterUrl) {
+                                    img.src = posterUrl;
+                                }
+                            }
+                            return { movie, posterUrl };
+                        })
+                        .catch(error => {
+                            console.error(`Failed to fetch poster for ${movie.title}:`, error);
+                            return { movie, posterUrl: null };
+                        });
+                    
+                    batchPromises.push(posterPromise);
+                });
+                
+                // Append batch to grid
+                if (loadingDiv) {
+                    loadingDiv.insertAdjacentHTML('beforebegin', batchHTML);
+                }
+                
+                // Wait a bit before next batch to keep UI responsive
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
             
-            // Final render
-            moviesGrid.innerHTML = movieCardsHTML;
-            
-            // Update stats
-            document.getElementById('totalMovies').textContent = movies.length;
+            // Remove loading indicator
+            const loadingDiv = document.getElementById('remainingLoading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
             
             // Show API status
             apiStatus.style.display = 'block';
@@ -1077,7 +1130,7 @@
                     </div>
                 `;
                 
-                // Fallback: Load movies without posters
+                // Fallback: Load all movies immediately without posters
                 let fallbackHTML = '';
                 movies.forEach(movie => {
                     fallbackHTML += createMovieCard(movie, null);
