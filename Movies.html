@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bollywood Movies 2024-2025 Collection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 50px 20px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #ff6b6b 0%, #ffa726 100%);
+            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        .header-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://images.unsplash.com/photo-1489599809516-9827b6d1cf13?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            opacity: 0.2;
+            mix-blend-mode: overlay;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            position: relative;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #fff, #ffeaa7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .search-container {
+            max-width: 700px;
+            margin: 40px auto;
+            position: relative;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 18px 25px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s ease;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            box-shadow: 0 8px 40px rgba(255, 107, 107, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 107, 107, 0.5);
+        }
+
+        #searchInput::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.3rem;
+        }
+
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(90deg, #ff6b6b 0%, #ffa726 100%);
+            border-color: transparent;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 35px;
+            padding: 20px 0;
+        }
+
+        .movie-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(255, 107, 107, 0.4);
+            border-color: rgba(255, 107, 107, 0.4);
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            background: linear-gradient(45deg, #ff6b6b, #ffa726);
+            transition: transform 0.5s ease;
+        }
+
+        .movie-card:hover .movie-poster {
+            transform: scale(1.05);
+        }
+
+        .movie-info {
+            padding: 25px;
+            position: relative;
+        }
+
+        .movie-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            color: #fff;
+            min-height: 70px;
+        }
+
+        .movie-year {
+            color: #ffa726;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255, 167, 38, 0.1);
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .watch-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #ff6b6b 0%, #ffa726 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        .watch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.7);
+            grid-column: 1 / -1;
+        }
+
+        .loading-spinner {
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top: 5px solid #ff6b6b;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-results {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 80px;
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        footer {
+            text-align: center;
+            padding: 50px 0;
+            margin-top: 80px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .api-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .api-status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+
+        @media (max-width: 1200px) {
+            .movies-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .movies-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 25px;
+            }
+            
+            .movie-poster {
+                height: 350px;
+            }
+            
+            .search-container {
+                margin: 20px auto;
+            }
+            
+            #searchInput {
+                padding: 15px 20px;
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .movies-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .filters {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+            
+            .filter-btn {
+                flex-shrink: 0;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="api-status" id="apiStatus">
+        <i class="fas fa-check-circle"></i> API Connected
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="header-overlay"></div>
+            <h1>🎬 Bollywood Movies</h1>
+            <p class="subtitle">Latest Collection 2024-2025 with Auto Posters</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <i class="fas fa-film"></i> <span id="totalMovies">100+</span> Movies
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-sync-alt"></i> Auto Posters
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-bolt"></i> Instant Play
+                </div>
+            </div>
+        </header>
+
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search movies by title, year, or keyword..." 
+                autocomplete="off"
+            >
+            <div class="search-icon">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-year="all">All Movies</button>
+            <button class="filter-btn" data-year="2025">2025 Releases</button>
+            <button class="filter-btn" data-year="2024">2024 Releases</button>
+            <button class="filter-btn" data-year="2023">Older Movies</button>
+        </div>
+
+        <div class="movies-grid" id="moviesGrid">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Fetching movie posters from TMDb...</p>
+                <p style="font-size: 0.9rem; margin-top: 10px;">This may take a moment</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 Bollywood Movies Collection | TMDb API Powered | Auto Poster Fetching</p>
+        <p style="margin-top: 10px; font-size: 0.8rem;">
+            Posters provided by The Movie Database (TMDb)
+        </p>
+    </footer>
+
+    <script>
+        // API Configuration
+        const TMDB_API_KEY = 'ae6b05317cb0a2c1620279a7a70f05ca';
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+        
+        // Your movie list with direct MP4 links
+        const movies = [
+            { title: "120 Bahadur (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/120 Bahadur %282025%29/120 Bahadur.mp4" },
+            { title: "A Stranger by the Hill (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/A Stranger by the Hill %282024%29/A Stranger by the Hill.mp4" },
+            { title: "Aankhon ki Gustaakhiyan (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Aankhon ki Gustaakhiyan %282025%29/Aankhon ki Gustaakhiyan.mp4" },
+            { title: "Aap Jaisa Koi (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Aap Jaisa Koi %282025%29/Aap Jaisa Koi.mp4" },
+            { title: "Agnyathavasi (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Agnyathavasi %282025%29/Agnyathavasi.mp4" },
+            { title: "Akaal The Unconquered (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Akaal The Unconquered %282025%29/Akaal The Unconquered.mp4" },
+            { title: "Akshardham Operation Vajra Shakti (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Akshardham Operation Vajra Shakti %282025%29/Akshardham Operation Vajra Shakti.mp4" },
+            { title: "Andaaz 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Andaaz 2 %282025%29/Andaaz 2.mp4" },
+            { title: "Azaad (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Azaad %282025%29/Azaad.mp4" },
+            { title: "Baaghi 4 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Baaghi 4 %282025%29/Baaghi 4.mp4" },
+            { title: "Baahubali The Epic (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Baahubali The Epic %282025%29/Baahubali The Epic.mp4" },
+            { title: "Badass Ravikumar (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Badass Ravikumar %282025%29/Badass Ravikumar.mp4" },
+            { title: "Baida (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Baida %282025%29/Baida.mp4" },
+            { title: "Baramulla (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Baramulla %282025%29/Baramulla.mp4" },
+            { title: "Be Happy (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Be Happy %282025%29/Be Happy.mp4" },
+            { title: "Bhagwat Chapter One Raakshas (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Bhagwat Chapter One Raakshas %282025%29/Bhagwat Chapter One Raakshas.mp4" },
+            { title: "Bhool Chuk Maaf (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Bhool Chuk Maaf %282025%29/Bhool Chuk Maaf.mp4" },
+            { title: "Bobby Aur Rishi Ki Love Story (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Bobby Aur Rishi Ki Love Story %282025%29/Bobby Aur Rishi Ki Love Story.mp4" },
+            { title: "Chhaava (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Chhaava %282025%29/Chhaava.mp4" },
+            { title: "Chhorii 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Chhorii 2 %282025%29/Chhorii 2.mp4" },
+            { title: "Chidiya (2016)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Chidiya %282016%29/Chidiya.mp4" },
+            { title: "Controll (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Controll %282025%29/Controll.mp4" },
+            { title: "Costao (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Costao %282025%29/Costao.mp4" },
+            { title: "Crazxy (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Crazxy %282025%29/Crazxy.mp4" },
+            { title: "De De Pyaar De 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/De De Pyaar De 2 %282025%29/De De Pyaar De 2.mp4" },
+            { title: "Detective Sherdil (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Detective Sherdil %282025%29/Detective Sherdil.mp4" },
+            { title: "Deva (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Deva %282025%29/Deva.mp4" },
+            { title: "Devmanus (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Devmanus %282025%29/Devmanus.mp4" },
+            { title: "Dhadak 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Dhadak 2 %282025%29/Dhadak 2.mp4" },
+            { title: "Dhoom Dhaam (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Dhoom Dhaam %282025%29/Dhoom Dhaam.mp4" },
+            { title: "Dhurandhar (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Dhurandhar %282025%29/Dhurandhar.mp4" },
+            { title: "Dil Dosti Aur Dogs (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Dil Dosti Aur Dogs %282025%29/Dil Dosti Aur Dogs.mp4" },
+            { title: "Ek Deewane Ki Deewaniyat (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Ek Deewane Ki Deewaniyat %282025%29/Ek Deewane Ki Deewaniyat.mp4" },
+            { title: "Eleven (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Eleven %282025%29/Eleven.mp4" },
+            { title: "Emergency (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Emergency %282025%29/Emergency.mp4" },
+            { title: "Fateh (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Fateh %282025%29/Fateh.mp4" },
+            { title: "Game Changer (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Game Changer %282025%29/Game Changer.mp4" },
+            { title: "Ghaati (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Ghaati %282025%29/Ghaati.mp4" },
+            { title: "Greater Kalesh (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Greater Kalesh %282025%29/Greater Kalesh.mp4" },
+            { title: "Ground Zero (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Ground Zero %282025%29/Ground Zero.mp4" },
+            { title: "Haq (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Haq %282025%29/Haq.mp4" },
+            { title: "Hisaab Barabar (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Hisaab Barabar %282025%29/Hisaab Barabar.mp4" },
+            { title: "Housefull 5 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Housefull 5 %282025%29/Housefull 5.mp4" },
+            { title: "Jaat (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Jaat %282025%29/Jaat.mp4" },
+            { title: "Jassi weds Jassi (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Jassi weds Jassi %282025%29/Jassi weds Jassi.mp4" },
+            { title: "Jatadhara (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Jatadhara %282025%29/Jatadhara.mp4" },
+            { title: "Jewel Thief The Heist Begins (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Jewel Thief The Heist Begins %282025%29/Jewel Thief The Heist Begins.mp4" },
+            { title: "Jo Bole So Nihaal (2005)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Jo Bole So Nihaal %282005%29/Jo Bole So Nihaal.mp4" },
+            { title: "Jolly LLB 3 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Jolly LLB 3 %282025%29/Jolly LLB 3.mp4" },
+            { title: "Kaalidhar Laapata (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Kaalidhar Laapata %282025%29/Kaalidhar Laapata.mp4" },
+            { title: "Kaushaljis vs Kaushal (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Kaushaljis vs Kaushal %282025%29/Kaushaljis vs Kaushal.mp4" },
+            { title: "Kesari Chapter 2 The Untold Story of Jallianwala Bagh (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Kesari Chapter 2 The Untold Story of Jallianwala Bagh %282025%29/Kesari Chapter 2 The Untold Story of Jallianwala Bagh.mp4" },
+            { title: "Kesari Veer (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Kesari Veer %282025%29/Kesari Veer.mp4" },
+            { title: "Kis Kisko Pyaar Karoon 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Kis Kisko Pyaar Karoon 2 %282025%29/Kis Kisko Pyaar Karoon 2.mp4" },
+            { title: "Kuladalli Keelyavudo (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Kuladalli Keelyavudo %282025%29/Kuladalli Keelyavudo.mp4" },
+            { title: "Logout (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Logout %282024%29/Logout.mp4" },
+            { title: "Loveyapa (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Loveyapa %282025%29/Loveyapa.mp4" },
+            { title: "Maa (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Maa %282025%29/Maa.mp4" },
+            { title: "Maalik (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Maalik %282025%29/Maalik.mp4" },
+            { title: "Majhail (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Majhail %282025%29/Majhail.mp4" },
+            { title: "Mastiii 4 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Mastiii 4 %282025%29/Mastiii 4.mp4" },
+            { title: "Match Fixing (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Match Fixing %282025%29/Match Fixing.mp4" },
+            { title: "Mere Husband Ki Biwi (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Mere Husband Ki Biwi %282025%29/Mere Husband Ki Biwi.mp4" },
+            { title: "Metro in Dino (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Metro in Dino %282025%29/Metro in Dino.mp4" },
+            { title: "Mrs (2023)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Mrs %282023%29/Mrs.mp4" },
+            { title: "Murderbaad (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Murderbaad %282025%29/Murderbaad.mp4" },
+            { title: "Nadaaniyan (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Nadaaniyan %282025%29/Nadaaniyan.mp4" },
+            { title: "Nikita Roy (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Nikita Roy %282025%29/Nikita Roy.mp4" },
+            { title: "Nishaanchi (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Nishaanchi %282025%29/Nishaanchi.mp4" },
+            { title: "Nishaanchi 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Nishaanchi 2 %282025%29/Nishaanchi 2.mp4" },
+            { title: "Param Sundari (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Param Sundari %282025%29/Param Sundari.mp4" },
+            { title: "Pintu Ki Pappi (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Pintu Ki Pappi %282025%29/Pintu Ki Pappi.mp4" },
+            { title: "Pune Highway (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Pune Highway %282024%29/Pune Highway.mp4" },
+            { title: "Raid 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Raid 2 %282025%29/Raid 2.mp4" },
+            { title: "Romeo S3 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Romeo S3 %282025%29/Romeo S3.mp4" },
+            { title: "Saale Aashiq (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Saale Aashiq %282025%29/Saale Aashiq.mp4" },
+            { title: "Saiyaara (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Saiyaara %282025%29/Saiyaara.mp4" },
+            { title: "Sarzameen (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Sarzameen %282025%29/Sarzameen.mp4" },
+            { title: "Sikandar (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Sikandar %282025%29/Sikandar.mp4" },
+            { title: "Sister Midnight (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Sister Midnight %282024%29/Sister Midnight.mp4" },
+            { title: "Sitaare Zameen Par (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Sitaare Zameen Par %282025%29/Sitaare Zameen Par.mp4" },
+            { title: "Sky Force (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Sky Force %282025%29/Sky Force.mp4" },
+            { title: "Son of Sardaar 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Son of Sardaar 2 %282025%29/Son of Sardaar 2.mp4" },
+            { title: "Songs Of Paradise (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Songs Of Paradise %282025%29/Songs Of Paradise.mp4" },
+            { title: "Stolen (2023)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Stolen %282023%29/Stolen.mp4" },
+            { title: "Subham (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Subham %282025%29/Subham.mp4" },
+            { title: "Sunny Sanskari Ki Tulsi Kumari (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Sunny Sanskari Ki Tulsi Kumari %282025%29/Sunny Sanskari Ki Tulsi Kumari.mp4" },
+            { title: "Superboys of Malegaon (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Superboys of Malegaon %282024%29/Superboys of Malegaon.mp4" },
+            { title: "Sweet Dreams (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Sweet Dreams %282025%29/Sweet Dreams.mp4" },
+            { title: "Tanvi The Great (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Tanvi The Great %282025%29/Tanvi The Great.mp4" },
+            { title: "Tehran (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Tehran %282025%29/Tehran.mp4" },
+            { title: "Tere Ishk Mein (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Tere Ishk Mein %282025%29/Tere Ishk Mein.mp4" },
+            { title: "Thamma (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Thamma %282025%29/Thamma.mp4" },
+            { title: "Thanal (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Thanal %282025%29/Thanal.mp4" },
+            { title: "The Bhootnii (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Bhootnii %282025%29/The Bhootnii.mp4" },
+            { title: "The Diplomat (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Diplomat %282025%29/The Diplomat.mp4" },
+            { title: "The Girlfriend (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Girlfriend %282025%29/The Girlfriend.mp4" },
+            { title: "The Great Shamsuddin Family (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Great Shamsuddin Family %282025%29/The Great Shamsuddin Family.mp4" },
+            { title: "The Mehta Boys (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Mehta Boys %282025%29/The Mehta Boys.mp4" },
+            { title: "The Shameless (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Shameless %282024%29/The Shameless.mp4" },
+            { title: "The Taj Story (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/The Taj Story %282025%29/The Taj Story.mp4" },
+            { title: "Tumko Meri Kasam (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/Tumko Meri Kasam %282025%29/Tumko Meri Kasam.mp4" },
+            { title: "UI (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/UI %282024%29/UI.mp4" },
+            { title: "War 2 (2025)", link: "http://103.145.232.246/Data/movies/Bollywood/2025/War 2 %282025%29/War 2.mp4" }
+        ];
+
+        // DOM Elements
+        const moviesGrid = document.getElementById('moviesGrid');
+        const searchInput = document.getElementById('searchInput');
+        const apiStatus = document.getElementById('apiStatus');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        // Extract year from title
+        function extractYear(title) {
+            const yearMatch = title.match(/\((\d{4})\)/);
+            return yearMatch ? yearMatch[1] : 'N/A';
+        }
+
+        // Clean movie title for search
+        function cleanTitle(title) {
+            return title.replace(/\(\d{4}\)/, '').trim();
+        }
+
+        // Fetch movie poster from TMDb
+        async function fetchMoviePoster(movieTitle, movieYear) {
+            try {
+                // Clean the title for better search
+                let cleanMovieTitle = cleanTitle(movieTitle);
+                
+                // Remove common suffixes for better matching
+                cleanMovieTitle = cleanMovieTitle
+                    .replace(/\s+2$/, '')
+                    .replace(/\s+II$/, '')
+                    .replace(/\s+Part\s+\w+$/, '')
+                    .trim();
+                
+                // Search for movie on TMDb
+                const searchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanMovieTitle)}&year=${movieYear}&language=en-US&include_adult=false`;
+                
+                const response = await fetch(searchUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // If we have results, get the first one
+                if (data.results && data.results.length > 0) {
+                    const movie = data.results[0];
+                    
+                    // Get the best available poster
+                    if (movie.poster_path) {
+                        return `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+                    }
+                }
+                
+                // Try alternative search without year
+                const altSearchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanMovieTitle)}&language=en-US&include_adult=false`;
+                const altResponse = await fetch(altSearchUrl);
+                
+                if (altResponse.ok) {
+                    const altData = await altResponse.json();
+                    if (altData.results && altData.results.length > 0 && altData.results[0].poster_path) {
+                        return `https://image.tmdb.org/t/p/w500${altData.results[0].poster_path}`;
+                    }
+                }
+                
+                return null; // No poster found
+            } catch (error) {
+                console.error(`Error fetching poster for ${movieTitle}:`, error);
+                return null;
+            }
+        }
+
+        // Create movie card HTML
+        function createMovieCard(movie, posterUrl) {
+            const year = extractYear(movie.title);
+            const titleWithoutYear = cleanTitle(movie.title);
+            
+            // Fallback poster if none found
+            const finalPosterUrl = posterUrl || `https://placehold.co/400x600/1a1a2e/ffffff?text=${encodeURIComponent(titleWithoutYear.split(' ').slice(0, 3).join(' '))}`;
+            
+            return `
+                <div class="movie-card" data-year="${year}" data-title="${titleWithoutYear.toLowerCase()}">
+                    <img src="${finalPosterUrl}" 
+                         alt="${titleWithoutYear}" 
+                         class="movie-poster"
+                         loading="lazy"
+                         onerror="this.src='https://placehold.co/400x600/1a1a2e/ffffff?text=${encodeURIComponent(titleWithoutYear.split(' ').slice(0, 3).join(' '))}'">
+                    <div class="movie-info">
+                        <h3 class="movie-title">${titleWithoutYear}</h3>
+                        <div class="movie-year">${year}</div>
+                        <a href="${movie.link}" target="_blank" class="watch-btn">
+                            <i class="fas fa-play"></i> Watch Now
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load all movies with posters
+        async function loadMovies() {
+            moviesGrid.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading movies and fetching posters...</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px;">Fetching ${movies.length} posters from TMDb</p>
+                </div>
+            `;
+            
+            let movieCardsHTML = '';
+            let posterPromises = [];
+            
+            // Create array of promises for poster fetching
+            movies.forEach((movie, index) => {
+                const year = extractYear(movie.title);
+                const posterPromise = fetchMoviePoster(movie.title, year)
+                    .then(posterUrl => {
+                        return { movie, posterUrl };
+                    })
+                    .catch(error => {
+                        console.error(`Failed to fetch poster for ${movie.title}:`, error);
+                        return { movie, posterUrl: null };
+                    });
+                
+                posterPromises.push(posterPromise);
+            });
+            
+            // Process in batches to avoid overwhelming the API
+            const batchSize = 20;
+            for (let i = 0; i < posterPromises.length; i += batchSize) {
+                const batch = posterPromises.slice(i, i + batchSize);
+                const batchResults = await Promise.all(batch);
+                
+                batchResults.forEach(({ movie, posterUrl }) => {
+                    movieCardsHTML += createMovieCard(movie, posterUrl);
+                });
+                
+                // Update UI incrementally
+                if (i + batchSize < posterPromises.length) {
+                    moviesGrid.innerHTML = movieCardsHTML + `
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading more movies... ${Math.min(i + batchSize, movies.length)}/${movies.length}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Final render
+            moviesGrid.innerHTML = movieCardsHTML;
+            
+            // Update stats
+            document.getElementById('totalMovies').textContent = movies.length;
+            
+            // Show API status
+            apiStatus.style.display = 'block';
+            setTimeout(() => {
+                apiStatus.style.display = 'none';
+            }, 3000);
+        }
+
+        // Filter movies
+        function filterMovies() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.year;
+            
+            const movieCards = document.querySelectorAll('.movie-card');
+            let visibleCount = 0;
+            
+            movieCards.forEach(card => {
+                const title = card.dataset.title;
+                const year = card.dataset.year;
+                
+                const matchesSearch = title.includes(searchTerm) || year.includes(searchTerm);
+                const matchesFilter = activeFilter === 'all' || year === activeFilter;
+                
+                if (matchesSearch && matchesFilter) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Show no results message
+            if (visibleCount === 0) {
+                moviesGrid.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <h3>No movies found</h3>
+                        <p>Try a different search term or filter</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        async function initialize() {
+            try {
+                // Test API connection
+                const testUrl = `${TMDB_BASE_URL}/configuration?api_key=${TMDB_API_KEY}`;
+                const testResponse = await fetch(testUrl);
+                
+                if (!testResponse.ok) {
+                    throw new Error('API connection failed');
+                }
+                
+                // Load movies
+                await loadMovies();
+                
+                // Setup event listeners
+                searchInput.addEventListener('input', filterMovies);
+                
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        filterBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        filterMovies();
+                    });
+                });
+                
+                // Add keyboard shortcut for search
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                        e.preventDefault();
+                        searchInput.focus();
+                    }
+                    if (e.key === 'Escape') {
+                        searchInput.value = '';
+                        filterMovies();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                moviesGrid.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px; color: #ff6b6b;"></i>
+                        <h3>API Connection Error</h3>
+                        <p>Failed to connect to TMDb API. Please check your API key.</p>
+                        <p style="margin-top: 20px;">Movies loaded without posters.</p>
+                    </div>
+                `;
+                
+                // Fallback: Load movies without posters
+                let fallbackHTML = '';
+                movies.forEach(movie => {
+                    fallbackHTML += createMovieCard(movie, null);
+                });
+                moviesGrid.innerHTML = fallbackHTML;
+                
+                apiStatus.className = 'api-status error';
+                apiStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> API Error - Using Fallback';
+                apiStatus.style.display = 'block';
+            }
+        }
+
+        // Start the application
+        initialize();
+    </script>
+</body>
+</html>
