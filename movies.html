@@ -3,8 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bollywood Movies 2024-2025 Collection</title>
+    <title>Bollywood Movies 2024-2025 Collection - Next Solution</title>
     <style>
+        :root {
+            --primary-color: #6a11cb;
+            --secondary-color: #2575fc;
+            --accent-color: #00d2ff;
+            --text-color: #333;
+            --light-bg: #f5f7fa;
+            --warning-color: #ff6b35;
+            --success-color: #28a745;
+            --gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+
+        /* Dark mode variables */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --light-bg: #1a1a1a;
+                --text-color: #ffffff;
+            }
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,73 +31,155 @@
         }
 
         body {
-            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            scroll-behavior: smooth;
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
             min-height: 100vh;
-            padding-bottom: 50px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
         }
 
         header {
-            text-align: center;
-            padding: 50px 20px;
-            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: var(--gradient);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             position: relative;
             overflow: hidden;
-            border-radius: 20px;
-            background: linear-gradient(90deg, #ff6b6b 0%, #ffa726 100%);
-            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.4);
+            backdrop-filter: blur(10px);
         }
 
-        .header-overlay {
+        .site-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .site-title:hover {
+            transform: scale(1.05);
+        }
+
+        nav {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        nav a:hover::before {
+            left: 100%;
+        }
+
+        nav a:hover {
+            background-color: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(106, 17, 203, 0.9), rgba(37, 117, 252, 0.9));
+            color: white;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .hero::before {
+            content: "";
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('https://images.unsplash.com/photo-1489599809516-9827b6d1cf13?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80');
-            background-size: cover;
-            opacity: 0.2;
-            mix-blend-mode: overlay;
+            background: url('https://images.unsplash.com/photo-1489599809516-9827b6d1cf13?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80') center/cover;
+            opacity: 0.15;
+            z-index: 1;
         }
 
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
+        .hero-content {
             position: relative;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
-            background: linear-gradient(45deg, #fff, #ffeaa7);
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-content h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #fff, #e3f2fd);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease;
         }
 
         .subtitle {
             font-size: 1.3rem;
             opacity: 0.9;
+            margin-bottom: 2rem;
             position: relative;
-            margin-bottom: 20px;
         }
 
         .stats {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-top: 20px;
-            position: relative;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
         }
 
         .stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px 25px;
-            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-item i {
+            color: var(--accent-color);
+            margin-right: 8px;
         }
 
         .search-container {
@@ -89,27 +190,26 @@
 
         #searchInput {
             width: 100%;
-            padding: 18px 25px;
-            font-size: 1.2rem;
+            padding: 1.2rem 2rem;
+            font-size: 1.1rem;
             border: none;
-            border-radius: 60px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.4s ease;
+            border-radius: 50px;
+            background: var(--light-bg);
+            color: var(--text-color);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(106, 17, 203, 0.2);
+            transition: all 0.3s ease;
         }
 
         #searchInput:focus {
             outline: none;
-            box-shadow: 0 8px 40px rgba(255, 107, 107, 0.5);
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 107, 107, 0.5);
+            box-shadow: 0 8px 30px rgba(106, 17, 203, 0.3);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
         }
 
         #searchInput::placeholder {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(0, 0, 0, 0.5);
         }
 
         .search-icon {
@@ -117,7 +217,7 @@
             right: 25px;
             top: 50%;
             transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--primary-color);
             font-size: 1.3rem;
         }
 
@@ -131,54 +231,64 @@
 
         .filter-btn {
             padding: 12px 25px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+            background: var(--light-bg);
+            border: 2px solid rgba(106, 17, 203, 0.2);
+            color: var(--text-color);
             border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.95rem;
         }
 
         .filter-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(106, 17, 203, 0.1);
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
         }
 
         .filter-btn.active {
-            background: linear-gradient(90deg, #ff6b6b 0%, #ffa726 100%);
+            background: var(--gradient);
+            color: white;
             border-color: transparent;
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
         .movies-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 35px;
+            gap: 30px;
             padding: 20px 0;
         }
 
         .movie-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
+            background: var(--light-bg);
+            border-radius: 15px;
             overflow: hidden;
             transition: all 0.4s ease;
             cursor: pointer;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(106, 17, 203, 0.1);
             position: relative;
         }
 
         .movie-card:hover {
-            transform: translateY(-15px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(255, 107, 107, 0.4);
-            border-color: rgba(255, 107, 107, 0.4);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(106, 17, 203, 0.2);
+            border-color: var(--primary-color);
         }
 
         .movie-poster {
             width: 100%;
-            height: 400px;
+            height: 380px;
             object-fit: cover;
-            background: linear-gradient(45deg, #ff6b6b, #ffa726);
+            background: var(--gradient);
             transition: transform 0.5s ease;
         }
 
@@ -187,39 +297,39 @@
         }
 
         .movie-info {
-            padding: 25px;
+            padding: 1.5rem;
             position: relative;
         }
 
         .movie-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
             line-height: 1.4;
-            color: #fff;
-            min-height: 70px;
+            color: var(--text-color);
+            min-height: 60px;
         }
 
         .movie-year {
-            color: #ffa726;
+            color: var(--primary-color);
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 1rem;
             display: inline-block;
-            padding: 8px 20px;
-            background: rgba(255, 167, 38, 0.1);
+            padding: 6px 15px;
+            background: rgba(106, 17, 203, 0.1);
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .watch-btn {
             display: block;
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(90deg, #ff6b6b 0%, #ffa726 100%);
+            padding: 14px;
+            background: var(--gradient);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
+            border-radius: 10px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -230,20 +340,20 @@
 
         .watch-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+            box-shadow: 0 10px 25px rgba(106, 17, 203, 0.4);
         }
 
         .loading {
             text-align: center;
             padding: 60px;
-            font-size: 1.3rem;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+            color: rgba(0, 0, 0, 0.6);
             grid-column: 1 / -1;
         }
 
         .loading-spinner {
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top: 5px solid #ff6b6b;
+            border: 5px solid rgba(106, 17, 203, 0.1);
+            border-top: 5px solid var(--primary-color);
             border-radius: 50%;
             width: 60px;
             height: 60px;
@@ -256,68 +366,99 @@
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .no-results {
             text-align: center;
             grid-column: 1 / -1;
-            padding: 80px;
-            font-size: 1.3rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        footer {
-            text-align: center;
-            padding: 50px 0;
-            margin-top: 80px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
+            padding: 60px;
+            font-size: 1.2rem;
+            color: rgba(0, 0, 0, 0.6);
         }
 
         .api-status {
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 10px 20px;
-            background: rgba(76, 175, 80, 0.2);
+            padding: 12px 24px;
+            background: rgba(76, 175, 80, 0.9);
             border: 1px solid rgba(76, 175, 80, 0.5);
-            border-radius: 20px;
+            border-radius: 10px;
             font-size: 0.9rem;
+            color: white;
             backdrop-filter: blur(10px);
             display: none;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .api-status.error {
-            background: rgba(244, 67, 54, 0.2);
+            background: rgba(244, 67, 54, 0.9);
             border-color: rgba(244, 67, 54, 0.5);
         }
 
-        @media (max-width: 1200px) {
-            .movies-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            }
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            margin-top: 4rem;
+            border-top: 1px solid rgba(106, 17, 203, 0.2);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            background: var(--light-bg);
+        }
+
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5rem;
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+                padding: 1rem;
             }
-            
+
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+
             .movies-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 25px;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
             }
-            
+
             .movie-poster {
                 height: 350px;
             }
-            
+
             .search-container {
                 margin: 20px auto;
+                padding: 0 15px;
             }
-            
+
             #searchInput {
-                padding: 15px 20px;
-                font-size: 1.1rem;
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            .stats {
+                gap: 1rem;
+            }
+
+            .stat-item {
+                padding: 0.8rem 1.2rem;
+                font-size: 0.9rem;
             }
         }
 
@@ -326,23 +467,52 @@
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
-            
+
             .container {
                 padding: 10px;
             }
-            
-            h1 {
-                font-size: 2rem;
+
+            .hero-content h1 {
+                font-size: 1.8rem;
             }
-            
+
             .filters {
                 justify-content: flex-start;
                 overflow-x: auto;
                 padding-bottom: 10px;
             }
-            
+
             .filter-btn {
                 flex-shrink: 0;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            #searchInput {
+                background: #2d2d2d;
+                color: white;
+                border-color: rgba(106, 17, 203, 0.3);
+            }
+
+            #searchInput::placeholder {
+                color: rgba(255, 255, 255, 0.5);
+            }
+
+            .filter-btn {
+                background: #2d2d2d;
+                color: white;
+                border-color: rgba(106, 17, 203, 0.3);
+            }
+
+            .movie-card {
+                background: #2d2d2d;
+                border-color: rgba(106, 17, 203, 0.2);
+            }
+
+            .loading, .no-results {
+                color: rgba(255, 255, 255, 0.6);
             }
         }
     </style>
@@ -353,11 +523,23 @@
         <i class="fas fa-check-circle"></i> API Connected
     </div>
 
-    <div class="container">
-        <header>
-            <div class="header-overlay"></div>
-            <h1>🎬 Bollywood Movies</h1>
-            <p class="subtitle">Latest Collection 2024-2025 with Auto Posters</p>
+    <header>
+        <div class="site-title">Next Solution</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="videos">Videos</a>
+            <a href="movies.html">Movies</a>
+            <a href="#tutorials">Tutorials</a>
+            <a href="downloads">Downloads</a>
+            <a href="Mega">Uploads</a>
+            <a href="#faq">FAQ</a>
+        </nav>
+    </header>
+
+    <div class="hero">
+        <div class="hero-content">
+            <h1>🎬 Bollywood Movies Collection</h1>
+            <p class="subtitle">Latest 2024-2025 Releases with Auto-Fetched Posters</p>
             <div class="stats">
                 <div class="stat-item">
                     <i class="fas fa-film"></i> <span id="totalMovies">100+</span> Movies
@@ -369,8 +551,10 @@
                     <i class="fas fa-bolt"></i> Instant Play
                 </div>
             </div>
-        </header>
+        </div>
+    </div>
 
+    <div class="container">
         <div class="search-container">
             <input 
                 type="text" 
@@ -400,9 +584,14 @@
     </div>
 
     <footer>
-        <p>© 2024 Bollywood Movies Collection | TMDb API Powered | Auto Poster Fetching</p>
-        <p style="margin-top: 10px; font-size: 0.8rem;">
+        <p>© 2024 Next Solution | Bollywood Movies Collection | TMDb API Powered</p>
+        <p style="margin-top: 10px; font-size: 0.8rem; opacity: 0.8;">
             Posters provided by The Movie Database (TMDb)
+        </p>
+        <p style="margin-top: 5px; font-size: 0.8rem;">
+            <a href="index.html">Home</a> | 
+            <a href="privacy">Privacy Policy</a> | 
+            <a href="terms">Terms of Service</a>
         </p>
     </footer>
 
@@ -703,7 +892,7 @@
             if (visibleCount === 0) {
                 moviesGrid.innerHTML = `
                     <div class="no-results">
-                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; color: var(--primary-color);"></i>
                         <h3>No movies found</h3>
                         <p>Try a different search term or filter</p>
                     </div>
@@ -752,7 +941,7 @@
                 console.error('Initialization error:', error);
                 moviesGrid.innerHTML = `
                     <div class="no-results">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px; color: #ff6b6b;"></i>
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px; color: var(--warning-color);"></i>
                         <h3>API Connection Error</h3>
                         <p>Failed to connect to TMDb API. Please check your API key.</p>
                         <p style="margin-top: 20px;">Movies loaded without posters.</p>
