@@ -528,7 +528,7 @@
         <nav>
             <a href="index.html">Home</a>
             <a href="videos">Videos</a>
-            <a href="movies">Movies</a>
+            <a href="movies.html">Movies</a>
             <a href="#tutorials">Tutorials</a>
             <a href="downloads">Downloads</a>
             <a href="Mega">Uploads</a>
@@ -843,22 +843,43 @@
         const apiStatus = document.getElementById('apiStatus');
         const filterBtns = document.querySelectorAll('.filter-btn');
 
-        // Extract year from title
-        function extractYear(title) {
-            const yearMatch = title.match(/\((\d{4})\)/);
-            return yearMatch ? yearMatch[1] : 'N/A';
+        // Extract year from title - FIXED VERSION
+        function extractYear(movie) {
+            // First check if movie has a year property
+            if (movie.year) {
+                return movie.year;
+            }
+            // Otherwise extract from title
+            const yearMatch = movie.title.match(/\((\d{4})\)/);
+            return yearMatch ? yearMatch[1] : '2024'; // Default to 2024 if no year found
+        }
+
+        // Get filter category for a movie year
+        function getYearCategory(year) {
+            const yearNum = parseInt(year);
+            if (yearNum >= 2025) return '2025';
+            if (yearNum === 2024) return '2024';
+            return '2023'; // Everything else is "Older Movies"
         }
 
         // Clean movie title for search
-        function cleanTitle(title) {
-            return title.replace(/\(\d{4}\)/, '').trim();
+        function cleanTitle(movie) {
+            // If year is in the title, remove it
+            if (movie.title && movie.title.match(/\(\d{4}\)/)) {
+                return movie.title.replace(/\(\d{4}\)/, '').trim();
+            }
+            // Otherwise return the title as is
+            return movie.title || '';
         }
 
         // Fetch movie poster from TMDb
         async function fetchMoviePoster(movieTitle, movieYear) {
             try {
                 // Clean the title for better search
-                let cleanMovieTitle = cleanTitle(movieTitle);
+                let cleanMovieTitle = movieTitle;
+                if (cleanMovieTitle.match(/\(\d{4}\)/)) {
+                    cleanMovieTitle = cleanMovieTitle.replace(/\(\d{4}\)/, '').trim();
+                }
                 
                 // Remove common suffixes for better matching
                 cleanMovieTitle = cleanMovieTitle
@@ -908,14 +929,15 @@
 
         // Create movie card HTML
         function createMovieCard(movie, posterUrl) {
-            const year = extractYear(movie.title);
-            const titleWithoutYear = cleanTitle(movie.title);
+            const year = extractYear(movie);
+            const yearCategory = getYearCategory(year);
+            const titleWithoutYear = cleanTitle(movie);
             
             // Fallback poster if none found
             const finalPosterUrl = posterUrl || `https://placehold.co/400x600/1a1a2e/ffffff?text=${encodeURIComponent(titleWithoutYear.split(' ').slice(0, 3).join(' '))}`;
             
             return `
-                <div class="movie-card" data-year="${year}" data-title="${titleWithoutYear.toLowerCase()}">
+                <div class="movie-card" data-year="${year}" data-year-category="${yearCategory}" data-title="${titleWithoutYear.toLowerCase()}">
                     <img src="${finalPosterUrl}" 
                          alt="${titleWithoutYear}" 
                          class="movie-poster"
@@ -942,6 +964,22 @@
                 </div>
             `;
             
+            // Calculate year counts for stats
+            const yearCounts = { '2025': 0, '2024': 0, '2023': 0 };
+            movies.forEach(movie => {
+                const year = extractYear(movie);
+                const category = getYearCategory(year);
+                yearCounts[category]++;
+            });
+            
+            // Update filter buttons with counts
+            filterBtns.forEach(btn => {
+                const year = btn.dataset.year;
+                if (year !== 'all') {
+                    btn.innerHTML = `${year} Releases (${yearCounts[year] || 0})`;
+                }
+            });
+            
             // Step 1: Load first 20 movies immediately with placeholders
             const firstBatch = movies.slice(0, 20);
             let initialHTML = '';
@@ -962,7 +1000,7 @@
             
             // Step 2: Fetch posters for first 20 movies in background
             const firstBatchPromises = firstBatch.map((movie, index) => {
-                const year = extractYear(movie.title);
+                const year = extractYear(movie);
                 return fetchMoviePoster(movie.title, year)
                     .then(posterUrl => {
                         const cards = document.querySelectorAll('.movie-card');
@@ -1005,7 +1043,7 @@
                     batchHTML += createMovieCard(movie, null);
                     
                     // Queue poster fetch for this movie
-                    const year = extractYear(movie.title);
+                    const year = extractYear(movie);
                     const posterPromise = fetchMoviePoster(movie.title, year)
                         .then(posterUrl => {
                             const allCards = document.querySelectorAll('.movie-card');
@@ -1047,7 +1085,7 @@
             }, 3000);
         }
 
-        // Filter movies
+        // Filter movies - FIXED VERSION
         function filterMovies() {
             const searchTerm = searchInput.value.toLowerCase();
             const activeFilter = document.querySelector('.filter-btn.active').dataset.year;
@@ -1058,9 +1096,20 @@
             movieCards.forEach(card => {
                 const title = card.dataset.title;
                 const year = card.dataset.year;
+                const yearCategory = card.dataset.yearCategory; // This is the fixed field
                 
                 const matchesSearch = title.includes(searchTerm) || year.includes(searchTerm);
-                const matchesFilter = activeFilter === 'all' || year === activeFilter;
+                
+                // Use yearCategory for filtering
+                let matchesFilter;
+                if (activeFilter === 'all') {
+                    matchesFilter = true;
+                } else if (activeFilter === '2023') {
+                    // For "Older Movies", show anything that's not 2024 or 2025
+                    matchesFilter = yearCategory === '2023';
+                } else {
+                    matchesFilter = yearCategory === activeFilter;
+                }
                 
                 if (matchesSearch && matchesFilter) {
                     card.style.display = 'block';
@@ -1077,6 +1126,9 @@
                         <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; color: var(--primary-color);"></i>
                         <h3>No movies found</h3>
                         <p>Try a different search term or filter</p>
+                        <p style="margin-top: 10px; font-size: 0.9rem;">
+                            Showing: ${activeFilter === 'all' ? 'All Movies' : activeFilter === '2023' ? 'Older Movies (before 2024)' : activeFilter + ' Releases'}
+                        </p>
                     </div>
                 `;
             }
@@ -1140,6 +1192,16 @@
                 apiStatus.className = 'api-status error';
                 apiStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> API Error - Using Fallback';
                 apiStatus.style.display = 'block';
+                
+                // Still setup filters even in fallback mode
+                searchInput.addEventListener('input', filterMovies);
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        filterBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        filterMovies();
+                    });
+                });
             }
         }
 
