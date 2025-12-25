@@ -5,24 +5,39 @@ on:
     branches: [ main ]
   workflow_dispatch:  # Allows manual triggering
 
+permissions:
+  contents: write  # This gives the workflow permission to push
+
 jobs:
   generate:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
-
+          
       - name: Generate pages
         run: node generate-pages.js
-
-      - name: Commit and push generated pages
+        
+      - name: Configure Git
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+      - name: Commit and push generated pages
+        run: |
           git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generated movie pages" && git push)
+          git status
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-generated movie pages"
+            git push
+          fi
