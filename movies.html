@@ -865,7 +865,7 @@
             
             return `
                 <div class="movie-card" data-year="${year}" data-year-category="${yearCategory}" data-title="${titleWithoutYear.toLowerCase()}">
-                    <a href="${slug}.html">
+                    <a href="movies/${slug}.html">
                         <img src="${posterUrl}" 
                              alt="${titleWithoutYear}" 
                              class="movie-poster"
@@ -875,7 +875,7 @@
                     <div class="movie-info">
                         <h3 class="movie-title">${titleWithoutYear}</h3>
                         <div class="movie-year">${year}</div>
-                        <a href="${slug}.html" class="watch-btn">
+                        <a href="movies/${slug}.html" class="watch-btn">
                             <i class="fas fa-play"></i> Watch Now
                         </a>
                     </div>
