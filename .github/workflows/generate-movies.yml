@@ -1,4 +1,4 @@
-name: Generate and Move Movie Pages
+name: Cleanup Movie Filenames
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  generate:
+  cleanup:
     runs-on: ubuntu-latest
     
     steps:
@@ -18,27 +18,93 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-          
-      - name: Generate pages
-        run: node generate-pages.js
-          
-      - name: Move files from movies/ to root
+      - name: List current HTML files
         run: |
-          # Check if movies folder exists
-          if [ -d "movies" ]; then
-            echo "Moving files from movies/ to root..."
-            mv movies/*.html ./
-            # Remove empty movies folder
-            rmdir movies || true
-          else
-            echo "movies/ folder not found"
+          echo "Current HTML files:"
+          ls -la *.html || echo "No HTML files found"
+          
+      - name: Remove year from movie filenames
+        run: |
+          echo "Processing movie files..."
+          
+          # Process each HTML file
+          for file in *.html; do
+            # Skip index.html and other non-movie files
+            if [[ "$file" == "index.html" ]] || [[ "$file" == "movies.html" ]]; then
+              echo "Skipping: $file"
+              continue
+            fi
+            
+            # Try different patterns for year in filename
+            if [[ $file =~ ^(.+)-[0-9]{4}\.html$ ]]; then
+              # Pattern: movie-name-2025.html
+              new_name="${BASH_REMATCH[1]}.html"
+            elif [[ $file =~ ^(.+)-[0-9]{4}-.*\.html$ ]]; then
+              # Pattern: movie-name-2025-something.html
+              new_name="${BASH_REMATCH[1]}.html"
+            else
+              echo "Skipping (no year pattern): $file"
+              continue
+            fi
+            
+            echo "Will rename: $file -> $new_name"
+            
+            # Check if new name already exists
+            if [ -f "$new_name" ]; then
+              echo "Warning: $new_name already exists! Cannot rename $file"
+              continue
+            fi
+            
+            # Perform the rename
+            mv "$file" "$new_name"
+            echo "Renamed: $file -> $new_name"
+          done
+          
+      - name: Update all HTML files with new links
+        run: |
+          echo "Updating links in all HTML files..."
+          
+          # Update index.html
+          if [ -f "index.html" ]; then
+            cp index.html index.html.backup
+            sed -i 's/href="\([^"]*\)-[0-9]\{4\}\.html"/href="\1.html"/g' index.html
+            sed -i 's/href="\([^"]*\)-[0-9]\{4\}-.*\.html"/href="\1.html"/g' index.html
+            echo "Updated index.html"
           fi
           
-      - name: Commit and push generated pages
+          # Update movies.html if it exists
+          if [ -f "movies.html" ]; then
+            cp movies.html movies.html.backup
+            sed -i 's/href="\([^"]*\)-[0-9]\{4\}\.html"/href="\1.html"/g' movies.html
+            sed -i 's/href="\([^"]*\)-[0-9]\{4\}-.*\.html"/href="\1.html"/g' movies.html
+            echo "Updated movies.html"
+          fi
+          
+          # Update all movie pages to fix internal links
+          for file in *.html; do
+            # Skip backups and index
+            if [[ "$file" == "*.backup" ]] || [[ "$file" == "index.html" ]] || [[ "$file" == "movies.html" ]]; then
+              continue
+            fi
+            
+            cp "$file" "${file}.backup"
+            sed -i 's/href="\([^"]*\)-[0-9]\{4\}\.html"/href="\1.html"/g' "$file"
+            sed -i 's/href="\([^"]*\)-[0-9]\{4\}-.*\.html"/href="\1.html"/g' "$file"
+            echo "Updated links in: $file"
+          done
+          
+      - name: Cleanup backup files
+        run: |
+          echo "Removing backup files..."
+          rm -f *.backup
+          echo "Backup files removed"
+          
+      - name: List updated files
+        run: |
+          echo "Updated HTML files:"
+          ls -la *.html || echo "No HTML files found"
+          
+      - name: Commit and push changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -47,6 +113,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Auto-generated movie pages in root"
+            git commit -m "Cleanup: Remove year suffix from movie filenames and update all links"
             git push
           fi
