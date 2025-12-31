@@ -42,6 +42,42 @@
             min-height: 100vh;
         }
 
+        /* Custom cursor */
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s, width 0.3s, height 0.3s;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+        }
+
+        /* Loading animation */
+        .loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: var(--gradient);
+            z-index: 9999;
+            transition: width 0.3s ease;
+        }
+
         header {
             display: flex;
             justify-content: space-between;
@@ -213,6 +249,12 @@
             color: rgba(0, 0, 0, 0.5);
         }
 
+        @media (prefers-color-scheme: dark) {
+            #searchInput::placeholder {
+                color: rgba(255, 255, 255, 0.5);
+            }
+        }
+
         .search-icon {
             position: absolute;
             right: 25px;
@@ -352,6 +394,12 @@
             grid-column: 1 / -1;
         }
 
+        @media (prefers-color-scheme: dark) {
+            .loading {
+                color: rgba(255, 255, 255, 0.6);
+            }
+        }
+
         .loading-spinner {
             border: 5px solid rgba(106, 17, 203, 0.1);
             border-top: 5px solid var(--primary-color);
@@ -386,25 +434,10 @@
             color: rgba(0, 0, 0, 0.6);
         }
 
-        .api-status {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            background: rgba(76, 175, 80, 0.9);
-            border: 1px solid rgba(76, 175, 80, 0.5);
-            border-radius: 10px;
-            font-size: 0.9rem;
-            color: white;
-            backdrop-filter: blur(10px);
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .api-status.error {
-            background: rgba(244, 67, 54, 0.9);
-            border-color: rgba(244, 67, 54, 0.5);
+        @media (prefers-color-scheme: dark) {
+            .no-results {
+                color: rgba(255, 255, 255, 0.6);
+            }
         }
 
         footer {
@@ -420,6 +453,111 @@
         footer a {
             color: var(--primary-color);
             text-decoration: none;
+        }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 40px 0;
+            padding: 20px;
+            background: var(--light-bg);
+            border-radius: 15px;
+            border: 1px solid rgba(106, 17, 203, 0.1);
+        }
+
+        .page-btn {
+            padding: 10px 25px;
+            background: rgba(106, 17, 203, 0.1);
+            border: 2px solid rgba(106, 17, 203, 0.2);
+            color: var(--text-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--gradient);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-numbers {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .page-number {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(106, 17, 203, 0.1);
+            border: 2px solid rgba(106, 17, 203, 0.2);
+            color: var(--text-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .page-number:hover {
+            background: var(--gradient);
+            color: white;
+            border-color: transparent;
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.2);
+        }
+
+        .page-number.active {
+            background: var(--gradient);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+        }
+
+        .page-info {
+            color: var(--text-color);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .ad-container {
+            margin: 30px auto;
+            text-align: center;
+            max-width: 728px;
+            min-height: 90px;
+            background: var(--light-bg);
+            border-radius: 10px;
+            border: 1px solid rgba(106, 17, 203, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .ad-label {
+            font-size: 0.8rem;
+            color: var(--text-color);
+            opacity: 0.6;
+            margin-bottom: 5px;
         }
 
         @media (max-width: 768px) {
@@ -461,6 +599,24 @@
                 padding: 0.8rem 1.2rem;
                 font-size: 0.9rem;
             }
+
+            .pagination {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .page-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            .page-numbers {
+                order: 2;
+            }
+
+            .custom-cursor, .cursor-dot {
+                display: none;
+            }
         }
 
         @media (max-width: 480px) {
@@ -488,6 +644,12 @@
                 padding: 10px 20px;
                 font-size: 0.9rem;
             }
+
+            .page-number {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
         }
 
         @media (prefers-color-scheme: dark) {
@@ -495,10 +657,6 @@
                 background: #2d2d2d;
                 color: white;
                 border-color: rgba(106, 17, 203, 0.3);
-            }
-
-            #searchInput::placeholder {
-                color: rgba(255, 255, 255, 0.5);
             }
 
             .filter-btn {
@@ -512,27 +670,42 @@
                 border-color: rgba(106, 17, 203, 0.2);
             }
 
-            .loading, .no-results {
-                color: rgba(255, 255, 255, 0.6);
+            .pagination {
+                background: #2d2d2d;
+                border-color: rgba(106, 17, 203, 0.2);
+            }
+
+            .page-btn, .page-number {
+                background: rgba(106, 17, 203, 0.15);
+                border-color: rgba(106, 17, 203, 0.3);
+                color: white;
+            }
+
+            .ad-container {
+                background: #2d2d2d;
+                border-color: rgba(106, 17, 203, 0.2);
             }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="api-status" id="apiStatus">
-        <i class="fas fa-check-circle"></i> API Connected
-    </div>
+    <!-- Custom Cursor -->
+    <div class="custom-cursor" id="customCursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+
+    <!-- Loading Bar -->
+    <div class="loading-bar" id="loadingBar"></div>
 
     <header>
         <div class="site-title">Next Solution</div>
         <nav>
-            <a href="index.html">Home</a>
-            <a href="#videos">Videos</a>
-            <a href="#movies">Movies</a>
+            <a href="./">Home</a>
+            <a href="videos">Videos</a>
+            <a href="movies.html">Movies</a>
             <a href="#tutorials">Tutorials</a>
-            <a href="#downloads">Downloads</a>
-            <a href="#mega">Uploads</a>
+            <a href="downloads">Downloads</a>
+            <a href="Mega">Uploads</a>
             <a href="#faq">FAQ</a>
         </nav>
     </header>
@@ -540,16 +713,16 @@
     <div class="hero">
         <div class="hero-content">
             <h1>🎬 Bollywood Movies Collection</h1>
-            <p class="subtitle">Latest 2024-2025 Releases</p>
+            <p class="subtitle">Latest 2024-2025 Releases | Page <span id="currentPageNum">1</span></p>
             <div class="stats">
                 <div class="stat-item">
                     <i class="fas fa-film"></i> <span id="totalMovies">200+</span> Movies
                 </div>
                 <div class="stat-item">
-                    <i class="fas fa-play-circle"></i> Embedded Player
+                    <i class="fas fa-play-circle"></i> Instant Streaming
                 </div>
                 <div class="stat-item">
-                    <i class="fas fa-bolt"></i> Instant Play
+                    <i class="fas fa-sort"></i> Smart Pagination
                 </div>
             </div>
         </div>
@@ -575,10 +748,47 @@
             <button class="filter-btn" data-year="2023">Older Movies</button>
         </div>
 
+        <!-- Ad Container -->
+        <div class="ad-container">
+            <div>
+                <div class="ad-label">Advertisement</div>
+                <!-- Your ad code will go here -->
+                <div style="color: var(--text-color); opacity: 0.7;">Ad Space (728x90)</div>
+            </div>
+        </div>
+
         <div class="movies-grid" id="moviesGrid">
             <div class="loading">
                 <div class="loading-spinner"></div>
-                <p>Loading 200+ movies...</p>
+                <p>Loading movies with real posters...</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <button class="page-btn" id="prevBtn">
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            
+            <div class="page-numbers" id="pageNumbers">
+                <!-- Page numbers will be generated here -->
+            </div>
+            
+            <button class="page-btn" id="nextBtn">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="page-info">
+            Showing <span id="startMovie">1</span> to <span id="endMovie">10</span> of <span id="totalCount">0</span> movies
+        </div>
+
+        <!-- Bottom Ad Container -->
+        <div class="ad-container">
+            <div>
+                <div class="ad-label">Advertisement</div>
+                <!-- Your ad code will go here -->
+                <div style="color: var(--text-color); opacity: 0.7;">Ad Space (728x90)</div>
             </div>
         </div>
     </div>
@@ -586,13 +796,20 @@
     <footer>
         <p>© 2024 Next Solution | Bollywood Movies Collection</p>
         <p style="margin-top: 5px; font-size: 0.8rem;">
-            <a href="index.html">Home</a> | 
+            <a href="./">Home</a> | 
             <a href="#privacy">Privacy Policy</a> | 
             <a href="#terms">Terms of Service</a>
         </p>
     </footer>
 
     <script>
+        // ==============================================
+        // YOUR TMDb API KEY
+        // ==============================================
+        const TMDB_API_KEY = 'ae6b05317cb0a2c1620279a7a70f05ca';
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+        const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+
         // ==============================================
         // COMPLETE MOVIES LIST (200+ MOVIES)
         // ==============================================
@@ -827,54 +1044,282 @@
             { title: "Yudhra (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2024/Yudhra %282024%29/Yudhra.mp4"},
             { title: "Zero Se Restart (2024)", link: "http://103.145.232.246/Data/movies/Bollywood/2024/Zero Se Restart %282024%29/Zero%20Se%20Restart.mp4"}
         ];
+
+        // Note: I've shortened the array for readability. In your actual code, 
+        // keep the full 200+ movies array as provided in your previous code.
+
         // ==============================================
+        // MOVIE POSTER CACHE
+        // ==============================================
+        const moviePosterCache = {};
 
-        // Rest of JavaScript code...
-        function createSlug(title) {
-            return title.toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/--+/g, '-');
-        }
+        // ==============================================
+        // PAGINATION VARIABLES
+        // ==============================================
+        let currentPage = 1;
+        const moviesPerPage = 10;
+        let filteredMovies = [...movies];
+        let activeFilter = 'all';
 
-        function extractYear(movie) {
-            const yearMatch = movie.title.match(/\((\d{4})\)/);
-            return yearMatch ? yearMatch[1] : '2024';
-        }
+        // ==============================================
+        // DOM ELEMENTS
+        // ==============================================
+        const moviesGrid = document.getElementById('moviesGrid');
+        const pageNumbers = document.getElementById('pageNumbers');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const currentPageSpan = document.getElementById('currentPageNum');
+        const startMovieSpan = document.getElementById('startMovie');
+        const endMovieSpan = document.getElementById('endMovie');
+        const totalCountSpan = document.getElementById('totalCount');
+        const totalMoviesSpan = document.getElementById('totalMovies');
+        const searchInput = document.getElementById('searchInput');
 
-        function cleanTitle(movie) {
-            if (movie.title && movie.title.match(/\(\d{4}\)/)) {
-                return movie.title.replace(/\(\d{4}\)/, '').trim();
+        // ==============================================
+        // INITIALIZATION
+        // ==============================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            totalMoviesSpan.textContent = movies.length;
+            totalCountSpan.textContent = movies.length;
+            
+            // Load initial movies with TMDb posters
+            await loadMoviePosters();
+            updatePagination();
+            await displayMovies();
+            setupEventListeners();
+            initializeCustomCursor();
+        });
+
+        // ==============================================
+        // TMDb API FUNCTIONS
+        // ==============================================
+        async function searchMovieOnTMDB(movieTitle) {
+            try {
+                // Extract clean movie name (remove year and special characters)
+                const cleanTitle = movieTitle
+                    .replace(/\(\d{4}\)/g, '') // Remove (2024), (2025), etc
+                    .replace(/[^\w\s-]/g, ' ') // Replace special characters with space
+                    .trim()
+                    .replace(/\s+/g, ' '); // Remove extra spaces
+                
+                const searchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&language=en-US&page=1`;
+                
+                const response = await fetch(searchUrl);
+                if (!response.ok) {
+                    throw new Error(`TMDb API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.results && data.results.length > 0) {
+                    // Find the best match
+                    const bestMatch = data.results[0];
+                    return {
+                        poster_path: bestMatch.poster_path,
+                        backdrop_path: bestMatch.backdrop_path,
+                        overview: bestMatch.overview,
+                        vote_average: bestMatch.vote_average
+                    };
+                }
+                
+                return null;
+            } catch (error) {
+                console.error(`Error searching for "${movieTitle}" on TMDb:`, error);
+                return null;
             }
-            return movie.title || '';
         }
 
-        function getYearCategory(year) {
-            const yearNum = parseInt(year);
-            if (yearNum >= 2025) return '2025';
-            if (yearNum === 2024) return '2024';
-            return '2023';
+        async function loadMoviePosters() {
+            const loadingMessage = document.querySelector('.loading p');
+            if (loadingMessage) {
+                loadingMessage.textContent = 'Fetching movie posters from TMDb...';
+            }
+
+            // Process movies in batches to avoid rate limiting
+            const batchSize = 20;
+            for (let i = 0; i < movies.length; i += batchSize) {
+                const batch = movies.slice(i, i + batchSize);
+                
+                // Update loading message
+                if (loadingMessage) {
+                    loadingMessage.textContent = `Fetching posters ${i + 1}-${Math.min(i + batchSize, movies.length)} of ${movies.length}...`;
+                }
+                
+                // Process batch
+                await Promise.allSettled(
+                    batch.map(async (movie, index) => {
+                        const cacheKey = movie.title.toLowerCase();
+                        
+                        if (!moviePosterCache[cacheKey]) {
+                            const tmdbData = await searchMovieOnTMDB(movie.title);
+                            if (tmdbData && tmdbData.poster_path) {
+                                moviePosterCache[cacheKey] = {
+                                    posterUrl: TMDB_IMAGE_BASE_URL + tmdbData.poster_path,
+                                    hasPoster: true
+                                };
+                            } else {
+                                // Fallback to placeholder
+                                const cleanTitle = movie.title.replace(/\(\d{4}\)/, '').trim();
+                                const placeholderText = encodeURIComponent(cleanTitle.split(' ').slice(0, 3).join(' '));
+                                moviePosterCache[cacheKey] = {
+                                    posterUrl: `https://placehold.co/400x600/1a1a2e/ffffff?text=${placeholderText}`,
+                                    hasPoster: false
+                                };
+                            }
+                        }
+                    })
+                );
+                
+                // Small delay between batches to respect rate limits
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        function getMoviePoster(movieTitle) {
+            const cacheKey = movieTitle.toLowerCase();
+            if (moviePosterCache[cacheKey]) {
+                return moviePosterCache[cacheKey];
+            }
+            
+            // If not in cache, create placeholder
+            const cleanTitle = movieTitle.replace(/\(\d{4}\)/, '').trim();
+            const placeholderText = encodeURIComponent(cleanTitle.split(' ').slice(0, 3).join(' '));
+            return {
+                posterUrl: `https://placehold.co/400x600/1a1a2e/ffffff?text=${placeholderText}`,
+                hasPoster: false
+            };
+        }
+
+        // ==============================================
+        // UI FUNCTIONS
+        // ==============================================
+        function initializeCustomCursor() {
+            const cursor = document.getElementById('customCursor');
+            const cursorDot = document.getElementById('cursorDot');
+            
+            if (window.matchMedia("(min-width: 769px)").matches) {
+                document.addEventListener('mousemove', (e) => {
+                    cursor.style.left = e.clientX + 'px';
+                    cursor.style.top = e.clientY + 'px';
+                    cursorDot.style.left = e.clientX + 'px';
+                    cursorDot.style.top = e.clientY + 'px';
+                });
+
+                document.querySelectorAll('a, button').forEach(el => {
+                    el.addEventListener('mouseenter', () => {
+                        cursor.style.transform = 'scale(1.5)';
+                        cursor.style.borderColor = 'var(--accent-color)';
+                    });
+                    el.addEventListener('mouseleave', () => {
+                        cursor.style.transform = 'scale(1)';
+                        cursor.style.borderColor = 'var(--primary-color)';
+                    });
+                });
+            }
+        }
+
+        function setupEventListeners() {
+            searchInput.addEventListener('input', handleSearch);
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeFilter = btn.dataset.year;
+                    filterAndDisplay();
+                });
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePage();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredMovies.length / moviesPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePage();
+                }
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' && currentPage > 1) {
+                    currentPage--;
+                    updatePage();
+                } else if (e.key === 'ArrowRight' && currentPage < Math.ceil(filteredMovies.length / moviesPerPage)) {
+                    currentPage++;
+                    updatePage();
+                }
+            });
+        }
+
+        function handleSearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            if (searchTerm.trim() === '') {
+                filteredMovies = [...movies];
+            } else {
+                filteredMovies = movies.filter(movie => 
+                    movie.title.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            currentPage = 1;
+            filterAndDisplay();
+        }
+
+        function filterAndDisplay() {
+            let tempFiltered = [...filteredMovies];
+            
+            if (activeFilter !== 'all') {
+                tempFiltered = tempFiltered.filter(movie => {
+                    const year = movie.title.match(/\((\d{4})\)/);
+                    if (year) {
+                        const yearNum = parseInt(year[1]);
+                        if (activeFilter === '2023') {
+                            return yearNum < 2024;
+                        } else if (activeFilter === '2024') {
+                            return yearNum === 2024;
+                        } else if (activeFilter === '2025') {
+                            return yearNum === 2025;
+                        }
+                    }
+                    return false;
+                });
+            }
+            
+            filteredMovies = tempFiltered;
+            totalCountSpan.textContent = filteredMovies.length;
+            updatePagination();
+            displayMovies();
         }
 
         function createMovieCard(movie) {
-            const year = extractYear(movie);
-            const yearCategory = getYearCategory(year);
-            const titleWithoutYear = cleanTitle(movie);
-            const slug = createSlug(movie.title);
-            const posterUrl = `https://placehold.co/400x600/1a1a2e/ffffff?text=${encodeURIComponent(titleWithoutYear.split(' ').slice(0, 3).join(' '))}`;
+            const year = movie.title.match(/\((\d{4})\)/);
+            const yearText = year ? year[1] : '2024';
+            const titleWithoutYear = movie.title.replace(/\(\d{4}\)/, '').trim();
+            const slug = titleWithoutYear.toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/--+/g, '-');
+            
+            // Get poster from cache
+            const posterData = getMoviePoster(movie.title);
             
             return `
-                <div class="movie-card" data-year="${year}" data-year-category="${yearCategory}" data-title="${titleWithoutYear.toLowerCase()}">
-                    <a href="${slug}.html">
-                        <img src="${posterUrl}" 
-                             alt="${titleWithoutYear}" 
-                             class="movie-poster"
-                             loading="lazy"
-                             onerror="this.src='https://placehold.co/400x600/1a1a2e/ffffff?text=${encodeURIComponent(titleWithoutYear.split(' ').slice(0, 3).join(' '))}'">
-                    </a>
+                <div class="movie-card">
+                    <img src="${posterData.posterUrl}" 
+                         alt="${titleWithoutYear}" 
+                         class="movie-poster"
+                         loading="lazy"
+                         onerror="this.onerror=null; this.src='https://placehold.co/400x600/1a1a2e/ffffff?text=${encodeURIComponent(titleWithoutYear.split(' ').slice(0, 3).join(' '))}'">
                     <div class="movie-info">
                         <h3 class="movie-title">${titleWithoutYear}</h3>
-                        <div class="movie-year">${year}</div>
+                        <div class="movie-year">${yearText}</div>
                         <a href="${slug}.html" class="watch-btn">
                             <i class="fas fa-play"></i> Watch Now
                         </a>
@@ -883,55 +1328,85 @@
             `;
         }
 
-        function loadMovies() {
-            document.getElementById('totalMovies').textContent = movies.length;
-            let html = '';
-            movies.forEach(movie => {
-                html += createMovieCard(movie);
+        async function displayMovies() {
+            moviesGrid.innerHTML = '';
+            
+            if (filteredMovies.length === 0) {
+                moviesGrid.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <h3>No movies found</h3>
+                        <p>Try adjusting your search or filter</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const startIndex = (currentPage - 1) * moviesPerPage;
+            const endIndex = Math.min(startIndex + moviesPerPage, filteredMovies.length);
+            const pageMovies = filteredMovies.slice(startIndex, endIndex);
+            
+            pageMovies.forEach(movie => {
+                moviesGrid.innerHTML += createMovieCard(movie);
             });
-            document.getElementById('moviesGrid').innerHTML = html;
+            
+            updatePageInfo();
         }
 
-        function filterMovies() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const activeFilter = document.querySelector('.filter-btn.active').dataset.year;
+        function updatePageInfo() {
+            const startIndex = (currentPage - 1) * moviesPerPage;
+            const endIndex = Math.min(startIndex + moviesPerPage, filteredMovies.length);
             
-            document.querySelectorAll('.movie-card').forEach(card => {
-                const title = card.dataset.title;
-                const year = card.dataset.year;
-                const yearCategory = card.dataset.yearCategory;
-                
-                const matchesSearch = title.includes(searchTerm) || year.includes(searchTerm);
-                let matchesFilter;
-                if (activeFilter === 'all') {
-                    matchesFilter = true;
-                } else if (activeFilter === '2023') {
-                    matchesFilter = yearCategory === '2023';
-                } else {
-                    matchesFilter = yearCategory === activeFilter;
-                }
-                
-                card.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
-            });
+            startMovieSpan.textContent = startIndex + 1;
+            endMovieSpan.textContent = endIndex;
+            currentPageSpan.textContent = currentPage;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            loadMovies();
-            document.getElementById('searchInput').addEventListener('input', filterMovies);
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredMovies.length / moviesPerPage);
             
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    filterMovies();
+            // Update button states
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            
+            // Generate page numbers
+            pageNumbers.innerHTML = '';
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+            
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('div');
+                pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    updatePage();
                 });
-            });
-            
-            const apiStatus = document.getElementById('apiStatus');
-            apiStatus.style.display = 'block';
+                pageNumbers.appendChild(pageBtn);
+            }
+        }
+
+        function updatePage() {
+            displayMovies();
+            updatePagination();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Loading Progress
+        const loadingBar = document.getElementById('loadingBar');
+        window.addEventListener('load', () => {
+            loadingBar.style.width = '100%';
             setTimeout(() => {
-                apiStatus.style.display = 'none';
-            }, 3000);
+                loadingBar.style.opacity = '0';
+                setTimeout(() => {
+                    loadingBar.style.display = 'none';
+                }, 500);
+            }, 500);
         });
     </script>
 </body>
