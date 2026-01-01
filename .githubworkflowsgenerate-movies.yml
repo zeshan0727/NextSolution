@@ -1,0 +1,29 @@
+name: Generate Movie Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  generate-movies:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Generate movie pages
+      run: |
+        mkdir -p movies
+        node generate-pages.js
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
+        keep_files: true
