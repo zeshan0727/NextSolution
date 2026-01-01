@@ -1,212 +1,39 @@
+[file name]: .github/workflows/generate-movies.yml
+[file content begin]
 name: Generate Movie Pages
-on: 
-  workflow_dispatch:
+on:
   push:
-    branches: [ main ]
-    paths:
-      - 'movies.html'
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   generate-movies:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
       with:
+        fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
-    
+        
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v3
       with:
         node-version: '18'
-    
-    - name: Generate Movie Pages
-      id: generate
+        
+    - name: Generate movie pages
       run: |
-        echo "🚀 STARTING MOVIE PAGE GENERATION"
-        echo "=================================="
+        # Clean up any existing movie pages in root
+        find . -maxdepth 1 -name "*.html" -not -name "index.html" -type f -delete
         
-        # Create the generator script
-        cat > generate-pages.js << 'EOF'
-        const fs = require('fs');
-        const path = require('path');
-        
-        console.log('📖 Reading movies.html...');
-        const html = fs.readFileSync('movies.html', 'utf8');
-        
-        // Method 1: Extract movies array
-        let movies = [];
-        try {
-          const start = html.indexOf('const movies = [');
-          const end = html.indexOf('];', start);
-          
-          if (start === -1 || end === -1) {
-            throw new Error('Cannot find movies array');
-          }
-          
-          const moviesStr = html.substring(start + 'const movies = '.length, end + 1);
-          movies = eval(moviesStr);
-          console.log(`✅ Method 1: Found ${movies.length} movies`);
-        } catch (e) {
-          console.log('⚠️ Method 1 failed, trying regex...');
-          
-          // Method 2: Regex extraction
-          const regex = /\{ title: "([^"]+)", link: "([^"]+)" \}/g;
-          let match;
-          while ((match = regex.exec(html)) !== null) {
-            movies.push({
-              title: match[1],
-              link: match[2]
-            });
-          }
-          console.log(`✅ Method 2: Found ${movies.length} movies`);
-        }
-        
-        if (movies.length === 0) {
-          console.error('❌ ERROR: No movies found!');
-          process.exit(1);
-        }
-        
-        console.log(`🎬 Total movies to process: ${movies.length}`);
-        
-        // Check if template exists
-        let template = '';
-        if (fs.existsSync('movie-template.html')) {
-          template = fs.readFileSync('movie-template.html', 'utf8');
-          console.log('✅ Using movie-template.html');
-        } else {
-          // Create basic template
-          template = `<!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>{{TITLE}}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; background: #f5f7fa; }
-            .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-            h1 { color: #6a11cb; }
-            .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #6a11cb, #2575fc); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-            .back { color: #2575fc; text-decoration: none; display: block; margin-top: 30px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1>{{TITLE}}</h1>
-            <p>Year: {{YEAR}}</p>
-            <a href="{{LINK}}" class="btn" target="_blank">▶ Watch Now</a>
-            <a href="movies.html" class="back">← Back to All Movies</a>
-          </div>
-        </body>
-        </html>`;
-          console.log('⚠️ Using default template (movie-template.html not found)');
-        }
-        
-        // Generate pages
-        console.log('\n📄 Generating pages...');
-        let count = 0;
-        
-        movies.forEach((movie, index) => {
-          try {
-            // Create slug
-            const slug = movie.title
-              .toLowerCase()
-              .replace(/[^a-z0-9\s-]/g, '')
-              .replace(/\s+/g, '-')
-              .replace(/-+/g, '-');
-            
-            // Extract year
-            const yearMatch = movie.title.match(/\((\d{4})\)/);
-            const year = yearMatch ? yearMatch[1] : '2024';
-            const cleanTitle = movie.title.replace(/\(\d{4}\)/, '').trim();
-            
-            // Create page
-            let page = template
-              .replace(/{{TITLE}}/g, cleanTitle)
-              .replace(/{{YEAR}}/g, year)
-              .replace(/{{LINK}}/g, movie.link);
-            
-            // Write to root directory
-            fs.writeFileSync(`${slug}.html`, page);
-            count++;
-            
-            // Show progress
-            if (count % 100 === 0) {
-              console.log(`   Generated ${count}/${movies.length} pages...`);
-            }
-          } catch (error) {
-            console.log(`   ⚠️ Skipping "${movie.title}": ${error.message}`);
-          }
-        });
-        
-        console.log(`\n✅ SUCCESS! Generated ${count} pages in root directory`);
-        
-        // Create index file
-        const index = `<!DOCTYPE html>
-        <html>
-        <head><title>All Movie Pages (${count})</title></head>
-        <body>
-          <h1>All Generated Movie Pages</h1>
-          <p>Total: ${count} pages | Generated: ${new Date().toLocaleString()}</p>
-          <p><a href="movies.html">← Back to main movies page</a></p>
-        </body>
-        </html>`;
-        
-        fs.writeFileSync('index-all-movies.html', index);
-        console.log('📋 Created index-all-movies.html');
-        
-        // Set output for next step
-        console.log(`::set-output name=count::${count}`);
-        EOF
-        
-        # Run the generator
-        echo "Running generator..."
+        # Generate new pages
         node generate-pages.js
         
-        # Count results
-        echo ""
-        echo "=== GENERATION RESULTS ==="
-        echo "Total HTML files in root directory:"
-        find . -maxdepth 1 -name "*.html" | wc -l
-        echo ""
-        echo "Sample of generated files:"
-        ls *.html | grep -v movies.html | head -5
-        
-        # Create output for commit message
-        COUNT=$(find . -maxdepth 1 -name "*.html" | grep -v movies.html | wc -l)
-        echo "::set-output name=file_count::$COUNT"
-    
-    - name: Commit and Push Generated Pages
-      if: steps.generate.outputs.file_count != '0'
+    - name: Commit and push changes
       run: |
-        echo "🔄 Committing generated pages..."
-        
-        # Configure git
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        
-        # Add all HTML files except movies.html
-        git add *.html
-        git add movie-template.html || true
-        
-        # Check what's being committed
-        echo "Files to commit:"
-        git status --porcelain | grep -v movies.html || echo "No new HTML files"
-        
-        # Commit and push
-        if ! git diff --cached --quiet; then
-          git commit -m "🚀 Auto-generated movie pages ($(date +'%Y-%m-%d %H:%M:%S'))"
-          git push
-          echo "✅ Successfully pushed generated pages!"
-        else
-          echo "⚠️ No changes to commit"
-        fi
-    
-    - name: Verify Deployment
-      run: |
-        echo "✅ Workflow completed successfully!"
-        echo "Check your repository for generated .html files"
-        echo "GitHub Pages should automatically deploy them"
+        git add -A
+        git commit -m "Generate movie pages" || echo "No changes to commit"
+        git push origin main
+[file content end]
