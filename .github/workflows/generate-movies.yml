@@ -1,118 +1,133 @@
-name: Cleanup Movie Filenames
+name: Generate Movie Pages - Simple
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  cleanup:
+  generate-movies:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: List current HTML files
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Create generation script
         run: |
-          echo "Current HTML files:"
-          ls -la *.html || echo "No HTML files found"
+          cat > generate-movies.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
           
-      - name: Remove year from movie filenames
-        run: |
-          echo "Processing movie files..."
+          // Read movies.html
+          const moviesHtml = fs.readFileSync('movies.html', 'utf8');
           
-          # Process each HTML file
-          for file in *.html; do
-            # Skip index.html and other non-movie files
-            if [[ "$file" == "index.html" ]] || [[ "$file" == "movies.html" ]]; then
-              echo "Skipping: $file"
-              continue
-            fi
+          // Extract movies array
+          const moviesMatch = moviesHtml.match(/const movies = (\[.*?\]);/s);
+          if (!moviesMatch) {
+            console.error('Could not find movies array');
+            process.exit(1);
+          }
+          
+          // Parse movies (simplified - assumes clean format)
+          let moviesStr = moviesMatch[1];
+          
+          // Clean up the string for parsing
+          moviesStr = moviesStr
+            .replace(/\n/g, '')
+            .replace(/\s+/g, ' ')
+            .replace(/title:/g, '"title":')
+            .replace(/link:/g, '"link":')
+            .replace(/'/g, '"');
+          
+          let movies;
+          try {
+            movies = JSON.parse(moviesStr);
+          } catch (e) {
+            console.error('Error parsing movies:', e.message);
             
-            # Try different patterns for year in filename
-            if [[ $file =~ ^(.+)-[0-9]{4}\.html$ ]]; then
-              # Pattern: movie-name-2025.html
-              new_name="${BASH_REMATCH[1]}.html"
-            elif [[ $file =~ ^(.+)-[0-9]{4}-.*\.html$ ]]; then
-              # Pattern: movie-name-2025-something.html
-              new_name="${BASH_REMATCH[1]}.html"
-            else
-              echo "Skipping (no year pattern): $file"
-              continue
-            fi
-            
-            echo "Will rename: $file -> $new_name"
-            
-            # Check if new name already exists
-            if [ -f "$new_name" ]; then
-              echo "Warning: $new_name already exists! Cannot rename $file"
-              continue
-            fi
-            
-            # Perform the rename
-            mv "$file" "$new_name"
-            echo "Renamed: $file -> $new_name"
-          done
+            // Fallback: manual parsing
+            const movieRegex = /\{\s*title:\s*"([^"]+)",\s*link:\s*"([^"]+)"\s*\}/g;
+            movies = [];
+            let match;
+            while ((match = movieRegex.exec(moviesMatch[1])) !== null) {
+              movies.push({
+                title: match[1],
+                link: match[2]
+              });
+            }
+          }
           
-      - name: Update all HTML files with new links
-        run: |
-          echo "Updating links in all HTML files..."
+          console.log(`Found ${movies.length} movies`);
           
-          # Update index.html
-          if [ -f "index.html" ]; then
-            cp index.html index.html.backup
-            sed -i 's/href="\([^"]*\)-[0-9]\{4\}\.html"/href="\1.html"/g' index.html
-            sed -i 's/href="\([^"]*\)-[0-9]\{4\}-.*\.html"/href="\1.html"/g' index.html
-            echo "Updated index.html"
-          fi
+          // Read template
+          const template = fs.readFileSync('movie-template.html', 'utf8');
           
-          # Update movies.html if it exists
-          if [ -f "movies.html" ]; then
-            cp movies.html movies.html.backup
-            sed -i 's/href="\([^"]*\)-[0-9]\{4\}\.html"/href="\1.html"/g' movies.html
-            sed -i 's/href="\([^"]*\)-[0-9]\{4\}-.*\.html"/href="\1.html"/g' movies.html
-            echo "Updated movies.html"
-          fi
+          // Create movies directory
+          const moviesDir = 'movies';
+          if (!fs.existsSync(moviesDir)) {
+            fs.mkdirSync(moviesDir, { recursive: true });
+          }
           
-          # Update all movie pages to fix internal links
-          for file in *.html; do
-            # Skip backups and index
-            if [[ "$file" == "*.backup" ]] || [[ "$file" == "index.html" ]] || [[ "$file" == "movies.html" ]]; then
-              continue
-            fi
-            
-            cp "$file" "${file}.backup"
-            sed -i 's/href="\([^"]*\)-[0-9]\{4\}\.html"/href="\1.html"/g' "$file"
-            sed -i 's/href="\([^"]*\)-[0-9]\{4\}-.*\.html"/href="\1.html"/g' "$file"
-            echo "Updated links in: $file"
-          done
+          // Generate pages
+          let count = 0;
+          for (const movie of movies) {
+            try {
+              // Extract year from title
+              const yearMatch = movie.title.match(/\((\d{4})\)/);
+              const year = yearMatch ? yearMatch[1] : '2024';
+              const cleanTitle = movie.title.replace(/\(\d{4}\)/g, '').trim();
+              
+              // Create slug
+              let slug = cleanTitle
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 50);
+              
+              if (slug.endsWith('-')) slug = slug.slice(0, -1);
+              
+              // Replace placeholders
+              let page = template
+                .replace(/{{MOVIE_TITLE}}/g, cleanTitle)
+                .replace(/{{MOVIE_YEAR}}/g, year)
+                .replace(/{{MOVIE_URL}}/g, movie.link);
+              
+              // Write file
+              fs.writeFileSync(path.join(moviesDir, `${slug}.html`), page);
+              count++;
+              
+              if (count % 10 === 0) {
+                console.log(`Generated ${count} pages...`);
+              }
+            } catch (error) {
+              console.error(`Error with ${movie.title}:`, error.message);
+            }
+          }
           
-      - name: Cleanup backup files
-        run: |
-          echo "Removing backup files..."
-          rm -f *.backup
-          echo "Backup files removed"
+          console.log(`\nGenerated ${count} movie pages in /movies directory`);
+          EOF
           
-      - name: List updated files
-        run: |
-          echo "Updated HTML files:"
-          ls -la *.html || echo "No HTML files found"
-          
-      - name: Commit and push changes
+      - name: Run generation script
+        run: node generate-movies.js
+        
+      - name: Commit changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          git status
+          git add movies/
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No changes"
           else
-            git commit -m "Cleanup: Remove year suffix from movie filenames and update all links"
+            git commit -m "Add generated movie pages"
             git push
           fi
