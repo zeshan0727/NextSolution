@@ -1,20 +1,253 @@
-const fs = require('fs');
+name: Generate Movie Pages
 
-console.log('Testing movies extraction...');
-const html = fs.readFileSync('movies.html', 'utf8');
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'movies.html'
 
-// Try different patterns
-const patterns = [
-  /const movies = (\[[\s\S]*?\]);/,
-  /const movies\s*=\s*(\[.*?\]);/s,
-  /const movies = \[([\s\S]*?)\];/
-];
+permissions:
+  contents: write
 
-for (let i = 0; i < patterns.length; i++) {
-  const match = html.match(patterns[i]);
-  if (match) {
-    console.log(`Pattern ${i} matched!`);
-    console.log('Sample of match:', match[1].substring(0, 200));
-    break;
-  }
-}
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Debug - List files
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Files in current directory:"
+          ls -la
+          echo "Checking for movie-template.html:"
+          ls -la movie-template.html || echo "movie-template.html not found!"
+          echo "Checking for movies.html:"
+          ls -la movies.html || echo "movies.html not found!"
+          
+      - name: Create Node.js script
+        run: |
+          cat > generate.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          console.log('Starting movie page generation...');
+          
+          // Check if required files exist
+          if (!fs.existsSync('movies.html')) {
+            console.error('ERROR: movies.html not found!');
+            process.exit(1);
+          }
+          
+          if (!fs.existsSync('movie-template.html')) {
+            console.error('ERROR: movie-template.html not found!');
+            process.exit(1);
+          }
+          
+          // Read movies.html
+          console.log('Reading movies.html...');
+          const moviesHtml = fs.readFileSync('movies.html', 'utf8');
+          
+          // Extract movies array - more robust regex
+          console.log('Extracting movies array...');
+          const moviesMatch = moviesHtml.match(/const movies\s*=\s*\[([\s\S]*?)\];/);
+          
+          if (!moviesMatch) {
+            console.error('ERROR: Could not find movies array in movies.html');
+            console.log('Trying alternative pattern...');
+            // Try alternative pattern
+            const altMatch = moviesHtml.match(/const movies\s*=\s*\[([^]*?)\];/);
+            if (!altMatch) {
+              console.error('ERROR: No movies array found with any pattern');
+              process.exit(1);
+            }
+            moviesStr = altMatch[0];
+          } else {
+            moviesStr = moviesMatch[0];
+          }
+          
+          // Parse movies array
+          console.log('Parsing movies data...');
+          let movies = [];
+          
+          try {
+            // Clean up the string for evaluation
+            let evalStr = moviesStr
+              .replace('const movies = ', '')
+              .replace(/;$/, '')
+              .trim();
+            
+            // Ensure proper JSON format
+            evalStr = evalStr
+              .replace(/(\w+):/g, '"$1":')  // Convert key: to "key":
+              .replace(/'/g, '"');           // Convert single quotes to double
+            
+            movies = JSON.parse(evalStr);
+          } catch (parseError) {
+            console.log('JSON parse failed, trying manual extraction...');
+            
+            // Manual extraction as fallback
+            const movieRegex = /\{\s*title:\s*["']([^"']+)["'],\s*link:\s*["']([^"']+)["']\s*\}/g;
+            let match;
+            while ((match = movieRegex.exec(moviesStr)) !== null) {
+              movies.push({
+                title: match[1],
+                link: match[2]
+              });
+            }
+            
+            if (movies.length === 0) {
+              // Try another pattern
+              const altRegex = /title:\s*["']([^"']+)["']\s*,\s*link:\s*["']([^"']+)["']/g;
+              while ((match = altRegex.exec(moviesStr)) !== null) {
+                movies.push({
+                  title: match[1],
+                  link: match[2]
+                });
+              }
+            }
+          }
+          
+          console.log(`Found ${movies.length} movies`);
+          
+          if (movies.length === 0) {
+            console.error('ERROR: No movies found!');
+            console.log('moviesStr sample:', moviesStr.substring(0, 500));
+            process.exit(1);
+          }
+          
+          // Read template
+          console.log('Reading template...');
+          const template = fs.readFileSync('movie-template.html', 'utf8');
+          
+          // Create movies directory
+          const moviesDir = 'movies';
+          if (!fs.existsSync(moviesDir)) {
+            fs.mkdirSync(moviesDir, { recursive: true });
+          }
+          
+          // Generate pages
+          console.log('Generating movie pages...');
+          let generated = 0;
+          let errors = 0;
+          
+          for (const movie of movies.slice(0, 5)) { // Process first 5 for testing
+            try {
+              console.log(`Processing: ${movie.title}`);
+              
+              // Extract year
+              const yearMatch = movie.title.match(/\((\d{4})\)/);
+              const year = yearMatch ? yearMatch[1] : '2024';
+              const cleanTitle = movie.title.replace(/\(\d{4}\)/g, '').trim();
+              
+              // Create slug
+              let slug = cleanTitle
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 50);
+              
+              if (slug.endsWith('-')) slug = slug.slice(0, -1);
+              if (!slug) slug = 'movie-' + generated;
+              
+              const filename = path.join(moviesDir, `${slug}.html`);
+              
+              // Replace placeholders
+              let pageContent = template
+                .replace(/{{MOVIE_TITLE}}/g, cleanTitle)
+                .replace(/{{MOVIE_YEAR}}/g, year)
+                .replace(/{{MOVIE_URL}}/g, movie.link);
+              
+              // Write file
+              fs.writeFileSync(filename, pageContent);
+              generated++;
+              
+              console.log(`✓ Created: ${filename}`);
+              
+            } catch (error) {
+              console.error(`✗ Error with ${movie.title}:`, error.message);
+              errors++;
+            }
+          }
+          
+          console.log(`\n=== SUMMARY ===`);
+          console.log(`Movies processed: ${Math.min(movies.length, 5)}`);
+          console.log(`Pages generated: ${generated}`);
+          console.log(`Errors: ${errors}`);
+          
+          // Create a simple index.html in movies directory
+          const indexContent = `<!DOCTYPE html>
+          <html>
+          <head>
+              <title>Movies Index</title>
+              <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; }
+                  h1 { color: #6a11cb; }
+                  ul { list-style: none; padding: 0; }
+                  li { margin: 10px 0; padding: 10px; background: #f5f7fa; border-radius: 5px; }
+                  a { color: #2575fc; text-decoration: none; font-weight: bold; }
+                  a:hover { text-decoration: underline; }
+              </style>
+          </head>
+          <body>
+              <h1>Generated Movie Pages</h1>
+              <p>Total movies in database: ${movies.length}</p>
+              <p>Pages generated: ${generated}</p>
+              <ul>
+          `;
+          
+          // List generated files
+          const files = fs.readdirSync(moviesDir).filter(f => f.endsWith('.html') && f !== 'index.html');
+          for (const file of files) {
+            const movieTitle = file.replace('.html', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            indexContent += `<li><a href="${file}">${movieTitle}</a></li>\n`;
+          }
+          
+          indexContent += `
+              </ul>
+          </body>
+          </html>`;
+          
+          fs.writeFileSync(path.join(moviesDir, 'index.html'), indexContent);
+          console.log('Created movies/index.html');
+          
+          EOF
+          
+      - name: Run generation script
+        run: |
+          echo "Running generation script..."
+          node generate.js
+          
+      - name: List generated files
+        run: |
+          echo "Checking generated files..."
+          if [ -d "movies" ]; then
+            echo "Movies directory exists with files:"
+            ls -la movies/
+            echo "Total HTML files in movies/: $(find movies -name "*.html" | wc -l)"
+          else
+            echo "ERROR: movies directory was not created!"
+          fi
+          
+      - name: Commit and push
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Check if there are any changes
+          if git status --porcelain | grep -q "."; then
+            echo "Changes detected, committing..."
+            git add .
+            git commit -m "Auto-generate movie pages from movies list"
+            git push
+            echo "Changes pushed successfully!"
+          else
+            echo "No changes to commit"
+          fi
