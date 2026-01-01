@@ -30,7 +30,7 @@ jobs:
           cat > extract-movies.js << 'EOF'
           const fs = require('fs');
           
-          console.log('=== MOVIE EXTRACTION TEST ===');
+          console.log('=== MOVIE EXTRACTION ===');
           
           // Check if files exist
           if (!fs.existsSync('movies.html')) {
@@ -47,7 +47,7 @@ jobs:
           const html = fs.readFileSync('movies.html', 'utf8');
           console.log('movies.html loaded, size:', html.length, 'chars');
           
-          // Try different patterns to find movies array
+          // Find movies array
           const patterns = [
             /const movies\s*=\s*(\[.*?\]);/s,
             /const movies = (\[[\s\S]*?\]);/,
@@ -55,33 +55,27 @@ jobs:
           ];
           
           let moviesStr = '';
-          
           for (let i = 0; i < patterns.length; i++) {
             const match = html.match(patterns[i]);
             if (match) {
               console.log(`✓ Pattern ${i} matched!`);
               moviesStr = match[1];
-              console.log('First 300 chars of match:', match[1].substring(0, 300));
               break;
             }
           }
           
           if (!moviesStr) {
-            console.error('✗ No pattern matched! Could not find movies array.');
-            console.log('Sample of movies.html around expected area:');
-            const idx = html.indexOf('const movies');
-            if (idx > -1) {
-              console.log(html.substring(idx, idx + 500));
-            }
+            console.error('✗ Could not find movies array!');
             process.exit(1);
           }
           
-          // Try to parse as JSON
-          console.log('\n=== PARSING MOVIES ===');
+          console.log('Extracted movies string, length:', moviesStr.length);
+          
+          // Parse movies
           let movies = [];
           
           try {
-            // Clean up for JSON parsing
+            // Try JSON parsing first
             let jsonStr = moviesStr
               .replace(/\n/g, ' ')
               .replace(/\s+/g, ' ')
@@ -89,22 +83,29 @@ jobs:
               .replace(/'/g, '"');
             
             movies = JSON.parse(jsonStr);
-            console.log(`✓ Successfully parsed ${movies.length} movies as JSON`);
+            console.log(`✓ Parsed ${movies.length} movies as JSON`);
           } catch (e) {
             console.log('JSON parse failed:', e.message);
             console.log('Trying manual extraction...');
             
-            // Manual extraction
-            const movieRegex = /\{\s*title:\s*"([^"]+)"\s*,\s*link:\s*"([^"]+)"\s*\}/g;
-            let match;
-            while ((match = movieRegex.exec(moviesStr)) !== null) {
-              movies.push({
-                title: match[1],
-                link: match[2]
-              });
+            // Manual extraction - handle both formats
+            const moviePatterns = [
+              /\{\s*title:\s*"([^"]+)"\s*,\s*link:\s*"([^"]+)"\s*\}/g,
+              /\{\s*"title":\s*"([^"]+)"\s*,\s*"link":\s*"([^"]+)"\s*\}/g
+            ];
+            
+            for (const pattern of moviePatterns) {
+              let match;
+              while ((match = pattern.exec(moviesStr)) !== null) {
+                movies.push({
+                  title: match[1],
+                  link: match[2]
+                });
+              }
+              if (movies.length > 0) break;
             }
             
-            console.log(`✓ Manually extracted ${movies.length} movies`);
+            console.log(`✓ Extracted ${movies.length} movies manually`);
           }
           
           if (movies.length === 0) {
@@ -112,35 +113,39 @@ jobs:
             process.exit(1);
           }
           
-          // Show first few movies
-          console.log('\n=== FIRST 3 MOVIES ===');
-          for (let i = 0; i < Math.min(3, movies.length); i++) {
-            console.log(`${i + 1}. ${movies[i].title}`);
-            console.log(`   ${movies[i].link}`);
-          }
+          console.log('\n=== SAMPLE MOVIES ===');
+          console.log(`1. ${movies[0].title}`);
+          console.log(`2. ${movies[1].title}`);
+          console.log(`3. ${movies[2].title}`);
+          console.log(`... and ${movies.length - 3} more`);
           
-          // Save movies to file for next steps
+          // Save movies to file
           fs.writeFileSync('movies-data.json', JSON.stringify(movies, null, 2));
           console.log('\n✓ Movies data saved to movies-data.json');
           
           EOF
           
-      - name: Run extraction test
+      - name: Extract movies data
         run: |
-          echo "Running extraction test..."
+          echo "Extracting movies from movies.html..."
           node extract-movies.js
           
-      - name: Create page generator
+      - name: Create page generator (PROCESS ALL MOVIES)
         run: |
           cat > generate-pages.js << 'EOF'
           const fs = require('fs');
           const path = require('path');
           
-          console.log('=== GENERATING MOVIE PAGES ===');
+          console.log('=== GENERATING ALL MOVIE PAGES ===');
           
           // Load movies data
           const movies = JSON.parse(fs.readFileSync('movies-data.json', 'utf8'));
           console.log(`Loaded ${movies.length} movies`);
+          
+          if (movies.length === 0) {
+            console.error('No movies to process!');
+            process.exit(1);
+          }
           
           // Load template
           const template = fs.readFileSync('movie-template.html', 'utf8');
@@ -152,95 +157,148 @@ jobs:
             fs.mkdirSync(moviesDir, { recursive: true });
           }
           
-          // Generate pages
+          // Track progress
           let generated = 0;
+          let updated = 0;
+          let skipped = 0;
           let errors = 0;
           
-          console.log('\nGenerating pages...');
-          for (const movie of movies) {
+          console.log('\nStarting generation of ALL movies...');
+          
+          // Process ALL movies (not just first 5)
+          for (let i = 0; i < movies.length; i++) {
+            const movie = movies[i];
+            
             try {
-              // Extract year from title (format: "Movie Name (2024)")
+              // Extract year from title
               const yearMatch = movie.title.match(/\((\d{4})\)/);
               const year = yearMatch ? yearMatch[1] : '2024';
               
-              // Clean title (remove year)
+              // Clean title
               const cleanTitle = movie.title.replace(/\(\d{4}\)/g, '').trim();
               
               // Create SEO-friendly slug
               let slug = cleanTitle
                 .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
-                .replace(/\s+/g, '-')          // Replace spaces with hyphens
-                .replace(/-+/g, '-')           // Remove duplicate hyphens
-                .substring(0, 50);             // Limit length
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 50);
               
-              // Remove trailing hyphen
-              if (slug.endsWith('-')) {
-                slug = slug.slice(0, -1);
-              }
-              
-              // If slug is empty, use a fallback
-              if (!slug) {
-                slug = `movie-${generated + 1}`;
-              }
+              if (slug.endsWith('-')) slug = slug.slice(0, -1);
+              if (!slug) slug = `movie-${i + 1}`;
               
               const filename = `${slug}.html`;
               const filepath = path.join(moviesDir, filename);
               
-              // Replace placeholders in template
-              let pageContent = template
-                .replace(/{{MOVIE_TITLE}}/g, cleanTitle)
-                .replace(/{{MOVIE_YEAR}}/g, year)
-                .replace(/{{MOVIE_URL}}/g, movie.link);
+              // Check if file already exists and has same content
+              let needsUpdate = true;
+              if (fs.existsSync(filepath)) {
+                const existingContent = fs.readFileSync(filepath, 'utf8');
+                if (existingContent.includes(movie.link)) {
+                  needsUpdate = false;
+                  skipped++;
+                } else {
+                  updated++;
+                }
+              } else {
+                generated++;
+              }
               
-              // Write the file
-              fs.writeFileSync(filepath, pageContent);
-              generated++;
+              if (needsUpdate) {
+                // Replace placeholders
+                let pageContent = template
+                  .replace(/{{MOVIE_TITLE}}/g, cleanTitle)
+                  .replace(/{{MOVIE_YEAR}}/g, year)
+                  .replace(/{{MOVIE_URL}}/g, movie.link);
+                
+                // Write the file
+                fs.writeFileSync(filepath, pageContent);
+              }
               
-              // Show progress every 10 movies
-              if (generated % 10 === 0) {
-                console.log(`Generated ${generated} pages...`);
+              // Show progress
+              if ((i + 1) % 50 === 0) {
+                console.log(`Processed ${i + 1}/${movies.length} movies...`);
               }
               
             } catch (error) {
-              console.error(`Error with "${movie.title}":`, error.message);
+              console.error(`Error with movie #${i + 1} "${movie.title}":`, error.message);
               errors++;
             }
           }
           
-          console.log('\n=== GENERATION SUMMARY ===');
-          console.log(`Total movies: ${movies.length}`);
-          console.log(`Pages generated: ${generated}`);
+          console.log('\n=== FINAL SUMMARY ===');
+          console.log(`Total movies in database: ${movies.length}`);
+          console.log(`New pages generated: ${generated}`);
+          console.log(`Pages updated: ${updated}`);
+          console.log(`Pages skipped (unchanged): ${skipped}`);
           console.log(`Errors: ${errors}`);
           
-          // Create an index.html file listing all movies
+          // Create an index.html file
           console.log('\nCreating index.html...');
           let indexContent = `<!DOCTYPE html>
           <html>
           <head>
-              <title>All Movies - Next Solution</title>
+              <title>All Movies (${movies.length}) - Next Solution</title>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <style>
                   body {
                       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                      max-width: 1200px;
+                      max-width: 1400px;
                       margin: 0 auto;
                       padding: 20px;
                       background: #f5f7fa;
+                      color: #333;
                   }
                   h1 {
                       color: #6a11cb;
                       text-align: center;
+                      margin-bottom: 10px;
+                  }
+                  .subtitle {
+                      text-align: center;
+                      color: #666;
                       margin-bottom: 30px;
                   }
                   .stats {
+                      display: grid;
+                      grid-template-columns: repeat(4, 1fr);
+                      gap: 15px;
+                      margin-bottom: 30px;
+                  }
+                  .stat-box {
                       background: white;
                       padding: 20px;
                       border-radius: 10px;
-                      margin-bottom: 30px;
                       text-align: center;
                       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                  }
+                  .stat-number {
+                      font-size: 2rem;
+                      font-weight: bold;
+                      color: #6a11cb;
+                      margin-bottom: 5px;
+                  }
+                  .stat-label {
+                      color: #666;
+                      font-size: 0.9rem;
+                  }
+                  .search-box {
+                      margin: 30px 0;
+                      text-align: center;
+                  }
+                  #searchInput {
+                      width: 80%;
+                      max-width: 500px;
+                      padding: 12px 20px;
+                      border: 2px solid #ddd;
+                      border-radius: 25px;
+                      font-size: 16px;
+                      outline: none;
+                  }
+                  #searchInput:focus {
+                      border-color: #6a11cb;
                   }
                   .movie-grid {
                       display: grid;
@@ -252,42 +310,83 @@ jobs:
                       padding: 20px;
                       border-radius: 10px;
                       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-                      transition: transform 0.3s ease;
+                      transition: transform 0.3s ease, box-shadow 0.3s ease;
                   }
                   .movie-card:hover {
                       transform: translateY(-5px);
+                      box-shadow: 0 10px 25px rgba(106, 17, 203, 0.2);
                   }
-                  .movie-card h3 {
+                  .movie-title {
                       margin: 0 0 10px 0;
                       color: #2575fc;
+                      font-size: 1.1rem;
+                      line-height: 1.4;
+                  }
+                  .movie-year {
+                      display: inline-block;
+                      background: rgba(106, 17, 203, 0.1);
+                      color: #6a11cb;
+                      padding: 4px 12px;
+                      border-radius: 15px;
+                      font-size: 0.85rem;
+                      margin-bottom: 15px;
                   }
                   .movie-link {
                       display: inline-block;
-                      padding: 8px 16px;
-                      background: #6a11cb;
+                      padding: 8px 20px;
+                      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
                       color: white;
                       text-decoration: none;
                       border-radius: 5px;
-                      margin-top: 10px;
+                      font-weight: 600;
+                      transition: all 0.3s ease;
                   }
                   .movie-link:hover {
-                      background: #2575fc;
+                      transform: translateY(-2px);
+                      box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+                  }
+                  @media (max-width: 768px) {
+                      .stats {
+                          grid-template-columns: repeat(2, 1fr);
+                      }
+                      .movie-grid {
+                          grid-template-columns: 1fr;
+                      }
                   }
               </style>
           </head>
           <body>
-              <h1>🎬 All Movies (${movies.length})</h1>
+              <h1>🎬 All Movies Collection</h1>
+              <p class="subtitle">Complete list of ${movies.length} movies available to watch</p>
               
               <div class="stats">
-                  <p>Total Movies: ${movies.length} | Generated: ${generated} | Errors: ${errors}</p>
-                  <p><a href="../movies.html" style="color: #6a11cb;">← Back to main movies page</a></p>
+                  <div class="stat-box">
+                      <div class="stat-number">${movies.length}</div>
+                      <div class="stat-label">Total Movies</div>
+                  </div>
+                  <div class="stat-box">
+                      <div class="stat-number">${generated + updated}</div>
+                      <div class="stat-label">Pages Generated</div>
+                  </div>
+                  <div class="stat-box">
+                      <div class="stat-number">${skipped}</div>
+                      <div class="stat-label">Already Exist</div>
+                  </div>
+                  <div class="stat-box">
+                      <div class="stat-number">${errors}</div>
+                      <div class="stat-label">Errors</div>
+                  </div>
               </div>
               
-              <div class="movie-grid">
+              <div class="search-box">
+                  <input type="text" id="searchInput" placeholder="Search movies by title...">
+              </div>
+              
+              <div id="movieContainer" class="movie-grid">
           `;
           
           // Add each movie to the index
-          for (const movie of movies) {
+          movies.forEach((movie, index) => {
             const cleanTitle = movie.title.replace(/\(\d{4}\)/g, '').trim();
             const yearMatch = movie.title.match(/\((\d{4})\)/);
             const year = yearMatch ? yearMatch[1] : '2024';
@@ -300,51 +399,79 @@ jobs:
               .substring(0, 50);
             
             if (slug.endsWith('-')) slug = slug.slice(0, -1);
-            if (!slug) slug = `movie-${movies.indexOf(movie) + 1}`;
+            if (!slug) slug = `movie-${index + 1}`;
             
             indexContent += `
-                <div class="movie-card">
-                    <h3>${cleanTitle}</h3>
-                    <p><strong>Year:</strong> ${year}</p>
+                <div class="movie-card" data-title="${cleanTitle.toLowerCase()}">
+                    <h3 class="movie-title">${cleanTitle}</h3>
+                    <span class="movie-year">${year}</span>
+                    <br>
                     <a href="${slug}.html" class="movie-link">Watch Now →</a>
                 </div>
             `;
-          }
+          });
           
           indexContent += `
               </div>
+              
+              <script>
+                  // Search functionality
+                  const searchInput = document.getElementById('searchInput');
+                  const movieCards = document.querySelectorAll('.movie-card');
+                  
+                  searchInput.addEventListener('input', function() {
+                      const searchTerm = this.value.toLowerCase().trim();
+                      
+                      movieCards.forEach(card => {
+                          const title = card.getAttribute('data-title');
+                          if (title.includes(searchTerm)) {
+                              card.style.display = 'block';
+                          } else {
+                              card.style.display = 'none';
+                          }
+                      });
+                  });
+                  
+                  // Back to main page
+                  const backLink = document.createElement('div');
+                  backLink.innerHTML = '<div style="text-align:center; margin:40px 0;"><a href="../movies.html" style="color:#6a11cb; font-size:1.1rem;">← Back to main movies page with filters and search</a></div>';
+                  document.body.appendChild(backLink);
+              </script>
           </body>
           </html>`;
           
           fs.writeFileSync(path.join(moviesDir, 'index.html'), indexContent);
-          console.log('✓ Created movies/index.html');
+          console.log('✓ Created movies/index.html with search functionality');
           
           EOF
           
-      - name: Generate movie pages
+      - name: Generate ALL movie pages
         run: |
-          echo "Generating movie pages..."
+          echo "Generating pages for ALL movies..."
           node generate-pages.js
           
-      - name: List generated files
+      - name: Verify generation
         run: |
-          echo "=== GENERATED FILES ==="
+          echo "=== VERIFICATION ==="
+          echo "Current directory: $(pwd)"
+          echo ""
+          echo "Movies directory exists: $(ls -la movies/ 2>/dev/null && echo YES || echo NO)"
+          echo ""
           if [ -d "movies" ]; then
-            echo "Movies directory contents:"
-            ls -la movies/
-            echo ""
-            echo "Number of HTML files:"
+            echo "Number of HTML files in movies/:"
             find movies -name "*.html" | wc -l
             echo ""
-            echo "First 10 movie files:"
-            find movies -name "*.html" | head -10
+            echo "First 20 movie files:"
+            find movies -name "*.html" | head -20
+            echo ""
+            echo "Size of movies directory:"
+            du -sh movies/
           else
-            echo "ERROR: movies directory was not created!"
+            echo "ERROR: movies directory not created!"
           fi
           
       - name: Cleanup temporary files
         run: |
-          echo "Cleaning up..."
           rm -f movies-data.json extract-movies.js generate-pages.js
           
       - name: Commit and push changes
@@ -357,9 +484,9 @@ jobs:
           
           # Check if there are changes
           if ! git diff --cached --quiet; then
-            git commit -m "Auto-generate movie pages from movies list"
+            git commit -m "Auto-generate ${movies.length} movie pages from movies list"
             git push
-            echo "✓ Changes committed and pushed"
+            echo "✓ Successfully committed and pushed ${movies.length} movie pages"
           else
             echo "No changes to commit"
           fi
