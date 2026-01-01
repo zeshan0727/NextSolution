@@ -1,43 +1,111 @@
-name: Generate Pages
-on: workflow_dispatch
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Generate Pages
-        run: |
-          # Create simple generator
-          cat > gen.js << 'EOF'
-          const fs = require('fs');
-          const content = fs.readFileSync('movies.html', 'utf8');
-          
-          // Extract movies array
-          const start = content.indexOf('const movies = [');
-          const end = content.indexOf('];', start);
-          const arrStr = content.substring(start + 'const movies = '.length, end + 1);
-          
-          try {
-            const movies = eval(arrStr);
-            console.log(`Found ${movies.length} movies`);
-            
-            // Generate pages
-            movies.forEach((movie, i) => {
-              const slug = movie.title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-              const html = `<html><head><title>${movie.title}</title></head><body><h1>${movie.title}</h1><a href="${movie.link}">Watch</a><br><a href="movies.html">Back</a></body></html>`;
-              fs.writeFileSync(`${slug}.html`, html);
-              
-              if ((i + 1) % 100 === 0) console.log(`Generated ${i + 1} pages`);
-            });
-            
-            console.log(`Done! Generated ${movies.length} pages`);
-          } catch (e) {
-            console.error('Error:', e.message);
+        const FILE = 'movies.html';
+        if (!fs.existsSync(FILE)) {
+          console.error(`${FILE} not found in workspace`);
+          process.exit(1);
+        }
+
+        const content = fs.readFileSync(FILE, 'utf8');
+
+        // Find the movies array in the HTML/JS
+        const start = content.indexOf('const movies = [');
+        if (start === -1) {
+          console.error('Could not find "const movies = [" in movies.html');
+          process.exit(1);
+        }
+        const end = content.indexOf('];', start);
+        if (end === -1) {
+          console.error('Could not find closing "];" for movies array');
+          process.exit(1);
+        }
+
+        const arrStr = content.substring(start + 'const movies = '.length, end + 1);
+
+        let movies;
+        try {
+          movies = eval(arrStr); // we assume movies is a JS array literal in the file
+        } catch (e) {
+          console.error('Failed to parse movies array:', e.message);
+          process.exit(1);
+        }
+
+        if (!Array.isArray(movies)) {
+          console.error('Parsed movies is not an array');
+          process.exit(1);
+        }
+
+        console.log(`Found ${movies.length} movie entries`);
+
+        const outDir = 'movie-pages';
+        if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
+
+        // helper to get a fetch function (Node 18+ has global fetch)
+        async function getFetch() {
+          if (typeof fetch === 'function') return fetch;
+          // dynamically import node-fetch if fetch is not available
+          const mod = await import('node-fetch');
+          return mod.default || mod;
+        }
+
+        const fetchFn = await getFetch();
+
+        for (let i = 0; i < movies.length; i++) {
+          const movie = movies[i] || {};
+          const title = movie.title || `movie-${i+1}`;
+          const slug = title.toLowerCase()
+                            .replace(/[^a-z0-9]/g, '-')
+                            .replace(/-+/g, '-')
+                            .replace(/(^-|-$)/g, '') || `movie-${i+1}`;
+          const filename = path.join(outDir, `${slug}.html`);
+
+          if (!movie.link) {
+            // create a simple stub if no link
+            const stub = `<html><head><title>${escapeHtml(title)}</title></head><body><h1>${escapeHtml(title)}</h1><p>No link provided</p><a href="movies.html">Back</a></body></html>`;
+            fs.writeFileSync(filename, stub, 'utf8');
+            console.log(`Saved stub for "${title}" -> ${filename}`);
+            continue;
           }
-          EOF
-          
-          node gen.js
-          
-          # Count results
-          echo "Generated files:"
-          ls *.html | wc -l
+
+          try {
+            const res = await fetchFn(movie.link, { redirect: 'follow' });
+            if (!res.ok) {
+              console.error(`Failed to fetch ${movie.link} : ${res.status} ${res.statusText}`);
+              const fallback = `<html><head><title>${escapeHtml(title)}</title></head><body><h1>${escapeHtml(title)}</h1><p>Failed to fetch ${escapeHtml(movie.link)}: ${res.status}</p><a href="${escapeHtml(movie.link)}">Source</a><br><a href="movies.html">Back</a></body></html>`;
+              fs.writeFileSync(filename, fallback, 'utf8');
+            } else {
+              const body = await res.text();
+              // Save the fetched body directly. If you prefer to wrap it, modify here.
+              fs.writeFileSync(filename, body, 'utf8');
+              console.log(`Fetched and saved ${movie.link} -> ${filename}`);
+            }
+          } catch (err) {
+            console.error(`Error fetching ${movie.link}: ${err.message}`);
+            const fallback = `<html><head><title>${escapeHtml(title)}</title></head><body><h1>${escapeHtml(title)}</h1><p>Error fetching ${escapeHtml(movie.link)}: ${escapeHtml(err.message)}</p><a href="${escapeHtml(movie.link)}">Source</a><br><a href="movies.html">Back</a></body></html>`;
+            fs.writeFileSync(filename, fallback, 'utf8');
+          }
+
+          if ((i + 1) % 10 === 0) console.log(`Processed ${i + 1}/${movies.length}`);
+        }
+
+        // Count results
+        const count = fs.readdirSync(outDir).filter(f => f.endsWith('.html')).length;
+        console.log(`Done. Generated ${count} pages in ${outDir}/`);
+
+        // basic HTML escape
+        function escapeHtml(s) {
+          return String(s).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          }[c]));
+        }
+      })();
+      EOF
+
+      # Run the generator
+      node gen.js
+
+      # Report generated files
+      echo "Generated files:"
+      ls movie-pages/*.html 2>/dev/null | wc -l
