@@ -1,3 +1,5 @@
+[file name]: package.json
+[file content begin]
 {
   "name": "bollywood-movies",
   "version": "1.0.0",
@@ -5,6 +7,7 @@
   "main": "index.html",
   "scripts": {
     "generate": "node generate-pages.js",
+    "clean-generate": "find . -maxdepth 1 -name \"*.html\" -not -name \"index.html\" -type f -delete && node generate-pages.js",
     "test": "echo \"No tests specified\""
   },
   "keywords": ["bollywood", "movies", "streaming"],
@@ -13,3 +16,4 @@
   "dependencies": {},
   "devDependencies": {}
 }
+[file content end]
