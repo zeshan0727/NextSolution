@@ -1,312 +1,43 @@
-name: Generate 1257 Movie Pages
-
-on:
-  workflow_dispatch:  # Manual trigger
-  push:
-    paths:
-      - 'movies.html'
-  schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
-
+name: Generate Pages
+on: workflow_dispatch
 jobs:
-  generate-pages:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    - name: Create Generator Script
-      run: |
-        cat > generate.js << 'EOF'
-        const fs = require('fs');
-        const path = require('path');
-
-        // Function to extract movies from movies.html
-        function extractMovies() {
+      - uses: actions/checkout@v4
+      - name: Generate Pages
+        run: |
+          # Create simple generator
+          cat > gen.js << 'EOF'
+          const fs = require('fs');
+          const content = fs.readFileSync('movies.html', 'utf8');
+          
+          // Extract movies array
+          const start = content.indexOf('const movies = [');
+          const end = content.indexOf('];', start);
+          const arrStr = content.substring(start + 'const movies = '.length, end + 1);
+          
           try {
-            console.log('Reading movies.html...');
-            const content = fs.readFileSync('movies.html', 'utf8');
+            const movies = eval(arrStr);
+            console.log(`Found ${movies.length} movies`);
             
-            // Find the movies array in the JavaScript
-            const moviesStart = content.indexOf('const movies = [');
-            const moviesEnd = content.indexOf('];', moviesStart) + 1;
+            // Generate pages
+            movies.forEach((movie, i) => {
+              const slug = movie.title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+              const html = `<html><head><title>${movie.title}</title></head><body><h1>${movie.title}</h1><a href="${movie.link}">Watch</a><br><a href="movies.html">Back</a></body></html>`;
+              fs.writeFileSync(`${slug}.html`, html);
+              
+              if ((i + 1) % 100 === 0) console.log(`Generated ${i + 1} pages`);
+            });
             
-            if (moviesStart === -1 || moviesEnd === -1) {
-              throw new Error('Could not find movies array');
-            }
-            
-            // Extract the array string
-            const moviesStr = content.substring(moviesStart + 'const movies = '.length, moviesEnd);
-            
-            // Parse the JavaScript array
-            const movies = eval(moviesStr);
-            
-            console.log(`Found ${movies.length} movies in movies.html`);
-            return movies;
-          } catch (error) {
-            console.error('Error extracting movies:', error.message);
-            
-            // Try alternative method - extract from network tab
-            return extractMoviesFromNetwork();
+            console.log(`Done! Generated ${movies.length} pages`);
+          } catch (e) {
+            console.error('Error:', e.message);
           }
-        }
-
-        // Alternative extraction method
-        function extractMoviesFromNetwork() {
-          try {
-            const content = fs.readFileSync('movies.html', 'utf8');
-            
-            // Look for the first movie in the array
-            const regex = /\{ title: "([^"]+)", link: "([^"]+)" \}/g;
-            const movies = [];
-            let match;
-            
-            while ((match = regex.exec(content)) !== null) {
-              movies.push({
-                title: match[1],
-                link: match[2]
-              });
-            }
-            
-            console.log(`Extracted ${movies.length} movies using regex`);
-            return movies;
-          } catch (error) {
-            console.error('Alternative extraction failed:', error.message);
-            return [];
-          }
-        }
-
-        // Create slug from movie title
-        function createSlug(title) {
-          return title
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/--+/g, '-')
-            .replace(/[()]/g, '')
-            .trim()
-            .substring(0, 100);
-        }
-
-        // Get year from title
-        function getYear(title) {
-          const match = title.match(/\((\d{4})\)/);
-          return match ? match[1] : '2024';
-        }
-
-        // Clean title
-        function cleanTitle(title) {
-          return title.replace(/\(\d{4}\)/, '').trim();
-        }
-
-        // Read or create template
-        function getTemplate() {
-          if (fs.existsSync('movie-template.html')) {
-            return fs.readFileSync('movie-template.html', 'utf8');
-          }
+          EOF
           
-          // Create basic template
-          return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{MOVIE_TITLE}} ({{MOVIE_YEAR}}) - Next Solution</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        header { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); padding: 1rem; }
-        header a { color: white; text-decoration: none; font-size: 1.5rem; font-weight: bold; }
-        .movie-header { text-align: center; margin: 2rem 0; padding: 2rem; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .movie-header h1 { color: #6a11cb; margin-bottom: 0.5rem; }
-        .movie-year { color: #2575fc; font-size: 1.2rem; }
-        .watch-section { text-align: center; margin: 2rem 0; }
-        .watch-btn { display: inline-block; padding: 1rem 3rem; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; text-decoration: none; border-radius: 50px; font-size: 1.2rem; font-weight: bold; transition: transform 0.3s; }
-        .watch-btn:hover { transform: translateY(-3px); }
-        footer { text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #ddd; }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <a href="movies.html">← Back to Movies</a>
-        </div>
-    </header>
-    
-    <main class="container">
-        <div class="movie-header">
-            <h1>{{MOVIE_TITLE}}</h1>
-            <div class="movie-year">{{MOVIE_YEAR}}</div>
-        </div>
-        
-        <div class="watch-section">
-            <a href="{{MOVIE_LINK}}" class="watch-btn" target="_blank">
-                <i class="fas fa-play-circle"></i> Watch Now
-            </a>
-        </div>
-        
-        <div style="text-align: center; margin-top: 2rem;">
-            <a href="movies.html" style="color: #6a11cb; text-decoration: none;">
-                <i class="fas fa-arrow-left"></i> Browse All Movies
-            </a>
-        </div>
-    </main>
-    
-    <footer>
-        <p>© 2024 Next Solution Movies</p>
-    </footer>
-</body>
-</html>`;
-        }
-
-        // Main function
-        async function generatePages() {
-          console.log('Starting movie page generation...');
+          node gen.js
           
-          // Get movies
-          const movies = extractMovies();
-          
-          if (movies.length === 0) {
-            console.error('No movies found!');
-            process.exit(1);
-          }
-          
-          console.log(`Processing ${movies.length} movies...`);
-          
-          // Get template
-          const template = getTemplate();
-          
-          // Progress tracking
-          let generated = 0;
-          let errors = 0;
-          const batchSize = 50;
-          
-          // Process in batches
-          for (let i = 0; i < movies.length; i += batchSize) {
-            const batch = movies.slice(i, i + batchSize);
-            console.log(`Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(movies.length/batchSize)}...`);
-            
-            for (const movie of batch) {
-              try {
-                const slug = createSlug(movie.title);
-                const year = getYear(movie.title);
-                const cleanTitleText = cleanTitle(movie.title);
-                
-                // Replace placeholders
-                let page = template
-                  .replace(/{{MOVIE_TITLE}}/g, cleanTitleText)
-                  .replace(/{{MOVIE_YEAR}}/g, year)
-                  .replace(/{{MOVIE_LINK}}/g, movie.link);
-                
-                // Write file
-                fs.writeFileSync(`${slug}.html`, page);
-                generated++;
-                
-                // Show progress every 50 movies
-                if (generated % 50 === 0) {
-                  console.log(`Generated ${generated}/${movies.length} pages...`);
-                }
-                
-              } catch (error) {
-                console.error(`Error with "${movie.title}": ${error.message}`);
-                errors++;
-              }
-            }
-          }
-          
-          // Create summary
-          console.log('\n' + '='.repeat(50));
-          console.log('GENERATION COMPLETE!');
-          console.log('='.repeat(50));
-          console.log(`Total movies found: ${movies.length}`);
-          console.log(`Pages generated: ${generated}`);
-          console.log(`Errors: ${errors}`);
-          
-          // Create index file
-          createIndexFile(movies, generated);
-        }
-
-        // Create index file
-        function createIndexFile(movies, generatedCount) {
-          const indexContent = `<!DOCTYPE html>
-<html>
-<head>
-    <title>Movie Pages Index (${movies.length} movies)</title>
-    <style>
-        body { font-family: Arial; margin: 20px; }
-        h1 { color: #6a11cb; }
-        .stats { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
-        .movie-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .movie-link { color: #2575fc; text-decoration: none; }
-        .movie-link:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <h1>Movie Pages Index</h1>
-    <div class="stats">
-        <strong>Generated:</strong> ${new Date().toLocaleString()}<br>
-        <strong>Total Movies:</strong> ${movies.length}<br>
-        <strong>Pages Created:</strong> ${generatedCount}
-    </div>
-    <div class="movie-grid">
-        ${movies.map(movie => {
-          const slug = createSlug(movie.title);
-          const cleanTitleText = cleanTitle(movie.title);
-          return `<div class="movie-item">
-              <a href="${slug}.html" class="movie-link">${cleanTitleText}</a>
-          </div>`;
-        }).join('')}
-    </div>
-</body>
-</html>`;
-          
-          fs.writeFileSync('movie-pages-index.html', indexContent);
-          console.log('Created index: movie-pages-index.html');
-        }
-
-        // Run
-        generatePages().catch(error => {
-          console.error('Fatal error:', error);
-          process.exit(1);
-        });
-        EOF
-
-    - name: Run Generator
-      run: node generate.js
-
-    - name: Count Generated Files
-      run: |
-        echo "Counting generated HTML files..."
-        find . -name "*.html" -type f | grep -v "movies.html" | grep -v "movie-template.html" | wc -l
-        echo "Files generated:"
-        find . -name "*.html" -type f | head -20
-
-    - name: Commit Generated Pages
-      run: |
-        git config --global user.email "action@github.com"
-        git config --global user.name "GitHub Action"
-        
-        # Add all HTML files except movies.html and template
-        find . -name "*.html" -type f ! -name "movies.html" ! -name "movie-template.html" ! -name "movie-pages-index.html" | head -1300 | xargs git add || true
-        git add movie-pages-index.html || true
-        
-        # Check if there are changes
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "Generate 1257 movie pages - $(date +'%Y-%m-%d %H:%M:%S')"
-          git push
-          echo "✅ Successfully pushed generated pages"
-        fi
+          # Count results
+          echo "Generated files:"
+          ls *.html | wc -l
