@@ -1,0 +1,17 @@
+Package: com.nextsolution.unlockvibrate
+Version: 1.2.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 376
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/UnlockVibrate_RootHide_1.2.0_iOS16.deb
+Size: 6770
+MD5sum: e813b34529248ba374859f72ab479a84
+SHA1: bab8eafdc5f42b8b53458f5b355b72f64e8f4f4f
+SHA256: 9c137e0ce04e33007b97a61172dc797b4582ab18f1e732e9782cad12aff03539
+Section: Tweaks
+Priority: optional
+Description: Vibrates once after a successful unlock. Includes an enabled-by-default Settings switch. Native RootHide Bootstrap build for iOS 16.
+Author: Next Solution
+Name: Unlock Vibrate (RootHide)
+
