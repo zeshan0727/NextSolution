@@ -1,0 +1,8 @@
+Origin: Next Solution
+Label: Next Solution Repo
+Suite: stable
+Version: 1.0
+Codename: nextsolution
+Architectures: iphoneos-arm64 iphoneos-arm64e
+Components: main
+Description: Next Solution tweaks for RootHide and rootless jailbreaks
