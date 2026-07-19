@@ -18,6 +18,10 @@ struct SettingsView: View {
     @State private var exportingGoogleDrive = false
     @State private var importingGoogleDrive = false
     @State private var notice: SettingsNotice?
+    @State private var deepSeekAPIKey = ""
+    @State private var deepSeekConnected = DeepSeekService.shared.hasAPIKey
+    @State private var testingDeepSeek = false
+    @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
 
     private let currencies = ["QAR", "USD", "GBP", "EUR", "AED", "SAR", "PKR", "INR"]
 
@@ -107,6 +111,52 @@ struct SettingsView: View {
                     Label("Backup & Sync", systemImage: "icloud.fill")
                 } footer: {
                     Text("For Google Drive, install its app and enable Google Drive in Files. Choose Google Drive when the save or restore picker opens. iOS requires you to approve each Drive file operation.")
+                }
+
+                Section {
+                    HStack {
+                        Label(
+                            deepSeekConnected ? "Connected" : "Not Connected",
+                            systemImage: deepSeekConnected ? "checkmark.shield.fill" : "shield.slash.fill"
+                        )
+                        .foregroundStyle(deepSeekConnected ? AppTheme.green : .secondary)
+                        Spacer()
+                        if testingDeepSeek { ProgressView() }
+                    }
+
+                    SecureField(
+                        deepSeekConnected ? "Enter a replacement API key" : "DeepSeek API key",
+                        text: $deepSeekAPIKey
+                    )
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+
+                    Picker("Model", selection: $deepSeekModel) {
+                        Text("V4 Flash · Faster").tag("deepseek-v4-flash")
+                        Text("V4 Pro · Deeper").tag("deepseek-v4-pro")
+                    }
+
+                    Button("Save API Key") {
+                        saveDeepSeekKey()
+                    }
+                    .disabled(deepSeekAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    Button("Test DeepSeek Connection") {
+                        testDeepSeekConnection()
+                    }
+                    .disabled(!deepSeekConnected || testingDeepSeek)
+
+                    if deepSeekConnected {
+                        Button("Disconnect DeepSeek", role: .destructive) {
+                            DeepSeekService.shared.deleteAPIKey()
+                            deepSeekAPIKey = ""
+                            deepSeekConnected = false
+                        }
+                    }
+                } header: {
+                    Label("DeepSeek AI", systemImage: "sparkles")
+                } footer: {
+                    Text("The key is stored only in this iPhone's Keychain and is excluded from exports and backups. AI requests send summarized totals and categories, not raw SMS messages or account numbers.")
                 }
 
                 Section {
@@ -200,7 +250,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.13")
+                LabeledContent("Version", value: "1.3.14")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
@@ -285,6 +335,38 @@ struct SettingsView: View {
             "PKR": "Pakistani Rupee", "INR": "Indian Rupee"
         ]
         return "\(code) – \(names[code] ?? code)"
+    }
+
+    private func saveDeepSeekKey() {
+        do {
+            try DeepSeekService.shared.saveAPIKey(deepSeekAPIKey)
+            deepSeekAPIKey = ""
+            deepSeekConnected = true
+            notice = SettingsNotice(title: "DeepSeek Connected", message: "The API key was saved securely in this iPhone's Keychain.")
+        } catch {
+            notice = SettingsNotice(title: "Connection Failed", message: error.localizedDescription)
+        }
+    }
+
+    private func testDeepSeekConnection() {
+        testingDeepSeek = true
+        Task {
+            do {
+                _ = try await DeepSeekService.shared.request(
+                    messages: [DeepSeekMessage(role: "user", content: "Reply with exactly: Connected")],
+                    model: deepSeekModel
+                )
+                await MainActor.run {
+                    testingDeepSeek = false
+                    notice = SettingsNotice(title: "Connection Successful", message: "Daily Ledger can reach DeepSeek.")
+                }
+            } catch {
+                await MainActor.run {
+                    testingDeepSeek = false
+                    notice = SettingsNotice(title: "Connection Failed", message: error.localizedDescription)
+                }
+            }
+        }
     }
 
     private func showExportResult(_ result: Result<URL, Error>, format: String) {

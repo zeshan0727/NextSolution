@@ -10,6 +10,12 @@ private struct SpendingSuggestion: Identifiable {
 
 struct InsightsView: View {
     @EnvironmentObject private var store: LedgerStore
+    @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
+    @State private var serverAdvice = ""
+    @State private var followUp = ""
+    @State private var conversation: [DeepSeekMessage] = []
+    @State private var loadingAdvice = false
+    @State private var serverError: String?
 
     var body: some View {
         NavigationStack {
@@ -51,8 +57,63 @@ struct InsightsView: View {
                     }
                 }
 
+                Section("DeepSeek Recommendations") {
+                    if !DeepSeekService.shared.hasAPIKey {
+                        Label("Connect DeepSeek in Settings to receive server-generated recommendations.", systemImage: "key.fill")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Button {
+                            generateServerAdvice()
+                        } label: {
+                            HStack {
+                                Label(
+                                    serverAdvice.isEmpty ? "Generate Recommendations" : "Refresh Recommendations",
+                                    systemImage: "sparkles"
+                                )
+                                Spacer()
+                                if loadingAdvice { ProgressView() }
+                            }
+                        }
+                        .disabled(loadingAdvice)
+                    }
+
+                    if let serverError {
+                        Label(serverError, systemImage: "exclamationmark.triangle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(AppTheme.red)
+                    }
+
+                    if !serverAdvice.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "brain.head.profile")
+                                    .foregroundStyle(AppTheme.purple)
+                                Text("Your Spending Plan")
+                                    .font(.headline)
+                            }
+                            Text(serverAdvice)
+                                .font(.body)
+                                .textSelection(.enabled)
+                                .lineSpacing(4)
+                        }
+                        .padding(.vertical, 8)
+
+                        HStack(spacing: 8) {
+                            TextField("Ask about this recommendation", text: $followUp, axis: .vertical)
+                                .lineLimit(1...4)
+                            Button {
+                                sendFollowUp()
+                            } label: {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.title2)
+                            }
+                            .disabled(followUp.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || loadingAdvice)
+                        }
+                    }
+                }
+
                 Section {
-                    Text("Insights are calculated privately on this iPhone. No financial data is sent to an external AI service.")
+                    Text("Local suggestions stay on this iPhone. DeepSeek is contacted only when you press Generate or send a follow-up, using summarized categories and totals without raw SMS text, account numbers, or individual vendor descriptions.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -140,5 +201,69 @@ struct InsightsView: View {
 
     private func expenseTotal(_ transactions: [LedgerTransaction]) -> Decimal {
         transactions.reduce(Decimal.zero) { $0 + $1.amount }
+    }
+
+    private func generateServerAdvice() {
+        let messages = [
+            DeepSeekMessage(
+                role: "system",
+                content: "You are a careful personal spending coach. Give practical, respectful recommendations using only the supplied aggregate data. Use short titled sections, specific savings targets, priorities, and a simple 30-day action plan. Never claim to be a financial adviser and do not recommend risky investments or borrowing."
+            ),
+            DeepSeekMessage(role: "user", content: serverSummary)
+        ]
+        conversation = messages
+        performRequest(messages)
+    }
+
+    private func sendFollowUp() {
+        let question = followUp.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !question.isEmpty else { return }
+        followUp = ""
+        let messages = conversation + [
+            DeepSeekMessage(role: "assistant", content: serverAdvice),
+            DeepSeekMessage(role: "user", content: question)
+        ]
+        conversation = messages
+        performRequest(messages)
+    }
+
+    private func performRequest(_ messages: [DeepSeekMessage]) {
+        loadingAdvice = true
+        serverError = nil
+        Task {
+            do {
+                let response = try await DeepSeekService.shared.request(
+                    messages: messages,
+                    model: deepSeekModel
+                )
+                await MainActor.run {
+                    serverAdvice = response
+                    loadingAdvice = false
+                }
+            } catch {
+                await MainActor.run {
+                    serverError = error.localizedDescription
+                    loadingAdvice = false
+                }
+            }
+        }
+    }
+
+    private var serverSummary: String {
+        let grouped = Dictionary(grouping: currentExpenses, by: \.category)
+        let categoryLines = grouped.map { category, transactions in
+            "- \(category): \(NSDecimalNumber(decimal: expenseTotal(transactions)).stringValue) \(store.currencyCode) across \(transactions.count) transactions"
+        }
+        .sorted()
+        .joined(separator: "\n")
+        return """
+        Analyze this aggregate Daily Ledger spending summary.
+        Currency: \(store.currencyCode)
+        Current month expenses: \(NSDecimalNumber(decimal: currentExpense).stringValue)
+        Previous month expenses: \(NSDecimalNumber(decimal: previousExpense).stringValue)
+        Current month expense count: \(currentExpenses.count)
+        Categories:
+        \(categoryLines)
+        """
     }
 }
