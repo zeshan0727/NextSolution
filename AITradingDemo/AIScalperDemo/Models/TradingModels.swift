@@ -8,6 +8,40 @@ enum AssetSymbol: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var apiSymbol: String {
+        switch self {
+        case .eurusd: return "EUR/USD"
+        case .gold: return "XAU/USD"
+        case .bitcoin: return "BTC/USD"
+        }
+    }
+
+    /// Conservative paper-fill assumptions. They can never reproduce a real
+    /// broker exactly, but stop the demo from treating every mid-price as free.
+    var spreadPercent: Double {
+        switch self {
+        case .eurusd: return 0.012
+        case .gold: return 0.025
+        case .bitcoin: return 0.050
+        }
+    }
+
+    var maximumSlippagePercent: Double {
+        switch self {
+        case .eurusd: return 0.006
+        case .gold: return 0.010
+        case .bitcoin: return 0.020
+        }
+    }
+
+    var commissionPercentPerSide: Double {
+        switch self {
+        case .eurusd: return 0.010
+        case .gold: return 0.015
+        case .bitcoin: return 0.050
+        }
+    }
+
     var basePrice: Double {
         switch self {
         case .eurusd: return 1.08520
@@ -43,6 +77,22 @@ enum AssetSymbol: String, Codable, CaseIterable, Identifiable {
     func formattedPrice(_ price: Double) -> String {
         String(format: "%.*f", precision, price)
     }
+}
+
+enum MarketDataMode: String, Codable, CaseIterable, Identifiable {
+    case live = "Live market"
+    case simulated = "Simulation"
+
+    var id: String { rawValue }
+    var shortLabel: String { self == .live ? "LIVE DATA" : "SIM LIVE" }
+}
+
+enum FeedState: String {
+    case setupRequired
+    case connecting
+    case live
+    case error
+    case simulated
 }
 
 enum TradeDirection: String, Codable, CaseIterable, Identifiable {
@@ -129,6 +179,11 @@ struct PaperTrade: Identifiable, Codable {
     var profitLoss: Double?
     var exitReason: TradeExitReason?
     var ticksOpen: Int
+    var dataSource: MarketDataMode? = nil
+    var spreadPercent: Double? = nil
+    var entrySlippagePercent: Double? = nil
+    var exitSlippagePercent: Double? = nil
+    var feeCost: Double? = nil
 
     var isOpen: Bool { closedAt == nil }
     var isWinner: Bool { (profitLoss ?? 0) > 0 }
@@ -146,3 +201,8 @@ struct StrategySettings: Codable, Equatable {
     var maxHoldingTicks: Int = 24
 }
 
+struct ExecutionSettings: Codable, Equatable {
+    var pollIntervalSeconds: Double = 30
+    var maxHoldingMinutes: Int = 3
+    var applyTradingCosts = true
+}
