@@ -30,8 +30,12 @@ struct RootTabView: View {
         }
         .tint(.cyan)
         .onReceive(marketTimer) { _ in
-            engine.advanceMarket()
+            if engine.marketMode == .simulated {
+                engine.advanceMarket()
+            }
+        }
+        .task(id: engine.feedTaskID) {
+            await engine.runMarketFeed()
         }
     }
 }
-
