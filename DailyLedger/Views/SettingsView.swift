@@ -156,7 +156,7 @@ struct SettingsView: View {
                 } header: {
                     Label("DeepSeek AI", systemImage: "sparkles")
                 } footer: {
-                    Text("The key is stored only in this iPhone's Keychain and is excluded from exports and backups. AI requests send summarized totals and categories, not raw SMS messages or account numbers.")
+                    Text("The key is stored only in this iPhone's Keychain and is excluded from exports and backups. Requests are manual, thinking mode is disabled, output is capped at 650 tokens, and only the ten largest summarized categories are sent.")
                 }
 
                 Section {
@@ -250,7 +250,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.14")
+                LabeledContent("Version", value: "1.3.15")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {

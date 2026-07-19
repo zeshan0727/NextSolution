@@ -219,7 +219,7 @@ struct InsightsView: View {
         let question = followUp.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty else { return }
         followUp = ""
-        let messages = conversation + [
+        let messages = Array(conversation.prefix(2)) + [
             DeepSeekMessage(role: "assistant", content: serverAdvice),
             DeepSeekMessage(role: "user", content: question)
         ]
@@ -251,10 +251,13 @@ struct InsightsView: View {
 
     private var serverSummary: String {
         let grouped = Dictionary(grouping: currentExpenses, by: \.category)
-        let categoryLines = grouped.map { category, transactions in
-            "- \(category): \(NSDecimalNumber(decimal: expenseTotal(transactions)).stringValue) \(store.currencyCode) across \(transactions.count) transactions"
+        let ranked = grouped.map { category, transactions in
+            (category: category, amount: expenseTotal(transactions), count: transactions.count)
         }
-        .sorted()
+        .sorted { $0.amount > $1.amount }
+        let categoryLines = ranked.prefix(10).map { item in
+            "- \(item.category): \(NSDecimalNumber(decimal: item.amount).stringValue) \(store.currencyCode) across \(item.count) transactions"
+        }
         .joined(separator: "\n")
         return """
         Analyze this aggregate Daily Ledger spending summary.
@@ -264,6 +267,7 @@ struct InsightsView: View {
         Current month expense count: \(currentExpenses.count)
         Categories:
         \(categoryLines)
+        Keep the complete response under 500 words.
         """
     }
 }

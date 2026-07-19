@@ -82,7 +82,12 @@ final class DeepSeekService: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONEncoder().encode(
-            DeepSeekRequest(model: model, messages: messages, thinking: .init(type: "disabled"))
+            DeepSeekRequest(
+                model: model,
+                messages: messages,
+                thinking: .init(type: "disabled"),
+                maxTokens: 650
+            )
         )
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw DeepSeekError.invalidResponse }
@@ -103,6 +108,12 @@ private struct DeepSeekRequest: Encodable {
     let model: String
     let messages: [DeepSeekMessage]
     let thinking: Thinking
+    let maxTokens: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case model, messages, thinking
+        case maxTokens = "max_tokens"
+    }
 
     struct Thinking: Encodable { let type: String }
 }
