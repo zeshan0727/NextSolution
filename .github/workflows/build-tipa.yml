@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: brew install xcodegen dpkg
 
       - name: Generate Xcode project
         run: xcodegen generate
@@ -80,8 +80,8 @@ jobs:
 
       - name: Package RootHide add-on
         run: |
-          rm -rf build/rootHidePackage build/deb-parts
-          mkdir -p build/rootHidePackage build/deb-parts
+          rm -rf build/rootHidePackage
+          mkdir -p build/rootHidePackage
           cp -R RootHideSMSImport/layout/. build/rootHidePackage/
           mkdir -p build/rootHidePackage/usr/libexec
           cp build/dailyledgersmsd build/rootHidePackage/usr/libexec/dailyledgersmsd
@@ -92,10 +92,7 @@ jobs:
           chmod 644 \
             build/rootHidePackage/DEBIAN/control \
             build/rootHidePackage/Library/LaunchDaemons/com.nextsolution.dailyledger.smsimport.plist
-          printf '2.0\n' > build/deb-parts/debian-binary
-          COPYFILE_DISABLE=1 tar --uid 0 --gid 0 --uname root --gname wheel -C build/rootHidePackage/DEBIAN -czf build/deb-parts/control.tar.gz .
-          COPYFILE_DISABLE=1 tar --uid 0 --gid 0 --uname root --gname wheel -C build/rootHidePackage --exclude ./DEBIAN -czf build/deb-parts/data.tar.gz .
-          (cd build/deb-parts && xcrun llvm-ar --format=gnu rc ../../DailyLedgerSMSImport-1.0.0-roothide.deb debian-binary control.tar.gz data.tar.gz)
+          dpkg-deb --root-owner-group --build build/rootHidePackage DailyLedgerSMSImport-1.0.0-roothide.deb
           shasum -a 256 DailyLedgerSMSImport-1.0.0-roothide.deb > DailyLedgerSMSImport-1.0.0-roothide.sha256
 
       - name: Emit verification payload
