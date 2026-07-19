@@ -9,6 +9,12 @@ on:
       - "RootHideSMSImport/**"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
+  push:
+    paths:
+      - "DailyLedger/**"
+      - "RootHideSMSImport/**"
+      - "project.yml"
+      - ".github/workflows/build-tipa.yml"
 
 jobs:
   build:
@@ -88,17 +94,6 @@ jobs:
             build/rootHidePackage/Library/LaunchDaemons/com.nextsolution.dailyledger.smsimport.plist
           dpkg-deb --root-owner-group --build build/rootHidePackage DailyLedgerSMSImport-1.1.0-roothide.deb
           shasum -a 256 DailyLedgerSMSImport-1.1.0-roothide.deb > DailyLedgerSMSImport-1.1.0-roothide.sha256
-
-      - name: Emit verification payload
-        run: |
-          zip -j DailyLedger-build-output.zip \
-            DailyLedger-1.3.0.tipa \
-            DailyLedger-1.3.0.sha256 \
-            DailyLedgerSMSImport-1.1.0-roothide.deb \
-            DailyLedgerSMSImport-1.1.0-roothide.sha256
-          echo "DAILY_LEDGER_BUILD_PAYLOAD_BEGIN"
-          base64 -i DailyLedger-build-output.zip
-          echo "DAILY_LEDGER_BUILD_PAYLOAD_END"
 
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
