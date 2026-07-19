@@ -72,8 +72,8 @@ Imported records are merged using their UUID when an `id` is present.
 
 ## RootHide SMS auto import
 
-The build artifact also includes `DailyLedgerSMSImport-1.1.1-roothide.deb`. Install it using Sileo or Zebra inside RootHide Bootstrap 2.0 or later. The launch daemon runs as the `mobile` user, includes the RootHide container-access entitlements, and does not use the network.
+The build artifact also includes `DailyLedgerSMSImport-1.1.2-roothide.deb`. Install it using Sileo or Zebra inside RootHide Bootstrap 2.0 or later. The launch daemon runs as the `mobile` user, includes the RootHide container-access entitlements, and does not use the network.
 
 The importer extracts the amount, vendor, transaction time, and type. It stores the complete message as the description and applies the editable vendor rules. In **Daily Ledger → Settings → SMS Import Preferences**, set the required text (for example `**6760`), select the destination account, and tap **Scan Latest Matching SMS** to test or recover a recent message.
 
-On its first 1.1.1 launch and on an app-requested rescan, the add-on checks only the latest 500 SMS database rows. SMS GUIDs and content checks prevent duplicate ledger entries.
+On its first 1.1.2 launch and on an app-requested rescan, the add-on checks the latest 2,000 SMS database rows. It decodes both plain and attributed message bodies, matches the configured marker such as `**6760` case-insensitively, and vibrates once only after a new ledger entry is saved. SMS GUIDs and content checks prevent duplicate ledger entries.

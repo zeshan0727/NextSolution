@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <CommonCrypto/CommonDigest.h>
 #import <CoreFoundation/CoreFoundation.h>
+#import <AudioToolbox/AudioToolbox.h>
 #import <sqlite3.h>
 #import <sys/stat.h>
 #import <fcntl.h>
@@ -426,7 +427,31 @@ static NSString *MessageText(sqlite3_stmt *statement) {
         NSString *text = [NSString stringWithUTF8String:(const char *)textBytes];
         if (text.length > 0) return text;
     }
-    return TextFromAttributedBody(sqlite3_column_blob(statement, 3), sqlite3_column_bytes(statement, 3));
+    const void *bytes = sqlite3_column_blob(statement, 3);
+    int length = sqlite3_column_bytes(statement, 3);
+    if (bytes && length > 0) {
+        NSData *data = [NSData dataWithBytes:bytes length:(NSUInteger)length];
+        @try {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            id value = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+#pragma clang diagnostic pop
+            if ([value isKindOfClass:[NSAttributedString class]]) {
+                NSString *decoded = [value string];
+                if (decoded.length > 0) return decoded;
+            }
+            if ([value isKindOfClass:[NSString class]] && [value length] > 0) return value;
+        } @catch (__unused NSException *exception) {
+            // Fall through to the resilient archive scanner below.
+        }
+    }
+    return TextFromAttributedBody(bytes, length);
+}
+
+static void SignalSuccessfulImport(void) {
+    // Exactly one short vibration per successful scan batch, never for a
+    // non-match, parse failure, or duplicate transaction.
+    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
 }
 
 static void ProcessMessages(BOOL forceRecent) {
@@ -467,8 +492,8 @@ static void ProcessMessages(BOOL forceRecent) {
     NSInteger savedRequestID = [state[@"lastRescanRequestID"] integerValue];
     NSInteger stateVersion = [state[@"version"] integerValue];
     sqlite3_int64 maximum = MaximumRowID(database);
-    BOOL scanRecent = forceRecent || !savedRow || stateVersion < 2 || requestID != savedRequestID;
-    sqlite3_int64 lastRowID = scanRecent ? MAX((sqlite3_int64)0, maximum - 500) : savedRow.longLongValue;
+    BOOL scanRecent = forceRecent || !savedRow || stateVersion < 3 || requestID != savedRequestID;
+    sqlite3_int64 lastRowID = scanRecent ? MAX((sqlite3_int64)0, maximum - 2000) : savedRow.longLongValue;
     BOOL hasNewRows = maximum > lastRowID;
     if (!hasNewRows && !scanRecent) {
         sqlite3_close(database);
@@ -529,7 +554,7 @@ static void ProcessMessages(BOOL forceRecent) {
     if (!writeFailed) processedRowID = maximum;
     state[@"lastRowID"] = @(processedRowID);
     state[@"lastRescanRequestID"] = @(requestID);
-    state[@"version"] = @2;
+    state[@"version"] = @3;
     SaveState(state);
 
     NSString *status;
@@ -537,6 +562,7 @@ static void ProcessMessages(BOOL forceRecent) {
         status = @"A matching SMS was found, but Daily Ledger could not save it. It will retry automatically.";
     } else if (imported > 0) {
         status = [NSString stringWithFormat:@"Imported %ld matching SMS%@ to %@.", (long)imported, imported == 1 ? @"" : @" messages", accountName];
+        SignalSuccessfulImport();
     } else if (parseFailures > 0) {
         status = [NSString stringWithFormat:@"Found %ld SMS containing %@, but its transaction fields could not be parsed.", (long)parseFailures, matchText];
     } else if (matched > 0 && duplicates > 0) {
@@ -573,7 +599,7 @@ int main(int argc, char *argv[]) {
             ProcessMessages(YES);
             return 0;
         }
-        Log(@"Daily Ledger SMS Import 1.1.1 started.");
+        Log(@"Daily Ledger SMS Import 1.1.2 started; exact marker is %@.", kDefaultMatchText);
         while (true) {
             @autoreleasepool { ProcessMessages(NO); }
             sleep(5);

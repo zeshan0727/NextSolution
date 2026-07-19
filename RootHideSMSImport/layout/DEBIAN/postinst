@@ -6,7 +6,8 @@ chown mobile:mobile /rootfs/var/mobile/Library/DailyLedgerSMSImport 2>/dev/null 
 chmod 700 /rootfs/var/mobile/Library/DailyLedgerSMSImport 2>/dev/null || true
 
 launchctl bootout system/com.nextsolution.dailyledger.smsimport 2>/dev/null || true
-launchctl bootstrap system /Library/LaunchDaemons/com.nextsolution.dailyledger.smsimport.plist 2>/dev/null || true
-launchctl kickstart -k system/com.nextsolution.dailyledger.smsimport 2>/dev/null || true
+launchctl bootstrap system /Library/LaunchDaemons/com.nextsolution.dailyledger.smsimport.plist
+launchctl kickstart -k system/com.nextsolution.dailyledger.smsimport
+launchctl print system/com.nextsolution.dailyledger.smsimport >/dev/null
 
 exit 0

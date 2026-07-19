@@ -141,7 +141,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.1")
+                LabeledContent("Version", value: "1.3.2")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
@@ -171,7 +171,10 @@ struct SettingsView: View {
             }
             .fileImporter(
                 isPresented: $importing,
-                allowedContentTypes: [.json, .commaSeparatedText, .plainText, .data],
+                // Some Files providers report JSON/CSV downloads as a generic item.
+                // Accepting UTType.item keeps those files selectable; the codec still
+                // validates their actual bytes before importing anything.
+                allowedContentTypes: [.item],
                 allowsMultipleSelection: false
             ) { result in
                 importFile(result)
