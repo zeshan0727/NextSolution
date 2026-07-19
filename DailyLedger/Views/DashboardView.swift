@@ -1,20 +1,36 @@
 import SwiftUI
 
+private enum DashboardDatePreset: String, CaseIterable, Identifiable {
+    case today = "Today"
+    case week = "This Week"
+    case month = "This Month"
+    case year = "This Year"
+    case custom = "Custom"
+    var id: String { rawValue }
+}
+
 struct DashboardView: View {
     @EnvironmentObject private var store: LedgerStore
     let onAdd: (TransactionType) -> Void
     let onTransfer: () -> Void
+    @AppStorage("DashboardDatePreset") private var storedDatePreset = DashboardDatePreset.month.rawValue
+    @AppStorage("DashboardCustomStart") private var storedCustomStart = Date().timeIntervalSince1970
+    @AppStorage("DashboardCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
+    @State private var showingCustomDates = false
+    @State private var draftStartDate = Date()
+    @State private var draftEndDate = Date()
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 22) {
                     header
+                    dateFilter
                     BalanceCard(
                         balance: allTimeBalance,
-                        income: monthTotals.income,
-                        expense: monthTotals.expense,
-                        loan: monthTotals.loan,
+                        income: filteredTotals.income,
+                        expense: filteredTotals.expense,
+                        loan: filteredTotals.loan,
                         currencyCode: store.currencyCode
                     )
                     quickActions
@@ -25,6 +41,70 @@ struct DashboardView: View {
             }
             .background(AppTheme.page)
             .navigationBarHidden(true)
+            .sheet(isPresented: $showingCustomDates) {
+                NavigationStack {
+                    Form {
+                        DatePicker("From", selection: $draftStartDate, displayedComponents: .date)
+                        DatePicker("To", selection: $draftEndDate, displayedComponents: .date)
+                    }
+                    .navigationTitle("Custom Dashboard Period")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showingCustomDates = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") {
+                                storedCustomStart = draftStartDate.timeIntervalSince1970
+                                storedCustomEnd = draftEndDate.timeIntervalSince1970
+                                storedDatePreset = DashboardDatePreset.custom.rawValue
+                                showingCustomDates = false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var dateFilter: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack {
+                Text("Dashboard period").font(.headline)
+                Spacer()
+                Text(periodTitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppTheme.purple)
+            }
+            Menu {
+                ForEach(DashboardDatePreset.allCases) { preset in
+                    Button {
+                        if preset == .custom {
+                            draftStartDate = Date(timeIntervalSince1970: storedCustomStart)
+                            draftEndDate = Date(timeIntervalSince1970: storedCustomEnd)
+                            showingCustomDates = true
+                        } else {
+                            storedDatePreset = preset.rawValue
+                        }
+                    } label: {
+                        if selectedDatePreset == preset {
+                            Label(preset.rawValue, systemImage: "checkmark")
+                        } else {
+                            Text(preset.rawValue)
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "calendar")
+                    Text(selectedDatePreset.rawValue)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                }
+                .font(.subheadline.weight(.semibold))
+                .padding(13)
+                .background(.background, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            }
         }
     }
 
@@ -81,12 +161,12 @@ struct DashboardView: View {
                 Text("Recent transactions")
                     .font(.headline)
                 Spacer()
-                Text("This month: \(monthTotals.count)")
+                Text("\(periodTitle): \(filteredTotals.count)")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
 
-            if store.transactions.isEmpty {
+            if filteredTransactions.isEmpty {
                 EmptyLedgerView(
                     title: "No transactions yet",
                     message: "Use one of the colorful buttons above to add your first entry."
@@ -94,11 +174,11 @@ struct DashboardView: View {
                 .background(.background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(store.transactions.prefix(6).enumerated()), id: \.element.id) { index, transaction in
+                    ForEach(Array(filteredTransactions.prefix(6).enumerated()), id: \.element.id) { index, transaction in
                         TransactionRow(transaction: transaction)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                        if index < min(store.transactions.count, 6) - 1 {
+                        if index < min(filteredTransactions.count, 6) - 1 {
                             Divider().padding(.leading, 68)
                         }
                     }
@@ -109,11 +189,48 @@ struct DashboardView: View {
         }
     }
 
-    private var monthTotals: LedgerTotals {
-        guard let interval = Calendar.current.dateInterval(of: .month, for: Date()) else {
-            return LedgerTotals(income: 0, expense: 0, loan: 0, count: 0)
+    private var selectedDatePreset: DashboardDatePreset {
+        DashboardDatePreset(rawValue: storedDatePreset) ?? .month
+    }
+
+    private var selectedInterval: DateInterval {
+        let calendar = Calendar.current
+        switch selectedDatePreset {
+        case .today:
+            return calendar.dateInterval(of: .day, for: Date())!
+        case .week:
+            return calendar.dateInterval(of: .weekOfYear, for: Date())!
+        case .month:
+            return calendar.dateInterval(of: .month, for: Date())!
+        case .year:
+            return calendar.dateInterval(of: .year, for: Date())!
+        case .custom:
+            let first = Date(timeIntervalSince1970: storedCustomStart)
+            let second = Date(timeIntervalSince1970: storedCustomEnd)
+            let start = calendar.startOfDay(for: min(first, second))
+            let endDay = calendar.startOfDay(for: max(first, second))
+            let end = calendar.date(byAdding: .day, value: 1, to: endDay) ?? endDay
+            return DateInterval(start: start, end: end)
         }
-        return store.totals(in: interval)
+    }
+
+    private var filteredTotals: LedgerTotals {
+        store.totals(in: selectedInterval)
+    }
+
+    private var filteredTransactions: [LedgerTransaction] {
+        store.transactions.filter { selectedInterval.contains($0.date) }
+    }
+
+    private var periodTitle: String {
+        switch selectedDatePreset {
+        case .today: return "Today"
+        case .week: return "This week"
+        case .month: return "This month"
+        case .year: return "This year"
+        case .custom:
+            return "\(DisplayFormat.day.string(from: selectedInterval.start)) – \(DisplayFormat.day.string(from: selectedInterval.end.addingTimeInterval(-1)))"
+        }
     }
 
     private var allTimeBalance: Decimal {

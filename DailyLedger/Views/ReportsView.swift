@@ -7,6 +7,34 @@ private enum ReportPeriod: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+private enum ReportKind: String, CaseIterable, Identifiable {
+    case summary = "Financial Summary"
+    case income = "Income Report"
+    case expenses = "Expense Report"
+    case loans = "Loans / Transfers"
+    case categories = "Category Report"
+
+    var id: String { rawValue }
+    var subtitle: String {
+        switch self {
+        case .summary: return "Income, expenses, transfers and net result"
+        case .income: return "All money received in the selected period"
+        case .expenses: return "All expenses with transaction snapshots"
+        case .loans: return "Amounts transferred out during the selected period"
+        case .categories: return "Spending grouped by category"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .summary: return "chart.bar.xaxis"
+        case .income: return "arrow.down.left.circle.fill"
+        case .expenses: return "arrow.up.right.circle.fill"
+        case .loans: return "arrow.left.arrow.right.circle.fill"
+        case .categories: return "square.grid.2x2.fill"
+        }
+    }
+}
+
 private struct ReportBucket: Identifiable {
     let id: String
     let label: String
@@ -21,9 +49,46 @@ private struct CategoryTotal: Identifiable {
 }
 
 struct ReportsView: View {
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(ReportKind.allCases) { kind in
+                        NavigationLink {
+                            ReportDetailView(kind: kind)
+                        } label: {
+                            Label {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(kind.rawValue).font(.headline)
+                                    Text(kind.subtitle)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            } icon: {
+                                Image(systemName: kind.icon)
+                                    .foregroundStyle(AppTheme.purple)
+                            }
+                            .padding(.vertical, 5)
+                        }
+                    }
+                } header: {
+                    Text("Choose a report")
+                } footer: {
+                    Text("Select a report first, then choose its month or year.")
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Reports")
+        }
+    }
+}
+
+private struct ReportDetailView: View {
     @EnvironmentObject private var store: LedgerStore
+    let kind: ReportKind
     @State private var period: ReportPeriod = .month
     @State private var anchorDate = Date()
+    @State private var selectedTransaction: LedgerTransaction?
 
     var body: some View {
         NavigationStack {
@@ -37,17 +102,54 @@ struct ReportsView: View {
                     .pickerStyle(.segmented)
 
                     periodNavigator
-                    totalCards
-                    activityChart
-                    categoryBreakdown
+                    if kind == .summary { totalCards }
+                    if kind == .summary || kind == .income || kind == .expenses {
+                        activityChart
+                    }
+                    if kind == .summary || kind == .categories {
+                        categoryBreakdown
+                    }
+                    if kind == .income || kind == .expenses || kind == .loans {
+                        transactionList
+                    }
                 }
                 .padding(16)
                 .padding(.bottom, 24)
             }
             .background(AppTheme.page)
-            .navigationTitle("Reports")
+            .navigationTitle(kind.rawValue)
+            .navigationBarTitleDisplayMode(.inline)
             .onChange(of: period) { _ in anchorDate = Date() }
+            .sheet(item: $selectedTransaction) { transaction in
+                TransactionSnapshotView(transaction: transaction)
+                    .environmentObject(store)
+            }
         }
+    }
+
+    private var transactionList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(kind.rawValue)
+                .font(.headline)
+            if selectedTransactions.isEmpty {
+                EmptyLedgerView(
+                    title: "No transactions",
+                    message: "Nothing is available for this report period."
+                )
+            } else {
+                ForEach(selectedTransactions.sorted { $0.date > $1.date }) { transaction in
+                    Button {
+                        selectedTransaction = transaction
+                    } label: {
+                        TransactionRow(transaction: transaction)
+                    }
+                    .buttonStyle(.plain)
+                    if transaction.id != selectedTransactions.last?.id { Divider() }
+                }
+            }
+        }
+        .padding(16)
+        .background(.background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
     private var periodNavigator: some View {
@@ -216,9 +318,16 @@ struct ReportsView: View {
 
     private var selectedTransactions: [LedgerTransaction] {
         store.transactions.filter {
-            selectedInterval.contains($0.date) &&
-                $0.type != .transfer &&
-                store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+            guard selectedInterval.contains($0.date),
+                  store.account(withID: $0.accountID)?.currencyCode == store.currencyCode else {
+                return false
+            }
+            switch kind {
+            case .summary, .categories: return true
+            case .income: return $0.type == .income
+            case .expenses: return $0.type == .expense
+            case .loans: return $0.type == .transfer
+            }
         }
     }
 
@@ -266,7 +375,7 @@ struct ReportsView: View {
     }
 
     private var categoryTotals: [CategoryTotal] {
-        let expenses = selectedTransactions.filter { $0.type == .expense && !$0.isLoanPayment }
+        let expenses = selectedTransactions.filter { $0.type == .expense }
         let grouped = Dictionary(grouping: expenses, by: \.category)
         return grouped.map { category, items in
             CategoryTotal(

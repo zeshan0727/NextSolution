@@ -305,16 +305,16 @@ final class LedgerStore: ObservableObject {
             .filter { $0.type == .income }
             .reduce(Decimal.zero) { $0 + $1.amount }
         let expense = selected
-            .filter { $0.type == .expense && !$0.isLoanPayment }
+            .filter { $0.type == .expense }
             .reduce(Decimal.zero) { $0 + $1.amount }
         let loan = selected
-            .filter(\.isLoanPayment)
+            .filter { $0.type == .transfer }
             .reduce(Decimal.zero) { $0 + $1.amount }
         return LedgerTotals(
             income: income,
             expense: expense,
             loan: loan,
-            count: selected.filter { $0.type != .transfer }.count
+            count: selected.count
         )
     }
 }
@@ -333,5 +333,5 @@ struct LedgerTotals {
     let expense: Decimal
     let loan: Decimal
     let count: Int
-    var balance: Decimal { income - expense - loan }
+    var balance: Decimal { income - expense }
 }
