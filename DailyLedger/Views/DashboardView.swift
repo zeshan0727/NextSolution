@@ -27,7 +27,7 @@ struct DashboardView: View {
                     header
                     dateFilter
                     BalanceCard(
-                        balance: allTimeBalance,
+                        balance: filteredTotals.balance,
                         income: filteredTotals.income,
                         expense: filteredTotals.expense,
                         loan: filteredTotals.loan,
@@ -233,13 +233,6 @@ struct DashboardView: View {
         }
     }
 
-    private var allTimeBalance: Decimal {
-        store.activeAccounts
-            .filter { $0.currencyCode == store.currencyCode }
-            .reduce(Decimal.zero) { result, account in
-                result + store.balance(for: account)
-        }
-    }
 }
 
 private struct QuickActionButton: View {
