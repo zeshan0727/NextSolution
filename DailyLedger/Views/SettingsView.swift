@@ -250,7 +250,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.15")
+                LabeledContent("Version", value: "1.3.16")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
@@ -354,7 +354,8 @@ struct SettingsView: View {
             do {
                 _ = try await DeepSeekService.shared.request(
                     messages: [DeepSeekMessage(role: "user", content: "Reply with exactly: Connected")],
-                    model: deepSeekModel
+                    model: deepSeekModel,
+                    maxTokens: 20
                 )
                 await MainActor.run {
                     testingDeepSeek = false

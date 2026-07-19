@@ -74,7 +74,11 @@ final class DeepSeekService: ObservableObject {
         SecItemDelete(query as CFDictionary)
     }
 
-    func request(messages: [DeepSeekMessage], model: String) async throws -> String {
+    func request(
+        messages: [DeepSeekMessage],
+        model: String,
+        maxTokens: Int = 650
+    ) async throws -> String {
         guard let key = loadAPIKey(), !key.isEmpty else { throw DeepSeekError.missingKey }
         var request = URLRequest(url: URL(string: "https://api.deepseek.com/chat/completions")!)
         request.httpMethod = "POST"
@@ -86,7 +90,7 @@ final class DeepSeekService: ObservableObject {
                 model: model,
                 messages: messages,
                 thinking: .init(type: "disabled"),
-                maxTokens: 650
+                maxTokens: min(max(maxTokens, 16), 650)
             )
         )
         let (data, response) = try await URLSession.shared.data(for: request)

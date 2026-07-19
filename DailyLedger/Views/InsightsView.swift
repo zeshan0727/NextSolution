@@ -11,7 +11,7 @@ private struct SpendingSuggestion: Identifiable {
 struct InsightsView: View {
     @EnvironmentObject private var store: LedgerStore
     @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
-    @State private var serverAdvice = ""
+    @AppStorage("DeepSeekLastRecommendation") private var serverAdvice = ""
     @State private var followUp = ""
     @State private var conversation: [DeepSeekMessage] = []
     @State private var loadingAdvice = false
@@ -112,6 +112,24 @@ struct InsightsView: View {
                     }
                 }
 
+                Section("General AI Chat") {
+                    NavigationLink {
+                        DeepSeekChatView()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Chat with DeepSeek").font(.headline)
+                                Text("General questions without automatic ledger data")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "bubble.left.and.bubble.right.fill")
+                                .foregroundStyle(AppTheme.blue)
+                        }
+                    }
+                }
+
                 Section {
                     Text("Local suggestions stay on this iPhone. DeepSeek is contacted only when you press Generate or send a follow-up, using summarized categories and totals without raw SMS text, account numbers, or individual vendor descriptions.")
                         .font(.caption)
@@ -204,22 +222,29 @@ struct InsightsView: View {
     }
 
     private func generateServerAdvice() {
-        let messages = [
+        let messages = recommendationBaseMessages
+        conversation = messages
+        performRequest(messages)
+    }
+
+    private var recommendationBaseMessages: [DeepSeekMessage] {
+        [
             DeepSeekMessage(
                 role: "system",
-                content: "You are a careful personal spending coach. Give practical, respectful recommendations using only the supplied aggregate data. Use short titled sections, specific savings targets, priorities, and a simple 30-day action plan. Never claim to be a financial adviser and do not recommend risky investments or borrowing."
+                content: "You are a careful personal spending coach. Return only 3 or 4 prioritized bullet points. Each bullet must be one short, specific sentence with an action and, where possible, an estimated monthly saving. No introduction, conclusion, headings, disclaimers, risky investments, or borrowing advice."
             ),
             DeepSeekMessage(role: "user", content: serverSummary)
         ]
-        conversation = messages
-        performRequest(messages)
     }
 
     private func sendFollowUp() {
         let question = followUp.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty else { return }
         followUp = ""
-        let messages = Array(conversation.prefix(2)) + [
+        let base = conversation.count >= 2
+            ? Array(conversation.prefix(2))
+            : recommendationBaseMessages
+        let messages = base + [
             DeepSeekMessage(role: "assistant", content: serverAdvice),
             DeepSeekMessage(role: "user", content: question)
         ]
@@ -234,7 +259,8 @@ struct InsightsView: View {
             do {
                 let response = try await DeepSeekService.shared.request(
                     messages: messages,
-                    model: deepSeekModel
+                    model: deepSeekModel,
+                    maxTokens: 320
                 )
                 await MainActor.run {
                     serverAdvice = response
@@ -267,7 +293,7 @@ struct InsightsView: View {
         Current month expense count: \(currentExpenses.count)
         Categories:
         \(categoryLines)
-        Keep the complete response under 500 words.
+        Return only 3 or 4 concise bullets and keep the complete response under 180 words.
         """
     }
 }
