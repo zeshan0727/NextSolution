@@ -7,7 +7,7 @@ private enum AIChatMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-private struct DeepSeekChatBubble: Identifiable {
+private struct DeepSeekChatBubble: Identifiable, Codable {
     let id = UUID()
     let role: String
     let content: String
@@ -18,7 +18,7 @@ struct DeepSeekChatView: View {
     @EnvironmentObject private var store: LedgerStore
     @AppStorage("DeepSeekModel") private var model = "deepseek-v4-flash"
     @AppStorage("AIChatMode") private var chatMode = AIChatMode.ledger.rawValue
-    @State private var messages: [DeepSeekChatBubble] = []
+    @State private var messages: [DeepSeekChatBubble] = DeepSeekChatHistory.load()
     @State private var draft = ""
     @State private var sending = false
     @State private var errorMessage: String?
@@ -118,6 +118,9 @@ struct DeepSeekChatView: View {
             TransactionSnapshotView(transaction: transaction)
                 .environmentObject(store)
         }
+        .onChange(of: messages.count) { _ in
+            DeepSeekChatHistory.save(messages)
+        }
         .overlay {
             if !DeepSeekService.shared.hasAPIKey && !isLedgerMode {
                 VStack(spacing: 12) {
@@ -188,7 +191,7 @@ struct DeepSeekChatView: View {
             return
         }
         guard DeepSeekService.shared.hasAPIKey else {
-            errorMessage = "That did not look like a ledger search. Connect DeepSeek in Settings for general chat, or ask to find an amount, vendor, account, or category."
+            errorMessage = "Connect DeepSeek in Settings first."
             return
         }
         sending = true
@@ -221,5 +224,20 @@ struct DeepSeekChatView: View {
                 }
             }
         }
+    }
+}
+
+private enum DeepSeekChatHistory {
+    private static let key = "DeepSeekPersistentChatHistory"
+
+    static func load() -> [DeepSeekChatBubble] {
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let messages = try? JSONDecoder().decode([DeepSeekChatBubble].self, from: data) else { return [] }
+        return messages
+    }
+
+    static func save(_ messages: [DeepSeekChatBubble]) {
+        let limited = Array(messages.suffix(100))
+        UserDefaults.standard.set(try? JSONEncoder().encode(limited), forKey: key)
     }
 }

@@ -162,7 +162,7 @@ struct TransactionRow: View {
             return "\(sourceAccount?.name ?? "Account") → \(destinationAccount?.name ?? "Account")"
         }
         if let vendor = transaction.vendor, !vendor.isEmpty { return vendor }
-        return transaction.details.isEmpty ? transaction.category : transaction.details
+        return transaction.category
     }
 
     private var secondaryText: String {

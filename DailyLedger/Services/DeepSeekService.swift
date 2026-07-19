@@ -25,7 +25,15 @@ final class DeepSeekService: ObservableObject {
     private static let keychainService = "com.nextsolution.dailyledger.deepseek"
     private static let keychainAccount = "api-key"
 
-    private init() {}
+    @Published private(set) var promptTokens: Int
+    @Published private(set) var completionTokens: Int
+    @Published private(set) var totalTokens: Int
+
+    private init() {
+        promptTokens = UserDefaults.standard.integer(forKey: "DeepSeekPromptTokens")
+        completionTokens = UserDefaults.standard.integer(forKey: "DeepSeekCompletionTokens")
+        totalTokens = UserDefaults.standard.integer(forKey: "DeepSeekTotalTokens")
+    }
 
     var hasAPIKey: Bool { !(loadAPIKey() ?? "").isEmpty }
 
@@ -99,12 +107,35 @@ final class DeepSeekService: ObservableObject {
             let apiError = try? JSONDecoder().decode(DeepSeekAPIError.self, from: data)
             throw DeepSeekError.server(apiError?.error.message ?? "DeepSeek request failed (HTTP \(http.statusCode)).")
         }
-        guard let content = try? JSONDecoder().decode(DeepSeekResponse.self, from: data)
-            .choices.first?.message.content,
+        guard let decoded = try? JSONDecoder().decode(DeepSeekResponse.self, from: data),
+              let content = decoded.choices.first?.message.content,
               !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw DeepSeekError.invalidResponse
         }
+        if let usage = decoded.usage {
+            await MainActor.run { record(usage) }
+        }
         return content
+    }
+
+    func resetUsage() {
+        promptTokens = 0
+        completionTokens = 0
+        totalTokens = 0
+        saveUsage()
+    }
+
+    private func record(_ usage: DeepSeekResponse.Usage) {
+        promptTokens += usage.promptTokens
+        completionTokens += usage.completionTokens
+        totalTokens += usage.totalTokens
+        saveUsage()
+    }
+
+    private func saveUsage() {
+        UserDefaults.standard.set(promptTokens, forKey: "DeepSeekPromptTokens")
+        UserDefaults.standard.set(completionTokens, forKey: "DeepSeekCompletionTokens")
+        UserDefaults.standard.set(totalTokens, forKey: "DeepSeekTotalTokens")
     }
 }
 
@@ -124,8 +155,19 @@ private struct DeepSeekRequest: Encodable {
 
 private struct DeepSeekResponse: Decodable {
     let choices: [Choice]
+    let usage: Usage?
     struct Choice: Decodable {
         let message: DeepSeekMessage
+    }
+    struct Usage: Decodable {
+        let promptTokens: Int
+        let completionTokens: Int
+        let totalTokens: Int
+        enum CodingKeys: String, CodingKey {
+            case promptTokens = "prompt_tokens"
+            case completionTokens = "completion_tokens"
+            case totalTokens = "total_tokens"
+        }
     }
 }
 

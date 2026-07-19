@@ -10,12 +10,14 @@ private struct SpendingSuggestion: Identifiable {
 
 struct InsightsView: View {
     @EnvironmentObject private var store: LedgerStore
+    @StateObject private var deepSeekUsage = DeepSeekService.shared
     @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
     @AppStorage("DeepSeekLastRecommendation") private var serverAdvice = ""
     @State private var followUp = ""
     @State private var conversation: [DeepSeekMessage] = []
     @State private var loadingAdvice = false
     @State private var serverError: String?
+    @AppStorage("DeepSeekTokenBudget") private var tokenBudget = 50_000
 
     var body: some View {
         NavigationStack {
@@ -110,6 +112,33 @@ struct InsightsView: View {
                             .disabled(followUp.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || loadingAdvice)
                         }
                     }
+                }
+
+                Section("DeepSeek Token Usage") {
+                    VStack(alignment: .leading, spacing: 9) {
+                        HStack {
+                            Text("\(deepSeekUsage.totalTokens.formatted()) tokens")
+                                .font(.headline)
+                            Spacer()
+                            Text("Target: \(tokenBudget.formatted())")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        ProgressView(value: min(Double(deepSeekUsage.totalTokens) / Double(max(tokenBudget, 1)), 1))
+                            .tint(deepSeekUsage.totalTokens >= tokenBudget ? AppTheme.red : AppTheme.purple)
+                        HStack {
+                            Text("Input \(deepSeekUsage.promptTokens.formatted())")
+                            Spacer()
+                            Text("Output \(deepSeekUsage.completionTokens.formatted())")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                    Stepper("Usage target: \(tokenBudget.formatted())", value: $tokenBudget, in: 5_000...500_000, step: 5_000)
+                    Button("Reset Usage Counter", role: .destructive) {
+                        deepSeekUsage.resetUsage()
+                    }
+                    .disabled(deepSeekUsage.totalTokens == 0)
                 }
 
                 Section("General AI Chat") {
