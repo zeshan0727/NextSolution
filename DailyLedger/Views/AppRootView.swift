@@ -37,12 +37,21 @@ struct AppRootView: View {
     @State private var selectedTab: AppTab = .home
     @State private var addSheet: AddSheet?
     @State private var showingTransfer = false
-    @State private var tabRootID = UUID()
 
     var body: some View {
         VStack(spacing: 0) {
-            activeTab
-                .id(tabRootID)
+            ZStack {
+                tabLayer(.home) {
+                    DashboardView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
+                }
+                tabLayer(.accounts) { AccountsView() }
+                tabLayer(.transactions) {
+                    TransactionsView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
+                }
+                tabLayer(.insights) { InsightsView() }
+                tabLayer(.reports) { ReportsView() }
+                tabLayer(.settings) { SettingsView() }
+            }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             Divider()
             HStack(spacing: 0) {
@@ -89,31 +98,19 @@ struct AppRootView: View {
         }
     }
 
-    @ViewBuilder
-    private var activeTab: some View {
-        switch selectedTab {
-        case .home:
-            DashboardView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
-        case .accounts:
-            AccountsView()
-        case .transactions:
-            TransactionsView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
-        case .insights:
-            InsightsView()
-        case .reports:
-            ReportsView()
-        case .settings:
-            SettingsView()
-        }
+    private func tabLayer<Content: View>(
+        _ tab: AppTab,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        content()
+            .opacity(selectedTab == tab ? 1 : 0)
+            .allowsHitTesting(selectedTab == tab)
+            .accessibilityHidden(selectedTab != tab)
+            .zIndex(selectedTab == tab ? 1 : 0)
     }
 
     private func select(_ tab: AppTab) {
-        if selectedTab == tab {
-            tabRootID = UUID()
-        } else {
-            selectedTab = tab
-            tabRootID = UUID()
-        }
+        selectedTab = tab
     }
 
     private var errorBinding: Binding<Bool> {
