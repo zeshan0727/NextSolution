@@ -4,6 +4,7 @@ struct BalanceCard: View {
     let balance: Decimal
     let income: Decimal
     let expense: Decimal
+    let loan: Decimal
     let currencyCode: String
 
     var body: some View {
@@ -30,6 +31,12 @@ struct BalanceCard: View {
                     title: "Expenses",
                     value: expense,
                     icon: "arrow.up.right",
+                    currencyCode: currencyCode
+                )
+                BalanceMiniStat(
+                    title: "Loans paid",
+                    value: loan,
+                    icon: "banknote.fill",
                     currencyCode: currencyCode
                 )
             }

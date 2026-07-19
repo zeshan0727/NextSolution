@@ -142,6 +142,7 @@ final class LedgerDiskStore {
         )
         let data = try encoder.encode(ledger)
         try data.write(to: fileURL, options: .atomic)
+        BackupSyncService.shared.ledgerDidSave(data)
         try? FileManager.default.setAttributes(
             [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
             ofItemAtPath: fileURL.path

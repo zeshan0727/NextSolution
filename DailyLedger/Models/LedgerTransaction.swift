@@ -116,6 +116,13 @@ struct LedgerTransaction: Identifiable, Codable, Hashable {
     }
 }
 
+extension LedgerTransaction {
+    var isLoanPayment: Bool {
+        guard type == .expense else { return false }
+        return ["loan", "loan payment", "payment", "payments"].contains(category.lowercased())
+    }
+}
+
 struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var keyword: String
@@ -258,6 +265,12 @@ struct LedgerData: Codable {
         }
         for index in transactions.indices where transactions[index].accountID == nil {
             transactions[index].accountID = fallbackID
+        }
+        for index in transactions.indices {
+            let category = transactions[index].category.lowercased()
+            if ["payment", "payments", "loan payment"].contains(category) {
+                transactions[index].category = "Loan"
+            }
         }
         version = 3
     }

@@ -14,6 +14,7 @@ struct DashboardView: View {
                         balance: allTimeBalance,
                         income: monthTotals.income,
                         expense: monthTotals.expense,
+                        loan: monthTotals.loan,
                         currencyCode: store.currencyCode
                     )
                     quickActions
@@ -110,7 +111,7 @@ struct DashboardView: View {
 
     private var monthTotals: LedgerTotals {
         guard let interval = Calendar.current.dateInterval(of: .month, for: Date()) else {
-            return LedgerTotals(income: 0, expense: 0, count: 0)
+            return LedgerTotals(income: 0, expense: 0, loan: 0, count: 0)
         }
         return store.totals(in: interval)
     }

@@ -9,6 +9,8 @@ private struct SettingsNotice: Identifiable {
 
 struct SettingsView: View {
     @EnvironmentObject private var store: LedgerStore
+    @StateObject private var backupSync = BackupSyncService.shared
+    @AppStorage("DailyLedgerICloudSync") private var iCloudSyncEnabled = false
     @State private var selectedCurrency = "QAR"
     @State private var exportingBackup = false
     @State private var exportingCSV = false
@@ -70,6 +72,30 @@ struct SettingsView: View {
                     Label("Import & Export", systemImage: "arrow.left.arrow.right")
                 } footer: {
                     Text("Imported records are merged by their unique ID, helping prevent duplicate entries.")
+                }
+
+                Section {
+                    Toggle("iCloud Drive Sync", isOn: $iCloudSyncEnabled)
+                    Button {
+                        store.syncBackupNow()
+                    } label: {
+                        Label("Back Up Now", systemImage: "icloud.and.arrow.up.fill")
+                    }
+                    Button {
+                        store.restoreLatestICloudBackup()
+                    } label: {
+                        Label("Restore Latest iCloud Backup", systemImage: "icloud.and.arrow.down.fill")
+                    }
+                    LabeledContent("Last Backup") {
+                        Text(backupSync.lastBackupDate?.formatted(date: .abbreviated, time: .shortened) ?? "Never")
+                    }
+                    Text(backupSync.status)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    Label("Backup & Sync", systemImage: "icloud.fill")
+                } footer: {
+                    Text("A local backup is saved after every change. Automatic iCloud Drive sync works only when iOS grants this installation an iCloud container; unsigned TrollStore apps may not receive that entitlement.")
                 }
 
                 Section {
@@ -141,7 +167,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.2")
+                LabeledContent("Version", value: "1.3.3")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {

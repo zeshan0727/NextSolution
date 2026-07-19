@@ -266,6 +266,37 @@ final class LedgerStore: ObservableObject {
         }
     }
 
+    func syncBackupNow() {
+        BackupSyncService.shared.syncNow(ledger: LedgerDiskStore.shared.load())
+    }
+
+    func restoreLatestICloudBackup() {
+        do {
+            let ledger = try BackupSyncService.shared.restoreLatestICloudBackup()
+            try LedgerDiskStore.shared.save(ledger)
+            reload()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func categories(for type: TransactionType) -> [String] {
+        let defaults = type == .expense
+            ? LedgerTransaction.expenseCategories
+            : LedgerTransaction.incomeCategories
+        let used = transactions
+            .filter { $0.type == type }
+            .map(\.category)
+        return (defaults + used).reduce(into: [String]()) { result, item in
+            let cleaned = item.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !cleaned.isEmpty && !result.contains(where: {
+                $0.caseInsensitiveCompare(cleaned) == .orderedSame
+            }) {
+                result.append(cleaned)
+            }
+        }
+    }
+
     func totals(in interval: DateInterval) -> LedgerTotals {
         let selected = transactions.filter {
             interval.contains($0.date) && account(withID: $0.accountID)?.currencyCode == currencyCode
@@ -274,11 +305,15 @@ final class LedgerStore: ObservableObject {
             .filter { $0.type == .income }
             .reduce(Decimal.zero) { $0 + $1.amount }
         let expense = selected
-            .filter { $0.type == .expense }
+            .filter { $0.type == .expense && !$0.isLoanPayment }
+            .reduce(Decimal.zero) { $0 + $1.amount }
+        let loan = selected
+            .filter(\.isLoanPayment)
             .reduce(Decimal.zero) { $0 + $1.amount }
         return LedgerTotals(
             income: income,
             expense: expense,
+            loan: loan,
             count: selected.filter { $0.type != .transfer }.count
         )
     }
@@ -296,6 +331,7 @@ private extension String {
 struct LedgerTotals {
     let income: Decimal
     let expense: Decimal
+    let loan: Decimal
     let count: Int
-    var balance: Decimal { income - expense }
+    var balance: Decimal { income - expense - loan }
 }

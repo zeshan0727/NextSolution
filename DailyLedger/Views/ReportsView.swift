@@ -103,6 +103,13 @@ struct ReportsView: View {
                     compact: true
                 )
             }
+            ReportTotalCard(
+                title: "Loans Paid",
+                value: totals.loan,
+                currencyCode: store.currencyCode,
+                icon: "banknote.fill",
+                color: AppTheme.orange
+            )
         }
     }
 
@@ -165,24 +172,35 @@ struct ReportsView: View {
                     .padding(.vertical, 24)
             } else {
                 ForEach(categoryTotals) { item in
-                    HStack(spacing: 12) {
-                        Image(systemName: AppTheme.categoryIcon(item.name))
-                            .font(.caption.bold())
-                            .foregroundStyle(AppTheme.categoryColor(item.name))
-                            .frame(width: 34, height: 34)
-                            .background(AppTheme.categoryColor(item.name).opacity(0.12), in: Circle())
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text(item.name)
-                                    .font(.subheadline.weight(.semibold))
-                                Spacer()
-                                Text(DisplayFormat.currency(item.amount, code: store.currencyCode))
-                                    .font(.subheadline.bold())
+                    NavigationLink {
+                        CategoryTransactionsView(
+                            category: item.name,
+                            interval: selectedInterval
+                        )
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: AppTheme.categoryIcon(item.name))
+                                .font(.caption.bold())
+                                .foregroundStyle(AppTheme.categoryColor(item.name))
+                                .frame(width: 34, height: 34)
+                                .background(AppTheme.categoryColor(item.name).opacity(0.12), in: Circle())
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Text(item.name)
+                                        .font(.subheadline.weight(.semibold))
+                                    Spacer()
+                                    Text(DisplayFormat.currency(item.amount, code: store.currencyCode))
+                                        .font(.subheadline.bold())
+                                }
+                                ProgressView(value: categoryRatio(item.amount))
+                                    .tint(AppTheme.categoryColor(item.name))
                             }
-                            ProgressView(value: categoryRatio(item.amount))
-                                .tint(AppTheme.categoryColor(item.name))
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(.tertiary)
                         }
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -248,7 +266,7 @@ struct ReportsView: View {
     }
 
     private var categoryTotals: [CategoryTotal] {
-        let expenses = selectedTransactions.filter { $0.type == .expense }
+        let expenses = selectedTransactions.filter { $0.type == .expense && !$0.isLoanPayment }
         let grouped = Dictionary(grouping: expenses, by: \.category)
         return grouped.map { category, items in
             CategoryTotal(

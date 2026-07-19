@@ -10,6 +10,7 @@ struct AddTransactionView: View {
     @State private var vendor = ""
     @State private var details = ""
     @State private var accountID: UUID?
+    @State private var newCategory = ""
     @FocusState private var amountFocused: Bool
     private let editingTransaction: LedgerTransaction?
 
@@ -145,6 +146,20 @@ struct AddTransactionView: View {
                     .accessibilityAddTraits(category == item ? .isSelected : [])
                 }
             }
+            HStack {
+                TextField("Create a new category", text: $newCategory)
+                    .textInputAutocapitalization(.words)
+                    .padding(12)
+                    .background(.background, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                Button("Add") {
+                    let cleaned = newCategory.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !cleaned.isEmpty else { return }
+                    category = cleaned
+                    newCategory = ""
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(newCategory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
         }
     }
 
@@ -236,9 +251,7 @@ struct AddTransactionView: View {
     }
 
     private func categories(for type: TransactionType) -> [String] {
-        type == .expense
-            ? LedgerTransaction.expenseCategories
-            : LedgerTransaction.incomeCategories
+        store.categories(for: type)
     }
 
     private func save() {
