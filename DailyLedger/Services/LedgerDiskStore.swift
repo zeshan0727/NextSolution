@@ -91,12 +91,21 @@ final class LedgerDiskStore {
         )
         let descriptor = Darwin.open(lockURL.path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
         guard descriptor >= 0 else { return try work() }
-        Darwin.flock(descriptor, LOCK_EX)
+        setFileLock(descriptor, type: Int16(F_WRLCK), blocking: true)
         defer {
-            Darwin.flock(descriptor, LOCK_UN)
+            setFileLock(descriptor, type: Int16(F_UNLCK), blocking: false)
             Darwin.close(descriptor)
         }
         return try work()
+    }
+
+    private func setFileLock(_ descriptor: Int32, type: Int16, blocking: Bool) {
+        var lock = Darwin.flock()
+        lock.l_type = type
+        lock.l_whence = Int16(SEEK_SET)
+        lock.l_start = 0
+        lock.l_len = 0
+        _ = Darwin.fcntl(descriptor, blocking ? F_SETLKW : F_SETLK, &lock)
     }
 
     private func loadUnlocked() -> LedgerData {

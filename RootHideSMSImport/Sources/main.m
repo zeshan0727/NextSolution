@@ -2,7 +2,6 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <sqlite3.h>
-#import <sys/file.h>
 #import <sys/stat.h>
 #import <fcntl.h>
 #import <unistd.h>
@@ -227,7 +226,8 @@ static BOOL AppendTransaction(NSString *ledgerPath, NSDictionary *parsed, NSStri
     NSString *lockPath = [directory stringByAppendingPathComponent:@"ledger.lock"];
     int descriptor = open(lockPath.fileSystemRepresentation, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (descriptor < 0) return NO;
-    if (flock(descriptor, LOCK_EX) != 0) {
+    struct flock lock = {.l_type = F_WRLCK, .l_whence = SEEK_SET, .l_start = 0, .l_len = 0};
+    if (fcntl(descriptor, F_SETLKW, &lock) != 0) {
         close(descriptor);
         return NO;
     }
@@ -300,7 +300,8 @@ static BOOL AppendTransaction(NSString *ledgerPath, NSDictionary *parsed, NSStri
             success = NO;
         }
     } @finally {
-        flock(descriptor, LOCK_UN);
+        lock.l_type = F_UNLCK;
+        fcntl(descriptor, F_SETLK, &lock);
         close(descriptor);
     }
     return success;
