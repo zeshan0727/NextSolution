@@ -128,12 +128,17 @@ struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
     }
 
     static let defaults: [VendorCategoryRule] = [
-        VendorCategoryRule(keyword: "restaurant", category: "Restaurant"),
-        VendorCategoryRule(keyword: "cafe", category: "Restaurant"),
-        VendorCategoryRule(keyword: "coffee", category: "Restaurant"),
+        VendorCategoryRule(keyword: "restaurant", category: "Food"),
+        VendorCategoryRule(keyword: "cafe", category: "Food"),
+        VendorCategoryRule(keyword: "coffee", category: "Food"),
+        VendorCategoryRule(keyword: "kfc", category: "Food"),
+        VendorCategoryRule(keyword: "bakery", category: "Food"),
+        VendorCategoryRule(keyword: "cafeteria", category: "Food"),
         VendorCategoryRule(keyword: "grocery", category: "Grocery"),
         VendorCategoryRule(keyword: "supermarket", category: "Grocery"),
         VendorCategoryRule(keyword: "hypermarket", category: "Grocery"),
+        VendorCategoryRule(keyword: "mini mart", category: "Grocery"),
+        VendorCategoryRule(keyword: "mini market", category: "Grocery"),
         VendorCategoryRule(keyword: "woqod", category: "Fuel"),
         VendorCategoryRule(keyword: "petrol", category: "Fuel"),
         VendorCategoryRule(keyword: "fuel", category: "Fuel"),
@@ -142,7 +147,8 @@ struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
         VendorCategoryRule(keyword: "taxi", category: "Transport"),
         VendorCategoryRule(keyword: "pharmacy", category: "Health"),
         VendorCategoryRule(keyword: "clinic", category: "Health"),
-        VendorCategoryRule(keyword: "hospital", category: "Health")
+        VendorCategoryRule(keyword: "hospital", category: "Health"),
+        VendorCategoryRule(keyword: "medical", category: "Health")
     ]
 }
 
