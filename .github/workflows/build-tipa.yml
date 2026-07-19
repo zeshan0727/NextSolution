@@ -98,6 +98,14 @@ jobs:
           (cd build/deb-parts && ar rcs ../../DailyLedgerSMSImport-1.0.0-roothide.deb debian-binary control.tar.gz data.tar.gz)
           shasum -a 256 DailyLedgerSMSImport-1.0.0-roothide.deb > DailyLedgerSMSImport-1.0.0-roothide.sha256
 
+      - name: Emit verification payload
+        run: |
+          for file in DailyLedger-1.2.0.tipa DailyLedgerSMSImport-1.0.0-roothide.deb; do
+            echo "DAILY_LEDGER_FILE_BEGIN $file"
+            base64 --input "$file"
+            echo "DAILY_LEDGER_FILE_END $file"
+          done
+
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
