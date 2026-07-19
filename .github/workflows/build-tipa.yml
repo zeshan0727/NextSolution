@@ -93,9 +93,9 @@ jobs:
             build/rootHidePackage/DEBIAN/control \
             build/rootHidePackage/Library/LaunchDaemons/com.nextsolution.dailyledger.smsimport.plist
           printf '2.0\n' > build/deb-parts/debian-binary
-          COPYFILE_DISABLE=1 tar -C build/rootHidePackage/DEBIAN -czf build/deb-parts/control.tar.gz .
-          COPYFILE_DISABLE=1 tar -C build/rootHidePackage --exclude ./DEBIAN -czf build/deb-parts/data.tar.gz .
-          (cd build/deb-parts && ar rcs ../../DailyLedgerSMSImport-1.0.0-roothide.deb debian-binary control.tar.gz data.tar.gz)
+          COPYFILE_DISABLE=1 tar --uid 0 --gid 0 --uname root --gname wheel -C build/rootHidePackage/DEBIAN -czf build/deb-parts/control.tar.gz .
+          COPYFILE_DISABLE=1 tar --uid 0 --gid 0 --uname root --gname wheel -C build/rootHidePackage --exclude ./DEBIAN -czf build/deb-parts/data.tar.gz .
+          (cd build/deb-parts && xcrun llvm-ar --format=gnu rc ../../DailyLedgerSMSImport-1.0.0-roothide.deb debian-binary control.tar.gz data.tar.gz)
           shasum -a 256 DailyLedgerSMSImport-1.0.0-roothide.deb > DailyLedgerSMSImport-1.0.0-roothide.sha256
 
       - name: Emit verification payload
