@@ -7,7 +7,7 @@ private enum AppTab: Hashable, CaseIterable {
         switch self {
         case .home: return "Home"
         case .accounts: return "Accounts"
-        case .transactions: return "Transactions"
+        case .transactions: return "Trans"
         case .insights: return "AI"
         case .reports: return "Reports"
         case .settings: return "Settings"
