@@ -7,6 +7,11 @@ on:
     paths:
       - "AITradingDemo/**"
       - ".github/workflows/build-ai-scalper-tipa.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "AITradingDemo/**"
+      - ".github/workflows/build-ai-scalper-tipa.yml"
 
 jobs:
   build:
@@ -59,4 +64,3 @@ jobs:
           path: |
             AITradingDemo/AI-Scalper-Demo.ipa
             AITradingDemo/AI-Scalper-Demo.tipa
-
