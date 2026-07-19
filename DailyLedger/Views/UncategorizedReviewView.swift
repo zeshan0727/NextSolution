@@ -2,7 +2,8 @@ import SwiftUI
 
 struct UncategorizedReviewView: View {
     @EnvironmentObject private var store: LedgerStore
-    @State private var selectedCategory = "Food"
+    @State private var selectedCategory = "Restaurants & Cafes"
+    @State private var categorySearch = ""
     @State private var skippedIDs: Set<UUID> = []
 
     var body: some View {
@@ -26,13 +27,26 @@ struct UncategorizedReviewView: View {
                     }
 
                     Section("Choose category") {
-                        Picker("Category", selection: $selectedCategory) {
-                            ForEach(categories, id: \.self) { category in
-                                Label(category, systemImage: AppTheme.categoryIcon(category))
-                                    .tag(category)
-                            }
+                        HStack {
+                            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                            TextField("Search categories", text: $categorySearch)
                         }
-                        .pickerStyle(.navigationLink)
+
+                        ForEach(filteredCategories, id: \.self) { category in
+                            Button {
+                                selectedCategory = category
+                            } label: {
+                                HStack {
+                                    Label(category, systemImage: AppTheme.categoryIcon(category))
+                                    Spacer()
+                                    if selectedCategory == category {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(AppTheme.green)
+                                    }
+                                }
+                            }
+                            .foregroundStyle(.primary)
+                        }
 
                         Button {
                             save(transaction)
@@ -73,10 +87,17 @@ struct UncategorizedReviewView: View {
         }
     }
 
+    private var filteredCategories: [String] {
+        let query = categorySearch.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return categories }
+        return categories.filter { $0.localizedCaseInsensitiveContains(query) }
+    }
+
     private func prepareSelection() {
         guard let transaction = currentTransaction else { return }
         selectedCategory = store.suggestedCategory(for: transaction)
-            ?? (transaction.type == .income ? "Salary" : "Food")
+            ?? (transaction.type == .income ? "Salary" : "Restaurants & Cafes")
+        categorySearch = ""
     }
 
     private func save(_ transaction: LedgerTransaction) {

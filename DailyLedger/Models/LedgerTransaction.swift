@@ -128,12 +128,12 @@ struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
     }
 
     static let defaults: [VendorCategoryRule] = [
-        VendorCategoryRule(keyword: "restaurant", category: "Food"),
-        VendorCategoryRule(keyword: "cafe", category: "Food"),
-        VendorCategoryRule(keyword: "coffee", category: "Food"),
-        VendorCategoryRule(keyword: "kfc", category: "Food"),
-        VendorCategoryRule(keyword: "bakery", category: "Food"),
-        VendorCategoryRule(keyword: "cafeteria", category: "Food"),
+        VendorCategoryRule(keyword: "restaurant", category: "Restaurants & Cafes"),
+        VendorCategoryRule(keyword: "cafe", category: "Restaurants & Cafes"),
+        VendorCategoryRule(keyword: "coffee", category: "Restaurants & Cafes"),
+        VendorCategoryRule(keyword: "kfc", category: "Restaurants & Cafes"),
+        VendorCategoryRule(keyword: "bakery", category: "Restaurants & Cafes"),
+        VendorCategoryRule(keyword: "cafeteria", category: "Restaurants & Cafes"),
         VendorCategoryRule(keyword: "grocery", category: "Grocery"),
         VendorCategoryRule(keyword: "supermarket", category: "Grocery"),
         VendorCategoryRule(keyword: "hypermarket", category: "Grocery"),
@@ -271,7 +271,7 @@ struct LedgerData: Codable {
 
 extension LedgerTransaction {
     static let expenseCategories = [
-        "Restaurant", "Grocery", "Food", "Shopping", "Transport", "Bills", "Fuel",
+        "Restaurants & Cafes", "Grocery", "Shopping", "Transport", "Bills", "Fuel",
         "Health", "Home", "Family", "Entertainment", "Other"
     ]
 

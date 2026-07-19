@@ -238,7 +238,7 @@ final class LedgerStore: ObservableObject {
         var categorized = 0
         let now = Date()
         updateLedger(failureMessage: "Transactions could not be categorized.") { ledger in
-            let rules = (ledger.settings.vendorRules + VendorCategoryRule.defaults).sorted {
+            let rules = (VendorCategoryRule.defaults + ledger.settings.vendorRules).sorted {
                 $0.keyword.count > $1.keyword.count
             }
             for index in ledger.transactions.indices {

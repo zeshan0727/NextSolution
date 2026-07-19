@@ -4,6 +4,7 @@ struct VendorRulesView: View {
     @EnvironmentObject private var store: LedgerStore
     @State private var editingRule: VendorCategoryRule?
     @State private var confirmingReset = false
+    @State private var searchText = ""
 
     var body: some View {
         List {
@@ -12,7 +13,7 @@ struct VendorRulesView: View {
                     Text("No rules yet. Unmatched vendors are saved as Other.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(store.settings.vendorRules) { rule in
+                    ForEach(filteredRules) { rule in
                         Button {
                             editingRule = rule
                         } label: {
@@ -35,12 +36,12 @@ struct VendorRulesView: View {
                             }
                         }
                     }
-                    .onDelete(perform: store.deleteVendorRules)
+                    .onDelete(perform: deleteFilteredRules)
                 }
             } header: {
                 Text("Vendor contains")
             } footer: {
-                Text("Rules are checked from top to bottom without case sensitivity. For example, NEW NASCO RESTAURANT matches restaurant.")
+                Text("Rules are checked without case sensitivity. For example, a KFC merchant matches Restaurants & Cafes.")
             }
 
             Section {
@@ -50,6 +51,7 @@ struct VendorRulesView: View {
             }
         }
         .navigationTitle("Vendor Rules")
+        .searchable(text: $searchText, prompt: "Search vendor rules")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
@@ -74,6 +76,24 @@ struct VendorRulesView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    private var filteredRules: [VendorCategoryRule] {
+        guard !searchText.isEmpty else { return store.settings.vendorRules }
+        return store.settings.vendorRules.filter {
+            $0.keyword.localizedCaseInsensitiveContains(searchText) ||
+            $0.category.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private func deleteFilteredRules(at offsets: IndexSet) {
+        let ids = Set(offsets.compactMap { index in
+            filteredRules.indices.contains(index) ? filteredRules[index].id : nil
+        })
+        let sourceOffsets = IndexSet(store.settings.vendorRules.indices.filter {
+            ids.contains(store.settings.vendorRules[$0].id)
+        })
+        store.deleteVendorRules(at: sourceOffsets)
     }
 }
 

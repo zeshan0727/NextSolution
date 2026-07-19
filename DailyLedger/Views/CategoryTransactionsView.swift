@@ -3,6 +3,7 @@ import SwiftUI
 struct CategoryTransactionsView: View {
     @EnvironmentObject private var store: LedgerStore
     @State private var selectedTransaction: LedgerTransaction?
+    @State private var searchText = ""
     let category: String
     let interval: DateInterval
 
@@ -18,6 +19,7 @@ struct CategoryTransactionsView: View {
         .listStyle(.insetGrouped)
         .navigationTitle(category)
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Search transactions")
         .overlay {
             if transactions.isEmpty {
                 EmptyLedgerView(
@@ -36,7 +38,11 @@ struct CategoryTransactionsView: View {
         store.transactions.filter {
             interval.contains($0.date) &&
             $0.category.caseInsensitiveCompare(category) == .orderedSame &&
-            store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+            store.account(withID: $0.accountID)?.currencyCode == store.currencyCode &&
+            (searchText.isEmpty ||
+                ($0.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                $0.details.localizedCaseInsensitiveContains(searchText) ||
+                NSDecimalNumber(decimal: $0.amount).stringValue.contains(searchText))
         }
         .sorted { $0.date > $1.date }
     }

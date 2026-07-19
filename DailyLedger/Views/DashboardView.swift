@@ -19,6 +19,7 @@ struct DashboardView: View {
     @State private var showingCustomDates = false
     @State private var draftStartDate = Date()
     @State private var draftEndDate = Date()
+    @State private var transactionSearch = ""
 
     var body: some View {
         NavigationStack {
@@ -166,6 +167,25 @@ struct DashboardView: View {
                     .foregroundStyle(.secondary)
             }
 
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Search recent transactions", text: $transactionSearch)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                if !transactionSearch.isEmpty {
+                    Button {
+                        transactionSearch = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(12)
+            .background(.background, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+
             if filteredTransactions.isEmpty {
                 EmptyLedgerView(
                     title: "No transactions yet",
@@ -219,7 +239,15 @@ struct DashboardView: View {
     }
 
     private var filteredTransactions: [LedgerTransaction] {
-        store.transactions.filter { selectedInterval.contains($0.date) }
+        store.transactions.filter {
+            guard selectedInterval.contains($0.date), !transactionSearch.isEmpty else {
+                return selectedInterval.contains($0.date)
+            }
+            return $0.category.localizedCaseInsensitiveContains(transactionSearch) ||
+                ($0.vendor?.localizedCaseInsensitiveContains(transactionSearch) ?? false) ||
+                $0.details.localizedCaseInsensitiveContains(transactionSearch) ||
+                NSDecimalNumber(decimal: $0.amount).stringValue.contains(transactionSearch)
+        }
     }
 
     private var periodTitle: String {

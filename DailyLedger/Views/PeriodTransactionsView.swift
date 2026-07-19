@@ -17,6 +17,7 @@ enum PeriodTransactionKind {
 struct PeriodTransactionsView: View {
     @EnvironmentObject private var store: LedgerStore
     @State private var selectedTransaction: LedgerTransaction?
+    @State private var searchText = ""
     let kind: PeriodTransactionKind
     let interval: DateInterval
 
@@ -32,6 +33,7 @@ struct PeriodTransactionsView: View {
         .listStyle(.insetGrouped)
         .navigationTitle(kind.title)
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Search transactions")
         .overlay {
             if transactions.isEmpty {
                 EmptyLedgerView(
@@ -52,15 +54,20 @@ struct PeriodTransactionsView: View {
                   store.account(withID: transaction.accountID)?.currencyCode == store.currencyCode else {
                 return false
             }
+            let kindMatches: Bool
             switch kind {
             case .income:
-                return transaction.type == .income
+                kindMatches = transaction.type == .income
             case .expenses:
-                return transaction.type == .expense
+                kindMatches = transaction.type == .expense
             case .loans:
-                return transaction.type == .transfer &&
+                kindMatches = transaction.type == .transfer &&
                     store.account(withID: transaction.destinationAccountID)?.group == .payments
             }
+            guard kindMatches, !searchText.isEmpty else { return kindMatches }
+            return transaction.category.localizedCaseInsensitiveContains(searchText) ||
+                (transaction.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                transaction.details.localizedCaseInsensitiveContains(searchText)
         }
         .sorted { $0.date > $1.date }
     }

@@ -51,8 +51,8 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload DailyLedger-1.3.7.tipa
-          shasum -a 256 DailyLedger-1.3.7.tipa > DailyLedger-1.3.7.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload DailyLedger-1.3.8.tipa
+          shasum -a 256 DailyLedger-1.3.8.tipa > DailyLedger-1.3.8.sha256
 
       - name: Test SMS parser
         run: |
@@ -123,8 +123,8 @@ jobs:
         with:
           name: DailyLedger-TrollStore
           path: |
-            DailyLedger-1.3.7.tipa
-            DailyLedger-1.3.7.sha256
+            DailyLedger-1.3.8.tipa
+            DailyLedger-1.3.8.sha256
             DailyLedgerSMSImport-1.3.0-roothide.deb
             DailyLedgerSMSImport-1.3.0-roothide.sha256
           if-no-files-found: error

@@ -5,6 +5,7 @@ struct AccountsView: View {
     @State private var editingAccount: LedgerAccount?
     @State private var addingAccount = false
     @State private var showingTransfer = false
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -45,6 +46,7 @@ struct AccountsView: View {
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Accounts")
+            .searchable(text: $searchText, prompt: "Search accounts")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { addingAccount = true } label: {
@@ -70,7 +72,11 @@ struct AccountsView: View {
 
     private func accounts(in group: AccountGroup) -> [LedgerAccount] {
         store.activeAccounts
-            .filter { $0.group == group }
+            .filter {
+                $0.group == group && (searchText.isEmpty ||
+                    $0.name.localizedCaseInsensitiveContains(searchText) ||
+                    $0.currencyCode.localizedCaseInsensitiveContains(searchText))
+            }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 }
@@ -111,6 +117,7 @@ private struct AccountDetailView: View {
     @State private var addingExpense = false
     @State private var addingIncome = false
     @State private var transferring = false
+    @State private var searchText = ""
 
     var body: some View {
         List {
@@ -161,6 +168,7 @@ private struct AccountDetailView: View {
             }
         }
         .navigationTitle(account?.name ?? "Account")
+        .searchable(text: $searchText, prompt: "Search transactions")
         .sheet(isPresented: $addingExpense) {
             AddTransactionView(initialType: .expense, accountID: accountID)
                 .environmentObject(store)
@@ -188,7 +196,12 @@ private struct AccountDetailView: View {
 
     private var transactions: [LedgerTransaction] {
         store.transactions.filter {
-            $0.accountID == accountID || $0.destinationAccountID == accountID
+            let belongs = $0.accountID == accountID || $0.destinationAccountID == accountID
+            guard belongs, !searchText.isEmpty else { return belongs }
+            return $0.category.localizedCaseInsensitiveContains(searchText) ||
+                ($0.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                $0.details.localizedCaseInsensitiveContains(searchText) ||
+                NSDecimalNumber(decimal: $0.amount).stringValue.contains(searchText)
         }
     }
 }

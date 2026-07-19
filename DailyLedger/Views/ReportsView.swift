@@ -50,11 +50,13 @@ private struct CategoryTotal: Identifiable {
 }
 
 struct ReportsView: View {
+    @State private var searchText = ""
+
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(ReportKind.allCases) { kind in
+                    ForEach(filteredReportKinds) { kind in
                         NavigationLink {
                             ReportDetailView(kind: kind)
                         } label: {
@@ -80,6 +82,15 @@ struct ReportsView: View {
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Reports")
+            .searchable(text: $searchText, prompt: "Search reports")
+        }
+    }
+
+    private var filteredReportKinds: [ReportKind] {
+        guard !searchText.isEmpty else { return ReportKind.allCases }
+        return ReportKind.allCases.filter {
+            $0.rawValue.localizedCaseInsensitiveContains(searchText) ||
+            $0.subtitle.localizedCaseInsensitiveContains(searchText)
         }
     }
 }
@@ -95,6 +106,7 @@ private struct ReportDetailView: View {
     @State private var showingCustomDates = false
     @State private var draftStartDate = Date()
     @State private var draftEndDate = Date()
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -125,6 +137,7 @@ private struct ReportDetailView: View {
             .background(AppTheme.page)
             .navigationTitle(kind.rawValue)
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "Search report transactions")
             .onChange(of: storedPeriod) { value in
                 anchorDate = Date()
                 if value == ReportPeriod.custom.rawValue {
@@ -386,14 +399,20 @@ private struct ReportDetailView: View {
                   store.account(withID: $0.accountID)?.currencyCode == store.currencyCode else {
                 return false
             }
+            let kindMatches: Bool
             switch kind {
-            case .summary, .categories: return true
-            case .income: return $0.type == .income
-            case .expenses: return $0.type == .expense
+            case .summary, .categories: kindMatches = true
+            case .income: kindMatches = $0.type == .income
+            case .expenses: kindMatches = $0.type == .expense
             case .loans:
-                return $0.type == .transfer &&
+                kindMatches = $0.type == .transfer &&
                     store.account(withID: $0.destinationAccountID)?.group == .payments
             }
+            guard kindMatches, !searchText.isEmpty else { return kindMatches }
+            return $0.category.localizedCaseInsensitiveContains(searchText) ||
+                ($0.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                $0.details.localizedCaseInsensitiveContains(searchText) ||
+                NSDecimalNumber(decimal: $0.amount).stringValue.contains(searchText)
         }
     }
 

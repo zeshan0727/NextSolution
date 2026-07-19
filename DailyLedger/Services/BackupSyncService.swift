@@ -50,6 +50,21 @@ final class BackupSyncService: ObservableObject {
         try? BGTaskScheduler.shared.submit(request)
     }
 
+    func handleDidEnterBackground(ledger: LedgerData) {
+        var taskID = UIBackgroundTaskIdentifier.invalid
+        taskID = UIApplication.shared.beginBackgroundTask(withName: "DailyLedgerBackup") {
+            if taskID != .invalid {
+                UIApplication.shared.endBackgroundTask(taskID)
+                taskID = .invalid
+            }
+        }
+        syncNow(ledger: ledger)
+        scheduleBackgroundRefresh()
+        if taskID != .invalid {
+            UIApplication.shared.endBackgroundTask(taskID)
+        }
+    }
+
     func registerBackgroundTask() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.taskIdentifier, using: nil) { task in
             guard let refresh = task as? BGAppRefreshTask else { return }

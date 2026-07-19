@@ -18,8 +18,9 @@ struct DailyLedgerApp: App {
                     if phase == .active {
                         store.reload()
                     } else if phase == .background {
-                        BackupSyncService.shared.syncNow(ledger: LedgerDiskStore.shared.load())
-                        BackupSyncService.shared.scheduleBackgroundRefresh()
+                        BackupSyncService.shared.handleDidEnterBackground(
+                            ledger: LedgerDiskStore.shared.load()
+                        )
                     }
                 }
         }
