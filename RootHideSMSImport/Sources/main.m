@@ -599,7 +599,7 @@ int main(int argc, char *argv[]) {
             ProcessMessages(YES);
             return 0;
         }
-        Log(@"Daily Ledger SMS Import 1.1.2 started; exact marker is %@.", kDefaultMatchText);
+        Log(@"Daily Ledger SMS Import 1.1.3 started in mobile GUI domain; exact marker is %@.", kDefaultMatchText);
         while (true) {
             @autoreleasepool { ProcessMessages(NO); }
             sleep(5);

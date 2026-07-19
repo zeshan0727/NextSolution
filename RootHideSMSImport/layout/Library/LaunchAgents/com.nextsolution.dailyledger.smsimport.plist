@@ -17,7 +17,5 @@
     <string>Background</string>
     <key>ThrottleInterval</key>
     <integer>5</integer>
-    <key>UserName</key>
-    <string>mobile</string>
 </dict>
 </plist>
