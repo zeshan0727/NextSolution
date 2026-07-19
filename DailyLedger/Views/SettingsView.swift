@@ -154,6 +154,34 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Button {
+                        let summary = store.automaticallyCategorizeTransactions()
+                        notice = SettingsNotice(
+                            title: "Categorization Complete",
+                            message: "Categorized \(summary.categorizedCount) transactions. \(summary.reviewCount) still need your review."
+                        )
+                    } label: {
+                        SettingsRow(
+                            title: "Auto-Categorize Transactions",
+                            subtitle: "Z-iP-14PM-16.0 transactions from the last 30 days",
+                            icon: "wand.and.stars.inverse",
+                            color: AppTheme.orange
+                        )
+                    }
+                    .disabled(store.uncategorizedTransactions.isEmpty)
+
+                    NavigationLink {
+                        UncategorizedReviewView()
+                    } label: {
+                        SettingsRow(
+                            title: "Review Uncategorized",
+                            subtitle: "\(store.uncategorizedTransactions.count) recent Z-iP transactions remaining",
+                            icon: "checklist",
+                            color: AppTheme.blue
+                        )
+                    }
+                    .disabled(store.uncategorizedTransactions.isEmpty)
+
                     Button(role: .destructive) {
                         confirmingDelete = true
                     } label: {
@@ -167,7 +195,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.5")
+                LabeledContent("Version", value: "1.3.7")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
