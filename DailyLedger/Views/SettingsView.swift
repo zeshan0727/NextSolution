@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var deepSeekConnected = DeepSeekService.shared.hasAPIKey
     @State private var testingDeepSeek = false
     @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
+    @AppStorage("DeepSeekLedgerLookup") private var deepSeekLedgerLookup = false
 
     private let currencies = ["QAR", "USD", "GBP", "EUR", "AED", "SAR", "PKR", "INR"]
 
@@ -136,6 +137,8 @@ struct SettingsView: View {
                         Text("V4 Pro · Deeper").tag("deepseek-v4-pro")
                     }
 
+                    Toggle("Allow Ledger Lookup in AI Chat", isOn: $deepSeekLedgerLookup)
+
                     Button("Save API Key") {
                         saveDeepSeekKey()
                     }
@@ -156,7 +159,7 @@ struct SettingsView: View {
                 } header: {
                     Label("DeepSeek AI", systemImage: "sparkles")
                 } footer: {
-                    Text("The key is stored only in this iPhone's Keychain and is excluded from exports and backups. Requests are manual, thinking mode is disabled, output is capped at 650 tokens, and only the ten largest summarized categories are sent.")
+                    Text("The key is stored only in this iPhone's Keychain and is excluded from exports and backups. Ledger Lookup searches locally and uses no API tokens. Requests are manual, thinking mode is disabled, and output is capped.")
                 }
 
                 Section {
@@ -250,7 +253,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.16")
+                LabeledContent("Version", value: "1.3.17")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
