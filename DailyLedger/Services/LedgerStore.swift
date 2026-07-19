@@ -228,6 +228,69 @@ final class LedgerStore: ObservableObject {
         }
     }
 
+    var uncategorizedTransactions: [LedgerTransaction] {
+        let now = Date()
+        return transactions.filter { isAutoCategorizationCandidate($0, now: now) }
+    }
+
+    @discardableResult
+    func automaticallyCategorizeTransactions() -> CategorizationSummary {
+        var categorized = 0
+        let now = Date()
+        updateLedger(failureMessage: "Transactions could not be categorized.") { ledger in
+            let rules = (ledger.settings.vendorRules + VendorCategoryRule.defaults).sorted {
+                $0.keyword.count > $1.keyword.count
+            }
+            for index in ledger.transactions.indices {
+                let transaction = ledger.transactions[index]
+                guard isAutoCategorizationCandidate(transaction, now: now),
+                      let category = suggestedCategory(for: transaction, rules: rules) else { continue }
+                ledger.transactions[index].category = category
+                categorized += 1
+            }
+        }
+        return CategorizationSummary(
+            categorizedCount: categorized,
+            reviewCount: uncategorizedTransactions.count
+        )
+    }
+
+    func suggestedCategory(for transaction: LedgerTransaction) -> String? {
+        suggestedCategory(for: transaction, rules: settings.vendorRules)
+    }
+
+    private func suggestedCategory(
+        for transaction: LedgerTransaction,
+        rules: [VendorCategoryRule]
+    ) -> String? {
+        let text = [transaction.vendor, transaction.details]
+            .compactMap { $0 }
+            .joined(separator: " ")
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            .lowercased()
+        guard !text.isEmpty else { return nil }
+        return rules.first { rule in
+            let keyword = rule.keyword
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+                .lowercased()
+            return !keyword.isEmpty && text.contains(keyword)
+        }?.category
+    }
+
+    private func isAutoCategorizationCandidate(
+        _ transaction: LedgerTransaction,
+        now: Date
+    ) -> Bool {
+        guard transaction.type != .transfer else { return false }
+        let categoryMatches = transaction.category
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare("Z-iP-14PM-16.0") == .orderedSame
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: now)
+            ?? now.addingTimeInterval(-30 * 24 * 60 * 60)
+        return categoryMatches && transaction.date >= cutoff && transaction.date <= now
+    }
+
     private func updateLedger(
         failureMessage: String,
         _ changes: (inout LedgerData) -> Void
@@ -313,10 +376,14 @@ final class LedgerStore: ObservableObject {
                 account(withID: $0.destinationAccountID)?.group == .payments
             }
             .reduce(Decimal.zero) { $0 + $1.amount }
+        let transfer = selected
+            .filter { $0.type == .transfer }
+            .reduce(Decimal.zero) { $0 + $1.amount }
         return LedgerTotals(
             income: income,
             expense: expense,
             loan: loan,
+            transfer: transfer,
             count: selected.count
         )
     }
@@ -327,6 +394,11 @@ struct ImportSummary {
     let accountCount: Int
 }
 
+struct CategorizationSummary {
+    let categorizedCount: Int
+    let reviewCount: Int
+}
+
 private extension String {
     var nilIfEmpty: String? { isEmpty ? nil : self }
 }
@@ -335,6 +407,7 @@ struct LedgerTotals {
     let income: Decimal
     let expense: Decimal
     let loan: Decimal
+    let transfer: Decimal
     let count: Int
-    var balance: Decimal { income - expense }
+    var balance: Decimal { income - expense - transfer }
 }
