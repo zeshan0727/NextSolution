@@ -10,7 +10,7 @@ struct BalanceCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 5) {
-                Text("CURRENT BALANCE")
+                Text("NET TOTAL · INCOME − EXPENSES − TRANSFERS")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.75))
                 Text(DisplayFormat.currency(balance, code: currencyCode))
