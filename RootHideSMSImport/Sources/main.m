@@ -386,6 +386,28 @@ static NSString *StatePath(void) {
     return [StateDirectory() stringByAppendingPathComponent:@"state.plist"];
 }
 
+static NSString *PreferencesPath(void) {
+    return MobilePath(@"/var/mobile/Library/Preferences/com.nextsolution.dailyledger.smsimport.plist");
+}
+
+static NSMutableDictionary *LoadTweakPreferences(void) {
+    NSDictionary *stored = [NSDictionary dictionaryWithContentsOfFile:PreferencesPath()];
+    return stored ? [stored mutableCopy] : [NSMutableDictionary dictionary];
+}
+
+static void SaveTweakStatus(NSString *message) {
+    NSMutableDictionary *preferences = LoadTweakPreferences();
+    preferences[@"tweakLoaded"] = @YES;
+    preferences[@"lastCheck"] = ISODate([NSDate date]);
+    preferences[@"lastResult"] = message ?: @"Unknown result";
+    [preferences writeToFile:PreferencesPath() atomically:YES];
+    CFNotificationCenterPostNotification(
+        CFNotificationCenterGetDarwinNotifyCenter(),
+        CFSTR("com.nextsolution.dailyledger.smsimport.preferences-changed"),
+        NULL, NULL, true
+    );
+}
+
 static NSMutableDictionary *LoadState(void) {
     NSDictionary *stored = [NSDictionary dictionaryWithContentsOfFile:StatePath()];
     return stored ? [stored mutableCopy] : [NSMutableDictionary dictionary];
@@ -457,32 +479,46 @@ static void SignalSuccessfulImport(void) {
 static void ProcessMessages(BOOL forceRecent) {
     NSString *ledgerPath = LedgerFilePath();
     if (!ledgerPath) {
-        Log(@"Daily Ledger container was not found. Open the app once, then reinstall or restart this service.");
+        NSString *result = @"Tweak loaded, but the Daily Ledger container was not found. Open Daily Ledger once.";
+        SaveTweakStatus(result);
+        Log(@"%@", result);
         return;
     }
 
     NSDictionary *ledgerSnapshot = ReadLedger(ledgerPath);
     NSDictionary *settings = ledgerSnapshot[@"settings"];
-    BOOL enabled = settings[@"smsAutoImportEnabled"] ? [settings[@"smsAutoImportEnabled"] boolValue] : YES;
-    NSString *matchText = [settings[@"smsMatchText"] isKindOfClass:[NSString class]] ? settings[@"smsMatchText"] : kDefaultMatchText;
+    NSDictionary *tweakPreferences = LoadTweakPreferences();
+    BOOL enabled = tweakPreferences[@"enabled"] ? [tweakPreferences[@"enabled"] boolValue] :
+        (settings[@"smsAutoImportEnabled"] ? [settings[@"smsAutoImportEnabled"] boolValue] : YES);
+    NSString *matchText = [tweakPreferences[@"matchText"] isKindOfClass:[NSString class]] ?
+        tweakPreferences[@"matchText"] :
+        ([settings[@"smsMatchText"] isKindOfClass:[NSString class]] ? settings[@"smsMatchText"] : kDefaultMatchText);
     if (matchText.length == 0) matchText = kDefaultMatchText;
     NSInteger requestID = [settings[@"smsRescanRequestID"] integerValue];
+    NSInteger paneRequestID = [tweakPreferences[@"scanRequestID"] integerValue];
     NSString *accountID = DestinationAccountID(ledgerSnapshot, settings ?: @{});
     NSString *accountName = DestinationAccountName(ledgerSnapshot, accountID);
     if (!enabled) {
-        if (forceRecent) UpdateStatus(ledgerPath, @"Automatic SMS import is turned off.");
+        if (forceRecent) {
+            UpdateStatus(ledgerPath, @"Automatic SMS import is turned off.");
+            SaveTweakStatus(@"Automatic SMS import is turned off.");
+        }
         return;
     }
 
     NSString *databasePath = SMSDatabasePath();
     if (!databasePath) {
-        if (forceRecent) UpdateStatus(ledgerPath, @"Messages database could not be opened by the RootHide service.");
+        NSString *result = @"Tweak loaded, but the Messages database path is unavailable.";
+        UpdateStatus(ledgerPath, result);
+        SaveTweakStatus(result);
         return;
     }
     sqlite3 *database = NULL;
     if (sqlite3_open_v2(databasePath.fileSystemRepresentation, &database, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, NULL) != SQLITE_OK) {
         if (database) sqlite3_close(database);
-        if (forceRecent) UpdateStatus(ledgerPath, @"Messages database could not be opened by the RootHide service.");
+        NSString *result = @"Tweak loaded, but SpringBoard could not open the Messages database.";
+        UpdateStatus(ledgerPath, result);
+        SaveTweakStatus(result);
         return;
     }
     sqlite3_busy_timeout(database, 2500);
@@ -490,9 +526,11 @@ static void ProcessMessages(BOOL forceRecent) {
     NSMutableDictionary *state = LoadState();
     NSNumber *savedRow = state[@"lastRowID"];
     NSInteger savedRequestID = [state[@"lastRescanRequestID"] integerValue];
+    NSInteger savedPaneRequestID = [state[@"lastPaneRescanRequestID"] integerValue];
     NSInteger stateVersion = [state[@"version"] integerValue];
     sqlite3_int64 maximum = MaximumRowID(database);
-    BOOL scanRecent = forceRecent || !savedRow || stateVersion < 3 || requestID != savedRequestID;
+    BOOL scanRecent = forceRecent || !savedRow || stateVersion < 4 ||
+        requestID != savedRequestID || paneRequestID != savedPaneRequestID;
     sqlite3_int64 lastRowID = scanRecent ? MAX((sqlite3_int64)0, maximum - 2000) : savedRow.longLongValue;
     BOOL hasNewRows = maximum > lastRowID;
     if (!hasNewRows && !scanRecent) {
@@ -554,7 +592,8 @@ static void ProcessMessages(BOOL forceRecent) {
     if (!writeFailed) processedRowID = maximum;
     state[@"lastRowID"] = @(processedRowID);
     state[@"lastRescanRequestID"] = @(requestID);
-    state[@"version"] = @3;
+    state[@"lastPaneRescanRequestID"] = @(paneRequestID);
+    state[@"version"] = @4;
     SaveState(state);
 
     NSString *status;
@@ -571,6 +610,7 @@ static void ProcessMessages(BOOL forceRecent) {
         status = [NSString stringWithFormat:@"No recent SMS containing %@ was found.", matchText];
     }
     UpdateStatus(ledgerPath, status);
+    SaveTweakStatus(status);
     Log(@"%@", status);
 }
 
@@ -598,7 +638,8 @@ static dispatch_source_t gDailyLedgerTimer;
 __attribute__((constructor))
 static void DailyLedgerSMSImportInitialize(void) {
     @autoreleasepool {
-        Log(@"Daily Ledger SMS Import 1.2.0 tweak loaded in SpringBoard; exact marker is %@.", kDefaultMatchText);
+        Log(@"Daily Ledger SMS Import 1.3.0 tweak loaded in SpringBoard; exact marker is %@.", kDefaultMatchText);
+        SaveTweakStatus(@"Tweak loaded in SpringBoard. Waiting for an SMS or manual scan.");
         dispatch_queue_t queue = dispatch_queue_create("com.nextsolution.dailyledger.smsimport", DISPATCH_QUEUE_SERIAL);
         gDailyLedgerTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
         dispatch_source_set_timer(gDailyLedgerTimer, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), 5 * NSEC_PER_SEC, NSEC_PER_SEC);
