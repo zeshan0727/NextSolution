@@ -20,9 +20,7 @@ final class LedgerDiskStore {
     func load() -> LedgerData {
         queue.sync {
             withFileLock {
-                let ledger = loadUnlocked()
-                try? saveUnlocked(ledger)
-                return ledger
+                loadUnlocked()
             }
         }
     }

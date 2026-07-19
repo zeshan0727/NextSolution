@@ -21,6 +21,7 @@ struct DashboardView: View {
     @State private var draftEndDate = Date()
     @State private var transactionSearch = ""
     @AppStorage("DashboardAccountSelection") private var selectedAccountValue = "all"
+    @State private var showingAccountSelection = false
 
     var body: some View {
         NavigationStack {
@@ -28,13 +29,14 @@ struct DashboardView: View {
                 LazyVStack(alignment: .leading, spacing: 22) {
                     header
                     dateFilter
-                    accountFilter
                     BalanceCard(
                         balance: filteredTotals.balance,
                         income: filteredTotals.income,
                         expense: filteredTotals.expense,
                         loan: filteredTotals.loan,
-                        currencyCode: store.currencyCode
+                        currencyCode: store.currencyCode,
+                        accountSummary: accountSelectionTitle,
+                        action: { showingAccountSelection = true }
                     )
                     quickActions
                     recentTransactions
@@ -63,6 +65,37 @@ struct DashboardView: View {
                                 storedDatePreset = DashboardDatePreset.custom.rawValue
                                 showingCustomDates = false
                             }
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAccountSelection) {
+                NavigationStack {
+                    List {
+                        Button {
+                            selectedAccountValue = "all"
+                        } label: {
+                            selectionRow(
+                                title: "All \(store.currencyCode) Accounts",
+                                selected: selectedAccountValue == "all"
+                            )
+                        }
+                        ForEach(selectableAccounts) { account in
+                            Button {
+                                toggleAccount(account.id)
+                            } label: {
+                                selectionRow(
+                                    title: account.name,
+                                    selected: selectedAccountIDs?.contains(account.id) == true
+                                )
+                            }
+                        }
+                    }
+                    .navigationTitle("Dashboard Accounts")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showingAccountSelection = false }
                         }
                     }
                 }
@@ -108,22 +141,6 @@ struct DashboardView: View {
                 .padding(13)
                 .background(.background, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             }
-        }
-    }
-
-    private var accountFilter: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            Text("Dashboard account").font(.headline)
-            Picker("Dashboard account", selection: $selectedAccountValue) {
-                Text("All \(store.currencyCode) Accounts").tag("all")
-                ForEach(store.activeAccounts.filter { $0.currencyCode == store.currencyCode }) { account in
-                    Text(account.name).tag(account.id.uuidString)
-                }
-            }
-            .pickerStyle(.menu)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(.background, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         }
     }
 
@@ -253,13 +270,14 @@ struct DashboardView: View {
     }
 
     private var filteredTotals: LedgerTotals {
-        store.totals(in: selectedInterval, accountID: selectedAccountID)
+        store.totals(in: selectedInterval, accountIDs: selectedAccountIDs)
     }
 
     private var filteredTransactions: [LedgerTransaction] {
         store.transactions.filter {
-            let accountMatches = selectedAccountID == nil ||
-                $0.accountID == selectedAccountID || $0.destinationAccountID == selectedAccountID
+            let accountMatches = selectedAccountIDs == nil ||
+                selectedAccountIDs?.contains($0.accountID ?? LedgerAccount.legacyMainID) == true ||
+                selectedAccountIDs?.contains($0.destinationAccountID ?? LedgerAccount.legacyMainID) == true
             guard selectedInterval.contains($0.date), accountMatches, !transactionSearch.isEmpty else {
                 return selectedInterval.contains($0.date) && accountMatches
             }
@@ -270,8 +288,43 @@ struct DashboardView: View {
         }
     }
 
-    private var selectedAccountID: UUID? {
-        selectedAccountValue == "all" ? nil : UUID(uuidString: selectedAccountValue)
+    private var selectedAccountIDs: Set<UUID>? {
+        guard selectedAccountValue != "all" else { return nil }
+        let ids = Set(selectedAccountValue.split(separator: ",").compactMap { UUID(uuidString: String($0)) })
+        return ids.isEmpty ? nil : ids
+    }
+
+    private var selectableAccounts: [LedgerAccount] {
+        store.activeAccounts
+            .filter { $0.currencyCode == store.currencyCode }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private var accountSelectionTitle: String {
+        guard let ids = selectedAccountIDs else { return "All \(store.currencyCode) accounts · Tap to select" }
+        let names = selectableAccounts.filter { ids.contains($0.id) }.map(\.name)
+        if names.count == 1 { return names[0] + " · Tap to change" }
+        return "\(names.count) accounts selected · Tap to change"
+    }
+
+    private func toggleAccount(_ id: UUID) {
+        var ids = selectedAccountIDs ?? []
+        if ids.contains(id) { ids.remove(id) } else { ids.insert(id) }
+        selectedAccountValue = ids.isEmpty
+            ? "all"
+            : ids.map(\.uuidString).sorted().joined(separator: ",")
+    }
+
+    private func selectionRow(title: String, selected: Bool) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            if selected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(AppTheme.purple)
+            }
+        }
+        .foregroundStyle(.primary)
     }
 
     private var periodTitle: String {

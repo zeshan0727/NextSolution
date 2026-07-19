@@ -17,7 +17,6 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var exportingGoogleDrive = false
     @State private var importingGoogleDrive = false
-    @State private var confirmingDelete = false
     @State private var notice: SettingsNotice?
 
     private let currencies = ["QAR", "USD", "GBP", "EUR", "AED", "SAR", "PKR", "INR"]
@@ -194,12 +193,6 @@ struct SettingsView: View {
                     }
                     .disabled(store.uncategorizedTransactions.isEmpty)
 
-                    Button(role: .destructive) {
-                        confirmingDelete = true
-                    } label: {
-                        Label("Delete All Transactions", systemImage: "trash.fill")
-                    }
-                    .disabled(store.transactions.isEmpty)
                 } header: {
                     Label("Data", systemImage: "lock.shield.fill")
                 } footer: {
@@ -207,7 +200,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.9")
+                LabeledContent("Version", value: "1.3.10")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
@@ -259,18 +252,6 @@ struct SettingsView: View {
                 allowsMultipleSelection: false
             ) { result in
                 importFile(result)
-            }
-            .confirmationDialog(
-                "Delete all transactions?",
-                isPresented: $confirmingDelete,
-                titleVisibility: .visible
-            ) {
-                Button("Delete Everything", role: .destructive) {
-                    store.deleteAll()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This cannot be undone unless you have exported a backup.")
             }
             .alert(item: $notice) { notice in
                 Alert(

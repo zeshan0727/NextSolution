@@ -9,6 +9,11 @@ final class BackupSyncService: ObservableObject {
 
     @Published private(set) var status = "Local automatic backup is ready."
     @Published private(set) var lastBackupDate: Date?
+    private let backupQueue = DispatchQueue(
+        label: "com.nextsolution.dailyledger.backup",
+        qos: .utility
+    )
+    private var pendingBackup: DispatchWorkItem?
 
     private init() {
         if let date = UserDefaults.standard.object(forKey: "DailyLedgerLastBackupDate") as? Date {
@@ -17,9 +22,16 @@ final class BackupSyncService: ObservableObject {
     }
 
     func ledgerDidSave(_ data: Data) {
-        DispatchQueue.main.async {
-            self.saveSnapshot(data, includeICloud: UserDefaults.standard.bool(forKey: "DailyLedgerICloudSync"))
+        pendingBackup?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.saveSnapshot(
+                data,
+                includeICloud: UserDefaults.standard.bool(forKey: "DailyLedgerICloudSync")
+            )
         }
+        pendingBackup = work
+        backupQueue.asyncAfter(deadline: .now() + 0.6, execute: work)
     }
 
     func syncNow(ledger: LedgerData) {
@@ -81,15 +93,18 @@ final class BackupSyncService: ObservableObject {
             let directory = localBackupURL.deletingLastPathComponent()
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try data.write(to: localBackupURL, options: .atomic)
-            lastBackupDate = Date()
-            UserDefaults.standard.set(lastBackupDate, forKey: "DailyLedgerLastBackupDate")
+            let completedAt = Date()
+            UserDefaults.standard.set(completedAt, forKey: "DailyLedgerLastBackupDate")
 
             guard includeICloud else {
-                status = "Local backup saved automatically."
+                publishBackupStatus("Local backup saved automatically.", date: completedAt)
                 return
             }
             guard let cloudURL = iCloudBackupURL else {
-                status = "Local backup saved. Automatic iCloud requires an Apple-provisioned iCloud entitlement."
+                publishBackupStatus(
+                    "Local backup saved. Automatic iCloud requires an Apple-provisioned iCloud entitlement.",
+                    date: completedAt
+                )
                 return
             }
             try FileManager.default.createDirectory(
@@ -97,9 +112,16 @@ final class BackupSyncService: ObservableObject {
                 withIntermediateDirectories: true
             )
             try data.write(to: cloudURL, options: .atomic)
-            status = "Local and iCloud Drive backups are up to date."
+            publishBackupStatus("Local and iCloud Drive backups are up to date.", date: completedAt)
         } catch {
-            status = "Backup failed: \(error.localizedDescription)"
+            publishBackupStatus("Backup failed: \(error.localizedDescription)", date: nil)
+        }
+    }
+
+    private func publishBackupStatus(_ message: String, date: Date?) {
+        DispatchQueue.main.async {
+            self.status = message
+            if let date { self.lastBackupDate = date }
         }
     }
 

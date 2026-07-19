@@ -6,8 +6,11 @@ struct BalanceCard: View {
     let expense: Decimal
     let loan: Decimal
     let currencyCode: String
+    let accountSummary: String
+    let action: () -> Void
 
     var body: some View {
+        Button(action: action) {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 5) {
                 Text("NET BALANCE · INCOME − EXPENSES − LOANS")
@@ -18,6 +21,9 @@ struct BalanceCard: View {
                     .foregroundStyle(.white)
                     .minimumScaleFactor(0.65)
                     .lineLimit(1)
+                Text(accountSummary)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.82))
             }
 
             HStack(spacing: 16) {
@@ -53,6 +59,8 @@ struct BalanceCard: View {
         }
         .shadow(color: AppTheme.purple.opacity(0.22), radius: 18, y: 10)
         .accessibilityElement(children: .combine)
+        }
+        .buttonStyle(.plain)
     }
 }
 

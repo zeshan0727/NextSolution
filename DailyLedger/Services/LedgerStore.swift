@@ -363,17 +363,6 @@ final class LedgerStore: ObservableObject {
         )
     }
 
-    func deleteAll() {
-        do {
-            try LedgerDiskStore.shared.mutate { ledger in
-                ledger.transactions = []
-            }
-            reload()
-        } catch {
-            errorMessage = "The data could not be deleted."
-        }
-    }
-
     func syncBackupNow() {
         BackupSyncService.shared.syncNow(ledger: LedgerDiskStore.shared.load())
     }
@@ -405,11 +394,12 @@ final class LedgerStore: ObservableObject {
         }
     }
 
-    func totals(in interval: DateInterval, accountID: UUID? = nil) -> LedgerTotals {
+    func totals(in interval: DateInterval, accountIDs: Set<UUID>? = nil) -> LedgerTotals {
+        let accountsByID = Dictionary(uniqueKeysWithValues: accounts.map { ($0.id, $0) })
         let selected = transactions.filter {
             interval.contains($0.date) &&
-            account(withID: $0.accountID)?.currencyCode == currencyCode &&
-            (accountID == nil || $0.accountID == accountID)
+            accountsByID[$0.accountID ?? LedgerAccount.legacyMainID]?.currencyCode == currencyCode &&
+            (accountIDs == nil || accountIDs?.contains($0.accountID ?? LedgerAccount.legacyMainID) == true)
         }
         let income = selected
             .filter { $0.type == .income }
@@ -420,7 +410,7 @@ final class LedgerStore: ObservableObject {
         let loan = selected
             .filter {
                 $0.type == .transfer &&
-                account(withID: $0.destinationAccountID)?.group == .payments
+                accountsByID[$0.destinationAccountID ?? LedgerAccount.legacyMainID]?.group == .payments
             }
             .reduce(Decimal.zero) { $0 + $1.amount }
         let transfer = selected
