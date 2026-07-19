@@ -11,8 +11,15 @@ struct AddTransactionView: View {
     @State private var details = ""
     @State private var accountID: UUID?
     @State private var newCategory = ""
-    @FocusState private var amountFocused: Bool
+    @FocusState private var focusedField: Field?
     private let editingTransaction: LedgerTransaction?
+
+    private enum Field: Hashable {
+        case amount
+        case newCategory
+        case vendor
+        case details
+    }
 
     init(initialType: TransactionType, accountID: UUID? = nil) {
         editingTransaction = nil
@@ -54,13 +61,21 @@ struct AddTransactionView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button {
+                        focusedField = nil
+                    } label: {
+                        Image(systemName: "keyboard.chevron.compact.down")
+                    }
+                    .accessibilityLabel("Hide keyboard")
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 saveButton
             }
             .onAppear {
                 if accountID == nil { accountID = store.defaultAccountID }
-                amountFocused = true
             }
             .onChange(of: type) { newType in
                 let available = categories(for: newType)
@@ -108,7 +123,7 @@ struct AddTransactionView: View {
                 TextField("0.00", text: $amountText)
                     .keyboardType(.decimalPad)
                     .font(.system(size: 42, weight: .bold, design: .rounded))
-                    .focused($amountFocused)
+                    .focused($focusedField, equals: .amount)
                     .accessibilityLabel("Transaction amount")
             }
             .padding(18)
@@ -149,6 +164,7 @@ struct AddTransactionView: View {
             HStack {
                 TextField("Create a new category", text: $newCategory)
                     .textInputAutocapitalization(.words)
+                    .focused($focusedField, equals: .newCategory)
                     .padding(12)
                     .background(.background, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 Button("Add") {
@@ -169,6 +185,7 @@ struct AddTransactionView: View {
                 .font(.headline)
             TextField("Example: Lunch, petrol, client payment", text: $details)
                 .textInputAutocapitalization(.sentences)
+                .focused($focusedField, equals: .details)
                 .padding(16)
                 .background(.background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
@@ -180,6 +197,7 @@ struct AddTransactionView: View {
                 .font(.headline)
             TextField("Example: NEW NASCO RESTAURANT", text: $vendor)
                 .textInputAutocapitalization(.words)
+                .focused($focusedField, equals: .vendor)
                 .padding(16)
                 .background(.background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
@@ -251,7 +269,9 @@ struct AddTransactionView: View {
     }
 
     private func categories(for type: TransactionType) -> [String] {
-        store.categories(for: type)
+        store.categories(for: type).sorted {
+            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+        }
     }
 
     private func save() {
