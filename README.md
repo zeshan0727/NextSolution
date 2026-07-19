@@ -1,55 +1,62 @@
-# Next Solution - Bollywood Movies Collection
+# Daily Ledger
 
-🎬 Watch 200+ Bollywood movies online for free in HD quality.
+Daily Ledger is an offline personal income and expense tracker for iPhone. This build targets iOS 16.0 and is designed to be packaged as a `.tipa` for TrollStore.
 
-## Features
-- 200+ Latest Bollywood movies (2024-2025)
-- Embedded video player
-- Mobile responsive design
-- No registration required
-- Free streaming
-- SEO optimized pages
+## Included in version 1.1
 
-## Live Site
-🌐 **https://zeshan0727.github.io/NextSolution/**
+- Fast income and expense entry with colorful categories
+- Home dashboard with current balance and monthly totals
+- Searchable transaction history grouped by date
+- Tap any transaction to edit its amount, type, category, description, or date
+- Monthly and yearly reports with income/expense charts
+- Spending breakdown by category
+- QAR default currency, plus USD, GBP, EUR, AED, SAR, PKR, and INR display options
+- CSV export for Excel, Numbers, Zoho, and other apps
+- Complete JSON backup export and merge-safe import
+- Offline App Intents for Shortcuts:
+  - Add Expense
+  - Add Income
+  - Open Expense Entry
+  - Open Income Entry
 
-## Setup
-1. Upload all files to GitHub repository
-2. Enable GitHub Pages in repository Settings
-3. The workflow will auto-generate movie pages
+Data is saved locally in the app's Application Support folder with protection that allows an approved Shortcut to write while the device is locked after the first unlock following a restart.
 
-## Files
-- `index.html` - Main movies gallery page
-- `movies.html` - Alternative main page
-- `movie-template.html` - Template for individual movie pages
-- `generate-pages.js` - Script to generate 200+ movie pages
-- `.github/workflows/generate-movies.yml` - GitHub Action workflow
-- `package.json` - Node.js configuration
-- `create-sitemap.js` - SEO sitemap generator
-- `sitemap.xml` - Auto-generated SEO sitemap
-- `robots.txt` - Search engine instructions
+## Build the TIPA without a developer account
 
-## How It Works
-1. GitHub Action runs when you push to main branch
-2. Generates individual HTML pages for each movie
-3. Creates SEO sitemap with all movie URLs
-4. Deploys to GitHub Pages automatically
+The included GitHub Actions workflow builds the unsigned iPhone app on macOS and packages it for TrollStore.
 
-## Movie URLs
-Each movie has its own SEO-friendly URL:
-- `https://zeshan0727.github.io/NextSolution/movies/120-bahadur-2025.html`
-- `https://zeshan0727.github.io/NextSolution/movies/war-2-2025.html`
-- `https://zeshan0727.github.io/NextSolution/movies/fighter-2024.html`
-- ... (200+ movies)
+1. Upload this folder to a GitHub repository.
+2. Open **Actions → Build Daily Ledger TIPA → Run workflow**.
+3. Download the **DailyLedger-TrollStore** artifact when the build finishes.
+4. Extract the artifact, open `DailyLedger-1.1.0.tipa` on the iPhone, and choose TrollStore.
 
-## Technologies
-- HTML5
-- CSS3
-- JavaScript
-- GitHub Pages
-- GitHub Actions
-- Node.js
+No Apple Developer account is needed for TrollStore installation.
 
-## Contact
-Repository: https://github.com/zeshan0727/NextSolution
-Live Site: https://zeshan0727.github.io/NextSolution/
+## Build locally with Xcode
+
+1. Install XcodeGen: `brew install xcodegen`
+2. From this folder, run `xcodegen generate`.
+3. Open `DailyLedger.xcodeproj` in Xcode.
+
+The deployment target and App Intents are set to iOS 16.0. The app is iPhone-only and optimized for portrait use.
+
+## Shortcuts setup
+
+Open Daily Ledger once after installation, then open the Shortcuts app and search for **Daily Ledger** under Apps. The Add Expense and Add Income actions accept:
+
+- Amount (required)
+- Category (optional; defaults to Other or Salary)
+- Description (optional)
+- Date (optional; defaults to now)
+
+For a personal automation, add one of these actions and enable **Run Immediately** where iOS offers that option. Whether an automation can run while locked also depends on the trigger selected by Apple and whether the phone has been unlocked once since restarting.
+
+## Supported import columns
+
+CSV files must contain `type`, `amount`, and `date`. They may also contain `id`, `category`, and either `details` or `note`.
+
+- `type`: `income` or `expense`
+- `amount`: plain decimal value, such as `25.50`
+- `date`: ISO 8601, such as `2026-07-19T08:30:00Z`
+
+Imported records are merged using their UUID when an `id` is present.
