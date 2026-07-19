@@ -81,6 +81,14 @@ private struct TradeHistoryRow: View {
                     Text(trade.exitReason?.rawValue ?? "Completed")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    HStack(spacing: 5) {
+                        Text(trade.dataSource?.rawValue ?? "Simulation v0.1")
+                        if let fee = trade.feeCost, fee > 0 {
+                            Text("• Fees \(fee.formatted(.currency(code: "USD")))")
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                     Text(trade.openedAt.formatted(date: .omitted, time: .shortened))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
