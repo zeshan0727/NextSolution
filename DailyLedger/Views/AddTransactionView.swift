@@ -11,12 +11,14 @@ struct AddTransactionView: View {
     @State private var details = ""
     @State private var accountID: UUID?
     @State private var newCategory = ""
+    @State private var categorySearch = ""
     @FocusState private var focusedField: Field?
     private let editingTransaction: LedgerTransaction?
 
     private enum Field: Hashable {
         case amount
         case newCategory
+        case categorySearch
         case vendor
         case details
     }
@@ -135,8 +137,28 @@ struct AddTransactionView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Category")
                 .font(.headline)
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Search categories", text: $categorySearch)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .focused($focusedField, equals: .categorySearch)
+                if !categorySearch.isEmpty {
+                    Button {
+                        categorySearch = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear category search")
+                }
+            }
+            .padding(12)
+            .background(.background, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 10) {
-                ForEach(categories(for: type), id: \.self) { item in
+                ForEach(filteredCategories, id: \.self) { item in
                     Button {
                         category = item
                     } label: {
@@ -272,6 +294,13 @@ struct AddTransactionView: View {
         store.categories(for: type).sorted {
             $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
         }
+    }
+
+    private var filteredCategories: [String] {
+        let items = categories(for: type)
+        let query = categorySearch.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return items }
+        return items.filter { $0.localizedCaseInsensitiveContains(query) }
     }
 
     private func save() {
