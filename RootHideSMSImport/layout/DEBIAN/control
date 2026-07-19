@@ -1,0 +1,9 @@
+Package: com.nextsolution.dailyledger.smsimport
+Name: Daily Ledger SMS Import
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Description: Locally imports supported QAR bank transaction SMS into Daily Ledger. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.2.0 or later.
+Maintainer: NextSolution
+Author: NextSolution
+Section: Utilities
+Priority: optional
