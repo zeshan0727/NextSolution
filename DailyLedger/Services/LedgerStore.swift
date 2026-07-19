@@ -308,7 +308,10 @@ final class LedgerStore: ObservableObject {
             .filter { $0.type == .expense }
             .reduce(Decimal.zero) { $0 + $1.amount }
         let loan = selected
-            .filter { $0.type == .transfer }
+            .filter {
+                $0.type == .transfer &&
+                account(withID: $0.destinationAccountID)?.group == .payments
+            }
             .reduce(Decimal.zero) { $0 + $1.amount }
         return LedgerTotals(
             income: income,

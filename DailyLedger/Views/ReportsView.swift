@@ -4,6 +4,7 @@ import SwiftUI
 private enum ReportPeriod: String, CaseIterable, Identifiable {
     case month = "Monthly"
     case year = "Yearly"
+    case custom = "Custom"
     var id: String { rawValue }
 }
 
@@ -86,17 +87,22 @@ struct ReportsView: View {
 private struct ReportDetailView: View {
     @EnvironmentObject private var store: LedgerStore
     let kind: ReportKind
-    @State private var period: ReportPeriod = .month
+    @AppStorage("ReportPeriodSelection") private var storedPeriod = ReportPeriod.month.rawValue
+    @AppStorage("ReportCustomStart") private var storedCustomStart = Date().timeIntervalSince1970
+    @AppStorage("ReportCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
     @State private var anchorDate = Date()
     @State private var selectedTransaction: LedgerTransaction?
+    @State private var showingCustomDates = false
+    @State private var draftStartDate = Date()
+    @State private var draftEndDate = Date()
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 18) {
-                    Picker("Report period", selection: $period) {
+                    Picker("Report period", selection: $storedPeriod) {
                         ForEach(ReportPeriod.allCases) { value in
-                            Text(value.rawValue).tag(value)
+                            Text(value.rawValue).tag(value.rawValue)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -119,10 +125,40 @@ private struct ReportDetailView: View {
             .background(AppTheme.page)
             .navigationTitle(kind.rawValue)
             .navigationBarTitleDisplayMode(.inline)
-            .onChange(of: period) { _ in anchorDate = Date() }
+            .onChange(of: storedPeriod) { value in
+                anchorDate = Date()
+                if value == ReportPeriod.custom.rawValue {
+                    draftStartDate = Date(timeIntervalSince1970: storedCustomStart)
+                    draftEndDate = Date(timeIntervalSince1970: storedCustomEnd)
+                    showingCustomDates = true
+                }
+            }
             .sheet(item: $selectedTransaction) { transaction in
                 TransactionSnapshotView(transaction: transaction)
                     .environmentObject(store)
+            }
+            .sheet(isPresented: $showingCustomDates) {
+                NavigationStack {
+                    Form {
+                        DatePicker("From", selection: $draftStartDate, displayedComponents: .date)
+                        DatePicker("To", selection: $draftEndDate, displayedComponents: .date)
+                    }
+                    .navigationTitle("Custom Report Period")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showingCustomDates = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") {
+                                storedCustomStart = draftStartDate.timeIntervalSince1970
+                                storedCustomEnd = draftEndDate.timeIntervalSince1970
+                                storedPeriod = ReportPeriod.custom.rawValue
+                                showingCustomDates = false
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -159,6 +195,8 @@ private struct ReportDetailView: View {
                     .frame(width: 40, height: 40)
                     .background(.background, in: Circle())
             }
+            .disabled(selectedPeriod == .custom)
+            .opacity(selectedPeriod == .custom ? 0.35 : 1)
             Spacer()
             VStack(spacing: 2) {
                 Text(periodTitle)
@@ -173,8 +211,8 @@ private struct ReportDetailView: View {
                     .frame(width: 40, height: 40)
                     .background(.background, in: Circle())
             }
-            .disabled(isCurrentPeriod)
-            .opacity(isCurrentPeriod ? 0.35 : 1)
+            .disabled(isCurrentPeriod || selectedPeriod == .custom)
+            .opacity(isCurrentPeriod || selectedPeriod == .custom ? 0.35 : 1)
         }
     }
 
@@ -188,30 +226,45 @@ private struct ReportDetailView: View {
                 color: totals.balance >= 0 ? AppTheme.purple : AppTheme.red
             )
             HStack(spacing: 12) {
+                NavigationLink {
+                    PeriodTransactionsView(kind: .income, interval: selectedInterval)
+                } label: {
+                    ReportTotalCard(
+                        title: "Income",
+                        value: totals.income,
+                        currencyCode: store.currencyCode,
+                        icon: "arrow.down.left.circle.fill",
+                        color: AppTheme.green,
+                        compact: true
+                    )
+                }
+                .buttonStyle(.plain)
+                NavigationLink {
+                    PeriodTransactionsView(kind: .expenses, interval: selectedInterval)
+                } label: {
+                    ReportTotalCard(
+                        title: "Expenses",
+                        value: totals.expense,
+                        currencyCode: store.currencyCode,
+                        icon: "arrow.up.right.circle.fill",
+                        color: AppTheme.red,
+                        compact: true
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            NavigationLink {
+                PeriodTransactionsView(kind: .loans, interval: selectedInterval)
+            } label: {
                 ReportTotalCard(
-                    title: "Income",
-                    value: totals.income,
+                    title: "Loans Paid",
+                    value: totals.loan,
                     currencyCode: store.currencyCode,
-                    icon: "arrow.down.left.circle.fill",
-                    color: AppTheme.green,
-                    compact: true
-                )
-                ReportTotalCard(
-                    title: "Expenses",
-                    value: totals.expense,
-                    currencyCode: store.currencyCode,
-                    icon: "arrow.up.right.circle.fill",
-                    color: AppTheme.red,
-                    compact: true
+                    icon: "banknote.fill",
+                    color: AppTheme.orange
                 )
             }
-            ReportTotalCard(
-                title: "Loans Paid",
-                value: totals.loan,
-                currencyCode: store.currencyCode,
-                icon: "banknote.fill",
-                color: AppTheme.orange
-            )
+            .buttonStyle(.plain)
         }
     }
 
@@ -311,8 +364,19 @@ private struct ReportDetailView: View {
     }
 
     private var selectedInterval: DateInterval {
-        let component: Calendar.Component = period == .month ? .month : .year
-        return Calendar.current.dateInterval(of: component, for: anchorDate)
+        let calendar = Calendar.current
+        if selectedPeriod == .custom {
+            let first = Date(timeIntervalSince1970: storedCustomStart)
+            let second = Date(timeIntervalSince1970: storedCustomEnd)
+            let start = calendar.startOfDay(for: min(first, second))
+            let endDay = calendar.startOfDay(for: max(first, second))
+            return DateInterval(
+                start: start,
+                end: calendar.date(byAdding: .day, value: 1, to: endDay) ?? endDay
+            )
+        }
+        let component: Calendar.Component = selectedPeriod == .month ? .month : .year
+        return calendar.dateInterval(of: component, for: anchorDate)
             ?? DateInterval(start: anchorDate, duration: 1)
     }
 
@@ -326,7 +390,9 @@ private struct ReportDetailView: View {
             case .summary, .categories: return true
             case .income: return $0.type == .income
             case .expenses: return $0.type == .expense
-            case .loans: return $0.type == .transfer
+            case .loans:
+                return $0.type == .transfer &&
+                    store.account(withID: $0.destinationAccountID)?.group == .payments
             }
         }
     }
@@ -336,22 +402,38 @@ private struct ReportDetailView: View {
     }
 
     private var periodTitle: String {
-        period == .month
-            ? DisplayFormat.monthYear.string(from: anchorDate)
-            : DisplayFormat.year.string(from: anchorDate)
+        switch selectedPeriod {
+        case .month: return DisplayFormat.monthYear.string(from: anchorDate)
+        case .year: return DisplayFormat.year.string(from: anchorDate)
+        case .custom:
+            return "\(DisplayFormat.day.string(from: selectedInterval.start)) – \(DisplayFormat.day.string(from: selectedInterval.end.addingTimeInterval(-1)))"
+        }
     }
 
     private var isCurrentPeriod: Bool {
         let calendar = Calendar.current
-        if period == .month {
+        if selectedPeriod == .month {
             return calendar.isDate(anchorDate, equalTo: Date(), toGranularity: .month)
         }
+        if selectedPeriod == .custom { return true }
         return calendar.isDate(anchorDate, equalTo: Date(), toGranularity: .year)
     }
 
     private var buckets: [ReportBucket] {
         let calendar = Calendar.current
-        if period == .month {
+        if selectedPeriod == .month || selectedPeriod == .custom {
+            if selectedPeriod == .custom {
+                let grouped = Dictionary(grouping: selectedTransactions) {
+                    calendar.startOfDay(for: $0.date)
+                }
+                return grouped.keys.sorted().map { date in
+                    makeBucket(
+                        id: "custom-\(date.timeIntervalSince1970)",
+                        label: DateFormatter.localizedString(from: date, dateStyle: .short, timeStyle: .none),
+                        items: grouped[date, default: []]
+                    )
+                }
+            }
             let days = calendar.range(of: .day, in: .month, for: anchorDate) ?? 1..<2
             return days.map { day in
                 let items = selectedTransactions.filter {
@@ -404,9 +486,13 @@ private struct ReportDetailView: View {
     }
 
     private func movePeriod(_ direction: Int) {
-        guard !(direction > 0 && isCurrentPeriod) else { return }
-        let component: Calendar.Component = period == .month ? .month : .year
+        guard selectedPeriod != .custom, !(direction > 0 && isCurrentPeriod) else { return }
+        let component: Calendar.Component = selectedPeriod == .month ? .month : .year
         anchorDate = Calendar.current.date(byAdding: component, value: direction, to: anchorDate) ?? anchorDate
+    }
+
+    private var selectedPeriod: ReportPeriod {
+        ReportPeriod(rawValue: storedPeriod) ?? .month
     }
 }
 

@@ -167,7 +167,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.4")
+                LabeledContent("Version", value: "1.3.5")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
