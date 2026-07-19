@@ -7,6 +7,7 @@ final class LedgerStore: ObservableObject {
     @Published private(set) var accounts: [LedgerAccount] = []
     @Published private(set) var settings = LedgerSettings()
     @Published var errorMessage: String?
+    private(set) var runningBalances: [UUID: Decimal] = [:]
 
     init() {
         importBundledPersonalSeedIfNeeded()
@@ -35,10 +36,36 @@ final class LedgerStore: ObservableObject {
     var activeAccounts: [LedgerAccount] { accounts.filter { !$0.isArchived } }
 
     func reload() {
-        let ledger = LedgerDiskStore.shared.load()
-        transactions = ledger.transactions.sorted { $0.date > $1.date }
+        apply(LedgerDiskStore.shared.load())
+    }
+
+    private func apply(_ ledger: LedgerData) {
+        let ordered = ledger.transactions.sorted {
+            if $0.date != $1.date { return $0.date < $1.date }
+            return $0.createdAt < $1.createdAt
+        }
+        var accountBalances = Dictionary(uniqueKeysWithValues: ledger.accounts.map {
+            ($0.id, $0.openingBalance)
+        })
+        var running: [UUID: Decimal] = [:]
+        for item in ordered {
+            if let sourceID = item.accountID {
+                switch item.type {
+                case .income:
+                    accountBalances[sourceID, default: 0] += item.amount
+                case .expense, .transfer:
+                    accountBalances[sourceID, default: 0] -= item.amount
+                }
+                running[item.id] = accountBalances[sourceID, default: 0]
+            }
+            if item.type == .transfer, let destinationID = item.destinationAccountID {
+                accountBalances[destinationID, default: 0] += item.destinationAmount ?? item.amount
+            }
+        }
         accounts = ledger.accounts
         settings = ledger.settings
+        runningBalances = running
+        transactions = Array(ordered.reversed())
     }
 
     func add(
@@ -60,8 +87,7 @@ final class LedgerStore: ObservableObject {
             accountID: accountID ?? defaultAccountID
         )
         do {
-            try LedgerDiskStore.shared.add(item)
-            reload()
+            apply(try LedgerDiskStore.shared.add(item))
         } catch {
             errorMessage = "The transaction could not be saved."
         }
@@ -90,8 +116,7 @@ final class LedgerStore: ObservableObject {
             destinationAmount: destinationAmount
         )
         do {
-            try LedgerDiskStore.shared.add(item)
-            reload()
+            apply(try LedgerDiskStore.shared.add(item))
         } catch {
             errorMessage = "The transfer could not be saved."
         }
@@ -172,10 +197,10 @@ final class LedgerStore: ObservableObject {
 
     func delete(_ transaction: LedgerTransaction) {
         do {
-            try LedgerDiskStore.shared.mutate { ledger in
+            let ledger = try LedgerDiskStore.shared.mutate { ledger in
                 ledger.transactions.removeAll { $0.id == transaction.id }
             }
-            reload()
+            apply(ledger)
         } catch {
             errorMessage = "The transaction could not be deleted."
         }
@@ -184,7 +209,7 @@ final class LedgerStore: ObservableObject {
     func update(_ transaction: LedgerTransaction) {
         var found = false
         do {
-            try LedgerDiskStore.shared.mutate { ledger in
+            let ledger = try LedgerDiskStore.shared.mutate { ledger in
                 guard let index = ledger.transactions.firstIndex(where: { $0.id == transaction.id }) else {
                     return
                 }
@@ -195,7 +220,7 @@ final class LedgerStore: ObservableObject {
                 errorMessage = "The original transaction could not be found."
                 return
             }
-            reload()
+            apply(ledger)
         } catch {
             errorMessage = "The transaction could not be updated."
         }
@@ -365,8 +390,7 @@ final class LedgerStore: ObservableObject {
         _ changes: (inout LedgerData) -> Void
     ) {
         do {
-            try LedgerDiskStore.shared.mutate(changes)
-            reload()
+            apply(try LedgerDiskStore.shared.mutate(changes))
         } catch {
             errorMessage = failureMessage
         }
@@ -380,7 +404,7 @@ final class LedgerStore: ObservableObject {
             accounts: incoming.accounts,
             restoring: incoming.settings
         )
-        reload()
+        apply(ledger)
         return ImportSummary(
             transactionCount: ledger.transactions.count - oldLedger.transactions.count,
             accountCount: ledger.accounts.count - oldLedger.accounts.count
@@ -395,7 +419,7 @@ final class LedgerStore: ObservableObject {
         do {
             let ledger = try BackupSyncService.shared.restoreLatestICloudBackup()
             try LedgerDiskStore.shared.save(ledger)
-            reload()
+            apply(ledger)
         } catch {
             errorMessage = error.localizedDescription
         }

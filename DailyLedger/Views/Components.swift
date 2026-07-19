@@ -133,6 +133,14 @@ struct TransactionRow: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(AppTheme.blue)
                 }
+                if let runningBalance = store.runningBalances[transaction.id] {
+                    Text("Balance " + DisplayFormat.currency(
+                        runningBalance,
+                        code: sourceAccount?.currencyCode ?? store.currencyCode
+                    ))
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.secondary)
+                }
             }
             .lineLimit(1)
             .minimumScaleFactor(0.65)

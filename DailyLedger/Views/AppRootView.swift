@@ -1,13 +1,14 @@
 import SwiftUI
 
 private enum AppTab: Hashable, CaseIterable {
-    case home, accounts, transactions, reports, settings
+    case home, accounts, transactions, insights, reports, settings
 
     var title: String {
         switch self {
         case .home: return "Home"
         case .accounts: return "Accounts"
         case .transactions: return "Transactions"
+        case .insights: return "AI"
         case .reports: return "Reports"
         case .settings: return "Settings"
         }
@@ -18,6 +19,7 @@ private enum AppTab: Hashable, CaseIterable {
         case .home: return "house.fill"
         case .accounts: return "creditcard.fill"
         case .transactions: return "list.bullet.rectangle.fill"
+        case .insights: return "sparkles"
         case .reports: return "chart.bar.fill"
         case .settings: return "gearshape.fill"
         }
@@ -96,6 +98,8 @@ struct AppRootView: View {
             AccountsView()
         case .transactions:
             TransactionsView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
+        case .insights:
+            InsightsView()
         case .reports:
             ReportsView()
         case .settings:

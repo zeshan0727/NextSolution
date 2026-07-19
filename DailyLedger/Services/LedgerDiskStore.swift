@@ -10,7 +10,6 @@ final class LedgerDiskStore {
 
     private init() {
         encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
 
         decoder = JSONDecoder()
