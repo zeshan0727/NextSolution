@@ -1,5 +1,12 @@
 import SwiftUI
 
+private enum AIChatMode: String, CaseIterable, Identifiable {
+    case ledger = "Ledger Search"
+    case deepSeek = "DeepSeek Chat"
+
+    var id: String { rawValue }
+}
+
 private struct DeepSeekChatBubble: Identifiable {
     let id = UUID()
     let role: String
@@ -10,7 +17,7 @@ private struct DeepSeekChatBubble: Identifiable {
 struct DeepSeekChatView: View {
     @EnvironmentObject private var store: LedgerStore
     @AppStorage("DeepSeekModel") private var model = "deepseek-v4-flash"
-    @AppStorage("DeepSeekLedgerLookup") private var ledgerLookupEnabled = false
+    @AppStorage("AIChatMode") private var chatMode = AIChatMode.ledger.rawValue
     @State private var messages: [DeepSeekChatBubble] = []
     @State private var draft = ""
     @State private var sending = false
@@ -19,17 +26,26 @@ struct DeepSeekChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            Picker("Chat mode", selection: $chatMode) {
+                ForEach(AIChatMode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+
             if messages.isEmpty {
                 Spacer()
                 VStack(spacing: 12) {
                     Image(systemName: "bubble.left.and.bubble.right.fill")
                         .font(.system(size: 38))
                         .foregroundStyle(AppTheme.purple)
-                    Text("Ask DeepSeek")
+                    Text(isLedgerMode ? "Search My Ledger" : "Ask DeepSeek")
                         .font(.title2.bold())
-                    Text(ledgerLookupEnabled
-                         ? "Search your ledger locally, or use DeepSeek for general chat. Local searches use no API tokens."
-                         : "General chat is separate from your ledger. Financial data is not added automatically.")
+                    Text(isLedgerMode
+                         ? "Ask for an amount, vendor, category, account, or date. Results stay on this iPhone and use no API tokens."
+                         : "General AI chat does not receive your ledger data. Switch to Ledger Search to query transactions.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -74,7 +90,7 @@ struct DeepSeekChatView: View {
             }
 
             HStack(alignment: .bottom, spacing: 9) {
-                TextField("Message DeepSeek", text: $draft, axis: .vertical)
+                TextField(isLedgerMode ? "Search transactions" : "Message DeepSeek", text: $draft, axis: .vertical)
                     .lineLimit(1...5)
                     .padding(11)
                     .background(AppTheme.page, in: RoundedRectangle(cornerRadius: 16))
@@ -82,7 +98,7 @@ struct DeepSeekChatView: View {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.system(size: 31))
                 }
-                .disabled(cleanedDraft.isEmpty || sending || (!DeepSeekService.shared.hasAPIKey && !ledgerLookupEnabled))
+                .disabled(cleanedDraft.isEmpty || sending || (!isLedgerMode && !DeepSeekService.shared.hasAPIKey))
             }
             .padding()
             .background(.ultraThinMaterial)
@@ -103,7 +119,7 @@ struct DeepSeekChatView: View {
                 .environmentObject(store)
         }
         .overlay {
-            if !DeepSeekService.shared.hasAPIKey && !ledgerLookupEnabled {
+            if !DeepSeekService.shared.hasAPIKey && !isLedgerMode {
                 VStack(spacing: 12) {
                     Image(systemName: "key.slash.fill")
                         .font(.system(size: 38))
@@ -151,6 +167,10 @@ struct DeepSeekChatView: View {
         draft.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var isLedgerMode: Bool {
+        chatMode == AIChatMode.ledger.rawValue
+    }
+
     private func send() {
         let text = cleanedDraft
         guard !text.isEmpty else { return }
@@ -158,16 +178,14 @@ struct DeepSeekChatView: View {
         errorMessage = nil
         messages.append(DeepSeekChatBubble(role: "user", content: text))
 
-        if ledgerLookupEnabled {
-            let result = LedgerChatSearch.run(query: text, store: store)
-            if result.matched {
-                messages.append(DeepSeekChatBubble(
-                    role: "assistant",
-                    content: result.response,
-                    transactionIDs: result.transactionIDs
-                ))
-                return
-            }
+        if isLedgerMode {
+            let result = LedgerChatSearch.run(query: text, store: store, force: true)
+            messages.append(DeepSeekChatBubble(
+                role: "assistant",
+                content: result.response,
+                transactionIDs: result.transactionIDs
+            ))
+            return
         }
         guard DeepSeekService.shared.hasAPIKey else {
             errorMessage = "That did not look like a ledger search. Connect DeepSeek in Settings for general chat, or ask to find an amount, vendor, account, or category."

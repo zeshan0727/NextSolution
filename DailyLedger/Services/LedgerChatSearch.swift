@@ -8,12 +8,12 @@ struct LedgerChatSearchResult {
 
 enum LedgerChatSearch {
     @MainActor
-    static func run(query: String, store: LedgerStore) -> LedgerChatSearchResult {
+    static func run(query: String, store: LedgerStore, force: Bool = false) -> LedgerChatSearchResult {
         let lowered = query.lowercased()
         let triggers = ["find", "search", "show", "list", "database", "transaction", "spent", "paid", "received", "how much"]
         let amount = extractAmount(from: query)
         let keywords = searchKeywords(from: query)
-        guard amount != nil || triggers.contains(where: lowered.contains) else {
+        guard force || amount != nil || triggers.contains(where: lowered.contains) else {
             return LedgerChatSearchResult(response: "", matched: false, transactionIDs: [])
         }
 
@@ -21,6 +21,8 @@ enum LedgerChatSearch {
         let matches = store.transactions.filter { transaction in
             if let interval, !interval.contains(transaction.date) { return false }
             if let amount, transaction.amount != amount { return false }
+            if (lowered.contains("expense") || lowered.contains("spent")), transaction.type != .expense { return false }
+            if (lowered.contains("income") || lowered.contains("received")), transaction.type != .income { return false }
             guard !keywords.isEmpty else { return true }
             let account = store.account(withID: transaction.accountID)?.name ?? ""
             let text = [transaction.category, transaction.vendor ?? "", transaction.details, account]

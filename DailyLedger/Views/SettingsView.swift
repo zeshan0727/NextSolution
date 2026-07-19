@@ -22,7 +22,6 @@ struct SettingsView: View {
     @State private var deepSeekConnected = DeepSeekService.shared.hasAPIKey
     @State private var testingDeepSeek = false
     @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
-    @AppStorage("DeepSeekLedgerLookup") private var deepSeekLedgerLookup = false
 
     private let currencies = ["QAR", "USD", "GBP", "EUR", "AED", "SAR", "PKR", "INR"]
 
@@ -137,7 +136,7 @@ struct SettingsView: View {
                         Text("V4 Pro · Deeper").tag("deepseek-v4-pro")
                     }
 
-                    Toggle("Allow Ledger Lookup in AI Chat", isOn: $deepSeekLedgerLookup)
+                    LabeledContent("Local Ledger Search", value: "Enabled")
 
                     Button("Save API Key") {
                         saveDeepSeekKey()
@@ -253,7 +252,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.17")
+                LabeledContent("Version", value: "1.3.18")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
