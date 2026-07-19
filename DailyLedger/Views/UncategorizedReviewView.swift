@@ -103,6 +103,7 @@ struct UncategorizedReviewView: View {
     private func save(_ transaction: LedgerTransaction) {
         var updated = transaction
         updated.category = selectedCategory
+        store.learnVendorCategory(from: transaction, category: selectedCategory)
         store.update(updated)
     }
 

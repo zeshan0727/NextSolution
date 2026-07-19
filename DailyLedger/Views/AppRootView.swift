@@ -19,26 +19,35 @@ struct AppRootView: View {
     @State private var selectedTab: AppTab = .home
     @State private var addSheet: AddSheet?
     @State private var showingTransfer = false
+    @State private var tabResetIDs: [AppTab: UUID] = [
+        .home: UUID(), .accounts: UUID(), .transactions: UUID(),
+        .reports: UUID(), .settings: UUID()
+    ]
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
             DashboardView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
+                .id(tabResetIDs[.home])
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
 
             AccountsView()
+                .id(tabResetIDs[.accounts])
                 .tabItem { Label("Accounts", systemImage: "creditcard.fill") }
                 .tag(AppTab.accounts)
 
             TransactionsView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
+                .id(tabResetIDs[.transactions])
                 .tabItem { Label("Transactions", systemImage: "list.bullet.rectangle.fill") }
                 .tag(AppTab.transactions)
 
             ReportsView()
+                .id(tabResetIDs[.reports])
                 .tabItem { Label("Reports", systemImage: "chart.bar.fill") }
                 .tag(AppTab.reports)
 
             SettingsView()
+                .id(tabResetIDs[.settings])
                 .tabItem { Label("Settings", systemImage: "gearshape.fill") }
                 .tag(AppTab.settings)
         }
@@ -61,6 +70,19 @@ struct AppRootView: View {
         } message: {
             Text(store.errorMessage ?? "Unknown error")
         }
+    }
+
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { selectedTab },
+            set: { newTab in
+                if newTab == selectedTab {
+                    tabResetIDs[newTab] = UUID()
+                } else {
+                    selectedTab = newTab
+                }
+            }
+        )
     }
 
     private var errorBinding: Binding<Bool> {

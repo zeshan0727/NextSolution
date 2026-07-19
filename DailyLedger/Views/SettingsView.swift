@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var exportingBackup = false
     @State private var exportingCSV = false
     @State private var importing = false
+    @State private var exportingGoogleDrive = false
+    @State private var importingGoogleDrive = false
     @State private var confirmingDelete = false
     @State private var notice: SettingsNotice?
 
@@ -86,6 +88,16 @@ struct SettingsView: View {
                     } label: {
                         Label("Restore Latest iCloud Backup", systemImage: "icloud.and.arrow.down.fill")
                     }
+                    Button {
+                        exportingGoogleDrive = true
+                    } label: {
+                        Label("Back Up to Google Drive", systemImage: "externaldrive.badge.icloud")
+                    }
+                    Button {
+                        importingGoogleDrive = true
+                    } label: {
+                        Label("Restore from Google Drive", systemImage: "arrow.down.doc.fill")
+                    }
                     LabeledContent("Last Backup") {
                         Text(backupSync.lastBackupDate?.formatted(date: .abbreviated, time: .shortened) ?? "Never")
                     }
@@ -95,7 +107,7 @@ struct SettingsView: View {
                 } header: {
                     Label("Backup & Sync", systemImage: "icloud.fill")
                 } footer: {
-                    Text("A local backup is saved after every change. Automatic iCloud Drive sync works only when iOS grants this installation an iCloud container; unsigned TrollStore apps may not receive that entitlement.")
+                    Text("For Google Drive, install its app and enable Google Drive in Files. Choose Google Drive when the save or restore picker opens. iOS requires you to approve each Drive file operation.")
                 }
 
                 Section {
@@ -195,7 +207,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.8")
+                LabeledContent("Version", value: "1.3.9")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
@@ -223,11 +235,26 @@ struct SettingsView: View {
             ) { result in
                 showExportResult(result, format: "CSV file")
             }
+            .fileExporter(
+                isPresented: $exportingGoogleDrive,
+                document: backupDocument,
+                contentType: .json,
+                defaultFilename: "DailyLedger-GoogleDrive-Backup"
+            ) { result in
+                showExportResult(result, format: "Google Drive backup")
+            }
             .fileImporter(
                 isPresented: $importing,
                 // Some Files providers report JSON/CSV downloads as a generic item.
                 // Accepting UTType.item keeps those files selectable; the codec still
                 // validates their actual bytes before importing anything.
+                allowedContentTypes: [.item],
+                allowsMultipleSelection: false
+            ) { result in
+                importFile(result)
+            }
+            .fileImporter(
+                isPresented: $importingGoogleDrive,
                 allowedContentTypes: [.item],
                 allowsMultipleSelection: false
             ) { result in

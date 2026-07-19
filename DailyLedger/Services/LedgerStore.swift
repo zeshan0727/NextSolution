@@ -214,6 +214,45 @@ final class LedgerStore: ObservableObject {
         }
     }
 
+    func learnVendorCategory(from transaction: LedgerTransaction, category: String) {
+        guard let keyword = vendorLearningKeyword(for: transaction) else { return }
+        updateLedger(failureMessage: "The vendor category could not be learned.") { ledger in
+            if let index = ledger.settings.vendorRules.firstIndex(where: {
+                $0.keyword.caseInsensitiveCompare(keyword) == .orderedSame
+            }) {
+                ledger.settings.vendorRules[index].category = category
+            } else {
+                ledger.settings.vendorRules.insert(
+                    VendorCategoryRule(keyword: keyword, category: category),
+                    at: 0
+                )
+            }
+        }
+    }
+
+    private func vendorLearningKeyword(for transaction: LedgerTransaction) -> String? {
+        var merchant = transaction.vendor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if merchant.isEmpty {
+            let pattern = #"\bat\s+(.+?)\s+at\s+\d{1,2}:\d{2}"#
+            if let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+               let match = expression.firstMatch(
+                    in: transaction.details,
+                    range: NSRange(transaction.details.startIndex..., in: transaction.details)
+               ),
+               let range = Range(match.range(at: 1), in: transaction.details) {
+                merchant = String(transaction.details[range])
+            }
+        }
+        let words = merchant
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+        let ignored = Set(["al", "new", "the", "merchant", "store"])
+        guard let keyword = words.first(where: {
+            $0.count >= 3 && !ignored.contains($0.lowercased())
+        }) else { return nil }
+        return keyword
+    }
+
     func deleteVendorRules(at offsets: IndexSet) {
         updateLedger(failureMessage: "The vendor rule could not be deleted.") { ledger in
             for index in offsets.sorted(by: >) where ledger.settings.vendorRules.indices.contains(index) {
@@ -238,9 +277,15 @@ final class LedgerStore: ObservableObject {
         var categorized = 0
         let now = Date()
         updateLedger(failureMessage: "Transactions could not be categorized.") { ledger in
-            let rules = (VendorCategoryRule.defaults + ledger.settings.vendorRules).sorted {
-                $0.keyword.count > $1.keyword.count
-            }
+            let rules = (ledger.settings.vendorRules + VendorCategoryRule.defaults)
+                .enumerated()
+                .sorted { left, right in
+                    if left.element.keyword.count != right.element.keyword.count {
+                        return left.element.keyword.count > right.element.keyword.count
+                    }
+                    return left.offset < right.offset
+                }
+                .map(\.element)
             for index in ledger.transactions.indices {
                 let transaction = ledger.transactions[index]
                 guard isAutoCategorizationCandidate(transaction, now: now),
@@ -360,9 +405,11 @@ final class LedgerStore: ObservableObject {
         }
     }
 
-    func totals(in interval: DateInterval) -> LedgerTotals {
+    func totals(in interval: DateInterval, accountID: UUID? = nil) -> LedgerTotals {
         let selected = transactions.filter {
-            interval.contains($0.date) && account(withID: $0.accountID)?.currencyCode == currencyCode
+            interval.contains($0.date) &&
+            account(withID: $0.accountID)?.currencyCode == currencyCode &&
+            (accountID == nil || $0.accountID == accountID)
         }
         let income = selected
             .filter { $0.type == .income }
@@ -409,5 +456,5 @@ struct LedgerTotals {
     let loan: Decimal
     let transfer: Decimal
     let count: Int
-    var balance: Decimal { income - expense - transfer }
+    var balance: Decimal { income - expense - loan }
 }

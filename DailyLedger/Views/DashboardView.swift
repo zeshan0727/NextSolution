@@ -20,6 +20,7 @@ struct DashboardView: View {
     @State private var draftStartDate = Date()
     @State private var draftEndDate = Date()
     @State private var transactionSearch = ""
+    @AppStorage("DashboardAccountSelection") private var selectedAccountValue = "all"
 
     var body: some View {
         NavigationStack {
@@ -27,6 +28,7 @@ struct DashboardView: View {
                 LazyVStack(alignment: .leading, spacing: 22) {
                     header
                     dateFilter
+                    accountFilter
                     BalanceCard(
                         balance: filteredTotals.balance,
                         income: filteredTotals.income,
@@ -106,6 +108,22 @@ struct DashboardView: View {
                 .padding(13)
                 .background(.background, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             }
+        }
+    }
+
+    private var accountFilter: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text("Dashboard account").font(.headline)
+            Picker("Dashboard account", selection: $selectedAccountValue) {
+                Text("All \(store.currencyCode) Accounts").tag("all")
+                ForEach(store.activeAccounts.filter { $0.currencyCode == store.currencyCode }) { account in
+                    Text(account.name).tag(account.id.uuidString)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(.background, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         }
     }
 
@@ -235,19 +253,25 @@ struct DashboardView: View {
     }
 
     private var filteredTotals: LedgerTotals {
-        store.totals(in: selectedInterval)
+        store.totals(in: selectedInterval, accountID: selectedAccountID)
     }
 
     private var filteredTransactions: [LedgerTransaction] {
         store.transactions.filter {
-            guard selectedInterval.contains($0.date), !transactionSearch.isEmpty else {
-                return selectedInterval.contains($0.date)
+            let accountMatches = selectedAccountID == nil ||
+                $0.accountID == selectedAccountID || $0.destinationAccountID == selectedAccountID
+            guard selectedInterval.contains($0.date), accountMatches, !transactionSearch.isEmpty else {
+                return selectedInterval.contains($0.date) && accountMatches
             }
             return $0.category.localizedCaseInsensitiveContains(transactionSearch) ||
                 ($0.vendor?.localizedCaseInsensitiveContains(transactionSearch) ?? false) ||
                 $0.details.localizedCaseInsensitiveContains(transactionSearch) ||
                 NSDecimalNumber(decimal: $0.amount).stringValue.contains(transactionSearch)
         }
+    }
+
+    private var selectedAccountID: UUID? {
+        selectedAccountValue == "all" ? nil : UUID(uuidString: selectedAccountValue)
     }
 
     private var periodTitle: String {
