@@ -30,7 +30,7 @@ struct DashboardView: View {
                     header
                     dateFilter
                     BalanceCard(
-                        balance: filteredTotals.balance,
+                        balance: store.remainingBalance(accountIDs: selectedAccountIDs),
                         income: filteredTotals.income,
                         expense: filteredTotals.expense,
                         loan: filteredTotals.loan,

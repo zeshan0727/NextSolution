@@ -13,7 +13,7 @@ struct BalanceCard: View {
         Button(action: action) {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 5) {
-                Text("NET BALANCE · INCOME − EXPENSES − LOANS")
+                Text("REMAINING ACCOUNT BALANCE")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.75))
                 Text(DisplayFormat.currency(balance, code: currencyCode))

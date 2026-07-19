@@ -146,6 +146,30 @@ final class LedgerStore: ObservableObject {
         }
     }
 
+    func remainingBalance(accountIDs: Set<UUID>? = nil) -> Decimal {
+        let selectedAccounts = activeAccounts.filter {
+            $0.currencyCode == currencyCode && (accountIDs == nil || accountIDs?.contains($0.id) == true)
+        }
+        let ids = Set(selectedAccounts.map(\.id))
+        var result = selectedAccounts.reduce(Decimal.zero) { $0 + $1.openingBalance }
+        for item in transactions {
+            switch item.type {
+            case .income where item.accountID.map(ids.contains) == true:
+                result += item.amount
+            case .expense where item.accountID.map(ids.contains) == true:
+                result -= item.amount
+            case .transfer:
+                if item.accountID.map(ids.contains) == true { result -= item.amount }
+                if item.destinationAccountID.map(ids.contains) == true {
+                    result += item.destinationAmount ?? item.amount
+                }
+            default:
+                break
+            }
+        }
+        return result
+    }
+
     func delete(_ transaction: LedgerTransaction) {
         do {
             try LedgerDiskStore.shared.mutate { ledger in
