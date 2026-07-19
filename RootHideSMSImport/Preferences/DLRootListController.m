@@ -4,6 +4,7 @@
 @interface PSListController : UIViewController
 @property(nonatomic, retain) NSArray *specifiers;
 - (NSArray *)loadSpecifiersFromPlistName:(NSString *)name target:(id)target;
+- (void)reloadSpecifiers;
 @end
 
 @interface DLRootListController : PSListController {
