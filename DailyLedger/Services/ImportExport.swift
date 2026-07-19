@@ -68,20 +68,17 @@ enum ImportExportCodec {
 
     static func decode(url: URL) throws -> ImportPayload {
         let data = try Data(contentsOf: url)
-        if url.pathExtension.lowercased() == "json" {
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            if let ledger = try? decoder.decode(LedgerData.self, from: data) {
-                return ImportPayload(
-                    transactions: ledger.transactions,
-                    accounts: ledger.accounts,
-                    settings: ledger.settings
-                )
-            }
-            if let transactions = try? decoder.decode([LedgerTransaction].self, from: data) {
-                return ImportPayload(transactions: transactions, accounts: [], settings: nil)
-            }
-            throw ImportExportError.unsupportedFile
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        if let ledger = try? decoder.decode(LedgerData.self, from: data) {
+            return ImportPayload(
+                transactions: ledger.transactions,
+                accounts: ledger.accounts,
+                settings: ledger.settings
+            )
+        }
+        if let transactions = try? decoder.decode([LedgerTransaction].self, from: data) {
+            return ImportPayload(transactions: transactions, accounts: [], settings: nil)
         }
         guard let text = String(data: data, encoding: .utf8) else {
             throw ImportExportError.unsupportedFile

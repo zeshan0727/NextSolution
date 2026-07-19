@@ -141,7 +141,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.0")
+                LabeledContent("Version", value: "1.3.1")
                     LabeledContent("Minimum iOS", value: "16.0")
                     LabeledContent("Storage", value: "Offline")
                 } header: {
@@ -171,7 +171,7 @@ struct SettingsView: View {
             }
             .fileImporter(
                 isPresented: $importing,
-                allowedContentTypes: [.json, .commaSeparatedText, .plainText],
+                allowedContentTypes: [.json, .commaSeparatedText, .plainText, .data],
                 allowsMultipleSelection: false
             ) { result in
                 importFile(result)

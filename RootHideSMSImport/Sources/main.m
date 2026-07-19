@@ -573,7 +573,7 @@ int main(int argc, char *argv[]) {
             ProcessMessages(YES);
             return 0;
         }
-        Log(@"Daily Ledger SMS Import 1.1.0 started.");
+        Log(@"Daily Ledger SMS Import 1.1.1 started.");
         while (true) {
             @autoreleasepool { ProcessMessages(NO); }
             sleep(5);

@@ -2,7 +2,7 @@
 
 Daily Ledger is an offline personal income and expense tracker for iPhone. This build targets iOS 16.0 and is designed to be packaged as a `.tipa` for TrollStore.
 
-## Included in version 1.3
+## Included in version 1.3.1
 
 - Fast income and expense entry with colorful categories
 - Home dashboard with current balance and monthly totals
@@ -34,7 +34,7 @@ The included GitHub Actions workflow builds the unsigned iPhone app on macOS and
 1. Upload this folder to a GitHub repository.
 2. Open **Actions → Build Daily Ledger TIPA → Run workflow**.
 3. Download the **DailyLedger-TrollStore** artifact when the build finishes.
-4. Extract the artifact, open `DailyLedger-1.3.0.tipa` on the iPhone, and choose TrollStore.
+4. Extract the artifact, open `DailyLedger-1.3.1.tipa` on the iPhone, and choose TrollStore.
 
 No Apple Developer account is needed for TrollStore installation.
 
@@ -72,8 +72,8 @@ Imported records are merged using their UUID when an `id` is present.
 
 ## RootHide SMS auto import
 
-The build artifact also includes `DailyLedgerSMSImport-1.1.0-roothide.deb`. Install it using Sileo or Zebra inside RootHide Bootstrap 2.0 or later. The launch daemon runs as the `mobile` user and does not use the network.
+The build artifact also includes `DailyLedgerSMSImport-1.1.1-roothide.deb`. Install it using Sileo or Zebra inside RootHide Bootstrap 2.0 or later. The launch daemon runs as the `mobile` user, includes the RootHide container-access entitlements, and does not use the network.
 
 The importer extracts the amount, vendor, transaction time, and type. It stores the complete message as the description and applies the editable vendor rules. In **Daily Ledger → Settings → SMS Import Preferences**, set the required text (for example `**6760`), select the destination account, and tap **Scan Latest Matching SMS** to test or recover a recent message.
 
-On its first 1.1 launch and on an app-requested rescan, the add-on checks only the latest 500 SMS database rows. SMS GUIDs and content checks prevent duplicate ledger entries.
+On its first 1.1.1 launch and on an app-requested rescan, the add-on checks only the latest 500 SMS database rows. SMS GUIDs and content checks prevent duplicate ledger entries.

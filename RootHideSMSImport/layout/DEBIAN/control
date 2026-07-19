@@ -1,8 +1,8 @@
 Package: com.nextsolution.dailyledger.smsimport
 Name: Daily Ledger SMS Import
-Version: 1.1.0
+Version: 1.1.1
 Architecture: iphoneos-arm64e
-Description: Automatically imports matching QAR bank SMS into a selected Daily Ledger account. Includes editable matching preferences, recent-message recovery, and importer status. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.0 or later.
+Description: Automatically imports matching QAR bank SMS into a selected Daily Ledger account. Adds the RootHide container-access entitlements required for SMS database and TrollStore app data access. Includes editable matching preferences, recent-message recovery, and importer status. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.0 or later.
 Maintainer: NextSolution
 Author: NextSolution
 Section: Utilities
