@@ -1,0 +1,283 @@
+import Combine
+import Foundation
+
+@MainActor
+final class LedgerStore: ObservableObject {
+    @Published private(set) var transactions: [LedgerTransaction] = []
+    @Published private(set) var accounts: [LedgerAccount] = []
+    @Published private(set) var settings = LedgerSettings()
+    @Published var errorMessage: String?
+
+    init() {
+        reload()
+    }
+
+    var currencyCode: String { settings.currencyCode }
+    var defaultAccountID: UUID? { settings.defaultAccountID ?? accounts.first?.id }
+    var activeAccounts: [LedgerAccount] { accounts.filter { !$0.isArchived } }
+
+    func reload() {
+        let ledger = LedgerDiskStore.shared.load()
+        transactions = ledger.transactions.sorted { $0.date > $1.date }
+        accounts = ledger.accounts
+        settings = ledger.settings
+    }
+
+    func add(
+        type: TransactionType,
+        amount: Decimal,
+        date: Date,
+        category: String,
+        vendor: String = "",
+        details: String,
+        accountID: UUID? = nil
+    ) {
+        let item = LedgerTransaction(
+            type: type,
+            amount: amount,
+            date: date,
+            category: category,
+            vendor: vendor.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            details: details.trimmingCharacters(in: .whitespacesAndNewlines),
+            accountID: accountID ?? defaultAccountID
+        )
+        do {
+            try LedgerDiskStore.shared.add(item)
+            reload()
+        } catch {
+            errorMessage = "The transaction could not be saved."
+        }
+    }
+
+    func addTransfer(
+        from sourceID: UUID,
+        to destinationID: UUID,
+        amount: Decimal,
+        destinationAmount: Decimal,
+        date: Date,
+        details: String
+    ) {
+        guard sourceID != destinationID else {
+            errorMessage = "Choose two different accounts."
+            return
+        }
+        let item = LedgerTransaction(
+            type: .transfer,
+            amount: amount,
+            date: date,
+            category: "Transfer",
+            details: details.trimmingCharacters(in: .whitespacesAndNewlines),
+            accountID: sourceID,
+            destinationAccountID: destinationID,
+            destinationAmount: destinationAmount
+        )
+        do {
+            try LedgerDiskStore.shared.add(item)
+            reload()
+        } catch {
+            errorMessage = "The transfer could not be saved."
+        }
+    }
+
+    func addAccount(_ account: LedgerAccount) {
+        updateLedger(failureMessage: "The account could not be saved.") { ledger in
+            guard !ledger.accounts.contains(where: { $0.id == account.id }) else { return }
+            ledger.accounts.append(account)
+            if ledger.settings.defaultAccountID == nil {
+                ledger.settings.defaultAccountID = account.id
+            }
+        }
+    }
+
+    func updateAccount(_ account: LedgerAccount) {
+        updateLedger(failureMessage: "The account could not be updated.") { ledger in
+            guard let index = ledger.accounts.firstIndex(where: { $0.id == account.id }) else { return }
+            ledger.accounts[index] = account
+        }
+    }
+
+    func archiveAccount(_ account: LedgerAccount) {
+        updateLedger(failureMessage: "The account could not be archived.") { ledger in
+            guard let index = ledger.accounts.firstIndex(where: { $0.id == account.id }) else { return }
+            ledger.accounts[index].isArchived = true
+            if ledger.settings.defaultAccountID == account.id {
+                ledger.settings.defaultAccountID = ledger.accounts.first(where: { !$0.isArchived })?.id
+            }
+        }
+    }
+
+    func account(withID id: UUID?) -> LedgerAccount? {
+        guard let id else { return nil }
+        return accounts.first(where: { $0.id == id })
+    }
+
+    func balance(for account: LedgerAccount) -> Decimal {
+        transactions.reduce(account.openingBalance) { result, item in
+            switch item.type {
+            case .income where item.accountID == account.id:
+                return result + item.amount
+            case .expense where item.accountID == account.id:
+                return result - item.amount
+            case .transfer where item.accountID == account.id:
+                return result - item.amount
+            case .transfer where item.destinationAccountID == account.id:
+                return result + (item.destinationAmount ?? item.amount)
+            default:
+                return result
+            }
+        }
+    }
+
+    func delete(_ transaction: LedgerTransaction) {
+        do {
+            try LedgerDiskStore.shared.mutate { ledger in
+                ledger.transactions.removeAll { $0.id == transaction.id }
+            }
+            reload()
+        } catch {
+            errorMessage = "The transaction could not be deleted."
+        }
+    }
+
+    func update(_ transaction: LedgerTransaction) {
+        var found = false
+        do {
+            try LedgerDiskStore.shared.mutate { ledger in
+                guard let index = ledger.transactions.firstIndex(where: { $0.id == transaction.id }) else {
+                    return
+                }
+                ledger.transactions[index] = transaction
+                found = true
+            }
+            guard found else {
+                errorMessage = "The original transaction could not be found."
+                return
+            }
+            reload()
+        } catch {
+            errorMessage = "The transaction could not be updated."
+        }
+    }
+
+    func updateCurrency(_ code: String) {
+        guard code != settings.currencyCode else { return }
+        updateLedger(failureMessage: "The currency could not be updated.") { ledger in
+            ledger.settings.currencyCode = code
+        }
+    }
+
+    func updateSMSAutoImport(_ enabled: Bool) {
+        guard enabled != settings.smsAutoImportEnabled else { return }
+        updateLedger(failureMessage: "The SMS auto-import setting could not be updated.") { ledger in
+            ledger.settings.smsAutoImportEnabled = enabled
+        }
+    }
+
+    func updateSMSPreferences(matchText: String, destinationAccountID: UUID?) {
+        updateLedger(failureMessage: "The SMS import preferences could not be updated.") { ledger in
+            ledger.settings.smsMatchText = matchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            ledger.settings.smsDestinationAccountID = destinationAccountID
+        }
+    }
+
+    func requestSMSRescan() {
+        updateLedger(failureMessage: "The SMS rescan could not be requested.") { ledger in
+            ledger.settings.smsRescanRequestID += 1
+        }
+    }
+
+    func saveVendorRule(_ rule: VendorCategoryRule) {
+        updateLedger(failureMessage: "The vendor rule could not be saved.") { ledger in
+            if let index = ledger.settings.vendorRules.firstIndex(where: { $0.id == rule.id }) {
+                ledger.settings.vendorRules[index] = rule
+            } else {
+                ledger.settings.vendorRules.append(rule)
+            }
+        }
+    }
+
+    func deleteVendorRules(at offsets: IndexSet) {
+        updateLedger(failureMessage: "The vendor rule could not be deleted.") { ledger in
+            for index in offsets.sorted(by: >) where ledger.settings.vendorRules.indices.contains(index) {
+                ledger.settings.vendorRules.remove(at: index)
+            }
+        }
+    }
+
+    func resetVendorRules() {
+        updateLedger(failureMessage: "The vendor rules could not be reset.") { ledger in
+            ledger.settings.vendorRules = VendorCategoryRule.defaults
+        }
+    }
+
+    private func updateLedger(
+        failureMessage: String,
+        _ changes: (inout LedgerData) -> Void
+    ) {
+        do {
+            try LedgerDiskStore.shared.mutate(changes)
+            reload()
+        } catch {
+            errorMessage = failureMessage
+        }
+    }
+
+    func importFile(at url: URL) throws -> ImportSummary {
+        let incoming = try ImportExportCodec.decode(url: url)
+        let oldLedger = LedgerDiskStore.shared.load()
+        let ledger = try LedgerDiskStore.shared.merge(
+            incoming.transactions,
+            accounts: incoming.accounts,
+            restoring: incoming.settings
+        )
+        reload()
+        return ImportSummary(
+            transactionCount: ledger.transactions.count - oldLedger.transactions.count,
+            accountCount: ledger.accounts.count - oldLedger.accounts.count
+        )
+    }
+
+    func deleteAll() {
+        do {
+            try LedgerDiskStore.shared.mutate { ledger in
+                ledger.transactions = []
+            }
+            reload()
+        } catch {
+            errorMessage = "The data could not be deleted."
+        }
+    }
+
+    func totals(in interval: DateInterval) -> LedgerTotals {
+        let selected = transactions.filter {
+            interval.contains($0.date) && account(withID: $0.accountID)?.currencyCode == currencyCode
+        }
+        let income = selected
+            .filter { $0.type == .income }
+            .reduce(Decimal.zero) { $0 + $1.amount }
+        let expense = selected
+            .filter { $0.type == .expense }
+            .reduce(Decimal.zero) { $0 + $1.amount }
+        return LedgerTotals(
+            income: income,
+            expense: expense,
+            count: selected.filter { $0.type != .transfer }.count
+        )
+    }
+}
+
+struct ImportSummary {
+    let transactionCount: Int
+    let accountCount: Int
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
+}
+
+struct LedgerTotals {
+    let income: Decimal
+    let expense: Decimal
+    let count: Int
+    var balance: Decimal { income - expense }
+}

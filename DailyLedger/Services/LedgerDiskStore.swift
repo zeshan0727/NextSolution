@@ -1,0 +1,164 @@
+import Foundation
+import Darwin
+
+final class LedgerDiskStore {
+    static let shared = LedgerDiskStore()
+
+    private let queue = DispatchQueue(label: "com.nextsolution.dailyledger.storage")
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
+
+    private init() {
+        encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+
+        decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+    }
+
+    func load() -> LedgerData {
+        queue.sync {
+            withFileLock {
+                let ledger = loadUnlocked()
+                try? saveUnlocked(ledger)
+                return ledger
+            }
+        }
+    }
+
+    func save(_ ledger: LedgerData) throws {
+        try queue.sync {
+            try withFileLock { try saveUnlocked(ledger) }
+        }
+    }
+
+    @discardableResult
+    func mutate(_ changes: (inout LedgerData) -> Void) throws -> LedgerData {
+        try queue.sync {
+            try withFileLock {
+                var ledger = loadUnlocked()
+                changes(&ledger)
+                ledger.normalize()
+                try saveUnlocked(ledger)
+                return ledger
+            }
+        }
+    }
+
+    @discardableResult
+    func add(_ transaction: LedgerTransaction) throws -> LedgerData {
+        try queue.sync {
+            try withFileLock {
+                var ledger = loadUnlocked()
+                guard !ledger.transactions.contains(where: { $0.id == transaction.id }) else {
+                    return ledger
+                }
+                ledger.transactions.append(transaction)
+                ledger.normalize()
+                try saveUnlocked(ledger)
+                return ledger
+            }
+        }
+    }
+
+    @discardableResult
+    func merge(
+        _ incoming: [LedgerTransaction],
+        accounts incomingAccounts: [LedgerAccount] = [],
+        restoring settings: LedgerSettings? = nil
+    ) throws -> LedgerData {
+        try queue.sync {
+            try withFileLock {
+                var ledger = loadUnlocked()
+                if !incomingAccounts.isEmpty,
+                   ledger.transactions.isEmpty,
+                   ledger.accounts.count == 1,
+                   ledger.accounts[0].id == LedgerAccount.legacyMainID {
+                    ledger.accounts = []
+                    ledger.settings.defaultAccountID = nil
+                    ledger.settings.smsDestinationAccountID = nil
+                }
+                let existingAccountIDs = Set(ledger.accounts.map(\.id))
+                ledger.accounts.append(contentsOf: incomingAccounts.filter {
+                    !existingAccountIDs.contains($0.id)
+                })
+                let existingIDs = Set(ledger.transactions.map(\.id))
+                ledger.transactions.append(contentsOf: incoming.filter { !existingIDs.contains($0.id) })
+                if let settings {
+                    ledger.settings = settings
+                }
+                ledger.normalize()
+                try saveUnlocked(ledger)
+                return ledger
+            }
+        }
+    }
+
+    private func withFileLock<T>(_ work: () throws -> T) rethrows -> T {
+        let directory = fileURL.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        let descriptor = Darwin.open(lockURL.path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        guard descriptor >= 0 else { return try work() }
+        setFileLock(descriptor, type: Int16(F_WRLCK), blocking: true)
+        defer {
+            setFileLock(descriptor, type: Int16(F_UNLCK), blocking: false)
+            Darwin.close(descriptor)
+        }
+        return try work()
+    }
+
+    private func setFileLock(_ descriptor: Int32, type: Int16, blocking: Bool) {
+        var lock = Darwin.flock()
+        lock.l_type = type
+        lock.l_whence = Int16(SEEK_SET)
+        lock.l_start = 0
+        lock.l_len = 0
+        _ = Darwin.fcntl(descriptor, blocking ? F_SETLKW : F_SETLK, &lock)
+    }
+
+    private func loadUnlocked() -> LedgerData {
+        guard let data = try? Data(contentsOf: fileURL),
+              let decoded = try? decoder.decode(LedgerData.self, from: data) else {
+            return LedgerData()
+        }
+        return decoded
+    }
+
+    private func saveUnlocked(_ ledger: LedgerData) throws {
+        let directory = fileURL.deletingLastPathComponent()
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        try? FileManager.default.setAttributes(
+            [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+            ofItemAtPath: directory.path
+        )
+        let data = try encoder.encode(ledger)
+        try data.write(to: fileURL, options: .atomic)
+        try? FileManager.default.setAttributes(
+            [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+            ofItemAtPath: fileURL.path
+        )
+    }
+
+    private var fileURL: URL {
+        let root = FileManager.default.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        ).first!
+        return root
+            .appendingPathComponent("DailyLedger", isDirectory: true)
+            .appendingPathComponent("ledger.json")
+    }
+
+    private var lockURL: URL {
+        fileURL.deletingLastPathComponent().appendingPathComponent("ledger.lock")
+    }
+}
