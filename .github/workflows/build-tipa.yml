@@ -93,7 +93,6 @@ jobs:
             RootHideSMSImport/Preferences/DLRootListController.m \
             -framework Foundation \
             -framework UIKit \
-            -framework Preferences \
             -o build/DailyLedgerSMSImportPreferences
           codesign --force --sign - build/DailyLedgerSMSImportPreferences
 
