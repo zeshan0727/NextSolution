@@ -72,32 +72,34 @@ jobs:
             -arch arm64 \
             -miphoneos-version-min=16.0 \
             -fobjc-arc \
+            -dynamiclib \
+            -DDAILYLEDGER_TWEAK=1 \
             RootHideSMSImport/Sources/main.m \
             -framework Foundation \
             -framework CoreFoundation \
             -framework AudioToolbox \
             -lsqlite3 \
-            -o build/dailyledgersmsd
+            -o build/DailyLedgerSMSImport.dylib
           codesign --force --sign - \
             --entitlements RootHideSMSImport/entitlements.plist \
-            build/dailyledgersmsd
+            build/DailyLedgerSMSImport.dylib
 
       - name: Package RootHide add-on
         run: |
           rm -rf build/rootHidePackage
           mkdir -p build/rootHidePackage
           cp -R RootHideSMSImport/layout/. build/rootHidePackage/
-          mkdir -p build/rootHidePackage/usr/libexec
-          cp build/dailyledgersmsd build/rootHidePackage/usr/libexec/dailyledgersmsd
+          mkdir -p build/rootHidePackage/Library/MobileSubstrate/DynamicLibraries
+          cp build/DailyLedgerSMSImport.dylib build/rootHidePackage/Library/MobileSubstrate/DynamicLibraries/
           chmod 755 \
-            build/rootHidePackage/usr/libexec/dailyledgersmsd \
+            build/rootHidePackage/Library/MobileSubstrate/DynamicLibraries/DailyLedgerSMSImport.dylib \
             build/rootHidePackage/DEBIAN/postinst \
             build/rootHidePackage/DEBIAN/prerm
           chmod 644 \
             build/rootHidePackage/DEBIAN/control \
-            build/rootHidePackage/Library/LaunchAgents/com.nextsolution.dailyledger.smsimport.plist
-          dpkg-deb --root-owner-group --build build/rootHidePackage DailyLedgerSMSImport-1.1.3-roothide.deb
-          shasum -a 256 DailyLedgerSMSImport-1.1.3-roothide.deb > DailyLedgerSMSImport-1.1.3-roothide.sha256
+            build/rootHidePackage/Library/MobileSubstrate/DynamicLibraries/DailyLedgerSMSImport.plist
+          dpkg-deb --root-owner-group --build build/rootHidePackage DailyLedgerSMSImport-1.2.0-roothide.deb
+          shasum -a 256 DailyLedgerSMSImport-1.2.0-roothide.deb > DailyLedgerSMSImport-1.2.0-roothide.sha256
 
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
@@ -106,6 +108,6 @@ jobs:
           path: |
             DailyLedger-1.3.2.tipa
             DailyLedger-1.3.2.sha256
-            DailyLedgerSMSImport-1.1.3-roothide.deb
-            DailyLedgerSMSImport-1.1.3-roothide.sha256
+            DailyLedgerSMSImport-1.2.0-roothide.deb
+            DailyLedgerSMSImport-1.2.0-roothide.sha256
           if-no-files-found: error

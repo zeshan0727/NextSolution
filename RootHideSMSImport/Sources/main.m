@@ -592,6 +592,23 @@ static int RunSelfTest(void) {
     return passed ? 0 : 1;
 }
 
+#if defined(DAILYLEDGER_TWEAK)
+static dispatch_source_t gDailyLedgerTimer;
+
+__attribute__((constructor))
+static void DailyLedgerSMSImportInitialize(void) {
+    @autoreleasepool {
+        Log(@"Daily Ledger SMS Import 1.2.0 tweak loaded in SpringBoard; exact marker is %@.", kDefaultMatchText);
+        dispatch_queue_t queue = dispatch_queue_create("com.nextsolution.dailyledger.smsimport", DISPATCH_QUEUE_SERIAL);
+        gDailyLedgerTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+        dispatch_source_set_timer(gDailyLedgerTimer, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), 5 * NSEC_PER_SEC, NSEC_PER_SEC);
+        dispatch_source_set_event_handler(gDailyLedgerTimer, ^{
+            @autoreleasepool { ProcessMessages(NO); }
+        });
+        dispatch_resume(gDailyLedgerTimer);
+    }
+}
+#else
 int main(int argc, char *argv[]) {
     @autoreleasepool {
         if (argc > 1 && strcmp(argv[1], "--self-test") == 0) return RunSelfTest();
@@ -607,3 +624,4 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
+#endif
