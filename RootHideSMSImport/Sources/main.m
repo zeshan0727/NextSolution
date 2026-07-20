@@ -638,7 +638,7 @@ static dispatch_source_t gDailyLedgerTimer;
 __attribute__((constructor))
 static void DailyLedgerSMSImportInitialize(void) {
     @autoreleasepool {
-        Log(@"Daily Ledger SMS Import 1.3.0 tweak loaded in SpringBoard; exact marker is %@.", kDefaultMatchText);
+        Log(@"Daily Ledger SMS Import 1.4.0 native RootHide tweak loaded in SpringBoard; exact marker is %@.", kDefaultMatchText);
         SaveTweakStatus(@"Tweak loaded in SpringBoard. Waiting for an SMS or manual scan.");
         dispatch_queue_t queue = dispatch_queue_create("com.nextsolution.dailyledger.smsimport", DISPATCH_QUEUE_SERIAL);
         gDailyLedgerTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
