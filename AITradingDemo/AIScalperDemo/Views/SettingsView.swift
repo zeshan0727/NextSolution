@@ -81,7 +81,11 @@ struct SettingsView: View {
                             Label("Create a Twelve Data API key", systemImage: "arrow.up.right.square")
                         }
 
-                        Text("The key stays on this device. The free plan is suitable for testing one active market; keep the app open for 30-second refreshes.")
+                        Text("The key stays on this device. WebSocket mode redraws the chart on every genuine provider tick; REST candles reconcile every two minutes. Keep the app open while testing.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text("Twelve Data Basic includes only trial WebSocket access. Unsupported pairs automatically continue with the slower REST feed; full symbol streaming requires a compatible plan.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
@@ -174,7 +178,7 @@ struct SettingsView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("AI Scalper Demo 0.2")
+                        Text("AI Scalper Demo 0.3")
                             .font(.subheadline.bold())
                         Text("Live mode uses real prices but every order and fill remains virtual. Results do not predict real trading performance.")
                             .font(.caption)
