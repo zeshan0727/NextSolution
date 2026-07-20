@@ -18,8 +18,7 @@ DailyLedgerSMSImportPreferences_FILES = Preferences/DLRootListController.m
 DailyLedgerSMSImportPreferences_CFLAGS = -fobjc-arc
 DailyLedgerSMSImportPreferences_FRAMEWORKS = UIKit
 DailyLedgerSMSImportPreferences_LDFLAGS = -undefined dynamic_lookup
-DailyLedgerSMSImportPreferences_RESOURCE_FILES = Preferences/Root.plist
-DailyLedgerSMSImportPreferences_INFOPLIST = Preferences/Info.plist
+DailyLedgerSMSImportPreferences_RESOURCE_FILES = Preferences/Root.plist Preferences/Info.plist
 DailyLedgerSMSImportPreferences_INSTALL_PATH = /Library/PreferenceBundles
 
 include $(THEOS_MAKE_PATH)/bundle.mk
