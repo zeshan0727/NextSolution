@@ -62,6 +62,7 @@ enum AppTheme {
 extension View {
     @ViewBuilder
     func dailyLedgerGlass(tint: Color = AppTheme.purple, interactive: Bool = false) -> some View {
+        #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             if interactive {
                 self.glassEffect(.regular.tint(tint.opacity(0.22)).interactive(), in: .rect(cornerRadius: 22))
@@ -77,6 +78,15 @@ extension View {
                 }
                 .shadow(color: tint.opacity(0.18), radius: 12, y: 6)
         }
+        #else
+        self
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(.white.opacity(0.28), lineWidth: 0.8)
+            }
+            .shadow(color: tint.opacity(0.18), radius: 12, y: 6)
+        #endif
     }
 }
 
