@@ -4,6 +4,7 @@ import SwiftUI
 struct DailyLedgerApp: App {
     @StateObject private var store = LedgerStore()
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
 
     init() {
         BackupSyncService.shared.registerBackgroundTask()
@@ -14,6 +15,7 @@ struct DailyLedgerApp: App {
             AppRootView()
                 .environmentObject(store)
                 .tint(AppTheme.purple)
+                .preferredColorScheme(AppAppearance(rawValue: appearance)?.colorScheme)
                 .onChange(of: scenePhase) { phase in
                     if phase == .active {
                         store.reload()

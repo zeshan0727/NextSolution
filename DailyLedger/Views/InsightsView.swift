@@ -18,6 +18,7 @@ struct InsightsView: View {
     @State private var loadingAdvice = false
     @State private var serverError: String?
     @AppStorage("DeepSeekTokenBudget") private var tokenBudget = 50_000
+    @State private var localInsightRefresh = Date()
 
     var body: some View {
         NavigationStack {
@@ -36,7 +37,12 @@ struct InsightsView: View {
                     .padding(.vertical, 8)
                 }
 
-                Section("Suggestions to Cut Expenses") {
+                Section {
+                    Button {
+                        localInsightRefresh = Date()
+                    } label: {
+                        Label("Update Fixed Insights", systemImage: "arrow.clockwise")
+                    }
                     if suggestions.isEmpty {
                         Text("Add more expenses this month to receive useful suggestions.")
                             .foregroundStyle(.secondary)
@@ -56,6 +62,14 @@ struct InsightsView: View {
                             }
                             .padding(.vertical, 5)
                         }
+                    }
+                } header: {
+                    HStack {
+                        Text("Suggestions to Cut Expenses")
+                        Spacer()
+                        Text(localInsightRefresh, style: .time)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                 }
 

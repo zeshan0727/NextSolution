@@ -28,6 +28,7 @@ struct DashboardView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 22) {
                     header
+                    dailySpending
                     dateFilter
                     BalanceCard(
                         balance: store.remainingBalance(accountIDs: selectedAccountIDs),
@@ -101,6 +102,33 @@ struct DashboardView: View {
                 }
             }
         }
+    }
+
+    private var dailySpending: some View {
+        HStack(spacing: 12) {
+            DailySpendButton(
+                title: "Yesterday",
+                amount: expense(on: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()),
+                currencyCode: store.currencyCode,
+                icon: "sun.haze.fill",
+                colors: [AppTheme.purple, AppTheme.blue]
+            )
+            DailySpendButton(
+                title: "Today so far",
+                amount: expense(on: Date()),
+                currencyCode: store.currencyCode,
+                icon: "clock.fill",
+                colors: [AppTheme.orange, AppTheme.red]
+            )
+        }
+    }
+
+    private func expense(on date: Date) -> Decimal {
+        let calendar = Calendar.current
+        return store.transactions.lazy.filter {
+            $0.type == .expense && calendar.isDate($0.date, inSameDayAs: date) &&
+            store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+        }.reduce(Decimal.zero) { $0 + $1.amount }
     }
 
     private var dateFilter: some View {
@@ -338,6 +366,38 @@ struct DashboardView: View {
         }
     }
 
+}
+
+private struct DailySpendButton: View {
+    let title: String
+    let amount: Decimal
+    let currencyCode: String
+    let icon: String
+    let colors: [Color]
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.headline)
+                .frame(width: 34, height: 34)
+                .background(.white.opacity(0.18), in: Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.caption.weight(.semibold))
+                Text(DisplayFormat.currency(amount, code: currencyCode))
+                    .font(.subheadline.bold())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+        }
+        .foregroundStyle(.white)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
+        .accessibilityElement(children: .combine)
+    }
 }
 
 private struct QuickActionButton: View {

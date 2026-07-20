@@ -1,5 +1,20 @@
 import SwiftUI
 
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case system = "System Default"
+    case light = "Light"
+    case dark = "Black"
+
+    var id: String { rawValue }
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 enum AppTheme {
     static let purple = Color(red: 0.39, green: 0.25, blue: 0.93)
     static let blue = Color(red: 0.16, green: 0.48, blue: 0.96)

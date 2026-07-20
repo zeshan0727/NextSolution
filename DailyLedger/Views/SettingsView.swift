@@ -22,6 +22,8 @@ struct SettingsView: View {
     @State private var deepSeekConnected = DeepSeekService.shared.hasAPIKey
     @State private var testingDeepSeek = false
     @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
+    @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
+    @State private var showingSMSStatus = true
 
     private let currencies = ["QAR", "USD", "GBP", "EUR", "AED", "SAR", "PKR", "INR"]
 
@@ -29,15 +31,20 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section {
-                    Picker("Currency", selection: $selectedCurrency) {
+                    Picker("Reporting Currency", selection: $selectedCurrency) {
                         ForEach(currencies, id: \.self) { code in
                             Text(currencyLabel(code)).tag(code)
                         }
                     }
+                    Picker("Appearance", selection: $appearance) {
+                        ForEach(AppAppearance.allCases) { option in
+                            Text(option.rawValue).tag(option.rawValue)
+                        }
+                    }
                 } header: {
-                    Label("General", systemImage: "slider.horizontal.3")
+                    Label("Display", systemImage: "circle.lefthalf.filled")
                 } footer: {
-                    Text("This chooses the currency shown on Home and Reports. Each account keeps its own currency and amounts are never converted automatically.")
+                    Text("Reporting Currency controls Home and Reports totals. Account balances remain in each account's own currency.")
                 }
 
                 Section {
@@ -189,6 +196,27 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    if showingSMSStatus, let result = store.settings.smsImporterLastResult, !result.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Label("Latest bank message", systemImage: "message.badge.filled.fill")
+                                .font(.headline)
+                            Text(result)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(4)
+                            HStack {
+                                Button("Record Transaction") {
+                                    store.requestSMSRescan()
+                                    notice = SettingsNotice(title: "Import Requested", message: "Daily Ledger asked the SMS importer to record the latest matching message.")
+                                }
+                                .buttonStyle(.borderedProminent)
+                                Button("Cancel") { showingSMSStatus = false }
+                                    .buttonStyle(.bordered)
+                            }
+                        }
+                        .padding(.vertical, 5)
+                    }
+
                     NavigationLink {
                         SMSImportPreferencesView()
                     } label: {
@@ -213,7 +241,7 @@ struct SettingsView: View {
                 } header: {
                     Label("Bank SMS", systemImage: "bolt.shield.fill")
                 } footer: {
-                    Text("Requires the Daily Ledger SMS Import package on RootHide Bootstrap 2.0 or later. Messages stay on this iPhone.")
+                    Text("Shows the latest importer result and lets you record the latest matching bank message or cancel the prompt.")
                 }
 
                 Section {
@@ -246,15 +274,14 @@ struct SettingsView: View {
                     .disabled(store.uncategorizedTransactions.isEmpty)
 
                 } header: {
-                    Label("Data", systemImage: "lock.shield.fill")
+                    Label("Categorization", systemImage: "tag.fill")
                 } footer: {
-                    Text("Your ledger is stored only on this iPhone unless you export it. Create a backup before deleting the app.")
+                    Text("Review only recent transactions that could not be categorized automatically.")
                 }
 
                 Section {
-                LabeledContent("Version", value: "1.3.21")
-                    LabeledContent("Minimum iOS", value: "16.0")
-                    LabeledContent("Storage", value: "Offline")
+                    LabeledContent("Version", value: "1.3.22")
+                    LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")
                 }

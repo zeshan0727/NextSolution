@@ -49,8 +49,8 @@ struct AddTransactionView: View {
                     accountPicker
                     amountEditor
                     categoryPicker
-                    vendorEditor
                     detailsEditor
+                    vendorEditor
                     dateEditor
                 }
                 .padding(18)
@@ -158,7 +158,7 @@ struct AddTransactionView: View {
             .padding(12)
             .background(.background, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 10) {
-                ForEach(filteredCategories, id: \.self) { item in
+                ForEach(visibleCategories, id: \.self) { item in
                     Button {
                         category = item
                     } label: {
@@ -205,11 +205,25 @@ struct AddTransactionView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Description")
                 .font(.headline)
-            TextField("Example: Lunch, petrol, client payment", text: $details)
+            TextField("Example: Lunch, petrol, client payment", text: $details, axis: .vertical)
+                .lineLimit(4...5)
+                .frame(minHeight: 96, alignment: .topLeading)
                 .textInputAutocapitalization(.sentences)
                 .focused($focusedField, equals: .details)
                 .padding(16)
                 .background(.background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            if !suggestedVendors.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        Text("Suggested:").font(.caption).foregroundStyle(.secondary)
+                        ForEach(suggestedVendors, id: \.self) { suggestion in
+                            Button(suggestion) { vendor = suggestion }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -301,6 +315,36 @@ struct AddTransactionView: View {
         let query = categorySearch.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return items }
         return items.filter { $0.localizedCaseInsensitiveContains(query) }
+    }
+
+    private var visibleCategories: [String] {
+        let searched = filteredCategories
+        if !categorySearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return searched }
+        let usage = Dictionary(grouping: store.transactions.filter { $0.type == type }, by: \.category)
+        let top = searched.sorted {
+            let left = usage[$0]?.count ?? 0
+            let right = usage[$1]?.count ?? 0
+            return left == right
+                ? $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+                : left > right
+        }
+        var result = Array(top.prefix(3))
+        if !result.contains(category) { result.append(category) }
+        return result
+    }
+
+    private var suggestedVendors: [String] {
+        let words = Set(details.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count > 2 })
+        guard !words.isEmpty else { return [] }
+        var scores: [String: Int] = [:]
+        for transaction in store.transactions {
+            guard let candidate = transaction.vendor, !candidate.isEmpty else { continue }
+            let searchable = (transaction.details + " " + transaction.category).lowercased()
+            let score = words.reduce(0) { $0 + (searchable.contains($1) ? 1 : 0) }
+            if score > 0 { scores[candidate, default: 0] += score }
+        }
+        return scores.sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
+            .prefix(3).map(\.key)
     }
 
     private func save() {
