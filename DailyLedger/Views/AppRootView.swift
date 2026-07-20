@@ -1,6 +1,6 @@
 import SwiftUI
 
-private enum AppTab: Hashable, CaseIterable {
+enum AppTab: Hashable, CaseIterable {
     case home, accounts, transactions, insights, reports, settings
 
     var title: String {
@@ -40,18 +40,12 @@ struct AppRootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ZStack {
-                tabLayer(.home) {
-                    DashboardView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
-                }
-                tabLayer(.accounts) { AccountsView() }
-                tabLayer(.transactions) {
-                    TransactionsView(onAdd: presentAdd, onTransfer: { showingTransfer = true })
-                }
-                tabLayer(.insights) { InsightsView() }
-                tabLayer(.reports) { ReportsView() }
-                tabLayer(.settings) { SettingsView() }
-            }
+            PersistentTabHost(
+                selectedTab: $selectedTab,
+                store: store,
+                onAdd: presentAdd,
+                onTransfer: { showingTransfer = true }
+            )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             Divider()
             HStack(spacing: 0) {
@@ -96,17 +90,6 @@ struct AppRootView: View {
         } message: {
             Text(store.errorMessage ?? "Unknown error")
         }
-    }
-
-    private func tabLayer<Content: View>(
-        _ tab: AppTab,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        content()
-            .opacity(selectedTab == tab ? 1 : 0)
-            .allowsHitTesting(selectedTab == tab)
-            .accessibilityHidden(selectedTab != tab)
-            .zIndex(selectedTab == tab ? 1 : 0)
     }
 
     private func select(_ tab: AppTab) {
