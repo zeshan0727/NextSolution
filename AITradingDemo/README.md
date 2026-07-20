@@ -2,11 +2,15 @@
 
 An iOS 16 SwiftUI paper-trading app designed for TrollStore testing. It never connects to a broker, accesses a trading account, or places real orders.
 
-## Version 0.2
+## Version 0.3
 
-- Real one-minute EUR/USD and BTC/USD candles from Twelve Data (XAU/USD depends on plan access)
+- Real one-minute candles plus Twelve Data WebSocket price ticks
+- Major pairs: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD, EUR/GBP, and EUR/JPY
+- Gold and BTC/USD remain available (XAU/USD depends on plan access)
 - Secure API-key storage in the iPhone Keychain
-- 30-second REST refresh while the app remains open
+- Immediate chart redraw for every genuine WebSocket tick
+- Two-minute REST reconciliation/fallback while the app remains open
+- Automatic stale-price lock that prevents entries on old candles
 - Optional accelerated simulation for comparison with the original test
 - EMA 9/21, RSI 14, Bollinger Bands 20/2, and MACD 12/26/9 signals
 - Automatic or manual paper trades with quick take-profit, stop-loss, and timed exit
@@ -17,12 +21,14 @@ An iOS 16 SwiftUI paper-trading app designed for TrollStore testing. It never co
 ## Set up live market data
 
 1. Create a Twelve Data account and API key at <https://twelvedata.com/pricing>.
-2. Install and open AI Scalper Demo 0.2.
+2. Install and open AI Scalper Demo 0.3.
 3. Open **Settings → Market data** and select **Live market**.
 4. Paste the key and tap **Save key and connect**.
-5. Start with EUR/USD or BTC/USD. Keep the app open while testing.
+5. Select a supported pair and keep the app open while testing.
 
-The key is stored in the device Keychain. It is sent only to Twelve Data in HTTPS requests. The app polls one selected symbol every 30 seconds; free-plan request limits still apply.
+The key is stored in the device Keychain. It is sent only to Twelve Data over encrypted HTTPS/WSS connections. Twelve Data's free Basic plan has trial WebSocket access; if streaming is unavailable for a selected symbol, the app clearly shows that it is using REST fallback. Provider and daily request limits still apply.
+
+Forex streaming does not mean millisecond forex quotes. Twelve Data currently documents mid-price updates around once per minute for its Forex API v2. The UI renders every real event immediately and never invents movement between provider updates. Crypto tick frequency can be higher.
 
 ## Trading-cost model
 
