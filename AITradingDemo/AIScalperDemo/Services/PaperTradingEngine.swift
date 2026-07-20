@@ -10,7 +10,11 @@ final class PaperTradingEngine: ObservableObject {
     @Published private(set) var apiKey = ""
     @Published private(set) var feedState: FeedState = .simulated
     @Published private(set) var lastMarketUpdate: Date?
+    @Published private(set) var lastMarketTimestamp: Date?
     @Published private(set) var lastFeedError: String?
+    @Published private(set) var streamConnected = false
+    @Published private(set) var streamMessage: String?
+    @Published private(set) var receivedTickCount = 0
     @Published var autoTradingEnabled = false
 
     @Published var marketMode: MarketDataMode {
@@ -35,6 +39,7 @@ final class PaperTradingEngine: ObservableObject {
 
     private var tickNumber = 0
     private var lastEntryTick = -100
+    private var lastEntryDate = Date.distantPast
     private let settingsKey = "ai-scalper.settings.v1"
     private let tradesKey = "ai-scalper.trades.v1"
     private let balanceKey = "ai-scalper.balance.v1"
@@ -122,8 +127,14 @@ final class PaperTradingEngine: ObservableObject {
 
     var hasAPIKey: Bool { !apiKey.isEmpty }
 
+    var isMarketDataFresh: Bool {
+        guard marketMode == .live else { return true }
+        guard let timestamp = lastMarketTimestamp else { return false }
+        return abs(Date().timeIntervalSince(timestamp)) <= 180
+    }
+
     var isMarketReady: Bool {
-        marketMode == .simulated || (feedState == .live && candles.count >= 26)
+        marketMode == .simulated || (feedState == .live && isMarketDataFresh && candles.count >= 26)
     }
 
     var feedTaskID: String {
@@ -135,7 +146,8 @@ final class PaperTradingEngine: ObservableObject {
         switch feedState {
         case .setupRequired: return "API key required"
         case .connecting: return "Connecting"
-        case .live: return "Live market data"
+        case .live: return streamConnected ? "Streaming live" : "REST live"
+        case .stale: return "Market closed / stale"
         case .error: return "Feed error"
         case .simulated: return "Accelerated simulation"
         }
@@ -150,30 +162,61 @@ final class PaperTradingEngine: ObservableObject {
             return
         }
 
+        let symbol = settings.asset.apiSymbol
+        let key = apiKey
         while !Task.isCancelled {
-            feedState = candles.isEmpty ? .connecting : feedState
+            if candles.isEmpty { feedState = .connecting }
             do {
-                let received = try await TwelveDataClient.fetchCandles(
-                    symbol: settings.asset.apiSymbol,
-                    apiKey: apiKey
-                )
-                guard !Task.isCancelled else { return }
+                let received = try await TwelveDataClient.fetchCandles(symbol: symbol, apiKey: key)
+                guard !Task.isCancelled, symbol == settings.asset.apiSymbol else { return }
                 applyLiveCandles(received)
-                feedState = .live
                 lastFeedError = nil
-                lastMarketUpdate = Date()
             } catch is CancellationError {
                 return
             } catch {
                 guard !Task.isCancelled else { return }
-                feedState = .error
                 lastFeedError = error.localizedDescription
+                if candles.isEmpty { feedState = .error }
                 autoTradingEnabled = false
             }
 
             do {
-                let delay = max(15, executionSettings.pollIntervalSeconds)
+                let delay = max(120, executionSettings.pollIntervalSeconds)
                 try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            } catch {
+                return
+            }
+        }
+    }
+
+    @MainActor
+    func runTickFeed() async {
+        guard marketMode == .live, !apiKey.isEmpty else { return }
+        let symbol = settings.asset.apiSymbol
+        let key = apiKey
+
+        while !Task.isCancelled {
+            streamConnected = false
+            do {
+                try await TwelveDataWebSocketClient.stream(
+                    symbol: symbol,
+                    apiKey: key,
+                    onConnected: { message in
+                        self.streamConnected = true
+                        self.streamMessage = message
+                    },
+                    onTick: { tick in
+                        self.applyLiveTick(tick)
+                    }
+                )
+            } catch {
+                guard !Task.isCancelled else { return }
+                streamConnected = false
+                streamMessage = "WebSocket unavailable: \(error.localizedDescription). REST fallback remains active."
+            }
+
+            do {
+                try await Task.sleep(nanoseconds: 10_000_000_000)
             } catch {
                 return
             }
@@ -186,6 +229,7 @@ final class PaperTradingEngine: ObservableObject {
         guard KeychainStore.save(trimmed, account: apiKeyAccount) else { return false }
         apiKey = trimmed
         lastFeedError = nil
+        streamMessage = nil
         feedState = .connecting
         return true
     }
@@ -195,6 +239,9 @@ final class PaperTradingEngine: ObservableObject {
         apiKey = ""
         autoTradingEnabled = false
         lastFeedError = nil
+        lastMarketTimestamp = nil
+        streamConnected = false
+        streamMessage = nil
         candles = []
         indicators = IndicatorSnapshot()
         feedState = .setupRequired
@@ -222,8 +269,16 @@ final class PaperTradingEngine: ObservableObject {
         if candles.count > 240 {
             candles.removeFirst(candles.count - 240)
         }
-
         processMarketUpdate()
+    }
+
+    func checkMarketFreshness() {
+        guard marketMode == .live,
+              lastMarketTimestamp != nil,
+              !isMarketDataFresh,
+              feedState != .stale else { return }
+        feedState = .stale
+        autoTradingEnabled = false
     }
 
     func setAutoTrading(_ enabled: Bool) {
@@ -248,6 +303,7 @@ final class PaperTradingEngine: ObservableObject {
         isRiskLocked = false
         tickNumber = 0
         lastEntryTick = -100
+        lastEntryDate = .distantPast
         persistTrades()
         persistBalance()
         prepareMarketForCurrentMode()
@@ -256,6 +312,7 @@ final class PaperTradingEngine: ObservableObject {
     func unrealizedProfitLoss(for trade: PaperTrade) -> Double {
         let estimatedExit = executionPrice(
             midPrice: currentPrice,
+            asset: trade.asset,
             direction: trade.direction,
             isEntry: false,
             slippagePercent: estimatedSlippage(for: trade.asset)
@@ -266,6 +323,53 @@ final class PaperTradingEngine: ObservableObject {
     private func applyLiveCandles(_ received: [MarketCandle]) {
         candles = Array(received.suffix(240))
         tickNumber += 1
+        lastMarketTimestamp = received.last?.time
+        lastMarketUpdate = Date()
+        feedState = isMarketDataFresh ? .live : .stale
+        if !isMarketDataFresh { autoTradingEnabled = false }
+        processMarketUpdate()
+    }
+
+    private func applyLiveTick(_ tick: LivePriceTick) {
+        guard marketMode == .live,
+              tick.symbol == settings.asset.apiSymbol,
+              tick.price > 0 else { return }
+
+        let minute = Date(timeIntervalSince1970: floor(tick.marketTime.timeIntervalSince1970 / 60) * 60)
+        if let last = candles.last {
+            let lastMinute = Date(timeIntervalSince1970: floor(last.time.timeIntervalSince1970 / 60) * 60)
+            if minute < lastMinute { return }
+
+            if minute == lastMinute {
+                candles[candles.count - 1] = MarketCandle(
+                    id: last.id,
+                    time: last.time,
+                    open: last.open,
+                    high: max(last.high, tick.price),
+                    low: min(last.low, tick.price),
+                    close: tick.price
+                )
+            } else {
+                candles.append(MarketCandle(
+                    time: minute,
+                    open: last.close,
+                    high: max(last.close, tick.price),
+                    low: min(last.close, tick.price),
+                    close: tick.price
+                ))
+            }
+        } else {
+            candles = [MarketCandle(time: minute, open: tick.price, high: tick.price, low: tick.price, close: tick.price)]
+        }
+
+        if candles.count > 240 { candles.removeFirst(candles.count - 240) }
+        receivedTickCount += 1
+        tickNumber += 1
+        lastMarketTimestamp = tick.marketTime
+        lastMarketUpdate = Date()
+        streamConnected = true
+        streamMessage = "Receiving real price ticks"
+        feedState = isMarketDataFresh ? .live : .stale
         processMarketUpdate()
     }
 
@@ -274,12 +378,14 @@ final class PaperTradingEngine: ObservableObject {
         updateOpenTrade()
         evaluateRiskLock()
 
-        let entrySpacing = marketMode == .live ? 2 : 8
+        let entrySpacingMet = marketMode == .live
+            ? Date().timeIntervalSince(lastEntryDate) >= 60
+            : tickNumber - lastEntryTick >= 8
         if autoTradingEnabled,
            !isRiskLocked,
            isMarketReady,
            openTrade == nil,
-           tickNumber - lastEntryTick >= entrySpacing,
+           entrySpacingMet,
            indicators.confidence >= settings.confidenceThreshold,
            let direction = indicators.signal.direction {
             open(direction: direction, confidence: indicators.confidence)
@@ -291,6 +397,7 @@ final class PaperTradingEngine: ObservableObject {
         let slippage = actualSlippage(for: settings.asset)
         let price = executionPrice(
             midPrice: currentPrice,
+            asset: settings.asset,
             direction: direction,
             isEntry: true,
             slippagePercent: slippage
@@ -314,6 +421,7 @@ final class PaperTradingEngine: ObservableObject {
             feeCost: totalFees
         )
         lastEntryTick = tickNumber
+        lastEntryDate = Date()
     }
 
     private func updateOpenTrade() {
@@ -345,6 +453,7 @@ final class PaperTradingEngine: ObservableObject {
         let exitSlippage = actualSlippage(for: trade.asset)
         let exitPrice = executionPrice(
             midPrice: currentPrice,
+            asset: trade.asset,
             direction: trade.direction,
             isEntry: false,
             slippagePercent: exitSlippage
@@ -365,13 +474,14 @@ final class PaperTradingEngine: ObservableObject {
 
     private func executionPrice(
         midPrice: Double,
+        asset: AssetSymbol,
         direction: TradeDirection,
         isEntry: Bool,
         slippagePercent: Double
     ) -> Double {
         guard executionSettings.applyTradingCosts else { return midPrice }
         let side = isEntry ? direction.multiplier : -direction.multiplier
-        let adverseCost = settings.asset.spreadPercent / 2 + slippagePercent
+        let adverseCost = asset.spreadPercent / 2 + slippagePercent
         return midPrice * (1 + side * adverseCost / 100)
     }
 
@@ -388,17 +498,20 @@ final class PaperTradingEngine: ObservableObject {
         let dailyLossHit = todayProfitLoss <= -settings.maxDailyLoss
         let lossStreakHit = consecutiveLosses >= settings.maxConsecutiveLosses
         isRiskLocked = dailyLossHit || lossStreakHit || balance <= 0
-        if isRiskLocked {
-            autoTradingEnabled = false
-        }
+        if isRiskLocked { autoTradingEnabled = false }
     }
 
     private func prepareMarketForCurrentMode() {
         autoTradingEnabled = false
         lastFeedError = nil
         lastMarketUpdate = nil
+        lastMarketTimestamp = nil
+        streamConnected = false
+        streamMessage = nil
+        receivedTickCount = 0
         tickNumber = 0
         lastEntryTick = -100
+        lastEntryDate = .distantPast
 
         if marketMode == .simulated {
             feedState = .simulated
@@ -414,8 +527,13 @@ final class PaperTradingEngine: ObservableObject {
         autoTradingEnabled = false
         tickNumber = 0
         lastEntryTick = -100
+        lastEntryDate = .distantPast
         lastMarketUpdate = nil
+        lastMarketTimestamp = nil
         lastFeedError = nil
+        streamConnected = false
+        streamMessage = nil
+        receivedTickCount = 0
 
         if marketMode == .simulated {
             feedState = .simulated
