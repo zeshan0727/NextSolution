@@ -2,6 +2,7 @@ import Charts
 import SwiftUI
 
 private enum ReportPeriod: String, CaseIterable, Identifiable {
+    case day = "Daily"
     case month = "Monthly"
     case year = "Yearly"
     case custom = "Custom"
@@ -388,7 +389,7 @@ private struct ReportDetailView: View {
                 end: calendar.date(byAdding: .day, value: 1, to: endDay) ?? endDay
             )
         }
-        let component: Calendar.Component = selectedPeriod == .month ? .month : .year
+        let component: Calendar.Component = selectedPeriod == .day ? .day : (selectedPeriod == .month ? .month : .year)
         return calendar.dateInterval(of: component, for: anchorDate)
             ?? DateInterval(start: anchorDate, duration: 1)
     }
@@ -422,6 +423,7 @@ private struct ReportDetailView: View {
 
     private var periodTitle: String {
         switch selectedPeriod {
+        case .day: return DisplayFormat.day.string(from: anchorDate)
         case .month: return DisplayFormat.monthYear.string(from: anchorDate)
         case .year: return DisplayFormat.year.string(from: anchorDate)
         case .custom:
@@ -431,6 +433,9 @@ private struct ReportDetailView: View {
 
     private var isCurrentPeriod: Bool {
         let calendar = Calendar.current
+        if selectedPeriod == .day {
+            return calendar.isDateInToday(anchorDate)
+        }
         if selectedPeriod == .month {
             return calendar.isDate(anchorDate, equalTo: Date(), toGranularity: .month)
         }
@@ -440,6 +445,9 @@ private struct ReportDetailView: View {
 
     private var buckets: [ReportBucket] {
         let calendar = Calendar.current
+        if selectedPeriod == .day {
+            return makeHourlyBuckets()
+        }
         if selectedPeriod == .month || selectedPeriod == .custom {
             if selectedPeriod == .custom {
                 let grouped = Dictionary(grouping: selectedTransactions) {
@@ -506,8 +514,19 @@ private struct ReportDetailView: View {
 
     private func movePeriod(_ direction: Int) {
         guard selectedPeriod != .custom, !(direction > 0 && isCurrentPeriod) else { return }
-        let component: Calendar.Component = selectedPeriod == .month ? .month : .year
+        let component: Calendar.Component = selectedPeriod == .day ? .day : (selectedPeriod == .month ? .month : .year)
         anchorDate = Calendar.current.date(byAdding: component, value: direction, to: anchorDate) ?? anchorDate
+    }
+
+    private func makeHourlyBuckets() -> [ReportBucket] {
+        let calendar = Calendar.current
+        return stride(from: 0, to: 24, by: 3).map { hour in
+            let items = selectedTransactions.filter {
+                let value = calendar.component(.hour, from: $0.date)
+                return value >= hour && value < hour + 3
+            }
+            return makeBucket(id: "hour-\(hour)", label: String(format: "%02d:00", hour), items: items)
+        }
     }
 
     private var selectedPeriod: ReportPeriod {

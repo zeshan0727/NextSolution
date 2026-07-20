@@ -19,6 +19,9 @@ struct InsightsView: View {
     @State private var serverError: String?
     @AppStorage("DeepSeekTokenBudget") private var tokenBudget = 50_000
     @State private var localInsightRefresh = Date()
+    @State private var fixedSuggestions: [SpendingSuggestion] = []
+    @AppStorage("MonthlyIncomePrimary") private var primaryIncome = 0.0
+    @AppStorage("MonthlyIncomeSecondary") private var secondaryIncome = 0.0
 
     var body: some View {
         NavigationStack {
@@ -40,14 +43,15 @@ struct InsightsView: View {
                 Section {
                     Button {
                         localInsightRefresh = Date()
+                        fixedSuggestions = makeSuggestions()
                     } label: {
                         Label("Update Fixed Insights", systemImage: "arrow.clockwise")
                     }
-                    if suggestions.isEmpty {
+                    if fixedSuggestions.isEmpty {
                         Text("Add more expenses this month to receive useful suggestions.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(suggestions) { suggestion in
+                        ForEach(fixedSuggestions) { suggestion in
                             HStack(alignment: .top, spacing: 13) {
                                 Image(systemName: suggestion.icon)
                                     .foregroundStyle(suggestion.color)
@@ -71,6 +75,21 @@ struct InsightsView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                }
+
+                Section("Monthly AI Budget") {
+                    Stepper("Primary income: \(DisplayFormat.currency(Decimal(primaryIncome), code: store.currencyCode))", value: $primaryIncome, in: 0...1_000_000, step: 500)
+                    Stepper("Other fixed income: \(DisplayFormat.currency(Decimal(secondaryIncome), code: store.currencyCode))", value: $secondaryIncome, in: 0...1_000_000, step: 500)
+                    if monthlyBudgetIncome > 0 {
+                        BudgetLine(title: "Essentials", amount: monthlyBudgetIncome * Decimal(string: "0.45")!, color: AppTheme.blue, currencyCode: store.currencyCode)
+                        BudgetLine(title: "Savings & goals", amount: monthlyBudgetIncome * Decimal(string: "0.20")!, color: AppTheme.green, currencyCode: store.currencyCode)
+                        BudgetLine(title: "Family & flexible", amount: monthlyBudgetIncome * Decimal(string: "0.20")!, color: AppTheme.purple, currencyCode: store.currencyCode)
+                        BudgetLine(title: "Personal spending", amount: monthlyBudgetIncome * Decimal(string: "0.10")!, color: AppTheme.orange, currencyCode: store.currencyCode)
+                        BudgetLine(title: "Safety buffer", amount: monthlyBudgetIncome * Decimal(string: "0.05")!, color: AppTheme.teal, currencyCode: store.currencyCode)
+                    }
+                    Text("Income amounts stay in this app on your device. Refresh DeepSeek Recommendations for a plan adjusted to current spending.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Section("DeepSeek Recommendations") {
@@ -181,11 +200,18 @@ struct InsightsView: View {
             }
             .navigationTitle("AI Insights")
             .listStyle(.insetGrouped)
+            .onAppear {
+                if fixedSuggestions.isEmpty { fixedSuggestions = makeSuggestions() }
+            }
         }
     }
 
     private var currentMonth: DateInterval {
         Calendar.current.dateInterval(of: .month, for: Date())!
+    }
+
+    private var monthlyBudgetIncome: Decimal {
+        Decimal(primaryIncome + secondaryIncome)
     }
 
     private var previousMonth: DateInterval {
@@ -213,7 +239,7 @@ struct InsightsView: View {
         return "\(DisplayFormat.currency(abs(monthChange), code: store.currencyCode)) \(direction) than last month"
     }
 
-    private var suggestions: [SpendingSuggestion] {
+    private func makeSuggestions() -> [SpendingSuggestion] {
         guard currentExpense > 0 else { return [] }
         var result: [SpendingSuggestion] = []
         let grouped = Dictionary(grouping: currentExpenses, by: \.category)
@@ -250,6 +276,15 @@ struct InsightsView: View {
                 color: AppTheme.red
             ))
         }
+        let day = max(Calendar.current.component(.day, from: Date()), 1)
+        let dailyAverage = currentExpense / Decimal(day)
+        result.append(SpendingSuggestion(
+            id: "daily-pace-\(day)",
+            title: "Current daily pace",
+            detail: "You are averaging \(DisplayFormat.currency(dailyAverage, code: store.currencyCode)) per day; keep the next seven days below this level to improve the month.",
+            icon: "speedometer",
+            color: AppTheme.teal
+        ))
         return result
     }
 
@@ -334,9 +369,26 @@ struct InsightsView: View {
         Current month expenses: \(NSDecimalNumber(decimal: currentExpense).stringValue)
         Previous month expenses: \(NSDecimalNumber(decimal: previousExpense).stringValue)
         Current month expense count: \(currentExpenses.count)
+        Fixed monthly income: \(NSDecimalNumber(decimal: monthlyBudgetIncome).stringValue)
         Categories:
         \(categoryLines)
         Return only 3 or 4 concise bullets and keep the complete response under 180 words.
         """
+    }
+}
+
+private struct BudgetLine: View {
+    let title: String
+    let amount: Decimal
+    let color: Color
+    let currencyCode: String
+
+    var body: some View {
+        HStack {
+            Circle().fill(color).frame(width: 10, height: 10)
+            Text(title)
+            Spacer()
+            Text(DisplayFormat.currency(amount, code: currencyCode)).bold()
+        }
     }
 }

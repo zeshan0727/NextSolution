@@ -334,6 +334,7 @@ struct AddTransactionView: View {
     }
 
     private var suggestedVendors: [String] {
+        if let extracted = extractedVendor { return [extracted] }
         let words = Set(details.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count > 2 })
         guard !words.isEmpty else { return [] }
         var scores: [String: Int] = [:]
@@ -345,6 +346,21 @@ struct AddTransactionView: View {
         }
         return scores.sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
             .prefix(3).map(\.key)
+    }
+
+    private var extractedVendor: String? {
+        let patterns = [
+            #"(?i)\b(?:at|to|merchant)\s+([A-Z0-9][A-Z0-9 '&.-]{1,30}?)(?=\s+(?:on|at|for|using|card|amount)\b|[,.;]|$)"#,
+            #"(?i)\b(?:from)\s+([A-Z0-9][A-Z0-9 '&.-]{1,30}?)(?=\s+(?:on|at|for|using|card|amount)\b|[,.;]|$)"#
+        ]
+        for pattern in patterns {
+            guard let expression = try? NSRegularExpression(pattern: pattern),
+                  let match = expression.firstMatch(in: details, range: NSRange(details.startIndex..., in: details)),
+                  let range = Range(match.range(at: 1), in: details) else { continue }
+            let value = details[range].trimmingCharacters(in: .whitespacesAndNewlines)
+            if value.count >= 2 { return value }
+        }
+        return nil
     }
 
     private func save() {

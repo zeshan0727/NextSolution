@@ -22,6 +22,13 @@ struct DashboardView: View {
     @State private var transactionSearch = ""
     @AppStorage("DashboardAccountSelection") private var selectedAccountValue = "all"
     @State private var showingAccountSelection = false
+    @State private var spendingDay: SpendingDay?
+
+    private struct SpendingDay: Identifiable {
+        let id = UUID()
+        let title: String
+        let interval: DateInterval
+    }
 
     var body: some View {
         NavigationStack {
@@ -101,6 +108,18 @@ struct DashboardView: View {
                     }
                 }
             }
+            .sheet(item: $spendingDay) { day in
+                NavigationStack {
+                    PeriodTransactionsView(kind: .expenses, interval: day.interval)
+                        .navigationTitle(day.title)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Close") { spendingDay = nil }
+                            }
+                        }
+                }
+                .environmentObject(store)
+            }
         }
     }
 
@@ -112,15 +131,22 @@ struct DashboardView: View {
                 currencyCode: store.currencyCode,
                 icon: "sun.haze.fill",
                 colors: [AppTheme.purple, AppTheme.blue]
-            )
+            ) { openSpendingDay(offset: -1, title: "Yesterday's Expenses") }
             DailySpendButton(
                 title: "Today so far",
                 amount: expense(on: Date()),
                 currencyCode: store.currencyCode,
                 icon: "clock.fill",
                 colors: [AppTheme.orange, AppTheme.red]
-            )
+            ) { openSpendingDay(offset: 0, title: "Today's Expenses") }
         }
+    }
+
+    private func openSpendingDay(offset: Int, title: String) {
+        let calendar = Calendar.current
+        let date = calendar.date(byAdding: .day, value: offset, to: Date()) ?? Date()
+        guard let interval = calendar.dateInterval(of: .day, for: date) else { return }
+        spendingDay = SpendingDay(title: title, interval: interval)
     }
 
     private func expense(on date: Date) -> Decimal {
@@ -374,8 +400,10 @@ private struct DailySpendButton: View {
     let currencyCode: String
     let icon: String
     let colors: [Color]
+    let action: () -> Void
 
     var body: some View {
+        Button(action: action) {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.headline)
@@ -396,7 +424,10 @@ private struct DailySpendButton: View {
             LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing),
             in: RoundedRectangle(cornerRadius: 18, style: .continuous)
         )
+        .dailyLedgerGlass(tint: colors.first ?? AppTheme.purple, interactive: true)
         .accessibilityElement(children: .combine)
+        }
+        .buttonStyle(.plain)
     }
 }
 
