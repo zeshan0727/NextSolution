@@ -20,6 +20,7 @@ struct DashboardView: View {
         switch engine.feedState {
         case .live, .simulated: return .mint
         case .connecting: return .orange
+        case .stale: return .orange
         case .setupRequired, .error: return .pink
         }
     }
@@ -149,9 +150,12 @@ struct DashboardView: View {
                     }
                 }
                 .frame(height: 190)
+                .animation(.linear(duration: 0.12), value: engine.currentPrice)
 
                 if engine.marketMode == .live {
-                    Text("1-minute candles • refreshed every 30 seconds • app must remain open")
+                    Text(engine.streamConnected
+                         ? "WebSocket ticks • redraws on every real update • \(engine.receivedTickCount) received"
+                         : "REST fallback • 2-minute reconciliation • app must remain open")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -258,6 +262,7 @@ struct DashboardView: View {
         case .live: return "antenna.radiowaves.left.and.right"
         case .simulated: return "waveform.path.ecg"
         case .connecting: return "arrow.triangle.2.circlepath"
+        case .stale: return "pause.circle.fill"
         case .setupRequired: return "key.fill"
         case .error: return "exclamationmark.triangle.fill"
         }
@@ -266,6 +271,8 @@ struct DashboardView: View {
     private var feedDetailText: String {
         if let error = engine.lastFeedError { return error }
         if engine.feedState == .setupRequired { return "Add a Twelve Data API key in Settings." }
+        if engine.feedState == .stale { return "Trading is locked until a fresh market timestamp arrives." }
+        if let message = engine.streamMessage { return message }
         if let updated = engine.lastMarketUpdate {
             return "Last price update \(updated.formatted(date: .omitted, time: .standard))"
         }
