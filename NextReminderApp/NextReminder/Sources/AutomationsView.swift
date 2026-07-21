@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AutomationsView: View {
     @EnvironmentObject private var store: AutomationStore
+    @EnvironmentObject private var emailStore: EmailAutomationStore
+
     @State private var filter: AutomationListFilter = .all
     @State private var selectedPlatform: AutomationPlatform?
     @State private var searchText = ""
@@ -42,14 +44,15 @@ struct AutomationsView: View {
         ScrollView {
             LazyVStack(spacing: 14) {
                 header
+                emailAutomationCard
                 listFilters
                 platformFilters
 
                 if filteredAutomations.isEmpty {
                     EmptyStateView(
                         icon: "paperplane.circle",
-                        title: "No automations found",
-                        message: "Schedule a WhatsApp message, Instagram post or Story, or an X post."
+                        title: "No social automations found",
+                        message: "Schedule a WhatsApp message, Instagram post or Story, or an X post. Email reminders are managed in the separate panel above."
                     )
                 } else {
                     ForEach(filteredAutomations) { automation in
@@ -97,7 +100,7 @@ struct AutomationsView: View {
         .background(Color.nextBackground.ignoresSafeArea())
         .navigationTitle("Automations")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Search automations")
+        .searchable(text: $searchText, prompt: "Search social automations")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 NavigationLink {
@@ -131,20 +134,84 @@ struct AutomationsView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Scheduled publishing")
+                Text("Scheduled automations")
                     .font(.title2.bold())
-                Text("\(store.active.count) active")
+                Text("\(store.active.count) active social automation\(store.active.count == 1 ? "" : "s")")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Image(systemName: "paperplane.fill")
+            Image(systemName: "gearshape.2.fill")
                 .font(.title3)
                 .foregroundStyle(.nextOrange)
                 .frame(width: 48, height: 48)
                 .background(Color.nextOrange.opacity(0.15), in: Circle())
         }
         .padding(.top, 8)
+    }
+
+    private var emailAutomationCard: some View {
+        NavigationLink {
+            EmailAutomationSettingsView()
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue, Color.purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    Image(systemName: "envelope.badge.fill")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 58, height: 58)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Email Reminder Automations")
+                        .font(.headline)
+                    Text(emailAutomationSubtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(emailStore.settings.enabled ? "Enabled" : "Off")
+                        .font(.caption.bold())
+                        .foregroundStyle(emailStore.settings.enabled ? Color.green : Color.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(15)
+            .background(
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.13), Color.purple.opacity(0.09), Color.nextCard],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                in: RoundedRectangle(cornerRadius: 19, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 19, style: .continuous)
+                    .stroke(Color.blue.opacity(0.22), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var emailAutomationSubtitle: String {
+        let settings = emailStore.settings
+        guard settings.enabled else { return "Set a fixed recipient and choose Gmail, iCloud, SMTP, or Apple Mail." }
+        let recipient = settings.recipient.isEmpty ? "Recipient not set" : settings.recipient
+        return "\(settings.deliveryMethod.shortTitle) • \(recipient)"
     }
 
     private var listFilters: some View {
@@ -172,7 +239,12 @@ struct AutomationsView: View {
     private var platformFilters: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                platformButton(title: "All", symbol: "square.grid.2x2.fill", platform: nil, color: .nextOrange)
+                platformButton(
+                    title: "All",
+                    symbol: "square.grid.2x2.fill",
+                    platform: nil,
+                    color: .nextOrange
+                )
                 ForEach(AutomationPlatform.allCases) { platform in
                     platformButton(
                         title: platform.shortTitle,
