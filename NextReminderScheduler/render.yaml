@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: next-reminder-scheduler
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./NextReminderScheduler/Dockerfile
+    dockerContext: ./NextReminderScheduler
+    healthCheckPath: /v1/health
+    envVars:
+      - key: API_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: DATA_FILE
+        value: /data/next-reminder.json
+    disk:
+      name: next-reminder-data
+      mountPath: /data
+      sizeGB: 1
