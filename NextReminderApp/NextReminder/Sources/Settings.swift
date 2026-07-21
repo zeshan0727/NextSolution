@@ -1,8 +1,5 @@
-import Foundation
 import SwiftUI
-import Combine
 import UserNotifications
-import UIKit
 
 struct SettingsView: View {
     @EnvironmentObject private var store: ReminderStore
@@ -45,12 +42,24 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: mode.symbol)
-                                .foregroundStyle(mode == .dark ? Color.purple : mode == .light ? Color.yellow : Color.nextOrange)
+                                .foregroundStyle(
+                                    mode == .dark
+                                        ? Color.purple
+                                        : mode == .light ? Color.yellow : Color.nextOrange
+                                )
                                 .frame(width: 28)
                             Text(mode.title)
                             Spacer()
-                            Image(systemName: selectedTheme.wrappedValue == mode ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedTheme.wrappedValue == mode ? Color.nextOrange : Color.secondary)
+                            Image(
+                                systemName: selectedTheme.wrappedValue == mode
+                                    ? "checkmark.circle.fill"
+                                    : "circle"
+                            )
+                            .foregroundStyle(
+                                selectedTheme.wrappedValue == mode
+                                    ? Color.nextOrange
+                                    : Color.secondary
+                            )
                         }
                         .padding(14)
                         .nextCard()
@@ -87,7 +96,7 @@ struct SettingsView: View {
             .padding(14)
             .nextCard()
 
-            Text("Notifications are used for reminder alerts, automation approvals, assisted publishing, and status checks.")
+            Text("Notifications are used for reminder alerts, email compose alerts, automation approvals, and assisted publishing.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -111,19 +120,31 @@ struct SettingsView: View {
 
     private var automationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "Social Automations")
+            SectionHeader(title: "Automations")
+
+            NavigationLink {
+                EmailAutomationSettingsView()
+            } label: {
+                settingsRow(
+                    icon: "envelope.badge.fill",
+                    title: "Email Reminder Automations",
+                    subtitle: "Fixed recipient, Gmail, iCloud, SMTP, or Apple Mail"
+                )
+            }
+            .buttonStyle(.plain)
+
             NavigationLink {
                 AutomationConnectionsView()
             } label: {
                 settingsRow(
                     icon: "network.badge.shield.half.filled",
-                    title: "Accounts & Scheduler",
-                    subtitle: "Connect WhatsApp Business, Instagram, X, and an HTTPS scheduler"
+                    title: "Social Accounts & Scheduler",
+                    subtitle: "Connect WhatsApp Business, Instagram, X, and HTTPS automation"
                 )
             }
             .buttonStyle(.plain)
 
-            Text("Social passwords are never stored. Automatic mode uses OAuth-connected accounts on your scheduler; personal or unsupported accounts use approval or assisted mode.")
+            Text("Passwords are not stored in the app. Automatic email and social jobs use remote OAuth or SMTP connectors on your secure scheduler.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -136,16 +157,28 @@ struct SettingsView: View {
                 HStack(spacing: 13) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.nextOrange.opacity(0.18))
-                        Image(systemName: "bell.badge.fill")
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.24), Color.purple.opacity(0.24)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        Image(systemName: "checkmark.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(.nextOrange)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Color.cyan, Color.purple],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
                     }
                     .frame(width: 52, height: 52)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Next Reminder").font(.headline)
-                        Text("Version 1.1.0 • iOS 16.0+")
+                        Text("Version 1.2.0 • iOS 16.0+")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
