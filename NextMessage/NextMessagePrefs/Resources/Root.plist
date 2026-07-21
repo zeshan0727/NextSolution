@@ -18,6 +18,32 @@
 
     <dict>
         <key>cell</key><string>PSGroupCell</string>
+        <key>label</key><string>iOS 16 DIAGNOSTIC</string>
+        <key>footerText</key><string>This build automatically records the Messages controller and view classes needed for a real Concept A implementation. It does not collect message text, contact names, phone numbers, or participant information. Open the inbox and one conversation before sharing the report.</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>Capture Current Messages Screen</string>
+        <key>action</key><string>captureDiagnostic</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>Share Last Report</string>
+        <key>action</key><string>shareDiagnostic</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>Copy Last Report</string>
+        <key>action</key><string>copyDiagnostic</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>Clear Diagnostic Report</string>
+        <key>action</key><string>clearDiagnostic</string>
+    </dict>
+
+    <dict>
+        <key>cell</key><string>PSGroupCell</string>
         <key>label</key><string>THEME</string>
         <key>footerText</key><string>System follows the iPhone appearance. Black uses a true-black OLED canvas.</string>
     </dict>
