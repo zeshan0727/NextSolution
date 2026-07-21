@@ -9,8 +9,8 @@
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>NextMessagePrefs</string>
     <key>CFBundlePackageType</key><string>BNDL</string>
-    <key>CFBundleShortVersionString</key><string>0.2.0</string>
-    <key>CFBundleVersion</key><string>2</string>
+    <key>CFBundleShortVersionString</key><string>0.2.1</string>
+    <key>CFBundleVersion</key><string>3</string>
     <key>CFBundleSupportedPlatforms</key><array><string>iPhoneOS</string></array>
     <key>DTPlatformName</key><string>iphoneos</string>
     <key>MinimumOSVersion</key><string>15.0</string>
