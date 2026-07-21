@@ -5,7 +5,6 @@ services:
     plan: starter
     dockerfilePath: ./NextReminderScheduler/Dockerfile
     dockerContext: ./NextReminderScheduler
-    healthCheckPath: /v1/health
     envVars:
       - key: API_KEY
         generateValue: true
