@@ -11,9 +11,7 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
 @implementation NMRootListController
 
 - (NSArray *)specifiers {
-    if (!_specifiers) {
-        _specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self];
-    }
+    if (!_specifiers) _specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self];
     return _specifiers;
 }
 
@@ -25,16 +23,16 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
 }
 
 - (void)buildHeader {
-    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 154)];
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 158)];
 
     UIView *iconBackground = [UIView new];
     iconBackground.translatesAutoresizingMaskIntoConstraints = NO;
-    iconBackground.backgroundColor = [UIColor colorWithRed:0.58 green:0.45 blue:1.0 alpha:1.0];
+    iconBackground.backgroundColor = [UIColor colorWithRed:0.45 green:0.35 blue:1.0 alpha:1.0];
     iconBackground.layer.cornerRadius = 22.0;
     iconBackground.layer.cornerCurve = kCACornerCurveContinuous;
-    iconBackground.layer.shadowColor = [UIColor colorWithRed:0.55 green:0.42 blue:1.0 alpha:1.0].CGColor;
-    iconBackground.layer.shadowOpacity = 0.30;
-    iconBackground.layer.shadowRadius = 14.0;
+    iconBackground.layer.shadowColor = [UIColor colorWithRed:0.35 green:0.48 blue:1.0 alpha:1.0].CGColor;
+    iconBackground.layer.shadowOpacity = 0.32;
+    iconBackground.layer.shadowRadius = 15.0;
     iconBackground.layer.shadowOffset = CGSizeMake(0, 6);
     [header addSubview:iconBackground];
 
@@ -53,7 +51,7 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
 
     UILabel *subtitleLabel = [UILabel new];
     subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    subtitleLabel.text = @"A calmer, cleaner Messages experience";
+    subtitleLabel.text = @"Concept A — smarter, cleaner messaging";
     subtitleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
     subtitleLabel.textColor = UIColor.secondaryLabelColor;
     subtitleLabel.textAlignment = NSTextAlignmentCenter;
@@ -64,25 +62,20 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
         [iconBackground.centerXAnchor constraintEqualToAnchor:header.centerXAnchor],
         [iconBackground.widthAnchor constraintEqualToConstant:64],
         [iconBackground.heightAnchor constraintEqualToConstant:64],
-
         [icon.centerXAnchor constraintEqualToAnchor:iconBackground.centerXAnchor],
         [icon.centerYAnchor constraintEqualToAnchor:iconBackground.centerYAnchor],
         [icon.widthAnchor constraintEqualToConstant:34],
         [icon.heightAnchor constraintEqualToConstant:34],
-
         [titleLabel.topAnchor constraintEqualToAnchor:iconBackground.bottomAnchor constant:12],
         [titleLabel.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:16],
         [titleLabel.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-16],
-
         [subtitleLabel.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:4],
         [subtitleLabel.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:16],
         [subtitleLabel.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-16],
     ]];
 
     UITableView *tableView = [self valueForKey:@"table"];
-    if ([tableView isKindOfClass:UITableView.class]) {
-        tableView.tableHeaderView = header;
-    }
+    if ([tableView isKindOfClass:UITableView.class]) tableView.tableHeaderView = header;
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
@@ -93,18 +86,11 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
 
 - (void)resetPreferences {
     NSArray<NSString *> *keys = @[
-        @"Enabled",
-        @"AppearanceMode",
-        @"RedesignInbox",
-        @"RedesignConversation",
-        @"EnableToasts",
-        @"EnableInfoAction",
-        @"EnableDeleteAction",
+        @"Enabled", @"AppearanceMode", @"RedesignInbox", @"RedesignConversation",
+        @"EnableAuroraBackground", @"EnableConceptHeader", @"EnableBottomDock",
+        @"EnableSmartReplies", @"EnableToasts", @"EnableInfoAction", @"EnableDeleteAction"
     ];
-
-    for (NSString *key in keys) {
-        CFPreferencesSetAppValue((__bridge CFStringRef)key, NULL, (__bridge CFStringRef)NMPrefsDomain);
-    }
+    for (NSString *key in keys) CFPreferencesSetAppValue((__bridge CFStringRef)key, NULL, (__bridge CFStringRef)NMPrefsDomain);
     CFPreferencesAppSynchronize((__bridge CFStringRef)NMPrefsDomain);
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), NMPrefsChangedNotification, NULL, NULL, true);
     [self reloadSpecifiers];
