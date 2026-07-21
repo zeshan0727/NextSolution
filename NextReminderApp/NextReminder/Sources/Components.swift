@@ -1,8 +1,4 @@
-import Foundation
 import SwiftUI
-import Combine
-import UserNotifications
-import UIKit
 
 // MARK: - AppComponents
 struct NextCardModifier: ViewModifier {
@@ -13,7 +9,7 @@ struct NextCardModifier: ViewModifier {
                     .fill(Color.nextCard)
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                            .stroke(Color.nextCardBorder, lineWidth: 1)
                     )
             )
     }
@@ -103,7 +99,7 @@ struct CategoryPill: View {
         )
         .overlay(
             Capsule()
-                .stroke(selected ? Color.clear : Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(selected ? Color.clear : Color.nextCardBorder, lineWidth: 1)
         )
     }
 }
@@ -124,34 +120,55 @@ struct PriorityBadge: View {
     }
 }
 
+struct UrgencyBadge: View {
+    let urgency: ReminderUrgency
+
+    var body: some View {
+        Label(urgency.title, systemImage: urgency.symbol)
+            .font(.caption2.bold())
+            .foregroundStyle(urgency.color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(urgency.color.opacity(0.14), in: Capsule())
+    }
+}
+
 // MARK: - ReminderCard
 struct ReminderCard: View {
     let reminder: ReminderItem
     let category: ReminderCategory
 
-    private var accentColor: Color {
-        reminder.isOverdue ? .red : Color(hex: category.colorHex)
-    }
+    private var urgency: ReminderUrgency { reminder.urgency }
+    private var accentColor: Color { urgency.color }
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 13, style: .continuous)
                     .fill(accentColor.opacity(0.18))
-                Image(systemName: category.icon)
+                Image(systemName: urgency.symbol)
                     .font(.title3.bold())
                     .foregroundStyle(accentColor)
             }
-            .frame(width: 48, height: 48)
+            .frame(width: 50, height: 50)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(reminder.title)
                     .font(.headline)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
-                Text(reminder.dueDate.compactDateTime)
+
+                Label(reminder.dueDate.compactDateTime, systemImage: "bell.fill")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                if let deadline = reminder.deadlineDate {
+                    Label("Deadline: \(deadline.compactDateTime)", systemImage: "flag.checkered")
+                        .font(.caption)
+                        .foregroundStyle(accentColor)
+                        .lineLimit(1)
+                }
+
                 if !reminder.notes.isEmpty {
                     Text(reminder.notes)
                         .font(.caption)
@@ -165,15 +182,21 @@ struct ReminderCard: View {
             VStack(alignment: .trailing, spacing: 8) {
                 Text(reminder.timeRemaining())
                     .font(.caption.bold())
-                    .foregroundStyle(reminder.isOverdue ? .red : accentColor)
+                    .foregroundStyle(accentColor)
                     .multilineTextAlignment(.trailing)
-                PriorityBadge(priority: reminder.priority)
+                UrgencyBadge(urgency: urgency)
+                HStack(spacing: 5) {
+                    Image(systemName: category.icon)
+                    Text(category.name)
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
         }
         .padding(14)
         .background(
             LinearGradient(
-                colors: [accentColor.opacity(0.20), Color.nextCard.opacity(0.96)],
+                colors: [accentColor.opacity(0.26), accentColor.opacity(0.08), Color.nextCard.opacity(0.98)],
                 startPoint: .leading,
                 endPoint: .trailing
             ),
@@ -181,7 +204,8 @@ struct ReminderCard: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(accentColor.opacity(0.25), lineWidth: 1)
+                .stroke(accentColor.opacity(0.38), lineWidth: 1)
         )
+        .shadow(color: accentColor.opacity(0.08), radius: 8, y: 3)
     }
 }
