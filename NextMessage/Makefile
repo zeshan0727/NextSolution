@@ -15,5 +15,9 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += NextMessagePrefs
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
+before-package::
+	@chmod 0755 layout/DEBIAN/postinst 2>/dev/null || true
+	@chmod 0755 layout/DEBIAN/postrm 2>/dev/null || true
+
 after-install::
-	install.exec "killall -9 MobileSMS Preferences 2>/dev/null || true"
+	install.exec "uicache -a 2>/dev/null || true; killall -9 MobileSMS Preferences 2>/dev/null || true"
