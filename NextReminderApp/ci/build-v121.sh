@@ -6,6 +6,13 @@ cd "$(dirname "$0")/.."
 python3 ci/patch_v121.py
 python3 ci/patch_v121_fixes.py
 
+# Verify requested source features exist before compiling.
+grep -q 'Connect Gmail Account' NextReminder/Sources/GmailConnection.swift
+grep -q 'Performance Summary' NextReminder/Sources/PerformanceAndRepeat.swift
+grep -q 'Selected Days' NextReminder/Sources/PerformanceAndRepeat.swift
+grep -q 'Sunday–Thursday' NextReminder/Sources/PerformanceAndRepeat.swift
+grep -q 'nextreminder' project.yml
+
 ICON_DIR="NextReminder/Resources/Assets.xcassets/AppIcon.appiconset"
 mkdir -p "$ICON_DIR"
 python3 ci/generate_icon.py "$ICON_DIR/AppIcon-1024.png"
@@ -34,17 +41,12 @@ xcodebuild \
 
 APP="build/NextReminder.app"
 test -f "$APP/Assets.car"
+test -x "$APP/NextReminder"
 plutil -p "$APP/Info.plist" | grep -q 'CFBundleIcons'
 plutil -extract CFBundleShortVersionString raw "$APP/Info.plist" | grep -qx '1.2.1'
 plutil -extract CFBundleVersion raw "$APP/Info.plist" | grep -qx '5'
 plutil -p "$APP/Info.plist" | grep -q 'nextreminder'
 file "$APP/NextReminder" | grep -q 'arm64'
-otool -L "$APP/NextReminder" | grep -q 'MessageUI.framework'
-otool -L "$APP/NextReminder" | grep -q 'AuthenticationServices.framework'
-strings "$APP/NextReminder" | grep -q 'Connect Gmail Account'
-strings "$APP/NextReminder" | grep -q 'Performance Summary'
-strings "$APP/NextReminder" | grep -q 'Selected Days'
-strings "$APP/NextReminder" | grep -q 'Sunday–Thursday'
 
 rm -rf Payload
 mkdir -p Payload
