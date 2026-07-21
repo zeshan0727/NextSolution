@@ -5,7 +5,7 @@ INSTALL_TARGET_PROCESSES = MobileSMS Preferences
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = NextMessage
-NextMessage_FILES = Tweak.xm
+NextMessage_FILES = Tweak.xm NMDiagnostics.m
 NextMessage_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
 NextMessage_FRAMEWORKS = UIKit Foundation QuartzCore
 NextMessage_LIBRARIES = sqlite3
