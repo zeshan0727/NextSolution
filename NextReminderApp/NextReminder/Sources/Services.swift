@@ -4,7 +4,6 @@ import Combine
 import UserNotifications
 import UIKit
 
-// MARK: - PersistenceService
 struct PersistenceService {
     private let fileManager = FileManager.default
     private let fileName = "NextReminderDatabase.json"
@@ -29,19 +28,13 @@ struct PersistenceService {
     func save(_ database: ReminderDatabase) throws {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(database)
         try data.write(to: fileURL, options: [.atomic])
     }
 }
 
-// MARK: - NotificationActionCoordinator
 struct PendingNotificationAction: Codable {
-    enum Kind: String, Codable {
-        case complete
-        case snooze
-    }
-
+    enum Kind: String, Codable { case complete, snooze }
     var reminderID: UUID
     var kind: Kind
     var comment: String
@@ -53,9 +46,7 @@ extension Notification.Name {
 
 final class NotificationActionCoordinator {
     static let shared = NotificationActionCoordinator()
-
     private let defaultsKey = "NextReminder.PendingNotificationAction"
-
     private init() {}
 
     func store(_ action: PendingNotificationAction) {
@@ -67,24 +58,19 @@ final class NotificationActionCoordinator {
 
     func consume() -> PendingNotificationAction? {
         guard let data = UserDefaults.standard.data(forKey: defaultsKey),
-              let action = try? JSONDecoder().decode(PendingNotificationAction.self, from: data) else {
-            return nil
-        }
+              let action = try? JSONDecoder().decode(PendingNotificationAction.self, from: data) else { return nil }
         UserDefaults.standard.removeObject(forKey: defaultsKey)
         return action
     }
 }
 
-// MARK: - NotificationManager
 final class NotificationManager {
     static let shared = NotificationManager()
-
     static let categoryIdentifier = "NEXT_REMINDER_CATEGORY"
     static let completeActionIdentifier = "NEXT_REMINDER_COMPLETE"
     static let snoozeActionIdentifier = "NEXT_REMINDER_SNOOZE"
 
     private let center = UNUserNotificationCenter.current()
-
     private init() {}
 
     func configureCategories() {
@@ -110,11 +96,8 @@ final class NotificationManager {
     }
 
     func requestAuthorization() async -> Bool {
-        do {
-            return try await center.requestAuthorization(options: [.alert, .badge, .sound])
-        } catch {
-            return false
-        }
+        do { return try await center.requestAuthorization(options: [.alert, .badge, .sound]) }
+        catch { return false }
     }
 
     func authorizationStatus() async -> UNAuthorizationStatus {
@@ -183,14 +166,10 @@ final class NotificationManager {
 
     private func notificationBody(for reminder: ReminderItem, categoryName: String) -> String {
         let note = reminder.notes.trimmingCharacters(in: .whitespacesAndNewlines)
-        if note.isEmpty {
-            return "\(categoryName) • \(reminder.priority.title) priority"
-        }
-        return note
+        return note.isEmpty ? "\(categoryName) • \(reminder.priority.title) priority" : note
     }
 }
 
-// MARK: - ReminderStore
 @MainActor
 final class ReminderStore: ObservableObject {
     @Published private(set) var reminders: [ReminderItem] = []
@@ -199,6 +178,11 @@ final class ReminderStore: ObservableObject {
 
     private let persistence = PersistenceService()
     private var cancellables = Set<AnyCancellable>()
+    private var pendingSaveWorkItem: DispatchWorkItem?
+    private static let persistenceQueue = DispatchQueue(
+        label: "com.nextsolution.nextreminder.persistence",
+        qos: .utility
+    )
 
     init() {
         load()
@@ -298,8 +282,7 @@ final class ReminderStore: ObservableObject {
                 newDueDate: newDate
             )
         )
-        let updated = reminders[index]
-        persistAndSchedule(updated)
+        persistAndSchedule(reminders[index])
     }
 
     func restore(_ reminder: ReminderItem) {
@@ -308,10 +291,15 @@ final class ReminderStore: ObservableObject {
         reminders[index].completionComment = nil
         reminders[index].updatedAt = Date()
         reminders[index].history.append(
-            ReminderHistoryEntry(action: .restored, date: Date(), comment: "", previousDueDate: nil, newDueDate: reminder.dueDate)
+            ReminderHistoryEntry(
+                action: .restored,
+                date: Date(),
+                comment: "",
+                previousDueDate: nil,
+                newDueDate: reminder.dueDate
+            )
         )
-        let updated = reminders[index]
-        persistAndSchedule(updated)
+        persistAndSchedule(reminders[index])
     }
 
     func addCategory(name: String, icon: String, colorHex: String) {
@@ -364,11 +352,22 @@ final class ReminderStore: ObservableObject {
     }
 
     private func save() {
-        do {
-            try persistence.save(ReminderDatabase(reminders: reminders, categories: categories))
-        } catch {
-            lastErrorMessage = "Changes could not be saved."
+        let snapshot = ReminderDatabase(reminders: reminders, categories: categories)
+        pendingSaveWorkItem?.cancel()
+
+        let persistence = self.persistence
+        let workItem = DispatchWorkItem { [weak self] in
+            do {
+                try persistence.save(snapshot)
+            } catch {
+                DispatchQueue.main.async {
+                    self?.lastErrorMessage = "Changes could not be saved."
+                }
+            }
         }
+
+        pendingSaveWorkItem = workItem
+        Self.persistenceQueue.async(execute: workItem)
     }
 
     private func persistAndSchedule(_ reminder: ReminderItem) {
