@@ -1,0 +1,65 @@
+name: Build Next Message RootHide
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'builds/next-message/**'
+      - '.github/workflows/build-next-message-roothide.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          brew update
+          brew install ldid dpkg xz
+
+      - name: Install Theos
+        run: |
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$HOME/theos"
+
+      - name: Restore uploaded source archive
+        run: |
+          mkdir -p build-work
+          cat builds/next-message/source.part* > build-work/NextMessageTweak-source.zip.b64
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          source = Path('build-work/NextMessageTweak-source.zip.b64')
+          target = Path('build-work/NextMessageTweak-source.zip')
+          target.write_bytes(base64.b64decode(source.read_text()))
+          print(f'Restored {target} ({target.stat().st_size} bytes)')
+          PY
+          unzip -q build-work/NextMessageTweak-source.zip -d build-work
+          test -f build-work/NextMessageTweak/Makefile
+
+      - name: Build RootHide package
+        id: build
+        shell: bash
+        run: |
+          set -o pipefail
+          export THEOS="$HOME/theos"
+          cd build-work/NextMessageTweak
+          make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1 2>&1 | tee build.log
+          test -n "$(find packages -maxdepth 1 -name '*.deb' -print -quit)"
+          shasum -a 256 packages/*.deb | tee packages/SHA256SUMS.txt
+
+      - name: Upload package and build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMessage-RootHide-1.0.0
+          path: |
+            build-work/NextMessageTweak/packages/*.deb
+            build-work/NextMessageTweak/packages/SHA256SUMS.txt
+            build-work/NextMessageTweak/build.log
+          if-no-files-found: warn
+          retention-days: 7
