@@ -26,7 +26,7 @@ jobs:
         run: |
           git clone --recursive --depth 1 https://github.com/roothide/theos.git "$HOME/theos"
 
-      - name: Restore uploaded source archive
+      - name: Restore and prepare uploaded source
         run: |
           mkdir -p build-work
           cat builds/next-message/source.part* > build-work/NextMessageTweak-source.zip.b64
@@ -40,6 +40,7 @@ jobs:
           PY
           unzip -q build-work/NextMessageTweak-source.zip -d build-work
           test -f build-work/NextMessageTweak/Makefile
+          python3 builds/next-message/prepare_source.py
 
       - name: Build RootHide package
         id: build
