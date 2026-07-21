@@ -44,9 +44,19 @@ jobs:
       - name: Build Next Message
         working-directory: NextMessage
         run: |
-          set -euxo pipefail
+          set -o pipefail
           make clean
-          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}" messages=yes
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}" messages=yes \
+            2>&1 | tee "$GITHUB_WORKSPACE/build-${{ matrix.scheme }}.log"
+
+      - name: Upload compiler log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMessage-${{ matrix.scheme }}-build-log
+          path: build-${{ matrix.scheme }}.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Collect package
         run: |
