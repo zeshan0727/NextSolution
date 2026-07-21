@@ -3,6 +3,8 @@
         bundle = NextMessagePrefs;
         cell = PSLinkCell;
         detail = NMRootListController;
+        executable = NextMessagePrefs;
+        isController = 1;
         label = "Next Message";
     };
 }
