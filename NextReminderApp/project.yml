@@ -8,9 +8,6 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-    TARGETED_DEVICE_FAMILY: "1"
-    MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_LANGUAGE: en
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 
@@ -27,10 +24,22 @@ targets:
       - path: NextReminder/Resources
     info:
       path: NextReminder/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Next Reminder
+        CFBundleName: NextReminder
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIRequiredDeviceCapabilities:
+          - arm64
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextreminder
         PRODUCT_NAME: NextReminder
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: NextReminder/Resources/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
