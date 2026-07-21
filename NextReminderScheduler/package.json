@@ -1,0 +1,20 @@
+{
+  "name": "next-reminder-scheduler",
+  "version": "1.2.1",
+  "private": true,
+  "description": "Secure Gmail OAuth and exact-time email scheduler for Next Reminder",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0"
+  }
+}
