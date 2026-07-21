@@ -1,0 +1,10 @@
+Package: com.nextsolution.nextmessage
+Name: Next Message
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: A minimal Concept H redesign for the stock Messages app with light, black, and system-followed themes, swipe actions, and conversation info toasts.
+Maintainer: Next Solution - Zeshan 0727
+Author: Next Solution - Zeshan 0727
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader, firmware (>= 15.0)
+Icon: https://zeshan0727.github.io/CydiaIcon.png
