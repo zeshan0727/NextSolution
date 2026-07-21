@@ -4,7 +4,6 @@ import Combine
 import UserNotifications
 import UIKit
 
-// MARK: - SettingsView
 struct SettingsView: View {
     @EnvironmentObject private var store: ReminderStore
     @AppStorage("NextReminder.ThemeMode") private var themeModeRaw = AppThemeMode.system.rawValue
@@ -24,6 +23,7 @@ struct SettingsView: View {
                 appearanceSection
                 notificationSection
                 managementSection
+                automationSection
                 aboutSection
             }
             .padding(16)
@@ -45,12 +45,12 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: mode.symbol)
-                                .foregroundStyle(mode == .dark ? .purple : mode == .light ? .yellow : .nextOrange)
+                                .foregroundStyle(mode == .dark ? Color.purple : mode == .light ? Color.yellow : Color.nextOrange)
                                 .frame(width: 28)
                             Text(mode.title)
                             Spacer()
                             Image(systemName: selectedTheme.wrappedValue == mode ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedTheme.wrappedValue == mode ? .nextOrange : .secondary)
+                                .foregroundStyle(selectedTheme.wrappedValue == mode ? Color.nextOrange : Color.secondary)
                         }
                         .padding(14)
                         .nextCard()
@@ -64,32 +64,30 @@ struct SettingsView: View {
     private var notificationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "Notifications")
-            VStack(spacing: 0) {
-                HStack {
-                    Image(systemName: notificationIcon)
-                        .foregroundStyle(notificationColor)
-                        .frame(width: 28)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Notification Permission")
-                        Text(notificationStatusText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if authorizationStatus == .notDetermined {
-                        Button(isRequesting ? "Requesting…" : "Enable") {
-                            Task { await requestNotifications() }
-                        }
-                        .disabled(isRequesting)
-                    } else {
-                        Button("Settings") { NotificationManager.shared.openSystemSettings() }
-                    }
+            HStack {
+                Image(systemName: notificationIcon)
+                    .foregroundStyle(notificationColor)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Notification Permission")
+                    Text(notificationStatusText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .padding(14)
+                Spacer()
+                if authorizationStatus == .notDetermined {
+                    Button(isRequesting ? "Requesting…" : "Enable") {
+                        Task { await requestNotifications() }
+                    }
+                    .disabled(isRequesting)
+                } else {
+                    Button("Settings") { NotificationManager.shared.openSystemSettings() }
+                }
             }
+            .padding(14)
             .nextCard()
 
-            Text("Each reminder can use one or more alerts: at the deadline, 5, 15, or 30 minutes before, 1 or 3 hours before, or 1 day before.")
+            Text("Notifications are used for reminder alerts, automation approvals, assisted publishing, and status checks.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -97,13 +95,37 @@ struct SettingsView: View {
 
     private var managementSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "Management")
+            SectionHeader(title: "Reminder Management")
             NavigationLink {
                 CategoryManagementView()
             } label: {
-                settingsRow(icon: "line.3.horizontal.decrease.circle.fill", title: "Reminder Filters", subtitle: "Rename Personal and General or add custom filters")
+                settingsRow(
+                    icon: "line.3.horizontal.decrease.circle.fill",
+                    title: "Reminder Filters",
+                    subtitle: "Rename Personal and General or add custom filters"
+                )
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    private var automationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader(title: "Social Automations")
+            NavigationLink {
+                AutomationConnectionsView()
+            } label: {
+                settingsRow(
+                    icon: "network.badge.shield.half.filled",
+                    title: "Accounts & Scheduler",
+                    subtitle: "Connect WhatsApp Business, Instagram, X, and an HTTPS scheduler"
+                )
+            }
+            .buttonStyle(.plain)
+
+            Text("Social passwords are never stored. Automatic mode uses OAuth-connected accounts on your scheduler; personal or unsupported accounts use approval or assisted mode.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -123,7 +145,7 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Next Reminder").font(.headline)
-                        Text("Version 1.0.0 • iOS 16.0+")
+                        Text("Version 1.1.0 • iOS 16.0+")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
