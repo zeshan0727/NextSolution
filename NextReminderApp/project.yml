@@ -17,11 +17,9 @@ targets:
     platform: iOS
     deploymentTarget: "16.0"
     sources:
-      - path: NextReminder
-        excludes:
-          - Resources
-    resources:
-      - path: NextReminder/Resources
+      - path: NextReminder/Sources
+      - path: NextReminder/Resources/Assets.xcassets
+        buildPhase: resources
     info:
       path: NextReminder/Resources/Info.plist
       properties:
@@ -37,8 +35,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextreminder
         PRODUCT_NAME: NextReminder
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.0.1"
+        CURRENT_PROJECT_VERSION: "2"
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: NextReminder/Resources/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -47,6 +45,12 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+      configs:
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: -O
+          SWIFT_COMPILATION_MODE: wholemodule
+          DEAD_CODE_STRIPPING: YES
+          STRIP_INSTALLED_PRODUCT: YES
     scheme:
       testTargets: []
       gatherCoverageData: false
