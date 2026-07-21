@@ -1,8 +1,8 @@
-import Foundation
 import SwiftUI
-import Combine
-import UserNotifications
-import UIKit
+
+struct IdentifiedReminderID: Identifiable, Equatable {
+    let id: UUID
+}
 
 // MARK: - RootView
 enum AppTab: Hashable {
@@ -14,12 +14,16 @@ enum AppTab: Hashable {
 }
 
 struct RootView: View {
+    @EnvironmentObject private var reminderStore: ReminderStore
     @EnvironmentObject private var automationStore: AutomationStore
+    @EnvironmentObject private var emailAutomationStore: EmailAutomationStore
+
     @State private var selectedTab: AppTab = .reminders
     @State private var lastRegularTab: AppTab = .reminders
     @State private var showAddMenu = false
     @State private var addFlow: AddFlow?
     @State private var openedAutomation: IdentifiedAutomationID?
+    @State private var openedEmailReminder: IdentifiedReminderID?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -65,7 +69,16 @@ struct RootView: View {
             openedAutomation = IdentifiedAutomationID(id: id)
             automationStore.clearRequested()
         }
-        .confirmationDialog("What would you like to create?", isPresented: $showAddMenu, titleVisibility: .visible) {
+        .onChange(of: emailAutomationStore.requestedReminderID) { id in
+            guard let id else { return }
+            openedEmailReminder = IdentifiedReminderID(id: id)
+            emailAutomationStore.clearRequestedReminder()
+        }
+        .confirmationDialog(
+            "What would you like to create?",
+            isPresented: $showAddMenu,
+            titleVisibility: .visible
+        ) {
             Button("New Reminder") { addFlow = .reminder }
             Button("New Social Automation") { addFlow = .automation }
             Button("Cancel", role: .cancel) {}
@@ -83,6 +96,20 @@ struct RootView: View {
         .sheet(item: $openedAutomation) { item in
             NavigationStack {
                 AutomationDetailView(automationID: item.id)
+            }
+        }
+        .sheet(item: $openedEmailReminder) { item in
+            if let reminder = reminderStore.reminders.first(where: { $0.id == item.id }) {
+                EmailComposeSheet(
+                    reminder: reminder,
+                    settings: emailAutomationStore.settings
+                )
+            } else {
+                EmptyStateView(
+                    icon: "envelope.badge.fill",
+                    title: "Reminder not found",
+                    message: "The reminder linked to this email may have been deleted."
+                )
             }
         }
     }
@@ -113,17 +140,20 @@ struct RemindersView: View {
             let matchesSearch = searchText.isEmpty
                 || reminder.title.localizedCaseInsensitiveContains(searchText)
                 || reminder.notes.localizedCaseInsensitiveContains(searchText)
+
             let matchesQuick: Bool
             switch quickFilter {
             case .all:
                 matchesQuick = true
             case .today:
-                matchesQuick = Calendar.current.isDateInToday(reminder.dueDate)
+                matchesQuick = Calendar.current.isDateInToday(reminder.effectiveDeadline)
             case .upcoming:
-                matchesQuick = reminder.dueDate > Date() && !Calendar.current.isDateInToday(reminder.dueDate)
+                matchesQuick = reminder.effectiveDeadline > Date()
+                    && !Calendar.current.isDateInToday(reminder.effectiveDeadline)
             case .overdue:
                 matchesQuick = reminder.isOverdue
             }
+
             let matchesCategory = selectedCategoryID == nil || reminder.categoryID == selectedCategoryID
             let matchesAdvancedCategory = advancedCategoryIDs.isEmpty || advancedCategoryIDs.contains(reminder.categoryID)
             let matchesPriority = selectedPriorities.isEmpty || selectedPriorities.contains(reminder.priority)
@@ -147,7 +177,10 @@ struct RemindersView: View {
                 } else {
                     ForEach(filteredReminders) { reminder in
                         NavigationLink(value: reminder.id) {
-                            ReminderCard(reminder: reminder, category: store.category(for: reminder.categoryID))
+                            ReminderCard(
+                                reminder: reminder,
+                                category: store.category(for: reminder.categoryID)
+                            )
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
@@ -222,7 +255,7 @@ struct RemindersView: View {
             ZStack {
                 Circle()
                     .fill(Color.nextOrange.opacity(0.15))
-                Image(systemName: "bell.fill")
+                Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.nextOrange)
                     .font(.title3)
             }
@@ -274,7 +307,9 @@ struct RemindersView: View {
                     .foregroundStyle(selectedCategoryID == nil ? Color.white : Color.primary)
                     .padding(.horizontal, 13)
                     .padding(.vertical, 9)
-                    .background(Capsule().fill(selectedCategoryID == nil ? Color.nextOrange : Color.nextCard))
+                    .background(
+                        Capsule().fill(selectedCategoryID == nil ? Color.nextOrange : Color.nextCard)
+                    )
                 }
                 .buttonStyle(.plain)
 
