@@ -1,41 +1,55 @@
-import Foundation
 import SwiftUI
-import Combine
-import UserNotifications
-import UIKit
 
 // MARK: - ReminderEditorView
 struct ReminderEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: ReminderStore
+    @EnvironmentObject private var emailStore: EmailAutomationStore
 
     let reminder: ReminderItem?
 
     @State private var title: String
     @State private var notes: String
     @State private var dueDate: Date
+    @State private var hasDeadline: Bool
+    @State private var deadlineDate: Date
     @State private var priority: ReminderPriority
     @State private var categoryID: UUID
     @State private var repeatRule: ReminderRepeat
     @State private var alertOffsets: Set<ReminderAlertOffset>
     @State private var notificationsEnabled: Bool
+    @State private var emailWhenDue: Bool
     @State private var isRequestingPermission = false
     @State private var permissionDenied = false
 
     init(reminder: ReminderItem?) {
         self.reminder = reminder
+        let initialReminderDate = reminder?.dueDate ?? Date().addingTimeInterval(3600)
         _title = State(initialValue: reminder?.title ?? "")
         _notes = State(initialValue: reminder?.notes ?? "")
-        _dueDate = State(initialValue: reminder?.dueDate ?? Date().addingTimeInterval(3600))
+        _dueDate = State(initialValue: initialReminderDate)
+        _hasDeadline = State(initialValue: reminder?.deadlineDate != nil)
+        _deadlineDate = State(
+            initialValue: reminder?.deadlineDate ?? initialReminderDate.addingTimeInterval(3600)
+        )
         _priority = State(initialValue: reminder?.priority ?? .medium)
         _categoryID = State(initialValue: reminder?.categoryID ?? ReminderCategory.general.id)
         _repeatRule = State(initialValue: reminder?.repeatRule ?? .never)
         _alertOffsets = State(initialValue: reminder?.alertOffsets ?? [.thirtyMinutes])
         _notificationsEnabled = State(initialValue: reminder?.notificationsEnabled ?? true)
+        _emailWhenDue = State(initialValue: reminder?.emailWhenDue ?? false)
     }
 
     private var canSave: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && dueDate > Date().addingTimeInterval(-60)
+        let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let validReminderTime = dueDate > Date().addingTimeInterval(-60)
+        let validDeadline = !hasDeadline || deadlineDate > dueDate
+        return hasTitle && validReminderTime && validDeadline
+    }
+
+    private var emailSetupReady: Bool {
+        let settings = emailStore.settings
+        return settings.enabled && settings.hasValidRecipient && settings.automaticConnectorReady
     }
 
     var body: some View {
@@ -46,6 +60,7 @@ struct ReminderEditorView: View {
                 prioritySection
                 categorySection
                 notificationSection
+                emailSection
                 repeatSection
 
                 Button(reminder == nil ? "Create Reminder" : "Save Changes") {
@@ -65,6 +80,11 @@ struct ReminderEditorView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
+            }
+        }
+        .onChange(of: dueDate) { newValue in
+            if hasDeadline && deadlineDate <= newValue {
+                deadlineDate = newValue.addingTimeInterval(3600)
             }
         }
         .alert("Notifications Are Disabled", isPresented: $permissionDenied) {
@@ -104,9 +124,9 @@ struct ReminderEditorView: View {
 
     private var dateSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "Deadline")
+            SectionHeader(title: "Reminder Time")
             DatePicker(
-                "Date and time",
+                "Alert date and time",
                 selection: $dueDate,
                 in: Date()...,
                 displayedComponents: [.date, .hourAndMinute]
@@ -114,6 +134,31 @@ struct ReminderEditorView: View {
             .datePickerStyle(.compact)
             .padding(14)
             .nextCard()
+
+            Toggle("Add a final completion deadline", isOn: $hasDeadline)
+                .padding(14)
+                .nextCard()
+                .onChange(of: hasDeadline) { enabled in
+                    if enabled && deadlineDate <= dueDate {
+                        deadlineDate = dueDate.addingTimeInterval(3600)
+                    }
+                }
+
+            if hasDeadline {
+                DatePicker(
+                    "Final deadline",
+                    selection: $deadlineDate,
+                    in: dueDate.addingTimeInterval(60)...,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+                .datePickerStyle(.compact)
+                .padding(14)
+                .nextCard()
+
+                Text("The reminder alert happens at the first time. Task color and overdue status follow the final deadline.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -130,7 +175,7 @@ struct ReminderEditorView: View {
                             Text(item.title)
                         }
                         .font(.subheadline.bold())
-                        .foregroundStyle(priority == item ? .white : item.color)
+                        .foregroundStyle(priority == item ? Color.white : item.color)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 13)
                         .background(
@@ -186,7 +231,7 @@ struct ReminderEditorView: View {
             }
 
             if notificationsEnabled {
-                Text("Receive one or more alerts before the deadline.")
+                Text("Receive one or more alerts before the reminder time.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -204,7 +249,7 @@ struct ReminderEditorView: View {
                                 Text(offset.title)
                             }
                             .font(.caption.bold())
-                            .foregroundStyle(alertOffsets.contains(offset) ? .white : .primary)
+                            .foregroundStyle(alertOffsets.contains(offset) ? Color.white : Color.primary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .background(
@@ -215,6 +260,61 @@ struct ReminderEditorView: View {
                         .buttonStyle(.plain)
                     }
                 }
+            }
+        }
+    }
+
+    private var emailSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader(title: "Email at Reminder Time")
+
+            Toggle("Send or prepare an email", isOn: $emailWhenDue)
+                .padding(14)
+                .nextCard()
+                .disabled(!emailSetupReady)
+
+            if emailSetupReady {
+                HStack(spacing: 12) {
+                    Image(systemName: emailStore.settings.deliveryMethod.symbol)
+                        .foregroundStyle(.blue)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(emailStore.settings.recipient)
+                            .font(.subheadline.weight(.semibold))
+                        Text(emailStore.settings.deliveryMethod.title)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: emailWhenDue ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(emailWhenDue ? Color.green : Color.secondary)
+                }
+                .padding(14)
+                .nextCard()
+            } else {
+                NavigationLink {
+                    EmailAutomationSettingsView()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "envelope.badge.fill")
+                            .foregroundStyle(.nextOrange)
+                            .frame(width: 28)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Set Up Email Automations")
+                                .font(.headline)
+                            Text("Choose a fixed recipient and sending method first.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(14)
+                    .nextCard()
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -253,17 +353,22 @@ struct ReminderEditorView: View {
 
     private func saveReminder() {
         let cleanedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let selectedAlerts: Set<ReminderAlertOffset> = notificationsEnabled && alertOffsets.isEmpty ? [.atTime] : alertOffsets
+        let selectedAlerts: Set<ReminderAlertOffset> = notificationsEnabled && alertOffsets.isEmpty
+            ? [.atTime]
+            : alertOffsets
+        let finalDeadline = hasDeadline ? deadlineDate : nil
 
         if var existing = reminder {
             existing.title = cleanedTitle
             existing.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.dueDate = dueDate
+            existing.deadlineDate = finalDeadline
             existing.priority = priority
             existing.categoryID = categoryID
             existing.repeatRule = repeatRule
             existing.alertOffsets = selectedAlerts
             existing.notificationsEnabled = notificationsEnabled
+            existing.emailWhenDue = emailWhenDue && emailSetupReady
             store.update(existing)
         } else {
             store.add(
@@ -271,11 +376,13 @@ struct ReminderEditorView: View {
                     title: cleanedTitle,
                     notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
                     dueDate: dueDate,
+                    deadlineDate: finalDeadline,
                     priority: priority,
                     categoryID: categoryID,
                     repeatRule: repeatRule,
                     alertOffsets: selectedAlerts,
-                    notificationsEnabled: notificationsEnabled
+                    notificationsEnabled: notificationsEnabled,
+                    emailWhenDue: emailWhenDue && emailSetupReady
                 )
             )
         }
