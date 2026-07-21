@@ -29,6 +29,11 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Install signing and packaging tools
+        uses: dhinakg/procursus-action@main
+        with:
+          packages: ldid dpkg
+
       - name: Install Theos toolchain
         run: |
           set -euxo pipefail
