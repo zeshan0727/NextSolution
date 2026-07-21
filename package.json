@@ -1,19 +1,20 @@
-[file name]: package.json
-[file content begin]
 {
-  "name": "bollywood-movies",
-  "version": "1.0.0",
-  "description": "Bollywood Movies Streaming Site",
-  "main": "index.html",
+  "name": "next-reminder-scheduler",
+  "version": "1.2.1",
+  "private": true,
+  "description": "Secure Gmail OAuth and exact-time email scheduler for Next Reminder",
+  "main": "server.js",
+  "type": "commonjs",
   "scripts": {
-    "generate": "node generate-pages.js",
-    "clean-generate": "find . -maxdepth 1 -name \"*.html\" -not -name \"index.html\" -type f -delete && node generate-pages.js",
-    "test": "echo \"No tests specified\""
+    "start": "node server.js",
+    "check": "node --check server.js"
   },
-  "keywords": ["bollywood", "movies", "streaming"],
-  "author": "Next Solution",
-  "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {}
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0"
+  }
 }
-[file content end]

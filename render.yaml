@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: next-reminder-zeshan-0727
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    autoDeployTrigger: commit
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: API_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: DATA_FILE
+        value: /data/next-reminder.json
+    disk:
+      name: next-reminder-data
+      mountPath: /data
+      sizeGB: 1
