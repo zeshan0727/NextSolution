@@ -50,6 +50,7 @@ jobs:
         working-directory: NextMessage
         run: |
           set -o pipefail
+          chmod 0755 layout/DEBIAN/postinst layout/DEBIAN/postrm
           make clean
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}" messages=yes \
             2>&1 | tee "$GITHUB_WORKSPACE/build-${{ matrix.scheme }}.log"
