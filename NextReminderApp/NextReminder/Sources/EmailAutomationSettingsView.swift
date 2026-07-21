@@ -3,6 +3,7 @@ import SwiftUI
 struct EmailAutomationSettingsView: View {
     @EnvironmentObject private var emailStore: EmailAutomationStore
     @EnvironmentObject private var automationStore: AutomationStore
+    @EnvironmentObject private var reminderStore: ReminderStore
 
     @State private var draft = EmailAutomationSettings()
 
@@ -146,7 +147,7 @@ struct EmailAutomationSettingsView: View {
     private var actionSection: some View {
         VStack(spacing: 12) {
             Button("Save Email Automation") {
-                emailStore.save(draft)
+                saveAndReschedule()
             }
             .buttonStyle(OrangeActionButtonStyle())
             .disabled(!canSave)
@@ -204,5 +205,15 @@ struct EmailAutomationSettingsView: View {
         }
         .padding(14)
         .nextCard()
+    }
+
+    private func saveAndReschedule() {
+        emailStore.save(draft)
+        let reminders = reminderStore.pendingReminders
+        Task {
+            for reminder in reminders {
+                await EmailAutomationManager.shared.sync(reminder)
+            }
+        }
     }
 }
