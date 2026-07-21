@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 python3 ci/patch_v121.py
+python3 ci/patch_v121_fixes.py
 
 ICON_DIR="NextReminder/Resources/Assets.xcassets/AppIcon.appiconset"
 mkdir -p "$ICON_DIR"
@@ -43,6 +44,7 @@ otool -L "$APP/NextReminder" | grep -q 'AuthenticationServices.framework'
 strings "$APP/NextReminder" | grep -q 'Connect Gmail Account'
 strings "$APP/NextReminder" | grep -q 'Performance Summary'
 strings "$APP/NextReminder" | grep -q 'Selected Days'
+strings "$APP/NextReminder" | grep -q 'Sunday–Thursday'
 
 rm -rf Payload
 mkdir -p Payload
@@ -51,5 +53,11 @@ ditto -c -k --sequesterRsrc --keepParent Payload NextReminder-v1.2.1-unsigned.ip
 cp NextReminder-v1.2.1-unsigned.ipa NextReminder-v1.2.1-unsigned.tipa
 shasum -a 256 NextReminder-v1.2.1-unsigned.tipa > NextReminder-v1.2.1-unsigned.tipa.sha256
 unzip -t NextReminder-v1.2.1-unsigned.tipa >/dev/null
+
+SCHEDULER_DIR="../NextReminderScheduler"
+node --check "$SCHEDULER_DIR/server.js"
+rm -f NextReminderScheduler-v1.2.1.zip
+ditto -c -k --sequesterRsrc --keepParent "$SCHEDULER_DIR" NextReminderScheduler-v1.2.1.zip
+unzip -t NextReminderScheduler-v1.2.1.zip >/dev/null
 
 echo "Next Reminder v1.2.1 build and verification completed."
