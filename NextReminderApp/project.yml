@@ -25,6 +25,8 @@ targets:
       properties:
         CFBundleDisplayName: Next Reminder
         CFBundleName: NextReminder
+        CFBundleShortVersionString: "1.0.1"
+        CFBundleVersion: "2"
         UILaunchScreen: {}
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations:
