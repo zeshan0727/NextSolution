@@ -3,157 +3,136 @@
 <plist version="1.0">
 <array>
     <dict>
-        <key>cell</key>
-        <string>PSGroupCell</string>
-        <key>label</key>
-        <string>GENERAL</string>
-        <key>footerText</key>
-        <string>Next Message redesigns the stock Messages app while keeping Apple’s original messaging functions.</string>
+        <key>cell</key><string>PSGroupCell</string>
+        <key>label</key><string>NEXT MESSAGE</string>
+        <key>footerText</key><string>Concept A redesign for Apple Messages. Original messaging, attachments, calls, and deletion remain handled by the stock app.</string>
     </dict>
     <dict>
-        <key>cell</key>
-        <string>PSSwitchCell</string>
-        <key>label</key>
-        <string>Enable Next Message</string>
-        <key>defaults</key>
-        <string>com.nextsolution.nextmessage</string>
-        <key>key</key>
-        <string>Enabled</string>
-        <key>default</key>
-        <true/>
-        <key>PostNotification</key>
-        <string>com.nextsolution.nextmessage/preferences.changed</string>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Enable Next Message</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>Enabled</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
     </dict>
 
     <dict>
-        <key>cell</key>
-        <string>PSGroupCell</string>
-        <key>label</key>
-        <string>APPEARANCE</string>
-        <key>footerText</key>
-        <string>System follows your iPhone appearance. Black uses a true-black background for OLED displays.</string>
+        <key>cell</key><string>PSGroupCell</string>
+        <key>label</key><string>THEME</string>
+        <key>footerText</key><string>System follows the iPhone appearance. Black uses a true-black OLED canvas.</string>
     </dict>
     <dict>
-        <key>cell</key>
-        <string>PSSegmentCell</string>
-        <key>label</key>
-        <string>Theme</string>
-        <key>defaults</key>
-        <string>com.nextsolution.nextmessage</string>
-        <key>key</key>
-        <string>AppearanceMode</string>
-        <key>default</key>
-        <integer>0</integer>
+        <key>cell</key><string>PSSegmentCell</string>
+        <key>label</key><string>Appearance</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>AppearanceMode</string>
+        <key>default</key><integer>0</integer>
         <key>validTitles</key>
-        <array>
-            <string>System</string>
-            <string>Light</string>
-            <string>Black</string>
-        </array>
+        <array><string>System</string><string>Light</string><string>Black</string></array>
         <key>validValues</key>
-        <array>
-            <integer>0</integer>
-            <integer>1</integer>
-            <integer>2</integer>
-        </array>
-        <key>PostNotification</key>
-        <string>com.nextsolution.nextmessage/preferences.changed</string>
+        <array><integer>0</integer><integer>1</integer><integer>2</integer></array>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
     </dict>
     <dict>
-        <key>cell</key>
-        <string>PSSwitchCell</string>
-        <key>label</key>
-        <string>Conversation Cards</string>
-        <key>defaults</key>
-        <string>com.nextsolution.nextmessage</string>
-        <key>key</key>
-        <string>RedesignInbox</string>
-        <key>default</key>
-        <true/>
-        <key>PostNotification</key>
-        <string>com.nextsolution.nextmessage/preferences.changed</string>
-    </dict>
-    <dict>
-        <key>cell</key>
-        <string>PSSwitchCell</string>
-        <key>label</key>
-        <string>Modern Chat View</string>
-        <key>defaults</key>
-        <string>com.nextsolution.nextmessage</string>
-        <key>key</key>
-        <string>RedesignConversation</string>
-        <key>default</key>
-        <true/>
-        <key>PostNotification</key>
-        <string>com.nextsolution.nextmessage/preferences.changed</string>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Aurora Background</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>EnableAuroraBackground</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
     </dict>
 
     <dict>
-        <key>cell</key>
-        <string>PSGroupCell</string>
-        <key>label</key>
-        <string>ACTIONS</string>
-        <key>footerText</key>
-        <string>Swipe a conversation to access Info and Delete. Info opens a quiet toast showing the total messages and the first conversation date.</string>
+        <key>cell</key><string>PSGroupCell</string>
+        <key>label</key><string>CONCEPT A — INBOX</string>
+        <key>footerText</key><string>Adds the Next Message glass header, search, category chips, floating compose button, glass conversation cards, and bottom dock.</string>
     </dict>
     <dict>
-        <key>cell</key>
-        <string>PSSwitchCell</string>
-        <key>label</key>
-        <string>Quiet Toasts</string>
-        <key>defaults</key>
-        <string>com.nextsolution.nextmessage</string>
-        <key>key</key>
-        <string>EnableToasts</string>
-        <key>default</key>
-        <true/>
-        <key>PostNotification</key>
-        <string>com.nextsolution.nextmessage/preferences.changed</string>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Redesign Inbox</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>RedesignInbox</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
     </dict>
     <dict>
-        <key>cell</key>
-        <string>PSSwitchCell</string>
-        <key>label</key>
-        <string>Info Swipe Action</string>
-        <key>defaults</key>
-        <string>com.nextsolution.nextmessage</string>
-        <key>key</key>
-        <string>EnableInfoAction</string>
-        <key>default</key>
-        <true/>
-        <key>PostNotification</key>
-        <string>com.nextsolution.nextmessage/preferences.changed</string>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Glass Header &amp; Filters</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>EnableConceptHeader</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
     </dict>
     <dict>
-        <key>cell</key>
-        <string>PSSwitchCell</string>
-        <key>label</key>
-        <string>Delete Swipe Action</string>
-        <key>defaults</key>
-        <string>com.nextsolution.nextmessage</string>
-        <key>key</key>
-        <string>EnableDeleteAction</string>
-        <key>default</key>
-        <true/>
-        <key>PostNotification</key>
-        <string>com.nextsolution.nextmessage/preferences.changed</string>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Bottom Navigation Dock</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>EnableBottomDock</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
     </dict>
 
     <dict>
-        <key>cell</key>
-        <string>PSGroupCell</string>
-        <key>label</key>
-        <string>MAINTENANCE</string>
-        <key>footerText</key>
-        <string>Next Solution — Zeshan 0727</string>
+        <key>cell</key><string>PSGroupCell</string>
+        <key>label</key><string>CONCEPT A — CHAT</string>
+        <key>footerText</key><string>Uses gradient sent bubbles, glass received bubbles, a modern composer, and smart-reply chips.</string>
     </dict>
     <dict>
-        <key>cell</key>
-        <string>PSButtonCell</string>
-        <key>label</key>
-        <string>Reset Preferences</string>
-        <key>action</key>
-        <string>resetPreferences</string>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Redesign Conversation</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>RedesignConversation</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Smart Reply Bar</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>EnableSmartReplies</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
+    </dict>
+
+    <dict>
+        <key>cell</key><string>PSGroupCell</string>
+        <key>label</key><string>SWIPE ACTIONS</string>
+        <key>footerText</key><string>Info displays the number of messages and the date the conversation first started. Delete preserves Apple’s stock deletion action.</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Conversation Info</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>EnableInfoAction</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Delete</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>EnableDeleteAction</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>label</key><string>Quiet Toasts</string>
+        <key>defaults</key><string>com.nextsolution.nextmessage</string>
+        <key>key</key><string>EnableToasts</string>
+        <key>default</key><true/>
+        <key>PostNotification</key><string>com.nextsolution.nextmessage/preferences.changed</string>
+    </dict>
+
+    <dict>
+        <key>cell</key><string>PSGroupCell</string>
+        <key>label</key><string>MAINTENANCE</string>
+        <key>footerText</key><string>Next Solution — Zeshan 0727</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>Reset Preferences</string>
+        <key>action</key><string>resetPreferences</string>
     </dict>
 </array>
 </plist>
