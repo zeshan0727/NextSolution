@@ -4,14 +4,12 @@ import Combine
 import UserNotifications
 import UIKit
 
-// MARK: - ReminderModels
 enum ReminderPriority: String, Codable, CaseIterable, Identifiable {
     case urgent
     case medium
     case low
 
     var id: String { rawValue }
-
     var title: String { rawValue.capitalized }
 
     var symbol: String {
@@ -43,16 +41,11 @@ enum ReminderRepeat: String, Codable, CaseIterable, Identifiable {
 
     func nextDate(after date: Date, calendar: Calendar = .current) -> Date? {
         switch self {
-        case .never:
-            return nil
-        case .daily:
-            return calendar.date(byAdding: .day, value: 1, to: date)
-        case .weekly:
-            return calendar.date(byAdding: .weekOfYear, value: 1, to: date)
-        case .monthly:
-            return calendar.date(byAdding: .month, value: 1, to: date)
-        case .yearly:
-            return calendar.date(byAdding: .year, value: 1, to: date)
+        case .never: return nil
+        case .daily: return calendar.date(byAdding: .day, value: 1, to: date)
+        case .weekly: return calendar.date(byAdding: .weekOfYear, value: 1, to: date)
+        case .monthly: return calendar.date(byAdding: .month, value: 1, to: date)
+        case .yearly: return calendar.date(byAdding: .year, value: 1, to: date)
         }
     }
 }
@@ -101,13 +94,7 @@ struct ReminderCategory: Identifiable, Codable, Hashable {
     var colorHex: String
     var isProtected: Bool
 
-    init(
-        id: UUID = UUID(),
-        name: String,
-        icon: String = "tag.fill",
-        colorHex: String = "FF7A00",
-        isProtected: Bool = false
-    ) {
+    init(id: UUID = UUID(), name: String, icon: String = "tag.fill", colorHex: String = "FF7A00", isProtected: Bool = false) {
         self.id = id
         self.name = name
         self.icon = icon
@@ -204,19 +191,14 @@ struct ReminderItem: Identifiable, Codable, Hashable {
         let absolute = abs(interval)
         let prefix = interval < 0 ? "Overdue by " : ""
 
-        if absolute < 60 {
-            return interval < 0 ? "Overdue" : "Due now"
-        }
-        if absolute < 3600 {
-            return "\(prefix)\(Int(absolute / 60))m"
-        }
+        if absolute < 60 { return interval < 0 ? "Overdue" : "Due now" }
+        if absolute < 3600 { return "\(prefix)\(Int(absolute / 60))m" }
         if absolute < 86400 {
             let hours = Int(absolute / 3600)
             let minutes = Int((absolute.truncatingRemainder(dividingBy: 3600)) / 60)
             return minutes > 0 ? "\(prefix)\(hours)h \(minutes)m" : "\(prefix)\(hours)h"
         }
-        let days = Int(absolute / 86400)
-        return "\(prefix)\(days)d"
+        return "\(prefix)\(Int(absolute / 86400))d"
     }
 }
 
@@ -232,6 +214,7 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
+
     var symbol: String {
         switch self {
         case .system: return "iphone"
@@ -249,11 +232,32 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Color+Hex
 extension Color {
     static let nextOrange = Color(red: 1.0, green: 0.43, blue: 0.0)
-    static let nextBackground = Color(red: 0.035, green: 0.045, blue: 0.06)
-    static let nextCard = Color(red: 0.075, green: 0.085, blue: 0.105)
+
+    static let nextBackground = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.035, green: 0.045, blue: 0.060, alpha: 1.0)
+            : UIColor(red: 0.962, green: 0.970, blue: 0.982, alpha: 1.0)
+    })
+
+    static let nextCard = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.075, green: 0.085, blue: 0.105, alpha: 1.0)
+            : UIColor.white
+    })
+
+    static let nextCardBorder = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(white: 1.0, alpha: 0.06)
+            : UIColor(red: 0.874, green: 0.898, blue: 0.933, alpha: 1.0)
+    })
+
+    static let nextSecondaryFill = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(white: 1.0, alpha: 0.04)
+            : UIColor(red: 0.945, green: 0.955, blue: 0.972, alpha: 1.0)
+    })
 
     init(hex: String) {
         let sanitized = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -282,18 +286,13 @@ extension Color {
     }
 }
 
-// MARK: - Date+Helpers
 extension Date {
     var isToday: Bool { Calendar.current.isDateInToday(self) }
     var isTomorrow: Bool { Calendar.current.isDateInTomorrow(self) }
 
     var compactDateTime: String {
-        if isToday {
-            return "Today, \(formatted(date: .omitted, time: .shortened))"
-        }
-        if isTomorrow {
-            return "Tomorrow, \(formatted(date: .omitted, time: .shortened))"
-        }
+        if isToday { return "Today, \(formatted(date: .omitted, time: .shortened))" }
+        if isTomorrow { return "Tomorrow, \(formatted(date: .omitted, time: .shortened))" }
         return formatted(date: .abbreviated, time: .shortened)
     }
 }
