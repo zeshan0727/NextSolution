@@ -1,13 +1,10 @@
-import Foundation
 import SwiftUI
-import Combine
-import UserNotifications
-import UIKit
 
 // MARK: - ReminderDetailView
 struct ReminderDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: ReminderStore
+    @EnvironmentObject private var emailStore: EmailAutomationStore
     let reminderID: UUID
 
     @State private var isEditing = false
@@ -38,7 +35,11 @@ struct ReminderDetailView: View {
                 .toolbar {
                     ToolbarItemGroup(placement: .navigationBarTrailing) {
                         Button { isEditing = true } label: { Image(systemName: "pencil") }
-                        Button(role: .destructive) { showDeleteConfirmation = true } label: { Image(systemName: "trash") }
+                        Button(role: .destructive) {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Image(systemName: "trash")
+                        }
                     }
                 }
                 .sheet(isPresented: $isEditing) {
@@ -52,40 +53,57 @@ struct ReminderDetailView: View {
                     ExtendReminderView(reminder: reminder)
                         .environmentObject(store)
                 }
-                .confirmationDialog("Delete this reminder?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+                .confirmationDialog(
+                    "Delete this reminder?",
+                    isPresented: $showDeleteConfirmation,
+                    titleVisibility: .visible
+                ) {
                     Button("Delete", role: .destructive) {
                         store.delete(reminder)
                         dismiss()
                     }
                 }
             } else {
-                EmptyStateView(icon: "questionmark.circle", title: "Reminder not found", message: "This reminder may have been deleted.")
+                EmptyStateView(
+                    icon: "questionmark.circle",
+                    title: "Reminder not found",
+                    message: "This reminder may have been deleted."
+                )
             }
         }
     }
 
     private func countdownCard(_ reminder: ReminderItem) -> some View {
         let category = store.category(for: reminder.categoryID)
-        let color = reminder.isOverdue ? Color.red : Color(hex: category.colorHex)
+        let urgency = reminder.urgency
+        let color = urgency.color
+
         return VStack(spacing: 18) {
             ZStack {
                 Circle()
-                    .stroke(Color.white.opacity(0.08), lineWidth: 14)
+                    .stroke(Color.nextCardBorder, lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: progress(for: reminder))
                     .stroke(
-                        AngularGradient(colors: [color.opacity(0.45), color, .nextOrange], center: .center),
+                        AngularGradient(
+                            colors: [color.opacity(0.45), color, .nextOrange],
+                            center: .center
+                        ),
                         style: StrokeStyle(lineWidth: 14, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
+
                 VStack(spacing: 7) {
-                    Image(systemName: reminder.isOverdue ? "exclamationmark.triangle.fill" : "bell.fill")
+                    Image(systemName: urgency.symbol)
                         .font(.title2)
                         .foregroundStyle(color)
                     Text(reminder.timeRemaining())
                         .font(.title2.bold())
                         .multilineTextAlignment(.center)
-                    Text(reminder.dueDate.compactDateTime)
+                    Text(reminder.deadlineDate == nil ? "Reminder time" : "Final deadline")
+                        .font(.caption2.bold())
+                        .foregroundStyle(color)
+                    Text(reminder.effectiveDeadline.compactDateTime)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -93,11 +111,12 @@ struct ReminderDetailView: View {
             }
             .frame(width: 220, height: 220)
 
-            VStack(spacing: 6) {
+            VStack(spacing: 8) {
                 Text(reminder.title)
                     .font(.title3.bold())
                     .multilineTextAlignment(.center)
                 HStack(spacing: 8) {
+                    UrgencyBadge(urgency: urgency)
                     PriorityBadge(priority: reminder.priority)
                     Text(category.name)
                         .font(.caption.bold())
@@ -110,16 +129,50 @@ struct ReminderDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(20)
-        .nextCard()
+        .background(
+            LinearGradient(
+                colors: [color.opacity(0.18), Color.nextCard],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 20)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(color.opacity(0.3), lineWidth: 1)
+        )
     }
 
     private func informationCard(_ reminder: ReminderItem) -> some View {
         VStack(spacing: 0) {
-            detailRow(icon: "calendar", title: "Deadline", value: reminder.dueDate.formatted(date: .long, time: .shortened))
+            detailRow(
+                icon: "bell.fill",
+                title: "Reminder time",
+                value: reminder.dueDate.formatted(date: .long, time: .shortened)
+            )
+
+            if let deadline = reminder.deadlineDate {
+                Divider().opacity(0.2)
+                detailRow(
+                    icon: "flag.checkered",
+                    title: "Final deadline",
+                    value: deadline.formatted(date: .long, time: .shortened)
+                )
+            }
+
             Divider().opacity(0.2)
-            detailRow(icon: "bell.fill", title: "Alerts", value: alertText(reminder))
+            detailRow(icon: "alarm.fill", title: "Alerts", value: alertText(reminder))
+
             Divider().opacity(0.2)
             detailRow(icon: "repeat", title: "Repeat", value: reminder.repeatRule.title)
+
+            Divider().opacity(0.2)
+            detailRow(
+                icon: "envelope.badge.fill",
+                title: "Email at reminder time",
+                value: emailText(reminder)
+            )
+
             if !reminder.notes.isEmpty {
                 Divider().opacity(0.2)
                 HStack(alignment: .top, spacing: 12) {
@@ -155,7 +208,7 @@ struct ReminderDetailView: View {
     private func actionButtons(_ reminder: ReminderItem) -> some View {
         HStack(spacing: 12) {
             Button { isExtending = true } label: {
-                Label("Extend", systemImage: "arrow.forward.circle.fill")
+                Label(reminder.deadlineDate == nil ? "Extend" : "Extend Times", systemImage: "arrow.forward.circle.fill")
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(Color.nextCard, in: RoundedRectangle(cornerRadius: 14))
@@ -200,15 +253,25 @@ struct ReminderDetailView: View {
     }
 
     private func progress(for reminder: ReminderItem) -> CGFloat {
-        let remaining = reminder.dueDate.timeIntervalSinceNow
+        let remaining = reminder.effectiveDeadline.timeIntervalSinceNow
         if remaining <= 0 { return 1 }
-        let window = max(reminder.dueDate.timeIntervalSince(reminder.createdAt), 3600)
+        let window = max(reminder.effectiveDeadline.timeIntervalSince(reminder.createdAt), 3600)
         return CGFloat(min(max(1 - remaining / window, 0.05), 1))
     }
 
     private func alertText(_ reminder: ReminderItem) -> String {
         guard reminder.notificationsEnabled else { return "Off" }
-        return reminder.alertOffsets.sorted { $0.rawValue < $1.rawValue }.map(\.title).joined(separator: ", ")
+        return reminder.alertOffsets
+            .sorted { $0.rawValue < $1.rawValue }
+            .map(\.title)
+            .joined(separator: ", ")
+    }
+
+    private func emailText(_ reminder: ReminderItem) -> String {
+        guard reminder.emailWhenDue else { return "Off" }
+        let settings = emailStore.settings
+        guard settings.enabled, settings.hasValidRecipient else { return "Setup required" }
+        return "\(settings.deliveryMethod.shortTitle) to \(settings.recipient)"
     }
 
     private func historyIcon(_ action: ReminderHistoryEntry.Action) -> String {
@@ -222,7 +285,7 @@ struct ReminderDetailView: View {
     private func historyTitle(_ action: ReminderHistoryEntry.Action) -> String {
         switch action {
         case .completed: return "Completed"
-        case .extended: return "Deadline extended"
+        case .extended: return "Reminder and deadline extended"
         case .restored: return "Restored"
         }
     }
