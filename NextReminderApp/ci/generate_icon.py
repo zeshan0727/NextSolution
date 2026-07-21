@@ -16,9 +16,21 @@ def mix(a, b, amount):
     return a + (b - a) * amount
 
 
+def smoothstep(edge0, edge1, value):
+    if edge0 == edge1:
+        return 0.0
+    amount = clamp((value - edge0) / (edge1 - edge0))
+    return amount * amount * (3.0 - 2.0 * amount)
+
+
 def blend(dst, src, alpha):
     alpha = clamp(alpha)
-    return tuple(int(mix(dst[i], src[i], alpha)) for i in range(3))
+    return tuple(int(mix(dst[index], src[index], alpha)) for index in range(3))
+
+
+def color_mix(first, second, amount):
+    amount = clamp(amount)
+    return tuple(int(mix(first[index], second[index], amount)) for index in range(3))
 
 
 def set_pixel(x, y, rgb):
@@ -35,78 +47,103 @@ def segment_distance(px, py, ax, ay, bx, by):
     return math.hypot(px - qx, py - qy)
 
 
-orange = (255, 111, 0)
-bright = (255, 176, 48)
-dark_orange = (155, 48, 0)
-graphite = (27, 29, 36)
-black = (5, 6, 9)
+def ring_color(angle):
+    # Travel clockwise around the C ring: cyan -> blue -> violet -> magenta.
+    normalized = (angle + math.pi) / (2 * math.pi)
+    cyan = (15, 213, 255)
+    blue = (43, 102, 255)
+    violet = (112, 65, 255)
+    magenta = (196, 63, 255)
+    if normalized < 0.34:
+        return color_mix(cyan, blue, normalized / 0.34)
+    if normalized < 0.70:
+        return color_mix(blue, violet, (normalized - 0.34) / 0.36)
+    return color_mix(violet, magenta, (normalized - 0.70) / 0.30)
+
+
+navy = (6, 12, 25)
+navy_highlight = (24, 39, 70)
+white = (249, 252, 255)
+check_shadow = (11, 20, 40)
+
+center_x, center_y = 478, 510
+ring_radius = 305
+ring_width = 62
 
 for y in range(H):
     for x in range(W):
-        radial = clamp(1 - math.hypot(x - 465, y - 405) / 760)
-        diagonal = math.exp(-((y - (930 - 0.64 * x)) / 45) ** 2)
-        base = (int(5 + 22 * radial), int(6 + 20 * radial), int(9 + 24 * radial))
-        base = blend(base, dark_orange, diagonal * 0.50)
+        distance_from_center = math.hypot(x - 470, y - 425)
+        radial = clamp(1.0 - distance_from_center / 760.0)
+        corner_vignette = smoothstep(780, 260, math.hypot(x - 512, y - 512))
+        diagonal = math.exp(-((y - (960 - 0.70 * x)) / 145.0) ** 2)
 
-        # Rounded-square orange rim.
-        dx = max(abs(x - 512) - 435, 0)
-        dy = max(abs(y - 512) - 435, 0)
-        rim = math.hypot(dx, dy)
-        if 0 < rim < 20:
-            base = blend(base, orange, 1 - rim / 20)
-
-        # Bell silhouette and metallic highlight.
-        dome_value = ((x - 512) / 258) ** 2 + ((y - 430) / 245) ** 2
-        dome = dome_value < 1 and y >= 245
-        width = 245 + max(0, y - 460) * 0.39
-        skirt = 420 <= y <= 720 and abs(x - 512) < width
-        if dome or skirt:
-            light = clamp(1 - math.hypot(x - 405, y - 285) / 520)
-            metal = (int(22 + 44 * light), int(23 + 42 * light), int(29 + 45 * light))
-            base = blend(base, metal, 0.97)
-            if abs(dome_value - 1) < 0.028 or abs(abs(x - 512) - width) < 7:
-                base = blend(base, orange, 0.78)
-
-        # Bell top, lip and clapper.
-        top_radius = math.hypot(x - 512, y - 214)
-        if top_radius < 59:
-            base = blend(base, graphite, 0.98)
-            if 51 < top_radius < 59:
-                base = blend(base, bright, 0.92)
-        clapper_radius = math.hypot(x - 512, y - 775)
-        if clapper_radius < 56:
-            base = blend(base, graphite, 0.98)
-            if 48 < clapper_radius < 56:
-                base = blend(base, orange, 0.95)
-        if 700 <= y <= 750 and abs(x - 512) < 334:
-            lip_y = 716 + 22 * ((x - 512) / 334) ** 2
-            if abs(y - lip_y) < 12:
-                base = blend(base, orange, 0.96)
-
-        # Clock face with glowing ring.
-        radius = math.hypot(x - 512, y - 500)
-        if radius < 183:
-            face_light = clamp(1 - math.hypot(x - 450, y - 420) / 340)
-            face = (int(8 + 25 * face_light), int(9 + 25 * face_light), int(12 + 29 * face_light))
-            base = blend(base, face, 0.99)
-        if 174 < radius < 194:
-            base = blend(base, bright if radius < 183 else orange, 0.99)
-
-        for angle in (0, math.pi / 2, math.pi, 3 * math.pi / 2):
-            tx = 512 + math.cos(angle) * 137
-            ty = 500 + math.sin(angle) * 137
-            if math.hypot(x - tx, y - ty) < 9:
-                base = blend(base, bright, 1.0)
-
-        # Glowing check mark.
-        distance = min(
-            segment_distance(x, y, 423, 512, 495, 580),
-            segment_distance(x, y, 495, 580, 630, 429),
+        base = (
+            int(navy[0] + 18 * radial * corner_vignette),
+            int(navy[1] + 25 * radial * corner_vignette),
+            int(navy[2] + 41 * radial * corner_vignette),
         )
-        if distance < 31:
-            base = blend(base, dark_orange, (1 - distance / 31) * 0.78)
-        if distance < 18:
-            base = blend(base, bright, 0.98)
+        base = blend(base, navy_highlight, diagonal * 0.16)
+
+        # Subtle premium inner border.
+        edge_distance = min(x, y, W - 1 - x, H - 1 - y)
+        if 24 < edge_distance < 36:
+            base = blend(base, (63, 91, 145), (1 - abs(edge_distance - 30) / 6) * 0.18)
+
+        dx = x - center_x
+        dy = y - center_y
+        radius = math.hypot(dx, dy)
+        angle = math.atan2(dy, dx)
+
+        # Open gap on the upper-right creates a distinct C-shaped progress ring.
+        in_gap = -0.58 < angle < 0.17
+        ring_distance = abs(radius - ring_radius)
+        current_ring_color = ring_color(angle)
+
+        if not in_gap and ring_distance < ring_width + 44:
+            glow = clamp(1.0 - ring_distance / (ring_width + 44))
+            base = blend(base, current_ring_color, glow * glow * 0.34)
+
+        if not in_gap and ring_distance < ring_width:
+            core = clamp(1.0 - ring_distance / ring_width)
+            edge_softness = smoothstep(0.0, 0.22, core)
+            shine = clamp(1.0 - math.hypot(x - 365, y - 275) / 620)
+            ring_pixel = blend(current_ring_color, white, shine * 0.12)
+            base = blend(base, ring_pixel, 0.90 * edge_softness)
+
+        # Rounded glowing endpoints for the C ring.
+        for endpoint_angle in (-0.58, 0.17):
+            endpoint_x = center_x + math.cos(endpoint_angle) * ring_radius
+            endpoint_y = center_y + math.sin(endpoint_angle) * ring_radius
+            endpoint_distance = math.hypot(x - endpoint_x, y - endpoint_y)
+            endpoint_color = ring_color(endpoint_angle)
+            if endpoint_distance < 88:
+                base = blend(base, endpoint_color, (1 - endpoint_distance / 88) ** 2 * 0.30)
+            if endpoint_distance < ring_width:
+                base = blend(base, endpoint_color, smoothstep(ring_width, 0, endpoint_distance) * 0.94)
+
+        # Strong white check mark with a soft navy shadow and blue-violet glow.
+        check_distance = min(
+            segment_distance(x, y, 315, 510, 455, 642),
+            segment_distance(x, y, 455, 642, 715, 350),
+        )
+        if check_distance < 82:
+            base = blend(base, (73, 80, 255), (1 - check_distance / 82) ** 2 * 0.26)
+        if check_distance < 56:
+            base = blend(base, check_shadow, (1 - check_distance / 56) * 0.72)
+        if check_distance < 37:
+            core = smoothstep(37, 0, check_distance)
+            highlight = color_mix((225, 233, 244), white, core)
+            base = blend(base, highlight, 0.98)
+
+        # Small four-point sparkle in the upper-right, symbolizing smart automation.
+        sparkle_x, sparkle_y = 789, 238
+        sx, sy = abs(x - sparkle_x), abs(y - sparkle_y)
+        sparkle_shape = min(sx / 17 + sy / 66, sx / 66 + sy / 17)
+        sparkle_distance = math.hypot(x - sparkle_x, y - sparkle_y)
+        if sparkle_distance < 92:
+            base = blend(base, (174, 84, 255), (1 - sparkle_distance / 92) ** 2 * 0.34)
+        if sparkle_shape < 1.0:
+            base = blend(base, white, smoothstep(1.0, 0.0, sparkle_shape))
 
         set_pixel(x, y, base)
 
