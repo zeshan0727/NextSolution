@@ -9,7 +9,7 @@ python3 ci/patch_v121_fixes.py
 # Verify requested source features exist before compiling.
 grep -q 'Connect Gmail Account' NextReminder/Sources/GmailConnection.swift
 grep -q 'Performance Summary' NextReminder/Sources/PerformanceAndRepeat.swift
-grep -q 'Selected Days' NextReminder/Sources/PerformanceAndRepeat.swift
+grep -q 'Selected Days' NextReminder/Sources/Editor.swift
 grep -q 'Sunday–Thursday' NextReminder/Sources/PerformanceAndRepeat.swift
 grep -q 'nextreminder' project.yml
 
