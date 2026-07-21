@@ -1,0 +1,75 @@
+name: Build Next Reminder PR
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'NextReminderApp/**'
+      - '.github/workflows/build-next-reminder-pr.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: NextReminderApp
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Restore app icon
+        run: |
+          set -euo pipefail
+          ICON_DIR="NextReminder/Resources/Assets.xcassets/AppIcon.appiconset"
+          base64 --decode \
+            --input "$ICON_DIR/AppIcon-1024.png.b64" \
+            --output "$ICON_DIR/AppIcon-1024.png"
+          for size in 40 58 60 80 87 120 180; do
+            sips -z "$size" "$size" "$ICON_DIR/AppIcon-1024.png" \
+              --out "$ICON_DIR/AppIcon-$size.png" >/dev/null
+          done
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project NextReminder.xcodeproj \
+            -scheme NextReminder \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            CONFIGURATION_BUILD_DIR="$PWD/build" \
+            clean build | tee xcodebuild.log
+
+      - name: Package TIPA
+        run: |
+          set -euo pipefail
+          mkdir -p Payload
+          cp -R build/NextReminder.app Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextReminder-unsigned.ipa
+          cp NextReminder-unsigned.ipa NextReminder-unsigned.tipa
+          shasum -a 256 NextReminder-unsigned.tipa > NextReminder-unsigned.tipa.sha256
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextReminder-TIPA
+          path: |
+            NextReminderApp/NextReminder-unsigned.tipa
+            NextReminderApp/NextReminder-unsigned.ipa
+            NextReminderApp/NextReminder-unsigned.tipa.sha256
+            NextReminderApp/xcodebuild.log
+          if-no-files-found: error
+          retention-days: 7
