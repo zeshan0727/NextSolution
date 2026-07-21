@@ -1,0 +1,55 @@
+name: Build Next Message
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'NextMessage/**'
+      - '.github/workflows/build-next-message.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.scheme }} package
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme:
+          - rootless
+          - roothide
+
+    env:
+      THEOS: ${{ github.workspace }}/theos
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Theos toolchain
+        run: |
+          git clone --recursive --depth 1 https://github.com/roothide/theos.git "$THEOS"
+          git clone --depth 1 https://github.com/theos/sdks.git "$THEOS/sdks"
+
+      - name: Build Next Message
+        working-directory: NextMessage
+        run: |
+          make clean
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}" messages=yes
+
+      - name: Collect package
+        run: |
+          mkdir -p "artifacts/${{ matrix.scheme }}"
+          find NextMessage/packages -maxdepth 1 -type f -name '*.deb' -exec cp {} "artifacts/${{ matrix.scheme }}/" \;
+          ls -la "artifacts/${{ matrix.scheme }}"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMessage-${{ matrix.scheme }}
+          path: artifacts/${{ matrix.scheme }}/*.deb
+          if-no-files-found: error
+          retention-days: 14
