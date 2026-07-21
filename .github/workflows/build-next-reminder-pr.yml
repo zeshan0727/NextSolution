@@ -1,4 +1,4 @@
-name: Build Next Reminder PR
+name: Build Next Reminder v1.0.1
 
 on:
   pull_request:
@@ -16,17 +16,149 @@ jobs:
     defaults:
       run:
         working-directory: NextReminderApp
+
     steps:
       - name: Checkout pull request
         uses: actions/checkout@v4
 
-      - name: Restore app icon
+      - name: Generate elegant app icon
         run: |
           set -euo pipefail
           ICON_DIR="NextReminder/Resources/Assets.xcassets/AppIcon.appiconset"
-          base64 --decode \
-            --input "$ICON_DIR/AppIcon-1024.png.b64" \
-            --output "$ICON_DIR/AppIcon-1024.png"
+          mkdir -p "$ICON_DIR"
+          python3 - "$ICON_DIR/AppIcon-1024.png" <<'PY'
+          import math, struct, sys, zlib
+
+          W = H = 1024
+          pixels = bytearray(W * H * 4)
+
+          def clamp(v, a=0.0, b=1.0): return max(a, min(b, v))
+          def mix(a, b, t): return a + (b-a) * t
+          def smoothstep(a, b, x):
+              t = clamp((x-a)/(b-a))
+              return t*t*(3-2*t)
+          def blend(dst, src, alpha):
+              return tuple(int(mix(dst[i], src[i], alpha)) for i in range(3))
+          def set_px(x, y, rgb):
+              i = (y * W + x) * 4
+              pixels[i:i+4] = bytes((rgb[0], rgb[1], rgb[2], 255))
+          def dist_segment(px, py, ax, ay, bx, by):
+              vx, vy = bx-ax, by-ay
+              wx, wy = px-ax, py-ay
+              d = vx*vx + vy*vy
+              t = clamp((wx*vx + wy*vy)/d if d else 0)
+              qx, qy = ax+t*vx, ay+t*vy
+              return math.hypot(px-qx, py-qy)
+
+          orange = (255, 116, 0)
+          bright = (255, 173, 42)
+          dark_orange = (165, 55, 0)
+          graphite = (26, 28, 34)
+          black = (5, 6, 9)
+
+          for y in range(H):
+              for x in range(W):
+                  # Deep graphite background with a warm diagonal glow.
+                  radial = clamp(1 - math.hypot(x-470, y-410)/760)
+                  diag = math.exp(-((y - (920 - 0.62*x))/44)**2)
+                  vignette = smoothstep(760, 250, math.hypot(x-512, y-512))
+                  base = (
+                      int(5 + 18*radial*vignette),
+                      int(6 + 19*radial*vignette),
+                      int(9 + 22*radial*vignette)
+                  )
+                  base = blend(base, dark_orange, clamp(diag*0.48))
+
+                  # Rounded-square rim.
+                  dx = max(abs(x-512)-430, 0)
+                  dy = max(abs(y-512)-430, 0)
+                  corner_d = math.hypot(dx, dy)
+                  if 0 < corner_d < 22:
+                      base = blend(base, orange, 1-corner_d/22)
+
+                  # Bell shadow.
+                  bell_d = ((x-512)/300)**2 + ((y-490)/330)**2
+                  if bell_d < 1.12 and y > 235:
+                      shadow = clamp((1.12-bell_d)/0.22)*0.45
+                      base = blend(base, black, shadow)
+
+                  # Bell body: dome plus widening lower skirt.
+                  dome = ((x-512)/255)**2 + ((y-430)/245)**2 < 1 and y >= 250
+                  width = 248 + max(0, y-470)*0.38
+                  skirt = 430 <= y <= 720 and abs(x-512) < width
+                  if dome or skirt:
+                      light = clamp(1 - math.hypot(x-420, y-290)/500)
+                      metal = (
+                          int(mix(24, 63, light)),
+                          int(mix(25, 62, light)),
+                          int(mix(31, 68, light))
+                      )
+                      edge = clamp(1 - abs(x-512)/330)
+                      base = blend(base, metal, 0.92)
+                      if abs(abs(x-512)-width) < 7 or abs(bell_d-1) < 0.025:
+                          base = blend(base, orange, 0.75)
+
+                  # Top button and clapper.
+                  if math.hypot(x-512, y-215) < 58:
+                      base = blend(base, graphite, 0.95)
+                      if 52 < math.hypot(x-512, y-215) < 59:
+                          base = blend(base, bright, 0.9)
+                  if math.hypot(x-512, y-772) < 55:
+                      base = blend(base, graphite, 0.95)
+                      if 49 < math.hypot(x-512, y-772) < 56:
+                          base = blend(base, orange, 0.9)
+
+                  # Bell lip.
+                  if 704 <= y <= 741 and abs(x-512) < 330:
+                      curve = ((x-512)/330)**2
+                      lip_y = 715 + 22*curve
+                      if abs(y-lip_y) < 12:
+                          base = blend(base, orange, 0.95)
+
+                  # Clock face and orange ring.
+                  r = math.hypot(x-512, y-500)
+                  if r < 183:
+                      face_light = clamp(1 - math.hypot(x-450, y-425)/330)
+                      face = (int(9+24*face_light), int(10+24*face_light), int(13+27*face_light))
+                      base = blend(base, face, 0.98)
+                  if 174 < r < 194:
+                      t = clamp((r-174)/20)
+                      base = blend(base, bright if t < 0.45 else orange, 0.98)
+
+                  # Clock ticks.
+                  for ang in (0, math.pi/2, math.pi, 3*math.pi/2):
+                      tx, ty = 512 + math.cos(ang)*137, 500 + math.sin(ang)*137
+                      if math.hypot(x-tx, y-ty) < 9:
+                          base = blend(base, bright, 1.0)
+
+                  # Check mark with glow and bright core.
+                  d1 = dist_segment(x, y, 425, 512, 495, 579)
+                  d2 = dist_segment(x, y, 495, 579, 626, 432)
+                  d = min(d1, d2)
+                  if d < 31:
+                      glow = clamp(1-d/31)
+                      base = blend(base, dark_orange, glow*0.75)
+                  if d < 18:
+                      core = clamp(1-d/18)
+                      base = blend(base, bright, 0.85+0.15*core)
+
+                  set_px(x, y, base)
+
+          def chunk(tag, data):
+              return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', zlib.crc32(tag+data) & 0xffffffff)
+
+          raw = bytearray()
+          stride = W*4
+          for y in range(H):
+              raw.append(0)
+              raw.extend(pixels[y*stride:(y+1)*stride])
+          png = b'\x89PNG\r\n\x1a\n'
+          png += chunk(b'IHDR', struct.pack('>IIBBBBB', W, H, 8, 6, 0, 0, 0))
+          png += chunk(b'IDAT', zlib.compress(bytes(raw), 9))
+          png += chunk(b'IEND', b'')
+          with open(sys.argv[1], 'wb') as f: f.write(png)
+          PY
+
           for size in 40 58 60 80 87 120 180; do
             sips -z "$size" "$size" "$ICON_DIR/AppIcon-1024.png" \
               --out "$ICON_DIR/AppIcon-$size.png" >/dev/null
@@ -53,23 +185,31 @@ jobs:
             CONFIGURATION_BUILD_DIR="$PWD/build" \
             clean build | tee xcodebuild.log
 
+      - name: Verify compiled resources
+        run: |
+          set -euo pipefail
+          test -f build/NextReminder.app/Assets.car
+          plutil -p build/NextReminder.app/Info.plist | grep -q 'CFBundleIcons'
+          file build/NextReminder.app/NextReminder | grep -q 'arm64'
+          echo "Asset catalog, app icon metadata and arm64 binary verified."
+
       - name: Package TIPA
         run: |
           set -euo pipefail
           mkdir -p Payload
           cp -R build/NextReminder.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextReminder-unsigned.ipa
-          cp NextReminder-unsigned.ipa NextReminder-unsigned.tipa
-          shasum -a 256 NextReminder-unsigned.tipa > NextReminder-unsigned.tipa.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextReminder-v1.0.1-unsigned.ipa
+          cp NextReminder-v1.0.1-unsigned.ipa NextReminder-v1.0.1-unsigned.tipa
+          shasum -a 256 NextReminder-v1.0.1-unsigned.tipa > NextReminder-v1.0.1-unsigned.tipa.sha256
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextReminder-TIPA
+          name: NextReminder-v1.0.1-TIPA
           path: |
-            NextReminderApp/NextReminder-unsigned.tipa
-            NextReminderApp/NextReminder-unsigned.ipa
-            NextReminderApp/NextReminder-unsigned.tipa.sha256
+            NextReminderApp/NextReminder-v1.0.1-unsigned.tipa
+            NextReminderApp/NextReminder-v1.0.1-unsigned.ipa
+            NextReminderApp/NextReminder-v1.0.1-unsigned.tipa.sha256
             NextReminderApp/xcodebuild.log
           if-no-files-found: error
           retention-days: 7
