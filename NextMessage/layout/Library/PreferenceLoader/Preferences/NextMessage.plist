@@ -1,0 +1,8 @@
+{
+    entry = {
+        bundle = NextMessagePrefs;
+        cell = PSLinkCell;
+        detail = NMRootListController;
+        label = "Next Message";
+    };
+}
