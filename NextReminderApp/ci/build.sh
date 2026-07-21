@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+# Next Reminder v1.0.1 verified release build.
 cd "$(dirname "$0")/.."
 ICON_DIR="NextReminder/Resources/Assets.xcassets/AppIcon.appiconset"
 mkdir -p "$ICON_DIR"
