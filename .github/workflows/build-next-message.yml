@@ -31,12 +31,20 @@ jobs:
 
       - name: Install Theos toolchain
         run: |
-          git clone --recursive --depth 1 https://github.com/roothide/theos.git "$THEOS"
-          git clone --depth 1 https://github.com/theos/sdks.git "$THEOS/sdks"
+          set -euxo pipefail
+          git clone --depth 1 https://github.com/roothide/theos.git "$THEOS"
+          git -C "$THEOS" submodule update --init --recursive --depth 1
+          mkdir -p "$THEOS/sdks"
+          curl -L --fail --retry 3 \
+            https://github.com/theos/sdks/releases/latest/download/iPhoneOS16.5.sdk.tar.xz \
+            -o /tmp/iPhoneOS16.5.sdk.tar.xz
+          tar -xJf /tmp/iPhoneOS16.5.sdk.tar.xz -C "$THEOS/sdks"
+          ls -la "$THEOS/sdks"
 
       - name: Build Next Message
         working-directory: NextMessage
         run: |
+          set -euxo pipefail
           make clean
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}" messages=yes
 
