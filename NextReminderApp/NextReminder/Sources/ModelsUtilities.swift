@@ -1,7 +1,5 @@
 import Foundation
 import SwiftUI
-import Combine
-import UserNotifications
 import UIKit
 
 enum ReminderPriority: String, Codable, CaseIterable, Identifiable {
@@ -25,6 +23,54 @@ enum ReminderPriority: String, Codable, CaseIterable, Identifiable {
         case .urgent: return .red
         case .medium: return .orange
         case .low: return .green
+        }
+    }
+}
+
+enum ReminderUrgency: String, CaseIterable, Identifiable {
+    case criticalOverdue
+    case overdue
+    case urgent
+    case dueToday
+    case dueSoon
+    case upcoming
+    case planned
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .criticalOverdue: return "Overdue > 1 day"
+        case .overdue: return "Overdue"
+        case .urgent: return "Urgent"
+        case .dueToday: return "Due today"
+        case .dueSoon: return "Due within 24h"
+        case .upcoming: return "Upcoming"
+        case .planned: return "Planned"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .criticalOverdue: return "exclamationmark.octagon.fill"
+        case .overdue: return "exclamationmark.triangle.fill"
+        case .urgent: return "flame.fill"
+        case .dueToday: return "sun.max.fill"
+        case .dueSoon: return "clock.badge.exclamationmark.fill"
+        case .upcoming: return "calendar.badge.clock"
+        case .planned: return "calendar.circle.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .criticalOverdue: return Color(red: 0.82, green: 0.04, blue: 0.10)
+        case .overdue: return Color(red: 0.96, green: 0.20, blue: 0.14)
+        case .urgent: return Color(red: 0.95, green: 0.10, blue: 0.28)
+        case .dueToday: return .orange
+        case .dueSoon: return Color(red: 0.93, green: 0.68, blue: 0.03)
+        case .upcoming: return Color(red: 0.10, green: 0.70, blue: 0.42)
+        case .planned: return Color(red: 0.12, green: 0.50, blue: 0.96)
         }
     }
 }
@@ -76,13 +122,13 @@ enum ReminderAlertOffset: Int, Codable, CaseIterable, Identifiable, Hashable {
 
     var notificationText: String {
         switch self {
-        case .atTime: return "Due now"
-        case .fiveMinutes: return "Due in 5 minutes"
-        case .fifteenMinutes: return "Due in 15 minutes"
-        case .thirtyMinutes: return "Due in 30 minutes"
-        case .oneHour: return "Due in 1 hour"
-        case .threeHours: return "Due in 3 hours"
-        case .oneDay: return "Due tomorrow"
+        case .atTime: return "Reminder time"
+        case .fiveMinutes: return "Reminder in 5 minutes"
+        case .fifteenMinutes: return "Reminder in 15 minutes"
+        case .thirtyMinutes: return "Reminder in 30 minutes"
+        case .oneHour: return "Reminder in 1 hour"
+        case .threeHours: return "Reminder in 3 hours"
+        case .oneDay: return "Reminder tomorrow"
         }
     }
 }
@@ -138,12 +184,16 @@ struct ReminderItem: Identifiable, Codable, Hashable {
     var id: UUID
     var title: String
     var notes: String
+    /// The time at which the reminder alert and optional email should occur.
     var dueDate: Date
+    /// Optional final completion deadline, which can be later than the reminder time.
+    var deadlineDate: Date?
     var priority: ReminderPriority
     var categoryID: UUID
     var repeatRule: ReminderRepeat
     var alertOffsets: Set<ReminderAlertOffset>
     var notificationsEnabled: Bool
+    var emailWhenDue: Bool
     var createdAt: Date
     var updatedAt: Date
     var completedAt: Date?
@@ -155,11 +205,13 @@ struct ReminderItem: Identifiable, Codable, Hashable {
         title: String,
         notes: String = "",
         dueDate: Date,
+        deadlineDate: Date? = nil,
         priority: ReminderPriority = .medium,
         categoryID: UUID = ReminderCategory.general.id,
         repeatRule: ReminderRepeat = .never,
         alertOffsets: Set<ReminderAlertOffset> = [.thirtyMinutes],
         notificationsEnabled: Bool = true,
+        emailWhenDue: Bool = false,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         completedAt: Date? = nil,
@@ -170,11 +222,13 @@ struct ReminderItem: Identifiable, Codable, Hashable {
         self.title = title
         self.notes = notes
         self.dueDate = dueDate
+        self.deadlineDate = deadlineDate
         self.priority = priority
         self.categoryID = categoryID
         self.repeatRule = repeatRule
         self.alertOffsets = alertOffsets
         self.notificationsEnabled = notificationsEnabled
+        self.emailWhenDue = emailWhenDue
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.completedAt = completedAt
@@ -182,23 +236,90 @@ struct ReminderItem: Identifiable, Codable, Hashable {
         self.history = history
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case id, title, notes, dueDate, deadlineDate, priority, categoryID, repeatRule
+        case alertOffsets, notificationsEnabled, emailWhenDue, createdAt, updatedAt
+        case completedAt, completionComment, history
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes) ?? ""
+        dueDate = try container.decode(Date.self, forKey: .dueDate)
+        deadlineDate = try container.decodeIfPresent(Date.self, forKey: .deadlineDate)
+        priority = try container.decodeIfPresent(ReminderPriority.self, forKey: .priority) ?? .medium
+        categoryID = try container.decodeIfPresent(UUID.self, forKey: .categoryID) ?? ReminderCategory.general.id
+        repeatRule = try container.decodeIfPresent(ReminderRepeat.self, forKey: .repeatRule) ?? .never
+        alertOffsets = try container.decodeIfPresent(Set<ReminderAlertOffset>.self, forKey: .alertOffsets) ?? [.thirtyMinutes]
+        notificationsEnabled = try container.decodeIfPresent(Bool.self, forKey: .notificationsEnabled) ?? true
+        emailWhenDue = try container.decodeIfPresent(Bool.self, forKey: .emailWhenDue) ?? false
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
+        completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
+        completionComment = try container.decodeIfPresent(String.self, forKey: .completionComment)
+        history = try container.decodeIfPresent([ReminderHistoryEntry].self, forKey: .history) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(notes, forKey: .notes)
+        try container.encode(dueDate, forKey: .dueDate)
+        try container.encodeIfPresent(deadlineDate, forKey: .deadlineDate)
+        try container.encode(priority, forKey: .priority)
+        try container.encode(categoryID, forKey: .categoryID)
+        try container.encode(repeatRule, forKey: .repeatRule)
+        try container.encode(alertOffsets, forKey: .alertOffsets)
+        try container.encode(notificationsEnabled, forKey: .notificationsEnabled)
+        try container.encode(emailWhenDue, forKey: .emailWhenDue)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+        try container.encodeIfPresent(completedAt, forKey: .completedAt)
+        try container.encodeIfPresent(completionComment, forKey: .completionComment)
+        try container.encode(history, forKey: .history)
+    }
+
     var isCompleted: Bool { completedAt != nil }
-    var isOverdue: Bool { !isCompleted && dueDate < Date() }
+    var effectiveDeadline: Date { deadlineDate ?? dueDate }
+    var isOverdue: Bool { !isCompleted && effectiveDeadline < Date() }
+    var urgency: ReminderUrgency { urgency(at: Date()) }
+
+    func urgency(at now: Date) -> ReminderUrgency {
+        guard !isCompleted else { return .planned }
+        let interval = effectiveDeadline.timeIntervalSince(now)
+        if interval < -86_400 { return .criticalOverdue }
+        if interval < 0 { return .overdue }
+        if priority == .urgent { return .urgent }
+        if Calendar.current.isDateInToday(effectiveDeadline) { return .dueToday }
+        if interval <= 86_400 { return .dueSoon }
+        if interval <= 259_200 { return .upcoming }
+        return .planned
+    }
 
     func timeRemaining(now: Date = Date()) -> String {
         if isCompleted { return "Completed" }
-        let interval = dueDate.timeIntervalSince(now)
+        return Self.remainingText(until: effectiveDeadline, now: now)
+    }
+
+    func reminderTimeRemaining(now: Date = Date()) -> String {
+        Self.remainingText(until: dueDate, now: now)
+    }
+
+    private static func remainingText(until date: Date, now: Date) -> String {
+        let interval = date.timeIntervalSince(now)
         let absolute = abs(interval)
         let prefix = interval < 0 ? "Overdue by " : ""
-
         if absolute < 60 { return interval < 0 ? "Overdue" : "Due now" }
         if absolute < 3600 { return "\(prefix)\(Int(absolute / 60))m" }
-        if absolute < 86400 {
+        if absolute < 86_400 {
             let hours = Int(absolute / 3600)
             let minutes = Int((absolute.truncatingRemainder(dividingBy: 3600)) / 60)
             return minutes > 0 ? "\(prefix)\(hours)h \(minutes)m" : "\(prefix)\(hours)h"
         }
-        return "\(prefix)\(Int(absolute / 86400))d"
+        return "\(prefix)\(Int(absolute / 86_400))d"
     }
 }
 
