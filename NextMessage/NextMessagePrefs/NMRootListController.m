@@ -3,7 +3,10 @@
 #import <Preferences/PSSpecifier.h>
 
 static NSString * const NMPrefsDomain = @"com.nextsolution.nextmessage";
+static NSString * const NMDiagnosticPath = @"/var/mobile/Library/Preferences/com.nextsolution.nextmessage.diagnostic.txt";
 static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.nextmessage/preferences.changed");
+static CFStringRef const NMCaptureNotification = CFSTR("com.nextsolution.nextmessage.capturediagnostic");
+static CFStringRef const NMClearNotification = CFSTR("com.nextsolution.nextmessage.cleardiagnostic");
 
 @interface NMRootListController : PSListController
 @end
@@ -51,7 +54,7 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
 
     UILabel *subtitleLabel = [UILabel new];
     subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    subtitleLabel.text = @"Concept A — smarter, cleaner messaging";
+    subtitleLabel.text = @"v0.2.1 — iOS 16 diagnostic build";
     subtitleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
     subtitleLabel.textColor = UIColor.secondaryLabelColor;
     subtitleLabel.textAlignment = NSTextAlignmentCenter;
@@ -84,6 +87,61 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), NMPrefsChangedNotification, NULL, NULL, true);
 }
 
+- (void)showTitle:(NSString *)title message:(NSString *)message {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (NSString *)diagnosticReport {
+    NSError *error = nil;
+    NSString *report = [NSString stringWithContentsOfFile:NMDiagnosticPath encoding:NSUTF8StringEncoding error:&error];
+    return report.length > 0 ? report : nil;
+}
+
+- (void)captureDiagnostic {
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), NMCaptureNotification, NULL, NULL, true);
+    [self showTitle:@"Capture Requested"
+            message:@"For the best report, first open the Messages inbox, open one conversation, return to the inbox, and then come back here. Next Message also captures each Messages screen automatically. Wait three seconds, then use Share Last Report."];
+}
+
+- (void)copyDiagnostic {
+    NSString *report = [self diagnosticReport];
+    if (!report) {
+        [self showTitle:@"No Report Yet"
+                message:@"Open Messages and visit the inbox and one conversation. Return here after a few seconds, then try again."];
+        return;
+    }
+    UIPasteboard.generalPasteboard.string = report;
+    [self showTitle:@"Report Copied"
+            message:@"The privacy-safe report is on the clipboard. Paste it into the ChatGPT conversation."];
+}
+
+- (void)shareDiagnostic {
+    NSString *report = [self diagnosticReport];
+    if (!report) {
+        [self showTitle:@"No Report Yet"
+                message:@"Open Messages and visit the inbox and one conversation. Return here after a few seconds, then try again."];
+        return;
+    }
+
+    NSString *temporaryPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"NextMessage-Diagnostic-v0.2.1.txt"];
+    [report writeToFile:temporaryPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    NSURL *fileURL = [NSURL fileURLWithPath:temporaryPath];
+    UIActivityViewController *activity = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
+    if (activity.popoverPresentationController) {
+        activity.popoverPresentationController.sourceView = self.view;
+        activity.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds), 1, 1);
+    }
+    [self presentViewController:activity animated:YES completion:nil];
+}
+
+- (void)clearDiagnostic {
+    [NSFileManager.defaultManager removeItemAtPath:NMDiagnosticPath error:nil];
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), NMClearNotification, NULL, NULL, true);
+    [self showTitle:@"Report Cleared" message:@"Open Messages again to generate a fresh diagnostic report."];
+}
+
 - (void)resetPreferences {
     NSArray<NSString *> *keys = @[
         @"Enabled", @"AppearanceMode", @"RedesignInbox", @"RedesignConversation",
@@ -94,10 +152,7 @@ static CFStringRef const NMPrefsChangedNotification = CFSTR("com.nextsolution.ne
     CFPreferencesAppSynchronize((__bridge CFStringRef)NMPrefsDomain);
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), NMPrefsChangedNotification, NULL, NULL, true);
     [self reloadSpecifiers];
-
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Next Message" message:@"Preferences were reset to their defaults." preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:nil]];
-    [self presentViewController:alert animated:YES completion:nil];
+    [self showTitle:@"Next Message" message:@"Preferences were reset to their defaults."];
 }
 
 @end
