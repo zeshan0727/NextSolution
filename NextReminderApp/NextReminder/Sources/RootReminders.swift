@@ -7,16 +7,19 @@ import UIKit
 // MARK: - RootView
 enum AppTab: Hashable {
     case reminders
-    case calendar
+    case automations
     case add
     case completed
     case settings
 }
 
 struct RootView: View {
+    @EnvironmentObject private var automationStore: AutomationStore
     @State private var selectedTab: AppTab = .reminders
     @State private var lastRegularTab: AppTab = .reminders
-    @State private var isAddingReminder = false
+    @State private var showAddMenu = false
+    @State private var addFlow: AddFlow?
+    @State private var openedAutomation: IdentifiedAutomationID?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -27,10 +30,10 @@ struct RootView: View {
             .tag(AppTab.reminders)
 
             NavigationStack {
-                CalendarRemindersView()
+                AutomationsView()
             }
-            .tabItem { Label("Calendar", systemImage: "calendar") }
-            .tag(AppTab.calendar)
+            .tabItem { Label("Automations", systemImage: "paperplane.fill") }
+            .tag(AppTab.automations)
 
             Color.clear
                 .tabItem { Label("Add", systemImage: "plus.circle.fill") }
@@ -50,15 +53,36 @@ struct RootView: View {
         }
         .onChange(of: selectedTab) { newValue in
             if newValue == .add {
-                isAddingReminder = true
+                showAddMenu = true
                 selectedTab = lastRegularTab
             } else {
                 lastRegularTab = newValue
             }
         }
-        .sheet(isPresented: $isAddingReminder) {
+        .onChange(of: automationStore.requestedAutomationID) { id in
+            guard let id else { return }
+            selectedTab = .automations
+            openedAutomation = IdentifiedAutomationID(id: id)
+            automationStore.clearRequested()
+        }
+        .confirmationDialog("What would you like to create?", isPresented: $showAddMenu, titleVisibility: .visible) {
+            Button("New Reminder") { addFlow = .reminder }
+            Button("New Social Automation") { addFlow = .automation }
+            Button("Cancel", role: .cancel) {}
+        }
+        .sheet(item: $addFlow) { flow in
             NavigationStack {
-                ReminderEditorView(reminder: nil)
+                switch flow {
+                case .reminder:
+                    ReminderEditorView(reminder: nil)
+                case .automation:
+                    AutomationEditorView(automation: nil)
+                }
+            }
+        }
+        .sheet(item: $openedAutomation) { item in
+            NavigationStack {
+                AutomationDetailView(automationID: item.id)
             }
         }
     }
@@ -157,7 +181,12 @@ struct RemindersView: View {
                 }
                 .accessibilityLabel("Manage filters")
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                NavigationLink {
+                    CalendarRemindersView()
+                } label: {
+                    Image(systemName: "calendar")
+                }
                 Button {
                     isShowingFilters = true
                 } label: {
@@ -218,7 +247,7 @@ struct RemindersView: View {
                     } label: {
                         Text(filter.title)
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(quickFilter == filter ? .white : .primary)
+                            .foregroundStyle(quickFilter == filter ? Color.white : Color.primary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                             .background(
