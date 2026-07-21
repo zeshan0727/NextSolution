@@ -1,8 +1,8 @@
+import Combine
 import Foundation
 import SwiftUI
-import Combine
-import UserNotifications
 import UIKit
+import UserNotifications
 
 struct PersistenceService {
     private let fileManager = FileManager.default
@@ -58,7 +58,9 @@ final class NotificationActionCoordinator {
 
     func consume() -> PendingNotificationAction? {
         guard let data = UserDefaults.standard.data(forKey: defaultsKey),
-              let action = try? JSONDecoder().decode(PendingNotificationAction.self, from: data) else { return nil }
+              let action = try? JSONDecoder().decode(PendingNotificationAction.self, from: data) else {
+            return nil
+        }
         UserDefaults.standard.removeObject(forKey: defaultsKey)
         return action
     }
@@ -96,8 +98,11 @@ final class NotificationManager {
     }
 
     func requestAuthorization() async -> Bool {
-        do { return try await center.requestAuthorization(options: [.alert, .badge, .sound]) }
-        catch { return false }
+        do {
+            return try await center.requestAuthorization(options: [.alert, .badge, .sound])
+        } catch {
+            return false
+        }
     }
 
     func authorizationStatus() async -> UNAuthorizationStatus {
@@ -142,9 +147,14 @@ final class NotificationManager {
         content.categoryIdentifier = Self.categoryIdentifier
         content.userInfo = ["reminderID": reminder.id.uuidString]
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(minutes * 60), repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: TimeInterval(minutes * 60),
+            repeats: false
+        )
         let identifier = "\(reminder.id.uuidString)-snooze-\(Date().timeIntervalSince1970)"
-        try? await center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+        try? await center.add(
+            UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        )
     }
 
     func cancel(reminderID: UUID) async {
@@ -166,7 +176,11 @@ final class NotificationManager {
 
     private func notificationBody(for reminder: ReminderItem, categoryName: String) -> String {
         let note = reminder.notes.trimmingCharacters(in: .whitespacesAndNewlines)
-        return note.isEmpty ? "\(categoryName) • \(reminder.priority.title) priority" : note
+        if !note.isEmpty { return note }
+        if let deadline = reminder.deadlineDate {
+            return "\(categoryName) • Final deadline \(deadline.compactDateTime)"
+        }
+        return "\(categoryName) • \(reminder.priority.title) priority"
     }
 }
 
@@ -191,10 +205,19 @@ final class ReminderStore: ObservableObject {
             .sink { [weak self] _ in self?.processPendingNotificationAction() }
             .store(in: &cancellables)
         processPendingNotificationAction()
+
+        let existing = pendingReminders
+        Task {
+            for reminder in existing {
+                await EmailAutomationManager.shared.sync(reminder)
+            }
+        }
     }
 
     var pendingReminders: [ReminderItem] {
-        reminders.filter { !$0.isCompleted }.sorted { $0.dueDate < $1.dueDate }
+        reminders
+            .filter { !$0.isCompleted }
+            .sorted { $0.effectiveDeadline < $1.effectiveDeadline }
     }
 
     var completedReminders: [ReminderItem] {
@@ -223,13 +246,17 @@ final class ReminderStore: ObservableObject {
     func delete(_ reminder: ReminderItem) {
         reminders.removeAll { $0.id == reminder.id }
         save()
-        Task { await NotificationManager.shared.cancel(reminderID: reminder.id) }
+        Task {
+            await NotificationManager.shared.cancel(reminderID: reminder.id)
+            await EmailAutomationManager.shared.cancel(reminderID: reminder.id)
+        }
     }
 
     func complete(_ reminder: ReminderItem, comment: String) {
         guard let index = reminders.firstIndex(where: { $0.id == reminder.id }) else { return }
         let completionDate = Date()
         let cleanedComment = comment.trimmingCharacters(in: .whitespacesAndNewlines)
+
         reminders[index].completedAt = completionDate
         reminders[index].completionComment = cleanedComment.isEmpty ? nil : cleanedComment
         reminders[index].updatedAt = completionDate
@@ -244,34 +271,41 @@ final class ReminderStore: ObservableObject {
         )
 
         if let nextDate = reminder.repeatRule.nextDate(after: reminder.dueDate) {
+            let deadlineGap = reminder.deadlineDate?.timeIntervalSince(reminder.dueDate)
+            let nextDeadline = deadlineGap.map { nextDate.addingTimeInterval($0) }
             let nextReminder = ReminderItem(
                 title: reminder.title,
                 notes: reminder.notes,
                 dueDate: nextDate,
+                deadlineDate: nextDeadline,
                 priority: reminder.priority,
                 categoryID: reminder.categoryID,
                 repeatRule: reminder.repeatRule,
                 alertOffsets: reminder.alertOffsets,
-                notificationsEnabled: reminder.notificationsEnabled
+                notificationsEnabled: reminder.notificationsEnabled,
+                emailWhenDue: reminder.emailWhenDue
             )
             reminders.append(nextReminder)
-            Task {
-                await NotificationManager.shared.schedule(
-                    nextReminder,
-                    categoryName: category(for: nextReminder.categoryID).name
-                )
-            }
+            scheduleServices(for: nextReminder)
         }
 
         save()
-        Task { await NotificationManager.shared.cancel(reminderID: reminder.id) }
+        Task {
+            await NotificationManager.shared.cancel(reminderID: reminder.id)
+            await EmailAutomationManager.shared.cancel(reminderID: reminder.id)
+        }
     }
 
     func extend(_ reminder: ReminderItem, to newDate: Date, comment: String) {
         guard let index = reminders.firstIndex(where: { $0.id == reminder.id }) else { return }
         let cleanedComment = comment.trimmingCharacters(in: .whitespacesAndNewlines)
         let oldDate = reminders[index].dueDate
+        let shift = newDate.timeIntervalSince(oldDate)
+
         reminders[index].dueDate = newDate
+        if let deadline = reminders[index].deadlineDate {
+            reminders[index].deadlineDate = deadline.addingTimeInterval(shift)
+        }
         reminders[index].updatedAt = Date()
         reminders[index].history.append(
             ReminderHistoryEntry(
@@ -372,17 +406,25 @@ final class ReminderStore: ObservableObject {
 
     private func persistAndSchedule(_ reminder: ReminderItem) {
         save()
+        scheduleServices(for: reminder)
+    }
+
+    private func scheduleServices(for reminder: ReminderItem) {
+        let categoryName = category(for: reminder.categoryID).name
         Task {
             await NotificationManager.shared.schedule(
                 reminder,
-                categoryName: category(for: reminder.categoryID).name
+                categoryName: categoryName
             )
+            await EmailAutomationManager.shared.sync(reminder)
         }
     }
 
     private func processPendingNotificationAction() {
         guard let action = NotificationActionCoordinator.shared.consume(),
-              let reminder = reminders.first(where: { $0.id == action.reminderID }) else { return }
+              let reminder = reminders.first(where: { $0.id == action.reminderID }) else {
+            return
+        }
 
         switch action.kind {
         case .complete:
