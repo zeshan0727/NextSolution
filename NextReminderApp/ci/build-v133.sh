@@ -13,6 +13,7 @@ python3 ci/patch_v130.py
 python3 ci/patch_v131.py
 python3 ci/patch_v132.py
 python3 ci/patch_v133.py
+python3 ci/patch_v133_fix.py
 
 # Avoid actor-isolation issues on iOS 16 / Swift 5 mode.
 python3 - <<'PY'
