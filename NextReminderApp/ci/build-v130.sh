@@ -11,16 +11,28 @@ python3 ci/patch_v124.py
 python3 ci/patch_v125.py
 python3 ci/patch_v130.py
 
-# Avoid actor-isolated StateObject initialization issues on iOS 16 / Swift 5 mode.
+# Avoid actor-isolation issues on iOS 16 / Swift 5 mode.
 python3 - <<'PY'
 from pathlib import Path
-p = Path('NextReminder/Sources/FileSharing.swift')
-text = p.read_text().replace('@MainActor\nfinal class FileShareShortcutStore', 'final class FileShareShortcutStore')
-p.write_text(text)
+
+file_sharing = Path('NextReminder/Sources/FileSharing.swift')
+text = file_sharing.read_text().replace(
+    '@MainActor\nfinal class FileShareShortcutStore',
+    'final class FileShareShortcutStore'
+)
+file_sharing.write_text(text)
+
+backup = Path('NextReminder/Sources/BackupRestore.swift')
+text = backup.read_text().replace(
+    '    static func createPackage(store: ReminderStore) throws -> NextReminderBackupPackage {',
+    '    @MainActor\n    static func createPackage(store: ReminderStore) throws -> NextReminderBackupPackage {'
+)
+backup.write_text(text)
 PY
 
 # Verify backup/restore, Settings automation center, AI tab, and secure DeepSeek integration.
 grep -q 'NextReminderBackupPackage' NextReminder/Sources/BackupRestore.swift
+grep -q '@MainActor' NextReminder/Sources/BackupRestore.swift
 grep -q 'iCloud Drive' NextReminder/Sources/BackupRestore.swift
 grep -q 'Google Drive' NextReminder/Sources/BackupRestore.swift
 grep -q 'Dropbox' NextReminder/Sources/BackupRestore.swift
