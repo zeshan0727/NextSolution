@@ -130,8 +130,14 @@ jobs:
           from pathlib import Path
           path = Path('projects/NextMedia/ci/build-lame.sh')
           source = path.read_text()
-          flags = '-DHAVE_MEMCPY=1 -include stdlib.h -include string.h '
-          source = source.replace('export CFLAGS="-arch arm64', f'export CFLAGS="{flags}-arch arm64')
+          source = source.replace(
+              'export CFLAGS="-arch arm64',
+              'export CFLAGS="-DHAVE_MEMCPY=1 -include string.h -arch arm64'
+          )
+          source = source.replace(
+              'make -j"$(sysctl -n hw.ncpu)"',
+              'make CFLAGS="$CFLAGS -include stdlib.h" -j"$(sysctl -n hw.ncpu)"'
+          )
           path.write_text(source)
           PY
           projects/NextMedia/ci/build-lame.sh 2>&1 | tee projects/NextMedia/lame-build.log
