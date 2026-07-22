@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+exec > >(tee v132-build.log) 2>&1
 
 cd "$(dirname "$0")/.."
 
