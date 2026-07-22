@@ -80,8 +80,8 @@ jobs:
             createIntermediateGroups: true
           packages:
             LAME:
-              url: https://github.com/BB9z/LAME-xcframework.git
-              exactVersion: 3.100.3
+              url: https://github.com/BB9z/LAME-xcframework
+              exactVersion: "3.100.3"
           settings:
             base:
               SWIFT_VERSION: "5.0"
@@ -129,7 +129,9 @@ jobs:
 
       - name: Generate Xcode project
         working-directory: projects/NextMedia
-        run: xcodegen generate
+        run: |
+          set -o pipefail
+          xcodegen generate 2>&1 | tee xcodegen.log
 
       - name: Resolve Swift packages
         working-directory: projects/NextMedia
@@ -179,3 +181,4 @@ jobs:
             projects/NextMedia/dist/NextMedia-1.2.0.tipa
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
+            projects/NextMedia/xcodegen.log
