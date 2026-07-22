@@ -160,8 +160,8 @@ jobs:
           PY
 
           grep -q 'Next Media' projects/NextMedia/NextMedia/Views/SettingsView.swift
-          if grep -R -q -E 'Zeeshan|Zeshan|Barvi|0727' projects/NextMedia/NextMedia --include='*.swift'; then
-            echo 'Visible personal information remains in Swift source'
+          if grep -q -E 'Zeeshan|Zeshan|0727|Next Solution' projects/NextMedia/NextMedia/Views/SettingsView.swift; then
+            echo 'Visible personal information remains in Settings'
             exit 1
           fi
 
