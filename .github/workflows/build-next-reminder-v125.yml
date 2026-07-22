@@ -1,0 +1,33 @@
+name: Build Next Reminder v1.2.5
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Build and verify v1.2.5
+        run: |
+          chmod +x NextReminderApp/ci/build-v125.sh
+          NextReminderApp/ci/build-v125.sh
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextReminder-v1.2.5
+          if-no-files-found: warn
+          path: |
+            NextReminderApp/NextReminder-v1.2.5-unsigned.tipa
+            NextReminderApp/NextReminder-v1.2.5-unsigned.ipa
+            NextReminderApp/NextReminder-v1.2.5-unsigned.tipa.sha256
+            NextReminderApp/xcodebuild.log
