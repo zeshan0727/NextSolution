@@ -28,6 +28,7 @@ The `Build Next Media TIPA` GitHub Actions workflow restores the project, genera
 - Xcode build log
 
 The draft pull request is used only to run compile verification; it is not intended to be merged automatically.
+CI target: macOS 15 runner, iOS device SDK, minimum deployment iOS 15.0.
 
 Bundle identifier: `uk.zeshanbarvi.nextmedia`
 
