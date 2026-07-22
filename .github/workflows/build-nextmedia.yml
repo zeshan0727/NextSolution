@@ -1,0 +1,83 @@
+name: Build Next Media TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - next-media-v1
+    paths:
+      - "NextMediaApp/**"
+      - ".github/workflows/build-nextmedia.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Restore source project
+        run: |
+          set -euo pipefail
+          cat NextMediaApp/source.part00 NextMediaApp/source.part01 NextMediaApp/source.part02 > /tmp/NextMedia-source.b64
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          encoded = Path('/tmp/NextMedia-source.b64').read_text().strip()
+          Path('/tmp/NextMedia-project.tar.gz').write_bytes(base64.b64decode(encoded, validate=True))
+          PY
+          tar -xzf /tmp/NextMedia-project.tar.gz
+          python3 projects/NextMedia/ci/generate_icons.py
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: projects/NextMedia
+        run: xcodegen generate
+
+      - name: Build unsigned app
+        working-directory: projects/NextMedia
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project NextMedia.xcodeproj \
+            -scheme NextMedia \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            clean build | tee xcodebuild.log
+
+      - name: Package IPA and TIPA
+        working-directory: projects/NextMedia
+        run: |
+          set -euo pipefail
+          APP_PATH="build/Build/Products/Release-iphoneos/NextMedia.app"
+          test -d "$APP_PATH"
+          rm -rf Payload dist
+          mkdir -p Payload dist
+          cp -R "$APP_PATH" Payload/NextMedia.app
+          /usr/bin/zip -qry "dist/NextMedia-1.0.0.ipa" Payload
+          cp "dist/NextMedia-1.0.0.ipa" "dist/NextMedia-1.0.0.tipa"
+          shasum -a 256 dist/NextMedia-1.0.0.ipa dist/NextMedia-1.0.0.tipa > dist/SHA256SUMS.txt
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMedia-1.0.0
+          if-no-files-found: warn
+          path: |
+            projects/NextMedia/dist/NextMedia-1.0.0.ipa
+            projects/NextMedia/dist/NextMedia-1.0.0.tipa
+            projects/NextMedia/dist/SHA256SUMS.txt
+            projects/NextMedia/xcodebuild.log
