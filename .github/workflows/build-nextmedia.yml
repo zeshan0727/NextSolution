@@ -113,7 +113,7 @@ jobs:
 
           encoded = Path('NextMediaApp/icon131.b64').read_text().strip()
           raw = base64.b64decode(encoded, validate=True)
-          expected = '4f35c9b60e4c7669b58950d70406cb2685289fccece272e5df57107c44213b55'
+          expected = '63fb14a501b661d8a0f49521444771f31c29bfbcf38b679967064fb28e0d6aaa'
           actual = hashlib.sha256(raw).hexdigest()
           if actual != expected:
               raise SystemExit(f'icon checksum mismatch: {actual}')
