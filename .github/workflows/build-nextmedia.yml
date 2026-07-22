@@ -128,9 +128,15 @@ jobs:
               source = source.crop((left, top, left + side, top + side))
 
           assets = Path('projects/NextMedia/NextMedia/Resources/Assets.xcassets')
+          generated = []
           for set_name in ('AppIcon.appiconset', 'AppIconDark.appiconset'):
               icon_set = assets / set_name
-              manifest = json.loads((icon_set / 'Contents.json').read_text())
+              manifest_path = icon_set / 'Contents.json'
+              if not manifest_path.exists():
+                  if set_name == 'AppIcon.appiconset':
+                      raise SystemExit(f'Missing required icon set: {manifest_path}')
+                  continue
+              manifest = json.loads(manifest_path.read_text())
               for entry in manifest.get('images', []):
                   filename = entry.get('filename')
                   size_text = entry.get('size')
@@ -141,7 +147,11 @@ jobs:
                   scale = float(scale_text.rstrip('x'))
                   pixels = int(round(points * scale))
                   icon = source.resize((pixels, pixels), Image.Resampling.LANCZOS)
-                  icon.save(icon_set / filename, 'PNG', optimize=True)
+                  destination = icon_set / filename
+                  icon.save(destination, 'PNG', optimize=True)
+                  generated.append(destination)
+          if not generated:
+              raise SystemExit('No app icon files were generated')
 
           plist_path = Path('projects/NextMedia/NextMedia/Info.plist')
           with plist_path.open('rb') as handle:
@@ -154,16 +164,25 @@ jobs:
 
           settings = Path('projects/NextMedia/NextMedia/Views/SettingsView.swift')
           text = settings.read_text()
-          text = text.replace('Next Solution – Zeeshan 0727', 'Next Media')
-          text = text.replace('Next Solution - Zeeshan 0727', 'Next Media')
-          settings.write_text(text)
-          PY
+          text = text.replace('Text("1.3.0")', 'Text("1.3.1")')
+          cleaned = []
+          for line in text.splitlines():
+              if any(token in line for token in ('Next Solution', 'Zeeshan', 'Zeshan', '0727')):
+                  indent = line[:len(line) - len(line.lstrip())]
+                  cleaned.append(indent + 'Text("Next Media")')
+              else:
+                  cleaned.append(line)
+          settings.write_text('\n'.join(cleaned) + '\n')
 
-          grep -q 'Next Media' projects/NextMedia/NextMedia/Views/SettingsView.swift
-          if grep -q -E 'Zeeshan|Zeshan|0727|Next Solution' projects/NextMedia/NextMedia/Views/SettingsView.swift; then
-            echo 'Visible personal information remains in Settings'
-            exit 1
-          fi
+          log = Path('projects/NextMedia/icon-step.log')
+          log.write_text(
+              f'icon_sha256={actual}\n'
+              f'source_size={source.width}x{source.height}\n'
+              f'generated_count={len(generated)}\n'
+              f'version={info["CFBundleShortVersionString"]}\n'
+              f'build={info["CFBundleVersion"]}\n'
+          )
+          PY
 
       - name: Configure LAME MP3 package
         run: |
@@ -301,3 +320,4 @@ jobs:
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
             projects/NextMedia/xcodegen.log
+            projects/NextMedia/icon-step.log
