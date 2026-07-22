@@ -19,6 +19,10 @@ const ENCRYPTION_KEY = crypto
   .update(process.env.ENCRYPTION_KEY || 'change-this-encryption-key')
   .digest();
 
+const MAX_SINGLE_ATTACHMENT_BYTES = 10_000_000;
+const MAX_TOTAL_ATTACHMENT_BYTES = 18_000_000;
+const MAX_ATTACHMENT_COUNT = 10;
+
 if (!API_KEY) console.warn('WARNING: API_KEY is empty. Configure it before public deployment.');
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
   console.warn('WARNING: Google OAuth environment variables are incomplete.');
@@ -26,7 +30,7 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
 
 const app = express();
 app.disable('x-powered-by');
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '30mb' }));
 
 function emptyDatabase() {
   return { connectors: {}, oauthSessions: {}, emailJobs: {} };
@@ -110,19 +114,74 @@ function base64url(value) {
 }
 
 function encodeHeader(value) {
-  return `=?UTF-8?B?${Buffer.from(value, 'utf8').toString('base64')}?=`;
+  return `=?UTF-8?B?${Buffer.from(String(value || ''), 'utf8').toString('base64')}?=`;
 }
 
-function createRawMessage({ to, subject, body, from }) {
-  const headers = [
-    `To: ${to}`,
-    from ? `From: ${from}` : null,
+function sanitizeHeader(value) {
+  return String(value || '').replace(/[\r\n]+/g, ' ').trim();
+}
+
+function sanitizeFileName(value) {
+  const cleaned = sanitizeHeader(value).replace(/["\\]/g, '_').slice(0, 180);
+  return cleaned || 'attachment';
+}
+
+function sanitizeMimeType(value) {
+  const cleaned = sanitizeHeader(value).toLowerCase();
+  return /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(cleaned)
+    ? cleaned
+    : 'application/octet-stream';
+}
+
+function wrapBase64(value) {
+  return String(value || '').replace(/\s+/g, '').match(/.{1,76}/g)?.join('\r\n') || '';
+}
+
+function createRawMessage({ to, subject, body, from, attachments = [] }) {
+  const recipients = Array.isArray(to) ? to.join(', ') : String(to || '');
+  const commonHeaders = [
+    `To: ${sanitizeHeader(recipients)}`,
+    from ? `From: ${sanitizeHeader(from)}` : null,
     `Subject: ${encodeHeader(subject)}`,
     'MIME-Version: 1.0',
+  ].filter(Boolean);
+
+  if (!attachments.length) {
+    const headers = [
+      ...commonHeaders,
+      'Content-Type: text/plain; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
+    ];
+    return base64url(`${headers.join('\r\n')}\r\n\r\n${String(body || '')}`);
+  }
+
+  const boundary = `NextReminder_${crypto.randomBytes(16).toString('hex')}`;
+  const lines = [
+    ...commonHeaders,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
     'Content-Type: text/plain; charset=UTF-8',
     'Content-Transfer-Encoding: 8bit',
-  ].filter(Boolean);
-  return base64url(`${headers.join('\r\n')}\r\n\r\n${body}`);
+    '',
+    String(body || ''),
+  ];
+
+  for (const attachment of attachments) {
+    const fileName = sanitizeFileName(attachment.fileName);
+    const mimeType = sanitizeMimeType(attachment.mimeType);
+    lines.push(
+      `--${boundary}`,
+      `Content-Type: ${mimeType}; name="${fileName}"`,
+      'Content-Transfer-Encoding: base64',
+      `Content-Disposition: attachment; filename="${fileName}"`,
+      '',
+      wrapBase64(attachment.base64),
+    );
+  }
+
+  lines.push(`--${boundary}--`, '');
+  return base64url(lines.join('\r\n'));
 }
 
 async function gmailClientForConnector(connectorID) {
@@ -150,16 +209,24 @@ async function gmailClientForConnector(connectorID) {
 async function sendEmailJob(job) {
   const { gmail, connector } = await gmailClientForConnector(job.remoteConnectorID);
   const raw = createRawMessage({
-    to: job.recipient,
+    to: job.recipients || job.recipient,
     subject: job.subject,
     body: job.body,
     from: connector.emailAddress,
+    attachments: job.attachments || [],
   });
   const result = await gmail.users.messages.send({
     userId: 'me',
     requestBody: { raw },
   });
   return result.data.id || null;
+}
+
+function isValidEmail(value) {
+  const cleaned = String(value || '').trim();
+  return cleaned.length <= 254
+    && !cleaned.includes(' ')
+    && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cleaned);
 }
 
 function normalizeEmailPayload(body) {
@@ -169,6 +236,7 @@ function normalizeEmailPayload(body) {
       throw new Error(`Missing required field: ${key}`);
     }
   }
+  if (!isValidEmail(body.recipient)) throw new Error('Invalid recipient email address.');
   const scheduledDate = new Date(body.scheduledAt);
   if (Number.isNaN(scheduledDate.getTime())) throw new Error('Invalid scheduledAt value.');
   return {
@@ -177,8 +245,8 @@ function normalizeEmailPayload(body) {
     provider: 'gmail',
     remoteConnectorID: body.remoteConnectorID.trim(),
     senderLabel: String(body.senderLabel || '').trim(),
-    subject: body.subject,
-    body: body.body,
+    subject: String(body.subject).slice(0, 500),
+    body: String(body.body).slice(0, 100_000),
     scheduledAt: scheduledDate.toISOString(),
     timeZone: String(body.timeZone || 'UTC'),
     reminderTitle: String(body.reminderTitle || ''),
@@ -188,12 +256,74 @@ function normalizeEmailPayload(body) {
   };
 }
 
+function normalizeFileSharePayload(body) {
+  if (!body || !Array.isArray(body.recipients) || body.recipients.length === 0) {
+    throw new Error('Add at least one recipient.');
+  }
+  const recipients = body.recipients
+    .map((value) => String(value || '').trim())
+    .filter(Boolean);
+  if (!recipients.length || recipients.length > 20 || !recipients.every(isValidEmail)) {
+    throw new Error('One or more recipient email addresses are invalid.');
+  }
+
+  const remoteConnectorID = String(body.remoteConnectorID || '').trim();
+  if (!remoteConnectorID) throw new Error('Gmail connector ID is missing.');
+  if (!database.connectors[remoteConnectorID]) {
+    throw new Error('Gmail connector not found. Reconnect Gmail in Next Reminder.');
+  }
+
+  const subject = String(body.subject || '').trim();
+  if (!subject) throw new Error('Email subject is required.');
+
+  if (!Array.isArray(body.attachments) || body.attachments.length === 0) {
+    throw new Error('Attach at least one file.');
+  }
+  if (body.attachments.length > MAX_ATTACHMENT_COUNT) {
+    throw new Error(`A maximum of ${MAX_ATTACHMENT_COUNT} attachments is allowed.`);
+  }
+
+  let totalBytes = 0;
+  const attachments = body.attachments.map((item, index) => {
+    const fileName = sanitizeFileName(item?.fileName || `attachment-${index + 1}`);
+    const mimeType = sanitizeMimeType(item?.mimeType);
+    const base64 = String(item?.base64 || '').replace(/\s+/g, '');
+    if (!base64) throw new Error(`${fileName} has no file data.`);
+    const bytes = Buffer.from(base64, 'base64');
+    if (!bytes.length) throw new Error(`${fileName} could not be decoded.`);
+    if (bytes.length > MAX_SINGLE_ATTACHMENT_BYTES) {
+      throw new Error(`${fileName} is larger than 10 MB.`);
+    }
+    totalBytes += bytes.length;
+    return { fileName, mimeType, base64 };
+  });
+
+  if (totalBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
+    throw new Error('The combined attachments are larger than 18 MB.');
+  }
+
+  return {
+    recipients,
+    remoteConnectorID,
+    senderLabel: String(body.senderLabel || '').trim(),
+    subject: subject.slice(0, 500),
+    body: String(body.body || '').slice(0, 100_000),
+    attachments,
+  };
+}
+
+app.get('/healthz', (req, res) => {
+  res.json({ ok: true, service: 'Next Reminder Scheduler', version: '1.2.3' });
+});
+
 app.get('/v1/health', requireAPIKey, (req, res) => {
   res.json({
     ok: true,
+    message: 'Connection successful',
     service: 'Next Reminder Scheduler',
-    version: '1.2.1',
+    version: '1.2.3',
     gmailOAuthConfigured: Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REDIRECT_URI),
+    fileSharingEnabled: true,
   });
 });
 
@@ -347,8 +477,23 @@ app.post('/v1/email-reminders/cancel', requireAPIKey, (req, res) => {
   res.json({ message: 'Email reminder cancelled.' });
 });
 
+app.post('/v1/file-shares', requireAPIKey, async (req, res) => {
+  try {
+    const payload = normalizeFileSharePayload(req.body);
+    const gmailMessageID = await sendEmailJob(payload);
+    res.json({ id: gmailMessageID, message: 'Email sent successfully.' });
+  } catch (error) {
+    console.error('File sharing failed:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
 app.post('/v1/automations', requireAPIKey, (req, res) => {
-  res.status(501).json({ message: 'This scheduler package currently implements Gmail email automations only.' });
+  res.status(501).json({ message: 'This scheduler currently implements Gmail email and file-sharing automations.' });
+});
+
+app.post('/v1/automations/publish', requireAPIKey, (req, res) => {
+  res.status(501).json({ message: 'This scheduler currently implements Gmail email and file-sharing automations.' });
 });
 
 async function processDueEmailJobs() {
@@ -388,7 +533,6 @@ setInterval(() => {
   processDueEmailJobs().catch((error) => console.error('Scheduler loop failed:', error));
 }, 15_000).unref();
 
-// Remove abandoned OAuth sessions after 30 minutes.
 setInterval(() => {
   const cutoff = Date.now() - 30 * 60 * 1000;
   for (const [state, session] of Object.entries(database.oauthSessions)) {
@@ -398,10 +542,13 @@ setInterval(() => {
 }, 10 * 60 * 1000).unref();
 
 app.use((error, req, res, next) => {
+  if (error?.type === 'entity.too.large') {
+    return res.status(413).json({ message: 'The selected attachments are too large.' });
+  }
   console.error(error);
   res.status(500).json({ message: 'Unexpected scheduler error.' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Next Reminder Scheduler listening on port ${PORT}`);
+  console.log(`Next Reminder Scheduler v1.2.3 listening on port ${PORT}`);
 });
