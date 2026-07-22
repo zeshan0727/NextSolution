@@ -102,8 +102,8 @@ jobs:
 
       - name: Apply selected glass app icon and finalize 1.3.1
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
+          set +e
+          python3 - <<'PY' > projects/NextMedia/icon-step.log 2>&1
           import base64
           import hashlib
           import json
@@ -174,15 +174,15 @@ jobs:
                   cleaned.append(line)
           settings.write_text('\n'.join(cleaned) + '\n')
 
-          log = Path('projects/NextMedia/icon-step.log')
-          log.write_text(
-              f'icon_sha256={actual}\n'
-              f'source_size={source.width}x{source.height}\n'
-              f'generated_count={len(generated)}\n'
-              f'version={info["CFBundleShortVersionString"]}\n'
-              f'build={info["CFBundleVersion"]}\n'
-          )
+          print(f'icon_sha256={actual}')
+          print(f'source_size={source.width}x{source.height}')
+          print(f'generated_count={len(generated)}')
+          print(f'version={info["CFBundleShortVersionString"]}')
+          print(f'build={info["CFBundleVersion"]}')
           PY
+          status=$?
+          cat projects/NextMedia/icon-step.log || true
+          exit $status
 
       - name: Configure LAME MP3 package
         run: |
