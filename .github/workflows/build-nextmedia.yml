@@ -8,6 +8,12 @@ on:
     paths:
       - "NextMediaApp/**"
       - ".github/workflows/build-nextmedia.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "NextMediaApp/**"
+      - ".github/workflows/build-nextmedia.yml"
 
 permissions:
   contents: read
