@@ -224,8 +224,8 @@ jobs:
                   excludes:
                     - Resources
                     - Info.plist
-              resources:
                 - path: NextMedia/Resources
+                  buildPhase: resources
               dependencies:
                 - package: LAME
                   product: LAME
