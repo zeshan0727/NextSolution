@@ -1,4 +1,4 @@
-name: Build Next Media TIPA
+name: Build Next Media 1.1.0
 
 on:
   workflow_dispatch:
@@ -7,12 +7,14 @@ on:
       - next-media-v1
     paths:
       - "NextMediaApp/**"
+      - "NextMediaPatch/**"
       - ".github/workflows/build-nextmedia.yml"
   pull_request:
     branches:
       - main
     paths:
       - "NextMediaApp/**"
+      - "NextMediaPatch/**"
       - ".github/workflows/build-nextmedia.yml"
 
 permissions:
@@ -39,6 +41,12 @@ jobs:
           PY
           tar -xzf /tmp/NextMedia-project.tar.gz
           python3 projects/NextMedia/ci/generate_icons.py
+
+      - name: Apply version 1.1 browser patch
+        run: |
+          set -euo pipefail
+          cp NextMediaPatch/project.yml projects/NextMedia/project.yml
+          cp -R NextMediaPatch/NextMedia/. projects/NextMedia/NextMedia/
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -72,18 +80,18 @@ jobs:
           rm -rf Payload dist
           mkdir -p Payload dist
           cp -R "$APP_PATH" Payload/NextMedia.app
-          /usr/bin/zip -qry "dist/NextMedia-1.0.0.ipa" Payload
-          cp "dist/NextMedia-1.0.0.ipa" "dist/NextMedia-1.0.0.tipa"
-          shasum -a 256 dist/NextMedia-1.0.0.ipa dist/NextMedia-1.0.0.tipa > dist/SHA256SUMS.txt
+          /usr/bin/zip -qry "dist/NextMedia-1.1.0.ipa" Payload
+          cp "dist/NextMedia-1.1.0.ipa" "dist/NextMedia-1.1.0.tipa"
+          shasum -a 256 dist/NextMedia-1.1.0.ipa dist/NextMedia-1.1.0.tipa > dist/SHA256SUMS.txt
 
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NextMedia-1.0.0
+          name: NextMedia-1.1.0
           if-no-files-found: warn
           path: |
-            projects/NextMedia/dist/NextMedia-1.0.0.ipa
-            projects/NextMedia/dist/NextMedia-1.0.0.tipa
+            projects/NextMedia/dist/NextMedia-1.1.0.ipa
+            projects/NextMedia/dist/NextMedia-1.1.0.tipa
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
