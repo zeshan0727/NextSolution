@@ -32,3 +32,4 @@ jobs:
             NextReminderApp/NextReminder-v1.3.2-unsigned.tipa.sha256
             NextReminderApp/xcodebuild.log
             NextReminderApp/v132-build.log
+            v132-build.log
