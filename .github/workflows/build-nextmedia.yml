@@ -1,4 +1,4 @@
-name: Build Next Media 1.2.0
+name: Build Next Media 1.3.0
 
 on:
   workflow_dispatch:
@@ -54,12 +54,17 @@ jobs:
           PY
           tar -xzf /tmp/NextMedia-v12-patch.tar.gz
 
-      - name: Prepare Swift source and themed icons
+      - name: Prepare version 1.2 source and themed icons
         run: |
           set -euo pipefail
           python3 -m venv /tmp/nextmedia-tools
           /tmp/nextmedia-tools/bin/pip install --disable-pip-version-check pillow
           /tmp/nextmedia-tools/bin/python NextMediaApp/prepare_v12.py
+
+      - name: Apply version 1.3 browser UX patch
+        run: |
+          set -euo pipefail
+          /tmp/nextmedia-tools/bin/python NextMediaApp/prepare_v13.py
 
       - name: Configure LAME MP3 package
         run: |
@@ -86,8 +91,8 @@ jobs:
             base:
               SWIFT_VERSION: "5.0"
               IPHONEOS_DEPLOYMENT_TARGET: "15.0"
-              MARKETING_VERSION: "1.2.0"
-              CURRENT_PROJECT_VERSION: "3"
+              MARKETING_VERSION: "1.3.0"
+              CURRENT_PROJECT_VERSION: "4"
               TARGETED_DEVICE_FAMILY: "1,2"
               SUPPORTS_MACCATALYST: NO
               ENABLE_BITCODE: NO
@@ -122,6 +127,7 @@ jobs:
               scheme:
                 testTargets: []
           EOF_PROJECT
+          sed -i '' 's/^          //' projects/NextMedia/project.yml
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -156,7 +162,7 @@ jobs:
             CODE_SIGN_IDENTITY='' \
             clean build | tee xcodebuild.log
 
-      - name: Package IPA and TIPA
+      - name: Package IPA, TIPA and source
         working-directory: projects/NextMedia
         run: |
           set -euo pipefail
@@ -165,19 +171,24 @@ jobs:
           rm -rf Payload dist
           mkdir -p Payload dist
           cp -R "$APP_PATH" Payload/NextMedia.app
-          /usr/bin/zip -qry "dist/NextMedia-1.2.0.ipa" Payload
-          cp "dist/NextMedia-1.2.0.ipa" "dist/NextMedia-1.2.0.tipa"
-          shasum -a 256 dist/NextMedia-1.2.0.ipa dist/NextMedia-1.2.0.tipa > dist/SHA256SUMS.txt
+          /usr/bin/zip -qry "dist/NextMedia-1.3.0.ipa" Payload
+          cp "dist/NextMedia-1.3.0.ipa" "dist/NextMedia-1.3.0.tipa"
+          cd ../..
+          /usr/bin/zip -qry "projects/NextMedia/dist/NextMedia-1.3.0-source.zip" projects/NextMedia \
+            -x 'projects/NextMedia/build/*' 'projects/NextMedia/Payload/*' 'projects/NextMedia/dist/*' 'projects/NextMedia/.build/*'
+          cd projects/NextMedia
+          shasum -a 256 dist/NextMedia-1.3.0.ipa dist/NextMedia-1.3.0.tipa dist/NextMedia-1.3.0-source.zip > dist/SHA256SUMS.txt
 
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NextMedia-1.2.0
+          name: NextMedia-1.3.0
           if-no-files-found: warn
           path: |
-            projects/NextMedia/dist/NextMedia-1.2.0.ipa
-            projects/NextMedia/dist/NextMedia-1.2.0.tipa
+            projects/NextMedia/dist/NextMedia-1.3.0.ipa
+            projects/NextMedia/dist/NextMedia-1.3.0.tipa
+            projects/NextMedia/dist/NextMedia-1.3.0-source.zip
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
             projects/NextMedia/xcodegen.log
