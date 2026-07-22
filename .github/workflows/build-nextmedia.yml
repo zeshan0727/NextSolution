@@ -126,6 +126,7 @@ jobs:
       - name: Build MP3 encoder library
         run: |
           set -o pipefail
+          export CPPFLAGS="-DHAVE_MEMCPY=1"
           projects/NextMedia/ci/build-lame.sh 2>&1 | tee projects/NextMedia/lame-build.log
 
       - name: Generate Xcode project
