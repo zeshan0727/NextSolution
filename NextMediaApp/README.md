@@ -27,6 +27,8 @@ The `Build Next Media TIPA` GitHub Actions workflow restores the project, genera
 - SHA-256 checksums
 - Xcode build log
 
+The draft pull request is used only to run compile verification; it is not intended to be merged automatically.
+
 Bundle identifier: `uk.zeshanbarvi.nextmedia`
 
 Author: Next Solution – Zeeshan 0727
