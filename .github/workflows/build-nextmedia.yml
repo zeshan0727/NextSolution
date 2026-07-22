@@ -71,63 +71,64 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          path = Path('projects/NextMedia/NextMedia/Audio/MP3Encoder.m')
-          source = path.read_text()
+
+          encoder = Path('projects/NextMedia/NextMedia/Audio/MP3Encoder.m')
+          source = encoder.read_text()
           source = source.replace('#import "lame.h"', '#import <LAME/lame.h>')
-          path.write_text(source)
+          encoder.write_text(source)
+
+          project = '''name: NextMedia
+options:
+  bundleIdPrefix: uk.zeshanbarvi
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+packages:
+  LAME:
+    url: https://github.com/BB9z/LAME-xcframework
+    exactVersion: "3.100.3"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    MARKETING_VERSION: "1.3.0"
+    CURRENT_PROJECT_VERSION: "4"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SUPPORTS_MACCATALYST: NO
+    ENABLE_BITCODE: NO
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+targets:
+  NextMedia:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: NextMedia
+        excludes:
+          - Resources
+          - Info.plist
+    resources:
+      - path: NextMedia/Resources
+    dependencies:
+      - package: LAME
+        product: LAME
+      - sdk: AudioToolbox.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uk.zeshanbarvi.nextmedia
+        PRODUCT_NAME: NextMedia
+        INFOPLIST_FILE: NextMedia/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_OBJC_BRIDGING_HEADER: NextMedia/NextMedia-Bridging-Header.h
+    scheme:
+      testTargets: []
+'''
+          Path('projects/NextMedia/project.yml').write_text(project)
           PY
-          cat > projects/NextMedia/project.yml <<'EOF_PROJECT'
-          name: NextMedia
-          options:
-            bundleIdPrefix: uk.zeshanbarvi
-            deploymentTarget:
-              iOS: "15.0"
-            createIntermediateGroups: true
-          packages:
-            LAME:
-              url: https://github.com/BB9z/LAME-xcframework
-              exactVersion: "3.100.3"
-          settings:
-            base:
-              SWIFT_VERSION: "5.0"
-              IPHONEOS_DEPLOYMENT_TARGET: "15.0"
-              MARKETING_VERSION: "1.3.0"
-              CURRENT_PROJECT_VERSION: "4"
-              TARGETED_DEVICE_FAMILY: "1,2"
-              SUPPORTS_MACCATALYST: NO
-              ENABLE_BITCODE: NO
-              CODE_SIGNING_ALLOWED: NO
-              CODE_SIGNING_REQUIRED: NO
-              CODE_SIGN_IDENTITY: ""
-          targets:
-            NextMedia:
-              type: application
-              platform: iOS
-              deploymentTarget: "15.0"
-              sources:
-                - path: NextMedia
-                  excludes:
-                    - Resources
-                    - Info.plist
-              resources:
-                - path: NextMedia/Resources
-              dependencies:
-                - package: LAME
-                  product: LAME
-                - sdk: AudioToolbox.framework
-              settings:
-                base:
-                  PRODUCT_BUNDLE_IDENTIFIER: uk.zeshanbarvi.nextmedia
-                  PRODUCT_NAME: NextMedia
-                  INFOPLIST_FILE: NextMedia/Info.plist
-                  ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-                  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-                  GENERATE_INFOPLIST_FILE: NO
-                  SWIFT_OBJC_BRIDGING_HEADER: NextMedia/NextMedia-Bridging-Header.h
-              scheme:
-                testTargets: []
-          EOF_PROJECT
-          sed -i '' 's/^          //' projects/NextMedia/project.yml
 
       - name: Install XcodeGen
         run: brew install xcodegen
