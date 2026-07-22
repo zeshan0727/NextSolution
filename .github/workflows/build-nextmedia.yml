@@ -64,7 +64,9 @@ jobs:
       - name: Generate light and dark app icons
         run: |
           set -euo pipefail
-          python3 - <<'PY'
+          python3 -m venv /tmp/nextmedia-icons
+          /tmp/nextmedia-icons/bin/pip install --disable-pip-version-check pillow
+          /tmp/nextmedia-icons/bin/python - <<'PY'
           import json
           from pathlib import Path
           from PIL import Image, ImageDraw
@@ -97,7 +99,6 @@ jobs:
                   accent = (35, 112, 246)
 
               draw.rounded_rectangle((128, 128, 896, 896), radius=190, fill=card)
-              # Musical note and play mark, kept bold for small icon sizes.
               draw.rounded_rectangle((385, 285, 470, 665), radius=42, fill=accent)
               draw.rounded_rectangle((445, 275, 695, 355), radius=38, fill=accent)
               draw.ellipse((275, 585, 475, 785), fill=accent)
