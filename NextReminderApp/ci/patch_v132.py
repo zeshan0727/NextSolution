@@ -25,26 +25,18 @@ replace_once(
 )
 replace_once(
     xpost,
-    '''        case .photoPermission:
-            return "Allow Next Reminder to add photos in iPhone Settings."
-        case .server(let message):''',
-    '''        case .photoPermission:
-            return "Allow Next Reminder to add photos in iPhone Settings."
-        case .incomplete(let reason):
-            return "OpenAI stopped before completing the draft (\(reason)). Try again."
-        case .refused(let reason):
-            return "OpenAI could not create this draft: \(reason)"
-        case .server(let message):'''
+    '''        case .photoPermission: return "Allow Next Reminder to add photos in iPhone Settings."
+        case .server(let message): return message''',
+    '''        case .photoPermission: return "Allow Next Reminder to add photos in iPhone Settings."
+        case .incomplete(let reason): return "OpenAI stopped before completing the draft (\(reason)). Try again."
+        case .refused(let reason): return "OpenAI could not create this draft: \(reason)"
+        case .server(let message): return message'''
 )
 
 replace_once(
     xpost,
     '''struct XPostOpenAIClient {
-    func generateDraft(
-        topic: XPostTopic,
-        model: XPostTextModel,
-        apiKey: String
-    ) async throws -> XPostDraft {''',
+    func generateDraft(topic: XPostTopic, model: XPostTextModel, apiKey: String) async throws -> XPostDraft {''',
     '''struct XPostGenerationResult {
     var draft: XPostDraft
     var inputTokens: Int
@@ -54,11 +46,7 @@ replace_once(
 }
 
 struct XPostOpenAIClient {
-    func generateDraft(
-        topic: XPostTopic,
-        model: XPostTextModel,
-        apiKey: String
-    ) async throws -> XPostGenerationResult {'''
+    func generateDraft(topic: XPostTopic, model: XPostTextModel, apiKey: String) async throws -> XPostGenerationResult {'''
 )
 
 replace_once(
