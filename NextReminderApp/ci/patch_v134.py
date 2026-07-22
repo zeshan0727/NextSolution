@@ -12,6 +12,18 @@ def replace_once(path: Path, old: str, new: str) -> None:
     path.write_text(text.replace(old, new, 1))
 
 
+# Repair the inherited GTA prompt escaping produced by the earlier patch chain.
+xpost = SOURCES / "XPostGenerator.swift"
+xpost_text = xpost.read_text()
+broken = '''            : "Do not repeat these recently generated GTA angles:
+" + excludedAngles.map { "- \($0)" }.joined(separator: "
+")'''
+fixed = '''            : "Do not repeat these recently generated GTA angles:\\n" + excludedAngles.map { "- \($0)" }.joined(separator: "\\n")'''
+if broken in xpost_text:
+    xpost_text = xpost_text.replace(broken, fixed, 1)
+xpost.write_text(xpost_text)
+
+
 actions = SOURCES / "CompletedFilterActions.swift"
 
 replace_once(
