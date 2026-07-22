@@ -122,7 +122,6 @@ jobs:
               scheme:
                 testTargets: []
           EOF_PROJECT
-          sed -i '' 's/^          //' projects/NextMedia/project.yml
 
       - name: Install XcodeGen
         run: brew install xcodegen
