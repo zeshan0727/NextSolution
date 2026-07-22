@@ -3,15 +3,13 @@ name: Build Next Media 1.2.0
 on:
   workflow_dispatch:
   push:
-    branches:
-      - next-media-v1
+    branches: [next-media-v1]
     paths:
       - "NextMediaApp/**"
       - "NextMediaPatch/**"
       - ".github/workflows/build-nextmedia.yml"
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "NextMediaApp/**"
       - "NextMediaPatch/**"
@@ -42,15 +40,11 @@ jobs:
           tar -xzf /tmp/NextMedia-project.tar.gz
           python3 projects/NextMedia/ci/generate_icons.py
 
-      - name: Apply version 1.1 browser patch
+      - name: Apply browser and version 1.2 patches
         run: |
           set -euo pipefail
           cp NextMediaPatch/project.yml projects/NextMedia/project.yml
           cp -R NextMediaPatch/NextMedia/. projects/NextMedia/NextMedia/
-
-      - name: Apply version 1.2 feature patch
-        run: |
-          set -euo pipefail
           cat NextMediaApp/v12patch.part00 NextMediaApp/v12patch.part01 > /tmp/NextMedia-v12-patch.b64
           python3 - <<'PY'
           import base64
@@ -61,64 +55,12 @@ jobs:
           tar -xzf /tmp/NextMedia-v12-patch.tar.gz
           chmod +x projects/NextMedia/ci/build-lame.sh
 
-      - name: Generate light and dark app icons
+      - name: Prepare Swift source and themed icons
         run: |
           set -euo pipefail
-          python3 -m venv /tmp/nextmedia-icons
-          /tmp/nextmedia-icons/bin/pip install --disable-pip-version-check pillow
-          /tmp/nextmedia-icons/bin/python - <<'PY'
-          import json
-          from pathlib import Path
-          from PIL import Image, ImageDraw
-
-          assets = Path('projects/NextMedia/NextMedia/Resources/Assets.xcassets')
-          light_dir = assets / 'AppIcon.appiconset'
-          dark_dir = assets / 'AppIconDark.appiconset'
-          dark_dir.mkdir(parents=True, exist_ok=True)
-
-          contents = json.loads((light_dir / 'Contents.json').read_text())
-          (dark_dir / 'Contents.json').write_text(json.dumps(contents, indent=2) + '\n')
-
-          def master(dark: bool) -> Image.Image:
-              size = 1024
-              image = Image.new('RGB', (size, size), (7, 10, 22) if dark else (247, 249, 255))
-              draw = ImageDraw.Draw(image)
-              if dark:
-                  for y in range(size):
-                      t = y / (size - 1)
-                      draw.line((0, y, size, y), fill=(int(8 + 15*t), int(12 + 18*t), int(30 + 45*t)))
-                  card = (30, 37, 66)
-                  ink = (242, 246, 255)
-                  accent = (83, 161, 255)
-              else:
-                  for y in range(size):
-                      t = y / (size - 1)
-                      draw.line((0, y, size, y), fill=(int(252 - 18*t), int(253 - 19*t), 255))
-                  card = (255, 255, 255)
-                  ink = (18, 26, 48)
-                  accent = (35, 112, 246)
-
-              draw.rounded_rectangle((128, 128, 896, 896), radius=190, fill=card)
-              draw.rounded_rectangle((385, 285, 470, 665), radius=42, fill=accent)
-              draw.rounded_rectangle((445, 275, 695, 355), radius=38, fill=accent)
-              draw.ellipse((275, 585, 475, 785), fill=accent)
-              draw.ellipse((535, 525, 735, 725), fill=accent)
-              draw.polygon([(520, 405), (520, 565), (650, 485)], fill=ink)
-              return image
-
-          light = master(False)
-          dark = master(True)
-
-          for entry in contents['images']:
-              filename = entry.get('filename')
-              if not filename:
-                  continue
-              points = float(entry['size'].split('x')[0])
-              scale = float(entry['scale'].replace('x', ''))
-              px = int(round(points * scale))
-              light.resize((px, px), Image.Resampling.LANCZOS).save(light_dir / filename, format='PNG')
-              dark.resize((px, px), Image.Resampling.LANCZOS).save(dark_dir / filename, format='PNG')
-          PY
+          python3 -m venv /tmp/nextmedia-tools
+          /tmp/nextmedia-tools/bin/pip install --disable-pip-version-check pillow
+          /tmp/nextmedia-tools/bin/python NextMediaApp/prepare_v12.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
