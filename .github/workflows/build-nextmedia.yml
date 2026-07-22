@@ -124,7 +124,9 @@ jobs:
         run: brew install xcodegen
 
       - name: Build MP3 encoder library
-        run: projects/NextMedia/ci/build-lame.sh
+        run: |
+          set -o pipefail
+          projects/NextMedia/ci/build-lame.sh 2>&1 | tee projects/NextMedia/lame-build.log
 
       - name: Generate Xcode project
         working-directory: projects/NextMedia
@@ -170,3 +172,4 @@ jobs:
             projects/NextMedia/dist/NextMedia-1.2.0.tipa
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
+            projects/NextMedia/lame-build.log
