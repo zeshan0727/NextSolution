@@ -14,6 +14,42 @@ python3 ci/patch_v131.py
 python3 ci/patch_v132.py
 python3 ci/patch_v133.py
 python3 ci/patch_v134.py
+
+# v1.2.2 added unattended-badge cleanup after the selected-day cleanup.
+# Adjust the v1.3.5 lifecycle patch to preserve that cleanup while adding hourly storage.
+python3 - <<'PY'
+from pathlib import Path
+path = Path('ci/patch_v135.py')
+text = path.read_text()
+old = '''    ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+    }
+
+    func complete''' + "'''" + ''',
+    ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+        HourlyRepeatStore.shared.remove(for: reminder.id)
+    }
+
+    func complete''' + "'''" + '''
+'''
+new = '''    ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+        UnattendedReminderTracker.shared.remove(reminder.id)
+        refreshUnattendedBadge()
+    }
+
+    func complete''' + "'''" + ''',
+    ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+        HourlyRepeatStore.shared.remove(for: reminder.id)
+        UnattendedReminderTracker.shared.remove(reminder.id)
+        refreshUnattendedBadge()
+    }
+
+    func complete''' + "'''" + '''
+'''
+if old not in text:
+    raise SystemExit('Could not adjust v1.3.5 service lifecycle pattern')
+path.write_text(text.replace(old, new, 1))
+PY
+
 python3 ci/patch_v135.py
 
 python3 - <<'PY'
