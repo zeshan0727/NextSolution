@@ -1,5 +1,5 @@
 # Daily Ledger 1.3.31 validated build
-# Build trigger: per-currency net loan movement
+# Build trigger: Financial Summary per-currency net loan snapshots
 name: Build Daily Ledger TIPA
 
 on:

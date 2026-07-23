@@ -633,18 +633,20 @@ private struct ReportDetailView: View {
                 }
                 .buttonStyle(.plain)
             }
-            NavigationLink {
-                PeriodTransactionsView(kind: .loans, interval: selectedInterval)
-            } label: {
-                ReportTotalCard(
-                    title: "Loans Paid",
-                    value: totals.loan,
-                    currencyCode: store.currencyCode,
-                    icon: "banknote.fill",
-                    color: AppTheme.orange
-                )
+            ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
+                NavigationLink {
+                    LoanMovementReportView()
+                } label: {
+                    ReportTotalCard(
+                        title: "\(movement.currencyCode) Loan Movement · \(movement.netAmount > 0 ? "Increased" : "Decreased")",
+                        value: abs(movement.netAmount),
+                        currencyCode: movement.currencyCode,
+                        icon: movement.netAmount > 0 ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
+                        color: movement.netAmount > 0 ? AppTheme.orange : AppTheme.green
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 
