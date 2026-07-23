@@ -49,16 +49,23 @@ if needle not in source:
     raise SystemExit('Could not locate v1.4.4 patch extraction point')
 source = source.replace(needle, needle + addition, 1)
 
-source = source.replace(
-    "grep -q 'onTapGesture(count: 2)' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift",
-    "grep -q 'TapGesture(count: 2)' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift"
-)
 source = source.replace("1.4.4", "1.4.5")
 source = source.replace("== '10'", "== '11'")
 source = source.replace("grep -qx '10'", "grep -qx '11'")
 source = source.replace(
     "exec bash /tmp/NextMedia-build144-core.sh",
-    "mkdir -p diagnostics\ncp /tmp/NextMedia-build144-core.sh diagnostics/build145-inner-generated.sh\nexec bash -x /tmp/NextMedia-build144-core.sh"
+    r'''python3 - <<'PYGESTURE'
+from pathlib import Path
+inner = Path('/tmp/NextMedia-build144-core.sh')
+text = inner.read_text().replace(
+    "grep -q 'onTapGesture(count: 2)' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift",
+    "grep -q 'TapGesture(count: 2)' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift"
+)
+inner.write_text(text)
+PYGESTURE
+mkdir -p diagnostics
+cp /tmp/NextMedia-build144-core.sh diagnostics/build145-inner-generated.sh
+exec bash -x /tmp/NextMedia-build144-core.sh'''
 )
 
 path.write_text(source)
