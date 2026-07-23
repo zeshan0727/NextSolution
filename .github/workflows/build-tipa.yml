@@ -1,4 +1,5 @@
 # Daily Ledger 1.3.29 validated build
+# Build trigger: loan movement and inline amount calculator
 name: Build Daily Ledger TIPA
 
 on:
