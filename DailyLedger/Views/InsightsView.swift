@@ -20,6 +20,7 @@ struct InsightsView: View {
     @AppStorage("DeepSeekTokenBudget") private var tokenBudget = 50_000
     @State private var localInsightRefresh = Date()
     @State private var fixedSuggestions: [SpendingSuggestion] = []
+    @State private var refreshVariant = 0
     @AppStorage("MonthlyIncomePrimary") private var primaryIncome = 0.0
     @AppStorage("MonthlyIncomeSecondary") private var secondaryIncome = 0.0
 
@@ -43,6 +44,7 @@ struct InsightsView: View {
                 Section {
                     Button {
                         localInsightRefresh = Date()
+                        refreshVariant += 1
                         fixedSuggestions = makeSuggestions()
                     } label: {
                         Label("Update Fixed Insights", systemImage: "arrow.clockwise")
@@ -284,6 +286,15 @@ struct InsightsView: View {
             detail: "You are averaging \(DisplayFormat.currency(dailyAverage, code: store.currencyCode)) per day; keep the next seven days below this level to improve the month.",
             icon: "speedometer",
             color: AppTheme.teal
+        ))
+        let rotating = [
+            ("Plan one low-spend day", "Choose one day this week for essentials only and compare it with your current daily average.", "calendar.badge.minus"),
+            ("Review the top three purchases", "Open this month's largest purchases and confirm each one still matches your priorities.", "list.number"),
+            ("Protect tomorrow's balance", "Delay one optional purchase for 24 hours and keep that amount available in your selected account.", "shield.checkered")
+        ][refreshVariant % 3]
+        result.append(SpendingSuggestion(
+            id: "rotating-\(refreshVariant)", title: rotating.0, detail: rotating.1,
+            icon: rotating.2, color: AppTheme.purple
         ))
         return result
     }

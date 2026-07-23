@@ -9,6 +9,11 @@ private enum DashboardDatePreset: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+private enum SpendingCardKind: String, CaseIterable, Identifiable {
+    case today, yesterday, thisWeek, lastWeek
+    var id: String { rawValue }
+}
+
 struct DashboardView: View {
     @EnvironmentObject private var store: LedgerStore
     let onAdd: (TransactionType) -> Void
@@ -23,6 +28,8 @@ struct DashboardView: View {
     @AppStorage("DashboardAccountSelection") private var selectedAccountValue = "all"
     @State private var showingAccountSelection = false
     @State private var spendingDay: SpendingDay?
+    @State private var showingCardOrder = false
+    @AppStorage("DashboardSpendingCardOrder") private var storedCardOrder = "yesterday,today,thisWeek,lastWeek"
 
     private struct SpendingDay: Identifiable {
         let id = UUID()
@@ -120,26 +127,88 @@ struct DashboardView: View {
                 }
                 .environmentObject(store)
             }
+            .sheet(isPresented: $showingCardOrder) {
+                NavigationStack {
+                    List {
+                        ForEach(cardOrder) { card in Text(cardTitle(card)) }
+                            .onMove(perform: moveCards)
+                    }
+                    .environment(\.editMode, .constant(.active))
+                    .navigationTitle("Rearrange Cards")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showingCardOrder = false }
+                        }
+                    }
+                }
+            }
         }
     }
 
     private var dailySpending: some View {
-        HStack(spacing: 12) {
-            DailySpendButton(
-                title: "Yesterday",
-                amount: expense(on: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()),
-                currencyCode: store.currencyCode,
-                icon: "sun.haze.fill",
-                colors: [AppTheme.purple, AppTheme.blue]
-            ) { openSpendingDay(offset: -1, title: "Yesterday's Expenses") }
-            DailySpendButton(
-                title: "Today so far",
-                amount: expense(on: Date()),
-                currencyCode: store.currencyCode,
-                icon: "clock.fill",
-                colors: [AppTheme.orange, AppTheme.red]
-            ) { openSpendingDay(offset: 0, title: "Today's Expenses") }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Spending shortcuts").font(.headline)
+                Spacer()
+                Button { showingCardOrder = true } label: {
+                    Label("Edit", systemImage: "arrow.up.arrow.down")
+                        .font(.caption.bold())
+                }
+            }
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(cardOrder) { card in
+                    DailySpendButton(
+                        title: cardTitle(card), amount: cardAmount(card), currencyCode: store.currencyCode,
+                        icon: cardIcon(card), colors: cardColors(card)
+                    ) { openCard(card) }
+                    .contextMenu {
+                        Button("Rearrange Cards") { showingCardOrder = true }
+                    }
+                }
+            }
         }
+    }
+
+    private var cardOrder: [SpendingCardKind] {
+        let saved = storedCardOrder.split(separator: ",").compactMap { SpendingCardKind(rawValue: String($0)) }
+        return saved.count == SpendingCardKind.allCases.count ? saved : SpendingCardKind.allCases
+    }
+
+    private func moveCards(from source: IndexSet, to destination: Int) {
+        var values = cardOrder
+        values.move(fromOffsets: source, toOffset: destination)
+        storedCardOrder = values.map(\.rawValue).joined(separator: ",")
+    }
+
+    private func cardTitle(_ card: SpendingCardKind) -> String {
+        switch card { case .today: return "Today"; case .yesterday: return "Yesterday"; case .thisWeek: return "This week"; case .lastWeek: return "Last week" }
+    }
+    private func cardIcon(_ card: SpendingCardKind) -> String {
+        switch card { case .today: return "clock.fill"; case .yesterday: return "sun.haze.fill"; case .thisWeek: return "calendar"; case .lastWeek: return "calendar.badge.clock" }
+    }
+    private func cardColors(_ card: SpendingCardKind) -> [Color] {
+        switch card { case .today: return [AppTheme.orange, AppTheme.red]; case .yesterday: return [AppTheme.purple, AppTheme.blue]; case .thisWeek: return [AppTheme.teal, AppTheme.blue]; case .lastWeek: return [AppTheme.green, AppTheme.teal] }
+    }
+    private func cardInterval(_ card: SpendingCardKind) -> DateInterval {
+        let calendar = Calendar.current
+        switch card {
+        case .today: return calendar.dateInterval(of: .day, for: Date())!
+        case .yesterday: return calendar.dateInterval(of: .day, for: calendar.date(byAdding: .day, value: -1, to: Date())!)!
+        case .thisWeek: return calendar.dateInterval(of: .weekOfYear, for: Date())!
+        case .lastWeek:
+            let date = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
+            return calendar.dateInterval(of: .weekOfYear, for: date)!
+        }
+    }
+    private func cardAmount(_ card: SpendingCardKind) -> Decimal {
+        let interval = cardInterval(card)
+        return store.transactions.lazy.filter {
+            $0.type == .expense && interval.contains($0.date) && store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+        }.reduce(Decimal.zero) { $0 + $1.amount }
+    }
+    private func openCard(_ card: SpendingCardKind) {
+        spendingDay = SpendingDay(title: cardTitle(card) + " Expenses", interval: cardInterval(card))
     }
 
     private func openSpendingDay(offset: Int, title: String) {
@@ -395,6 +464,7 @@ struct DashboardView: View {
 }
 
 private struct DailySpendButton: View {
+    @AppStorage("DailyLedgerVisualTheme") private var visualTheme = AppVisualTheme.glass.rawValue
     let title: String
     let amount: Decimal
     let currencyCode: String
@@ -404,6 +474,15 @@ private struct DailySpendButton: View {
 
     var body: some View {
         Button(action: action) {
+        Group {
+            if visualTheme == AppVisualTheme.glass.rawValue { cardContent.dailyLedgerGlass(tint: colors.first ?? AppTheme.purple, interactive: true) }
+            else { cardContent }
+        }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var cardContent: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.headline)
@@ -424,10 +503,7 @@ private struct DailySpendButton: View {
             LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing),
             in: RoundedRectangle(cornerRadius: 18, style: .continuous)
         )
-        .dailyLedgerGlass(tint: colors.first ?? AppTheme.purple, interactive: true)
         .accessibilityElement(children: .combine)
-        }
-        .buttonStyle(.plain)
     }
 }
 

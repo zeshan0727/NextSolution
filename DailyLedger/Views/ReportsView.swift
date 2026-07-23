@@ -56,6 +56,14 @@ struct ReportsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Planning & Comparison") {
+                    NavigationLink { ReportComparisonView() } label: {
+                        Label("Compare Reports", systemImage: "chart.xyaxis.line")
+                    }
+                    NavigationLink { BudgetReportView() } label: {
+                        Label("Budget Planner", systemImage: "target")
+                    }
+                }
                 Section {
                     ForEach(filteredReportKinds) { kind in
                         NavigationLink {
@@ -93,6 +101,73 @@ struct ReportsView: View {
             $0.rawValue.localizedCaseInsensitiveContains(searchText) ||
             $0.subtitle.localizedCaseInsensitiveContains(searchText)
         }
+    }
+}
+
+private struct ReportComparisonView: View {
+    @EnvironmentObject private var store: LedgerStore
+    @State private var unit: Calendar.Component = .month
+    @State private var type: TransactionType = .expense
+
+    var body: some View {
+        List {
+            Picker("Compare", selection: $type) {
+                Text("Expenses").tag(TransactionType.expense)
+                Text("Income").tag(TransactionType.income)
+            }.pickerStyle(.segmented)
+            Picker("Period", selection: $unit) {
+                Text("Daily").tag(Calendar.Component.day)
+                Text("Monthly").tag(Calendar.Component.month)
+                Text("Yearly").tag(Calendar.Component.year)
+            }.pickerStyle(.segmented)
+            Section("Current vs Previous") {
+                comparisonRow("Current", interval: currentInterval)
+                comparisonRow("Previous", interval: previousInterval)
+                LabeledContent("Change", value: DisplayFormat.currency(currentAmount - previousAmount, code: store.currencyCode))
+            }
+        }
+        .navigationTitle("Compare Reports")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var currentInterval: DateInterval { Calendar.current.dateInterval(of: unit, for: Date())! }
+    private var previousInterval: DateInterval {
+        let date = Calendar.current.date(byAdding: unit, value: -1, to: Date())!
+        return Calendar.current.dateInterval(of: unit, for: date)!
+    }
+    private var currentAmount: Decimal { amount(in: currentInterval) }
+    private var previousAmount: Decimal { amount(in: previousInterval) }
+    private func amount(in interval: DateInterval) -> Decimal {
+        store.transactions.lazy.filter {
+            $0.type == type && interval.contains($0.date) && store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+        }.reduce(Decimal.zero) { $0 + $1.amount }
+    }
+    private func comparisonRow(_ title: String, interval: DateInterval) -> some View {
+        LabeledContent(title, value: DisplayFormat.currency(amount(in: interval), code: store.currencyCode))
+    }
+}
+
+private struct BudgetReportView: View {
+    @EnvironmentObject private var store: LedgerStore
+    @AppStorage("MonthlyIncomePrimary") private var primaryIncome = 0.0
+    @AppStorage("MonthlyIncomeSecondary") private var secondaryIncome = 0.0
+    var body: some View {
+        List {
+            Section("Monthly Income") {
+                Stepper("Primary: \(DisplayFormat.currency(Decimal(primaryIncome), code: store.currencyCode))", value: $primaryIncome, in: 0...1_000_000, step: 500)
+                Stepper("Other fixed: \(DisplayFormat.currency(Decimal(secondaryIncome), code: store.currencyCode))", value: $secondaryIncome, in: 0...1_000_000, step: 500)
+            }
+            Section("Suggested Budget") {
+                budget("Essentials", 0.45); budget("Savings & goals", 0.20)
+                budget("Family & flexible", 0.20); budget("Personal", 0.10); budget("Buffer", 0.05)
+            }
+        }
+        .navigationTitle("Budget Planner")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    private var total: Decimal { Decimal(primaryIncome + secondaryIncome) }
+    private func budget(_ title: String, _ ratio: Decimal) -> some View {
+        LabeledContent(title, value: DisplayFormat.currency(total * ratio, code: store.currencyCode))
     }
 }
 

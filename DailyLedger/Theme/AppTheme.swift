@@ -15,6 +15,12 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     }
 }
 
+enum AppVisualTheme: String, CaseIterable, Identifiable {
+    case native = "Native Classic"
+    case glass = "iOS 26 Glass Style"
+    var id: String { rawValue }
+}
+
 enum AppTheme {
     static let purple = Color(red: 0.39, green: 0.25, blue: 0.93)
     static let blue = Color(red: 0.16, green: 0.48, blue: 0.96)

@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var testingDeepSeek = false
     @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
     @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
+    @AppStorage("DailyLedgerVisualTheme") private var visualTheme = AppVisualTheme.glass.rawValue
     @State private var showingSMSStatus = true
 
     private let currencies = ["QAR", "USD", "GBP", "EUR", "AED", "SAR", "PKR", "INR"]
@@ -39,6 +40,11 @@ struct SettingsView: View {
                     Picker("Appearance", selection: $appearance) {
                         ForEach(AppAppearance.allCases) { option in
                             Text(option.rawValue).tag(option.rawValue)
+                        }
+                    }
+                    Picker("App Theme", selection: $visualTheme) {
+                        ForEach(AppVisualTheme.allCases) { theme in
+                            Text(theme.rawValue).tag(theme.rawValue)
                         }
                     }
                 } header: {
@@ -280,7 +286,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.23")
+                    LabeledContent("Version", value: "1.3.24")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")

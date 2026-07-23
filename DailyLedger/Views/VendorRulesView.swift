@@ -51,6 +51,7 @@ struct VendorRulesView: View {
             }
         }
         .navigationTitle("Vendor Rules")
+        .onAppear { store.addMissingVendorRules() }
         .searchable(text: $searchText, prompt: "Search vendor rules")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

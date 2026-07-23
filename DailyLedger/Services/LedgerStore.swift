@@ -87,7 +87,17 @@ final class LedgerStore: ObservableObject {
             accountID: accountID ?? defaultAccountID
         )
         do {
-            apply(try LedgerDiskStore.shared.add(item))
+            let ledger = try LedgerDiskStore.shared.mutate { ledger in
+                ledger.transactions.append(item)
+                guard let vendor = item.vendor, !vendor.isEmpty,
+                      !ledger.settings.vendorRules.contains(where: {
+                          $0.keyword.caseInsensitiveCompare(vendor) == .orderedSame
+                      }) else { return }
+                ledger.settings.vendorRules.append(
+                    VendorCategoryRule(keyword: vendor, category: item.category)
+                )
+            }
+            apply(ledger)
         } catch {
             errorMessage = "The transaction could not be saved."
         }
@@ -313,6 +323,24 @@ final class LedgerStore: ObservableObject {
     func resetVendorRules() {
         updateLedger(failureMessage: "The vendor rules could not be reset.") { ledger in
             ledger.settings.vendorRules = VendorCategoryRule.defaults
+        }
+    }
+
+    func addMissingVendorRules() {
+        updateLedger(failureMessage: "Vendor rules could not be updated.") { ledger in
+            for transaction in ledger.transactions {
+                guard let vendor = transaction.vendor?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      !vendor.isEmpty,
+                      !ledger.settings.vendorRules.contains(where: {
+                          $0.keyword.caseInsensitiveCompare(vendor) == .orderedSame
+                      }) else { continue }
+                ledger.settings.vendorRules.append(
+                    VendorCategoryRule(keyword: vendor, category: transaction.category)
+                )
+            }
+            ledger.settings.vendorRules.sort {
+                $0.keyword.localizedCaseInsensitiveCompare($1.keyword) == .orderedAscending
+            }
         }
     }
 
