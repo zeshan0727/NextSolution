@@ -56,4 +56,6 @@ source = source.replace("grep -qx '10'", "grep -qx '11'")
 path.write_text(source)
 PY
 
-exec bash /tmp/NextMedia-build145-core.sh
+mkdir -p diagnostics
+cp /tmp/NextMedia-build145-core.sh diagnostics/build145-generated.sh
+exec bash -x /tmp/NextMedia-build145-core.sh
