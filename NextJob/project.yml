@@ -23,15 +23,6 @@ targets:
           - project.yml
           - README.md
           - Scripts/GenerateIcon.swift
-    preBuildScripts:
-      - name: Generate App Icon
-        basedOnDependencyAnalysis: false
-        script: |
-          ICON_DIR="$SRCROOT/Assets.xcassets/AppIcon.appiconset"
-          ICON_PNG="$ICON_DIR/AppIcon-1024.png"
-          if [ ! -f "$ICON_PNG" ]; then
-            /usr/bin/xcrun swift "$SRCROOT/Scripts/GenerateIcon.swift" "$ICON_PNG"
-          fi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextjob
