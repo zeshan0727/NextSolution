@@ -27,6 +27,12 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      - name: Generate app icon
+        run: |
+          xcrun --sdk macosx swift \
+            NextJob/Scripts/GenerateIcon.swift \
+            NextJob/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+
       - name: Generate Xcode project
         run: |
           cd NextJob
