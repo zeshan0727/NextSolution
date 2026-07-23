@@ -8,13 +8,23 @@ struct CategoryTransactionsView: View {
     let interval: DateInterval
 
     var body: some View {
-        List(transactions) { transaction in
-            Button {
-                selectedTransaction = transaction
-            } label: {
-                TransactionRow(transaction: transaction)
+        List {
+            Section {
+                ForEach(transactions) { transaction in
+                    Button {
+                        selectedTransaction = transaction
+                    } label: {
+                        TransactionRow(transaction: transaction)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } footer: {
+                HStack {
+                    Text("Total · \(transactions.count) transactions")
+                    Spacer()
+                    Text(DisplayFormat.currency(total, code: store.currencyCode)).bold()
+                }
             }
-            .buttonStyle(.plain)
         }
         .listStyle(.insetGrouped)
         .navigationTitle(category)
@@ -46,12 +56,17 @@ struct CategoryTransactionsView: View {
         }
         .sorted { $0.date > $1.date }
     }
+
+    private var total: Decimal {
+        transactions.reduce(Decimal.zero) { $0 + $1.amount }
+    }
 }
 
 struct TransactionSnapshotView: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
     @State private var editing = false
+    @State private var splitting = false
     let transaction: LedgerTransaction
 
     var body: some View {
@@ -90,8 +105,21 @@ struct TransactionSnapshotView: View {
                     Button("Close") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Edit") { editing = true }
+                    HStack {
+                        if transaction.type != .transfer {
+                            Button {
+                                splitting = true
+                            } label: {
+                                Label("Split", systemImage: "rectangle.split.2x1")
+                            }
+                        }
+                        Button("Edit") { editing = true }
+                    }
                 }
+            }
+            .sheet(isPresented: $splitting) {
+                SplitTransactionView(transaction: transaction)
+                    .environmentObject(store)
             }
             .sheet(isPresented: $editing) {
                 if transaction.type == .transfer {

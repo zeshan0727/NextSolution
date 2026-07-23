@@ -24,7 +24,7 @@ struct AccountsView: View {
                 ForEach(AccountGroup.allCases) { group in
                     let accounts = accounts(in: group)
                     if !accounts.isEmpty {
-                        Section(group.title.uppercased()) {
+                        Section {
                             ForEach(accounts) { account in
                                 NavigationLink {
                                     AccountDetailView(accountID: account.id)
@@ -39,6 +39,13 @@ struct AccountsView: View {
                                     }
                                     .tint(AppTheme.blue)
                                 }
+                            }
+                        } header: {
+                            HStack {
+                                Text(group.title.uppercased())
+                                Spacer()
+                                Text(groupBalanceText(accounts))
+                                    .font(.caption.weight(.semibold))
                             }
                         }
                     }
@@ -78,6 +85,16 @@ struct AccountsView: View {
                     $0.currencyCode.localizedCaseInsensitiveContains(searchText))
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private func groupBalanceText(_ accounts: [LedgerAccount]) -> String {
+        let grouped = Dictionary(grouping: accounts, by: \.currencyCode)
+        return grouped.keys.sorted().map { code in
+            let total = grouped[code, default: []].reduce(Decimal.zero) {
+                $0 + store.balance(for: $1)
+            }
+            return DisplayFormat.currency(total, code: code)
+        }.joined(separator: " · ")
     }
 }
 

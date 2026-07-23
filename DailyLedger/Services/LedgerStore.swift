@@ -7,7 +7,9 @@ final class LedgerStore: ObservableObject {
     @Published private(set) var accounts: [LedgerAccount] = []
     @Published private(set) var settings = LedgerSettings()
     @Published var errorMessage: String?
+    @Published private(set) var recordingCards: [LedgerTransaction] = []
     private(set) var runningBalances: [UUID: Decimal] = [:]
+    private var hasLoaded = false
 
     init() {
         importBundledPersonalSeedIfNeeded()
@@ -40,6 +42,7 @@ final class LedgerStore: ObservableObject {
     }
 
     private func apply(_ ledger: LedgerData) {
+        let previousIDs = Set(transactions.map(\.id))
         let ordered = ledger.transactions.sorted {
             if $0.date != $1.date { return $0.date < $1.date }
             return $0.createdAt < $1.createdAt
@@ -66,6 +69,13 @@ final class LedgerStore: ObservableObject {
         settings = ledger.settings
         runningBalances = running
         transactions = Array(ordered.reversed())
+        if hasLoaded {
+            let additions = transactions.filter { !previousIDs.contains($0.id) }
+            if !additions.isEmpty {
+                recordingCards.append(contentsOf: additions.prefix(8))
+            }
+        }
+        hasLoaded = true
     }
 
     func add(
@@ -77,13 +87,15 @@ final class LedgerStore: ObservableObject {
         details: String,
         accountID: UUID? = nil
     ) {
+        let cleanedDetails = details.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedVendor = vendor.trimmingCharacters(in: .whitespacesAndNewlines)
         let item = LedgerTransaction(
             type: type,
             amount: amount,
             date: date,
             category: category,
-            vendor: vendor.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
-            details: details.trimmingCharacters(in: .whitespacesAndNewlines),
+            vendor: (cleanedVendor.nilIfEmpty ?? LedgerTransaction.vendorFromMessage(cleanedDetails)),
+            details: cleanedDetails,
             accountID: accountID ?? defaultAccountID
         )
         do {
@@ -100,6 +112,40 @@ final class LedgerStore: ObservableObject {
             apply(ledger)
         } catch {
             errorMessage = "The transaction could not be saved."
+        }
+    }
+
+    func dismissRecordingCard(_ id: UUID) {
+        recordingCards.removeAll { $0.id == id }
+    }
+
+    func split(
+        _ transaction: LedgerTransaction,
+        firstAccountID: UUID,
+        firstAmount: Decimal,
+        secondAccountID: UUID,
+        secondAmount: Decimal
+    ) {
+        guard firstAccountID != secondAccountID, firstAmount > 0, secondAmount > 0,
+              firstAmount + secondAmount == transaction.amount else {
+            errorMessage = "Split amounts must equal the original amount and use two different accounts."
+            return
+        }
+        do {
+            let ledger = try LedgerDiskStore.shared.mutate { ledger in
+                guard let index = ledger.transactions.firstIndex(where: { $0.id == transaction.id }) else { return }
+                ledger.transactions[index].accountID = firstAccountID
+                ledger.transactions[index].amount = firstAmount
+                ledger.transactions.append(LedgerTransaction(
+                    type: transaction.type, amount: secondAmount, date: transaction.date,
+                    category: transaction.category, vendor: transaction.vendor,
+                    details: transaction.details, accountID: secondAccountID,
+                    createdAt: transaction.createdAt
+                ))
+            }
+            apply(ledger)
+        } catch {
+            errorMessage = "The transaction could not be split."
         }
     }
 
@@ -352,6 +398,7 @@ final class LedgerStore: ObservableObject {
     @discardableResult
     func automaticallyCategorizeTransactions() -> CategorizationSummary {
         var categorized = 0
+        var categorizedIDs: [UUID] = []
         let now = Date()
         updateLedger(failureMessage: "Transactions could not be categorized.") { ledger in
             let rules = (ledger.settings.vendorRules + VendorCategoryRule.defaults)
@@ -369,8 +416,10 @@ final class LedgerStore: ObservableObject {
                       let category = suggestedCategory(for: transaction, rules: rules) else { continue }
                 ledger.transactions[index].category = category
                 categorized += 1
+                categorizedIDs.append(transaction.id)
             }
         }
+        recordingCards.append(contentsOf: transactions.filter { categorizedIDs.contains($0.id) })
         return CategorizationSummary(
             categorizedCount: categorized,
             reviewCount: uncategorizedTransactions.count

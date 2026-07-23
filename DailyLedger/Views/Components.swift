@@ -167,9 +167,10 @@ struct TransactionRow: View {
 
     private var secondaryText: String {
         if transaction.type == .transfer {
-            return transaction.details.isEmpty ? "Transfer" : transaction.details
+            let detail = transaction.details.isEmpty ? "Transfer" : transaction.details
+            return detail + " · " + transaction.date.formatted(date: .abbreviated, time: .shortened)
         }
-        return [sourceAccount?.name, transaction.category]
+        return [sourceAccount?.name, transaction.category, transaction.date.formatted(date: .abbreviated, time: .shortened)]
             .compactMap { $0 }
             .joined(separator: " · ")
     }

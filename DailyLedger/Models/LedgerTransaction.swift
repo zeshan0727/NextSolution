@@ -116,6 +116,23 @@ struct LedgerTransaction: Identifiable, Codable, Hashable {
     }
 }
 
+extension LedgerTransaction {
+    static func vendorFromMessage(_ text: String) -> String? {
+        let patterns = [
+            #"(?i)\b(?:at|to|merchant)\s+([A-Z0-9][A-Z0-9 '&.-]{1,40}?)(?=\s+(?:on|at|for|using|card|amount|date|available)\b|[,.;\n]|$)"#,
+            #"(?i)\bfrom\s+([A-Z0-9][A-Z0-9 '&.-]{1,40}?)(?=\s+(?:on|at|for|using|card|amount|date)\b|[,.;\n]|$)"#
+        ]
+        for pattern in patterns {
+            guard let expression = try? NSRegularExpression(pattern: pattern),
+                  let match = expression.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                  let range = Range(match.range(at: 1), in: text) else { continue }
+            let value = text[range].trimmingCharacters(in: .whitespacesAndNewlines)
+            if value.count >= 2 { return value }
+        }
+        return nil
+    }
+}
+
 struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var keyword: String
@@ -264,6 +281,9 @@ struct LedgerData: Codable {
         }
         for index in transactions.indices where transactions[index].accountID == nil {
             transactions[index].accountID = fallbackID
+        }
+        for index in transactions.indices where transactions[index].vendor?.isEmpty != false {
+            transactions[index].vendor = LedgerTransaction.vendorFromMessage(transactions[index].details)
         }
         version = 3
     }

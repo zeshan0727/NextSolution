@@ -5,6 +5,7 @@ struct UncategorizedReviewView: View {
     @State private var selectedCategory = "Restaurants & Cafes"
     @State private var categorySearch = ""
     @State private var skippedIDs: Set<UUID> = []
+    @State private var splittingTransaction: LedgerTransaction?
 
     var body: some View {
         Group {
@@ -59,6 +60,12 @@ struct UncategorizedReviewView: View {
                             skippedIDs.insert(transaction.id)
                             prepareSelection()
                         }
+                        Button {
+                            splittingTransaction = transaction
+                        } label: {
+                            Label("Split Between Two Accounts", systemImage: "rectangle.split.2x1")
+                                .font(.caption.weight(.semibold))
+                        }
                     }
                 }
                 .onAppear { prepareSelection() }
@@ -75,6 +82,10 @@ struct UncategorizedReviewView: View {
         }
         .navigationTitle("Review Uncategorized")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $splittingTransaction) { transaction in
+            SplitTransactionView(transaction: transaction)
+                .environmentObject(store)
+        }
     }
 
     private var currentTransaction: LedgerTransaction? {

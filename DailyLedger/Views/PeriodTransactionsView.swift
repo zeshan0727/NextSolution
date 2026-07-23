@@ -22,13 +22,23 @@ struct PeriodTransactionsView: View {
     let interval: DateInterval
 
     var body: some View {
-        List(transactions) { transaction in
-            Button {
-                selectedTransaction = transaction
-            } label: {
-                TransactionRow(transaction: transaction)
+        List {
+            Section {
+                ForEach(transactions) { transaction in
+                    Button {
+                        selectedTransaction = transaction
+                    } label: {
+                        TransactionRow(transaction: transaction)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } footer: {
+                HStack {
+                    Text("Total · \(transactions.count) transactions")
+                    Spacer()
+                    Text(DisplayFormat.currency(total, code: store.currencyCode)).bold()
+                }
             }
-            .buttonStyle(.plain)
         }
         .listStyle(.insetGrouped)
         .navigationTitle(kind.title)
@@ -70,5 +80,9 @@ struct PeriodTransactionsView: View {
                 transaction.details.localizedCaseInsensitiveContains(searchText)
         }
         .sorted { $0.date > $1.date }
+    }
+
+    private var total: Decimal {
+        transactions.reduce(Decimal.zero) { $0 + $1.amount }
     }
 }

@@ -90,6 +90,19 @@ struct AppRootView: View {
         } message: {
             Text(store.errorMessage ?? "Unknown error")
         }
+        .overlay(alignment: .top) {
+            if let transaction = store.recordingCards.first {
+                RecordingSuccessCard(transaction: transaction) {
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                        store.dismissRecordingCard(transaction.id)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(20)
+            }
+        }
     }
 
     private func select(_ tab: AppTab) {
@@ -111,5 +124,63 @@ struct AppRootView: View {
         guard let type = ShortcutRouter.consumePendingType() else { return }
         selectedTab = .home
         addSheet = AddSheet(type: type)
+    }
+}
+
+private struct RecordingSuccessCard: View {
+    @EnvironmentObject private var store: LedgerStore
+    let transaction: LedgerTransaction
+    let onDismiss: () -> Void
+    @State private var offset: CGFloat = 0
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.white)
+                .frame(width: 42, height: 42)
+                .background(AppTheme.green, in: Circle())
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Transaction Recorded")
+                    .font(.headline)
+                Text(transaction.vendor ?? transaction.category)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                Text(
+                    DisplayFormat.currency(transaction.amount, code: currencyCode) +
+                    " · " + transaction.date.formatted(date: .abbreviated, time: .shortened)
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "hand.draw.fill")
+                .foregroundStyle(.secondary)
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(AppTheme.green.opacity(0.35), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
+        .offset(x: offset)
+        .rotationEffect(.degrees(Double(offset / 35)))
+        .gesture(
+            DragGesture(minimumDistance: 12)
+                .onChanged { offset = $0.translation.width }
+                .onEnded {
+                    if abs($0.translation.width) > 80 {
+                        onDismiss()
+                    } else {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) { offset = 0 }
+                    }
+                }
+        )
+        .accessibilityAction(named: "Dismiss") { onDismiss() }
+    }
+
+    private var currencyCode: String {
+        store.account(withID: transaction.accountID)?.currencyCode ?? store.currencyCode
     }
 }

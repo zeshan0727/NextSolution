@@ -143,7 +143,30 @@ private struct ReportComparisonView: View {
         }.reduce(Decimal.zero) { $0 + $1.amount }
     }
     private func comparisonRow(_ title: String, interval: DateInterval) -> some View {
-        LabeledContent(title, value: DisplayFormat.currency(amount(in: interval), code: store.currencyCode))
+        NavigationLink {
+            PeriodTransactionsView(
+                kind: type == .income ? .income : .expenses,
+                interval: interval
+            )
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                    Text("\(transactionCount(in: interval)) transactions")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(DisplayFormat.currency(amount(in: interval), code: store.currencyCode))
+                    .font(.subheadline.bold())
+            }
+        }
+    }
+    private func transactionCount(in interval: DateInterval) -> Int {
+        store.transactions.lazy.filter {
+            $0.type == type && interval.contains($0.date) &&
+            store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+        }.count
     }
 }
 
@@ -271,10 +294,23 @@ private struct ReportDetailView: View {
                     .buttonStyle(.plain)
                     if transaction.id != selectedTransactions.last?.id { Divider() }
                 }
+                Divider()
+                HStack {
+                    Text("Total · \(selectedTransactions.count) transactions")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Text(DisplayFormat.currency(transactionListTotal, code: store.currencyCode))
+                        .font(.headline)
+                }
+                .padding(.top, 4)
             }
         }
         .padding(16)
         .background(.background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    private var transactionListTotal: Decimal {
+        selectedTransactions.reduce(Decimal.zero) { $0 + $1.amount }
     }
 
     private var periodNavigator: some View {
@@ -445,6 +481,13 @@ private struct ReportDetailView: View {
                         }
                     }
                     .buttonStyle(.plain)
+                }
+                Divider()
+                HStack {
+                    Text("Total Expenses").font(.headline)
+                    Spacer()
+                    Text(DisplayFormat.currency(totals.expense, code: store.currencyCode))
+                        .font(.headline)
                 }
             }
         }
