@@ -739,7 +739,7 @@ private struct ReportDetailView: View {
 
     private var selectedTransactions: [LedgerTransaction] {
         if kind == .expenses { return cachedExpenseTransactions }
-        store.transactions.filter {
+        return store.transactions.filter {
             guard selectedInterval.contains($0.date),
                   store.account(withID: $0.accountID)?.currencyCode == store.currencyCode else {
                 return false
