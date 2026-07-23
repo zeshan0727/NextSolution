@@ -1,0 +1,1 @@
+Isolated validation PR for Next Job 1.0.4.
