@@ -1,4 +1,4 @@
-name: Temporary Build Next Media 1.3.0
+name: Temporary Build Next Media 1.4.1
 
 on:
   push:
@@ -16,168 +16,29 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - name: Checkout Next Media branch
+      - name: Checkout Next Media 1.4.1 branch
         uses: actions/checkout@v4
         with:
-          ref: next-media-v1
+          ref: next-media-v141-build
 
-      - name: Restore source project
+      - name: Build and verify floating player update
         run: |
-          set -euo pipefail
-          cat NextMediaApp/source.part00 NextMediaApp/source.part01 NextMediaApp/source.part02 > /tmp/NextMedia-source.b64
-          python3 - <<'PY'
-          import base64
-          from pathlib import Path
-          encoded = Path('/tmp/NextMedia-source.b64').read_text().strip()
-          Path('/tmp/NextMedia-project.tar.gz').write_bytes(base64.b64decode(encoded, validate=True))
-          PY
-          tar -xzf /tmp/NextMedia-project.tar.gz
-          python3 projects/NextMedia/ci/generate_icons.py
-
-      - name: Apply browser and version 1.2 patches
-        run: |
-          set -euo pipefail
-          cp NextMediaPatch/project.yml projects/NextMedia/project.yml
-          cp -R NextMediaPatch/NextMedia/. projects/NextMedia/NextMedia/
-          cat NextMediaApp/v12patch.part00 NextMediaApp/v12patch.part01 > /tmp/NextMedia-v12-patch.b64
-          python3 - <<'PY'
-          import base64
-          from pathlib import Path
-          encoded = Path('/tmp/NextMedia-v12-patch.b64').read_text().strip()
-          Path('/tmp/NextMedia-v12-patch.tar.gz').write_bytes(base64.b64decode(encoded, validate=True))
-          PY
-          tar -xzf /tmp/NextMedia-v12-patch.tar.gz
-
-      - name: Prepare version 1.2 source and themed icons
-        run: |
-          set -euo pipefail
-          python3 -m venv /tmp/nextmedia-tools
-          /tmp/nextmedia-tools/bin/pip install --disable-pip-version-check pillow
-          /tmp/nextmedia-tools/bin/python NextMediaApp/prepare_v12.py
-
-      - name: Apply version 1.3 browser UX patch
-        run: |
-          set -euo pipefail
-          /tmp/nextmedia-tools/bin/python NextMediaApp/prepare_v13.py
-
-      - name: Configure LAME MP3 package
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          encoder = Path('projects/NextMedia/NextMedia/Audio/MP3Encoder.m')
-          source = encoder.read_text().replace('#import "lame.h"', '#import <LAME/lame.h>')
-          encoder.write_text(source)
-
-          Path('projects/NextMedia/project.yml').write_text('''name: NextMedia
-options:
-  bundleIdPrefix: uk.zeshanbarvi
-  deploymentTarget:
-    iOS: "15.0"
-  createIntermediateGroups: true
-packages:
-  LAME:
-    url: https://github.com/BB9z/LAME-xcframework
-    exactVersion: "3.100.3"
-settings:
-  base:
-    SWIFT_VERSION: "5.0"
-    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
-    MARKETING_VERSION: "1.3.0"
-    CURRENT_PROJECT_VERSION: "4"
-    TARGETED_DEVICE_FAMILY: "1,2"
-    SUPPORTS_MACCATALYST: NO
-    ENABLE_BITCODE: NO
-    CODE_SIGNING_ALLOWED: NO
-    CODE_SIGNING_REQUIRED: NO
-    CODE_SIGN_IDENTITY: ""
-targets:
-  NextMedia:
-    type: application
-    platform: iOS
-    deploymentTarget: "15.0"
-    sources:
-      - path: NextMedia
-        excludes:
-          - Resources
-          - Info.plist
-    resources:
-      - path: NextMedia/Resources
-    dependencies:
-      - package: LAME
-        product: LAME
-      - sdk: AudioToolbox.framework
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: uk.zeshanbarvi.nextmedia
-        PRODUCT_NAME: NextMedia
-        INFOPLIST_FILE: NextMedia/Info.plist
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        GENERATE_INFOPLIST_FILE: NO
-        SWIFT_OBJC_BRIDGING_HEADER: NextMedia/NextMedia-Bridging-Header.h
-    scheme:
-      testTargets: []
-''')
-          PY
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
-        working-directory: projects/NextMedia
-        run: |
+          mkdir -p diagnostics
           set -o pipefail
-          xcodegen generate 2>&1 | tee xcodegen.log
-
-      - name: Resolve Swift packages
-        working-directory: projects/NextMedia
-        run: xcodebuild -resolvePackageDependencies -project NextMedia.xcodeproj -scheme NextMedia
-
-      - name: Build unsigned app
-        working-directory: projects/NextMedia
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -project NextMedia.xcodeproj \
-            -scheme NextMedia \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY='' \
-            clean build | tee xcodebuild.log
-
-      - name: Package IPA, TIPA and source
-        working-directory: projects/NextMedia
-        run: |
-          set -euo pipefail
-          APP_PATH="build/Build/Products/Release-iphoneos/NextMedia.app"
-          test -d "$APP_PATH"
-          rm -rf Payload dist
-          mkdir -p Payload dist
-          cp -R "$APP_PATH" Payload/NextMedia.app
-          /usr/bin/zip -qry dist/NextMedia-1.3.0.ipa Payload
-          cp dist/NextMedia-1.3.0.ipa dist/NextMedia-1.3.0.tipa
-          cd ../..
-          /usr/bin/zip -qry projects/NextMedia/dist/NextMedia-1.3.0-source.zip projects/NextMedia \
-            -x 'projects/NextMedia/build/*' 'projects/NextMedia/Payload/*' 'projects/NextMedia/dist/*' 'projects/NextMedia/.build/*'
-          cd projects/NextMedia
-          shasum -a 256 dist/NextMedia-1.3.0.ipa dist/NextMedia-1.3.0.tipa dist/NextMedia-1.3.0-source.zip > dist/SHA256SUMS.txt
+          bash -x NextMediaApp/build141.sh 2>&1 | tee diagnostics/build141.log
 
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NextMedia-1.3.0
+          name: NextMedia-1.4.1
           if-no-files-found: warn
           path: |
-            projects/NextMedia/dist/NextMedia-1.3.0.ipa
-            projects/NextMedia/dist/NextMedia-1.3.0.tipa
-            projects/NextMedia/dist/NextMedia-1.3.0-source.zip
+            projects/NextMedia/dist/NextMedia-1.4.1.ipa
+            projects/NextMedia/dist/NextMedia-1.4.1.tipa
+            projects/NextMedia/dist/NextMedia-1.4.1-source.zip
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
             projects/NextMedia/xcodegen.log
+            projects/NextMedia/icon-step.log
+            diagnostics/build141.log
