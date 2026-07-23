@@ -1,5 +1,5 @@
 # Daily Ledger 1.3.31 validated build
-# Build trigger: Financial Summary fixed-rate converted net balance
+# Build trigger: PKR loan card QAR equivalent
 name: Build Daily Ledger TIPA
 
 on:

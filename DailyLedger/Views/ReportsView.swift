@@ -646,7 +646,10 @@ private struct ReportDetailView: View {
                         value: abs(movement.netAmount),
                         currencyCode: movement.currencyCode,
                         icon: movement.netAmount > 0 ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
-                        color: movement.netAmount > 0 ? AppTheme.orange : AppTheme.green
+                        color: movement.netAmount > 0 ? AppTheme.orange : AppTheme.green,
+                        secondaryText: movement.currencyCode.uppercased() == "PKR"
+                            ? "QAR equivalent: \(DisplayFormat.currency(abs(movement.netAmount) / Decimal(77), code: "QAR"))"
+                            : nil
                     )
                 }
                 .buttonStyle(.plain)
@@ -957,6 +960,7 @@ private struct ReportTotalCard: View {
     let icon: String
     let color: Color
     var compact = false
+    var secondaryText: String? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -973,6 +977,13 @@ private struct ReportTotalCard: View {
                     .font(compact ? .subheadline.bold() : .title3.bold())
                     .lineLimit(1)
                     .minimumScaleFactor(0.65)
+                if let secondaryText {
+                    Text(secondaryText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
             Spacer(minLength: 0)
         }
