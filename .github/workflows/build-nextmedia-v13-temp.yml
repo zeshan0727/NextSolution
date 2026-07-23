@@ -26,6 +26,7 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p diagnostics
+          cat NextMediaApp/v141patch.part00 NextMediaApp/v141patch.part01 > NextMediaApp/v141patch.b64
           set -o pipefail
           bash -x NextMediaApp/build141.sh 2>&1 | tee diagnostics/build141.log
 
