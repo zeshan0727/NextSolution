@@ -2,11 +2,13 @@
 
 Next Job is a private iOS 16+ job tracker built for part-time accounting work received from KB Accountants.
 
-## Included in 1.0.3
+## Included in 1.0.4
 
 - Jobs with assigned date, due date, completion date, status, job type, targeted time, actual time and price
-- Create missing job types directly from the New Job form
+- Create missing job types directly from the New Job or Edit Job form
+- Job Types management removed from Settings
 - Dashboard for not started, in progress, waiting for documents, completed and overdue work
+- Dedicated Pending Payments section and Jobs filter for completed work not marked received
 - Stable multi-file import and a separate validated complete-folder import
 - Folder trees are copied as one attachment and cannot be mixed with surrounding Files items
 - Related files and completion documents stored against the correct job
@@ -15,14 +17,19 @@ Next Job is a private iOS 16+ job tracker built for part-time accounting work re
 - Payment Pending and Payment Received tracking for completed jobs
 - Standard numbered PDF invoice generation for pending payments
 - Dedicated Email tab with Gmail Direct and Apple Mail Assisted modes
-- Gmail OAuth and direct email delivery through the same scheduler architecture used by Next Reminder
+- Gmail stale-connector recovery ported from Next Reminder 1.2.4
+- Reconnect Gmail, disconnect, and local Forget Saved Connection actions
+- Connector-not-found errors automatically clear the obsolete local connector
 - Dedicated AI tab using the OpenAI Responses API to craft editable emails from the selected job status and details
 - Explicit handling for incomplete responses, refusals, API errors and token-usage reporting
 - Recommended complimentary-token-eligible GPT-5 and GPT-4.1 model snapshots
 - One portable `.nextjobbackup` file containing all jobs, payment records, invoice metadata, settings, files and imported folders
 - Google Drive backup/restore through the iOS Files provider, with staged validation and rollback
-- Search, filters, custom job types, local deadline notifications and light/dark/system themes
 - Background persistence, cached summaries and optimized Release compilation
+
+## Gmail recovery behavior
+
+If the scheduler was restarted, redeployed, or lost its connector database, an older connector ID may no longer exist. Next Job detects `Gmail connector not found`, clears the false connected state, and asks for a fresh connection. Email Setup also provides Reconnect Gmail Account and Forget Saved Connection so the app cannot remain trapped in an obsolete connection.
 
 ## Email behavior
 
@@ -45,4 +52,4 @@ xcodegen generate
 xcodebuild -project NextJob.xcodeproj -scheme NextJob -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO build
 ```
 
-The GitHub Actions workflow applies the checked-in source migrations, validates all Swift source, builds the optimized unsigned app and packages `NextJob-1.0.3.tipa`, its checksum and the transformed source archive.
+The GitHub Actions workflow applies the checked-in source migrations, validates all Swift source, builds the optimized unsigned app and packages `NextJob-1.0.4.tipa`, its checksum and the transformed source archive.
