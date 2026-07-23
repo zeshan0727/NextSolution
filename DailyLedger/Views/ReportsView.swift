@@ -654,11 +654,27 @@ private struct ReportDetailView: View {
                 }
                 .buttonStyle(.plain)
             }
+            if convertedLoanMovement != 0 {
+                ReportTotalCard(
+                    title: "Net Loan Movement · \(convertedLoanMovement > 0 ? "Increased" : "Decreased")",
+                    value: abs(convertedLoanMovement),
+                    currencyCode: "QAR",
+                    icon: convertedLoanMovement > 0
+                        ? "arrow.up.right.circle.fill"
+                        : "arrow.down.right.circle.fill",
+                    color: convertedLoanMovement > 0 ? AppTheme.orange : AppTheme.green,
+                    secondaryText: "QAR movement + PKR movement ÷ 77"
+                )
+            }
         }
     }
 
     private var financeSummaryNetBalance: Decimal {
-        let convertedLoanMovement = store.loanNetMovements(in: selectedInterval).reduce(Decimal.zero) {
+        totals.income + convertedLoanMovement - totals.expense
+    }
+
+    private var convertedLoanMovement: Decimal {
+        store.loanNetMovements(in: selectedInterval).reduce(Decimal.zero) {
             result, movement in
             switch movement.currencyCode.uppercased() {
             case "QAR":
@@ -669,7 +685,6 @@ private struct ReportDetailView: View {
                 return result
             }
         }
-        return totals.income + convertedLoanMovement - totals.expense
     }
 
     private var activityChart: some View {

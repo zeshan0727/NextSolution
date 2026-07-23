@@ -1,5 +1,5 @@
 # Daily Ledger 1.3.31 validated build
-# Build trigger: PKR loan card QAR equivalent
+# Build trigger: consolidated loan movement and dashboard scrolling performance
 name: Build Daily Ledger TIPA
 
 on:

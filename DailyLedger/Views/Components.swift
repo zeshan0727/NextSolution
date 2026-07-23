@@ -52,7 +52,6 @@ struct BalanceCard: View {
                 .frame(width: 140, height: 140)
                 .offset(x: 45, y: -55)
         }
-        .shadow(color: AppTheme.purple.opacity(0.22), radius: 18, y: 10)
         .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)

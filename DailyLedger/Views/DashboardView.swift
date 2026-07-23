@@ -30,11 +30,28 @@ struct DashboardView: View {
     @State private var spendingDay: SpendingDay?
     @State private var showingCardOrder = false
     @AppStorage("DashboardSpendingCardOrder") private var storedCardOrder = "yesterday,today,thisWeek,lastWeek"
+    @State private var dashboardSnapshot = DashboardSnapshot.empty
 
     private struct SpendingDay: Identifiable {
         let id = UUID()
         let title: String
         let interval: DateInterval
+    }
+
+    private struct DashboardSnapshot {
+        let balance: Decimal
+        let totals: LedgerTotals
+        let loanMovements: [LoanNetMovement]
+        let spending: [SpendingCardKind: Decimal]
+        let recentTransactions: [LedgerTransaction]
+
+        static let empty = DashboardSnapshot(
+            balance: 0,
+            totals: LedgerTotals(income: 0, expense: 0, loan: 0, transfer: 0, count: 0),
+            loanMovements: [],
+            spending: [:],
+            recentTransactions: []
+        )
     }
 
     var body: some View {
@@ -45,13 +62,10 @@ struct DashboardView: View {
                     dailySpending
                     dateFilter
                     BalanceCard(
-                        balance: store.remainingBalance(accountIDs: selectedAccountIDs),
-                        income: filteredTotals.income,
-                        expense: filteredTotals.expense,
-                        loanMovements: store.loanNetMovements(
-                            in: selectedInterval,
-                            accountIDs: selectedAccountIDs
-                        ),
+                        balance: dashboardSnapshot.balance,
+                        income: dashboardSnapshot.totals.income,
+                        expense: dashboardSnapshot.totals.expense,
+                        loanMovements: dashboardSnapshot.loanMovements,
                         currencyCode: store.currencyCode,
                         accountSummary: accountSelectionTitle,
                         action: { showingAccountSelection = true }
@@ -64,6 +78,13 @@ struct DashboardView: View {
             }
             .background(AppTheme.page)
             .navigationBarHidden(true)
+            .onAppear(perform: refreshDashboardSnapshot)
+            .onReceive(store.$transactions) { _ in refreshDashboardSnapshot() }
+            .onChange(of: storedDatePreset) { _ in refreshDashboardSnapshot() }
+            .onChange(of: storedCustomStart) { _ in refreshDashboardSnapshot() }
+            .onChange(of: storedCustomEnd) { _ in refreshDashboardSnapshot() }
+            .onChange(of: selectedAccountValue) { _ in refreshDashboardSnapshot() }
+            .onChange(of: transactionSearch) { _ in refreshDashboardSnapshot() }
             .sheet(isPresented: $showingCustomDates) {
                 NavigationStack {
                     Form {
@@ -162,7 +183,9 @@ struct DashboardView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(cardOrder) { card in
                     DailySpendButton(
-                        title: cardTitle(card), amount: cardAmount(card), currencyCode: store.currencyCode,
+                        title: cardTitle(card),
+                        amount: dashboardSnapshot.spending[card, default: 0],
+                        currencyCode: store.currencyCode,
                         icon: cardIcon(card), colors: cardColors(card)
                     ) { openCard(card) }
                     .contextMenu {
@@ -203,12 +226,6 @@ struct DashboardView: View {
             let date = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
             return calendar.dateInterval(of: .weekOfYear, for: date)!
         }
-    }
-    private func cardAmount(_ card: SpendingCardKind) -> Decimal {
-        let interval = cardInterval(card)
-        return store.transactions.lazy.filter {
-            $0.type == .expense && interval.contains($0.date) && store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
-        }.reduce(Decimal.zero) { $0 + $1.amount }
     }
     private func openCard(_ card: SpendingCardKind) {
         spendingDay = SpendingDay(title: cardTitle(card) + " Expenses", interval: cardInterval(card))
@@ -323,7 +340,7 @@ struct DashboardView: View {
                 Text("Recent transactions")
                     .font(.headline)
                 Spacer()
-                Text("\(periodTitle): \(filteredTotals.count)")
+                Text("\(periodTitle): \(dashboardSnapshot.totals.count)")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
@@ -347,7 +364,7 @@ struct DashboardView: View {
             .padding(12)
             .background(.background, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-            if filteredTransactions.isEmpty {
+            if dashboardSnapshot.recentTransactions.isEmpty {
                 EmptyLedgerView(
                     title: "No transactions yet",
                     message: "Use one of the colorful buttons above to add your first entry."
@@ -355,11 +372,11 @@ struct DashboardView: View {
                 .background(.background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(filteredTransactions.prefix(6).enumerated()), id: \.element.id) { index, transaction in
+                    ForEach(Array(dashboardSnapshot.recentTransactions.prefix(6).enumerated()), id: \.element.id) { index, transaction in
                         TransactionRow(transaction: transaction)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                        if index < min(filteredTransactions.count, 6) - 1 {
+                        if index < min(dashboardSnapshot.recentTransactions.count, 6) - 1 {
                             Divider().padding(.leading, 68)
                         }
                     }
@@ -395,23 +412,39 @@ struct DashboardView: View {
         }
     }
 
-    private var filteredTotals: LedgerTotals {
-        store.totals(in: selectedInterval, accountIDs: selectedAccountIDs)
-    }
-
-    private var filteredTransactions: [LedgerTransaction] {
-        store.transactions.filter {
-            let accountMatches = selectedAccountIDs == nil ||
-                selectedAccountIDs?.contains($0.accountID ?? LedgerAccount.legacyMainID) == true ||
-                selectedAccountIDs?.contains($0.destinationAccountID ?? LedgerAccount.legacyMainID) == true
-            guard selectedInterval.contains($0.date), accountMatches, !transactionSearch.isEmpty else {
-                return selectedInterval.contains($0.date) && accountMatches
+    private func refreshDashboardSnapshot() {
+        let interval = selectedInterval
+        let accountIDs = selectedAccountIDs
+        let query = transactionSearch
+        let recent = store.transactions.filter {
+            let accountMatches = accountIDs == nil ||
+                accountIDs?.contains($0.accountID ?? LedgerAccount.legacyMainID) == true ||
+                accountIDs?.contains($0.destinationAccountID ?? LedgerAccount.legacyMainID) == true
+            guard interval.contains($0.date), accountMatches, !query.isEmpty else {
+                return interval.contains($0.date) && accountMatches
             }
-            return $0.category.localizedCaseInsensitiveContains(transactionSearch) ||
-                ($0.vendor?.localizedCaseInsensitiveContains(transactionSearch) ?? false) ||
-                $0.details.localizedCaseInsensitiveContains(transactionSearch) ||
-                NSDecimalNumber(decimal: $0.amount).stringValue.contains(transactionSearch)
+            return $0.category.localizedCaseInsensitiveContains(query) ||
+                ($0.vendor?.localizedCaseInsensitiveContains(query) ?? false) ||
+                $0.details.localizedCaseInsensitiveContains(query) ||
+                NSDecimalNumber(decimal: $0.amount).stringValue.contains(query)
         }
+
+        var spending: [SpendingCardKind: Decimal] = [:]
+        for card in SpendingCardKind.allCases {
+            let cardInterval = cardInterval(card)
+            spending[card] = store.transactions.lazy.filter {
+                $0.type == .expense && cardInterval.contains($0.date) &&
+                    store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+            }.reduce(Decimal.zero) { $0 + $1.amount }
+        }
+
+        dashboardSnapshot = DashboardSnapshot(
+            balance: store.remainingBalance(accountIDs: accountIDs),
+            totals: store.totals(in: interval, accountIDs: accountIDs),
+            loanMovements: store.loanNetMovements(in: interval, accountIDs: accountIDs),
+            spending: spending,
+            recentTransactions: recent
+        )
     }
 
     private var selectedAccountIDs: Set<UUID>? {
