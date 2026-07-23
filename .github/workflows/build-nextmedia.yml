@@ -1,4 +1,4 @@
-name: Build Next Media 1.3.1
+name: Build Next Media 1.4.0
 
 on:
   workflow_dispatch:
@@ -67,11 +67,11 @@ jobs:
           cat NextMediaApp/v13patch.part00a NextMediaApp/v13patch.part00b NextMediaApp/v13patch.part01 NextMediaApp/v13patch.part02 NextMediaApp/v13patch.part03 > /tmp/NextMedia-v13-patch.b64
           python3 - <<'PY'
           import base64
+          import hashlib
           from pathlib import Path
           encoded = Path('/tmp/NextMedia-v13-patch.b64').read_text().strip()
           archive = base64.b64decode(encoded, validate=True)
           expected = '5b43fc6819ea143cdba584d43ff57ae682edaf24b11a43e48474487339b2ba4b'
-          import hashlib
           actual = hashlib.sha256(archive).hexdigest()
           if actual != expected:
               raise SystemExit(f'v1.3 patch checksum mismatch: {actual}')
@@ -79,31 +79,10 @@ jobs:
           PY
           tar -xzf /tmp/NextMedia-v13-patch.tar.gz
 
-      - name: Verify version 1.3 source changes
+      - name: Apply selected glass app icon
         run: |
           set -euo pipefail
-          grep -q 'Show downloadable media' projects/NextMedia/NextMedia/Views/BrowserView.swift
-          grep -q 'Download & Merge' projects/NextMedia/NextMedia/Views/DetectedMediaListView.swift
-          grep -q 'fileSizeText' projects/NextMedia/NextMedia/Models/MediaItem.swift
-          grep -q 'Prefer 1080p on YouTube' projects/NextMedia/NextMedia/Views/SettingsView.swift
-          grep -q 'AdaptiveMediaDownloader' projects/NextMedia/NextMedia/Services/AdaptiveMediaDownloader.swift
-          if grep -R -q 'promptedMedia' projects/NextMedia/NextMedia; then
-            echo 'Old automatic media prompt code is still present'
-            exit 1
-          fi
-          python3 - <<'PY'
-          import plistlib
-          from pathlib import Path
-          with Path('projects/NextMedia/NextMedia/Info.plist').open('rb') as handle:
-              info = plistlib.load(handle)
-          assert info['CFBundleShortVersionString'] == '1.3.0', info
-          assert info['CFBundleVersion'] == '4', info
-          PY
-
-      - name: Apply selected glass app icon and finalize 1.3.1
-        run: |
-          set +e
-          /tmp/nextmedia-tools/bin/python - <<'PY' > projects/NextMedia/icon-step.log 2>&1
+          /tmp/nextmedia-tools/bin/python - <<'PY' | tee projects/NextMedia/icon-step.log
           import base64
           import hashlib
           import json
@@ -121,7 +100,7 @@ jobs:
           source_path = Path('/tmp/NextMedia-glass-icon.jpg')
           source_path.write_bytes(raw)
           source = Image.open(source_path).convert('RGB')
-          if source.size[0] != source.size[1]:
+          if source.width != source.height:
               side = min(source.size)
               left = (source.width - side) // 2
               top = (source.height - side) // 2
@@ -146,9 +125,8 @@ jobs:
                   points = float(size_text.split('x')[0])
                   scale = float(scale_text.rstrip('x'))
                   pixels = int(round(points * scale))
-                  icon = source.resize((pixels, pixels), Image.Resampling.LANCZOS)
                   destination = icon_set / filename
-                  icon.save(destination, 'PNG', optimize=True)
+                  source.resize((pixels, pixels), Image.Resampling.LANCZOS).save(destination, 'PNG', optimize=True)
                   generated.append(destination)
           if not generated:
               raise SystemExit('No app icon files were generated')
@@ -156,33 +134,57 @@ jobs:
           plist_path = Path('projects/NextMedia/NextMedia/Info.plist')
           with plist_path.open('rb') as handle:
               info = plistlib.load(handle)
-          info['CFBundleShortVersionString'] = '1.3.1'
-          info['CFBundleVersion'] = '5'
           info['CFBundleIconName'] = 'AppIcon'
           with plist_path.open('wb') as handle:
               plistlib.dump(info, handle, sort_keys=False)
 
-          settings = Path('projects/NextMedia/NextMedia/Views/SettingsView.swift')
-          text = settings.read_text()
-          text = text.replace('Text("1.3.0")', 'Text("1.3.1")')
-          cleaned = []
-          for line in text.splitlines():
-              if any(token in line for token in ('Next Solution', 'Zeeshan', 'Zeshan', '0727')):
-                  indent = line[:len(line) - len(line.lstrip())]
-                  cleaned.append(indent + 'Text("Next Media")')
-              else:
-                  cleaned.append(line)
-          settings.write_text('\n'.join(cleaned) + '\n')
-
           print(f'icon_sha256={actual}')
-          print(f'source_size={source.width}x{source.height}')
           print(f'generated_count={len(generated)}')
-          print(f'version={info["CFBundleShortVersionString"]}')
-          print(f'build={info["CFBundleVersion"]}')
           PY
-          status=$?
-          cat projects/NextMedia/icon-step.log || true
-          exit $status
+
+      - name: Apply version 1.4 handy player patch
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          from pathlib import Path
+          encoded = Path('NextMediaApp/v14patch.b64').read_text().strip()
+          archive = base64.b64decode(encoded, validate=True)
+          expected = 'e7dd8c94e5898b4477b998862eca00a66c44ff36875bc03492721818e045dac5'
+          actual = hashlib.sha256(archive).hexdigest()
+          if actual != expected:
+              raise SystemExit(f'v1.4 patch checksum mismatch: {actual}')
+          Path('/tmp/NextMedia-v14-patch.tar.gz').write_bytes(archive)
+          PY
+          tar -xzf /tmp/NextMedia-v14-patch.tar.gz
+
+      - name: Verify version 1.4 source changes
+        run: |
+          set -euo pipefail
+          grep -q 'gobackward.10' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift
+          grep -q 'goforward.10' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift
+          grep -q 'isPlayerFullscreen' projects/NextMedia/NextMedia/Views/NowPlayingView.swift
+          grep -q 'pictureInPictureActive' projects/NextMedia/NextMedia/Views/PlayerContainerView.swift
+          grep -q 'Make MP3' projects/NextMedia/NextMedia/Views/NowPlayingView.swift
+          grep -q 'Ringtone' projects/NextMedia/NextMedia/Views/NowPlayingView.swift
+          grep -q 'File Information' projects/NextMedia/NextMedia/Views/NowPlayingView.swift
+          grep -q 'updateCurrentItemTitle' projects/NextMedia/NextMedia/Services/PlayerManager.swift
+          grep -q 'Show downloadable media' projects/NextMedia/NextMedia/Views/BrowserView.swift
+          grep -q 'Download & Merge' projects/NextMedia/NextMedia/Views/DetectedMediaListView.swift
+          if grep -R -q 'promptedMedia' projects/NextMedia/NextMedia; then
+            echo 'Old automatic media prompt code is still present'
+            exit 1
+          fi
+          python3 - <<'PY'
+          import plistlib
+          from pathlib import Path
+          with Path('projects/NextMedia/NextMedia/Info.plist').open('rb') as handle:
+              info = plistlib.load(handle)
+          assert info['CFBundleShortVersionString'] == '1.4.0', info
+          assert info['CFBundleVersion'] == '6', info
+          assert info['CFBundleIconName'] == 'AppIcon', info
+          PY
 
       - name: Configure LAME MP3 package
         run: |
@@ -192,59 +194,6 @@ jobs:
           encoder = Path('projects/NextMedia/NextMedia/Audio/MP3Encoder.m')
           source = encoder.read_text().replace('#import "lame.h"', '#import <LAME/lame.h>')
           encoder.write_text(source)
-          project = '''name: NextMedia
-          options:
-            bundleIdPrefix: uk.zeshanbarvi
-            deploymentTarget:
-              iOS: "15.0"
-            createIntermediateGroups: true
-          packages:
-            LAME:
-              url: https://github.com/BB9z/LAME-xcframework
-              exactVersion: "3.100.3"
-          settings:
-            base:
-              SWIFT_VERSION: "5.0"
-              IPHONEOS_DEPLOYMENT_TARGET: "15.0"
-              MARKETING_VERSION: "1.3.1"
-              CURRENT_PROJECT_VERSION: "5"
-              TARGETED_DEVICE_FAMILY: "1,2"
-              SUPPORTS_MACCATALYST: NO
-              ENABLE_BITCODE: NO
-              CODE_SIGNING_ALLOWED: NO
-              CODE_SIGNING_REQUIRED: NO
-              CODE_SIGN_IDENTITY: ""
-          targets:
-            NextMedia:
-              type: application
-              platform: iOS
-              deploymentTarget: "15.0"
-              sources:
-                - path: NextMedia
-                  excludes:
-                    - Resources
-                    - Info.plist
-                - path: NextMedia/Resources
-                  buildPhase: resources
-              dependencies:
-                - package: LAME
-                  product: LAME
-                - sdk: AudioToolbox.framework
-              settings:
-                base:
-                  PRODUCT_BUNDLE_IDENTIFIER: uk.zeshanbarvi.nextmedia
-                  PRODUCT_NAME: NextMedia
-                  INFOPLIST_FILE: NextMedia/Info.plist
-                  ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-                  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-                  ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
-                  GENERATE_INFOPLIST_FILE: NO
-                  SWIFT_OBJC_BRIDGING_HEADER: NextMedia/NextMedia-Bridging-Header.h
-              scheme:
-                testTargets: []
-          '''
-          import textwrap
-          Path('projects/NextMedia/project.yml').write_text(textwrap.dedent(project))
           PY
 
       - name: Install XcodeGen
@@ -276,19 +225,22 @@ jobs:
             CODE_SIGN_IDENTITY='' \
             clean build | tee xcodebuild.log
 
-      - name: Verify compiled icon and final version
+      - name: Verify compiled player, icon and version
         working-directory: projects/NextMedia
         run: |
           set -euo pipefail
           APP_PATH="build/Build/Products/Release-iphoneos/NextMedia.app"
           test -f "$APP_PATH/Assets.car"
           test -f "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Info.plist" | grep -qx '1.3.1'
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Info.plist" | grep -qx '5'
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Info.plist" | grep -qx '1.4.0'
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Info.plist" | grep -qx '6'
           /usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP_PATH/Info.plist" | grep -qx 'AppIcon'
           test "$(stat -f%z "$APP_PATH/Assets.car")" -gt 50000
           grep -q 'CompileAssetCatalog' xcodebuild.log
-          grep -q 'AppIcon' xcodebuild.log
+          grep -q 'MiniPlayerView.swift' xcodebuild.log
+          grep -q 'NowPlayingView.swift' xcodebuild.log
+          grep -q 'PlayerContainerView.swift' xcodebuild.log
+          grep -q 'MediaArtworkView.swift' xcodebuild.log
 
       - name: Package IPA, TIPA and source
         working-directory: projects/NextMedia
@@ -299,24 +251,24 @@ jobs:
           rm -rf Payload dist
           mkdir -p Payload dist
           cp -R "$APP_PATH" Payload/NextMedia.app
-          /usr/bin/zip -qry "dist/NextMedia-1.3.1.ipa" Payload
-          cp "dist/NextMedia-1.3.1.ipa" "dist/NextMedia-1.3.1.tipa"
+          /usr/bin/zip -qry "dist/NextMedia-1.4.0.ipa" Payload
+          cp "dist/NextMedia-1.4.0.ipa" "dist/NextMedia-1.4.0.tipa"
           cd ../..
-          /usr/bin/zip -qry "projects/NextMedia/dist/NextMedia-1.3.1-source.zip" projects/NextMedia \
+          /usr/bin/zip -qry "projects/NextMedia/dist/NextMedia-1.4.0-source.zip" projects/NextMedia \
             -x 'projects/NextMedia/build/*' 'projects/NextMedia/Payload/*' 'projects/NextMedia/dist/*' 'projects/NextMedia/.build/*'
           cd projects/NextMedia
-          shasum -a 256 dist/NextMedia-1.3.1.ipa dist/NextMedia-1.3.1.tipa dist/NextMedia-1.3.1-source.zip > dist/SHA256SUMS.txt
+          shasum -a 256 dist/NextMedia-1.4.0.ipa dist/NextMedia-1.4.0.tipa dist/NextMedia-1.4.0-source.zip > dist/SHA256SUMS.txt
 
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NextMedia-1.3.1
+          name: NextMedia-1.4.0
           if-no-files-found: warn
           path: |
-            projects/NextMedia/dist/NextMedia-1.3.1.ipa
-            projects/NextMedia/dist/NextMedia-1.3.1.tipa
-            projects/NextMedia/dist/NextMedia-1.3.1-source.zip
+            projects/NextMedia/dist/NextMedia-1.4.0.ipa
+            projects/NextMedia/dist/NextMedia-1.4.0.tipa
+            projects/NextMedia/dist/NextMedia-1.4.0-source.zip
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
             projects/NextMedia/xcodegen.log
