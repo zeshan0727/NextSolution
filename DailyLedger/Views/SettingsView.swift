@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 private struct SettingsNotice: Identifiable {
@@ -360,15 +361,11 @@ struct SettingsView: View {
             ) { result in
                 showExportResult(result, format: "Google Drive backup")
             }
-            .fileImporter(
-                isPresented: $showingImporter,
-                // Some Files providers report JSON/CSV downloads as a generic item.
-                // Accepting UTType.item keeps those files selectable; the codec still
-                // validates their actual bytes before importing anything.
-                allowedContentTypes: [.item],
-                allowsMultipleSelection: false
-            ) { result in
-                importFile(result, source: importSource)
+            .sheet(isPresented: $showingImporter) {
+                ImportDocumentPicker { result in
+                    showingImporter = false
+                    importFile(result, source: importSource)
+                }
             }
             .alert(item: $notice) { notice in
                 Alert(
@@ -487,9 +484,9 @@ struct SettingsView: View {
         }
     }
 
-    private func importFile(_ result: Result<[URL], Error>, source: ImportSource) {
+    private func importFile(_ result: Result<URL, Error>, source: ImportSource) {
         do {
-            guard let url = try result.get().first else { return }
+            let url = try result.get()
             let accessing = url.startAccessingSecurityScopedResource()
             defer { if accessing { url.stopAccessingSecurityScopedResource() } }
             let data = try coordinatedData(from: url)
@@ -529,6 +526,49 @@ struct SettingsView: View {
             throw CocoaError(.fileReadUnknown)
         }
         return try readResult.get()
+    }
+}
+
+private struct ImportDocumentPicker: UIViewControllerRepresentable {
+    let completion: (Result<URL, Error>) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(completion: completion)
+    }
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(
+            forOpeningContentTypes: [.json, .commaSeparatedText, .plainText, .data, .item],
+            asCopy: true
+        )
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(
+        _ uiViewController: UIDocumentPickerViewController,
+        context: Context
+    ) {}
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let completion: (Result<URL, Error>) -> Void
+
+        init(completion: @escaping (Result<URL, Error>) -> Void) {
+            self.completion = completion
+        }
+
+        func documentPicker(
+            _ controller: UIDocumentPickerViewController,
+            didPickDocumentsAt urls: [URL]
+        ) {
+            guard let url = urls.first else {
+                completion(.failure(CocoaError(.fileReadNoSuchFile)))
+                return
+            }
+            completion(.success(url))
+        }
     }
 }
 
