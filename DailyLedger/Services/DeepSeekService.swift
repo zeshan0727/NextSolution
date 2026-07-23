@@ -22,7 +22,7 @@ enum DeepSeekError: LocalizedError {
 
 final class DeepSeekService: ObservableObject {
     static let shared = DeepSeekService()
-    private static let keychainService = "com.nextsolution.dailyledger.deepseek"
+    private static let keychainService = "com.nextsolution.nextledgertest.deepseek"
     private static let keychainAccount = "api-key"
 
     @Published private(set) var promptTokens: Int

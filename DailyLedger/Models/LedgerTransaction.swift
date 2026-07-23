@@ -168,29 +168,7 @@ struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
         self.category = category
     }
 
-    static let defaults: [VendorCategoryRule] = [
-        VendorCategoryRule(keyword: "restaurant", category: "Restaurants & Cafes"),
-        VendorCategoryRule(keyword: "cafe", category: "Restaurants & Cafes"),
-        VendorCategoryRule(keyword: "coffee", category: "Restaurants & Cafes"),
-        VendorCategoryRule(keyword: "kfc", category: "Restaurants & Cafes"),
-        VendorCategoryRule(keyword: "bakery", category: "Restaurants & Cafes"),
-        VendorCategoryRule(keyword: "cafeteria", category: "Restaurants & Cafes"),
-        VendorCategoryRule(keyword: "grocery", category: "Grocery"),
-        VendorCategoryRule(keyword: "supermarket", category: "Grocery"),
-        VendorCategoryRule(keyword: "hypermarket", category: "Grocery"),
-        VendorCategoryRule(keyword: "mini mart", category: "Grocery"),
-        VendorCategoryRule(keyword: "mini market", category: "Grocery"),
-        VendorCategoryRule(keyword: "woqod", category: "Fuel"),
-        VendorCategoryRule(keyword: "petrol", category: "Fuel"),
-        VendorCategoryRule(keyword: "fuel", category: "Fuel"),
-        VendorCategoryRule(keyword: "uber", category: "Transport"),
-        VendorCategoryRule(keyword: "karwa", category: "Transport"),
-        VendorCategoryRule(keyword: "taxi", category: "Transport"),
-        VendorCategoryRule(keyword: "pharmacy", category: "Health"),
-        VendorCategoryRule(keyword: "clinic", category: "Health"),
-        VendorCategoryRule(keyword: "hospital", category: "Health"),
-        VendorCategoryRule(keyword: "medical", category: "Health")
-    ]
+    static let defaults: [VendorCategoryRule] = []
 }
 
 struct LedgerSettings: Codable, Equatable {
@@ -206,7 +184,7 @@ struct LedgerSettings: Codable, Equatable {
 
     init(
         currencyCode: String = "QAR",
-        vendorRules: [VendorCategoryRule] = VendorCategoryRule.defaults,
+        vendorRules: [VendorCategoryRule] = [],
         smsAutoImportEnabled: Bool = true,
         defaultAccountID: UUID? = nil,
         smsMatchText: String = "**6760",
@@ -242,7 +220,7 @@ struct LedgerSettings: Codable, Equatable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         currencyCode = try values.decodeIfPresent(String.self, forKey: .currencyCode) ?? "QAR"
         vendorRules = try values.decodeIfPresent([VendorCategoryRule].self, forKey: .vendorRules)
-            ?? VendorCategoryRule.defaults
+            ?? []
         smsAutoImportEnabled = try values.decodeIfPresent(Bool.self, forKey: .smsAutoImportEnabled) ?? true
         defaultAccountID = try values.decodeIfPresent(UUID.self, forKey: .defaultAccountID)
         smsMatchText = try values.decodeIfPresent(String.self, forKey: .smsMatchText) ?? "**6760"
