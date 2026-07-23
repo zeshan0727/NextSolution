@@ -2,6 +2,12 @@ import Foundation
 import Combine
 import UserNotifications
 
+struct BackupRestoreSummary {
+    var jobCount: Int
+    var attachmentFileCount: Int
+    var attachmentBytes: Int64
+}
+
 @MainActor
 final class JobStore: ObservableObject {
     @Published private(set) var jobs: [JobRecord] = []
@@ -11,17 +17,13 @@ final class JobStore: ObservableObject {
     static let shared = JobStore()
 
     private let fileManager = FileManager.default
-    private let encoder: JSONEncoder
-    private let decoder: JSONDecoder
     private let databaseURL: URL
+    private let persistenceQueue = DispatchQueue(
+        label: "com.nextsolution.nextjob.persistence",
+        qos: .utility
+    )
 
     init() {
-        encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
-        decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
         let root = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("NextJob", isDirectory: true)
         try? fileManager.createDirectory(at: root, withIntermediateDirectories: true)
@@ -38,17 +40,42 @@ final class JobStore: ObservableObject {
     }
 
     var summary: DashboardSummary {
-        DashboardSummary(
+        var notStarted = 0
+        var inProgress = 0
+        var waiting = 0
+        var completed = 0
+        var overdue = 0
+        var completedValue = 0.0
+        var outstandingValue = 0.0
+        var targetMinutes = 0
+        var actualMinutes = 0
+
+        for job in jobs {
+            switch job.status {
+            case .notStarted: notStarted += 1
+            case .inProgress: inProgress += 1
+            case .waitingForDocuments: waiting += 1
+            case .completed:
+                completed += 1
+                completedValue += job.price
+            }
+            if job.status != .completed { outstandingValue += job.price }
+            if job.isOverdue { overdue += 1 }
+            targetMinutes += job.targetMinutes
+            actualMinutes += job.actualMinutes ?? 0
+        }
+
+        return DashboardSummary(
             total: jobs.count,
-            notStarted: jobs.filter { $0.status == .notStarted }.count,
-            inProgress: jobs.filter { $0.status == .inProgress }.count,
-            waiting: jobs.filter { $0.status == .waitingForDocuments }.count,
-            completed: jobs.filter { $0.status == .completed }.count,
-            overdue: jobs.filter(\.isOverdue).count,
-            completedValue: jobs.filter { $0.status == .completed }.reduce(0) { $0 + $1.price },
-            outstandingValue: jobs.filter { $0.status != .completed }.reduce(0) { $0 + $1.price },
-            targetMinutes: jobs.reduce(0) { $0 + $1.targetMinutes },
-            actualMinutes: jobs.compactMap(\.actualMinutes).reduce(0, +)
+            notStarted: notStarted,
+            inProgress: inProgress,
+            waiting: waiting,
+            completed: completed,
+            overdue: overdue,
+            completedValue: completedValue,
+            outstandingValue: outstandingValue,
+            targetMinutes: targetMinutes,
+            actualMinutes: actualMinutes
         )
     }
 
@@ -68,9 +95,12 @@ final class JobStore: ObservableObject {
 
     func delete(_ job: JobRecord) {
         jobs.removeAll { $0.id == job.id }
-        try? JobFileService.shared.deleteJobFolder(jobID: job.id)
         NotificationService.shared.cancel(jobID: job.id)
         persist()
+        let jobID = job.id
+        DispatchQueue.global(qos: .utility).async {
+            try? JobFileService.shared.deleteJobFolder(jobID: jobID)
+        }
     }
 
     func setStatus(_ status: JobStatus, jobID: UUID) {
@@ -93,12 +123,15 @@ final class JobStore: ObservableObject {
     }
 
     func addAttachments(_ attachments: [JobAttachment], to jobID: UUID) {
+        guard !attachments.isEmpty else { return }
         mutate(jobID: jobID) { $0.attachments.append(contentsOf: attachments) }
     }
 
     func removeAttachment(_ attachment: JobAttachment, from jobID: UUID) {
         mutate(jobID: jobID) { $0.attachments.removeAll { $0.id == attachment.id } }
-        try? JobFileService.shared.deleteAttachment(attachment, jobID: jobID)
+        DispatchQueue.global(qos: .utility).async {
+            try? JobFileService.shared.deleteAttachment(attachment, jobID: jobID)
+        }
     }
 
     func addEmailRecord(_ record: JobEmailRecord, to jobID: UUID) {
@@ -120,7 +153,9 @@ final class JobStore: ObservableObject {
     func addJobType(named name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        guard !settings.jobTypes.contains(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
+        guard !settings.jobTypes.contains(where: {
+            $0.name.caseInsensitiveCompare(trimmed) == .orderedSame
+        }) else { return }
         updateSettings { $0.jobTypes.append(JobType(name: trimmed)) }
     }
 
@@ -136,11 +171,48 @@ final class JobStore: ObservableObject {
         await NotificationService.shared.requestPermission()
     }
 
+    func exportCompleteBackup() async throws -> URL {
+        let database = AppDatabase(jobs: jobs, settings: settings)
+        return try await Task.detached(priority: .userInitiated) {
+            try PortableBackupService.shared.createBackup(database: database)
+        }.value
+    }
+
+    func restoreCompleteBackup(from url: URL) async throws -> BackupRestoreSummary {
+        let prepared = try await Task.detached(priority: .userInitiated) {
+            try PortableBackupService.shared.prepareRestore(from: url)
+        }.value
+
+        let oldDatabase = AppDatabase(jobs: jobs, settings: settings)
+        var previousRoot: URL?
+        do {
+            previousRoot = try JobFileService.shared.installRestoredRoot(from: prepared.stagingRoot)
+            jobs = prepared.database.jobs
+            settings = prepared.database.settings
+            try persistSynchronously(prepared.database)
+            JobFileService.shared.discardPreviousRoot(previousRoot)
+            PortableBackupService.shared.discard(prepared)
+            jobs.forEach { refreshNotification(for: $0) }
+            return BackupRestoreSummary(
+                jobCount: jobs.count,
+                attachmentFileCount: prepared.fileCount,
+                attachmentBytes: prepared.totalBytes
+            )
+        } catch {
+            JobFileService.shared.rollbackRestoredRoot(previousRoot: previousRoot)
+            jobs = oldDatabase.jobs
+            settings = oldDatabase.settings
+            try? persistSynchronously(oldDatabase)
+            PortableBackupService.shared.discard(prepared)
+            throw error
+        }
+    }
+
     func exportDatabase() throws -> URL {
         let payload = AppDatabase(jobs: jobs, settings: settings)
-        let data = try encoder.encode(payload)
+        let data = try makeEncoder().encode(payload)
         let url = fileManager.temporaryDirectory
-            .appendingPathComponent("NextJob-Backup-\(Self.exportDateFormatter.string(from: Date())).json")
+            .appendingPathComponent("NextJob-Legacy-Backup-\(Self.exportDateFormatter.string(from: Date())).json")
         try data.write(to: url, options: .atomic)
         return url
     }
@@ -149,10 +221,10 @@ final class JobStore: ObservableObject {
         let accessing = url.startAccessingSecurityScopedResource()
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }
         let data = try Data(contentsOf: url)
-        let decoded = try decoder.decode(AppDatabase.self, from: data)
+        let decoded = try makeDecoder().decode(AppDatabase.self, from: data)
         jobs = decoded.jobs
         settings = decoded.settings
-        persist()
+        try persistSynchronously(decoded)
         jobs.forEach { refreshNotification(for: $0) }
     }
 
@@ -173,7 +245,7 @@ final class JobStore: ObservableObject {
         }
         do {
             let data = try Data(contentsOf: databaseURL)
-            let database = try decoder.decode(AppDatabase.self, from: data)
+            let database = try makeDecoder().decode(AppDatabase.self, from: data)
             jobs = database.jobs
             settings = database.settings
         } catch {
@@ -184,13 +256,40 @@ final class JobStore: ObservableObject {
     }
 
     private func persist() {
-        do {
-            let database = AppDatabase(jobs: jobs, settings: settings)
-            let data = try encoder.encode(database)
-            try data.write(to: databaseURL, options: .atomic)
-        } catch {
-            lastError = "Next Job could not save your changes: \(error.localizedDescription)"
+        let database = AppDatabase(jobs: jobs, settings: settings)
+        let url = databaseURL
+        persistenceQueue.async { [weak self] in
+            do {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+                encoder.dateEncodingStrategy = .iso8601
+                let data = try encoder.encode(database)
+                try data.write(to: url, options: .atomic)
+            } catch {
+                let message = "Next Job could not save your changes: \(error.localizedDescription)"
+                DispatchQueue.main.async {
+                    self?.lastError = message
+                }
+            }
         }
+    }
+
+    private func persistSynchronously(_ database: AppDatabase) throws {
+        let data = try makeEncoder().encode(database)
+        try data.write(to: databaseURL, options: .atomic)
+    }
+
+    private func makeEncoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }
+
+    private func makeDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
     }
 
     private func refreshNotification(for job: JobRecord) {
@@ -225,7 +324,10 @@ final class NotificationService {
             content.title = "Job deadline approaching"
             content.body = "\(job.title) is due \(label == "24h" ? "tomorrow" : "in one hour")."
             content.sound = .default
-            let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+            let parts = Calendar.current.dateComponents(
+                [.year, .month, .day, .hour, .minute],
+                from: date
+            )
             let request = UNNotificationRequest(
                 identifier: "nextjob-\(job.id.uuidString)-\(label)",
                 content: content,
