@@ -79,10 +79,17 @@ struct AppRootView: View {
             TransferView()
                 .environmentObject(store)
         }
-        .onAppear(perform: consumeShortcutRequest)
+        .onAppear {
+            consumeShortcutRequest()
+            store.backfillVendorRulesFromTransactions()
+        }
+        .onChange(of: store.transactions.count) { _ in
+            store.backfillVendorRulesFromTransactions()
+        }
         .onChange(of: scenePhase) { phase in
             guard phase == .active else { return }
             store.reload()
+            store.backfillVendorRulesFromTransactions()
             consumeShortcutRequest()
         }
         .alert("Daily Ledger", isPresented: errorBinding) {
