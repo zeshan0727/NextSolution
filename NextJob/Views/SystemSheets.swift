@@ -16,10 +16,7 @@ enum DocumentPickerMode {
     }
 
     var copiesSelection: Bool {
-        switch self {
-        case .files: return true
-        case .folder: return false
-        }
+        true
     }
 }
 
@@ -39,7 +36,7 @@ struct DocumentPicker: UIViewControllerRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(completion: completion)
+        Coordinator(mode: mode, completion: completion)
     }
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
@@ -53,17 +50,32 @@ struct DocumentPicker: UIViewControllerRepresentable {
         return picker
     }
 
-    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+    func updateUIViewController(
+        _ uiViewController: UIDocumentPickerViewController,
+        context: Context
+    ) {}
 
     final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        private let mode: DocumentPickerMode
         private let completion: (Result<[URL], Error>) -> Void
         private var hasFinished = false
 
-        init(completion: @escaping (Result<[URL], Error>) -> Void) {
+        init(
+            mode: DocumentPickerMode,
+            completion: @escaping (Result<[URL], Error>) -> Void
+        ) {
+            self.mode = mode
             self.completion = completion
         }
 
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        func documentPicker(
+            _ controller: UIDocumentPickerViewController,
+            didPickDocumentsAt urls: [URL]
+        ) {
+            if mode == .folder, urls.count != 1 {
+                finish(.failure(JobFileError.folderExpected))
+                return
+            }
             finish(.success(urls))
         }
 
@@ -88,7 +100,10 @@ struct ShareSheet: UIViewControllerRepresentable {
         UIActivityViewController(activityItems: items, applicationActivities: nil)
     }
 
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+    func updateUIViewController(
+        _ uiViewController: UIActivityViewController,
+        context: Context
+    ) {}
 }
 
 struct MailAttachment {
@@ -121,12 +136,19 @@ struct MailComposer: UIViewControllerRepresentable {
         controller.setSubject(draft.subject)
         controller.setMessageBody(draft.body, isHTML: false)
         for attachment in draft.attachments {
-            controller.addAttachmentData(attachment.data, mimeType: attachment.mimeType, fileName: attachment.fileName)
+            controller.addAttachmentData(
+                attachment.data,
+                mimeType: attachment.mimeType,
+                fileName: attachment.fileName
+            )
         }
         return controller
     }
 
-    func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
+    func updateUIViewController(
+        _ uiViewController: MFMailComposeViewController,
+        context: Context
+    ) {}
 
     final class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
         let completion: (MFMailComposeResult) -> Void
@@ -164,7 +186,10 @@ struct QuickLookPreview: UIViewControllerRepresentable {
         return controller
     }
 
-    func updateUIViewController(_ uiViewController: QLPreviewController, context: Context) {}
+    func updateUIViewController(
+        _ uiViewController: QLPreviewController,
+        context: Context
+    ) {}
 
     final class Coordinator: NSObject, QLPreviewControllerDataSource {
         let url: URL
@@ -175,7 +200,10 @@ struct QuickLookPreview: UIViewControllerRepresentable {
 
         func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
 
-        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+        func previewController(
+            _ controller: QLPreviewController,
+            previewItemAt index: Int
+        ) -> QLPreviewItem {
             url as NSURL
         }
     }
