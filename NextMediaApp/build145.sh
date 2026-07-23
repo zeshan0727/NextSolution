@@ -28,13 +28,8 @@ if actual != expected:
 Path('/tmp/NextMedia-v145-patch.tar.gz').write_bytes(archive)
 PY145
 tar -xzf /tmp/NextMedia-v145-patch.tar.gz
-'''
-if needle not in source:
-    raise SystemExit('Could not locate v1.4.4 patch extraction point')
-source = source.replace(needle, needle + addition, 1)
 
-validation_anchor = "grep -q 'Show downloadable media' projects/NextMedia/NextMedia/Views/BrowserView.swift"
-checks = r'''grep -q 'audiovisualBackgroundPlaybackPolicy = .continuesIfPossible' projects/NextMedia/NextMedia/Services/PlayerManager.swift
+grep -q 'audiovisualBackgroundPlaybackPolicy = .continuesIfPossible' projects/NextMedia/NextMedia/Services/PlayerManager.swift
 grep -q 'activateAudioSession()' projects/NextMedia/NextMedia/Services/PlayerManager.swift
 grep -q 'AVAudioSession.interruptionNotification' projects/NextMedia/NextMedia/Services/PlayerManager.swift
 grep -q 'canStartPictureInPictureAutomaticallyFromInline = true' projects/NextMedia/NextMedia/Views/PlayerContainerView.swift
@@ -48,10 +43,11 @@ grep -q 'UIBackgroundModes' projects/NextMedia/NextMedia/Info.plist
 if grep -q 'phase == .background || phase == .inactive' projects/NextMedia/NextMedia/NextMediaApp.swift; then
   echo 'Inactive scene transitions must not lock the app during PiP startup'
   exit 1
-fi'''
-if validation_anchor not in source:
-    raise SystemExit('Could not locate source validation anchor')
-source = source.replace(validation_anchor, validation_anchor + "\n" + checks, 1)
+fi
+'''
+if needle not in source:
+    raise SystemExit('Could not locate v1.4.4 patch extraction point')
+source = source.replace(needle, needle + addition, 1)
 
 source = source.replace("1.4.4", "1.4.5")
 source = source.replace("== '10'", "== '11'")
