@@ -15,25 +15,7 @@ final class LedgerStore: ObservableObject {
     private var hasLoaded = false
 
     init() {
-        importBundledPersonalSeedIfNeeded()
         reload()
-    }
-
-    private func importBundledPersonalSeedIfNeeded() {
-        let key = "DailyLedgerPersonalSeedImported"
-        guard !UserDefaults.standard.bool(forKey: key),
-              let url = Bundle.main.url(forResource: "PersonalLedgerSeed", withExtension: "json"),
-              let incoming = try? ImportExportCodec.decode(url: url) else { return }
-        do {
-            try LedgerDiskStore.shared.merge(
-                incoming.transactions,
-                accounts: incoming.accounts,
-                restoring: incoming.settings
-            )
-            UserDefaults.standard.set(true, forKey: key)
-        } catch {
-            errorMessage = "The bundled personal ledger could not be loaded."
-        }
     }
 
     var currencyCode: String { settings.currencyCode }
