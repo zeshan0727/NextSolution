@@ -90,13 +90,32 @@ struct TransferView: View {
     }
 
     private func amountField(_ title: String, text: Binding<String>, currency: String?) -> some View {
-        HStack {
-            Text(currency ?? "—")
-                .foregroundStyle(.secondary)
-            TextField(title, text: text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .focused($focusedAmount, equals: title == "Amount received" ? .destination : .source)
+        VStack(spacing: 8) {
+            HStack {
+                Text(currency ?? "—")
+                    .foregroundStyle(.secondary)
+                TextField(title, text: text)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .focused($focusedAmount, equals: title == "Amount received" ? .destination : .source)
+            }
+            HStack(spacing: 8) {
+                ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
+                    Button(symbol) {
+                        focusedAmount = title == "Amount received" ? .destination : .source
+                        appendOperator(symbol)
+                    }
+                    .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity)
+                }
+                Button("=") {
+                    focusedAmount = title == "Amount received" ? .destination : .source
+                    calculateFocusedAmount()
+                }
+                .buttonStyle(.borderedProminent)
+                .frame(maxWidth: .infinity)
+            }
+            .font(.subheadline.weight(.semibold))
         }
     }
 

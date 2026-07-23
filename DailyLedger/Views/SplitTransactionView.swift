@@ -91,6 +91,7 @@ struct SplitTransactionView: View {
             TextField("Amount", text: amount)
                 .keyboardType(.decimalPad)
                 .focused($focusedAmount, equals: title.hasPrefix("First") ? .first : .second)
+            inlineCalculator(for: title.hasPrefix("First") ? .first : .second)
         }
     }
 
@@ -108,7 +109,28 @@ struct SplitTransactionView: View {
             TextField("Amount", text: amount)
                 .keyboardType(.decimalPad)
                 .focused($focusedAmount, equals: title.hasPrefix("First") ? .first : .second)
+            inlineCalculator(for: title.hasPrefix("First") ? .first : .second)
         }
+    }
+
+    private func inlineCalculator(for field: SplitAmountField) -> some View {
+        HStack(spacing: 8) {
+            ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
+                Button(symbol) {
+                    focusedAmount = field
+                    appendOperator(symbol)
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+            }
+            Button("=") {
+                focusedAmount = field
+                calculateFocusedAmount()
+            }
+            .buttonStyle(.borderedProminent)
+            .frame(maxWidth: .infinity)
+        }
+        .font(.subheadline.weight(.semibold))
     }
 
     private var firstValue: Decimal { decimal(firstAmount) ?? 0 }

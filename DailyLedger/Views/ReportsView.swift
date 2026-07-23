@@ -363,7 +363,7 @@ private struct LoanMovementReportView: View {
                     NavigationLink {
                         LoanTransactionsView(interval: interval, currency: currency, movement: .paid)
                     } label: {
-                        LabeledContent("Loan paid", value: DisplayFormat.currency(paid(currency), code: currency))
+                        LabeledContent("Loan decrease / paid", value: DisplayFormat.currency(paid(currency), code: currency))
                     }
                     LabeledContent("Net movement", value: DisplayFormat.currency(increased(currency) - paid(currency), code: currency))
                 }
@@ -398,7 +398,9 @@ private struct LoanMovementReportView: View {
     private func increased(_ currency: String) -> Decimal {
         let ids = Set(loanAccounts.filter { $0.currencyCode == currency }.map(\.id))
         return store.transactions.filter {
-            $0.type == .expense && interval.contains($0.date) && ids.contains($0.accountID ?? LedgerAccount.legacyMainID)
+            interval.contains($0.date) &&
+            ids.contains($0.accountID ?? LedgerAccount.legacyMainID) &&
+            ($0.type == .expense || $0.type == .transfer)
         }.reduce(0) { $0 + $1.amount }
     }
     private func paid(_ currency: String) -> Decimal {
@@ -1023,7 +1025,7 @@ private struct LoanTransactionsView: View {
             }
             LabeledContent("Total", value: DisplayFormat.currency(total, code: currency))
         }
-        .navigationTitle(movement == .increased ? "Loan Increased" : "Loan Paid")
+        .navigationTitle(movement == .increased ? "Loan Increased" : "Loan Decreased / Paid")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedTransaction) {
             TransactionSnapshotView(transaction: $0).environmentObject(store)
@@ -1039,7 +1041,8 @@ private struct LoanTransactionsView: View {
             guard interval.contains($0.date) else { return false }
             switch movement {
             case .increased:
-                return $0.type == .expense && loanIDs.contains($0.accountID ?? LedgerAccount.legacyMainID)
+                return ($0.type == .expense || $0.type == .transfer) &&
+                    loanIDs.contains($0.accountID ?? LedgerAccount.legacyMainID)
             case .paid:
                 return $0.type == .transfer && loanIDs.contains($0.destinationAccountID ?? LedgerAccount.legacyMainID)
             }

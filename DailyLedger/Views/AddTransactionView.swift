@@ -138,7 +138,32 @@ struct AddTransactionView: View {
             }
             .padding(18)
             .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            amountCalculator
         }
+    }
+
+    private var amountCalculator: some View {
+        HStack(spacing: 8) {
+            ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
+                Button(symbol) {
+                    amountText = AmountExpression.appending(symbol, to: amountText)
+                    focusedField = .amount
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+            }
+            Button("=") {
+                if let value = AmountExpression.evaluate(amountText) {
+                    amountText = NSDecimalNumber(decimal: value).stringValue
+                }
+                focusedField = .amount
+            }
+            .buttonStyle(.borderedProminent)
+            .frame(maxWidth: .infinity)
+        }
+        .font(.headline)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Amount calculator")
     }
 
     private var categoryPicker: some View {
