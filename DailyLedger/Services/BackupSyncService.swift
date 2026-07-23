@@ -142,6 +142,6 @@ enum BackupSyncError: LocalizedError {
     case iCloudBackupUnavailable
 
     var errorDescription: String? {
-        "No DailyLedger backup is available in iCloud Drive, or this TrollStore build has no iCloud entitlement."
+        "No Next Ledger backup is available in iCloud Drive, or this TrollStore build has no iCloud entitlement."
     }
 }

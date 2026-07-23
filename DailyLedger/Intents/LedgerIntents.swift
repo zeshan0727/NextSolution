@@ -3,7 +3,7 @@ import Foundation
 
 struct AddExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Expense"
-    static let description = IntentDescription("Record an expense in Daily Ledger without opening the app.")
+    static let description = IntentDescription("Record an expense in Next Ledger without opening the app.")
     static let openAppWhenRun = false
     static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
 
@@ -38,7 +38,7 @@ struct AddExpenseIntent: AppIntent {
 
         do {
             try LedgerDiskStore.shared.add(transaction)
-            return .result(dialog: "Expense saved in Daily Ledger.")
+            return .result(dialog: "Expense saved in Next Ledger.")
         } catch {
             return .result(dialog: "The expense could not be saved.")
         }
@@ -47,7 +47,7 @@ struct AddExpenseIntent: AppIntent {
 
 struct AddIncomeIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Income"
-    static let description = IntentDescription("Record income in Daily Ledger without opening the app.")
+    static let description = IntentDescription("Record income in Next Ledger without opening the app.")
     static let openAppWhenRun = false
     static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
 
@@ -82,7 +82,7 @@ struct AddIncomeIntent: AppIntent {
 
         do {
             try LedgerDiskStore.shared.add(transaction)
-            return .result(dialog: "Income saved in Daily Ledger.")
+            return .result(dialog: "Income saved in Next Ledger.")
         } catch {
             return .result(dialog: "The income could not be saved.")
         }
@@ -91,7 +91,7 @@ struct AddIncomeIntent: AppIntent {
 
 struct TransferMoneyIntent: AppIntent {
     static let title: LocalizedStringResource = "Transfer Money"
-    static let description = IntentDescription("Move money between two Daily Ledger accounts.")
+    static let description = IntentDescription("Move money between two Next Ledger accounts.")
     static let openAppWhenRun = false
     static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
 
@@ -137,7 +137,7 @@ struct TransferMoneyIntent: AppIntent {
         )
         do {
             try LedgerDiskStore.shared.add(transaction)
-            return .result(dialog: "Transfer saved in Daily Ledger.")
+            return .result(dialog: "Transfer saved in Next Ledger.")
         } catch {
             return .result(dialog: "The transfer could not be saved.")
         }
@@ -146,7 +146,7 @@ struct TransferMoneyIntent: AppIntent {
 
 struct OpenAddExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Open Add Expense"
-    static let description = IntentDescription("Open Daily Ledger on the expense entry screen.")
+    static let description = IntentDescription("Open Next Ledger on the expense entry screen.")
     static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
@@ -157,7 +157,7 @@ struct OpenAddExpenseIntent: AppIntent {
 
 struct OpenAddIncomeIntent: AppIntent {
     static let title: LocalizedStringResource = "Open Add Income"
-    static let description = IntentDescription("Open Daily Ledger on the income entry screen.")
+    static let description = IntentDescription("Open Next Ledger on the income entry screen.")
     static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {

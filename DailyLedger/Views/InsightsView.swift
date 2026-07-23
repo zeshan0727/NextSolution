@@ -388,7 +388,7 @@ struct InsightsView: View {
         }
         .joined(separator: "\n")
         return """
-        Analyze this aggregate Daily Ledger spending summary.
+        Analyze this aggregate Next Ledger spending summary.
         Currency: \(store.currencyCode)
         Current month expenses: \(NSDecimalNumber(decimal: currentExpense).stringValue)
         Previous month expenses: \(NSDecimalNumber(decimal: previousExpense).stringValue)

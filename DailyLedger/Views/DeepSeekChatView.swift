@@ -202,7 +202,7 @@ struct DeepSeekChatView: View {
         let requestMessages = [
             DeepSeekMessage(
                 role: "system",
-                content: "You are a concise, helpful general assistant inside Daily Ledger. Keep responses practical and under 500 words. Do not claim access to ledger data unless the user includes it in this chat."
+                content: "You are a concise, helpful general assistant inside Next Ledger. Keep responses practical and under 500 words. Do not claim access to ledger data unless the user includes it in this chat."
             )
         ] + recent
 

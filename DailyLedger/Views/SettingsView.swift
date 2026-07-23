@@ -74,7 +74,7 @@ struct SettingsView: View {
                     } label: {
                         SettingsRow(
                             title: "Export JSON Backup",
-                            subtitle: "Complete Daily Ledger backup",
+                            subtitle: "Complete Next Ledger backup",
                             icon: "externaldrive.fill",
                             color: AppTheme.blue
                         )
@@ -203,7 +203,7 @@ struct SettingsView: View {
                 } header: {
                     Label("OpenAI Chat", systemImage: "bubble.left.and.bubble.right.fill")
                 } footer: {
-                    Text("GPT-5 models are included, but OpenAI currently does not support them on the API Free tier. Your API project controls availability and billing. Daily Ledger caps each answer to control tokens.")
+                    Text("GPT-5 models are included, but OpenAI currently does not support them on the API Free tier. Your API project controls availability and billing. Next Ledger caps each answer to control tokens.")
                 }
 
                 Section {
@@ -230,7 +230,7 @@ struct SettingsView: View {
                 } header: {
                     Label("Shortcuts", systemImage: "wand.and.stars")
                 } footer: {
-                    Text("In Shortcuts, search for Daily Ledger actions. You can pass an amount, category, description, and date from another action.")
+                    Text("In Shortcuts, search for Next Ledger actions. You can pass an amount, category, description, and date from another action.")
                 }
 
                 Section {
@@ -245,7 +245,7 @@ struct SettingsView: View {
                             HStack {
                                 Button("Record Transaction") {
                                     store.requestSMSRescan()
-                                    notice = SettingsNotice(title: "Import Requested", message: "Daily Ledger asked the SMS importer to record the latest matching message.")
+                                    notice = SettingsNotice(title: "Import Requested", message: "Next Ledger asked the SMS importer to record the latest matching message.")
                                 }
                                 .buttonStyle(.borderedProminent)
                                 Button("Cancel") { showingSMSStatus = false }
@@ -435,7 +435,7 @@ struct SettingsView: View {
                 )
                 await MainActor.run {
                     testingDeepSeek = false
-                    notice = SettingsNotice(title: "Connection Successful", message: "Daily Ledger can reach DeepSeek.")
+                    notice = SettingsNotice(title: "Connection Successful", message: "Next Ledger can reach DeepSeek.")
                 }
             } catch {
                 await MainActor.run {
@@ -467,7 +467,7 @@ struct SettingsView: View {
                 )
                 await MainActor.run {
                     testingOpenAI = false
-                    notice = SettingsNotice(title: "Connection Successful", message: "Daily Ledger can reach OpenAI.")
+                    notice = SettingsNotice(title: "Connection Successful", message: "Next Ledger can reach OpenAI.")
                 }
             } catch {
                 await MainActor.run {

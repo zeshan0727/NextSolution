@@ -1,6 +1,6 @@
-# Daily Ledger 1.3.31 validated build
-# Build trigger: consolidated loan movement and dashboard scrolling performance
-name: Build Daily Ledger TIPA
+# Next Ledger 1.3.32 validated build
+# Build trigger: Next Ledger branding and OpenAI context isolation
+name: Build Next Ledger TIPA
 
 on:
   workflow_dispatch:
@@ -53,8 +53,8 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload DailyLedger-1.3.31.tipa
-          shasum -a 256 DailyLedger-1.3.31.tipa > DailyLedger-1.3.31.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.32.tipa
+          shasum -a 256 NextLedger-1.3.32.tipa > NextLedger-1.3.32.sha256
 
       - name: Test SMS parser
         run: |
@@ -87,10 +87,10 @@ jobs:
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: DailyLedger-TrollStore
+          name: NextLedger-TrollStore
           path: |
-            DailyLedger-1.3.31.tipa
-            DailyLedger-1.3.31.sha256
+            NextLedger-1.3.32.tipa
+            NextLedger-1.3.32.sha256
             DailyLedgerSMSImport-1.4.0-roothide.deb
             DailyLedgerSMSImport-1.4.0-roothide.sha256
           if-no-files-found: error

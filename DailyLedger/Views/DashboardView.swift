@@ -290,7 +290,7 @@ struct DashboardView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Daily Ledger")
+                Text("Next Ledger")
                     .font(.system(size: 29, weight: .bold, design: .rounded))
                 Text("Your money at a glance")
                     .font(.subheadline)

@@ -85,7 +85,7 @@ struct AppRootView: View {
             store.reload()
             consumeShortcutRequest()
         }
-        .alert("Daily Ledger", isPresented: errorBinding) {
+        .alert("Next Ledger", isPresented: errorBinding) {
             Button("OK", role: .cancel) { store.errorMessage = nil }
         } message: {
             Text(store.errorMessage ?? "Unknown error")

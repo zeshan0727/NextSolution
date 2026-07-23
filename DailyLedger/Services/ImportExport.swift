@@ -9,7 +9,7 @@ enum ImportExportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedFile:
-            return "This file is not a Daily Ledger JSON backup or supported CSV file."
+            return "This file is not a Next Ledger JSON backup or supported CSV file."
         case .malformedCSV:
             return "The CSV file does not contain recognizable transaction columns."
         }
