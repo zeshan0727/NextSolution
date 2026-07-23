@@ -19,6 +19,9 @@ on:
       - "NextJob/**"
       - ".github/workflows/build-next-job.yml"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-15
@@ -105,3 +108,13 @@ jobs:
             NextJob-1.0.4.sha256
             NextJob-1.0.4-source.zip
           if-no-files-found: error
+
+      - name: Publish run pointer
+        if: success() && github.event_name == 'push'
+        run: |
+          echo "${GITHUB_RUN_ID}" > NextJob/latest-run-id-1.0.4.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add NextJob/latest-run-id-1.0.4.txt
+          git commit -m "Record Next Job 1.0.4 build run ${GITHUB_RUN_ID}"
+          git push origin HEAD:agent/next-job-1.0.4-validation
