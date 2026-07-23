@@ -98,7 +98,7 @@ struct JobsView: View {
             .navigationTitle("Jobs")
             .searchable(text: $searchText, prompt: "Search jobs, types or notes")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Picker("Filter", selection: $filter) {
                             ForEach(JobFilter.allCases) { item in
