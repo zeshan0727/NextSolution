@@ -82,7 +82,7 @@ struct SettingsView: View {
 
                 Section("About") {
                     LabeledContent("App", value: "Next Job")
-                    LabeledContent("Version", value: "1.0.0")
+                    LabeledContent("Version", value: "1.0.1")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                     LabeledContent("Minimum iOS", value: "16.0")
                 }
@@ -100,7 +100,7 @@ struct SettingsView: View {
                 ShareSheet(items: payload.items)
             }
             .sheet(isPresented: $showingImporter) {
-                DocumentPicker(allowsMultipleSelection: false) { result in
+                DocumentPicker(mode: .files, allowsMultipleSelection: false) { result in
                     showingImporter = false
                     do {
                         guard let url = try result.get().first else { return }
