@@ -72,3 +72,5 @@ jobs:
       - name: Fail when compilation failed
         if: steps.compile.outcome != 'success'
         run: exit 1
+
+# Trigger 1.4.2 rebuild after package branch update.
