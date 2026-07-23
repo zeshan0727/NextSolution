@@ -46,14 +46,14 @@ enum AttachmentKind: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .related: return "Related Files"
-        case .completedWork: return "Completed Work"
+        case .completedWork: return "Completion Documents"
         }
     }
 
     var folderName: String {
         switch self {
-        case .related: return "Related Files"
-        case .completedWork: return "Completed Work"
+        case .related: return "Related Files - Reference"
+        case .completedWork: return "Completion Documents"
         }
     }
 }
@@ -82,14 +82,27 @@ struct JobAttachment: Identifiable, Codable, Equatable {
     var kind: AttachmentKind
     var addedAt: Date
     var byteCount: Int64
+    var isFolder: Bool?
+    var childCount: Int?
 
-    init(id: UUID = UUID(), originalName: String, storedName: String, kind: AttachmentKind, addedAt: Date = Date(), byteCount: Int64) {
+    init(
+        id: UUID = UUID(),
+        originalName: String,
+        storedName: String,
+        kind: AttachmentKind,
+        addedAt: Date = Date(),
+        byteCount: Int64,
+        isFolder: Bool? = nil,
+        childCount: Int? = nil
+    ) {
         self.id = id
         self.originalName = originalName
         self.storedName = storedName
         self.kind = kind
         self.addedAt = addedAt
         self.byteCount = byteCount
+        self.isFolder = isFolder
+        self.childCount = childCount
     }
 
     var formattedSize: String {
@@ -100,7 +113,10 @@ struct JobAttachment: Identifiable, Codable, Equatable {
 struct JobEmailRecord: Identifiable, Codable, Equatable {
     enum Kind: String, Codable {
         case documentRequest
+        case progress
         case completion
+        case paymentFollowUp
+        case custom
     }
 
     var id: UUID
@@ -109,7 +125,13 @@ struct JobEmailRecord: Identifiable, Codable, Equatable {
     var subject: String
     var sentAt: Date
 
-    init(id: UUID = UUID(), kind: Kind, recipient: String, subject: String, sentAt: Date = Date()) {
+    init(
+        id: UUID = UUID(),
+        kind: Kind,
+        recipient: String,
+        subject: String,
+        sentAt: Date = Date()
+    ) {
         self.id = id
         self.kind = kind
         self.recipient = recipient
@@ -138,7 +160,26 @@ struct JobRecord: Identifiable, Codable, Equatable {
     var createdAt: Date
     var updatedAt: Date
 
-    init(id: UUID = UUID(), title: String, clientName: String, jobType: String, assignedDate: Date, dueDate: Date, completedDate: Date? = nil, status: JobStatus = .notStarted, targetMinutes: Int = 60, actualMinutes: Int? = nil, price: Double = 0, notes: String = "", requestedDocuments: String = "", completionNotes: String = "", attachments: [JobAttachment] = [], emailHistory: [JobEmailRecord] = [], createdAt: Date = Date(), updatedAt: Date = Date()) {
+    init(
+        id: UUID = UUID(),
+        title: String,
+        clientName: String,
+        jobType: String,
+        assignedDate: Date,
+        dueDate: Date,
+        completedDate: Date? = nil,
+        status: JobStatus = .notStarted,
+        targetMinutes: Int = 60,
+        actualMinutes: Int? = nil,
+        price: Double = 0,
+        notes: String = "",
+        requestedDocuments: String = "",
+        completionNotes: String = "",
+        attachments: [JobAttachment] = [],
+        emailHistory: [JobEmailRecord] = [],
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
+    ) {
         self.id = id
         self.title = title
         self.clientName = clientName
