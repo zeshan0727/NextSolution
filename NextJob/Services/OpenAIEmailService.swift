@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 enum JobEmailPurpose: String, CaseIterable, Identifiable {
     case documentRequest
@@ -166,7 +167,9 @@ final class OpenAIConfigurationStore: ObservableObject {
     }
 
     var apiKey: String { SecureStore.load(account: apiKeyAccount) }
-    var isConfigured: Bool { !apiKey.isEmpty && !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var isConfigured: Bool {
+        !apiKey.isEmpty && !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     func save(apiKey: String, model: String) throws {
         let trimmedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -218,6 +221,7 @@ private struct OpenAIResponseEnvelope: Decodable {
 }
 
 struct OpenAIEmailService {
+    @MainActor
     func craft(
         job: JobRecord,
         purpose: JobEmailPurpose,
@@ -228,6 +232,8 @@ struct OpenAIEmailService {
     ) async throws -> OpenAIEmailDraft {
         guard configuration.isConfigured else { throw OpenAIEmailError.notConfigured }
 
+        let apiKey = configuration.apiKey
+        let model = configuration.model
         let prompt = makePrompt(
             job: job,
             purpose: purpose,
@@ -245,7 +251,7 @@ struct OpenAIEmailService {
             "additionalProperties": false
         ]
         let payload: [String: Any] = [
-            "model": configuration.model,
+            "model": model,
             "store": false,
             "input": prompt,
             "max_output_tokens": 900,
@@ -262,7 +268,7 @@ struct OpenAIEmailService {
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
         request.httpMethod = "POST"
         request.timeoutInterval = 120
-        request.setValue("Bearer \(configuration.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
