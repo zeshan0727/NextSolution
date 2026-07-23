@@ -2,7 +2,7 @@
 
 Next Job is a private iOS 16+ job tracker built for part-time accounting work received from KB Accountants.
 
-## Included in 1.0.2
+## Included in 1.0.3
 
 - Jobs with assigned date, due date, completion date, status, job type, targeted time, actual time and price
 - Create missing job types directly from the New Job form
@@ -11,10 +11,15 @@ Next Job is a private iOS 16+ job tracker built for part-time accounting work re
 - Folder trees are copied as one attachment and cannot be mixed with surrounding Files items
 - Related files and completion documents stored against the correct job
 - Completion ZIP names begin with the company name and `Completion Documents`
+- Professional completion emails include the exact recorded completion date/time, job notes and completion notes
+- Payment Pending and Payment Received tracking for completed jobs
+- Standard numbered PDF invoice generation for pending payments
 - Dedicated Email tab with Gmail Direct and Apple Mail Assisted modes
 - Gmail OAuth and direct email delivery through the same scheduler architecture used by Next Reminder
-- Dedicated AI tab using OpenAI to craft editable emails from the selected job status and details
-- One portable `.nextjobbackup` file containing all jobs, settings, files and imported folders
+- Dedicated AI tab using the OpenAI Responses API to craft editable emails from the selected job status and details
+- Explicit handling for incomplete responses, refusals, API errors and token-usage reporting
+- Recommended complimentary-token-eligible GPT-5 and GPT-4.1 model snapshots
+- One portable `.nextjobbackup` file containing all jobs, payment records, invoice metadata, settings, files and imported folders
 - Google Drive backup/restore through the iOS Files provider, with staged validation and rollback
 - Search, filters, custom job types, local deadline notifications and light/dark/system themes
 - Background persistence, cached summaries and optimized Release compilation
@@ -22,6 +27,10 @@ Next Job is a private iOS 16+ job tracker built for part-time accounting work re
 ## Email behavior
 
 Gmail Direct sends through a connected scheduler/Gmail OAuth account. Apple Mail Assisted opens the native Mail composer for review before sending. Direct Gmail attachments are limited to 10 MB each and 18 MB total; Apple Mail can be used for larger packages.
+
+## OpenAI behavior
+
+The app uses the Responses API with structured output, a larger output allowance, low reasoning effort for GPT-5 models, clear incomplete/refusal errors and visible token usage. Complimentary tokens depend on OpenAI account eligibility, enabled input/output data sharing and a positive API balance; the models are not universally free.
 
 ## Google Drive behavior
 
@@ -36,4 +45,4 @@ xcodegen generate
 xcodebuild -project NextJob.xcodeproj -scheme NextJob -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO build
 ```
 
-The GitHub Actions workflow applies the checked-in source migrations, validates all Swift source, builds the optimized unsigned app and packages `NextJob-1.0.2.tipa`, its checksum and the transformed source archive.
+The GitHub Actions workflow applies the checked-in source migrations, validates all Swift source, builds the optimized unsigned app and packages `NextJob-1.0.3.tipa`, its checksum and the transformed source archive.
