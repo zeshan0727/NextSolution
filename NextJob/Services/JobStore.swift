@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import UserNotifications
 
 @MainActor
@@ -242,5 +243,7 @@ final class NotificationService {
         }
     }
 
-    func cancelAll(jobIDs: [UUID]) { jobIDs.forEach(cancel) }
+    func cancelAll(jobIDs: [UUID]) {
+        jobIDs.forEach { cancel(jobID: $0) }
+    }
 }
