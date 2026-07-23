@@ -259,6 +259,26 @@ final class LedgerStore: ObservableObject {
         return runningBalancesByAccount[accountID]?[transactionID]
     }
 
+    func isReportIncome(_ transaction: LedgerTransaction) -> Bool {
+        transaction.type == .income || isAmaraTransfer(transaction)
+    }
+
+    func reportIncomeAmount(_ transaction: LedgerTransaction) -> Decimal {
+        isAmaraTransfer(transaction)
+            ? (transaction.destinationAmount ?? transaction.amount)
+            : transaction.amount
+    }
+
+    func reportIncomeAccountID(_ transaction: LedgerTransaction) -> UUID? {
+        isAmaraTransfer(transaction) ? transaction.destinationAccountID : transaction.accountID
+    }
+
+    private func isAmaraTransfer(_ transaction: LedgerTransaction) -> Bool {
+        guard transaction.type == .transfer,
+              let name = account(withID: transaction.accountID)?.name else { return false }
+        return name.localizedCaseInsensitiveContains("amara")
+    }
+
     func remainingBalance(accountIDs: Set<UUID>? = nil) -> Decimal {
         let selectedAccounts = activeAccounts.filter {
             $0.currencyCode == currencyCode && (accountIDs == nil || accountIDs?.contains($0.id) == true)
@@ -552,15 +572,19 @@ final class LedgerStore: ObservableObject {
     }
 
     func totals(in interval: DateInterval, accountIDs: Set<UUID>? = nil) -> LedgerTotals {
-        let accountsByID = Dictionary(uniqueKeysWithValues: accounts.map { ($0.id, $0) })
         let selected = transactions.filter {
             interval.contains($0.date) &&
             accountsByID[$0.accountID ?? LedgerAccount.legacyMainID]?.currencyCode == currencyCode &&
             (accountIDs == nil || accountIDs?.contains($0.accountID ?? LedgerAccount.legacyMainID) == true)
         }
-        let income = selected
-            .filter { $0.type == .income }
-            .reduce(Decimal.zero) { $0 + $1.amount }
+        let income = transactions.lazy
+            .filter {
+                guard interval.contains($0.date), isReportIncome($0) else { return false }
+                let incomeAccountID = reportIncomeAccountID($0) ?? LedgerAccount.legacyMainID
+                return accountsByID[incomeAccountID]?.currencyCode == currencyCode &&
+                    (accountIDs == nil || accountIDs?.contains(incomeAccountID) == true)
+            }
+            .reduce(Decimal.zero) { $0 + reportIncomeAmount($1) }
         let expense = selected
             .filter { $0.type == .expense }
             .reduce(Decimal.zero) { $0 + $1.amount }

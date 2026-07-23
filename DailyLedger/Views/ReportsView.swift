@@ -176,8 +176,16 @@ private struct ReportComparisonView: View {
     }
     private func amount(_ type: TransactionType, in interval: DateInterval) -> Decimal {
         store.transactions.lazy.filter {
-            $0.type == type && interval.contains($0.date) && store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
-        }.reduce(Decimal.zero) { $0 + $1.amount }
+            guard interval.contains($0.date) else { return false }
+            if type == .income {
+                return store.isReportIncome($0) &&
+                    store.account(withID: store.reportIncomeAccountID($0))?.currencyCode == store.currencyCode
+            }
+            return $0.type == type &&
+                store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+        }.reduce(Decimal.zero) {
+            $0 + (type == .income ? store.reportIncomeAmount($1) : $1.amount)
+        }
     }
     private var comparisonHeader: some View {
         HStack {
@@ -208,8 +216,12 @@ private struct ReportComparisonView: View {
     }
     private func transactionCount(in interval: DateInterval) -> Int {
         store.transactions.lazy.filter {
-            ($0.type == .income || $0.type == .expense) && interval.contains($0.date) &&
-            store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+            guard interval.contains($0.date) else { return false }
+            if store.isReportIncome($0) {
+                return store.account(withID: store.reportIncomeAccountID($0))?.currencyCode == store.currencyCode
+            }
+            return $0.type == .expense &&
+                store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
         }.count
     }
 }
@@ -306,7 +318,7 @@ private struct CustomAccountReportView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                    Text("\(transactions(in: interval).filter { $0.type == type }.count) transactions")
+                    Text("\(matchingTransactions(type, in: interval).count) transactions")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -323,10 +335,21 @@ private struct CustomAccountReportView: View {
         DateInterval(start: interval.start.addingTimeInterval(-interval.duration), end: interval.start)
     }
     private func transactions(in interval: DateInterval) -> [LedgerTransaction] {
-        store.transactions.filter { interval.contains($0.date) && selected.contains($0.accountID ?? LedgerAccount.legacyMainID) }
+        store.transactions.filter { interval.contains($0.date) }
+    }
+    private func matchingTransactions(_ type: TransactionType, in interval: DateInterval) -> [LedgerTransaction] {
+        transactions(in: interval).filter {
+            if type == .income {
+                return store.isReportIncome($0) &&
+                    selected.contains(store.reportIncomeAccountID($0) ?? LedgerAccount.legacyMainID)
+            }
+            return $0.type == type && selected.contains($0.accountID ?? LedgerAccount.legacyMainID)
+        }
     }
     private func total(_ type: TransactionType, in interval: DateInterval) -> Decimal {
-        transactions(in: interval).filter { $0.type == type }.reduce(0) { $0 + $1.amount }
+        matchingTransactions(type, in: interval).reduce(0) {
+            $0 + (type == .income ? store.reportIncomeAmount($1) : $1.amount)
+        }
     }
     private func formatted(_ value: Decimal) -> String { DisplayFormat.currency(value, code: store.currencyCode) }
     private func toggle(_ id: UUID) {
@@ -516,7 +539,10 @@ private struct ReportDetailView: View {
                     Button {
                         selectedTransaction = transaction
                     } label: {
-                        TransactionRow(transaction: transaction)
+                        TransactionRow(
+                            transaction: transaction,
+                            accountID: kind == .income ? store.reportIncomeAccountID(transaction) : nil
+                        )
                     }
                     .buttonStyle(.plain)
                     if transaction.id != selectedTransactions.last?.id { Divider() }
@@ -537,7 +563,9 @@ private struct ReportDetailView: View {
     }
 
     private var transactionListTotal: Decimal {
-        selectedTransactions.reduce(Decimal.zero) { $0 + $1.amount }
+        selectedTransactions.reduce(Decimal.zero) {
+            $0 + (kind == .income ? store.reportIncomeAmount($1) : $1.amount)
+        }
     }
 
     private var periodNavigator: some View {
@@ -742,17 +770,20 @@ private struct ReportDetailView: View {
     private var selectedTransactions: [LedgerTransaction] {
         if kind == .expenses { return cachedExpenseTransactions }
         return store.transactions.filter {
-            guard selectedInterval.contains($0.date),
-                  store.account(withID: $0.accountID)?.currencyCode == store.currencyCode else {
-                return false
-            }
+            guard selectedInterval.contains($0.date) else { return false }
             let kindMatches: Bool
             switch kind {
-            case .summary, .categories: kindMatches = true
-            case .income: kindMatches = $0.type == .income
-            case .expenses: kindMatches = $0.type == .expense
+            case .summary, .categories:
+                kindMatches = store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+            case .income:
+                kindMatches = store.isReportIncome($0) &&
+                    store.account(withID: store.reportIncomeAccountID($0))?.currencyCode == store.currencyCode
+            case .expenses:
+                kindMatches = $0.type == .expense &&
+                    store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
             case .loans:
                 kindMatches = $0.type == .transfer &&
+                    store.account(withID: $0.accountID)?.currencyCode == store.currencyCode &&
                     store.account(withID: $0.destinationAccountID)?.group == .payments
             }
             guard kindMatches, !searchText.isEmpty else { return kindMatches }
@@ -859,7 +890,9 @@ private struct ReportDetailView: View {
     }
 
     private func makeBucket(id: String, label: String, items: [LedgerTransaction]) -> ReportBucket {
-        let income = items.filter { $0.type == .income }.reduce(Decimal.zero) { $0 + $1.amount }
+        let income = items.filter(store.isReportIncome).reduce(Decimal.zero) {
+            $0 + store.reportIncomeAmount($1)
+        }
         let expense = items.filter { $0.type == .expense }.reduce(Decimal.zero) { $0 + $1.amount }
         return ReportBucket(
             id: id,
@@ -952,18 +985,29 @@ private struct ComparisonTransactionsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     @ViewBuilder private func rows(for type: TransactionType) -> some View {
-        let items = transactions.filter { $0.type == type }
+        let items = transactions.filter { type == .income ? store.isReportIncome($0) : $0.type == type }
         if items.isEmpty {
             Text("No \(type.title.lowercased()) transactions.").foregroundStyle(.secondary)
         } else {
-            ForEach(items) { TransactionRow(transaction: $0) }
-            LabeledContent("Total", value: DisplayFormat.currency(items.reduce(0) { $0 + $1.amount }, code: store.currencyCode))
+            ForEach(items) {
+                TransactionRow(
+                    transaction: $0,
+                    accountID: type == .income ? store.reportIncomeAccountID($0) : nil
+                )
+            }
+            LabeledContent("Total", value: DisplayFormat.currency(items.reduce(0) {
+                $0 + (type == .income ? store.reportIncomeAmount($1) : $1.amount)
+            }, code: store.currencyCode))
         }
     }
     private var transactions: [LedgerTransaction] {
         store.transactions.filter {
-            interval.contains($0.date) && ($0.type == .income || $0.type == .expense) &&
-            store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+            guard interval.contains($0.date) else { return false }
+            if store.isReportIncome($0) {
+                return store.account(withID: store.reportIncomeAccountID($0))?.currencyCode == store.currencyCode
+            }
+            return $0.type == .expense &&
+                store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
         }.sorted { $0.date > $1.date }
     }
 }
@@ -979,7 +1023,10 @@ private struct AccountReportTransactionsView: View {
         List {
             ForEach(transactions) { transaction in
                 Button { selectedTransaction = transaction } label: {
-                    TransactionRow(transaction: transaction)
+                    TransactionRow(
+                        transaction: transaction,
+                        accountID: type == .income ? store.reportIncomeAccountID(transaction) : nil
+                    )
                 }.buttonStyle(.plain)
             }
             Section {
@@ -995,11 +1042,19 @@ private struct AccountReportTransactionsView: View {
     }
     private var transactions: [LedgerTransaction] {
         store.transactions.filter {
-            interval.contains($0.date) && accountIDs.contains($0.accountID ?? LedgerAccount.legacyMainID) &&
-            $0.type == type
+            guard interval.contains($0.date) else { return false }
+            if type == .income {
+                return store.isReportIncome($0) &&
+                    accountIDs.contains(store.reportIncomeAccountID($0) ?? LedgerAccount.legacyMainID)
+            }
+            return accountIDs.contains($0.accountID ?? LedgerAccount.legacyMainID) && $0.type == type
         }.sorted { $0.date > $1.date }
     }
-    private var total: Decimal { transactions.reduce(0) { $0 + $1.amount } }
+    private var total: Decimal {
+        transactions.reduce(0) {
+            $0 + (type == .income ? store.reportIncomeAmount($1) : $1.amount)
+        }
+    }
     private func formatted(_ amount: Decimal) -> String {
         DisplayFormat.currency(amount, code: store.currencyCode)
     }
@@ -1071,7 +1126,7 @@ private struct AccountNatureReportView: View {
                     NavigationLink {
                         NatureTransactionsView(nature: nature, interval: interval, type: .income)
                     } label: {
-                        metric("Direct Income", type: .income, nature: nature)
+                        metric("Income", type: .income, nature: nature)
                     }
                     NavigationLink {
                         NatureTransactionsView(nature: nature, interval: interval, type: .expense)
@@ -1107,7 +1162,12 @@ private struct AccountNatureReportView: View {
     private func metric(_ title: String, type: TransactionType, nature: AccountNature) -> some View {
         let ids = Set(accounts(nature).map(\.id))
         let items = store.transactions.filter {
-            $0.type == type && interval.contains($0.date) && ids.contains($0.accountID ?? LedgerAccount.legacyMainID)
+            guard interval.contains($0.date) else { return false }
+            if type == .income {
+                return store.isReportIncome($0) &&
+                    ids.contains(store.reportIncomeAccountID($0) ?? LedgerAccount.legacyMainID)
+            }
+            return $0.type == type && ids.contains($0.accountID ?? LedgerAccount.legacyMainID)
         }
         return HStack {
             VStack(alignment: .leading) {
@@ -1119,9 +1179,14 @@ private struct AccountNatureReportView: View {
         }
     }
     private func currencySummary(_ items: [LedgerTransaction]) -> String {
-        Dictionary(grouping: items) { store.account(withID: $0.accountID)?.currencyCode ?? store.currencyCode }
+        Dictionary(grouping: items) {
+            let id = store.isReportIncome($0) ? store.reportIncomeAccountID($0) : $0.accountID
+            return store.account(withID: id)?.currencyCode ?? store.currencyCode
+        }
             .map { code, values in
-                DisplayFormat.currency(values.reduce(0) { $0 + $1.amount }, code: code)
+                DisplayFormat.currency(values.reduce(0) {
+                    $0 + (store.isReportIncome($1) ? store.reportIncomeAmount($1) : $1.amount)
+                }, code: code)
             }.sorted().joined(separator: " · ")
     }
     private func currencyBalances(_ nature: AccountNature) -> [NatureCurrencyBalance] {
@@ -1140,7 +1205,12 @@ private struct NatureTransactionsView: View {
     var body: some View {
         List {
             ForEach(transactions) { item in
-                Button { selectedTransaction = item } label: { TransactionRow(transaction: item) }
+                Button { selectedTransaction = item } label: {
+                    TransactionRow(
+                        transaction: item,
+                        accountID: type == .income ? store.reportIncomeAccountID(item) : nil
+                    )
+                }
                     .buttonStyle(.plain)
             }
         }
@@ -1158,8 +1228,12 @@ private struct NatureTransactionsView: View {
     }
     private var transactions: [LedgerTransaction] {
         store.transactions.filter {
-            $0.type == type && interval.contains($0.date) &&
-            accountIDs.contains($0.accountID ?? LedgerAccount.legacyMainID)
+            guard interval.contains($0.date) else { return false }
+            if type == .income {
+                return store.isReportIncome($0) &&
+                    accountIDs.contains(store.reportIncomeAccountID($0) ?? LedgerAccount.legacyMainID)
+            }
+            return $0.type == type && accountIDs.contains($0.accountID ?? LedgerAccount.legacyMainID)
         }.sorted { $0.date > $1.date }
     }
 }

@@ -28,7 +28,10 @@ struct PeriodTransactionsView: View {
                     Button {
                         selectedTransaction = transaction
                     } label: {
-                        TransactionRow(transaction: transaction)
+                        TransactionRow(
+                            transaction: transaction,
+                            accountID: kind == .income ? store.reportIncomeAccountID(transaction) : nil
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -60,16 +63,15 @@ struct PeriodTransactionsView: View {
 
     private var transactions: [LedgerTransaction] {
         store.transactions.filter { transaction in
-            guard interval.contains(transaction.date),
-                  store.account(withID: transaction.accountID)?.currencyCode == store.currencyCode else {
-                return false
-            }
+            guard interval.contains(transaction.date) else { return false }
             let kindMatches: Bool
             switch kind {
             case .income:
-                kindMatches = transaction.type == .income
+                kindMatches = store.isReportIncome(transaction) &&
+                    store.account(withID: store.reportIncomeAccountID(transaction))?.currencyCode == store.currencyCode
             case .expenses:
-                kindMatches = transaction.type == .expense
+                kindMatches = transaction.type == .expense &&
+                    store.account(withID: transaction.accountID)?.currencyCode == store.currencyCode
             case .loans:
                 kindMatches = transaction.type == .transfer &&
                     store.account(withID: transaction.destinationAccountID)?.group == .payments
@@ -83,6 +85,8 @@ struct PeriodTransactionsView: View {
     }
 
     private var total: Decimal {
-        transactions.reduce(Decimal.zero) { $0 + $1.amount }
+        transactions.reduce(Decimal.zero) {
+            $0 + (kind == .income ? store.reportIncomeAmount($1) : $1.amount)
+        }
     }
 }

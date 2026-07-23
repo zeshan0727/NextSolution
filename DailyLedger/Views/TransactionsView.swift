@@ -69,7 +69,12 @@ struct TransactionsView: View {
                                     Button {
                                         editingTransaction = transaction
                                     } label: {
-                                        TransactionRow(transaction: transaction)
+                                        TransactionRow(
+                                            transaction: transaction,
+                                            accountID: filter == .income
+                                                ? store.reportIncomeAccountID(transaction)
+                                                : nil
+                                        )
                                     }
                                     .buttonStyle(.plain)
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -188,7 +193,7 @@ struct TransactionsView: View {
             let typeMatches: Bool
             switch filter {
             case .all: typeMatches = true
-            case .income: typeMatches = transaction.type == .income
+            case .income: typeMatches = store.isReportIncome(transaction)
             case .expense: typeMatches = transaction.type == .expense
             case .transfer: typeMatches = transaction.type == .transfer
             }
