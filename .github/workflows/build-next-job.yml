@@ -8,6 +8,12 @@ on:
     paths:
       - "NextJob/**"
       - ".github/workflows/build-next-job.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "NextJob/**"
+      - ".github/workflows/build-next-job.yml"
 
 jobs:
   build:
