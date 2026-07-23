@@ -5,16 +5,10 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/build-nextmedia-v13-temp.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "NextMediaApp/**"
-      - ".github/workflows/build-nextmedia.yml"
-      - ".github/workflows/build-nextmedia-141.yml"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -25,9 +19,11 @@ jobs:
       - name: Checkout Next Media 1.4.1 branch
         uses: actions/checkout@v4
         with:
-          ref: next-media-v141-build
+          ref: next-media-v141-final
 
       - name: Build and verify floating player update
+        id: compile
+        continue-on-error: true
         run: |
           mkdir -p diagnostics
           set -o pipefail
@@ -48,3 +44,27 @@ jobs:
             projects/NextMedia/xcodegen.log
             projects/NextMedia/icon-step.log
             diagnostics/build141.log
+
+      - name: Publish exact run status
+        if: always()
+        env:
+          BUILD_OUTCOME: ${{ steps.compile.outcome }}
+        run: |
+          set -euo pipefail
+          STATUS_DIR="/tmp/nextmedia-run-status"
+          rm -rf "$STATUS_DIR"
+          mkdir -p "$STATUS_DIR"
+          printf 'run_id=%s\noutcome=%s\ncommit=%s\nversion=1.4.1\n' \
+            "$GITHUB_RUN_ID" "$BUILD_OUTCOME" "$GITHUB_SHA" > "$STATUS_DIR/latest-run.txt"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan nextmedia-status-output
+          git rm -rf .
+          cp "$STATUS_DIR/latest-run.txt" latest-run.txt
+          git add latest-run.txt
+          git commit -m "Publish Next Media 1.4.1 build status"
+          git push --force origin HEAD:next-media-v141-status
+
+      - name: Fail when compilation failed
+        if: steps.compile.outcome != 'success'
+        run: exit 1
