@@ -509,6 +509,15 @@ final class LedgerStore: ObservableObject {
 
     func importFile(at url: URL) throws -> ImportSummary {
         let incoming = try ImportExportCodec.decode(url: url)
+        return try mergeImport(incoming)
+    }
+
+    func importData(_ data: Data) throws -> ImportSummary {
+        let incoming = try ImportExportCodec.decode(data: data)
+        return try mergeImport(incoming)
+    }
+
+    private func mergeImport(_ incoming: ImportPayload) throws -> ImportSummary {
         let oldLedger = LedgerDiskStore.shared.load()
         let ledger = try LedgerDiskStore.shared.merge(
             incoming.transactions,

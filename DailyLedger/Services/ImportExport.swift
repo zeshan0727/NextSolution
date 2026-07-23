@@ -68,6 +68,10 @@ enum ImportExportCodec {
 
     static func decode(url: URL) throws -> ImportPayload {
         let data = try Data(contentsOf: url)
+        return try decode(data: data)
+    }
+
+    static func decode(data: Data) throws -> ImportPayload {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         if let ledger = try? decoder.decode(LedgerData.self, from: data) {
