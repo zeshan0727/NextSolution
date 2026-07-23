@@ -20,6 +20,24 @@ if "    @MainActor\n    func send(\n        recipient:" not in email_source:
     )
 email_path.write_text(email_source, encoding="utf-8")
 
+ai_path = Path("NextJob/Views/AIEmailView.swift")
+ai_source = ai_path.read_text(encoding="utf-8")
+ai_replacements = [
+    ('    @State private var body = ""', '    @State private var emailBody = ""'),
+    ('                body = ""', '                emailBody = ""'),
+    ('            if subject.isEmpty && body.isEmpty {', '            if subject.isEmpty && emailBody.isEmpty {'),
+    ('                TextEditor(text: $body)', '                TextEditor(text: $emailBody)'),
+    ('                body = result.body', '                emailBody = result.body'),
+    ('              !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {', '              !emailBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {'),
+    ('            draft: OpenAIEmailDraft(subject: subject, body: body),', '            draft: OpenAIEmailDraft(subject: subject, body: emailBody),'),
+    ('detailRow("Price", "\\(store.settings.currency) \\(job.price, specifier: \"%.2f\")")', 'detailRow("Price", "\\(store.settings.currency) \\(String(format: \"%.2f\", job.price))")'),
+]
+for old_value, new_value in ai_replacements:
+    if old_value not in ai_source:
+        raise RuntimeError(f"Could not locate AI email source fragment: {old_value}")
+    ai_source = ai_source.replace(old_value, new_value, 1)
+ai_path.write_text(ai_source, encoding="utf-8")
+
 view_path = Path("NextJob/Views/JobDetailView.swift")
 view = view_path.read_text(encoding="utf-8")
 view = view.replace(
