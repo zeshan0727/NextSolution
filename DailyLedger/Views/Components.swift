@@ -94,6 +94,7 @@ private struct BalanceMiniStat: View {
 struct TransactionRow: View {
     @EnvironmentObject private var store: LedgerStore
     let transaction: LedgerTransaction
+    var accountID: UUID? = nil
 
     var body: some View {
         HStack(spacing: 13) {
@@ -127,7 +128,8 @@ struct TransactionRow: View {
                 Text(amountText)
                     .font(.subheadline.bold())
                     .foregroundStyle(amountColor)
-                if transaction.type == .transfer,
+                if accountID == nil,
+                   transaction.type == .transfer,
                    let destination = destinationAccount,
                    destination.currencyCode != sourceAccount?.currencyCode {
                     Text("+" + DisplayFormat.currency(
@@ -137,10 +139,13 @@ struct TransactionRow: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(AppTheme.blue)
                 }
-                if let runningBalance = store.runningBalances[transaction.id] {
+                if let runningBalance = store.runningBalance(
+                    for: transaction.id,
+                    accountID: balanceAccountID
+                ) {
                     Text("Balance " + DisplayFormat.currency(
                         runningBalance,
-                        code: sourceAccount?.currencyCode ?? store.currencyCode
+                        code: balanceAccount?.currencyCode ?? store.currencyCode
                     ))
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
@@ -154,11 +159,25 @@ struct TransactionRow: View {
     }
 
     private var amountText: String {
-        let prefix = transaction.type == .income ? "+" : "−"
+        let prefix = isDestinationTransfer || transaction.type == .income ? "+" : "−"
         return prefix + DisplayFormat.currency(
-            transaction.amount,
-            code: sourceAccount?.currencyCode ?? store.currencyCode
+            isDestinationTransfer ? (transaction.destinationAmount ?? transaction.amount) : transaction.amount,
+            code: balanceAccount?.currencyCode ?? store.currencyCode
         )
+    }
+
+    private var isDestinationTransfer: Bool {
+        transaction.type == .transfer &&
+            accountID != nil &&
+            transaction.destinationAccountID == accountID
+    }
+
+    private var balanceAccountID: UUID? {
+        accountID ?? transaction.accountID
+    }
+
+    private var balanceAccount: LedgerAccount? {
+        store.account(withID: balanceAccountID)
     }
 
     private var primaryText: String {

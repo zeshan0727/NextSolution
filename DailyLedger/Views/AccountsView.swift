@@ -177,7 +177,7 @@ private struct AccountDetailView: View {
                 } else {
                     ForEach(transactions) { transaction in
                         Button { editingTransaction = transaction } label: {
-                            TransactionRow(transaction: transaction)
+                            TransactionRow(transaction: transaction, accountID: accountID)
                         }
                         .buttonStyle(.plain)
                     }

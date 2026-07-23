@@ -9,6 +9,9 @@ final class LedgerStore: ObservableObject {
     @Published var errorMessage: String?
     @Published private(set) var recordingCards: [LedgerTransaction] = []
     private(set) var runningBalances: [UUID: Decimal] = [:]
+    private var runningBalancesByAccount: [UUID: [UUID: Decimal]] = [:]
+    private var accountsByID: [UUID: LedgerAccount] = [:]
+    private var currentBalances: [UUID: Decimal] = [:]
     private var hasLoaded = false
 
     init() {
@@ -51,6 +54,7 @@ final class LedgerStore: ObservableObject {
             ($0.id, $0.openingBalance)
         })
         var running: [UUID: Decimal] = [:]
+        var accountRunning: [UUID: [UUID: Decimal]] = [:]
         for item in ordered {
             if let sourceID = item.accountID {
                 switch item.type {
@@ -60,14 +64,19 @@ final class LedgerStore: ObservableObject {
                     accountBalances[sourceID, default: 0] -= item.amount
                 }
                 running[item.id] = accountBalances[sourceID, default: 0]
+                accountRunning[sourceID, default: [:]][item.id] = accountBalances[sourceID, default: 0]
             }
             if item.type == .transfer, let destinationID = item.destinationAccountID {
                 accountBalances[destinationID, default: 0] += item.destinationAmount ?? item.amount
+                accountRunning[destinationID, default: [:]][item.id] = accountBalances[destinationID, default: 0]
             }
         }
         accounts = ledger.accounts
+        accountsByID = Dictionary(uniqueKeysWithValues: ledger.accounts.map { ($0.id, $0) })
+        currentBalances = accountBalances
         settings = ledger.settings
         runningBalances = running
+        runningBalancesByAccount = accountRunning
         transactions = Array(ordered.reversed())
         if hasLoaded {
             let additions = transactions.filter { !previousIDs.contains($0.id) }
@@ -238,24 +247,16 @@ final class LedgerStore: ObservableObject {
 
     func account(withID id: UUID?) -> LedgerAccount? {
         guard let id else { return nil }
-        return accounts.first(where: { $0.id == id })
+        return accountsByID[id]
     }
 
     func balance(for account: LedgerAccount) -> Decimal {
-        transactions.reduce(account.openingBalance) { result, item in
-            switch item.type {
-            case .income where item.accountID == account.id:
-                return result + item.amount
-            case .expense where item.accountID == account.id:
-                return result - item.amount
-            case .transfer where item.accountID == account.id:
-                return result - item.amount
-            case .transfer where item.destinationAccountID == account.id:
-                return result + (item.destinationAmount ?? item.amount)
-            default:
-                return result
-            }
-        }
+        currentBalances[account.id] ?? account.openingBalance
+    }
+
+    func runningBalance(for transactionID: UUID, accountID: UUID?) -> Decimal? {
+        guard let accountID else { return runningBalances[transactionID] }
+        return runningBalancesByAccount[accountID]?[transactionID]
     }
 
     func remainingBalance(accountIDs: Set<UUID>? = nil) -> Decimal {
