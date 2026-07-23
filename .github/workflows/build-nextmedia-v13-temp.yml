@@ -47,7 +47,7 @@ jobs:
             projects/NextMedia/xcodebuild.log
             projects/NextMedia/xcodegen.log
             projects/NextMedia/icon-step.log
-            diagnostics/build145.log
+            diagnostics/**
 
       - name: Publish exact run status
         if: always()
@@ -73,4 +73,4 @@ jobs:
         if: steps.compile.outcome != 'success'
         run: exit 1
 
-# Trigger Next Media 1.4.5 verified build.
+# Trigger Next Media 1.4.5 deep trace build.
