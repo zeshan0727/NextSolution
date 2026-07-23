@@ -21,8 +21,8 @@ targets:
       - path: DailyLedger
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.dailyledger
-        PRODUCT_NAME: Next Ledger
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextledgerrestoretest
+        PRODUCT_NAME: Next Ledger Restore Test
         INFOPLIST_FILE: DailyLedger/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

@@ -23,7 +23,7 @@ final class OpenAIService: ObservableObject {
         "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4o-mini",
         "gpt-5-nano", "gpt-5-mini", "gpt-5.6-sol"
     ]
-    private static let service = "com.nextsolution.dailyledger.openai"
+    private static let service = "com.nextsolution.nextledgerrestoretest.openai"
     private static let account = "api-key"
     @Published private(set) var inputTokens = UserDefaults.standard.integer(forKey: "OpenAIInputTokens")
     @Published private(set) var outputTokens = UserDefaults.standard.integer(forKey: "OpenAIOutputTokens")
