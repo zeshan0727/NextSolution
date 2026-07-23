@@ -1,0 +1,39 @@
+name: Apply Next Job 1.0.1 UI Patch
+
+on:
+  push:
+    branches:
+      - agent/next-job-v1.0.0-0723
+    paths:
+      - "NextJob/Patches/next-job-1.0.1.patch"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Apply interface patch
+        run: |
+          test -f NextJob/Patches/next-job-1.0.1.patch || exit 0
+          git apply --check NextJob/Patches/next-job-1.0.1.patch
+          git apply NextJob/Patches/next-job-1.0.1.patch
+          rm NextJob/Patches/next-job-1.0.1.patch
+
+      - name: Commit patched source
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "Next Solution Build"
+          git config user.email "actions@github.com"
+          git add NextJob/Views/JobDetailView.swift NextJob/Patches/next-job-1.0.1.patch
+          git commit -m "Add stable file and folder upload interface"
+          git push origin HEAD:${{ github.ref_name }}
