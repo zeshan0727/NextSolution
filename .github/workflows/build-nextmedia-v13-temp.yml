@@ -1,4 +1,4 @@
-name: Temporary Build Next Media 1.4.1
+name: Temporary Build Next Media 1.4.2
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: nextmedia-1.4.1-build
+  group: nextmedia-1.4.2-build
   cancel-in-progress: true
 
 jobs:
@@ -20,35 +20,34 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - name: Checkout Next Media 1.4.1 branch
+      - name: Checkout Next Media 1.4.2 branch
         uses: actions/checkout@v4
         with:
-          ref: next-media-v141-final
+          ref: next-media-v142-package-ready
 
-      - name: Build and verify floating player update
+      - name: Build and verify draggable square player
         id: compile
         continue-on-error: true
         run: |
           mkdir -p diagnostics
-          cat NextMediaApp/v141patch.part00 NextMediaApp/v141patch.part01 > NextMediaApp/v141patch.b64
           set -o pipefail
-          bash -x NextMediaApp/build141.sh 2>&1 | tee diagnostics/build141.log
+          bash -x NextMediaApp/build142.sh 2>&1 | tee diagnostics/build142.log
 
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NextMedia-1.4.1
+          name: NextMedia-1.4.2
           if-no-files-found: warn
           path: |
-            projects/NextMedia/dist/NextMedia-1.4.1.ipa
-            projects/NextMedia/dist/NextMedia-1.4.1.tipa
-            projects/NextMedia/dist/NextMedia-1.4.1-source.zip
+            projects/NextMedia/dist/NextMedia-1.4.2.ipa
+            projects/NextMedia/dist/NextMedia-1.4.2.tipa
+            projects/NextMedia/dist/NextMedia-1.4.2-source.zip
             projects/NextMedia/dist/SHA256SUMS.txt
             projects/NextMedia/xcodebuild.log
             projects/NextMedia/xcodegen.log
             projects/NextMedia/icon-step.log
-            diagnostics/build141.log
+            diagnostics/build142.log
 
       - name: Publish exact run status
         if: always()
@@ -59,7 +58,7 @@ jobs:
           STATUS_DIR="/tmp/nextmedia-run-status"
           rm -rf "$STATUS_DIR"
           mkdir -p "$STATUS_DIR"
-          printf 'run_id=%s\noutcome=%s\ncommit=%s\nversion=1.4.1\n' \
+          printf 'run_id=%s\noutcome=%s\ncommit=%s\nversion=1.4.2\n' \
             "$GITHUB_RUN_ID" "$BUILD_OUTCOME" "$GITHUB_SHA" > "$STATUS_DIR/latest-run.txt"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -67,8 +66,8 @@ jobs:
           git rm -rf .
           cp "$STATUS_DIR/latest-run.txt" latest-run.txt
           git add latest-run.txt
-          git commit -m "Publish Next Media 1.4.1 build status"
-          git push --force origin HEAD:next-media-v141-status
+          git commit -m "Publish Next Media 1.4.2 build status"
+          git push --force origin HEAD:next-media-v142-status
 
       - name: Fail when compilation failed
         if: steps.compile.outcome != 'success'
