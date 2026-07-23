@@ -28,6 +28,7 @@ jobs:
         run: |
           python3 NextJob/Patches/apply_1_0_1.py
           python3 NextJob/Patches/apply_1_0_2.py
+          python3 NextJob/Patches/apply_1_0_3.py
 
       - name: Validate Swift syntax
         run: |
@@ -71,7 +72,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-Compiler-Log-1.0.2
+          name: NextJob-Compiler-Log-1.0.3
           path: next-job-build.log
           if-no-files-found: ignore
 
@@ -82,20 +83,20 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.2.tipa
-          shasum -a 256 NextJob-1.0.2.tipa > NextJob-1.0.2.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.3.tipa
+          shasum -a 256 NextJob-1.0.3.tipa > NextJob-1.0.3.sha256
 
       - name: Package transformed source
         run: |
           rm -rf NextJob/NextJob.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.2-source.zip
+          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.3-source.zip
 
       - name: Upload TIPA and source
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-TrollStore-1.0.2
+          name: NextJob-TrollStore-1.0.3
           path: |
-            NextJob-1.0.2.tipa
-            NextJob-1.0.2.sha256
-            NextJob-1.0.2-source.zip
+            NextJob-1.0.3.tipa
+            NextJob-1.0.3.sha256
+            NextJob-1.0.3-source.zip
           if-no-files-found: error
