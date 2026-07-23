@@ -1,0 +1,7 @@
+{
+    entry = {
+        bundle = DailyLedgerSMSImportPreferences;
+        cell = PSLinkCell;
+        label = "Daily Ledger SMS";
+    };
+}

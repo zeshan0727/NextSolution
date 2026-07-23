@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+launchctl bootout system/com.nextsolution.dailyledger.smsimport 2>/dev/null || true
+launchctl bootout gui/501/com.nextsolution.dailyledger.smsimport 2>/dev/null || true
+mkdir -p /rootfs/var/mobile/Library/DailyLedgerSMSImport 2>/dev/null || true
+chown mobile:mobile /rootfs/var/mobile/Library/DailyLedgerSMSImport 2>/dev/null || true
+chmod 700 /rootfs/var/mobile/Library/DailyLedgerSMSImport 2>/dev/null || true
+
+if command -v sbreload >/dev/null 2>&1; then
+    sbreload
+else
+    killall -9 SpringBoard 2>/dev/null || true
+fi
+
+exit 0
