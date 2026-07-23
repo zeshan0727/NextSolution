@@ -47,6 +47,14 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee next-job-build.log
 
+      - name: Upload compiler log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextJob-Compiler-Log
+          path: next-job-build.log
+          if-no-files-found: error
+
       - name: Package for TrollStore
         run: |
           APP_PATH="$(find build-next-job/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
