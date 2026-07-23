@@ -1,0 +1,167 @@
+--- a/NextJob/Views/JobDetailView.swift
++++ b/NextJob/Views/JobDetailView.swift
+@@ -8,6 +8,9 @@
+     @State private var showingEditor = false
+     @State private var showingPicker = false
+     @State private var pickerKind: AttachmentKind = .related
++    @State private var pickerMode: DocumentPickerMode = .files
++    @State private var isImportingItems = false
++    @State private var importMessage = "Adding selected items…"
+     @State private var previewItem: PreviewItem?
+     @State private var sharePayload: SharePayload?
+     @State private var mailDraft: MailDraft?
+@@ -41,6 +44,22 @@
+                 EmptyStateView(title: "Job not found", message: "This job may have been deleted.", systemImage: "exclamationmark.triangle")
+                     .padding()
+             }
++
++            if isImportingItems {
++                Color.black.opacity(0.22)
++                    .ignoresSafeArea()
++                VStack(spacing: 12) {
++                    ProgressView()
++                        .controlSize(.large)
++                    Text(importMessage)
++                        .font(.subheadline.weight(.semibold))
++                        .multilineTextAlignment(.center)
++                }
++                .padding(.horizontal, 24)
++                .padding(.vertical, 20)
++                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
++                .padding(32)
++            }
+         }
+         .navigationTitle(job?.title ?? "Job")
+         .navigationBarTitleDisplayMode(.inline)
+@@ -55,9 +74,14 @@
+             if let job { JobEditorView(job: job).environmentObject(store) }
+         }
+         .sheet(isPresented: $showingPicker) {
+-            DocumentPicker(allowsMultipleSelection: true) { result in
++            DocumentPicker(
++                mode: pickerMode,
++                allowsMultipleSelection: pickerMode == .files
++            ) { result in
+                 showingPicker = false
+-                handleFiles(result)
++                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
++                    handleSelectedItems(result)
++                }
+             }
+         }
+         .sheet(item: $previewItem) { item in
+@@ -196,43 +220,55 @@
+         return VStack(alignment: .leading, spacing: 10) {
+             HStack {
+                 SectionTitle(title: kind.title, systemImage: kind == .related ? "paperclip" : "checkmark.doc")
+-                Button {
+-                    pickerKind = kind
+-                    showingPicker = true
++                Menu {
++                    Button {
++                        beginPicking(.files, kind: kind)
++                    } label: {
++                        Label("Add Files", systemImage: "doc.badge.plus")
++                    }
++                    Button {
++                        beginPicking(.folder, kind: kind)
++                    } label: {
++                        Label("Add Folder", systemImage: "folder.badge.plus")
++                    }
+                 } label: {
+                     Image(systemName: "plus.circle.fill")
+                         .font(.title3)
+                 }
++                .disabled(isImportingItems)
+             }
+             if files.isEmpty {
+-                Text(kind == .related ? "Add source documents, spreadsheets or instructions." : "Upload the completed files you will send back.")
++                Text(kind == .related ? "Add source files, folders, spreadsheets or instructions." : "Upload completed files or a complete work folder to send back.")
+                     .font(.subheadline)
+                     .foregroundStyle(.secondary)
+             } else {
+                 ForEach(files) { attachment in
++                    let isFolder = JobFileService.shared.isFolder(attachment, jobID: job.id)
+                     HStack(spacing: 12) {
+-                        Image(systemName: "doc.fill")
+-                            .foregroundStyle(.blue)
++                        Image(systemName: isFolder ? "folder.fill" : "doc.fill")
++                            .foregroundStyle(isFolder ? .orange : .blue)
+                         VStack(alignment: .leading, spacing: 2) {
+                             Text(attachment.originalName)
+                                 .font(.subheadline.weight(.medium))
+                                 .lineLimit(1)
+-                            Text(attachment.formattedSize)
++                            Text(JobFileService.shared.detailText(for: attachment, jobID: job.id))
+                                 .font(.caption)
+                                 .foregroundStyle(.secondary)
+                         }
+                         Spacer()
+                         Menu {
+-                            Button {
+-                                previewItem = PreviewItem(url: JobFileService.shared.url(for: attachment, jobID: job.id))
+-                            } label: {
+-                                Label("Preview", systemImage: "eye")
++                            if !isFolder {
++                                Button {
++                                    previewItem = PreviewItem(url: JobFileService.shared.url(for: attachment, jobID: job.id))
++                                } label: {
++                                    Label("Preview", systemImage: "eye")
++                                }
+                             }
+                             Button {
+                                 let url = JobFileService.shared.url(for: attachment, jobID: job.id)
+                                 sharePayload = SharePayload(items: [url])
+                             } label: {
+-                                Label("Share", systemImage: "square.and.arrow.up")
++                                Label(isFolder ? "Share Folder" : "Share", systemImage: "square.and.arrow.up")
+                             }
+                             Button(role: .destructive) {
+                                 store.removeAttachment(attachment, from: job.id)
+@@ -347,14 +383,42 @@
+         .presentationDetents([.medium])
+     }
+ 
+-    private func handleFiles(_ result: Result<[URL], Error>) {
++    private func beginPicking(_ mode: DocumentPickerMode, kind: AttachmentKind) {
++        guard !isImportingItems else { return }
++        pickerKind = kind
++        pickerMode = mode
++        showingPicker = true
++    }
++
++    private func handleSelectedItems(_ result: Result<[URL], Error>) {
+         do {
+             let urls = try result.get()
+             guard !urls.isEmpty else { return }
+-            let attachments = try JobFileService.shared.copyFiles(urls, jobID: jobID, kind: pickerKind)
+-            store.addAttachments(attachments, to: jobID)
++
++            let selectedKind = pickerKind
++            if pickerMode == .folder {
++                importMessage = "Adding folder and its contents…"
++            } else {
++                importMessage = "Adding \(urls.count) selected file\(urls.count == 1 ? \"\" : \"s\")…"
++            }
++            isImportingItems = true
++
++            DispatchQueue.global(qos: .userInitiated).async {
++                let importResult = Result {
++                    try JobFileService.shared.copyItems(urls, jobID: jobID, kind: selectedKind)
++                }
++                DispatchQueue.main.async {
++                    isImportingItems = false
++                    switch importResult {
++                    case .success(let attachments):
++                        store.addAttachments(attachments, to: jobID)
++                    case .failure(let error):
++                        showNotice("Items Not Added", error.localizedDescription)
++                    }
++                }
++            }
+         } catch {
+-            showNotice("Files Not Added", error.localizedDescription)
++            showNotice("Items Not Added", error.localizedDescription)
+         }
+     }
+ 
