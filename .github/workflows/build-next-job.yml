@@ -34,7 +34,9 @@ jobs:
 
       - name: Build unsigned iPhone app
         run: |
+          set -o pipefail
           xcodebuild \
+            -quiet \
             -project NextJob/NextJob.xcodeproj \
             -scheme NextJob \
             -configuration Release \
@@ -43,7 +45,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build
+            build 2>&1 | tee next-job-build.log
 
       - name: Package for TrollStore
         run: |
