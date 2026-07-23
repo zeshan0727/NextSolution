@@ -1,10 +1,38 @@
 import Foundation
 
+enum JobFileError: LocalizedError {
+    case mixedFileAndFolderSelection
+    case folderExpected
+    case filesExpected
+    case emptyFolder
+    case symbolicLinkNotSupported
+    case invalidFolderName
+
+    var errorDescription: String? {
+        switch self {
+        case .mixedFileAndFolderSelection:
+            return "Select either files or one complete folder. Files and folders cannot be mixed in the same import."
+        case .folderExpected:
+            return "The selected item is not a folder. Use Add Folder and select the folder itself, not the files inside it."
+        case .filesExpected:
+            return "A folder was selected from Add Files. Use Add Folder so the complete directory is attached as one item."
+        case .emptyFolder:
+            return "The selected folder is empty. Add documents to it before importing."
+        case .symbolicLinkNotSupported:
+            return "This folder contains a linked item that cannot be safely imported."
+        case .invalidFolderName:
+            return "The selected folder does not have a usable name."
+        }
+    }
+}
+
 final class JobFileService {
     static let shared = JobFileService()
 
     private let fileManager = FileManager.default
     private let rootURL: URL
+
+    var filesRootURL: URL { rootURL }
 
     private init() {
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -13,6 +41,28 @@ final class JobFileService {
     }
 
     func copyItems(_ urls: [URL], jobID: UUID, kind: AttachmentKind) throws -> [JobAttachment] {
+        guard !urls.isEmpty else { return [] }
+
+        var directoryURLs: [URL] = []
+        for url in urls {
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+            if try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true {
+                directoryURLs.append(url)
+            }
+        }
+
+        if !directoryURLs.isEmpty {
+            guard urls.count == 1, directoryURLs.count == 1 else {
+                throw JobFileError.mixedFileAndFolderSelection
+            }
+            return [try copyFolder(directoryURLs[0], jobID: jobID, kind: kind)]
+        }
+
+        return try copyFiles(urls, jobID: jobID, kind: kind)
+    }
+
+    func copyFiles(_ urls: [URL], jobID: UUID, kind: AttachmentKind) throws -> [JobAttachment] {
         let targetFolder = folderURL(jobID: jobID, kind: kind)
         try fileManager.createDirectory(at: targetFolder, withIntermediateDirectories: true)
 
@@ -21,55 +71,99 @@ final class JobFileService {
 
         do {
             for sourceURL in urls {
-                let copied: (attachment: JobAttachment, destination: URL) = try {
-                    let accessing = sourceURL.startAccessingSecurityScopedResource()
-                    defer { if accessing { sourceURL.stopAccessingSecurityScopedResource() } }
+                let accessing = sourceURL.startAccessingSecurityScopedResource()
+                defer { if accessing { sourceURL.stopAccessingSecurityScopedResource() } }
 
-                    let sourceValues = try sourceURL.resourceValues(forKeys: [.isDirectoryKey])
-                    let isDirectory = sourceValues.isDirectory == true
-                    let originalName = sourceURL.lastPathComponent
-                    let storedName = uniqueStoredName(for: originalName, isDirectory: isDirectory)
-                    let destination = targetFolder.appendingPathComponent(storedName, isDirectory: isDirectory)
+                let sourceValues = try sourceURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+                guard sourceValues.isDirectory != true else { throw JobFileError.filesExpected }
 
-                    try copyCoordinatedItem(from: sourceURL, to: destination)
-                    let attachment = JobAttachment(
+                let originalName = sourceURL.lastPathComponent
+                let storedName = uniqueStoredName(for: originalName, isDirectory: false)
+                let destination = targetFolder.appendingPathComponent(storedName)
+
+                try copyCoordinatedItem(from: sourceURL, to: destination)
+                copiedDestinations.append(destination)
+                attachments.append(
+                    JobAttachment(
                         originalName: originalName,
                         storedName: storedName,
                         kind: kind,
-                        byteCount: byteCount(at: destination)
+                        byteCount: Int64((try? destination.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0),
+                        isFolder: false,
+                        childCount: nil
                     )
-                    return (attachment, destination)
-                }()
-
-                copiedDestinations.append(copied.destination)
-                attachments.append(copied.attachment)
+                )
             }
             return attachments
         } catch {
-            for destination in copiedDestinations {
-                try? fileManager.removeItem(at: destination)
-            }
+            copiedDestinations.forEach { try? fileManager.removeItem(at: $0) }
             throw error
         }
     }
 
-    func copyFiles(_ urls: [URL], jobID: UUID, kind: AttachmentKind) throws -> [JobAttachment] {
-        try copyItems(urls, jobID: jobID, kind: kind)
+    func copyFolder(_ sourceURL: URL, jobID: UUID, kind: AttachmentKind) throws -> JobAttachment {
+        let accessing = sourceURL.startAccessingSecurityScopedResource()
+        defer { if accessing { sourceURL.stopAccessingSecurityScopedResource() } }
+
+        let values = try sourceURL.resourceValues(forKeys: [.isDirectoryKey, .nameKey])
+        guard values.isDirectory == true else { throw JobFileError.folderExpected }
+
+        let originalName = sourceURL.lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !originalName.isEmpty else { throw JobFileError.invalidFolderName }
+
+        let targetFolder = folderURL(jobID: jobID, kind: kind)
+        try fileManager.createDirectory(at: targetFolder, withIntermediateDirectories: true)
+
+        let storedName = uniqueStoredName(for: originalName, isDirectory: true)
+        let destination = targetFolder.appendingPathComponent(storedName, isDirectory: true)
+        let stagingParent = fileManager.temporaryDirectory
+            .appendingPathComponent("NextJobFolderImport-\(UUID().uuidString)", isDirectory: true)
+        let stagingFolder = stagingParent.appendingPathComponent(originalName, isDirectory: true)
+
+        try fileManager.createDirectory(at: stagingParent, withIntermediateDirectories: true)
+        defer { try? fileManager.removeItem(at: stagingParent) }
+
+        do {
+            try copyCoordinatedItem(from: sourceURL, to: stagingFolder)
+            let metrics = try validateFolder(at: stagingFolder)
+            guard metrics.fileCount > 0 else { throw JobFileError.emptyFolder }
+            try fileManager.moveItem(at: stagingFolder, to: destination)
+            return JobAttachment(
+                originalName: originalName,
+                storedName: storedName,
+                kind: kind,
+                byteCount: metrics.byteCount,
+                isFolder: true,
+                childCount: metrics.fileCount
+            )
+        } catch {
+            try? fileManager.removeItem(at: destination)
+            throw error
+        }
+    }
+
+    func copyFiles(_ urls: [URL], jobID: UUID, kind: AttachmentKind, legacy: Bool = true) throws -> [JobAttachment] {
+        try copyFiles(urls, jobID: jobID, kind: kind)
     }
 
     func url(for attachment: JobAttachment, jobID: UUID) -> URL {
         folderURL(jobID: jobID, kind: attachment.kind)
-            .appendingPathComponent(attachment.storedName)
+            .appendingPathComponent(attachment.storedName, isDirectory: attachment.isFolder == true)
     }
 
     func isFolder(_ attachment: JobAttachment, jobID: UUID) -> Bool {
+        if let isFolder = attachment.isFolder { return isFolder }
         let itemURL = url(for: attachment, jobID: jobID)
         return (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
     }
 
     func detailText(for attachment: JobAttachment, jobID: UUID) -> String {
         let size = ByteCountFormatter.string(fromByteCount: attachment.byteCount, countStyle: .file)
-        return isFolder(attachment, jobID: jobID) ? "Folder • \(size)" : size
+        guard isFolder(attachment, jobID: jobID) else { return size }
+        if let count = attachment.childCount {
+            return "Folder • \(count) file\(count == 1 ? "" : "s") • \(size)"
+        }
+        return "Folder • \(size)"
     }
 
     func deleteAttachment(_ attachment: JobAttachment, jobID: UUID) throws {
@@ -88,10 +182,14 @@ final class JobFileService {
 
     func createJobZip(job: JobRecord, currency: String) throws -> URL {
         let temporaryRoot = fileManager.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        let packageName = "Next Job - \(safeName(job.title))"
+            .appendingPathComponent("NextJobPackage-\(UUID().uuidString)", isDirectory: true)
+        let company = safeName(job.clientName.isEmpty ? "KB Accountants" : job.clientName)
+        let title = safeName(job.title)
+        let packageName = "\(company) - Completion Documents - \(title)"
         let packageURL = temporaryRoot.appendingPathComponent(packageName, isDirectory: true)
         try fileManager.createDirectory(at: packageURL, withIntermediateDirectories: true)
+
+        defer { try? fileManager.removeItem(at: temporaryRoot) }
 
         try makeSummary(job: job, currency: currency).write(
             to: packageURL.appendingPathComponent("Job Summary.txt"),
@@ -99,27 +197,18 @@ final class JobFileService {
             encoding: .utf8
         )
 
-        for kind in AttachmentKind.allCases {
-            let matching = job.attachments.filter { $0.kind == kind }
-            guard !matching.isEmpty else { continue }
-            let outputFolder = packageURL.appendingPathComponent(kind.folderName, isDirectory: true)
-            try fileManager.createDirectory(at: outputFolder, withIntermediateDirectories: true)
+        let completionFolder = packageURL.appendingPathComponent("Completion Documents", isDirectory: true)
+        try fileManager.createDirectory(at: completionFolder, withIntermediateDirectories: true)
+        try copyAttachments(job.completedFiles, jobID: job.id, to: completionFolder)
 
-            for attachment in matching {
-                let source = url(for: attachment, jobID: job.id)
-                guard fileManager.fileExists(atPath: source.path) else { continue }
-                var destination = outputFolder.appendingPathComponent(attachment.originalName)
-                if fileManager.fileExists(atPath: destination.path) {
-                    destination = outputFolder.appendingPathComponent(
-                        "\(attachment.id.uuidString.prefix(6))-\(attachment.originalName)"
-                    )
-                }
-                try fileManager.copyItem(at: source, to: destination)
-            }
+        if !job.relatedFiles.isEmpty {
+            let relatedFolder = packageURL.appendingPathComponent("Related Files - Reference", isDirectory: true)
+            try fileManager.createDirectory(at: relatedFolder, withIntermediateDirectories: true)
+            try copyAttachments(job.relatedFiles, jobID: job.id, to: relatedFolder)
         }
 
         let finalURL = fileManager.temporaryDirectory
-            .appendingPathComponent("\(packageName)-\(Self.dateFormatter.string(from: Date())).zip")
+            .appendingPathComponent("\(packageName) - \(Self.dateFormatter.string(from: Date())).zip")
         if fileManager.fileExists(atPath: finalURL.path) {
             try fileManager.removeItem(at: finalURL)
         }
@@ -142,8 +231,59 @@ final class JobFileService {
         guard fileManager.fileExists(atPath: finalURL.path) else {
             throw CocoaError(.fileNoSuchFile)
         }
-        try? fileManager.removeItem(at: temporaryRoot)
         return finalURL
+    }
+
+    func installRestoredRoot(from stagingRoot: URL) throws -> URL? {
+        let parent = rootURL.deletingLastPathComponent()
+        let previous = parent.appendingPathComponent("Next Job Files Previous-\(UUID().uuidString)", isDirectory: true)
+        var previousURL: URL?
+
+        if fileManager.fileExists(atPath: rootURL.path) {
+            try fileManager.moveItem(at: rootURL, to: previous)
+            previousURL = previous
+        }
+
+        do {
+            try fileManager.moveItem(at: stagingRoot, to: rootURL)
+            return previousURL
+        } catch {
+            if let previousURL, fileManager.fileExists(atPath: previousURL.path) {
+                try? fileManager.moveItem(at: previousURL, to: rootURL)
+            }
+            throw error
+        }
+    }
+
+    func rollbackRestoredRoot(previousRoot: URL?) {
+        try? fileManager.removeItem(at: rootURL)
+        if let previousRoot, fileManager.fileExists(atPath: previousRoot.path) {
+            try? fileManager.moveItem(at: previousRoot, to: rootURL)
+        } else {
+            try? fileManager.createDirectory(at: rootURL, withIntermediateDirectories: true)
+        }
+    }
+
+    func discardPreviousRoot(_ previousRoot: URL?) {
+        if let previousRoot { try? fileManager.removeItem(at: previousRoot) }
+    }
+
+    private func copyAttachments(_ attachments: [JobAttachment], jobID: UUID, to outputFolder: URL) throws {
+        for attachment in attachments {
+            let source = url(for: attachment, jobID: jobID)
+            guard fileManager.fileExists(atPath: source.path) else { continue }
+            var destination = outputFolder.appendingPathComponent(
+                attachment.originalName,
+                isDirectory: isFolder(attachment, jobID: jobID)
+            )
+            if fileManager.fileExists(atPath: destination.path) {
+                destination = outputFolder.appendingPathComponent(
+                    "\(attachment.id.uuidString.prefix(6))-\(attachment.originalName)",
+                    isDirectory: isFolder(attachment, jobID: jobID)
+                )
+            }
+            try fileManager.copyItem(at: source, to: destination)
+        }
     }
 
     private func copyCoordinatedItem(from sourceURL: URL, to destination: URL) throws {
@@ -171,26 +311,25 @@ final class JobFileService {
         }
     }
 
-    private func byteCount(at url: URL) -> Int64 {
-        let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
-        guard values?.isDirectory == true else {
-            return Int64(values?.fileSize ?? 0)
-        }
-
-        let keys: [URLResourceKey] = [.isRegularFileKey, .fileSizeKey]
+    private func validateFolder(at url: URL) throws -> (fileCount: Int, byteCount: Int64) {
+        let keys: Set<URLResourceKey> = [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey]
         guard let enumerator = fileManager.enumerator(
             at: url,
-            includingPropertiesForKeys: keys,
-            options: [.skipsHiddenFiles, .skipsPackageDescendants]
-        ) else { return 0 }
+            includingPropertiesForKeys: Array(keys),
+            options: [.skipsHiddenFiles]
+        ) else { return (0, 0) }
 
+        var count = 0
         var total: Int64 = 0
         for case let itemURL as URL in enumerator {
-            guard let itemValues = try? itemURL.resourceValues(forKeys: Set(keys)),
-                  itemValues.isRegularFile == true else { continue }
-            total += Int64(itemValues.fileSize ?? 0)
+            let values = try itemURL.resourceValues(forKeys: keys)
+            if values.isSymbolicLink == true { throw JobFileError.symbolicLinkNotSupported }
+            if values.isRegularFile == true {
+                count += 1
+                total += Int64(values.fileSize ?? 0)
+            }
         }
-        return total
+        return (count, total)
     }
 
     private func folderURL(jobID: UUID, kind: AttachmentKind) -> URL {
@@ -221,7 +360,7 @@ final class JobFileService {
 
     private func makeSummary(job: JobRecord, currency: String) -> String {
         var lines = [
-            "NEXT JOB – JOB PACKAGE",
+            "NEXT JOB – COMPLETION PACKAGE",
             "",
             "Job: \(job.title)",
             "Company: \(job.clientName)",
