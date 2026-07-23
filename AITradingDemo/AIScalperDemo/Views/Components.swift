@@ -72,18 +72,21 @@ struct MetricTile: View {
 }
 
 struct LivePill: View {
+    let text: String
+    let color: Color
+
     var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(.mint)
+                .fill(color)
                 .frame(width: 7, height: 7)
-            Text("SIM LIVE")
+            Text(text)
                 .font(.caption2.bold())
-                .foregroundStyle(.mint)
+                .foregroundStyle(color)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color.mint.opacity(0.10), in: Capsule())
+        .background(color.opacity(0.10), in: Capsule())
     }
 }
 
@@ -159,7 +162,19 @@ struct OpenTradeCard: View {
     }
 
     private var progress: Double {
-        min(1, Double(trade.ticksOpen) / Double(engine.settings.maxHoldingTicks))
+        if engine.marketMode == .live {
+            let duration = Double(engine.executionSettings.maxHoldingMinutes * 60)
+            return min(1, Date().timeIntervalSince(trade.openedAt) / duration)
+        }
+        return min(1, Double(trade.ticksOpen) / Double(engine.settings.maxHoldingTicks))
+    }
+
+    private var timedExitText: String {
+        if engine.marketMode == .live {
+            let elapsed = max(0, Int(Date().timeIntervalSince(trade.openedAt)))
+            return "\(elapsed)s / \(engine.executionSettings.maxHoldingMinutes)m"
+        }
+        return "\(trade.ticksOpen)/\(engine.settings.maxHoldingTicks)"
     }
 
     var body: some View {
@@ -187,7 +202,7 @@ struct OpenTradeCard: View {
                     HStack {
                         Text("Timed exit")
                         Spacer()
-                        Text("\(trade.ticksOpen)/\(engine.settings.maxHoldingTicks)")
+                        Text(timedExitText)
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -205,6 +220,13 @@ struct OpenTradeCard: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(.pink)
+
+                if let feeCost = trade.feeCost, feeCost > 0 {
+                    Text("Live P/L estimate already includes spread, slippage and about \(feeCost.formatted(.currency(code: "USD"))) in round-trip fees.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
             }
         }
     }

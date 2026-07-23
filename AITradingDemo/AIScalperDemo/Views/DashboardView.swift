@@ -16,6 +16,15 @@ struct DashboardView: View {
         return (minimum - padding)...(maximum + padding)
     }
 
+    private var feedColor: Color {
+        switch engine.feedState {
+        case .live, .simulated: return .mint
+        case .connecting: return .orange
+        case .stale: return .orange
+        case .setupRequired, .error: return .pink
+        }
+    }
+
     var body: some View {
         ZStack {
             AppBackground()
@@ -51,7 +60,9 @@ struct DashboardView: View {
                 Text("PAPER TRADING ONLY")
                     .font(.caption.bold())
                     .foregroundStyle(.cyan)
-                Text("Accelerated simulated market • no real orders")
+                Text(engine.marketMode == .live
+                     ? "Real market prices • virtual orders only"
+                     : "Accelerated simulated market • no real orders")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -93,8 +104,16 @@ struct DashboardView: View {
                             .font(.system(size: 27, weight: .bold, design: .rounded))
                     }
                     Spacer()
-                    LivePill()
+                    LivePill(text: engine.marketMode == .live ? engine.feedStatusText.uppercased() : "SIM LIVE", color: feedColor)
                 }
+
+                HStack(spacing: 6) {
+                    Image(systemName: feedStatusIcon)
+                    Text(feedDetailText)
+                        .lineLimit(2)
+                }
+                .font(.caption2)
+                .foregroundStyle(engine.feedState == .error ? .pink : .secondary)
 
                 Chart(visibleCandles) { candle in
                     AreaMark(
@@ -131,6 +150,15 @@ struct DashboardView: View {
                     }
                 }
                 .frame(height: 190)
+                .animation(.linear(duration: 0.12), value: engine.currentPrice)
+
+                if engine.marketMode == .live {
+                    Text(engine.streamConnected
+                         ? "WebSocket ticks • redraws on every real update • \(engine.receivedTickCount) received"
+                         : "REST fallback • 2-minute reconciliation • app must remain open")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -178,7 +206,7 @@ struct DashboardView: View {
                     }
                 }
                 .tint(.cyan)
-                .disabled(engine.isRiskLocked)
+                .disabled(engine.isRiskLocked || !engine.isMarketReady)
             }
         }
     }
@@ -207,7 +235,7 @@ struct DashboardView: View {
                         engine.openManual(.sell)
                     }
                 }
-                .disabled(engine.isRiskLocked)
+                .disabled(engine.isRiskLocked || !engine.isMarketReady)
             }
         }
     }
@@ -219,7 +247,7 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(engine.isRiskLocked ? "Trading locked by safety rules" : "Risk protection active")
                     .font(.subheadline.bold())
-                Text("Today \(engine.todayProfitLoss.signedCurrency) • \(engine.consecutiveLosses) consecutive losses")
+                Text("Today \(engine.todayProfitLoss.signedCurrency) • \(engine.consecutiveLosses) losses • costs included")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -227,5 +255,27 @@ struct DashboardView: View {
         }
         .padding(14)
         .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var feedStatusIcon: String {
+        switch engine.feedState {
+        case .live: return "antenna.radiowaves.left.and.right"
+        case .simulated: return "waveform.path.ecg"
+        case .connecting: return "arrow.triangle.2.circlepath"
+        case .stale: return "pause.circle.fill"
+        case .setupRequired: return "key.fill"
+        case .error: return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private var feedDetailText: String {
+        if let error = engine.lastFeedError { return error }
+        if engine.feedState == .setupRequired { return "Add a Twelve Data API key in Settings." }
+        if engine.feedState == .stale { return "Trading is locked until a fresh market timestamp arrives." }
+        if let message = engine.streamMessage { return message }
+        if let updated = engine.lastMarketUpdate {
+            return "Last price update \(updated.formatted(date: .omitted, time: .standard))"
+        }
+        return engine.feedStatusText
     }
 }
