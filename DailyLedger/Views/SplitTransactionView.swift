@@ -16,6 +16,8 @@ struct SplitTransactionView: View {
     @State private var mode: SplitMode = .expense
     @State private var firstCategory = ""
     @State private var secondCategory = ""
+    @FocusState private var focusedAmount: SplitAmountField?
+    private enum SplitAmountField { case first, second }
 
     var body: some View {
         NavigationStack {
@@ -59,13 +61,9 @@ struct SplitTransactionView: View {
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
-                        Button(symbol) { firstAmount = AmountExpression.appending(symbol, to: firstAmount) }
+                        Button(symbol) { appendOperator(symbol) }
                     }
-                    Button("=") {
-                        if let value = AmountExpression.evaluate(firstAmount) {
-                            firstAmount = NSDecimalNumber(decimal: value).stringValue
-                        }
-                    }
+                    Button("=", action: calculateFocusedAmount)
                 }
             }
             .onAppear {
@@ -90,7 +88,9 @@ struct SplitTransactionView: View {
                     Text($0).tag($0)
                 }
             }
-            TextField("Amount", text: amount).keyboardType(.decimalPad)
+            TextField("Amount", text: amount)
+                .keyboardType(.decimalPad)
+                .focused($focusedAmount, equals: title.hasPrefix("First") ? .first : .second)
         }
     }
 
@@ -107,6 +107,7 @@ struct SplitTransactionView: View {
             }
             TextField("Amount", text: amount)
                 .keyboardType(.decimalPad)
+                .focused($focusedAmount, equals: title.hasPrefix("First") ? .first : .second)
         }
     }
 
@@ -125,6 +126,22 @@ struct SplitTransactionView: View {
     }
     private func decimal(_ text: String) -> Decimal? {
         AmountExpression.evaluate(text)
+    }
+    private func appendOperator(_ symbol: String) {
+        if focusedAmount == .second {
+            secondAmount = AmountExpression.appending(symbol, to: secondAmount)
+        } else {
+            firstAmount = AmountExpression.appending(symbol, to: firstAmount)
+        }
+    }
+    private func calculateFocusedAmount() {
+        if focusedAmount == .second {
+            if let value = AmountExpression.evaluate(secondAmount) {
+                secondAmount = NSDecimalNumber(decimal: value).stringValue
+            }
+        } else if let value = AmountExpression.evaluate(firstAmount) {
+            firstAmount = NSDecimalNumber(decimal: value).stringValue
+        }
     }
     private func save() {
         if mode == .expense && transaction.type == .expense {

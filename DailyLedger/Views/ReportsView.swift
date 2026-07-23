@@ -50,6 +50,12 @@ private struct CategoryTotal: Identifiable {
     let amount: Decimal
 }
 
+private struct NatureCurrencyBalance: Identifiable {
+    let currency: String
+    let amount: Decimal
+    var id: String { currency }
+}
+
 struct ReportsView: View {
     @State private var searchText = ""
 
@@ -68,6 +74,12 @@ struct ReportsView: View {
                     }
                     NavigationLink { LoanMovementReportView() } label: {
                         Label("Loan Movement by Currency", systemImage: "banknote.fill")
+                    }
+                    NavigationLink { AccountNatureReportView() } label: {
+                        Label("Account Nature Report", systemImage: "folder.badge.gearshape")
+                    }
+                    NavigationLink { BalanceReconciliationReportView() } label: {
+                        Label("Books vs Message Balance", systemImage: "checkmark.arrow.trianglehead.counterclockwise")
                     }
                 }
                 Section {
@@ -232,6 +244,7 @@ private struct CustomAccountReportView: View {
     @State private var start = Calendar.current.dateInterval(of: .month, for: Date())!.start
     @State private var end = Date()
     @State private var compare = true
+    @State private var initialized = false
 
     var body: some View {
         List {
@@ -242,16 +255,17 @@ private struct CustomAccountReportView: View {
                     Button("Deselect All") { selected.removeAll() }
                 }
                 ForEach(store.activeAccounts) { account in
-                    Button { toggle(account.id) } label: {
-                        HStack {
-                            Label(account.name, systemImage: account.icon)
-                            Spacer()
-                            if selected.contains(account.id) {
-                                Image(systemName: "checkmark.circle.fill").foregroundStyle(AppTheme.purple)
-                            }
-                        }
+                    HStack {
+                        Label(account.name, systemImage: account.icon)
+                        Spacer()
+                        Image(systemName: selected.contains(account.id) ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(selected.contains(account.id) ? AppTheme.purple : .secondary)
                     }
-                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        toggle(account.id)
+                    }
+                    .accessibilityAddTraits(selected.contains(account.id) ? .isSelected : [])
                 }
             }
             Section("Dates") {
@@ -260,24 +274,45 @@ private struct CustomAccountReportView: View {
                 Toggle("Compare previous period", isOn: $compare)
             }
             Section("Selected Period") {
-                accountComparisonHeader
-                accountComparisonRow("Selected", interval: interval)
+                accountMetricRow("Income", type: .income, interval: interval)
+                accountMetricRow("Expenses", type: .expense, interval: interval)
             }
             if compare {
                 Section("Previous Equal Period") {
-                    accountComparisonHeader
-                    accountComparisonRow("Previous", interval: previousInterval)
-                    accountValues(
-                        "Change",
-                        income: total(.income, in: interval) - total(.income, in: previousInterval),
-                        expense: total(.expense, in: interval) - total(.expense, in: previousInterval)
-                    )
+                    accountMetricRow("Income", type: .income, interval: previousInterval)
+                    accountMetricRow("Expenses", type: .expense, interval: previousInterval)
+                    LabeledContent("Income change", value: formatted(
+                        total(.income, in: interval) - total(.income, in: previousInterval)
+                    ))
+                    LabeledContent("Expense change", value: formatted(
+                        total(.expense, in: interval) - total(.expense, in: previousInterval)
+                    ))
                 }
             }
         }
         .navigationTitle("Custom Account Report")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { if selected.isEmpty { selected = Set(store.activeAccounts.map(\.id)) } }
+        .onAppear {
+            guard !initialized else { return }
+            initialized = true
+            selected = Set(store.activeAccounts.map(\.id))
+        }
+    }
+
+    private func accountMetricRow(_ title: String, type: TransactionType, interval: DateInterval) -> some View {
+        NavigationLink {
+            AccountReportTransactionsView(interval: interval, accountIDs: selected, type: type)
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                    Text("\(transactions(in: interval).filter { $0.type == type }.count) transactions")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(formatted(total(type, in: interval))).font(.subheadline.bold())
+            }
+        }
     }
 
     private var interval: DateInterval {
@@ -294,28 +329,6 @@ private struct CustomAccountReportView: View {
         transactions(in: interval).filter { $0.type == type }.reduce(0) { $0 + $1.amount }
     }
     private func formatted(_ value: Decimal) -> String { DisplayFormat.currency(value, code: store.currencyCode) }
-    private var accountComparisonHeader: some View {
-        HStack {
-            Text("Period").frame(maxWidth: .infinity, alignment: .leading)
-            Text("Income").frame(width: 100, alignment: .trailing)
-            Text("Expense").frame(width: 100, alignment: .trailing)
-        }.font(.caption.bold()).foregroundStyle(.secondary)
-    }
-    private func accountComparisonRow(_ title: String, interval: DateInterval) -> some View {
-        NavigationLink {
-            AccountReportTransactionsView(interval: interval, accountIDs: selected)
-        } label: {
-            accountValues("\(title)\n\(transactions(in: interval).count) trans.",
-                          income: total(.income, in: interval), expense: total(.expense, in: interval))
-        }
-    }
-    private func accountValues(_ title: String, income: Decimal, expense: Decimal) -> some View {
-        HStack {
-            Text(title).font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
-            Text(formatted(income)).font(.caption.bold()).frame(width: 100, alignment: .trailing)
-            Text(formatted(expense)).font(.caption.bold()).frame(width: 100, alignment: .trailing)
-        }.minimumScaleFactor(0.65)
-    }
     private func toggle(_ id: UUID) {
         if selected.contains(id) { selected.remove(id) } else { selected.insert(id) }
     }
@@ -324,17 +337,17 @@ private struct CustomAccountReportView: View {
 private struct LoanMovementReportView: View {
     @EnvironmentObject private var store: LedgerStore
     @State private var month = Date()
-    @State private var customDates = false
-    @State private var start = Calendar.current.dateInterval(of: .month, for: Date())!.start
-    @State private var end = Date()
+    @AppStorage("LoanReportCustomDates") private var customDates = false
+    @AppStorage("LoanReportStart") private var storedStart = Calendar.current.dateInterval(of: .month, for: Date())!.start.timeIntervalSince1970
+    @AppStorage("LoanReportEnd") private var storedEnd = Date().timeIntervalSince1970
 
     var body: some View {
         List {
             Section {
                 Toggle("Custom Date Range", isOn: $customDates)
                 if customDates {
-                    DatePicker("From", selection: $start, displayedComponents: .date)
-                    DatePicker("To", selection: $end, in: start..., displayedComponents: .date)
+                    DatePicker("From", selection: startBinding, displayedComponents: .date)
+                    DatePicker("To", selection: endBinding, in: Date(timeIntervalSince1970: storedStart)..., displayedComponents: .date)
                 } else {
                     DatePicker("Month", selection: $month, displayedComponents: [.date])
                         .datePickerStyle(.compact)
@@ -342,8 +355,16 @@ private struct LoanMovementReportView: View {
             }
             ForEach(currencies, id: \.self) { currency in
                 Section(currency) {
-                    LabeledContent("Loan increased", value: DisplayFormat.currency(increased(currency), code: currency))
-                    LabeledContent("Loan paid", value: DisplayFormat.currency(paid(currency), code: currency))
+                    NavigationLink {
+                        LoanTransactionsView(interval: interval, currency: currency, movement: .increased)
+                    } label: {
+                        LabeledContent("Loan increased", value: DisplayFormat.currency(increased(currency), code: currency))
+                    }
+                    NavigationLink {
+                        LoanTransactionsView(interval: interval, currency: currency, movement: .paid)
+                    } label: {
+                        LabeledContent("Loan paid", value: DisplayFormat.currency(paid(currency), code: currency))
+                    }
                     LabeledContent("Net movement", value: DisplayFormat.currency(increased(currency) - paid(currency), code: currency))
                 }
             }
@@ -354,10 +375,18 @@ private struct LoanMovementReportView: View {
 
     private var interval: DateInterval {
         if customDates {
+            let start = Date(timeIntervalSince1970: storedStart)
+            let end = Date(timeIntervalSince1970: storedEnd)
             return DateInterval(start: Calendar.current.startOfDay(for: start),
                 end: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: end))!)
         }
         return Calendar.current.dateInterval(of: .month, for: month)!
+    }
+    private var startBinding: Binding<Date> {
+        Binding(get: { Date(timeIntervalSince1970: storedStart) }, set: { storedStart = $0.timeIntervalSince1970 })
+    }
+    private var endBinding: Binding<Date> {
+        Binding(get: { Date(timeIntervalSince1970: storedEnd) }, set: { storedEnd = $0.timeIntervalSince1970 })
     }
     private var loanAccounts: [LedgerAccount] {
         store.accounts.filter { $0.group == .payments || $0.nature == .loan }
@@ -394,6 +423,7 @@ private struct ReportDetailView: View {
     @State private var draftStartDate = Date()
     @State private var draftEndDate = Date()
     @State private var searchText = ""
+    @State private var cachedExpenseTransactions: [LedgerTransaction] = []
 
     var body: some View {
         NavigationStack {
@@ -425,6 +455,12 @@ private struct ReportDetailView: View {
             .navigationTitle(kind.rawValue)
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search report transactions")
+            .onAppear(perform: refreshExpenseCache)
+            .onChange(of: anchorDate) { _ in refreshExpenseCache() }
+            .onChange(of: storedCustomStart) { _ in refreshExpenseCache() }
+            .onChange(of: storedCustomEnd) { _ in refreshExpenseCache() }
+            .onChange(of: searchText) { _ in refreshExpenseCache() }
+            .onChange(of: store.transactions.count) { _ in refreshExpenseCache() }
             .onChange(of: storedPeriod) { value in
                 anchorDate = Date()
                 if value == ReportPeriod.custom.rawValue {
@@ -432,6 +468,7 @@ private struct ReportDetailView: View {
                     draftEndDate = Date(timeIntervalSince1970: storedCustomEnd)
                     showingCustomDates = true
                 }
+                refreshExpenseCache()
             }
             .sheet(item: $selectedTransaction) { transaction in
                 TransactionSnapshotView(transaction: transaction)
@@ -701,6 +738,7 @@ private struct ReportDetailView: View {
     }
 
     private var selectedTransactions: [LedgerTransaction] {
+        if kind == .expenses { return cachedExpenseTransactions }
         store.transactions.filter {
             guard selectedInterval.contains($0.date),
                   store.account(withID: $0.accountID)?.currencyCode == store.currencyCode else {
@@ -720,6 +758,22 @@ private struct ReportDetailView: View {
                 ($0.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
                 $0.details.localizedCaseInsensitiveContains(searchText) ||
                 NSDecimalNumber(decimal: $0.amount).stringValue.contains(searchText)
+        }
+    }
+
+    private func refreshExpenseCache() {
+        guard kind == .expenses else { return }
+        let interval = selectedInterval
+        let accountCurrency = Dictionary(uniqueKeysWithValues: store.accounts.map { ($0.id, $0.currencyCode) })
+        let query = searchText
+        cachedExpenseTransactions = store.transactions.filter {
+            guard $0.type == .expense, interval.contains($0.date),
+                  accountCurrency[$0.accountID ?? LedgerAccount.legacyMainID] == store.currencyCode else { return false }
+            guard !query.isEmpty else { return true }
+            return $0.category.localizedCaseInsensitiveContains(query) ||
+                ($0.vendor?.localizedCaseInsensitiveContains(query) ?? false) ||
+                $0.details.localizedCaseInsensitiveContains(query) ||
+                NSDecimalNumber(decimal: $0.amount).stringValue.contains(query)
         }
     }
 
@@ -916,6 +970,7 @@ private struct AccountReportTransactionsView: View {
     @EnvironmentObject private var store: LedgerStore
     let interval: DateInterval
     let accountIDs: Set<UUID>
+    let type: TransactionType
     @State private var selectedTransaction: LedgerTransaction?
 
     var body: some View {
@@ -926,8 +981,7 @@ private struct AccountReportTransactionsView: View {
                 }.buttonStyle(.plain)
             }
             Section {
-                LabeledContent("Income Total", value: formatted(total(.income)))
-                LabeledContent("Expense Total", value: formatted(total(.expense)))
+                LabeledContent("\(type.title) Total", value: formatted(total))
                 LabeledContent("Transactions", value: "\(transactions.count)")
             }
         }
@@ -940,13 +994,223 @@ private struct AccountReportTransactionsView: View {
     private var transactions: [LedgerTransaction] {
         store.transactions.filter {
             interval.contains($0.date) && accountIDs.contains($0.accountID ?? LedgerAccount.legacyMainID) &&
-            ($0.type == .income || $0.type == .expense)
+            $0.type == type
         }.sorted { $0.date > $1.date }
     }
-    private func total(_ type: TransactionType) -> Decimal {
-        transactions.filter { $0.type == type }.reduce(0) { $0 + $1.amount }
-    }
+    private var total: Decimal { transactions.reduce(0) { $0 + $1.amount } }
     private func formatted(_ amount: Decimal) -> String {
         DisplayFormat.currency(amount, code: store.currencyCode)
+    }
+}
+
+private enum LoanMovementKind {
+    case increased, paid
+}
+
+private struct LoanTransactionsView: View {
+    @EnvironmentObject private var store: LedgerStore
+    let interval: DateInterval
+    let currency: String
+    let movement: LoanMovementKind
+    @State private var selectedTransaction: LedgerTransaction?
+
+    var body: some View {
+        List {
+            ForEach(transactions) { transaction in
+                Button { selectedTransaction = transaction } label: {
+                    TransactionRow(transaction: transaction)
+                }.buttonStyle(.plain)
+            }
+            LabeledContent("Total", value: DisplayFormat.currency(total, code: currency))
+        }
+        .navigationTitle(movement == .increased ? "Loan Increased" : "Loan Paid")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $selectedTransaction) {
+            TransactionSnapshotView(transaction: $0).environmentObject(store)
+        }
+    }
+    private var loanIDs: Set<UUID> {
+        Set(store.accounts.filter {
+            ($0.group == .payments || $0.nature == .loan) && $0.currencyCode == currency
+        }.map(\.id))
+    }
+    private var transactions: [LedgerTransaction] {
+        store.transactions.filter {
+            guard interval.contains($0.date) else { return false }
+            switch movement {
+            case .increased:
+                return $0.type == .expense && loanIDs.contains($0.accountID ?? LedgerAccount.legacyMainID)
+            case .paid:
+                return $0.type == .transfer && loanIDs.contains($0.destinationAccountID ?? LedgerAccount.legacyMainID)
+            }
+        }.sorted { $0.date > $1.date }
+    }
+    private var total: Decimal {
+        transactions.reduce(0) {
+            $0 + (movement == .paid ? ($1.destinationAmount ?? $1.amount) : $1.amount)
+        }
+    }
+}
+
+private struct AccountNatureReportView: View {
+    @EnvironmentObject private var store: LedgerStore
+    @State private var start = Calendar.current.dateInterval(of: .month, for: Date())!.start
+    @State private var end = Date()
+
+    var body: some View {
+        List {
+            Section("Custom Dates") {
+                DatePicker("From", selection: $start, displayedComponents: .date)
+                DatePicker("To", selection: $end, in: start..., displayedComponents: .date)
+            }
+            ForEach(natures, id: \.self) { nature in
+                Section(nature.title) {
+                    NavigationLink {
+                        NatureTransactionsView(nature: nature, interval: interval, type: .income)
+                    } label: {
+                        metric("Direct Income", type: .income, nature: nature)
+                    }
+                    NavigationLink {
+                        NatureTransactionsView(nature: nature, interval: interval, type: .expense)
+                    } label: {
+                        metric("Recorded Expenses", type: .expense, nature: nature)
+                    }
+                    ForEach(currencyBalances(nature)) { item in
+                        LabeledContent("\(item.currency) account balance",
+                                       value: DisplayFormat.currency(item.amount, code: item.currency))
+                    }
+                }
+            }
+        }
+        .navigationTitle("Account Nature Report")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    private var interval: DateInterval {
+        DateInterval(start: Calendar.current.startOfDay(for: start),
+            end: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: end))!)
+    }
+    private var natures: [AccountNature] {
+        let values = Set(store.accounts.map(effectiveNature))
+        return AccountNature.allCases.filter { $0 != .unassigned && values.contains($0) }
+    }
+    private func effectiveNature(_ account: LedgerAccount) -> AccountNature {
+        if account.group == .payments { return .loan }
+        if account.group == .assets { return .asset }
+        return account.nature ?? .unassigned
+    }
+    private func accounts(_ nature: AccountNature) -> [LedgerAccount] {
+        store.accounts.filter { effectiveNature($0) == nature }
+    }
+    private func metric(_ title: String, type: TransactionType, nature: AccountNature) -> some View {
+        let ids = Set(accounts(nature).map(\.id))
+        let items = store.transactions.filter {
+            $0.type == type && interval.contains($0.date) && ids.contains($0.accountID ?? LedgerAccount.legacyMainID)
+        }
+        return HStack {
+            VStack(alignment: .leading) {
+                Text(title)
+                Text("\(items.count) transactions").font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(currencySummary(items)).font(.caption.bold())
+        }
+    }
+    private func currencySummary(_ items: [LedgerTransaction]) -> String {
+        Dictionary(grouping: items) { store.account(withID: $0.accountID)?.currencyCode ?? store.currencyCode }
+            .map { code, values in
+                DisplayFormat.currency(values.reduce(0) { $0 + $1.amount }, code: code)
+            }.sorted().joined(separator: " · ")
+    }
+    private func currencyBalances(_ nature: AccountNature) -> [NatureCurrencyBalance] {
+        Dictionary(grouping: accounts(nature), by: \.currencyCode).map { code, accounts in
+            NatureCurrencyBalance(currency: code, amount: accounts.reduce(0) { $0 + store.balance(for: $1) })
+        }.sorted { $0.currency < $1.currency }
+    }
+}
+
+private struct NatureTransactionsView: View {
+    @EnvironmentObject private var store: LedgerStore
+    let nature: AccountNature
+    let interval: DateInterval
+    let type: TransactionType
+    @State private var selectedTransaction: LedgerTransaction?
+    var body: some View {
+        List {
+            ForEach(transactions) { item in
+                Button { selectedTransaction = item } label: { TransactionRow(transaction: item) }
+                    .buttonStyle(.plain)
+            }
+        }
+        .navigationTitle("\(nature.title) \(type.title)")
+        .sheet(item: $selectedTransaction) {
+            TransactionSnapshotView(transaction: $0).environmentObject(store)
+        }
+    }
+    private var accountIDs: Set<UUID> {
+        Set(store.accounts.filter {
+            if $0.group == .payments { return nature == .loan }
+            if $0.group == .assets { return nature == .asset }
+            return $0.nature == nature
+        }.map(\.id))
+    }
+    private var transactions: [LedgerTransaction] {
+        store.transactions.filter {
+            $0.type == type && interval.contains($0.date) &&
+            accountIDs.contains($0.accountID ?? LedgerAccount.legacyMainID)
+        }.sorted { $0.date > $1.date }
+    }
+}
+
+private struct BalanceReconciliationReportView: View {
+    @EnvironmentObject private var store: LedgerStore
+    var body: some View {
+        List {
+            ForEach(store.activeAccounts) { account in
+                Section(account.name) {
+                    LabeledContent("Books balance",
+                                   value: DisplayFormat.currency(store.balance(for: account), code: account.currencyCode))
+                    if let reported = latestReportedBalance(account) {
+                        LabeledContent(reported.label,
+                                       value: DisplayFormat.currency(reported.amount, code: reported.currency))
+                        LabeledContent("Difference",
+                                       value: DisplayFormat.currency(reported.amount - store.balance(for: account), code: reported.currency))
+                        Label(
+                            reported.amount == store.balance(for: account) ? "Matched" : "Difference found",
+                            systemImage: reported.amount == store.balance(for: account)
+                                ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+                        )
+                        .foregroundStyle(reported.amount == store.balance(for: account) ? AppTheme.green : AppTheme.orange)
+                        Text("From \(reported.date.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        Text("No balance or available-limit value was found in this account’s imported messages.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Balance Reconciliation")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    private func latestReportedBalance(_ account: LedgerAccount) -> (label: String, amount: Decimal, currency: String, date: Date)? {
+        let candidates = store.transactions.filter { $0.accountID == account.id && !$0.details.isEmpty }
+            .sorted { $0.date > $1.date }
+        let patterns = [
+            ("Card Available Balance", #"(?i)Card\s+Available\s+Balance:\s*([A-Z]{3})\s*([\d,]+(?:\.\d{1,2})?)"#),
+            ("Available Limit", #"(?i)Available\s+Limit:\s*([A-Z]{3})\s*([\d,]+(?:\.\d{1,2})?)"#),
+            ("Message Balance", #"(?i)(?:Current\s+)?Balance:\s*([A-Z]{3})\s*([\d,]+(?:\.\d{1,2})?)"#)
+        ]
+        for transaction in candidates {
+            for (label, pattern) in patterns {
+                guard let regex = try? NSRegularExpression(pattern: pattern),
+                      let match = regex.firstMatch(in: transaction.details, range: NSRange(transaction.details.startIndex..., in: transaction.details)),
+                      let currencyRange = Range(match.range(at: 1), in: transaction.details),
+                      let amountRange = Range(match.range(at: 2), in: transaction.details),
+                      let amount = Decimal(string: String(transaction.details[amountRange]).replacingOccurrences(of: ",", with: ""))
+                else { continue }
+                return (label, amount, String(transaction.details[currencyRange]), transaction.date)
+            }
+        }
+        return nil
     }
 }

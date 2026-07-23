@@ -39,12 +39,9 @@ struct OpenAIChatView: View {
                         ForEach(messages) { message in
                             HStack {
                                 if message.role == "user" { Spacer(minLength: 36) }
-                                Text(message.content)
-                                    .padding(12)
-                                    .background(message.role == "user" ? AppTheme.purple : Color.secondary.opacity(0.13),
-                                                in: RoundedRectangle(cornerRadius: 16))
-                                    .foregroundStyle(message.role == "user" ? .white : .primary)
-                                if message.role != "user" {
+                                VStack(alignment: .leading, spacing: 9) {
+                                    Text(message.content)
+                                        .textSelection(.enabled)
                                     ForEach(message.transactionIDs, id: \.self) { id in
                                         if let transaction = store.transactions.first(where: { $0.id == id }) {
                                             Button {
@@ -52,10 +49,15 @@ struct OpenAIChatView: View {
                                             } label: {
                                                 Label("Open \(transaction.vendor ?? transaction.category)", systemImage: "arrow.up.right.square")
                                                     .font(.caption.bold())
+                                                    .lineLimit(1)
                                             }.buttonStyle(.bordered)
                                         }
                                     }
                                 }
+                                    .padding(12)
+                                    .background(message.role == "user" ? AppTheme.purple : Color.secondary.opacity(0.13),
+                                                in: RoundedRectangle(cornerRadius: 16))
+                                    .foregroundStyle(message.role == "user" ? .white : .primary)
                                 if message.role != "user" { Spacer(minLength: 36) }
                             }.id(message.id)
                         }
@@ -86,17 +88,29 @@ struct OpenAIChatView: View {
     private func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        messages.append(.init(role: "user", content: text)); draft = ""; sending = true; error = nil
-        let ledgerResult = isLedgerMode ? LedgerChatSearch.run(query: text, store: store, force: true) : nil
-        let ledgerContext = ledgerResult.map {
-            "\nLocal ledger search results:\n\($0.response)\nUse only these supplied results. Do not claim access to other transactions."
-        } ?? ""
-        let system = isLedgerMode
-            ? "You help discuss Daily Ledger transactions supplied in the prompt. Be concise, compare amounts carefully, and never invent missing ledger data."
-            : "Be concise and helpful."
+        messages.append(.init(role: "user", content: text)); draft = ""; error = nil
+        if isLedgerMode {
+            let result = LedgerChatSearch.run(query: text, store: store, force: true)
+            messages.append(.init(role: "assistant", content: result.response, transactionIDs: result.transactionIDs))
+            return
+        }
+        guard OpenAIService.shared.hasAPIKey else {
+            error = "Connect OpenAI in Settings first."
+            return
+        }
+        sending = true
+        let contextIDs = Array(Set(messages.suffix(12).flatMap(\.transactionIDs))).prefix(20)
+        let contextLines = contextIDs.compactMap { id -> String? in
+            guard let item = store.transactions.first(where: { $0.id == id }) else { return nil }
+            let account = store.account(withID: item.accountID)
+            return "\(item.date.formatted(date: .abbreviated, time: .shortened)) | \(item.type.title) | \(account?.currencyCode ?? store.currencyCode) \(item.amount) | \(item.vendor ?? item.category) | \(account?.name ?? "Unknown")"
+        }
+        let context = contextLines.isEmpty ? "" :
+            "\nTransactions selected earlier in Ledger AI:\n" + contextLines.joined(separator: "\n")
+        let system = "Be concise and helpful. If transaction context is supplied, discuss only that data and do not invent missing records."
         var recent = messages.suffix(12).map { OpenAIMessage(role: $0.role, content: $0.content) }
-        if !ledgerContext.isEmpty, !recent.isEmpty {
-            recent[recent.count - 1] = OpenAIMessage(role: "user", content: text + ledgerContext)
+        if !context.isEmpty, !recent.isEmpty {
+            recent[recent.count - 1] = OpenAIMessage(role: "user", content: text + context)
         }
         let requestMessages = [OpenAIMessage(role: "system", content: system)] + recent
         Task {
@@ -106,7 +120,7 @@ struct OpenAIChatView: View {
                     messages.append(.init(
                         role: "assistant",
                         content: answer,
-                        transactionIDs: ledgerResult?.transactionIDs ?? []
+                        transactionIDs: Array(contextIDs)
                     ))
                     sending = false
                 }

@@ -9,7 +9,9 @@ struct TransferView: View {
     @State private var destinationAmountText = ""
     @State private var date = Date()
     @State private var details = ""
+    @FocusState private var focusedAmount: AmountField?
     private let editingTransaction: LedgerTransaction?
+    private enum AmountField { case source, destination }
 
     init(sourceAccountID: UUID? = nil) {
         editingTransaction = nil
@@ -64,13 +66,9 @@ struct TransferView: View {
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
-                        Button(symbol) { amountText = AmountExpression.appending(symbol, to: amountText) }
+                        Button(symbol) { appendOperator(symbol) }
                     }
-                    Button("=") {
-                        if let value = AmountExpression.evaluate(amountText) {
-                            amountText = NSDecimalNumber(decimal: value).stringValue
-                        }
-                    }
+                    Button("=", action: calculateFocusedAmount)
                 }
             }
             .onAppear(perform: chooseDefaults)
@@ -98,6 +96,7 @@ struct TransferView: View {
             TextField(title, text: text)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
+                .focused($focusedAmount, equals: title == "Amount received" ? .destination : .source)
         }
     }
 
@@ -118,6 +117,23 @@ struct TransferView: View {
     private func positiveDecimal(_ text: String) -> Decimal? {
         guard let value = AmountExpression.evaluate(text), value > 0 else { return nil }
         return value
+    }
+
+    private func appendOperator(_ symbol: String) {
+        if focusedAmount == .destination {
+            destinationAmountText = AmountExpression.appending(symbol, to: destinationAmountText)
+        } else {
+            amountText = AmountExpression.appending(symbol, to: amountText)
+        }
+    }
+    private func calculateFocusedAmount() {
+        if focusedAmount == .destination {
+            if let value = AmountExpression.evaluate(destinationAmountText) {
+                destinationAmountText = NSDecimalNumber(decimal: value).stringValue
+            }
+        } else if let value = AmountExpression.evaluate(amountText) {
+            amountText = NSDecimalNumber(decimal: value).stringValue
+        }
     }
 
     private func chooseDefaults() {
