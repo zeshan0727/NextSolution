@@ -21,6 +21,8 @@ struct OpenAIChatView: View {
     @AppStorage("OpenAIModel") private var model = "gpt-4.1-nano"
     @AppStorage("OpenAIChatMode") private var chatMode = OpenAIChatMode.ledger.rawValue
     @State private var messages = OpenAIChatHistory.load()
+    @State private var generalSessionStart = OpenAIChatHistory.load().count
+    @State private var pendingLedgerTransactionIDs: [UUID] = []
     @State private var draft = ""
     @State private var sending = false
     @State private var error: String?
@@ -78,6 +80,17 @@ struct OpenAIChatView: View {
         .navigationTitle("OpenAI Chat")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: messages.count) { _ in OpenAIChatHistory.save(messages) }
+        .onChange(of: chatMode) { mode in
+            error = nil
+            if mode == OpenAIChatMode.general.rawValue {
+                pendingLedgerTransactionIDs = messages.last(where: {
+                    !$0.transactionIDs.isEmpty
+                })?.transactionIDs ?? []
+                generalSessionStart = messages.count
+            } else {
+                pendingLedgerTransactionIDs = []
+            }
+        }
         .sheet(item: $selectedTransaction) {
             TransactionSnapshotView(transaction: $0).environmentObject(store)
         }
@@ -88,6 +101,8 @@ struct OpenAIChatView: View {
     private func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        let contextIDs = isLedgerMode ? [] : Array(pendingLedgerTransactionIDs.prefix(20))
+        pendingLedgerTransactionIDs = []
         messages.append(.init(role: "user", content: text)); draft = ""; error = nil
         if isLedgerMode {
             let result = LedgerChatSearch.run(query: text, store: store, force: true)
@@ -99,16 +114,16 @@ struct OpenAIChatView: View {
             return
         }
         sending = true
-        let contextIDs = Array(Set(messages.suffix(12).flatMap(\.transactionIDs))).prefix(20)
         let contextLines = contextIDs.compactMap { id -> String? in
             guard let item = store.transactions.first(where: { $0.id == id }) else { return nil }
             let account = store.account(withID: item.accountID)
             return "\(item.date.formatted(date: .abbreviated, time: .shortened)) | \(item.type.title) | \(account?.currencyCode ?? store.currencyCode) \(item.amount) | \(item.vendor ?? item.category) | \(account?.name ?? "Unknown")"
         }
         let context = contextLines.isEmpty ? "" :
-            "\nTransactions selected earlier in Ledger AI:\n" + contextLines.joined(separator: "\n")
+            "\nTransactions handed off from Ledger AI for this request only:\n" + contextLines.joined(separator: "\n")
         let system = "Be concise and helpful. If transaction context is supplied, discuss only that data and do not invent missing records."
-        var recent = messages.suffix(12).map { OpenAIMessage(role: $0.role, content: $0.content) }
+        let sessionMessages = messages.dropFirst(min(generalSessionStart, messages.count))
+        var recent = sessionMessages.suffix(12).map { OpenAIMessage(role: $0.role, content: $0.content) }
         if !context.isEmpty, !recent.isEmpty {
             recent[recent.count - 1] = OpenAIMessage(role: "user", content: text + context)
         }
@@ -119,8 +134,7 @@ struct OpenAIChatView: View {
                 await MainActor.run {
                     messages.append(.init(
                         role: "assistant",
-                        content: answer,
-                        transactionIDs: Array(contextIDs)
+                        content: answer
                     ))
                     sending = false
                 }
