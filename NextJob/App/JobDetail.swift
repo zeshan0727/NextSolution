@@ -127,9 +127,9 @@ struct JobDetailView: View {
             }
 
             HStack(spacing: 12) {
-                valuePill(icon: "banknote.fill", text: "\(store.settings.currency) \(job.price, specifier: "%.2f")", tint: AppPalette.green)
-                valuePill(icon: "target", text: "\(job.targetHours, specifier: "%.1f")h target", tint: AppPalette.purple)
-                valuePill(icon: "timer", text: "\(job.actualHours, specifier: "%.1f")h actual", tint: AppPalette.cyan)
+                valuePill(icon: "banknote.fill", text: "\(store.settings.currency) " + String(format: "%.2f", job.price), tint: AppPalette.green)
+                valuePill(icon: "target", text: String(format: "%.1fh target", job.targetHours), tint: AppPalette.purple)
+                valuePill(icon: "timer", text: String(format: "%.1fh actual", job.actualHours), tint: AppPalette.cyan)
             }
         }
         .glassCard()
