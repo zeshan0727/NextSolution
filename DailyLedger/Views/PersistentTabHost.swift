@@ -10,12 +10,12 @@ struct PersistentTabHost: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> PersistentTabViewController {
         let controller = PersistentTabViewController()
         controller.install([
-            .home: host(DashboardView(onAdd: onAdd, onTransfer: onTransfer)),
+            .home: host(DashboardV124View(onAdd: onAdd, onTransfer: onTransfer)),
             .accounts: host(AccountsView()),
             .transactions: host(TransactionsView(onAdd: onAdd, onTransfer: onTransfer)),
-            .insights: host(InsightsView()),
-            .reports: host(ReportsView()),
-            .settings: host(SettingsView())
+            .insights: host(InsightsV124Host()),
+            .reports: host(ReportsV124View()),
+            .settings: host(SettingsV124View())
         ])
         controller.show(selectedTab)
         return controller
