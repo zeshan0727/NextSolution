@@ -22,6 +22,7 @@ targets:
         excludes:
           - project.yml
           - README.md
+          - Scripts/GenerateIcon.swift
     preBuildScripts:
       - name: Generate App Icon
         basedOnDependencyAnalysis: false
