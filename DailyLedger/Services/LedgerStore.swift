@@ -579,12 +579,12 @@ final class LedgerStore: ObservableObject {
         }
         let income = transactions.lazy
             .filter {
-                guard interval.contains($0.date), isReportIncome($0) else { return false }
-                let incomeAccountID = reportIncomeAccountID($0) ?? LedgerAccount.legacyMainID
-                return accountsByID[incomeAccountID]?.currencyCode == currencyCode &&
+                guard interval.contains($0.date), self.isReportIncome($0) else { return false }
+                let incomeAccountID = self.reportIncomeAccountID($0) ?? LedgerAccount.legacyMainID
+                return self.accountsByID[incomeAccountID]?.currencyCode == self.currencyCode &&
                     (accountIDs == nil || accountIDs?.contains(incomeAccountID) == true)
             }
-            .reduce(Decimal.zero) { $0 + reportIncomeAmount($1) }
+            .reduce(Decimal.zero) { $0 + self.reportIncomeAmount($1) }
         let expense = selected
             .filter { $0.type == .expense }
             .reduce(Decimal.zero) { $0 + $1.amount }
