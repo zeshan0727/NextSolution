@@ -149,6 +149,37 @@ final class LedgerStore: ObservableObject {
         }
     }
 
+    func splitExpense(
+        _ transaction: LedgerTransaction,
+        firstCategory: String,
+        firstAmount: Decimal,
+        secondCategory: String,
+        secondAmount: Decimal
+    ) {
+        guard transaction.type == .expense, firstAmount > 0, secondAmount > 0,
+              firstAmount + secondAmount == transaction.amount,
+              !firstCategory.isEmpty, !secondCategory.isEmpty else {
+            errorMessage = "Expense split amounts must equal the original amount."
+            return
+        }
+        do {
+            let ledger = try LedgerDiskStore.shared.mutate { ledger in
+                guard let index = ledger.transactions.firstIndex(where: { $0.id == transaction.id }) else { return }
+                ledger.transactions[index].category = firstCategory
+                ledger.transactions[index].amount = firstAmount
+                ledger.transactions.append(LedgerTransaction(
+                    type: .expense, amount: secondAmount, date: transaction.date,
+                    category: secondCategory, vendor: transaction.vendor,
+                    details: transaction.details, accountID: transaction.accountID,
+                    createdAt: transaction.createdAt
+                ))
+            }
+            apply(ledger)
+        } catch {
+            errorMessage = "The expense could not be split."
+        }
+    }
+
     func addTransfer(
         from sourceID: UUID,
         to destinationID: UUID,

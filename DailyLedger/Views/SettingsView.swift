@@ -21,6 +21,10 @@ struct SettingsView: View {
     @State private var deepSeekAPIKey = ""
     @State private var deepSeekConnected = DeepSeekService.shared.hasAPIKey
     @State private var testingDeepSeek = false
+    @State private var openAIAPIKey = ""
+    @State private var openAIConnected = OpenAIService.shared.hasAPIKey
+    @State private var testingOpenAI = false
+    @AppStorage("OpenAIModel") private var openAIModel = "gpt-4.1-nano"
     @AppStorage("DeepSeekModel") private var deepSeekModel = "deepseek-v4-flash"
     @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
     @AppStorage("DailyLedgerVisualTheme") private var visualTheme = AppVisualTheme.glass.rawValue
@@ -175,6 +179,32 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Label(openAIConnected ? "Connected" : "Not Connected",
+                          systemImage: openAIConnected ? "checkmark.shield.fill" : "shield.slash.fill")
+                        .foregroundStyle(openAIConnected ? AppTheme.green : .secondary)
+                    SecureField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    Picker("Text Model", selection: $openAIModel) {
+                        ForEach(OpenAIService.selectableModels, id: \.self) { Text($0).tag($0) }
+                    }
+                    Button("Save OpenAI API Key", action: saveOpenAIKey)
+                        .disabled(openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("Test OpenAI Connection", action: testOpenAIConnection)
+                        .disabled(!openAIConnected || testingOpenAI)
+                    if testingOpenAI { ProgressView() }
+                    if openAIConnected {
+                        Button("Disconnect OpenAI", role: .destructive) {
+                            OpenAIService.shared.deleteAPIKey()
+                            openAIConnected = false
+                        }
+                    }
+                } header: {
+                    Label("OpenAI Chat", systemImage: "bubble.left.and.bubble.right.fill")
+                } footer: {
+                    Text("Your API key stays in this iPhone's Keychain. API access and limits belong to your OpenAI API project; a ChatGPT subscription does not supply API usage. Daily Ledger caps each answer to control tokens.")
+                }
+
+                Section {
                     SettingsRow(
                         title: "Add Expense",
                         subtitle: "Save an expense without opening the app",
@@ -286,7 +316,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.25")
+                    LabeledContent("Version", value: "1.3.26")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")
@@ -399,6 +429,38 @@ struct SettingsView: View {
             } catch {
                 await MainActor.run {
                     testingDeepSeek = false
+                    notice = SettingsNotice(title: "Connection Failed", message: error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func saveOpenAIKey() {
+        do {
+            try OpenAIService.shared.saveAPIKey(openAIAPIKey)
+            openAIAPIKey = ""
+            openAIConnected = true
+            notice = SettingsNotice(title: "OpenAI Connected", message: "The API key was saved securely in this iPhone's Keychain.")
+        } catch {
+            notice = SettingsNotice(title: "Connection Failed", message: error.localizedDescription)
+        }
+    }
+
+    private func testOpenAIConnection() {
+        testingOpenAI = true
+        Task {
+            do {
+                _ = try await OpenAIService.shared.request(
+                    messages: [OpenAIMessage(role: "user", content: "Reply with exactly: Connected")],
+                    model: openAIModel, maxTokens: 20
+                )
+                await MainActor.run {
+                    testingOpenAI = false
+                    notice = SettingsNotice(title: "Connection Successful", message: "Daily Ledger can reach OpenAI.")
+                }
+            } catch {
+                await MainActor.run {
+                    testingOpenAI = false
                     notice = SettingsNotice(title: "Connection Failed", message: error.localizedDescription)
                 }
             }

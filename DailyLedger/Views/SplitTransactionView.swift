@@ -1,6 +1,11 @@
 import SwiftUI
 
 struct SplitTransactionView: View {
+    private enum SplitMode: String, CaseIterable, Identifiable {
+        case expense = "Split Expense"
+        case paymentSource = "Split Payment Source"
+        var id: String { rawValue }
+    }
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
     let transaction: LedgerTransaction
@@ -8,6 +13,9 @@ struct SplitTransactionView: View {
     @State private var secondAccountID: UUID?
     @State private var firstAmount = ""
     @State private var secondAmount = ""
+    @State private var mode: SplitMode = .expense
+    @State private var firstCategory = ""
+    @State private var secondCategory = ""
 
     var body: some View {
         NavigationStack {
@@ -17,8 +25,19 @@ struct SplitTransactionView: View {
                     LabeledContent("Date & Time", value: transaction.date.formatted(date: .abbreviated, time: .shortened))
                     LabeledContent("Category", value: transaction.category)
                 }
-                splitSection(title: "First Part", accountID: $firstAccountID, amount: $firstAmount)
-                splitSection(title: "Second Part", accountID: $secondAccountID, amount: $secondAmount)
+                if transaction.type == .expense {
+                    Picker("Split", selection: $mode) {
+                        ForEach(SplitMode.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                if mode == .expense && transaction.type == .expense {
+                    expenseSection(title: "First Expense", category: $firstCategory, amount: $firstAmount)
+                    expenseSection(title: "Second Expense", category: $secondCategory, amount: $secondAmount)
+                } else {
+                    splitSection(title: "First Source", accountID: $firstAccountID, amount: $firstAmount)
+                    splitSection(title: "Second Source", accountID: $secondAccountID, amount: $secondAmount)
+                }
                 Section {
                     LabeledContent("Split Total", value: DisplayFormat.currency(splitTotal, code: currencyCode))
                     if splitTotal != transaction.amount {
@@ -44,7 +63,20 @@ struct SplitTransactionView: View {
                 secondAccountID = store.activeAccounts.first { $0.id != firstAccountID }?.id
                 firstAmount = NSDecimalNumber(decimal: transaction.amount / 2).stringValue
                 secondAmount = NSDecimalNumber(decimal: transaction.amount - (transaction.amount / 2)).stringValue
+                firstCategory = transaction.category
+                secondCategory = transaction.category
             }
+        }
+    }
+
+    private func expenseSection(title: String, category: Binding<String>, amount: Binding<String>) -> some View {
+        Section(title) {
+            Picker("Category", selection: category) {
+                ForEach(store.categories(for: .expense).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }, id: \.self) {
+                    Text($0).tag($0)
+                }
+            }
+            TextField("Amount", text: amount).keyboardType(.decimalPad)
         }
     }
 
@@ -71,13 +103,24 @@ struct SplitTransactionView: View {
         store.account(withID: transaction.accountID)?.currencyCode ?? store.currencyCode
     }
     private var isValid: Bool {
-        firstAccountID != nil && secondAccountID != nil && firstAccountID != secondAccountID &&
-        firstValue > 0 && secondValue > 0 && splitTotal == transaction.amount
+        guard firstValue > 0, secondValue > 0, splitTotal == transaction.amount else { return false }
+        if mode == .expense && transaction.type == .expense {
+            return !firstCategory.isEmpty && !secondCategory.isEmpty
+        }
+        return firstAccountID != nil && secondAccountID != nil && firstAccountID != secondAccountID
     }
     private func decimal(_ text: String) -> Decimal? {
         Decimal(string: text.replacingOccurrences(of: ",", with: "."), locale: Locale(identifier: "en_US_POSIX"))
     }
     private func save() {
+        if mode == .expense && transaction.type == .expense {
+            store.splitExpense(
+                transaction, firstCategory: firstCategory, firstAmount: firstValue,
+                secondCategory: secondCategory, secondAmount: secondValue
+            )
+            dismiss()
+            return
+        }
         guard let firstAccountID, let secondAccountID else { return }
         store.split(
             transaction, firstAccountID: firstAccountID, firstAmount: firstValue,

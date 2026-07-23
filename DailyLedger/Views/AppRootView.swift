@@ -97,6 +97,7 @@ struct AppRootView: View {
                         store.dismissRecordingCard(transaction.id)
                     }
                 }
+                .id(transaction.id)
                 .padding(.horizontal, 14)
                 .padding(.top, 8)
                 .transition(.move(edge: .top).combined(with: .opacity))
@@ -132,6 +133,8 @@ private struct RecordingSuccessCard: View {
     let transaction: LedgerTransaction
     let onDismiss: () -> Void
     @State private var offset: CGFloat = 0
+    @State private var opacity = 1.0
+    @State private var dismissing = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -165,22 +168,36 @@ private struct RecordingSuccessCard: View {
         }
         .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
         .offset(x: offset)
+        .opacity(opacity)
         .rotationEffect(.degrees(Double(offset / 35)))
         .gesture(
             DragGesture(minimumDistance: 12)
                 .onChanged { offset = $0.translation.width }
                 .onEnded {
                     if abs($0.translation.width) > 80 {
-                        onDismiss()
+                        dismiss(toward: $0.translation.width)
                     } else {
                         withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) { offset = 0 }
                     }
                 }
         )
-        .accessibilityAction(named: "Dismiss") { onDismiss() }
+        .allowsHitTesting(!dismissing)
+        .accessibilityAction(named: "Dismiss") { dismiss(toward: 500) }
     }
 
     private var currencyCode: String {
         store.account(withID: transaction.accountID)?.currencyCode ?? store.currencyCode
+    }
+
+    private func dismiss(toward translation: CGFloat) {
+        guard !dismissing else { return }
+        dismissing = true
+        withAnimation(.easeOut(duration: 0.2)) {
+            offset = translation < 0 ? -600 : 600
+            opacity = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.21) {
+            onDismiss()
+        }
     }
 }

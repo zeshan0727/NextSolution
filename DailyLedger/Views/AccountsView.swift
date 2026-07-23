@@ -231,6 +231,7 @@ private struct AccountEditorView: View {
     @State private var group: AccountGroup = .qatar
     @State private var icon = "creditcard.fill"
     @State private var openingBalance = "0"
+    @State private var nature: AccountNature = .unassigned
     private let account: LedgerAccount?
 
     private let currencies = ["QAR", "PKR", "USD", "GBP", "EUR", "AED", "SAR", "INR"]
@@ -245,6 +246,7 @@ private struct AccountEditorView: View {
         _openingBalance = State(initialValue: account.map {
             NSDecimalNumber(decimal: $0.openingBalance).stringValue
         } ?? "0")
+        _nature = State(initialValue: account?.nature ?? .unassigned)
     }
 
     var body: some View {
@@ -257,6 +259,9 @@ private struct AccountEditorView: View {
                     }
                     Picker("Group", selection: $group) {
                         ForEach(AccountGroup.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker("Account Nature", selection: $nature) {
+                        ForEach(AccountNature.allCases) { Text($0.title).tag($0) }
                     }
                     Picker("Icon", selection: $icon) {
                         ForEach(icons, id: \.self) { value in
@@ -310,6 +315,7 @@ private struct AccountEditorView: View {
             account.group = group
             account.icon = icon
             account.openingBalance = balance
+            account.nature = nature == .unassigned ? nil : nature
             store.updateAccount(account)
         } else {
             store.addAccount(LedgerAccount(
@@ -317,7 +323,8 @@ private struct AccountEditorView: View {
                 currencyCode: currencyCode,
                 group: group,
                 icon: icon,
-                openingBalance: balance
+                openingBalance: balance,
+                nature: nature == .unassigned ? nil : nature
             ))
         }
         dismiss()

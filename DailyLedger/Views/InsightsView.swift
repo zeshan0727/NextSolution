@@ -178,12 +178,25 @@ struct InsightsView: View {
 
                 Section("General AI Chat") {
                     NavigationLink {
+                        OpenAIChatView()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("OpenAI Chat").font(.headline)
+                                Text("Separate persistent text chat")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "bubble.left.fill").foregroundStyle(AppTheme.green)
+                        }
+                    }
+                    NavigationLink {
                         DeepSeekChatView()
                     } label: {
                         Label {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Chat with DeepSeek").font(.headline)
-                                Text("General questions without automatic ledger data")
+                                Text("DeepSeek Chat").font(.headline)
+                                Text("Separate DeepSeek window and history")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }

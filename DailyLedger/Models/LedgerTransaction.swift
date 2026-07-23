@@ -36,6 +36,27 @@ enum AccountGroup: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum AccountNature: String, Codable, CaseIterable, Identifiable {
+    case unassigned
+    case loan
+    case control
+    case asset
+    case dailyExpense
+    case bank
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .unassigned: return "Unassigned"
+        case .loan: return "Loan"
+        case .control: return "Control"
+        case .asset: return "Asset"
+        case .dailyExpense: return "Daily Expense"
+        case .bank: return "Bank"
+        }
+    }
+}
+
 struct LedgerAccount: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String
@@ -44,6 +65,7 @@ struct LedgerAccount: Identifiable, Codable, Hashable {
     var icon: String
     var openingBalance: Decimal
     var isArchived: Bool
+    var nature: AccountNature?
     let createdAt: Date
 
     init(
@@ -54,6 +76,7 @@ struct LedgerAccount: Identifiable, Codable, Hashable {
         icon: String = "creditcard.fill",
         openingBalance: Decimal = 0,
         isArchived: Bool = false,
+        nature: AccountNature? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -63,6 +86,7 @@ struct LedgerAccount: Identifiable, Codable, Hashable {
         self.icon = icon
         self.openingBalance = openingBalance
         self.isArchived = isArchived
+        self.nature = nature
         self.createdAt = createdAt
     }
 

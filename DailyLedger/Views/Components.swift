@@ -120,6 +120,10 @@ struct TransactionRow: View {
             Spacer(minLength: 8)
 
             VStack(alignment: .trailing, spacing: 2) {
+                Text(transaction.date.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
                 Text(amountText)
                     .font(.subheadline.bold())
                     .foregroundStyle(amountColor)
@@ -167,10 +171,9 @@ struct TransactionRow: View {
 
     private var secondaryText: String {
         if transaction.type == .transfer {
-            let detail = transaction.details.isEmpty ? "Transfer" : transaction.details
-            return detail + " · " + transaction.date.formatted(date: .abbreviated, time: .shortened)
+            return transaction.details.isEmpty ? "Transfer" : transaction.details
         }
-        return [sourceAccount?.name, transaction.category, transaction.date.formatted(date: .abbreviated, time: .shortened)]
+        return [sourceAccount?.name, transaction.category]
             .compactMap { $0 }
             .joined(separator: " · ")
     }
