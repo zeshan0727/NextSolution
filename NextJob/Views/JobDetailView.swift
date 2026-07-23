@@ -46,7 +46,7 @@ struct JobDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if job != nil {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Edit") { showingEditor = true }
                 }
             }
@@ -214,14 +214,20 @@ struct JobDetailView: View {
                         }
                         Spacer()
                         Menu {
-                            Button("Preview", systemImage: "eye") {
+                            Button {
                                 previewItem = PreviewItem(url: JobFileService.shared.url(for: attachment, jobID: job.id))
+                            } label: {
+                                Label("Preview", systemImage: "eye")
                             }
-                            Button("Share", systemImage: "square.and.arrow.up") {
+                            Button {
                                 sharePayload = SharePayload(items: [JobFileService.shared.url(for: attachment, jobID: job.id)])
+                            } label: {
+                                Label("Share", systemImage: "square.and.arrow.up")
                             }
-                            Button("Remove", systemImage: "trash", role: .destructive) {
+                            Button(role: .destructive) {
                                 store.removeAttachment(attachment, from: job.id)
+                            } label: {
+                                Label("Remove", systemImage: "trash")
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")
