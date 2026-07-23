@@ -2,6 +2,7 @@
 set -euo pipefail
 
 cat NextMediaApp/v141patch.part00 NextMediaApp/v141patch.part01 > NextMediaApp/v141patch.b64
+cat NextMediaApp/v143patch.part00 NextMediaApp/v143patch.part01 NextMediaApp/v143patch.part02 NextMediaApp/v143patch.part03 NextMediaApp/v143patch.part04 > NextMediaApp/v143patch.b64
 
 git fetch --depth=1 origin f23b2f08015fdaf04826e147efd1906996824a87
 git show FETCH_HEAD:NextMediaApp/build141.sh > /tmp/NextMedia-build143-core.sh
