@@ -605,6 +605,41 @@ final class LedgerStore: ObservableObject {
             count: selected.count
         )
     }
+
+    func loanNetMovements(
+        in interval: DateInterval,
+        accountIDs: Set<UUID>? = nil
+    ) -> [LoanNetMovement] {
+        let loanAccountIDs = Set(accounts.filter {
+            $0.group == .payments || $0.nature == .loan
+        }.map(\.id))
+        var increases: [String: Decimal] = [:]
+        var decreases: [String: Decimal] = [:]
+
+        for transaction in transactions where interval.contains(transaction.date) {
+            if let sourceID = transaction.accountID,
+               loanAccountIDs.contains(sourceID),
+               accountIDs == nil || accountIDs?.contains(sourceID) == true,
+               transaction.type == .expense || transaction.type == .transfer,
+               let source = accountsByID[sourceID] {
+                increases[source.currencyCode, default: 0] += transaction.amount
+            }
+            if transaction.type == .transfer,
+               let destinationID = transaction.destinationAccountID,
+               loanAccountIDs.contains(destinationID),
+               accountIDs == nil || accountIDs?.contains(destinationID) == true,
+               let destination = accountsByID[destinationID] {
+                decreases[destination.currencyCode, default: 0] +=
+                    transaction.destinationAmount ?? transaction.amount
+            }
+        }
+
+        return Set(increases.keys).union(decreases.keys).compactMap { currency in
+            let net = increases[currency, default: 0] - decreases[currency, default: 0]
+            guard net != 0 else { return nil }
+            return LoanNetMovement(currencyCode: currency, netAmount: net)
+        }.sorted { $0.currencyCode < $1.currencyCode }
+    }
 }
 
 struct ImportSummary {
@@ -628,4 +663,14 @@ struct LedgerTotals {
     let transfer: Decimal
     let count: Int
     var balance: Decimal { income - expense - loan }
+}
+
+struct LoanNetMovement: Identifiable {
+    var id: String { currencyCode }
+    let currencyCode: String
+    let netAmount: Decimal
+
+    var title: String {
+        netAmount > 0 ? "Loan increased" : "Loan decreased"
+    }
 }

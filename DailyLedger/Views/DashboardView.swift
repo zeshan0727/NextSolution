@@ -48,7 +48,10 @@ struct DashboardView: View {
                         balance: store.remainingBalance(accountIDs: selectedAccountIDs),
                         income: filteredTotals.income,
                         expense: filteredTotals.expense,
-                        loan: filteredTotals.loan,
+                        loanMovements: store.loanNetMovements(
+                            in: selectedInterval,
+                            accountIDs: selectedAccountIDs
+                        ),
                         currencyCode: store.currencyCode,
                         accountSummary: accountSelectionTitle,
                         action: { showingAccountSelection = true }

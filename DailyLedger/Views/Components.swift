@@ -4,7 +4,7 @@ struct BalanceCard: View {
     let balance: Decimal
     let income: Decimal
     let expense: Decimal
-    let loan: Decimal
+    let loanMovements: [LoanNetMovement]
     let currencyCode: String
     let accountSummary: String
     let action: () -> Void
@@ -39,12 +39,7 @@ struct BalanceCard: View {
                     icon: "arrow.up.right",
                     currencyCode: currencyCode
                 )
-                BalanceMiniStat(
-                    title: "Loans paid",
-                    value: loan,
-                    icon: "banknote.fill",
-                    currencyCode: currencyCode
-                )
+                LoanMovementMiniStat(movements: loanMovements)
             }
         }
         .padding(22)
@@ -61,6 +56,43 @@ struct BalanceCard: View {
         .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct LoanMovementMiniStat: View {
+    let movements: [LoanNetMovement]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 9) {
+            Image(systemName: "banknote.fill")
+                .font(.caption.bold())
+                .frame(width: 28, height: 28)
+                .background(.white.opacity(0.18), in: Circle())
+            VStack(alignment: .leading, spacing: 3) {
+                if movements.isEmpty {
+                    Text("No net loan movement")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.72))
+                } else {
+                    ForEach(movements) { movement in
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(movement.title)
+                                .font(.caption2)
+                                .foregroundStyle(.white.opacity(0.72))
+                            Text(DisplayFormat.currency(
+                                abs(movement.netAmount),
+                                code: movement.currencyCode
+                            ))
+                            .font(.caption.bold())
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.62)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
