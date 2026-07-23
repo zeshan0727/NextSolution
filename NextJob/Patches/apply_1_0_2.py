@@ -10,6 +10,16 @@ legacy_overload = '''    func copyFiles(_ urls: [URL], jobID: UUID, kind: Attach
 service = service.replace(legacy_overload, "")
 service_path.write_text(service, encoding="utf-8")
 
+email_path = Path("NextJob/Services/EmailDeliveryService.swift")
+email_source = email_path.read_text(encoding="utf-8")
+if "    @MainActor\n    func send(\n        recipient:" not in email_source:
+    email_source = email_source.replace(
+        "    func send(\n        recipient:",
+        "    @MainActor\n    func send(\n        recipient:",
+        1,
+    )
+email_path.write_text(email_source, encoding="utf-8")
+
 view_path = Path("NextJob/Views/JobDetailView.swift")
 view = view_path.read_text(encoding="utf-8")
 view = view.replace(
