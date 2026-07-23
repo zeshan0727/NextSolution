@@ -37,6 +37,17 @@ enum JobStatus: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+enum PaymentStatus: String, CaseIterable, Codable, Identifiable {
+    case pending
+    case received
+
+    var id: String { rawValue }
+    var title: String { self == .pending ? "Payment Pending" : "Payment Received" }
+    var shortTitle: String { self == .pending ? "Pending" : "Received" }
+    var systemImage: String { self == .pending ? "clock.badge.exclamationmark" : "checkmark.seal.fill" }
+    var tint: Color { self == .pending ? .orange : .green }
+}
+
 enum AttachmentKind: String, Codable, CaseIterable, Identifiable {
     case related
     case completedWork
@@ -159,6 +170,11 @@ struct JobRecord: Identifiable, Codable, Equatable {
     var emailHistory: [JobEmailRecord]
     var createdAt: Date
     var updatedAt: Date
+    var paymentStatus: PaymentStatus?
+    var paymentReceivedDate: Date?
+    var invoiceNumber: String?
+    var invoiceIssuedDate: Date?
+    var invoiceDueDate: Date?
 
     init(
         id: UUID = UUID(),
@@ -178,7 +194,12 @@ struct JobRecord: Identifiable, Codable, Equatable {
         attachments: [JobAttachment] = [],
         emailHistory: [JobEmailRecord] = [],
         createdAt: Date = Date(),
-        updatedAt: Date = Date()
+        updatedAt: Date = Date(),
+        paymentStatus: PaymentStatus? = nil,
+        paymentReceivedDate: Date? = nil,
+        invoiceNumber: String? = nil,
+        invoiceIssuedDate: Date? = nil,
+        invoiceDueDate: Date? = nil
     ) {
         self.id = id
         self.title = title
@@ -198,6 +219,11 @@ struct JobRecord: Identifiable, Codable, Equatable {
         self.emailHistory = emailHistory
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.paymentStatus = paymentStatus
+        self.paymentReceivedDate = paymentReceivedDate
+        self.invoiceNumber = invoiceNumber
+        self.invoiceIssuedDate = invoiceIssuedDate
+        self.invoiceDueDate = invoiceDueDate
     }
 
     var isOverdue: Bool {
@@ -210,6 +236,10 @@ struct JobRecord: Identifiable, Codable, Equatable {
     var actualTimeText: String {
         guard let actualMinutes else { return "Not recorded" }
         return Self.timeText(minutes: actualMinutes)
+    }
+
+    var effectivePaymentStatus: PaymentStatus? {
+        paymentStatus ?? (status == .completed && price > 0 ? .pending : nil)
     }
 
     static func timeText(minutes: Int) -> String {
@@ -238,6 +268,11 @@ struct AppSettings: Codable, Equatable {
     var theme: AppTheme
     var dueRemindersEnabled: Bool
     var jobTypes: [JobType]
+    var invoiceFromName: String?
+    var invoiceFromEmail: String?
+    var invoiceFromAddress: String?
+    var invoicePaymentInstructions: String?
+    var invoiceTermsDays: Int?
 
     static let defaults = AppSettings(
         companyName: "KB Accountants",
@@ -254,7 +289,12 @@ struct AppSettings: Codable, Equatable {
             JobType(name: "Management Accounts"),
             JobType(name: "Year-End Accounts"),
             JobType(name: "Other")
-        ]
+        ],
+        invoiceFromName: "Next Solution – Zeeshan Barvi",
+        invoiceFromEmail: "",
+        invoiceFromAddress: "Doha, Qatar",
+        invoicePaymentInstructions: "Please arrange payment against this invoice and quote the invoice number.",
+        invoiceTermsDays: 7
     )
 }
 
