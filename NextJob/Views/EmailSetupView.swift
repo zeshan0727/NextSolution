@@ -138,10 +138,14 @@ struct EmailSetupView: View {
 struct OpenAISetupView: View {
     @StateObject private var openAIStore = OpenAIConfigurationStore.shared
     @State private var apiKey = ""
-    @State private var model = "gpt-5-mini"
+    @State private var model = "gpt-5-mini-2025-08-07"
     @State private var noticeTitle = ""
     @State private var noticeMessage = ""
     @State private var showingNotice = false
+
+    private var selectedOption: OpenAIModelOption? {
+        OpenAIModelOption.recommended.first { $0.id == model }
+    }
 
     var body: some View {
         Form {
@@ -149,14 +153,28 @@ struct OpenAISetupView: View {
                 SecureField("OpenAI API key", text: $apiKey)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                TextField("Model", text: $model)
+
+                Picker("Recommended model", selection: $model) {
+                    ForEach(OpenAIModelOption.recommended) { option in
+                        Text(option.title).tag(option.id)
+                    }
+                }
+
+                TextField("Model ID", text: $model)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+
+                if let selectedOption {
+                    Text(selectedOption.tokenGroup)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Button("Save OpenAI Settings") { save() }
             } header: {
                 Text("OpenAI Email Drafting")
             } footer: {
-                Text("The API key is stored in the iPhone Keychain and is not included in backups. The AI receives only the selected job information when you request a draft.")
+                Text("GPT-5 Mini is recommended for reliable, lower-cost email drafting. Complimentary tokens are available only to eligible API organizations that opt into input/output data sharing and maintain a positive account balance. The listed models are eligible for that program, but they are not universally free. Your API key is stored in the iPhone Keychain and excluded from backups.")
             }
 
             Section("Status") {
@@ -184,7 +202,7 @@ struct OpenAISetupView: View {
     private func save() {
         do {
             try openAIStore.save(apiKey: apiKey, model: model)
-            showNotice("OpenAI Saved", "The AI email assistant is ready.")
+            showNotice("OpenAI Saved", "The AI email assistant is ready with \(model).")
         } catch {
             showNotice("Could Not Save", error.localizedDescription)
         }
