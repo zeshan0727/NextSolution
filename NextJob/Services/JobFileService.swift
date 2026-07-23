@@ -12,31 +12,64 @@ final class JobFileService {
         try? fileManager.createDirectory(at: rootURL, withIntermediateDirectories: true)
     }
 
-    func copyFiles(_ urls: [URL], jobID: UUID, kind: AttachmentKind) throws -> [JobAttachment] {
+    func copyItems(_ urls: [URL], jobID: UUID, kind: AttachmentKind) throws -> [JobAttachment] {
         let targetFolder = folderURL(jobID: jobID, kind: kind)
         try fileManager.createDirectory(at: targetFolder, withIntermediateDirectories: true)
 
-        return try urls.map { sourceURL in
-            let accessing = sourceURL.startAccessingSecurityScopedResource()
-            defer { if accessing { sourceURL.stopAccessingSecurityScopedResource() } }
+        var attachments: [JobAttachment] = []
+        var copiedDestinations: [URL] = []
 
-            let originalName = sourceURL.lastPathComponent
-            let storedName = uniqueStoredName(for: originalName)
-            let destination = targetFolder.appendingPathComponent(storedName)
-            try fileManager.copyItem(at: sourceURL, to: destination)
-            let values = try destination.resourceValues(forKeys: [.fileSizeKey])
-            return JobAttachment(
-                originalName: originalName,
-                storedName: storedName,
-                kind: kind,
-                byteCount: Int64(values.fileSize ?? 0)
-            )
+        do {
+            for sourceURL in urls {
+                let copied: (attachment: JobAttachment, destination: URL) = try {
+                    let accessing = sourceURL.startAccessingSecurityScopedResource()
+                    defer { if accessing { sourceURL.stopAccessingSecurityScopedResource() } }
+
+                    let sourceValues = try sourceURL.resourceValues(forKeys: [.isDirectoryKey])
+                    let isDirectory = sourceValues.isDirectory == true
+                    let originalName = sourceURL.lastPathComponent
+                    let storedName = uniqueStoredName(for: originalName, isDirectory: isDirectory)
+                    let destination = targetFolder.appendingPathComponent(storedName, isDirectory: isDirectory)
+
+                    try copyCoordinatedItem(from: sourceURL, to: destination)
+                    let attachment = JobAttachment(
+                        originalName: originalName,
+                        storedName: storedName,
+                        kind: kind,
+                        byteCount: byteCount(at: destination)
+                    )
+                    return (attachment, destination)
+                }()
+
+                copiedDestinations.append(copied.destination)
+                attachments.append(copied.attachment)
+            }
+            return attachments
+        } catch {
+            for destination in copiedDestinations {
+                try? fileManager.removeItem(at: destination)
+            }
+            throw error
         }
+    }
+
+    func copyFiles(_ urls: [URL], jobID: UUID, kind: AttachmentKind) throws -> [JobAttachment] {
+        try copyItems(urls, jobID: jobID, kind: kind)
     }
 
     func url(for attachment: JobAttachment, jobID: UUID) -> URL {
         folderURL(jobID: jobID, kind: attachment.kind)
             .appendingPathComponent(attachment.storedName)
+    }
+
+    func isFolder(_ attachment: JobAttachment, jobID: UUID) -> Bool {
+        let itemURL = url(for: attachment, jobID: jobID)
+        return (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+    }
+
+    func detailText(for attachment: JobAttachment, jobID: UUID) -> String {
+        let size = ByteCountFormatter.string(fromByteCount: attachment.byteCount, countStyle: .file)
+        return isFolder(attachment, jobID: jobID) ? "Folder • \(size)" : size
     }
 
     func deleteAttachment(_ attachment: JobAttachment, jobID: UUID) throws {
@@ -71,12 +104,15 @@ final class JobFileService {
             guard !matching.isEmpty else { continue }
             let outputFolder = packageURL.appendingPathComponent(kind.folderName, isDirectory: true)
             try fileManager.createDirectory(at: outputFolder, withIntermediateDirectories: true)
+
             for attachment in matching {
                 let source = url(for: attachment, jobID: job.id)
                 guard fileManager.fileExists(atPath: source.path) else { continue }
                 var destination = outputFolder.appendingPathComponent(attachment.originalName)
                 if fileManager.fileExists(atPath: destination.path) {
-                    destination = outputFolder.appendingPathComponent("\(attachment.id.uuidString.prefix(6))-\(attachment.originalName)")
+                    destination = outputFolder.appendingPathComponent(
+                        "\(attachment.id.uuidString.prefix(6))-\(attachment.originalName)"
+                    )
                 }
                 try fileManager.copyItem(at: source, to: destination)
             }
@@ -90,7 +126,11 @@ final class JobFileService {
 
         var coordinationError: NSError?
         var copyError: Error?
-        NSFileCoordinator().coordinate(readingItemAt: packageURL, options: .forUploading, error: &coordinationError) { coordinatedURL in
+        NSFileCoordinator().coordinate(
+            readingItemAt: packageURL,
+            options: .forUploading,
+            error: &coordinationError
+        ) { coordinatedURL in
             do {
                 try fileManager.copyItem(at: coordinatedURL, to: finalURL)
             } catch {
@@ -99,9 +139,58 @@ final class JobFileService {
         }
         if let coordinationError { throw coordinationError }
         if let copyError { throw copyError }
-        guard fileManager.fileExists(atPath: finalURL.path) else { throw CocoaError(.fileNoSuchFile) }
+        guard fileManager.fileExists(atPath: finalURL.path) else {
+            throw CocoaError(.fileNoSuchFile)
+        }
         try? fileManager.removeItem(at: temporaryRoot)
         return finalURL
+    }
+
+    private func copyCoordinatedItem(from sourceURL: URL, to destination: URL) throws {
+        var coordinationError: NSError?
+        var copyError: Error?
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        coordinator.coordinate(readingItemAt: sourceURL, options: [], error: &coordinationError) { coordinatedURL in
+            do {
+                try fileManager.copyItem(at: coordinatedURL, to: destination)
+            } catch {
+                copyError = error
+            }
+        }
+
+        if let coordinationError {
+            try? fileManager.removeItem(at: destination)
+            throw coordinationError
+        }
+        if let copyError {
+            try? fileManager.removeItem(at: destination)
+            throw copyError
+        }
+        guard fileManager.fileExists(atPath: destination.path) else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+    }
+
+    private func byteCount(at url: URL) -> Int64 {
+        let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+        guard values?.isDirectory == true else {
+            return Int64(values?.fileSize ?? 0)
+        }
+
+        let keys: [URLResourceKey] = [.isRegularFileKey, .fileSizeKey]
+        guard let enumerator = fileManager.enumerator(
+            at: url,
+            includingPropertiesForKeys: keys,
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+        ) else { return 0 }
+
+        var total: Int64 = 0
+        for case let itemURL as URL in enumerator {
+            guard let itemValues = try? itemURL.resourceValues(forKeys: Set(keys)),
+                  itemValues.isRegularFile == true else { continue }
+            total += Int64(itemValues.fileSize ?? 0)
+        }
+        return total
     }
 
     private func folderURL(jobID: UUID, kind: AttachmentKind) -> URL {
@@ -112,10 +201,14 @@ final class JobFileService {
         rootURL.appendingPathComponent(jobID.uuidString, isDirectory: true)
     }
 
-    private func uniqueStoredName(for originalName: String) -> String {
+    private func uniqueStoredName(for originalName: String, isDirectory: Bool) -> String {
+        let suffix = UUID().uuidString.prefix(8)
+        if isDirectory {
+            return "\(safeName(originalName))-\(suffix)"
+        }
+
         let ext = (originalName as NSString).pathExtension
         let stem = (originalName as NSString).deletingPathExtension
-        let suffix = UUID().uuidString.prefix(8)
         return ext.isEmpty ? "\(stem)-\(suffix)" : "\(stem)-\(suffix).\(ext)"
     }
 
