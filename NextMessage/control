@@ -1,0 +1,11 @@
+Package: com.nextsolution.nextmessage
+Name: Next Message
+Version: 0.2.1
+Architecture: iphoneos-arm64
+Description: Diagnostic release for the Concept A Messages redesign. Captures privacy-safe iOS 16 controller and view hierarchy data without collecting message text, contact names, phone numbers, or participant information. Includes System, Light and Black themes, Info and Delete swipe actions, and a working Settings pane.
+Maintainer: Next Solution - Zeshan 0727
+Author: Next Solution - Zeshan 0727
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader, firmware (>= 15.0)
+Homepage: https://zeshan0727.github.io/
+Icon: https://zeshan0727.github.io/CydiaIcon.png
