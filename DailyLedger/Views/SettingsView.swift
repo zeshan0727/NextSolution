@@ -1,10 +1,16 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 private struct SettingsNotice: Identifiable {
     let id = UUID()
     let title: String
     let message: String
+}
+
+private enum ImportSource {
+    case files
+    case googleDrive
 }
 
 struct SettingsView: View {
@@ -14,9 +20,9 @@ struct SettingsView: View {
     @State private var selectedCurrency = "QAR"
     @State private var exportingBackup = false
     @State private var exportingCSV = false
-    @State private var importing = false
+    @State private var showingImporter = false
+    @State private var importSource = ImportSource.files
     @State private var exportingGoogleDrive = false
-    @State private var importingGoogleDrive = false
     @State private var notice: SettingsNotice?
     @State private var deepSeekAPIKey = ""
     @State private var deepSeekConnected = DeepSeekService.shared.hasAPIKey
@@ -81,7 +87,8 @@ struct SettingsView: View {
                     }
 
                     Button {
-                        importing = true
+                        importSource = .files
+                        showingImporter = true
                     } label: {
                         SettingsRow(
                             title: "Import Data",
@@ -114,7 +121,8 @@ struct SettingsView: View {
                         Label("Back Up to Google Drive", systemImage: "externaldrive.badge.icloud")
                     }
                     Button {
-                        importingGoogleDrive = true
+                        importSource = .googleDrive
+                        showingImporter = true
                     } label: {
                         Label("Restore from Google Drive", systemImage: "arrow.down.doc.fill")
                     }
@@ -318,7 +326,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.31")
+                    LabeledContent("Version", value: "1.3.33")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")
@@ -353,22 +361,11 @@ struct SettingsView: View {
             ) { result in
                 showExportResult(result, format: "Google Drive backup")
             }
-            .fileImporter(
-                isPresented: $importing,
-                // Some Files providers report JSON/CSV downloads as a generic item.
-                // Accepting UTType.item keeps those files selectable; the codec still
-                // validates their actual bytes before importing anything.
-                allowedContentTypes: [.item],
-                allowsMultipleSelection: false
-            ) { result in
-                importFile(result)
-            }
-            .fileImporter(
-                isPresented: $importingGoogleDrive,
-                allowedContentTypes: [.item],
-                allowsMultipleSelection: false
-            ) { result in
-                importFile(result)
+            .sheet(isPresented: $showingImporter) {
+                ImportDocumentPicker { result in
+                    showingImporter = false
+                    importFile(result, source: importSource)
+                }
             }
             .alert(item: $notice) { notice in
                 Alert(
@@ -487,12 +484,13 @@ struct SettingsView: View {
         }
     }
 
-    private func importFile(_ result: Result<[URL], Error>) {
+    private func importFile(_ result: Result<URL, Error>, source: ImportSource) {
         do {
-            guard let url = try result.get().first else { return }
+            let url = try result.get()
             let accessing = url.startAccessingSecurityScopedResource()
             defer { if accessing { url.stopAccessingSecurityScopedResource() } }
-            let summary = try store.importFile(at: url)
+            let data = try coordinatedData(from: url)
+            let summary = try store.importData(data)
             let transactionText = summary.transactionCount == 1
                 ? "1 transaction"
                 : "\(summary.transactionCount) transactions"
@@ -500,11 +498,76 @@ struct SettingsView: View {
                 ? "1 account"
                 : "\(summary.accountCount) accounts"
             notice = SettingsNotice(
-                title: "Import Complete",
+                title: source == .googleDrive ? "Restore Complete" : "Import Complete",
                 message: "Added \(transactionText) and \(accountText)."
             )
         } catch {
-            notice = SettingsNotice(title: "Import Failed", message: error.localizedDescription)
+            notice = SettingsNotice(
+                title: source == .googleDrive ? "Restore Failed" : "Import Failed",
+                message: error.localizedDescription
+            )
+        }
+    }
+
+    private func coordinatedData(from url: URL) throws -> Data {
+        var coordinatorError: NSError?
+        var readResult: Result<Data, Error>?
+        NSFileCoordinator().coordinate(
+            readingItemAt: url,
+            options: [],
+            error: &coordinatorError
+        ) { coordinatedURL in
+            readResult = Result {
+                try Data(contentsOf: coordinatedURL, options: .mappedIfSafe)
+            }
+        }
+        if let coordinatorError { throw coordinatorError }
+        guard let readResult else {
+            throw CocoaError(.fileReadUnknown)
+        }
+        return try readResult.get()
+    }
+}
+
+private struct ImportDocumentPicker: UIViewControllerRepresentable {
+    let completion: (Result<URL, Error>) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(completion: completion)
+    }
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(
+            forOpeningContentTypes: [.json, .commaSeparatedText, .plainText, .data, .item],
+            asCopy: true
+        )
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(
+        _ uiViewController: UIDocumentPickerViewController,
+        context: Context
+    ) {}
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let completion: (Result<URL, Error>) -> Void
+
+        init(completion: @escaping (Result<URL, Error>) -> Void) {
+            self.completion = completion
+        }
+
+        func documentPicker(
+            _ controller: UIDocumentPickerViewController,
+            didPickDocumentsAt urls: [URL]
+        ) {
+            guard let url = urls.first else {
+                completion(.failure(CocoaError(.fileReadNoSuchFile)))
+                return
+            }
+            completion(.success(url))
         }
     }
 }
