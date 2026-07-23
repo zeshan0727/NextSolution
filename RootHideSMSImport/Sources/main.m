@@ -87,16 +87,27 @@ static NSDate *DatabaseDate(sqlite3_int64 rawValue) {
 
 static NSDate *TransactionDate(NSString *text, NSDate *fallback) {
     NSString *day = Capture(@"\\b(\\d{1,2}-[A-Za-z]{3}-\\d{2,4})\\b", text, 1);
-    NSString *time = Capture(@"\\bat\\s+(\\d{1,2}:\\d{2})(?::\\d{2})?\\s+(?=\\d{1,2}-[A-Za-z]{3}-\\d{2,4}\\b)", text, 1);
+    NSString *format = nil;
+    if (day) {
+        BOOL fourDigitYear = [[[day componentsSeparatedByString:@"-"] lastObject] length] == 4;
+        format = fourDigitYear ? @"dd-MMM-yyyy" : @"dd-MMM-yy";
+    } else {
+        day = Capture(@"\\b(\\d{1,2}/\\d{1,2}/\\d{2,4})\\b", text, 1);
+        if (day) {
+            BOOL fourDigitYear = [[[day componentsSeparatedByString:@"/"] lastObject] length] == 4;
+            format = fourDigitYear ? @"dd/MM/yyyy" : @"dd/MM/yy";
+        } else {
+            day = Capture(@"\\b(\\d{4}-\\d{2}-\\d{2})\\b", text, 1);
+            if (day) format = @"yyyy-MM-dd";
+        }
+    }
+    NSString *time = Capture(@"\\bat\\s+(\\d{1,2}:\\d{2})(?::\\d{2})?\\b", text, 1);
     if (!day) return fallback;
 
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
     formatter.timeZone = [NSTimeZone localTimeZone];
-    BOOL fourDigitYear = [[[day componentsSeparatedByString:@"-"] lastObject] length] == 4;
-    formatter.dateFormat = fourDigitYear
-        ? (time ? @"dd-MMM-yyyy HH:mm" : @"dd-MMM-yyyy")
-        : (time ? @"dd-MMM-yy HH:mm" : @"dd-MMM-yy");
+    formatter.dateFormat = time ? [format stringByAppendingString:@" HH:mm"] : format;
     NSDate *parsed = [formatter dateFromString:time ? [NSString stringWithFormat:@"%@ %@", day, time] : day];
     return parsed ?: fallback;
 }

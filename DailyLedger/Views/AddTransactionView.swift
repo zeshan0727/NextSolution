@@ -64,6 +64,14 @@ struct AddTransactionView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItemGroup(placement: .keyboard) {
+                    ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
+                        Button(symbol) { amountText = AmountExpression.appending(symbol, to: amountText) }
+                    }
+                    Button("=") {
+                        if let value = AmountExpression.evaluate(amountText) {
+                            amountText = NSDecimalNumber(decimal: value).stringValue
+                        }
+                    }
                     Spacer()
                     Button {
                         focusedField = nil
@@ -292,11 +300,7 @@ struct AddTransactionView: View {
     }
 
     private var parsedAmount: Decimal? {
-        let normalized = amountText.replacingOccurrences(of: ",", with: ".")
-        guard let amount = Decimal(
-            string: normalized,
-            locale: Locale(identifier: "en_US_POSIX")
-        ), amount > 0 else { return nil }
+        guard let amount = AmountExpression.evaluate(amountText), amount > 0 else { return nil }
         return amount
     }
 

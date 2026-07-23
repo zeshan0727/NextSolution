@@ -57,6 +57,16 @@ struct SplitTransactionView: View {
                     Button("Split") { save() }
                         .disabled(!isValid)
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
+                        Button(symbol) { firstAmount = AmountExpression.appending(symbol, to: firstAmount) }
+                    }
+                    Button("=") {
+                        if let value = AmountExpression.evaluate(firstAmount) {
+                            firstAmount = NSDecimalNumber(decimal: value).stringValue
+                        }
+                    }
+                }
             }
             .onAppear {
                 firstAccountID = transaction.accountID ?? store.defaultAccountID
@@ -65,6 +75,10 @@ struct SplitTransactionView: View {
                 secondAmount = NSDecimalNumber(decimal: transaction.amount - (transaction.amount / 2)).stringValue
                 firstCategory = transaction.category
                 secondCategory = transaction.category
+            }
+            .onChange(of: firstAmount) { _ in
+                let remaining = max(transaction.amount - firstValue, 0)
+                secondAmount = NSDecimalNumber(decimal: remaining).stringValue
             }
         }
     }
@@ -110,7 +124,7 @@ struct SplitTransactionView: View {
         return firstAccountID != nil && secondAccountID != nil && firstAccountID != secondAccountID
     }
     private func decimal(_ text: String) -> Decimal? {
-        Decimal(string: text.replacingOccurrences(of: ",", with: "."), locale: Locale(identifier: "en_US_POSIX"))
+        AmountExpression.evaluate(text)
     }
     private func save() {
         if mode == .expense && transaction.type == .expense {

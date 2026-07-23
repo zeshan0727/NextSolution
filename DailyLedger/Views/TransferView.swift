@@ -62,6 +62,16 @@ struct TransferView: View {
                     Button(editingTransaction == nil ? "Transfer" : "Update", action: save)
                         .disabled(!canSave)
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    ForEach(["+", "−", "×", "÷"], id: \.self) { symbol in
+                        Button(symbol) { amountText = AmountExpression.appending(symbol, to: amountText) }
+                    }
+                    Button("=") {
+                        if let value = AmountExpression.evaluate(amountText) {
+                            amountText = NSDecimalNumber(decimal: value).stringValue
+                        }
+                    }
+                }
             }
             .onAppear(perform: chooseDefaults)
             .onChange(of: sourceAccountID) { value in
@@ -106,10 +116,7 @@ struct TransferView: View {
     }
 
     private func positiveDecimal(_ text: String) -> Decimal? {
-        guard let value = Decimal(
-            string: text.replacingOccurrences(of: ",", with: ""),
-            locale: Locale(identifier: "en_US_POSIX")
-        ), value > 0 else { return nil }
+        guard let value = AmountExpression.evaluate(text), value > 0 else { return nil }
         return value
     }
 

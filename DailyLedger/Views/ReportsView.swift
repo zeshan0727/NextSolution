@@ -113,16 +113,11 @@ struct ReportsView: View {
 private struct ReportComparisonView: View {
     @EnvironmentObject private var store: LedgerStore
     @State private var period: ReportPeriod = .month
-    @State private var type: TransactionType = .expense
     @State private var customStart = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @State private var customEnd = Date()
 
     var body: some View {
         List {
-            Picker("Compare", selection: $type) {
-                Text("Expenses").tag(TransactionType.expense)
-                Text("Income").tag(TransactionType.income)
-            }.pickerStyle(.segmented)
             Picker("Period", selection: $period) {
                 ForEach(ReportPeriod.allCases) { Text($0.rawValue).tag($0) }
             }.pickerStyle(.menu)
@@ -133,9 +128,14 @@ private struct ReportComparisonView: View {
                 }
             }
             Section("Current vs Previous") {
+                comparisonHeader
                 comparisonRow("Current", interval: currentInterval)
                 comparisonRow("Previous", interval: previousInterval)
-                LabeledContent("Change", value: DisplayFormat.currency(currentAmount - previousAmount, code: store.currencyCode))
+                comparisonValues(
+                    title: "Change",
+                    income: amount(.income, in: currentInterval) - amount(.income, in: previousInterval),
+                    expense: amount(.expense, in: currentInterval) - amount(.expense, in: previousInterval)
+                )
             }
         }
         .navigationTitle("Compare Reports")
@@ -162,36 +162,41 @@ private struct ReportComparisonView: View {
         let date = Calendar.current.date(byAdding: calendarUnit, value: -1, to: Date())!
         return Calendar.current.dateInterval(of: calendarUnit, for: date)!
     }
-    private var currentAmount: Decimal { amount(in: currentInterval) }
-    private var previousAmount: Decimal { amount(in: previousInterval) }
-    private func amount(in interval: DateInterval) -> Decimal {
+    private func amount(_ type: TransactionType, in interval: DateInterval) -> Decimal {
         store.transactions.lazy.filter {
             $0.type == type && interval.contains($0.date) && store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
         }.reduce(Decimal.zero) { $0 + $1.amount }
     }
+    private var comparisonHeader: some View {
+        HStack {
+            Text("Period").frame(maxWidth: .infinity, alignment: .leading)
+            Text("Income").frame(width: 100, alignment: .trailing)
+            Text("Expense").frame(width: 100, alignment: .trailing)
+        }.font(.caption.bold()).foregroundStyle(.secondary)
+    }
     private func comparisonRow(_ title: String, interval: DateInterval) -> some View {
         NavigationLink {
-            PeriodTransactionsView(
-                kind: type == .income ? .income : .expenses,
-                interval: interval
-            )
+            ComparisonTransactionsView(interval: interval)
         } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                    Text("\(transactionCount(in: interval)) transactions")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text(DisplayFormat.currency(amount(in: interval), code: store.currencyCode))
-                    .font(.subheadline.bold())
-            }
+            comparisonValues(
+                title: "\(title)\n\(transactionCount(in: interval)) trans.",
+                income: amount(.income, in: interval),
+                expense: amount(.expense, in: interval)
+            )
         }
+    }
+    private func comparisonValues(title: String, income: Decimal, expense: Decimal) -> some View {
+        HStack {
+            Text(title).font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
+            Text(DisplayFormat.currency(income, code: store.currencyCode))
+                .font(.caption.bold()).frame(width: 100, alignment: .trailing)
+            Text(DisplayFormat.currency(expense, code: store.currencyCode))
+                .font(.caption.bold()).frame(width: 100, alignment: .trailing)
+        }.minimumScaleFactor(0.65)
     }
     private func transactionCount(in interval: DateInterval) -> Int {
         store.transactions.lazy.filter {
-            $0.type == type && interval.contains($0.date) &&
+            ($0.type == .income || $0.type == .expense) && interval.contains($0.date) &&
             store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
         }.count
     }
@@ -231,6 +236,11 @@ private struct CustomAccountReportView: View {
     var body: some View {
         List {
             Section("Accounts") {
+                HStack {
+                    Button("Select All") { selected = Set(store.activeAccounts.map(\.id)) }
+                    Spacer()
+                    Button("Deselect All") { selected.removeAll() }
+                }
                 ForEach(store.activeAccounts) { account in
                     Button { toggle(account.id) } label: {
                         HStack {
@@ -250,16 +260,18 @@ private struct CustomAccountReportView: View {
                 Toggle("Compare previous period", isOn: $compare)
             }
             Section("Selected Period") {
-                LabeledContent("Income", value: formatted(total(.income, in: interval)))
-                LabeledContent("Expenses", value: formatted(total(.expense, in: interval)))
-                LabeledContent("Transactions", value: "\(transactions(in: interval).count)")
+                accountComparisonHeader
+                accountComparisonRow("Selected", interval: interval)
             }
             if compare {
                 Section("Previous Equal Period") {
-                    LabeledContent("Income", value: formatted(total(.income, in: previousInterval)))
-                    LabeledContent("Expenses", value: formatted(total(.expense, in: previousInterval)))
-                    LabeledContent("Income change", value: formatted(total(.income, in: interval) - total(.income, in: previousInterval)))
-                    LabeledContent("Expense change", value: formatted(total(.expense, in: interval) - total(.expense, in: previousInterval)))
+                    accountComparisonHeader
+                    accountComparisonRow("Previous", interval: previousInterval)
+                    accountValues(
+                        "Change",
+                        income: total(.income, in: interval) - total(.income, in: previousInterval),
+                        expense: total(.expense, in: interval) - total(.expense, in: previousInterval)
+                    )
                 }
             }
         }
@@ -282,6 +294,28 @@ private struct CustomAccountReportView: View {
         transactions(in: interval).filter { $0.type == type }.reduce(0) { $0 + $1.amount }
     }
     private func formatted(_ value: Decimal) -> String { DisplayFormat.currency(value, code: store.currencyCode) }
+    private var accountComparisonHeader: some View {
+        HStack {
+            Text("Period").frame(maxWidth: .infinity, alignment: .leading)
+            Text("Income").frame(width: 100, alignment: .trailing)
+            Text("Expense").frame(width: 100, alignment: .trailing)
+        }.font(.caption.bold()).foregroundStyle(.secondary)
+    }
+    private func accountComparisonRow(_ title: String, interval: DateInterval) -> some View {
+        NavigationLink {
+            AccountReportTransactionsView(interval: interval, accountIDs: selected)
+        } label: {
+            accountValues("\(title)\n\(transactions(in: interval).count) trans.",
+                          income: total(.income, in: interval), expense: total(.expense, in: interval))
+        }
+    }
+    private func accountValues(_ title: String, income: Decimal, expense: Decimal) -> some View {
+        HStack {
+            Text(title).font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
+            Text(formatted(income)).font(.caption.bold()).frame(width: 100, alignment: .trailing)
+            Text(formatted(expense)).font(.caption.bold()).frame(width: 100, alignment: .trailing)
+        }.minimumScaleFactor(0.65)
+    }
     private func toggle(_ id: UUID) {
         if selected.contains(id) { selected.remove(id) } else { selected.insert(id) }
     }
@@ -290,12 +324,21 @@ private struct CustomAccountReportView: View {
 private struct LoanMovementReportView: View {
     @EnvironmentObject private var store: LedgerStore
     @State private var month = Date()
+    @State private var customDates = false
+    @State private var start = Calendar.current.dateInterval(of: .month, for: Date())!.start
+    @State private var end = Date()
 
     var body: some View {
         List {
             Section {
-                DatePicker("Month", selection: $month, displayedComponents: [.date])
-                    .datePickerStyle(.compact)
+                Toggle("Custom Date Range", isOn: $customDates)
+                if customDates {
+                    DatePicker("From", selection: $start, displayedComponents: .date)
+                    DatePicker("To", selection: $end, in: start..., displayedComponents: .date)
+                } else {
+                    DatePicker("Month", selection: $month, displayedComponents: [.date])
+                        .datePickerStyle(.compact)
+                }
             }
             ForEach(currencies, id: \.self) { currency in
                 Section(currency) {
@@ -309,7 +352,13 @@ private struct LoanMovementReportView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private var interval: DateInterval { Calendar.current.dateInterval(of: .month, for: month)! }
+    private var interval: DateInterval {
+        if customDates {
+            return DateInterval(start: Calendar.current.startOfDay(for: start),
+                end: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: end))!)
+        }
+        return Calendar.current.dateInterval(of: .month, for: month)!
+    }
     private var loanAccounts: [LedgerAccount] {
         store.accounts.filter { $0.group == .payments || $0.nature == .loan }
     }
@@ -359,7 +408,7 @@ private struct ReportDetailView: View {
 
                     periodNavigator
                     if kind == .summary { totalCards }
-                    if kind == .summary || kind == .income || kind == .expenses {
+                    if kind == .summary || kind == .income {
                         activityChart
                     }
                     if kind == .summary || kind == .categories {
@@ -832,5 +881,72 @@ private struct ChartLegend: View {
             Circle().fill(color).frame(width: 7, height: 7)
             Text(title).font(.caption2).foregroundStyle(.secondary)
         }
+    }
+}
+
+private struct ComparisonTransactionsView: View {
+    @EnvironmentObject private var store: LedgerStore
+    let interval: DateInterval
+    var body: some View {
+        List {
+            Section("Income") { rows(for: .income) }
+            Section("Expenses") { rows(for: .expense) }
+        }
+        .navigationTitle("Compared Transactions")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    @ViewBuilder private func rows(for type: TransactionType) -> some View {
+        let items = transactions.filter { $0.type == type }
+        if items.isEmpty {
+            Text("No \(type.title.lowercased()) transactions.").foregroundStyle(.secondary)
+        } else {
+            ForEach(items) { TransactionRow(transaction: $0) }
+            LabeledContent("Total", value: DisplayFormat.currency(items.reduce(0) { $0 + $1.amount }, code: store.currencyCode))
+        }
+    }
+    private var transactions: [LedgerTransaction] {
+        store.transactions.filter {
+            interval.contains($0.date) && ($0.type == .income || $0.type == .expense) &&
+            store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
+        }.sorted { $0.date > $1.date }
+    }
+}
+
+private struct AccountReportTransactionsView: View {
+    @EnvironmentObject private var store: LedgerStore
+    let interval: DateInterval
+    let accountIDs: Set<UUID>
+    @State private var selectedTransaction: LedgerTransaction?
+
+    var body: some View {
+        List {
+            ForEach(transactions) { transaction in
+                Button { selectedTransaction = transaction } label: {
+                    TransactionRow(transaction: transaction)
+                }.buttonStyle(.plain)
+            }
+            Section {
+                LabeledContent("Income Total", value: formatted(total(.income)))
+                LabeledContent("Expense Total", value: formatted(total(.expense)))
+                LabeledContent("Transactions", value: "\(transactions.count)")
+            }
+        }
+        .navigationTitle("Account Transactions")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $selectedTransaction) {
+            TransactionSnapshotView(transaction: $0).environmentObject(store)
+        }
+    }
+    private var transactions: [LedgerTransaction] {
+        store.transactions.filter {
+            interval.contains($0.date) && accountIDs.contains($0.accountID ?? LedgerAccount.legacyMainID) &&
+            ($0.type == .income || $0.type == .expense)
+        }.sorted { $0.date > $1.date }
+    }
+    private func total(_ type: TransactionType) -> Decimal {
+        transactions.filter { $0.type == type }.reduce(0) { $0 + $1.amount }
+    }
+    private func formatted(_ amount: Decimal) -> String {
+        DisplayFormat.currency(amount, code: store.currencyCode)
     }
 }

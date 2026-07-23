@@ -185,7 +185,9 @@ struct SettingsView: View {
                     SecureField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                     Picker("Text Model", selection: $openAIModel) {
-                        ForEach(OpenAIService.selectableModels, id: \.self) { Text($0).tag($0) }
+                        ForEach(OpenAIService.selectableModels, id: \.self) { model in
+                            Text(modelLabel(model)).tag(model)
+                        }
                     }
                     Button("Save OpenAI API Key", action: saveOpenAIKey)
                         .disabled(openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -201,7 +203,7 @@ struct SettingsView: View {
                 } header: {
                     Label("OpenAI Chat", systemImage: "bubble.left.and.bubble.right.fill")
                 } footer: {
-                    Text("Your API key stays in this iPhone's Keychain. API access and limits belong to your OpenAI API project; a ChatGPT subscription does not supply API usage. Daily Ledger caps each answer to control tokens.")
+                    Text("GPT-5 models are included, but OpenAI currently does not support them on the API Free tier. Your API project controls availability and billing. Daily Ledger caps each answer to control tokens.")
                 }
 
                 Section {
@@ -316,7 +318,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.26")
+                    LabeledContent("Version", value: "1.3.27")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")
@@ -400,6 +402,15 @@ struct SettingsView: View {
             "PKR": "Pakistani Rupee", "INR": "Indian Rupee"
         ]
         return "\(code) – \(names[code] ?? code)"
+    }
+
+    private func modelLabel(_ model: String) -> String {
+        switch model {
+        case "gpt-5-nano": return "GPT-5 Nano · Lowest-cost GPT-5"
+        case "gpt-5-mini": return "GPT-5 Mini · Balanced"
+        case "gpt-5.6-sol": return "GPT-5.6 Sol · Frontier"
+        default: return model
+        }
     }
 
     private func saveDeepSeekKey() {
