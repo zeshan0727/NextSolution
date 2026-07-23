@@ -4,15 +4,50 @@ import UniformTypeIdentifiers
 import MessageUI
 import QuickLook
 
+enum DocumentPickerMode {
+    case files
+    case folder
+
+    var contentTypes: [UTType] {
+        switch self {
+        case .files: return [.item]
+        case .folder: return [.folder]
+        }
+    }
+
+    var copiesSelection: Bool {
+        switch self {
+        case .files: return true
+        case .folder: return false
+        }
+    }
+}
+
 struct DocumentPicker: UIViewControllerRepresentable {
+    let mode: DocumentPickerMode
     let allowsMultipleSelection: Bool
     let completion: (Result<[URL], Error>) -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(completion: completion) }
+    init(
+        mode: DocumentPickerMode = .files,
+        allowsMultipleSelection: Bool,
+        completion: @escaping (Result<[URL], Error>) -> Void
+    ) {
+        self.mode = mode
+        self.allowsMultipleSelection = allowsMultipleSelection
+        self.completion = completion
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(completion: completion)
+    }
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
-        picker.allowsMultipleSelection = allowsMultipleSelection
+        let picker = UIDocumentPickerViewController(
+            forOpeningContentTypes: mode.contentTypes,
+            asCopy: mode.copiesSelection
+        )
+        picker.allowsMultipleSelection = mode == .files && allowsMultipleSelection
         picker.shouldShowFileExtensions = true
         picker.delegate = context.coordinator
         return picker
@@ -21,18 +56,27 @@ struct DocumentPicker: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
 
     final class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let completion: (Result<[URL], Error>) -> Void
+        private let completion: (Result<[URL], Error>) -> Void
+        private var hasFinished = false
 
         init(completion: @escaping (Result<[URL], Error>) -> Void) {
             self.completion = completion
         }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            completion(.success(urls))
+            finish(.success(urls))
         }
 
         func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-            completion(.success([]))
+            finish(.success([]))
+        }
+
+        private func finish(_ result: Result<[URL], Error>) {
+            guard !hasFinished else { return }
+            hasFinished = true
+            DispatchQueue.main.async { [completion] in
+                completion(result)
+            }
         }
     }
 }
@@ -66,7 +110,9 @@ struct MailComposer: UIViewControllerRepresentable {
     let draft: MailDraft
     let completion: (MFMailComposeResult) -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(completion: completion) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(completion: completion)
+    }
 
     func makeUIViewController(context: Context) -> MFMailComposeViewController {
         let controller = MFMailComposeViewController()
@@ -89,7 +135,11 @@ struct MailComposer: UIViewControllerRepresentable {
             self.completion = completion
         }
 
-        func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
+        func mailComposeController(
+            _ controller: MFMailComposeViewController,
+            didFinishWith result: MFMailComposeResult,
+            error: Error?
+        ) {
             controller.dismiss(animated: true)
             completion(result)
         }
@@ -104,7 +154,9 @@ struct PreviewItem: Identifiable {
 struct QuickLookPreview: UIViewControllerRepresentable {
     let url: URL
 
-    func makeCoordinator() -> Coordinator { Coordinator(url: url) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(url: url)
+    }
 
     func makeUIViewController(context: Context) -> QLPreviewController {
         let controller = QLPreviewController()
@@ -116,9 +168,16 @@ struct QuickLookPreview: UIViewControllerRepresentable {
 
     final class Coordinator: NSObject, QLPreviewControllerDataSource {
         let url: URL
-        init(url: URL) { self.url = url }
+
+        init(url: URL) {
+            self.url = url
+        }
+
         func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
-        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem { url as NSURL }
+
+        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+            url as NSURL
+        }
     }
 }
 
