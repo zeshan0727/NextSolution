@@ -600,11 +600,15 @@ private struct ReportDetailView: View {
         VStack(spacing: 12) {
             ReportTotalCard(
                 title: "Net Balance",
-                value: totals.balance,
+                value: financeSummaryNetBalance,
                 currencyCode: store.currencyCode,
                 icon: "equal.circle.fill",
-                color: totals.balance >= 0 ? AppTheme.purple : AppTheme.red
+                color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red
             )
+            Text("PKR loan movement converted at fixed rate: PKR 77 = QAR 1.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 12) {
                 NavigationLink {
                     PeriodTransactionsView(kind: .income, interval: selectedInterval)
@@ -648,6 +652,21 @@ private struct ReportDetailView: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+
+    private var financeSummaryNetBalance: Decimal {
+        let convertedLoanMovement = store.loanNetMovements(in: selectedInterval).reduce(Decimal.zero) {
+            result, movement in
+            switch movement.currencyCode.uppercased() {
+            case "QAR":
+                return result + movement.netAmount
+            case "PKR":
+                return result + movement.netAmount / Decimal(77)
+            default:
+                return result
+            }
+        }
+        return totals.income + convertedLoanMovement - totals.expense
     }
 
     private var activityChart: some View {

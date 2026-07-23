@@ -1,5 +1,5 @@
 # Daily Ledger 1.3.31 validated build
-# Build trigger: Financial Summary per-currency net loan snapshots
+# Build trigger: Financial Summary fixed-rate converted net balance
 name: Build Daily Ledger TIPA
 
 on:
