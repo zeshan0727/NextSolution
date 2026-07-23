@@ -83,12 +83,12 @@ editor_path.write_text(editor, encoding="utf-8")
 ai_path = Path("NextJob/Views/AIEmailView.swift")
 ai = ai_path.read_text(encoding="utf-8")
 if "@State private var usageText" not in ai:
-    state_marker = '    @State private var bodyText = ""\n'
+    state_marker = '    @State private var emailBody = ""\n'
     if state_marker not in ai:
-        raise RuntimeError("Could not locate AI body state")
+        raise RuntimeError("Could not locate migrated AI email-body state")
     ai = ai.replace(state_marker, state_marker + '    @State private var usageText = ""\n', 1)
 
-    editor_marker = '''                TextEditor(text: $bodyText)
+    editor_marker = '''                TextEditor(text: $emailBody)
                     .frame(minHeight: 210)
                     .scrollContentBackground(.hidden)
                     .padding(8)
@@ -99,7 +99,7 @@ if "@State private var usageText" not in ai:
     if editor_marker in ai:
         ai = ai.replace(
             editor_marker,
-            '''                TextEditor(text: $bodyText)
+            '''                TextEditor(text: $emailBody)
                     .frame(minHeight: 210)
                     .scrollContentBackground(.hidden)
                     .padding(8)
@@ -119,26 +119,26 @@ if "@State private var usageText" not in ai:
     ai = ai.replace(
         '''            .onChange(of: selectedJobID) { _ in
                 subject = ""
-                bodyText = ""
+                emailBody = ""
             }
 ''',
         '''            .onChange(of: selectedJobID) { _ in
                 subject = ""
-                bodyText = ""
+                emailBody = ""
                 usageText = ""
             }
 ''',
         1,
     )
     result_marker = '''                subject = result.subject
-                bodyText = result.body
+                emailBody = result.body
 '''
     if result_marker not in ai:
         raise RuntimeError("Could not locate AI result assignment")
     ai = ai.replace(
         result_marker,
         '''                subject = result.subject
-                bodyText = result.body
+                emailBody = result.body
                 usageText = "Tokens: input \\(result.inputTokens ?? 0) • output \\(result.outputTokens ?? 0) • total \\(result.totalTokens ?? 0)"
 ''',
         1,
