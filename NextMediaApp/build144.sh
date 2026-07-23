@@ -122,6 +122,10 @@ grep -q 'scheduleAutoHideIfNeeded' projects/NextMedia/NextMedia/Views/MiniPlayer
 grep -q 'onChange(of: player.isPlaying)' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift
 grep -Fq 'Single tap to show or hide controls. Double tap to open the full player.' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift'''
 source = source.replace(checks143, checks143 + "\n" + checks144, 1)
+source = source.replace(
+    "grep -q 'onTapGesture(count: 2)' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift",
+    "grep -q 'TapGesture(count: 2)' projects/NextMedia/NextMedia/Views/MiniPlayerView.swift"
+)
 source = source.replace("1.4.3", "1.4.4")
 source = source.replace("== '9'", "== '10'")
 source = source.replace("grep -qx '9'", "grep -qx '10'")
