@@ -117,7 +117,7 @@ struct DashboardV124View: View {
                 }
                 Spacer()
                 Button(editingCards ? "Done" : "Edit") {
-                    withAnimation(.snappy) { editingCards.toggle() }
+                    withAnimation(.easeInOut(duration: 0.20)) { editingCards.toggle() }
                 }
                 .font(.subheadline.weight(.semibold))
             }
@@ -357,7 +357,7 @@ private struct RecoveredSpendDropDelegate: DropDelegate {
               let from = items.firstIndex(of: dragging),
               let to = items.firstIndex(of: item) else { return }
 
-        withAnimation(.snappy) {
+        withAnimation(.easeInOut(duration: 0.20)) {
             items.move(
                 fromOffsets: IndexSet(integer: from),
                 toOffset: to > from ? to + 1 : to
