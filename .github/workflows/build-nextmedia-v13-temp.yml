@@ -5,6 +5,12 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/build-nextmedia-v13-temp.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "NextMediaApp/**"
+      - ".github/workflows/build-nextmedia.yml"
+      - ".github/workflows/build-nextmedia-141.yml"
   workflow_dispatch:
 
 permissions:
