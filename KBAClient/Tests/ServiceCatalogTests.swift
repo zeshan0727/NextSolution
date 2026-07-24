@@ -16,6 +16,7 @@ final class ServiceCatalogTests: XCTestCase {
         XCTAssertFalse(services.contains { $0.id == "uk-payroll" })
     }
 
+    @MainActor
     func testReferenceFormatIsStable() {
         let date = Date(timeIntervalSince1970: 1_735_689_600) // 2025-01-01 UTC
         let reference = AppStore.makeReference(date: date, suffix: 1234)
