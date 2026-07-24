@@ -1,0 +1,4 @@
+Next Job 1.0.4 validation build
+Gmail stale connector recovery
+Pending payments filter
+Settings job type cleanup

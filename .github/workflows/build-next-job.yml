@@ -1,0 +1,120 @@
+name: Build Next Job TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - agent/next-job-v1.0.0-0723
+    paths:
+      - "NextJob/**"
+      - ".github/workflows/build-next-job.yml"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+    paths:
+      - "NextJob/**"
+      - ".github/workflows/build-next-job.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Apply Next Job source migrations
+        run: |
+          python3 NextJob/Patches/apply_1_0_1.py
+          python3 NextJob/Patches/apply_1_0_2.py
+          python3 NextJob/Patches/apply_1_0_3.py
+          python3 NextJob/Patches/apply_1_0_4.py
+          python3 NextJob/Patches/apply_1_0_5.py
+
+      - name: Validate Swift syntax
+        run: |
+          find NextJob -name '*.swift' \
+            -not -path 'NextJob/Scripts/*' \
+            -print0 | while IFS= read -r -d '' file; do
+              echo "Parsing $file"
+              swiftc -frontend -parse "$file"
+            done
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate app icon
+        run: |
+          xcrun --sdk macosx swift \
+            NextJob/Scripts/GenerateIcon.swift \
+            NextJob/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+
+      - name: Generate Xcode project
+        run: |
+          cd NextJob
+          xcodegen generate
+
+      - name: Build unsigned iPhone app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -quiet \
+            -project NextJob/NextJob.xcodeproj \
+            -scheme NextJob \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build-next-job \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee next-job-build.log
+
+      - name: Upload compiler log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextJob-Compiler-Log-1.0.5
+          path: next-job-build.log
+          if-no-files-found: ignore
+
+      - name: Package for TrollStore
+        run: |
+          APP_PATH="$(find build-next-job/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.5.tipa
+          shasum -a 256 NextJob-1.0.5.tipa > NextJob-1.0.5.sha256
+
+      - name: Package transformed source
+        run: |
+          rm -rf NextJob/NextJob.xcodeproj
+          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.5-source.zip
+
+      - name: Upload TIPA and source
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextJob-TrollStore-1.0.5
+          path: |
+            NextJob-1.0.5.tipa
+            NextJob-1.0.5.sha256
+            NextJob-1.0.5-source.zip
+          if-no-files-found: error
+
+      - name: Publish run pointer
+        if: github.event_name == 'push'
+        run: |
+          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.5.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build-run-nextjob-1.0.5.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record Next Job 1.0.5 build run"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
