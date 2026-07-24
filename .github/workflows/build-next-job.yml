@@ -16,6 +16,9 @@ on:
       - "NextJob/**"
       - ".github/workflows/build-next-job.yml"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-15
@@ -31,6 +34,7 @@ jobs:
           python3 NextJob/Patches/apply_1_0_2.py
           python3 NextJob/Patches/apply_1_0_3.py
           python3 NextJob/Patches/apply_1_0_4.py
+          python3 NextJob/Patches/apply_1_0_5.py
 
       - name: Validate Swift syntax
         run: |
@@ -74,7 +78,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-Compiler-Log-1.0.4
+          name: NextJob-Compiler-Log-1.0.5
           path: next-job-build.log
           if-no-files-found: ignore
 
@@ -85,20 +89,32 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.4.tipa
-          shasum -a 256 NextJob-1.0.4.tipa > NextJob-1.0.4.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.5.tipa
+          shasum -a 256 NextJob-1.0.5.tipa > NextJob-1.0.5.sha256
 
       - name: Package transformed source
         run: |
           rm -rf NextJob/NextJob.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.4-source.zip
+          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.5-source.zip
 
       - name: Upload TIPA and source
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-TrollStore-1.0.4
+          name: NextJob-TrollStore-1.0.5
           path: |
-            NextJob-1.0.4.tipa
-            NextJob-1.0.4.sha256
-            NextJob-1.0.4-source.zip
+            NextJob-1.0.5.tipa
+            NextJob-1.0.5.sha256
+            NextJob-1.0.5-source.zip
           if-no-files-found: error
+
+      - name: Publish run pointer
+        if: github.event_name == 'push'
+        run: |
+          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.5.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build-run-nextjob-1.0.5.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record Next Job 1.0.5 build run"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
