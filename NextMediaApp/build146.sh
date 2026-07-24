@@ -21,7 +21,7 @@ import hashlib
 from pathlib import Path
 encoded = Path('NextMediaApp/v146patch.b64').read_text().strip()
 archive = base64.b64decode(encoded, validate=True)
-expected = 'ec020d7595eb7a0c4702273108e8e4a68c1dcff8ed7307ff251ea705034e7968'
+expected = '55cd075ba1ef4cf24bd47295d854695fe73cab1f4a1a1ec4dd397e763d66b75c'
 actual = hashlib.sha256(archive).hexdigest()
 if actual != expected:
     raise SystemExit(f'v1.4.6 patch checksum mismatch: {actual}')
@@ -39,6 +39,10 @@ grep -q 'playbackStartModeKey' projects/NextMedia/NextMedia/Services/PlayerManag
 grep -q '@AppStorage("playbackStartMode")' projects/NextMedia/NextMedia/Views/SettingsView.swift
 grep -Fq 'Resume from Last Position' projects/NextMedia/NextMedia/Views/SettingsView.swift
 grep -Fq 'Always Start from Beginning' projects/NextMedia/NextMedia/Views/SettingsView.swift
+grep -q '<string>1.4.6</string>' projects/NextMedia/NextMedia/Info.plist
+grep -q '<string>12</string>' projects/NextMedia/NextMedia/Info.plist
+grep -q 'MARKETING_VERSION: "1.4.6"' projects/NextMedia/project.yml
+grep -q 'CURRENT_PROJECT_VERSION: "12"' projects/NextMedia/project.yml
 '''
 if needle not in source:
     raise SystemExit('Could not locate v1.4.5 patch extraction point')
