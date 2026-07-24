@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p diagnostics
           set -o pipefail
-          bash -x NextMediaApp/build146.sh 2>&1 | tee diagnostics/build146.log
+          bash -x NextMediaApp/build146fix.sh 2>&1 | tee diagnostics/build146.log
 
       - name: Upload build artifacts
         if: always()
@@ -73,4 +73,4 @@ jobs:
         if: steps.compile.outcome != 'success'
         run: exit 1
 
-# Trigger Next Media 1.4.6 verified build.
+# Trigger Next Media 1.4.6 fixed verified build.
