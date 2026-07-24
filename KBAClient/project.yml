@@ -1,0 +1,58 @@
+name: KBAClient
+options:
+  bundleIdPrefix: com.kbaccountant
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    SUPPORTS_MACCATALYST: "NO"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  KBAClient:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    resources:
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kbaccountant.client
+        PRODUCT_NAME: KBAClient
+        INFOPLIST_FILE: Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+  KBAClientTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: KBAClient
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kbaccountant.client.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+schemes:
+  KBAClient:
+    build:
+      targets:
+        KBAClient: all
+        KBAClientTests: [test]
+    test:
+      gatherCoverageData: true
+      targets:
+        - KBAClientTests
+    run:
+      config: Debug
+    archive:
+      config: Release
