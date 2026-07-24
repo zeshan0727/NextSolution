@@ -8,13 +8,17 @@ source_path = Path('NextMediaApp/build146.sh')
 source = source_path.read_text()
 
 about_edit = "replace_once(settings, 'Text(\"1.4.5\")', 'Text(\"1.4.6\")', 'About version')"
+about_update = '''settings_text = settings.read_text()
+settings_text = "\\n".join(
+    '                        Text("1.4.6").foregroundColor(.secondary)'
+    if 'Text("1.4.' in line and 'foregroundColor(.secondary)' in line
+    else line
+    for line in settings_text.splitlines()
+) + "\\n"
+settings.write_text(settings_text)'''
 if about_edit not in source:
-    raise SystemExit('Could not locate duplicate About version edit')
-source = source.replace(
-    about_edit,
-    "pass  # About version is updated by the inherited version step",
-    1
-)
+    raise SystemExit('Could not locate About version edit')
+source = source.replace(about_edit, about_update, 1)
 
 old_project_edit = '''project_text = project_text.replace('MARKETING_VERSION: "1.4.5"', 'MARKETING_VERSION: "1.4.6"')
 project_text = project_text.replace('CURRENT_PROJECT_VERSION: "11"', 'CURRENT_PROJECT_VERSION: "12"')'''
