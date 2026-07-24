@@ -1,6 +1,6 @@
 # Next Ledger 1.3.33 validated build
-# Build trigger: reliable Files and Google Drive restore picker
-name: Build Next Ledger TIPA
+# Test branch also verifies the isolated KBA Client customer portal.
+name: Build iOS Test Artifacts
 
 on:
   workflow_dispatch:
@@ -9,17 +9,19 @@ on:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
+      - "KBAClient/**"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
+      - "KBAClient/**"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
 jobs:
-  build:
+  build-next-ledger:
     runs-on: macos-15
     timeout-minutes: 20
 
@@ -84,7 +86,7 @@ jobs:
           cp RootHideSMSImport/packages/*.deb DailyLedgerSMSImport-1.4.0-roothide.deb
           shasum -a 256 DailyLedgerSMSImport-1.4.0-roothide.deb > DailyLedgerSMSImport-1.4.0-roothide.sha256
 
-      - name: Upload TIPA
+      - name: Upload Next Ledger TIPA
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
@@ -93,4 +95,73 @@ jobs:
             NextLedger-1.3.33.sha256
             DailyLedgerSMSImport-1.4.0-roothide.deb
             DailyLedgerSMSImport-1.4.0-roothide.sha256
+          if-no-files-found: error
+
+  verify-kba-client:
+    runs-on: macos-15
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare generated assets
+        working-directory: KBAClient
+        run: bash Scripts/prepare-assets.sh
+
+      - name: Generate KBA Client project
+        working-directory: KBAClient
+        run: xcodegen generate
+
+      - name: Run KBA Client unit tests
+        working-directory: KBAClient
+        run: |
+          xcodebuild \
+            -project KBAClient.xcodeproj \
+            -scheme KBAClient \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16 Pro' \
+            -derivedDataPath build-tests \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Build unsigned KBA Client app
+        working-directory: KBAClient
+        run: |
+          xcodebuild \
+            -project KBAClient.xcodeproj \
+            -scheme KBAClient \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package KBA Client TrollStore test build
+        working-directory: KBAClient
+        run: |
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload KBAClient-0.1.0-test.tipa
+          shasum -a 256 KBAClient-0.1.0-test.tipa > KBAClient-0.1.0-test.sha256
+          git archive --format=zip --output=KBAClient-0.1.0-source.zip HEAD KBAClient
+
+      - name: Upload verified KBA Client artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: KBAClient-0.1.0-Test
+          path: |
+            KBAClient/KBAClient-0.1.0-test.tipa
+            KBAClient/KBAClient-0.1.0-test.sha256
+            KBAClient/KBAClient-0.1.0-source.zip
+            KBAClient/QA_TEST_PLAN.md
+            KBAClient/RELEASE_CHECKLIST.md
           if-no-files-found: error
