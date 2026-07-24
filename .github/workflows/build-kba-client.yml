@@ -49,6 +49,16 @@ jobs:
           fi
           tail -n 80 test-build.log
 
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: KBAClient-Failure-Diagnostics
+          path: |
+            KBAClient/test-build.log
+            KBAClient/release-build.log
+          if-no-files-found: ignore
+
       - name: Build unsigned iPhone app
         working-directory: KBAClient
         run: |
