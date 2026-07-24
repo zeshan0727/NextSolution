@@ -32,19 +32,28 @@ jobs:
       - name: Run unit tests
         working-directory: KBAClient
         run: |
-          xcodebuild \
+          set +e
+          xcodebuild -quiet \
             -project KBAClient.xcodeproj \
             -scheme KBAClient \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16 Pro' \
             -derivedDataPath build-tests \
             CODE_SIGNING_ALLOWED=NO \
-            test
+            test > test-build.log 2>&1
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "===== KBA UNIT TEST / COMPILE FAILURE ====="
+            grep -E -n -C 3 'error:|failed|FAIL|Testing failed|Test Suite' test-build.log | tail -n 180 || tail -n 180 test-build.log
+            exit $status
+          fi
+          tail -n 80 test-build.log
 
       - name: Build unsigned iPhone app
         working-directory: KBAClient
         run: |
-          xcodebuild \
+          set +e
+          xcodebuild -quiet \
             -project KBAClient.xcodeproj \
             -scheme KBAClient \
             -configuration Release \
@@ -53,7 +62,14 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build
+            build > release-build.log 2>&1
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "===== KBA RELEASE BUILD FAILURE ====="
+            grep -E -n -C 3 'error:|failed|FAIL' release-build.log | tail -n 180 || tail -n 180 release-build.log
+            exit $status
+          fi
+          tail -n 80 release-build.log
 
       - name: Package TrollStore test build
         working-directory: KBAClient
