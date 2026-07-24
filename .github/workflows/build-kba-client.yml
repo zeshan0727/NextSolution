@@ -36,8 +36,7 @@ jobs:
           xcodebuild -quiet \
             -project KBAClient.xcodeproj \
             -scheme KBAClient \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16 Pro' \
+            -destination 'platform=macOS,arch=arm64,variant=Designed for [iPad,iPhone]' \
             -derivedDataPath build-tests \
             CODE_SIGNING_ALLOWED=NO \
             test > test-build.log 2>&1
