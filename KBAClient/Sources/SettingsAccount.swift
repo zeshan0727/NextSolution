@@ -22,7 +22,7 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
             }
 
-            Section("Test tools") {
+            Section {
                 Button {
                     store.loadTestData()
                 } label: {
@@ -33,6 +33,8 @@ struct SettingsView: View {
                 } label: {
                     Label("Delete all local test data", systemImage: "trash")
                 }
+            } header: {
+                Text("Test tools")
             } footer: {
                 Text("The final public release must connect authenticated requests, encrypted uploads, server-side status updates and a verified privacy policy before test mode is removed.")
             }
