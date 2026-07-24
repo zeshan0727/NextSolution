@@ -91,7 +91,7 @@ jobs:
           cp -R "$APP_PATH" Payload/
           ditto -c -k --sequesterRsrc --keepParent Payload KBAClient-0.1.0-test.tipa
           shasum -a 256 KBAClient-0.1.0-test.tipa > KBAClient-0.1.0-test.sha256
-          git archive --format=zip --output=KBAClient-0.1.0-source.zip HEAD KBAClient
+          git -C .. archive --format=zip --output=KBAClient/KBAClient-0.1.0-source.zip HEAD KBAClient
 
       - name: Upload verified test artifacts
         uses: actions/upload-artifact@v4
