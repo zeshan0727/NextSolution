@@ -291,6 +291,17 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        BudgetSettingsView()
+                    } label: {
+                        SettingsRow(
+                            title: "Budgets",
+                            subtitle: "Category limits, progress and 80% alerts",
+                            icon: "target",
+                            color: AppTheme.green
+                        )
+                    }
+
                     Button {
                         let summary = store.automaticallyCategorizeTransactions()
                         notice = SettingsNotice(
@@ -320,13 +331,13 @@ struct SettingsView: View {
                     .disabled(store.uncategorizedTransactions.isEmpty)
 
                 } header: {
-                    Label("Categorization", systemImage: "tag.fill")
+                    Label("Planning & Categorization", systemImage: "target")
                 } footer: {
                     Text("Review only recent transactions that could not be categorized automatically.")
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.33")
+                    LabeledContent("Version", value: "1.3.34")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")
