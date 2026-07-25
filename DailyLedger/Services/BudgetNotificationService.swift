@@ -17,8 +17,8 @@ final class BudgetNotificationService: NSObject, UNUserNotificationCenterDelegat
         spent: Decimal
     ) {
         let content = UNMutableNotificationContent()
-        content.title = "\(budget.category) budget reached 80%"
-        content.body = "You have spent \(DisplayFormat.currency(spent, code: budget.currencyCode)) of \(DisplayFormat.currency(budget.monthlyAmount, code: budget.currencyCode)) this month."
+        content.title = "\(budget.displayName) reached 80%"
+        content.body = "You have spent \(DisplayFormat.currency(spent, code: budget.currencyCode)) of \(DisplayFormat.currency(budget.monthlyAmount, code: budget.currencyCode)) in the current budget cycle."
         content.sound = .default
 
         let month = Calendar.current.dateComponents([.year, .month], from: Date())
