@@ -1,9 +1,13 @@
 import SwiftUI
 
+private struct BudgetEditorRoute: Identifiable {
+    let id = UUID()
+    let budget: ExpenseBudget
+}
+
 struct BudgetSettingsView: View {
     @EnvironmentObject private var store: LedgerStore
-    @State private var editorBudget: ExpenseBudget?
-    @State private var showingNewBudget = false
+    @State private var editorRoute: BudgetEditorRoute?
 
     private var budgets: [ExpenseBudget] {
         store.settings.expenseBudgets
@@ -23,7 +27,7 @@ struct BudgetSettingsView: View {
                 Section {
                     ForEach(budgets) { budget in
                         Button {
-                            editorBudget = budget
+                            editorRoute = BudgetEditorRoute(budget: budget)
                         } label: {
                             BudgetProgressRow(
                                 budget: budget,
@@ -34,9 +38,9 @@ struct BudgetSettingsView: View {
                     }
                     .onDelete(perform: store.deleteBudgets)
                 } header: {
-                    Text("This Month")
+                    Text("Current Budget Cycle")
                 } footer: {
-                    Text("Only expense transactions in the matching category and currency count toward each budget.")
+                    Text("Only expenses in the selected types, currency and custom date cycle count toward each budget.")
                 }
             }
 
@@ -55,27 +59,22 @@ struct BudgetSettingsView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    showingNewBudget = true
+                    editorRoute = BudgetEditorRoute(
+                        budget: ExpenseBudget(
+                            categories: [],
+                            monthlyAmount: 0,
+                            currencyCode: store.currencyCode
+                        )
+                    )
                 } label: {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("Add budget")
             }
         }
-        .sheet(isPresented: $showingNewBudget) {
+        .fullScreenCover(item: $editorRoute) { route in
             NavigationStack {
-                BudgetEditorView(
-                    budget: ExpenseBudget(
-                        category: "",
-                        monthlyAmount: 0,
-                        currencyCode: store.currencyCode
-                    )
-                )
-            }
-        }
-        .sheet(item: $editorBudget) { budget in
-            NavigationStack {
-                BudgetEditorView(budget: budget)
+                BudgetEditorView(budget: route.budget)
             }
         }
     }
@@ -122,9 +121,9 @@ struct BudgetPlannerView: View {
                         VStack(alignment: .leading, spacing: 9) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(budget.category)
+                                    Text(budget.displayName)
                                         .font(.headline)
-                                    Text(budget.currencyCode)
+                                    Text("\(budget.categories.count) expense type\(budget.categories.count == 1 ? "" : "s") · \(budget.currencyCode)")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -208,7 +207,10 @@ private struct BudgetProgressRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Label(budget.category, systemImage: AppTheme.categoryIcon(budget.category))
+                Label(
+                    budget.displayName,
+                    systemImage: AppTheme.categoryIcon(budget.categories.first ?? "Other")
+                )
                     .font(.headline)
                 Spacer()
                 if budget.alertsEnabled {
@@ -219,6 +221,13 @@ private struct BudgetProgressRow: View {
             }
             ProgressView(value: progress)
                 .tint(color)
+            Text(budget.categories.joined(separator: ", "))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            Text("Cycle: day \(budget.cycleStartDay) to day \(budget.cycleEndDay)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             HStack {
                 Text("\(DisplayFormat.currency(spent, code: budget.currencyCode)) spent")
                 Spacer()
@@ -232,11 +241,18 @@ private struct BudgetProgressRow: View {
 }
 
 private struct BudgetEditorView: View {
+    private enum FocusedField: Hashable {
+        case name
+        case amount
+        case search
+    }
+
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
     @State private var budget: ExpenseBudget
     @State private var amountText: String
     @State private var categorySearch = ""
+    @FocusState private var focusedField: FocusedField?
 
     init(budget: ExpenseBudget) {
         _budget = State(initialValue: budget)
@@ -258,10 +274,12 @@ private struct BudgetEditorView: View {
     var body: some View {
         Form {
             Section("Budget") {
-                TextField("Category", text: $budget.category)
+                TextField("Budget name (optional)", text: $budget.name)
                     .textInputAutocapitalization(.words)
+                    .focused($focusedField, equals: .name)
                 TextField("Monthly amount", text: $amountText)
                     .keyboardType(.decimalPad)
+                    .focused($focusedField, equals: .amount)
                 Picker("Currency", selection: $budget.currencyCode) {
                     ForEach(["QAR", "PKR", "USD", "EUR", "GBP", "AED", "SAR", "INR"], id: \.self) {
                         Text($0).tag($0)
@@ -270,32 +288,104 @@ private struct BudgetEditorView: View {
                 Toggle("Alert when 80% is reached", isOn: $budget.alertsEnabled)
             }
 
-            Section("Choose Existing Category") {
-                TextField("Search categories", text: $categorySearch)
-                ForEach(categories, id: \.self) { category in
-                    Button(category) {
-                        budget.category = category
+            Section {
+                Picker("Cycle starts on", selection: $budget.cycleStartDay) {
+                    ForEach(1...28, id: \.self) { day in
+                        Text("Day \(day)").tag(day)
                     }
                 }
+                Picker("Cycle ends on", selection: $budget.cycleEndDay) {
+                    ForEach(1...28, id: \.self) { day in
+                        Text("Day \(day)").tag(day)
+                    }
+                }
+            } header: {
+                Text("Budget Dates")
+            } footer: {
+                Text("For example, choose start day 26 and end day 25 for a salary-month budget.")
+            }
+
+            Section {
+                TextField("Search categories", text: $categorySearch)
+                    .focused($focusedField, equals: .search)
+                if !budget.categories.isEmpty {
+                    Button("Clear Selection") {
+                        focusedField = nil
+                        budget.categories.removeAll()
+                    }
+                }
+                ForEach(categories, id: \.self) { category in
+                    Button {
+                        focusedField = nil
+                        toggleCategory(category)
+                    } label: {
+                        HStack {
+                            Label(category, systemImage: AppTheme.categoryIcon(category))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Image(
+                                systemName: budget.includes(category: category)
+                                    ? "checkmark.circle.fill"
+                                    : "circle"
+                            )
+                            .foregroundStyle(
+                                budget.includes(category: category)
+                                    ? AppTheme.purple
+                                    : .secondary
+                            )
+                        }
+                    }
+                }
+            } header: {
+                Text("Expense Types (\(budget.categories.count) Selected)")
+            } footer: {
+                Text("All selected expense types are combined into this one budget and one 80% warning.")
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle(budget.monthlyAmount > 0 ? "Edit Budget" : "New Budget")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button("Cancel") {
+                    focusedField = nil
+                    dismiss()
+                }
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     guard let amount = Decimal(string: amountText), amount > 0 else { return }
+                    focusedField = nil
                     budget.monthlyAmount = amount
                     store.saveBudget(budget)
                     dismiss()
                 }
                 .disabled(
-                    budget.category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    budget.categories.isEmpty ||
                     Decimal(string: amountText).map { $0 <= 0 } != false
                 )
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    focusedField = nil
+                }
+            }
+        }
+        .onDisappear {
+            focusedField = nil
+        }
+    }
+
+    private func toggleCategory(_ category: String) {
+        if let index = budget.categories.firstIndex(where: {
+            $0.caseInsensitiveCompare(category) == .orderedSame
+        }) {
+            budget.categories.remove(at: index)
+        } else {
+            budget.categories.append(category)
+            budget.categories.sort {
+                $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
             }
         }
     }
