@@ -415,20 +415,23 @@ final class LedgerStore: ObservableObject {
 
     func saveBudget(_ budget: ExpenseBudget) {
         guard budget.monthlyAmount > 0,
-              !budget.category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Enter a category and a budget amount greater than zero."
+              !budget.categories.isEmpty else {
+            errorMessage = "Select at least one expense type and enter a budget amount greater than zero."
             return
         }
         updateLedger(failureMessage: "The budget could not be saved.") { ledger in
             var cleaned = budget
-            cleaned.category = budget.category.trimmingCharacters(in: .whitespacesAndNewlines)
+            cleaned.name = budget.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            cleaned.categories = budget.categories
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
             if let index = ledger.settings.expenseBudgets.firstIndex(where: { $0.id == budget.id }) {
                 ledger.settings.expenseBudgets[index] = cleaned
             } else {
                 ledger.settings.expenseBudgets.append(cleaned)
             }
             ledger.settings.expenseBudgets.sort {
-                $0.category.localizedCaseInsensitiveCompare($1.category) == .orderedAscending
+                $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
             }
         }
         if budget.alertsEnabled {
@@ -446,11 +449,11 @@ final class LedgerStore: ObservableObject {
     }
 
     func monthlyBudgetSpent(_ budget: ExpenseBudget, containing date: Date = Date()) -> Decimal {
-        guard let interval = Calendar.current.dateInterval(of: .month, for: date) else { return 0 }
+        guard let interval = budget.dateInterval(containing: date) else { return 0 }
         return transactions.lazy.filter {
             $0.type == .expense &&
             interval.contains($0.date) &&
-            $0.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
+            budget.includes(category: $0.category) &&
             self.account(withID: $0.accountID)?.currencyCode == budget.currencyCode
         }.reduce(Decimal.zero) { $0 + $1.amount }
     }
@@ -468,7 +471,7 @@ final class LedgerStore: ObservableObject {
             $0.type == .expense &&
             $0.date >= historyStart &&
             $0.date < currentMonth &&
-            $0.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
+            budget.includes(category: $0.category) &&
             self.account(withID: $0.accountID)?.currencyCode == budget.currencyCode
         }.reduce(Decimal.zero) { $0 + $1.amount }
         let historicalAverage = historicalTotal / 3
@@ -500,13 +503,13 @@ final class LedgerStore: ObservableObject {
         budgets: [ExpenseBudget],
         accounts: [LedgerAccount]
     ) {
-        guard let month = Calendar.current.dateInterval(of: .month, for: Date()) else { return }
         let accountCurrency = Dictionary(uniqueKeysWithValues: accounts.map { ($0.id, $0.currencyCode) })
         for budget in budgets where budget.alertsEnabled && budget.monthlyAmount > 0 {
+            guard let cycle = budget.dateInterval(containing: Date()) else { continue }
             let matches: (LedgerTransaction) -> Bool = { transaction in
                 transaction.type == .expense &&
-                month.contains(transaction.date) &&
-                transaction.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
+                cycle.contains(transaction.date) &&
+                budget.includes(category: transaction.category) &&
                 accountCurrency[transaction.accountID ?? LedgerAccount.legacyMainID] == budget.currencyCode
             }
             guard additions.contains(where: matches) else { continue }
