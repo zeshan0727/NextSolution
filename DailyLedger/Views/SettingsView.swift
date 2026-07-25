@@ -183,7 +183,7 @@ struct SettingsView: View {
                 } header: {
                     Label("DeepSeek AI", systemImage: "sparkles")
                 } footer: {
-                    Text("The key is stored only in this iPhone's Keychain and is excluded from exports and backups. Ledger Lookup searches locally and uses no API tokens. Requests are manual, thinking mode is disabled, and output is capped.")
+                    Text("The key is stored in this iPhone's Keychain with a device-protected update fallback. It is excluded from exports and backups. Ledger Lookup searches locally and uses no API tokens.")
                 }
 
                 Section {
@@ -211,7 +211,7 @@ struct SettingsView: View {
                 } header: {
                     Label("OpenAI Chat", systemImage: "bubble.left.and.bubble.right.fill")
                 } footer: {
-                    Text("GPT-5 models are included, but OpenAI currently does not support them on the API Free tier. Your API project controls availability and billing. Next Ledger caps each answer to control tokens.")
+                    Text("The key uses Keychain plus a device-protected update fallback and is excluded from exports. GPT-5 model availability depends on your API project. Next Ledger caps each answer to control tokens.")
                 }
 
                 Section {
@@ -337,7 +337,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.34")
+                    LabeledContent("Version", value: "1.3.35")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")
