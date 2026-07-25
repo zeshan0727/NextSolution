@@ -27,6 +27,7 @@ final class LedgerStore: ObservableObject {
     }
 
     private func apply(_ ledger: LedgerData) {
+        let previousTransactions = transactions
         let previousIDs = Set(transactions.map(\.id))
         let ordered = ledger.transactions.sorted {
             if $0.date != $1.date { return $0.date < $1.date }
@@ -64,6 +65,12 @@ final class LedgerStore: ObservableObject {
             let additions = transactions.filter { !previousIDs.contains($0.id) }
             if !additions.isEmpty {
                 recordingCards.append(contentsOf: additions.prefix(8))
+                checkBudgetThresholds(
+                    additions: additions,
+                    previousTransactions: previousTransactions,
+                    budgets: ledger.settings.expenseBudgets,
+                    accounts: ledger.accounts
+                )
             }
         }
         hasLoaded = true
@@ -403,6 +410,114 @@ final class LedgerStore: ObservableObject {
     func resetVendorRules() {
         updateLedger(failureMessage: "The vendor rules could not be reset.") { ledger in
             ledger.settings.vendorRules = VendorCategoryRule.defaults
+        }
+    }
+
+    func saveBudget(_ budget: ExpenseBudget) {
+        guard budget.monthlyAmount > 0,
+              !budget.category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Enter a category and a budget amount greater than zero."
+            return
+        }
+        updateLedger(failureMessage: "The budget could not be saved.") { ledger in
+            var cleaned = budget
+            cleaned.category = budget.category.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let index = ledger.settings.expenseBudgets.firstIndex(where: { $0.id == budget.id }) {
+                ledger.settings.expenseBudgets[index] = cleaned
+            } else {
+                ledger.settings.expenseBudgets.append(cleaned)
+            }
+            ledger.settings.expenseBudgets.sort {
+                $0.category.localizedCaseInsensitiveCompare($1.category) == .orderedAscending
+            }
+        }
+        if budget.alertsEnabled {
+            BudgetNotificationService.requestAuthorization()
+        }
+    }
+
+    func deleteBudgets(at offsets: IndexSet) {
+        updateLedger(failureMessage: "The budget could not be deleted.") { ledger in
+            for index in offsets.sorted(by: >)
+            where ledger.settings.expenseBudgets.indices.contains(index) {
+                ledger.settings.expenseBudgets.remove(at: index)
+            }
+        }
+    }
+
+    func monthlyBudgetSpent(_ budget: ExpenseBudget, containing date: Date = Date()) -> Decimal {
+        guard let interval = Calendar.current.dateInterval(of: .month, for: date) else { return 0 }
+        return transactions.lazy.filter {
+            $0.type == .expense &&
+            interval.contains($0.date) &&
+            $0.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
+            account(withID: $0.accountID)?.currencyCode == budget.currencyCode
+        }.reduce(Decimal.zero) { $0 + $1.amount }
+    }
+
+    func suggestedBudgetAmount(
+        for budget: ExpenseBudget,
+        monthlyIncome: Decimal
+    ) -> Decimal {
+        let calendar = Calendar.current
+        let currentMonth = calendar.dateInterval(of: .month, for: Date())?.start ?? Date()
+        guard let historyStart = calendar.date(byAdding: .month, value: -3, to: currentMonth) else {
+            return budget.monthlyAmount
+        }
+        let historicalTotal = transactions.lazy.filter {
+            $0.type == .expense &&
+            $0.date >= historyStart &&
+            $0.date < currentMonth &&
+            $0.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
+            account(withID: $0.accountID)?.currencyCode == budget.currencyCode
+        }.reduce(Decimal.zero) { $0 + $1.amount }
+        let historicalAverage = historicalTotal / 3
+        if historicalAverage > 0 {
+            return roundedBudget(historicalAverage * Decimal(string: "0.90")!)
+        }
+        let sameCurrencyCount = max(
+            settings.expenseBudgets.filter { $0.currencyCode == budget.currencyCode }.count,
+            1
+        )
+        if monthlyIncome > 0 {
+            return roundedBudget(
+                monthlyIncome * Decimal(string: "0.80")! / Decimal(sameCurrencyCount)
+            )
+        }
+        return budget.monthlyAmount
+    }
+
+    private func roundedBudget(_ amount: Decimal) -> Decimal {
+        var value = amount
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &value, 0, .plain)
+        return max(rounded, 1)
+    }
+
+    private func checkBudgetThresholds(
+        additions: [LedgerTransaction],
+        previousTransactions: [LedgerTransaction],
+        budgets: [ExpenseBudget],
+        accounts: [LedgerAccount]
+    ) {
+        guard let month = Calendar.current.dateInterval(of: .month, for: Date()) else { return }
+        let accountCurrency = Dictionary(uniqueKeysWithValues: accounts.map { ($0.id, $0.currencyCode) })
+        for budget in budgets where budget.alertsEnabled && budget.monthlyAmount > 0 {
+            let matches: (LedgerTransaction) -> Bool = { transaction in
+                transaction.type == .expense &&
+                month.contains(transaction.date) &&
+                transaction.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
+                accountCurrency[transaction.accountID ?? LedgerAccount.legacyMainID] == budget.currencyCode
+            }
+            guard additions.contains(where: matches) else { continue }
+            let before = previousTransactions.lazy.filter(matches)
+                .reduce(Decimal.zero) { $0 + $1.amount }
+            let after = before + additions.lazy.filter(matches)
+                .reduce(Decimal.zero) { $0 + $1.amount }
+            let threshold = budget.monthlyAmount * Decimal(string: "0.80")!
+            if before < threshold && after >= threshold {
+                BudgetNotificationService.notifyEightyPercent(budget: budget, spent: after)
+            }
         }
     }
 
