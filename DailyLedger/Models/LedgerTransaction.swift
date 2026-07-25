@@ -193,6 +193,28 @@ struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
     ]
 }
 
+struct ExpenseBudget: Identifiable, Codable, Equatable, Hashable {
+    let id: UUID
+    var category: String
+    var monthlyAmount: Decimal
+    var currencyCode: String
+    var alertsEnabled: Bool
+
+    init(
+        id: UUID = UUID(),
+        category: String,
+        monthlyAmount: Decimal,
+        currencyCode: String,
+        alertsEnabled: Bool = true
+    ) {
+        self.id = id
+        self.category = category
+        self.monthlyAmount = monthlyAmount
+        self.currencyCode = currencyCode
+        self.alertsEnabled = alertsEnabled
+    }
+}
+
 struct LedgerSettings: Codable, Equatable {
     var currencyCode: String
     var vendorRules: [VendorCategoryRule]
@@ -203,6 +225,7 @@ struct LedgerSettings: Codable, Equatable {
     var smsRescanRequestID: Int
     var smsImporterLastCheck: Date?
     var smsImporterLastResult: String?
+    var expenseBudgets: [ExpenseBudget]
 
     init(
         currencyCode: String = "QAR",
@@ -213,7 +236,8 @@ struct LedgerSettings: Codable, Equatable {
         smsDestinationAccountID: UUID? = nil,
         smsRescanRequestID: Int = 0,
         smsImporterLastCheck: Date? = nil,
-        smsImporterLastResult: String? = nil
+        smsImporterLastResult: String? = nil,
+        expenseBudgets: [ExpenseBudget] = []
     ) {
         self.currencyCode = currencyCode
         self.vendorRules = vendorRules
@@ -224,6 +248,7 @@ struct LedgerSettings: Codable, Equatable {
         self.smsRescanRequestID = smsRescanRequestID
         self.smsImporterLastCheck = smsImporterLastCheck
         self.smsImporterLastResult = smsImporterLastResult
+        self.expenseBudgets = expenseBudgets
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -236,6 +261,7 @@ struct LedgerSettings: Codable, Equatable {
         case smsRescanRequestID
         case smsImporterLastCheck
         case smsImporterLastResult
+        case expenseBudgets
     }
 
     init(from decoder: Decoder) throws {
@@ -250,6 +276,7 @@ struct LedgerSettings: Codable, Equatable {
         smsRescanRequestID = try values.decodeIfPresent(Int.self, forKey: .smsRescanRequestID) ?? 0
         smsImporterLastCheck = try values.decodeIfPresent(Date.self, forKey: .smsImporterLastCheck)
         smsImporterLastResult = try values.decodeIfPresent(String.self, forKey: .smsImporterLastResult)
+        expenseBudgets = try values.decodeIfPresent([ExpenseBudget].self, forKey: .expenseBudgets) ?? []
     }
 }
 
@@ -260,7 +287,7 @@ struct LedgerData: Codable {
     var settings: LedgerSettings
 
     init(
-        version: Int = 3,
+        version: Int = 4,
         transactions: [LedgerTransaction] = [],
         accounts: [LedgerAccount] = [LedgerAccount.legacyMain],
         settings: LedgerSettings = LedgerSettings()
@@ -309,7 +336,7 @@ struct LedgerData: Codable {
         for index in transactions.indices where transactions[index].vendor?.isEmpty != false {
             transactions[index].vendor = LedgerTransaction.vendorFromMessage(transactions[index].details)
         }
-        version = 3
+        version = 4
     }
 }
 
