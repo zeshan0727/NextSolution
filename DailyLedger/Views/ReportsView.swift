@@ -66,7 +66,7 @@ struct ReportsView: View {
                     NavigationLink { ReportComparisonView() } label: {
                         Label("Compare Reports", systemImage: "chart.xyaxis.line")
                     }
-                    NavigationLink { BudgetReportView() } label: {
+                    NavigationLink { BudgetPlannerView() } label: {
                         Label("Budget Planner", systemImage: "target")
                     }
                     NavigationLink { CustomAccountReportView() } label: {
@@ -223,30 +223,6 @@ private struct ReportComparisonView: View {
             return $0.type == .expense &&
                 store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
         }.count
-    }
-}
-
-private struct BudgetReportView: View {
-    @EnvironmentObject private var store: LedgerStore
-    @AppStorage("MonthlyIncomePrimary") private var primaryIncome = 0.0
-    @AppStorage("MonthlyIncomeSecondary") private var secondaryIncome = 0.0
-    var body: some View {
-        List {
-            Section("Monthly Income") {
-                Stepper("Primary: \(DisplayFormat.currency(Decimal(primaryIncome), code: store.currencyCode))", value: $primaryIncome, in: 0...1_000_000, step: 500)
-                Stepper("Other fixed: \(DisplayFormat.currency(Decimal(secondaryIncome), code: store.currencyCode))", value: $secondaryIncome, in: 0...1_000_000, step: 500)
-            }
-            Section("Suggested Budget") {
-                budget("Essentials", 0.45); budget("Savings & goals", 0.20)
-                budget("Family & flexible", 0.20); budget("Personal", 0.10); budget("Buffer", 0.05)
-            }
-        }
-        .navigationTitle("Budget Planner")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-    private var total: Decimal { Decimal(primaryIncome + secondaryIncome) }
-    private func budget(_ title: String, _ ratio: Decimal) -> some View {
-        LabeledContent(title, value: DisplayFormat.currency(total * ratio, code: store.currencyCode))
     }
 }
 
