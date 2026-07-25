@@ -2,6 +2,10 @@
 # Build trigger: multi-category custom-cycle budgets and update-safe API keys
 name: Build Next Ledger TIPA
 
+concurrency:
+  group: next-ledger-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   pull_request:
