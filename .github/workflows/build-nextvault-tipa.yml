@@ -1,0 +1,97 @@
+name: Build Next Vault TIPA
+
+on:
+  push:
+    branches:
+      - agent/next-vault-tipa-build
+    paths:
+      - 'NextVaultBuild/source.part*'
+      - '.github/workflows/build-nextvault-tipa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout build branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/next-vault-tipa-build
+
+      - name: Reconstruct source archive
+        run: |
+          set -euo pipefail
+          cat NextVaultBuild/source.part* > NextVaultBuild/source.b64
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          src = Path('NextVaultBuild/source.b64').read_text()
+          Path('NextVaultBuild/NextVault-source.zip').write_bytes(base64.b64decode(src))
+          PY
+          rm -rf NextVaultBuild/source
+          mkdir -p NextVaultBuild/source
+          unzip -q NextVaultBuild/NextVault-source.zip -d NextVaultBuild/source
+          test -f NextVaultBuild/source/NextVault/project.yml
+
+      - name: Install build tools
+        run: |
+          brew install xcodegen
+          brew install ldid
+
+      - name: Generate project
+        working-directory: NextVaultBuild/source/NextVault
+        run: xcodegen generate
+
+      - name: Build unsigned app
+        working-directory: NextVaultBuild/source/NextVault
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project NextVault.xcodeproj \
+            -scheme NextVault \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee ../../../xcodebuild-nextvault.log
+
+      - name: Apply TrollStore entitlements
+        working-directory: NextVaultBuild/source/NextVault
+        run: |
+          set -euo pipefail
+          APP='build/Build/Products/Release-iphoneos/NextVault.app'
+          test -d "$APP"
+          ldid -SNextVaultApp/NextVault.entitlements "$APP/NextVault"
+          ldid -SAutoFillExtension/NextVaultAutoFill.entitlements "$APP/PlugIns/NextVaultAutoFill.appex/NextVaultAutoFill"
+          ldid -SKeyboardExtension/NextVaultKeyboard.entitlements "$APP/PlugIns/NextVaultKeyboard.appex/NextVaultKeyboard"
+          ldid -SShareExtension/NextVaultShare.entitlements "$APP/PlugIns/NextVaultShare.appex/NextVaultShare"
+
+      - name: Package TIPA
+        working-directory: NextVaultBuild/source/NextVault
+        run: |
+          chmod +x Scripts/package_tipa.sh
+          Scripts/package_tipa.sh build/Build/Products/Release-iphoneos/NextVault.app NextVault_1.0.0_iOS16.tipa
+          cp NextVault_1.0.0_iOS16.tipa ../../NextVault_1.0.0_iOS16.tipa
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextVault-TIPA-and-logs
+          path: |
+            NextVaultBuild/NextVault_1.0.0_iOS16.tipa
+            xcodebuild-nextvault.log
+          if-no-files-found: warn
+
+      - name: Publish TIPA to build branch
+        if: success()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f NextVaultBuild/NextVault_1.0.0_iOS16.tipa
+          git commit -m 'Build Next Vault 1.0.0 TIPA'
+          git push origin HEAD:agent/next-vault-tipa-build
