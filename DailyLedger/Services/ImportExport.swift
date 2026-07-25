@@ -32,7 +32,7 @@ enum ImportExportCodec {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         return (try? encoder.encode(
-            LedgerData(version: 4, transactions: transactions, accounts: accounts, settings: settings)
+            LedgerData(version: 5, transactions: transactions, accounts: accounts, settings: settings)
         )) ?? Data()
     }
 
