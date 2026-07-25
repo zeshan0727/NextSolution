@@ -57,6 +57,7 @@ final class DeepSeekService: ObservableObject {
         guard status == errSecSuccess else {
             throw DeepSeekError.server("The API key could not be saved securely.")
         }
+        try? ProtectedSecretStore.shared.save(cleaned, for: Self.keychainService)
     }
 
     func loadAPIKey() -> String? {
@@ -68,9 +69,15 @@ final class DeepSeekService: ObservableObject {
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        if SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+           let data = result as? Data,
+           let value = String(data: data, encoding: .utf8) {
+            return value
+        }
+        guard let protectedValue = ProtectedSecretStore.shared.value(for: Self.keychainService),
+              !protectedValue.isEmpty else { return nil }
+        try? saveAPIKey(protectedValue)
+        return protectedValue
     }
 
     func deleteAPIKey() {
@@ -80,6 +87,7 @@ final class DeepSeekService: ObservableObject {
             kSecAttrAccount as String: Self.keychainAccount
         ]
         SecItemDelete(query as CFDictionary)
+        ProtectedSecretStore.shared.removeValue(for: Self.keychainService)
     }
 
     func request(
