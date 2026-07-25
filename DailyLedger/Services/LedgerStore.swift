@@ -451,7 +451,7 @@ final class LedgerStore: ObservableObject {
             $0.type == .expense &&
             interval.contains($0.date) &&
             $0.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
-            account(withID: $0.accountID)?.currencyCode == budget.currencyCode
+            self.account(withID: $0.accountID)?.currencyCode == budget.currencyCode
         }.reduce(Decimal.zero) { $0 + $1.amount }
     }
 
@@ -469,7 +469,7 @@ final class LedgerStore: ObservableObject {
             $0.date >= historyStart &&
             $0.date < currentMonth &&
             $0.category.caseInsensitiveCompare(budget.category) == .orderedSame &&
-            account(withID: $0.accountID)?.currencyCode == budget.currencyCode
+            self.account(withID: $0.accountID)?.currencyCode == budget.currencyCode
         }.reduce(Decimal.zero) { $0 + $1.amount }
         let historicalAverage = historicalTotal / 3
         if historicalAverage > 0 {
