@@ -137,6 +137,12 @@ struct SettingsView: View {
                     Label("Spread, adverse slippage and round-trip fees are deducted", systemImage: "minus.circle.fill")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                    if engine.marketMode == .live {
+                        Text("Live paper leverage: \(Int(engine.settings.asset.livePaperLeverage))×. This is lower than accelerated simulation leverage to prevent opening costs from triggering an immediate stop-loss.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Section("AI confirmation") {
@@ -178,7 +184,7 @@ struct SettingsView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("AI Scalper Demo 0.3")
+                        Text("AI Scalper Demo 0.3.1")
                             .font(.subheadline.bold())
                         Text("Live mode uses real prices but every order and fill remains virtual. Results do not predict real trading performance.")
                             .font(.caption)
