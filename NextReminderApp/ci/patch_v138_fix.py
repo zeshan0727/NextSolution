@@ -51,11 +51,11 @@ new = '''replace_once(
             Button("Open Settings") { selectedTab = .settings }
             Button("Dismiss", role: .cancel) { gmailDisconnectAlert = nil }
         } message: {
-            Text("\\(gmailDisconnectAlert ?? \"Gmail connection is unavailable\")\\n\\nOpen Settings → Email Reminder Automations and reconnect Gmail.")
+            Text((gmailDisconnectAlert ?? "Gmail connection is unavailable") + "\\\\n\\\\nOpen Settings → Email Reminder Automations and reconnect Gmail.")
         }
         .sheet(item: $openedAutomation) { item in\'\'\'
 )'''
 if old not in text:
     raise SystemExit("Could not adjust v1.3.8 RootView integration point")
 path.write_text(text.replace(old, new, 1))
-print("Adjusted v1.3.8 Gmail alert RootView integration point.")
+print("Adjusted v1.3.8 Gmail alert RootView integration point and escaped line breaks.")
