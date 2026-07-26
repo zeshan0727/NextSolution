@@ -402,8 +402,9 @@ final class PaperTradingEngine: ObservableObject {
             isEntry: true,
             slippagePercent: slippage
         )
+        let feeLeverage = marketMode == .live ? settings.asset.livePaperLeverage : 1
         let totalFees = executionSettings.applyTradingCosts
-            ? settings.tradeAmount * settings.asset.commissionPercentPerSide / 100 * 2
+            ? settings.tradeAmount * feeLeverage * settings.asset.commissionPercentPerSide / 100 * 2
             : 0
 
         openTrade = PaperTrade(
@@ -444,7 +445,10 @@ final class PaperTradingEngine: ObservableObject {
 
     private func profitLoss(for trade: PaperTrade, exitPrice: Double) -> Double {
         let rawMove = ((exitPrice - trade.entryPrice) / trade.entryPrice) * 100
-        let leveragedReturn = rawMove * trade.direction.multiplier * trade.asset.demoLeverage
+        let leverage = trade.dataSource == .live
+            ? trade.asset.livePaperLeverage
+            : trade.asset.demoLeverage
+        let leveragedReturn = rawMove * trade.direction.multiplier * leverage
         return trade.amount * leveragedReturn / 100 - (trade.feeCost ?? 0)
     }
 
