@@ -1,17 +1,35 @@
-from PIL import Image, ImageDraw
+import struct, zlib
 
-size = 1024
-image = Image.new('RGB', (size, size), '#111827')
-draw = ImageDraw.Draw(image)
-for inset in range(0, 220):
-    shade = int(25 + inset * 0.35)
-    draw.rounded_rectangle((inset, inset, size-inset, size-inset), radius=220-inset//2, outline=(30, 120+shade//4, 255), width=3)
-# shield
-draw.rounded_rectangle((250, 220, 774, 804), radius=150, fill='#2563EB')
-draw.ellipse((410, 350, 614, 554), fill='white')
-draw.rounded_rectangle((470, 500, 554, 680), radius=40, fill='white')
-# small key accents
-draw.ellipse((170, 760, 270, 860), outline='#60A5FA', width=26)
-draw.line((255, 810, 380, 810), fill='#60A5FA', width=26)
-draw.line((330, 810, 330, 870), fill='#60A5FA', width=26)
-image.save('NextPassword/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png')
+W = H = 1024
+pixels = bytearray()
+for y in range(H):
+    pixels.append(0)
+    for x in range(W):
+        r, g, b = 17, 24, 39
+        # blue rounded shield/body
+        if 230 < x < 794 and 190 < y < 830:
+            r, g, b = 37, 99, 235
+        # white keyhole circle
+        if (x - 512) ** 2 + (y - 435) ** 2 < 105 ** 2:
+            r, g, b = 255, 255, 255
+        # white keyhole stem
+        if 470 < x < 554 and 500 < y < 690:
+            r, g, b = 255, 255, 255
+        # cyan key symbol accent
+        if (x - 205) ** 2 + (y - 810) ** 2 < 48 ** 2 and (x - 205) ** 2 + (y - 810) ** 2 > 25 ** 2:
+            r, g, b = 96, 165, 250
+        if 245 < x < 390 and 798 < y < 824:
+            r, g, b = 96, 165, 250
+        if 326 < x < 352 and 805 < y < 875:
+            r, g, b = 96, 165, 250
+        pixels.extend((r, g, b))
+
+def chunk(kind, data):
+    return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
+
+png = b'\x89PNG\r\n\x1a\n'
+png += chunk(b'IHDR', struct.pack('>IIBBBBB', W, H, 8, 2, 0, 0, 0))
+png += chunk(b'IDAT', zlib.compress(bytes(pixels), 9))
+png += chunk(b'IEND', b'')
+with open('NextPassword/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png', 'wb') as f:
+    f.write(png)
