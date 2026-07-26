@@ -1,6 +1,9 @@
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 
+@interface UIKeyboardDockView : UIView
+@end
+
 static const void *NPButtonKey = &NPButtonKey;
 static NSString * const NPStorePath = @"/var/mobile/Library/Preferences/com.nextsolution.nextpasswordoverlay.plist";
 
@@ -21,13 +24,15 @@ static __weak id npFirstResponder;
 static UIViewController *NPTopController(void) {
     UIWindow *window = nil;
     for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
-        if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:UIWindowScene.class]) {
+        if ([scene isKindOfClass:UIWindowScene.class]) {
             for (UIWindow *candidate in ((UIWindowScene *)scene).windows) {
                 if (candidate.isKeyWindow) { window = candidate; break; }
+                if (!window && !candidate.hidden) window = candidate;
             }
         }
+        if (window.isKeyWindow) break;
     }
-    if (!window) window = UIApplication.sharedApplication.keyWindow;
+    if (!window) return nil;
     UIViewController *controller = window.rootViewController;
     while (controller.presentedViewController) controller = controller.presentedViewController;
     if ([controller isKindOfClass:UINavigationController.class]) controller = ((UINavigationController *)controller).visibleViewController;
@@ -112,7 +117,8 @@ static void NPShowGenerator(void) {
             [store writeToFile:NPStorePath atomically:YES];
             NPInsert(password);
         }]];
-        [NPTopController() presentViewController:alert animated:YES completion:nil];
+        UIViewController *presenter = NPTopController();
+        if (presenter) [presenter presentViewController:alert animated:YES completion:nil];
     }]];
     [menu addAction:[UIAlertAction actionWithTitle:@"Saved Passwords" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) { NPShowSaved(); }]];
     [menu addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
@@ -128,8 +134,7 @@ static void NPShowGenerator(void) {
         button.backgroundColor = [UIColor colorWithRed:0.05 green:0.45 blue:1 alpha:0.95];
         button.tintColor = UIColor.whiteColor;
         button.layer.cornerRadius = 18.0;
-        UIImage *icon = [UIImage systemImageNamed:@"lock.shield.fill"];
-        [button setImage:icon forState:UIControlStateNormal];
+        [button setImage:[UIImage systemImageNamed:@"lock.shield.fill"] forState:UIControlStateNormal];
         button.accessibilityLabel = @"Next Password";
         [button addTarget:nil action:@selector(np_openNextPassword) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:button];
