@@ -97,6 +97,19 @@ enum AssetSymbol: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// Lower leverage for real-feed paper trades so normal opening costs do
+    /// not immediately exceed the configured stop-loss.
+    var livePaperLeverage: Double {
+        switch self {
+        case .eurusd, .gbpusd, .usdjpy, .usdchf, .audusd, .usdcad, .nzdusd, .eurgbp, .eurjpy:
+            return 10
+        case .gold:
+            return 8
+        case .bitcoin:
+            return 3
+        }
+    }
+
     var precision: Int {
         switch self {
         case .usdjpy, .eurjpy: return 3
