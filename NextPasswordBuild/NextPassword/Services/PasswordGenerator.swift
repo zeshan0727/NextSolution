@@ -1,25 +1,48 @@
 import Foundation
 
+struct PasswordBreakdown {
+    let cleanedSite: String
+    let letterCount: Int
+    let firstLetter: Character?
+    let firstPosition: Int
+    let lastLetter: Character?
+    let lastPosition: Int
+
+    var password: String {
+        guard letterCount > 0 else { return "MpMr@" }
+        return String(format: "MpMr@%d%02d%02d", letterCount, firstPosition, lastPosition)
+    }
+}
+
 enum PasswordGenerator {
-    static func websiteBased(site: String) -> String {
-        let cleaned = site
+    static func breakdown(site: String) -> PasswordBreakdown {
+        let letters = site
             .trimmingCharacters(in: .whitespacesAndNewlines)
-            .filter { $0.isLetter || $0.isNumber }
+            .uppercased()
+            .filter { $0.isLetter }
 
-        let letters = cleaned.filter(\.isLetter)
-        let first = letters.first.map { String($0).uppercased() } ?? "X"
-        let second: String
-        if letters.count > 1 {
-            second = String(letters[letters.index(after: letters.startIndex)]).lowercased()
-        } else {
-            second = "x"
-        }
+        let first = letters.first
+        let last = letters.last
 
-        let stableNumber = cleaned.unicodeScalars.reduce(0) { value, scalar in
-            (value * 31 + Int(scalar.value)) % 100
-        }
-        let digits = String(format: "%02d", stableNumber)
+        return PasswordBreakdown(
+            cleanedSite: letters,
+            letterCount: letters.count,
+            firstLetter: first,
+            firstPosition: alphabetPosition(first),
+            lastLetter: last,
+            lastPosition: alphabetPosition(last)
+        )
+    }
 
-        return "MpMr@\(first)\(second)\(digits)"
+    static func websiteBased(site: String) -> String {
+        breakdown(site: site).password
+    }
+
+    private static func alphabetPosition(_ character: Character?) -> Int {
+        guard let character,
+              let scalar = String(character).unicodeScalars.first else { return 0 }
+        let value = Int(scalar.value)
+        guard value >= 65, value <= 90 else { return 0 }
+        return value - 64
     }
 }
