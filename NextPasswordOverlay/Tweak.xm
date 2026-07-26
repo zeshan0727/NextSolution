@@ -126,6 +126,11 @@ static void NPShowGenerator(void) {
 }
 
 %hook UIKeyboardDockView
+%new
+- (void)np_openNextPassword {
+    NPShowGenerator();
+}
+
 - (void)layoutSubviews {
     %orig;
     UIButton *button = objc_getAssociatedObject(self, NPButtonKey);
@@ -136,7 +141,7 @@ static void NPShowGenerator(void) {
         button.layer.cornerRadius = 18.0;
         [button setImage:[UIImage systemImageNamed:@"lock.shield.fill"] forState:UIControlStateNormal];
         button.accessibilityLabel = @"Next Password";
-        [button addTarget:nil action:@selector(np_openNextPassword) forControlEvents:UIControlEventTouchUpInside];
+        [button addTarget:self action:@selector(np_openNextPassword) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:button];
         objc_setAssociatedObject(self, NPButtonKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
@@ -144,9 +149,4 @@ static void NPShowGenerator(void) {
     button.frame = CGRectMake(self.bounds.size.width - size - 8.0, 5.0, size, size);
     [self bringSubviewToFront:button];
 }
-%end
-
-%hook NSObject
-%new
-- (void)np_openNextPassword { NPShowGenerator(); }
 %end
