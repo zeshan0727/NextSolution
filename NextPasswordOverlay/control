@@ -1,6 +1,6 @@
 Package: com.nextsolution.nextpasswordoverlay
 Name: Next Password Keyboard Overlay
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm64e
 Description: Adds a Next Password generator and saved-password panel above the Apple keyboard on iOS 16 RootHide.
 Maintainer: Next Solution - Zeshan 0727
