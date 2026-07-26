@@ -7,15 +7,21 @@ struct AddPasswordView: View {
     @State private var username = ""
     @State private var link = ""
     @State private var notes = ""
-    @State private var prefix = "MdMr@0727es"
-    @State private var sequence = 1
-    @State private var password = ""
+    @State private var password = "MpMr@"
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Website") {
                     TextField("Site or app name", text: $site)
+                        .onChange(of: site) { newValue in
+                            password = newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? "MpMr@"
+                                : PasswordGenerator.websiteBased(site: newValue)
+                        }
+                    Text("Your password is predicted from this website name.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     TextField("Username or email", text: $username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -23,16 +29,24 @@ struct AddPasswordView: View {
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
                 }
-                Section("Familiar Series") {
-                    TextField("Memorable prefix", text: $prefix)
-                    Stepper("Sequence: \(sequence)", value: $sequence, in: 1...9999)
-                    Button("Generate Password") {
-                        password = PasswordGenerator.familiar(prefix: prefix, sequence: sequence)
+
+                Section("Generated Password") {
+                    HStack {
+                        Text(password)
+                            .font(.system(.title3, design: .monospaced).bold())
+                        Spacer()
+                        Button {
+                            password = PasswordGenerator.websiteBased(site: site)
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .disabled(site.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    TextField("Password", text: $password)
-                        .textInputAutocapitalization(.never)
-                        .font(.system(.body, design: .monospaced))
+                    Text("Format: MpMr@ + 2 letters + 2 numbers")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
+
                 Section("Notes") {
                     TextField("Optional", text: $notes, axis: .vertical)
                 }
@@ -47,11 +61,8 @@ struct AddPasswordView: View {
                         vault.add(.init(site: site, username: username, password: password, link: link, notes: notes))
                         dismiss()
                     }
-                    .disabled(site.trimmingCharacters(in: .whitespaces).isEmpty || password.isEmpty)
+                    .disabled(site.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password == "MpMr@")
                 }
-            }
-            .onAppear {
-                password = PasswordGenerator.familiar(prefix: prefix, sequence: sequence)
             }
         }
     }
