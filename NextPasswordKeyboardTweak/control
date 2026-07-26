@@ -1,0 +1,9 @@
+Package: com.nextpassword.keyboard
+Name: Next Password Keyboard
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: RootHide keyboard helper for generating and inserting Next Password credentials in any app.
+Maintainer: Next Solution - Zeeshan 0727
+Author: Next Solution
+Section: Tweaks
+Depends: mobilesubstrate
