@@ -2,7 +2,15 @@
 
 An iOS 16 SwiftUI paper-trading app designed for TrollStore testing. It never connects to a broker, accesses a trading account, or places real orders.
 
-## Version 0.3
+## Version 0.3.1
+
+### 0.3.1 live-fill fix
+
+- Separates lower live paper leverage from the accelerated simulation leverage
+- Calculates round-trip commission on live notional value
+- Prevents normal spread/slippage at entry from immediately exceeding the default stop-loss
+
+### 0.3 streaming update
 
 - Real one-minute candles plus Twelve Data WebSocket price ticks
 - Major pairs: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD, EUR/GBP, and EUR/JPY
