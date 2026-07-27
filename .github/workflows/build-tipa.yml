@@ -16,7 +16,6 @@ on:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
-      - "scripts/apply_next_ledger_1_3_38_sources.py"
       - "scripts/fix_next_ledger_1_3_38_compile.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
@@ -24,7 +23,6 @@ on:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
-      - "scripts/apply_next_ledger_1_3_38_sources.py"
       - "scripts/fix_next_ledger_1_3_38_compile.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
@@ -41,9 +39,6 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
-      - name: Apply Next Ledger 1.3.38 source update
-        run: python3 scripts/apply_next_ledger_1_3_38_sources.py
-
       - name: Apply compile correction
         run: python3 scripts/fix_next_ledger_1_3_38_compile.py
 
@@ -56,12 +51,8 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add DailyLedger/Services/LedgerStore.swift \
-                  DailyLedger/Views/BudgetSettingsView.swift \
-                  DailyLedger/Views/ReportsView.swift \
-                  DailyLedger/Views/DashboardView.swift \
-                  project.yml
-          git commit -m "Build Next Ledger 1.3.38"
+          git add DailyLedger/Services/LedgerStore.swift
+          git commit -m "Fix Next Ledger 1.3.38 compile"
           TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           git push origin "HEAD:${TARGET_BRANCH}"
 
