@@ -40,6 +40,8 @@ final class PaperTradingEngine: ObservableObject {
     private var tickNumber = 0
     private var lastEntryTick = -100
     private var lastEntryDate = Date.distantPast
+    private var lastStreamPrice: Double?
+    private var lastStreamMarketTime: Date?
     private let settingsKey = "ai-scalper.settings.v1"
     private let tradesKey = "ai-scalper.trades.v1"
     private let balanceKey = "ai-scalper.balance.v1"
@@ -228,6 +230,8 @@ final class PaperTradingEngine: ObservableObject {
         guard !trimmed.isEmpty else { return false }
         guard KeychainStore.save(trimmed, account: apiKeyAccount) else { return false }
         apiKey = trimmed
+        lastStreamPrice = nil
+        lastStreamMarketTime = nil
         lastFeedError = nil
         streamMessage = nil
         feedState = .connecting
@@ -242,6 +246,8 @@ final class PaperTradingEngine: ObservableObject {
         lastMarketTimestamp = nil
         streamConnected = false
         streamMessage = nil
+        lastStreamPrice = nil
+        lastStreamMarketTime = nil
         candles = []
         indicators = IndicatorSnapshot()
         feedState = .setupRequired
@@ -310,24 +316,30 @@ final class PaperTradingEngine: ObservableObject {
     }
 
     func unrealizedProfitLoss(for trade: PaperTrade) -> Double {
-        let estimatedExit = executionPrice(
-            midPrice: currentPrice,
-            asset: trade.asset,
-            direction: trade.direction,
-            isEntry: false,
-            slippagePercent: estimatedSlippage(for: trade.asset)
-        )
+        let estimatedExit = trade.dataSource == .live
+            ? currentPrice
+            : executionPrice(
+                midPrice: currentPrice,
+                asset: trade.asset,
+                direction: trade.direction,
+                isEntry: false,
+                slippagePercent: estimatedSlippage(for: trade.asset)
+            )
         return profitLoss(for: trade, exitPrice: estimatedExit)
     }
 
     private func applyLiveCandles(_ received: [MarketCandle]) {
-        candles = Array(received.suffix(240))
+        candles = reconciledCandles(received)
         tickNumber += 1
-        lastMarketTimestamp = received.last?.time
+        lastMarketTimestamp = [received.last?.time, lastStreamMarketTime]
+            .compactMap { $0 }
+            .max()
         lastMarketUpdate = Date()
         feedState = isMarketDataFresh ? .live : .stale
         if !isMarketDataFresh { autoTradingEnabled = false }
-        processMarketUpdate()
+        // REST is used to rebuild indicator history, but it must not rewind a
+        // newer streaming quote or trigger a fill at an older candle close.
+        processMarketUpdate(allowsEntry: !hasFreshStreamingQuote)
     }
 
     private func applyLiveTick(_ tick: LivePriceTick) {
@@ -335,6 +347,8 @@ final class PaperTradingEngine: ObservableObject {
               tick.symbol == settings.asset.apiSymbol,
               tick.price > 0 else { return }
 
+        lastStreamPrice = tick.price
+        lastStreamMarketTime = tick.marketTime
         let minute = Date(timeIntervalSince1970: floor(tick.marketTime.timeIntervalSince1970 / 60) * 60)
         if let last = candles.last {
             let lastMinute = Date(timeIntervalSince1970: floor(last.time.timeIntervalSince1970 / 60) * 60)
@@ -370,10 +384,10 @@ final class PaperTradingEngine: ObservableObject {
         streamConnected = true
         streamMessage = "Receiving real price ticks"
         feedState = isMarketDataFresh ? .live : .stale
-        processMarketUpdate()
+        processMarketUpdate(allowsEntry: true)
     }
 
-    private func processMarketUpdate() {
+    private func processMarketUpdate(allowsEntry: Bool = true) {
         indicators = IndicatorEngine.analyse(candles: candles)
         updateOpenTrade()
         evaluateRiskLock()
@@ -382,6 +396,7 @@ final class PaperTradingEngine: ObservableObject {
             ? Date().timeIntervalSince(lastEntryDate) >= 60
             : tickNumber - lastEntryTick >= 8
         if autoTradingEnabled,
+           allowsEntry,
            !isRiskLocked,
            isMarketReady,
            openTrade == nil,
@@ -394,18 +409,34 @@ final class PaperTradingEngine: ObservableObject {
 
     private func open(direction: TradeDirection, confidence: Int) {
         guard settings.tradeAmount > 0, settings.tradeAmount <= balance else { return }
-        let slippage = actualSlippage(for: settings.asset)
-        let price = executionPrice(
-            midPrice: currentPrice,
-            asset: settings.asset,
-            direction: direction,
-            isEntry: true,
-            slippagePercent: slippage
+        let quotedPrice: Double?
+        if marketMode == .live {
+            quotedPrice = liveQuotePrice
+        } else {
+            quotedPrice = currentPrice
+        }
+        guard let quotedPrice else { return }
+
+        let slippage = marketMode == .live
+            ? estimatedSlippage(for: settings.asset)
+            : actualSlippage(for: settings.asset)
+        // Twelve Data supplies a last/mid quote rather than a broker bid/ask.
+        // Keep a live paper trade's entry locked to the price visible on the
+        // chart and deduct estimated spread/slippage separately as a cost.
+        let price = marketMode == .live
+            ? quotedPrice
+            : executionPrice(
+                midPrice: quotedPrice,
+                asset: settings.asset,
+                direction: direction,
+                isEntry: true,
+                slippagePercent: slippage
+            )
+        let totalFees = estimatedRoundTripCost(
+            for: settings.asset,
+            amount: settings.tradeAmount,
+            dataSource: marketMode
         )
-        let feeLeverage = marketMode == .live ? settings.asset.livePaperLeverage : 1
-        let totalFees = executionSettings.applyTradingCosts
-            ? settings.tradeAmount * feeLeverage * settings.asset.commissionPercentPerSide / 100 * 2
-            : 0
 
         openTrade = PaperTrade(
             id: UUID(),
@@ -454,14 +485,18 @@ final class PaperTradingEngine: ObservableObject {
 
     private func closeOpenTrade(reason: TradeExitReason) {
         guard var trade = openTrade else { return }
-        let exitSlippage = actualSlippage(for: trade.asset)
-        let exitPrice = executionPrice(
-            midPrice: currentPrice,
-            asset: trade.asset,
-            direction: trade.direction,
-            isEntry: false,
-            slippagePercent: exitSlippage
-        )
+        let exitSlippage = trade.dataSource == .live
+            ? estimatedSlippage(for: trade.asset)
+            : actualSlippage(for: trade.asset)
+        let exitPrice = trade.dataSource == .live
+            ? currentPrice
+            : executionPrice(
+                midPrice: currentPrice,
+                asset: trade.asset,
+                direction: trade.direction,
+                isEntry: false,
+                slippagePercent: exitSlippage
+            )
         let profitLoss = profitLoss(for: trade, exitPrice: exitPrice)
         trade.closedAt = Date()
         trade.exitPrice = exitPrice
@@ -498,6 +533,72 @@ final class PaperTradingEngine: ObservableObject {
         executionSettings.applyTradingCosts ? asset.maximumSlippagePercent * 0.60 : 0
     }
 
+    private var hasFreshStreamingQuote: Bool {
+        guard streamConnected, let timestamp = lastStreamMarketTime else { return false }
+        return abs(Date().timeIntervalSince(timestamp)) <= 180
+    }
+
+    private var liveQuotePrice: Double? {
+        if hasFreshStreamingQuote, let lastStreamPrice {
+            return lastStreamPrice
+        }
+        guard isMarketDataFresh else { return nil }
+        return candles.last?.close
+    }
+
+    private func estimatedRoundTripCost(
+        for asset: AssetSymbol,
+        amount: Double,
+        dataSource: MarketDataMode
+    ) -> Double {
+        guard executionSettings.applyTradingCosts else { return 0 }
+        let leverage = dataSource == .live ? asset.livePaperLeverage : 1
+        let commission = asset.commissionPercentPerSide * 2
+        let executionCosts = dataSource == .live
+            ? asset.spreadPercent + estimatedSlippage(for: asset) * 2
+            : commission
+        let totalPercent = dataSource == .live
+            ? commission + executionCosts
+            : executionCosts
+        return amount * leverage * totalPercent / 100
+    }
+
+    private func reconciledCandles(_ received: [MarketCandle]) -> [MarketCandle] {
+        guard hasFreshStreamingQuote,
+              let streamPrice = lastStreamPrice,
+              let streamTime = lastStreamMarketTime else {
+            return Array(received.suffix(240))
+        }
+
+        let streamMinute = minuteStart(streamTime)
+        var result = received
+        if let index = result.lastIndex(where: { minuteStart($0.time) == streamMinute }) {
+            let rest = result[index]
+            let streamed = candles.last(where: { minuteStart($0.time) == streamMinute })
+            result[index] = MarketCandle(
+                id: streamed?.id ?? rest.id,
+                time: rest.time,
+                open: rest.open,
+                high: max(rest.high, max(streamed?.high ?? streamPrice, streamPrice)),
+                low: min(rest.low, min(streamed?.low ?? streamPrice, streamPrice)),
+                close: streamPrice
+            )
+        } else if let last = result.last, streamMinute > minuteStart(last.time) {
+            result.append(MarketCandle(
+                time: streamMinute,
+                open: last.close,
+                high: max(last.close, streamPrice),
+                low: min(last.close, streamPrice),
+                close: streamPrice
+            ))
+        }
+        return Array(result.sorted { $0.time < $1.time }.suffix(240))
+    }
+
+    private func minuteStart(_ date: Date) -> Date {
+        Date(timeIntervalSince1970: floor(date.timeIntervalSince1970 / 60) * 60)
+    }
+
     private func evaluateRiskLock() {
         let dailyLossHit = todayProfitLoss <= -settings.maxDailyLoss
         let lossStreakHit = consecutiveLosses >= settings.maxConsecutiveLosses
@@ -513,6 +614,8 @@ final class PaperTradingEngine: ObservableObject {
         streamConnected = false
         streamMessage = nil
         receivedTickCount = 0
+        lastStreamPrice = nil
+        lastStreamMarketTime = nil
         tickNumber = 0
         lastEntryTick = -100
         lastEntryDate = .distantPast
@@ -538,6 +641,8 @@ final class PaperTradingEngine: ObservableObject {
         streamConnected = false
         streamMessage = nil
         receivedTickCount = 0
+        lastStreamPrice = nil
+        lastStreamMarketTime = nil
 
         if marketMode == .simulated {
             feedState = .simulated
