@@ -775,7 +775,7 @@ final class LedgerStore: ObservableObject {
             .filter { $0.type == type }
             .map(\.category)
         var seen = Set<String>()
-        return (defaults + used).compactMap { item in
+        return (defaults + Array(used)).compactMap { item in
             let cleaned = item.trimmingCharacters(in: .whitespacesAndNewlines)
             let key = cleaned
                 .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
