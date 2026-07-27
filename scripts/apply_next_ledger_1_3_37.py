@@ -565,19 +565,7 @@ def update_project(text: str) -> str:
     )
 
 
-def update_workflow(text: str) -> str:
-    return (
-        text.replace("Next Ledger 1.3.36", "Next Ledger 1.3.37")
-            .replace(
-                "budget consumption report and batched budget calculations",
-                "polished budgets, carried-forward balance and Next Solution header logo",
-            )
-            .replace("NextLedger-1.3.36", "NextLedger-1.3.37")
-    )
-
-
 update_file(ROOT / "DailyLedger/Views/BudgetSettingsView.swift", update_budget_view)
 update_file(ROOT / "DailyLedger/Views/ReportsView.swift", update_reports_view)
 update_file(ROOT / "DailyLedger/Views/DashboardView.swift", update_dashboard_view)
 update_file(ROOT / "project.yml", update_project)
-update_file(ROOT / ".github/workflows/build-tipa.yml", update_workflow)
