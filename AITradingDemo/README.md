@@ -2,7 +2,14 @@
 
 An iOS 16 SwiftUI paper-trading app designed for TrollStore testing. It never connects to a broker, accesses a trading account, or places real orders.
 
-## Version 0.3.1
+## Version 0.3.2
+
+### 0.3.2 live quote-lock fix
+
+- Locks each live paper entry to the exact provider quote visible on the chart
+- Deducts estimated spread and slippage as costs instead of inventing a higher BUY or lower SELL entry
+- Preserves a newer WebSocket tick when the slower REST candle history is reconciled
+- Prevents REST reconciliation from opening a trade at an older candle price while streaming is active
 
 ### 0.3.1 live-fill fix
 
@@ -22,14 +29,14 @@ An iOS 16 SwiftUI paper-trading app designed for TrollStore testing. It never co
 - Optional accelerated simulation for comparison with the original test
 - EMA 9/21, RSI 14, Bollinger Bands 20/2, and MACD 12/26/9 signals
 - Automatic or manual paper trades with quick take-profit, stop-loss, and timed exit
-- Paper fills deduct estimated spread, adverse slippage, and round-trip fees
+- Live paper fills use the visible provider quote and deduct estimated trading costs separately
 - Maximum daily loss and consecutive-loss safety locks
 - Persistent paper balance, settings, and up to 500 completed trades
 
 ## Set up live market data
 
 1. Create a Twelve Data account and API key at <https://twelvedata.com/pricing>.
-2. Install and open AI Scalper Demo 0.3.
+2. Install and open AI Scalper Demo 0.3.2.
 3. Open **Settings → Market data** and select **Live market**.
 4. Paste the key and tap **Save key and connect**.
 5. Select a supported pair and keep the app open while testing.
