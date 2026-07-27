@@ -12,15 +12,19 @@ def replace_once(path: Path, old: str, new: str) -> None:
     path.write_text(text.replace(old, new, 1))
 
 
-# Repair the generated Gmail alert string if the prior patch emitted literal line breaks.
+# Normalise the generated Gmail alert to valid Swift interpolation syntax.
 root = SOURCES / "RootReminders.swift"
 root_text = root.read_text()
-broken = '''Text("\\(gmailDisconnectAlert ?? "Gmail connection is unavailable")
+root_text = root_text.replace(
+    'Text("\\(gmailDisconnectAlert ?? \\"Gmail connection is unavailable\\")\\n\\nOpen Settings → Email Reminder Automations and reconnect Gmail.")',
+    'Text("\\(gmailDisconnectAlert ?? "Gmail connection is unavailable")\\n\\nOpen Settings → Email Reminder Automations and reconnect Gmail.")'
+)
+broken_multiline = '''Text("\\(gmailDisconnectAlert ?? "Gmail connection is unavailable")
 
 Open Settings → Email Reminder Automations and reconnect Gmail.")'''
-fixed = 'Text("\\(gmailDisconnectAlert ?? \\"Gmail connection is unavailable\\")\\n\\nOpen Settings → Email Reminder Automations and reconnect Gmail.")'
-if broken in root_text:
-    root.write_text(root_text.replace(broken, fixed, 1))
+correct = 'Text("\\(gmailDisconnectAlert ?? "Gmail connection is unavailable")\\n\\nOpen Settings → Email Reminder Automations and reconnect Gmail.")'
+root_text = root_text.replace(broken_multiline, correct)
+root.write_text(root_text)
 
 editor = SOURCES / "Editor.swift"
 
