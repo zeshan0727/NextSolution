@@ -616,14 +616,6 @@ private struct ReportDetailView: View {
                 }
                 .buttonStyle(.plain)
             }
-            ReportTotalCard(
-                title: "Carried Forward Balance",
-                value: carriedForwardBalance,
-                currencyCode: store.currencyCode,
-                icon: "arrow.uturn.right.circle.fill",
-                color: carriedForwardBalance >= 0 ? AppTheme.blue : AppTheme.red,
-                secondaryText: "Opening balance + prior net activity before \(selectedInterval.start.formatted(date: .abbreviated, time: .omitted))"
-            )
             ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
                 NavigationLink {
                     LoanMovementReportView()
@@ -656,39 +648,8 @@ private struct ReportDetailView: View {
         }
     }
 
-    private var openingBalance: Decimal {
-        store.accounts.lazy
-            .filter {
-                !$0.isArchived &&
-                $0.currencyCode.uppercased() == store.currencyCode.uppercased()
-            }
-            .reduce(Decimal.zero) { $0 + $1.openingBalance }
-    }
-
-    private var carriedForwardInterval: DateInterval? {
-        guard let earliest = store.transactions.last?.date,
-              earliest < selectedInterval.start else {
-            return nil
-        }
-        return DateInterval(start: earliest, end: selectedInterval.start)
-    }
-
-    private var carriedForwardBalance: Decimal {
-        guard let interval = carriedForwardInterval else {
-            return openingBalance
-        }
-        let historicalTotals = store.totals(in: interval)
-        return openingBalance
-            + historicalTotals.income
-            + convertedLoanMovement(in: interval)
-            - historicalTotals.expense
-    }
-
     private var financeSummaryNetBalance: Decimal {
-        carriedForwardBalance
-            + totals.income
-            + convertedLoanMovement
-            - totals.expense
+        totals.income + convertedLoanMovement - totals.expense
     }
 
     private var convertedLoanMovement: Decimal {
