@@ -51,7 +51,6 @@ PY
 python3 ci/patch_v135.py
 python3 ci/patch_v136.py
 python3 ci/patch_v137.py
-python3 ci/adjust_v138_root.py
 python3 ci/patch_v138.py
 python3 ci/patch_v139.py
 
@@ -63,7 +62,6 @@ backup = Path('NextReminder/Sources/BackupRestore.swift')
 backup.write_text(backup.read_text().replace('    static func createPackage(store: ReminderStore) throws -> NextReminderBackupPackage {', '    @MainActor\n    static func createPackage(store: ReminderStore) throws -> NextReminderBackupPackage {'))
 PY
 
-# Verify routine-stop controls and cancellation.
 grep -q 'Stop Routine & Cancel Alerts' NextReminder/Sources/Editor.swift
 grep -q 'showStopRoutineConfirmation' NextReminder/Sources/Editor.swift
 grep -q 'stopRoutineImmediately' NextReminder/Sources/Editor.swift
@@ -72,7 +70,6 @@ grep -q 'await NotificationManager.shared.cancel' NextReminder/Sources/Editor.sw
 grep -q 'existing.notificationsEnabled = false' NextReminder/Sources/Editor.swift
 grep -q 'isStoppingExistingRoutine' NextReminder/Sources/Editor.swift
 
-# Verify retained notification/Gmail/routine features.
 grep -q 'effectiveOffsets.insert(.atTime)' NextReminder/Sources/Services.swift
 grep -q 'final class GmailConnectionHealthMonitor' NextReminder/Sources/GmailConnection.swift
 grep -q 'static let startHour = 8' NextReminder/Sources/RoutineReminders.swift
