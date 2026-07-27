@@ -449,45 +449,121 @@ final class LedgerStore: ObservableObject {
     }
 
     func monthlyBudgetSpent(_ budget: ExpenseBudget, containing date: Date = Date()) -> Decimal {
-        guard let interval = budget.dateInterval(containing: date) else { return 0 }
-        return transactions.lazy.filter {
+        budgetConsumptionSnapshots(containing: date)
+            .first { $0.budget.id == budget.id }?
+            .spent ?? 0
+    }
+
+    func budgetConsumptionSnapshots(
+        containing date: Date = Date()
+    ) -> [BudgetConsumptionSnapshot] {
+        let budgets = settings.expenseBudgets
+        let intervals = Dictionary(uniqueKeysWithValues: budgets.compactMap { budget in
+            budget.dateInterval(containing: date).map { (budget.id, $0) }
+        })
+        var candidates: [String: [UUID]] = [:]
+        for budget in budgets {
+            for category in budget.categories {
+                candidates[budgetLookupKey(currency: budget.currencyCode, category: category), default: []]
+                    .append(budget.id)
+            }
+        }
+        var spentByBudget: [UUID: Decimal] = [:]
+        for transaction in transactions where transaction.type == .expense {
+            guard let currency = account(withID: transaction.accountID)?.currencyCode else { continue }
+            let key = budgetLookupKey(currency: currency, category: transaction.category)
+            for budgetID in candidates[key] ?? [] {
+                guard intervals[budgetID]?.contains(transaction.date) == true else { continue }
+                spentByBudget[budgetID, default: 0] += transaction.amount
+            }
+        }
+        let today = Calendar.current.startOfDay(for: date)
+        return budgets.compactMap { budget in
+            guard let interval = intervals[budget.id] else { return nil }
+            let spent = spentByBudget[budget.id, default: 0]
+            let inclusiveEnd = Calendar.current.date(byAdding: .day, value: -1, to: interval.end)
+                ?? interval.end
+            let daysRemaining = max(
+                Calendar.current.dateComponents([.day], from: today, to: inclusiveEnd).day ?? 0,
+                0
+            )
+            return BudgetConsumptionSnapshot(
+                budget: budget,
+                interval: interval,
+                spent: spent,
+                daysRemaining: daysRemaining
+            )
+        }
+    }
+
+    func transactions(for snapshot: BudgetConsumptionSnapshot) -> [LedgerTransaction] {
+        transactions.filter {
             $0.type == .expense &&
-            interval.contains($0.date) &&
-            budget.includes(category: $0.category) &&
-            self.account(withID: $0.accountID)?.currencyCode == budget.currencyCode
-        }.reduce(Decimal.zero) { $0 + $1.amount }
+            snapshot.interval.contains($0.date) &&
+            snapshot.budget.includes(category: $0.category) &&
+            account(withID: $0.accountID)?.currencyCode == snapshot.budget.currencyCode
+        }
     }
 
     func suggestedBudgetAmount(
         for budget: ExpenseBudget,
         monthlyIncome: Decimal
     ) -> Decimal {
+        suggestedBudgetAmounts(
+            monthlyIncome: monthlyIncome,
+            incomeCurrencyCode: budget.currencyCode
+        )[budget.id] ?? budget.monthlyAmount
+    }
+
+    func suggestedBudgetAmounts(
+        monthlyIncome: Decimal,
+        incomeCurrencyCode: String
+    ) -> [UUID: Decimal] {
         let calendar = Calendar.current
         let currentMonth = calendar.dateInterval(of: .month, for: Date())?.start ?? Date()
         guard let historyStart = calendar.date(byAdding: .month, value: -3, to: currentMonth) else {
-            return budget.monthlyAmount
+            return Dictionary(uniqueKeysWithValues: settings.expenseBudgets.map {
+                ($0.id, $0.monthlyAmount)
+            })
         }
-        let historicalTotal = transactions.lazy.filter {
-            $0.type == .expense &&
-            $0.date >= historyStart &&
-            $0.date < currentMonth &&
-            budget.includes(category: $0.category) &&
-            self.account(withID: $0.accountID)?.currencyCode == budget.currencyCode
-        }.reduce(Decimal.zero) { $0 + $1.amount }
-        let historicalAverage = historicalTotal / 3
-        if historicalAverage > 0 {
-            return roundedBudget(historicalAverage * Decimal(string: "0.90")!)
+        var categoryHistory: [String: Decimal] = [:]
+        for transaction in transactions where
+            transaction.type == .expense &&
+            transaction.date >= historyStart &&
+            transaction.date < currentMonth {
+            guard let currency = account(withID: transaction.accountID)?.currencyCode else { continue }
+            categoryHistory[
+                budgetLookupKey(currency: currency, category: transaction.category),
+                default: 0
+            ] += transaction.amount
         }
-        let sameCurrencyCount = max(
-            settings.expenseBudgets.filter { $0.currencyCode == budget.currencyCode }.count,
-            1
-        )
-        if monthlyIncome > 0 {
-            return roundedBudget(
-                monthlyIncome * Decimal(string: "0.80")! / Decimal(sameCurrencyCount)
-            )
-        }
-        return budget.monthlyAmount
+        let budgetCountByCurrency = Dictionary(grouping: settings.expenseBudgets, by: \.currencyCode)
+            .mapValues { $0.count }
+        return Dictionary(uniqueKeysWithValues: settings.expenseBudgets.map { budget in
+            let historicalTotal = budget.categories.reduce(Decimal.zero) {
+                $0 + categoryHistory[
+                    budgetLookupKey(currency: budget.currencyCode, category: $1),
+                    default: 0
+                ]
+            }
+            let historicalAverage = historicalTotal / 3
+            if historicalAverage > 0 {
+                return (
+                    budget.id,
+                    roundedBudget(historicalAverage * Decimal(string: "0.90")!)
+                )
+            }
+            let count = max(budgetCountByCurrency[budget.currencyCode, default: 1], 1)
+            if monthlyIncome > 0 && budget.currencyCode == incomeCurrencyCode {
+                return (
+                    budget.id,
+                    roundedBudget(
+                        monthlyIncome * Decimal(string: "0.80")! / Decimal(count)
+                    )
+                )
+            }
+            return (budget.id, budget.monthlyAmount)
+        })
     }
 
     private func roundedBudget(_ amount: Decimal) -> Decimal {
@@ -495,6 +571,13 @@ final class LedgerStore: ObservableObject {
         var rounded = Decimal()
         NSDecimalRound(&rounded, &value, 0, .plain)
         return max(rounded, 1)
+    }
+
+    private func budgetLookupKey(currency: String, category: String) -> String {
+        let normalized = category
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            .lowercased()
+        return "\(currency.uppercased())|\(normalized)"
     }
 
     private func checkBudgetThresholds(
@@ -781,5 +864,19 @@ struct LoanNetMovement: Identifiable {
 
     var title: String {
         netAmount > 0 ? "Loan increased" : "Loan decreased"
+    }
+}
+
+struct BudgetConsumptionSnapshot: Identifiable, Equatable {
+    var id: UUID { budget.id }
+    let budget: ExpenseBudget
+    let interval: DateInterval
+    let spent: Decimal
+    let daysRemaining: Int
+
+    var remaining: Decimal { budget.monthlyAmount - spent }
+    var progress: Double {
+        guard budget.monthlyAmount > 0 else { return 0 }
+        return NSDecimalNumber(decimal: spent / budget.monthlyAmount).doubleValue
     }
 }
