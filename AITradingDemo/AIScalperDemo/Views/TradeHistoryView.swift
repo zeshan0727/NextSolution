@@ -84,7 +84,7 @@ private struct TradeHistoryRow: View {
                     HStack(spacing: 5) {
                         Text(trade.dataSource?.rawValue ?? "Simulation v0.1")
                         if let fee = trade.feeCost, fee > 0 {
-                            Text("• Fees \(fee.formatted(.currency(code: "USD")))")
+                            Text("• Costs \(fee.formatted(.currency(code: "USD")))")
                         }
                     }
                     .font(.caption2)
