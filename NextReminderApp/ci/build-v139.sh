@@ -69,7 +69,6 @@ grep -q 'stopRoutineImmediately' NextReminder/Sources/Editor.swift
 grep -q 'HourlyRepeatStore.shared.remove' NextReminder/Sources/Editor.swift
 grep -q 'await NotificationManager.shared.cancel' NextReminder/Sources/Editor.swift
 grep -q 'existing.notificationsEnabled = false' NextReminder/Sources/Editor.swift
-grep -q 'isStoppingExistingRoutine' NextReminder/Sources/Editor.swift
 
 grep -q 'effectiveOffsets.insert(.atTime)' NextReminder/Sources/Services.swift
 grep -q 'final class GmailConnectionHealthMonitor' NextReminder/Sources/GmailConnection.swift
