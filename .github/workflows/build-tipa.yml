@@ -51,7 +51,8 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add DailyLedger/Services/LedgerStore.swift
+          git add DailyLedger/Services/LedgerStore.swift \
+                  DailyLedger/Views/BudgetSettingsView.swift
           git commit -m "Fix Next Ledger 1.3.38 compile"
           TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           git push origin "HEAD:${TARGET_BRANCH}"
