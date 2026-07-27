@@ -40,9 +40,6 @@ struct BudgetSettingsView: View {
                             } label: {
                                 BudgetProgressRow(snapshot: snapshot)
                                     .equatable()
-                                    .equatable()
-                                    .equatable()
-                                    .equatable()
                             }
                             .buttonStyle(.plain)
 
@@ -127,9 +124,6 @@ struct BudgetConsumptionReportView: View {
                             BudgetTransactionsView(snapshot: snapshot)
                         } label: {
                             BudgetConsumptionCard(snapshot: snapshot)
-                                .equatable()
-                                .equatable()
-                                .equatable()
                                 .equatable()
                         }
                         .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
