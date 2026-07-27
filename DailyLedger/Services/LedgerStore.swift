@@ -886,7 +886,8 @@ final class LedgerStore: ObservableObject {
             }
         }
 
-        let result = Set(increases.keys).union(decreases.keys).compactMap { currency in
+        let currencies = Set<String>(increases.keys).union(Set<String>(decreases.keys))
+        let result: [LoanNetMovement] = currencies.compactMap { currency -> LoanNetMovement? in
             let net = increases[currency, default: 0] - decreases[currency, default: 0]
             guard net != 0 else { return nil }
             return LoanNetMovement(currencyCode: currency, netAmount: net)
