@@ -222,7 +222,7 @@ struct OpenTradeCard: View {
                 .tint(.pink)
 
                 if let feeCost = trade.feeCost, feeCost > 0 {
-                    Text("Live P/L estimate already includes spread, slippage and about \(feeCost.formatted(.currency(code: "USD"))) in round-trip fees.")
+                    Text("Entry is locked to the visible provider quote. Live P/L includes about \(feeCost.formatted(.currency(code: "USD"))) in estimated spread, slippage and round-trip fees.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
