@@ -14,6 +14,7 @@ struct BudgetSettingsView: View {
     }
 
     var body: some View {
+        let snapshots = store.budgetConsumptionSnapshots()
         List {
             if budgets.isEmpty {
                 Section {
@@ -25,14 +26,11 @@ struct BudgetSettingsView: View {
                 }
             } else {
                 Section {
-                    ForEach(budgets) { budget in
+                    ForEach(snapshots) { snapshot in
                         Button {
-                            editorRoute = BudgetEditorRoute(budget: budget)
+                            editorRoute = BudgetEditorRoute(budget: snapshot.budget)
                         } label: {
-                            BudgetProgressRow(
-                                budget: budget,
-                                spent: store.monthlyBudgetSpent(budget)
-                            )
+                            BudgetProgressRow(snapshot: snapshot)
                         }
                         .buttonStyle(.plain)
                     }
@@ -80,6 +78,41 @@ struct BudgetSettingsView: View {
     }
 }
 
+struct BudgetConsumptionReportView: View {
+    @EnvironmentObject private var store: LedgerStore
+
+    var body: some View {
+        let snapshots = store.budgetConsumptionSnapshots()
+        List {
+            if snapshots.isEmpty {
+                Section {
+                    EmptyBudgetMessage(
+                        title: "No Budgets to Track",
+                        detail: "Create a budget in Settings first. Its live consumption will appear here.",
+                        icon: "chart.bar.doc.horizontal"
+                    )
+                }
+            } else {
+                Section {
+                    ForEach(snapshots) { snapshot in
+                        NavigationLink {
+                            BudgetTransactionsView(snapshot: snapshot)
+                        } label: {
+                            BudgetConsumptionCard(snapshot: snapshot)
+                        }
+                    }
+                } header: {
+                    Text("Current Consumption")
+                } footer: {
+                    Text("Tap a budget to view the expenses included in its current custom cycle.")
+                }
+            }
+        }
+        .navigationTitle("Budget Consumption")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 struct BudgetPlannerView: View {
     @EnvironmentObject private var store: LedgerStore
     @AppStorage("MonthlyIncomePrimary") private var primaryIncome = 0.0
@@ -90,6 +123,10 @@ struct BudgetPlannerView: View {
     }
 
     var body: some View {
+        let suggestions = store.suggestedBudgetAmounts(
+            monthlyIncome: Decimal(primaryIncome + secondaryIncome),
+            incomeCurrencyCode: store.currencyCode
+        )
         List {
             Section("Monthly Income") {
                 Stepper(
@@ -117,7 +154,7 @@ struct BudgetPlannerView: View {
             } else {
                 Section {
                     ForEach(budgets) { budget in
-                        let suggestion = suggestedAmount(for: budget)
+                        let suggestion = suggestions[budget.id] ?? budget.monthlyAmount
                         VStack(alignment: .leading, spacing: 9) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
@@ -156,12 +193,6 @@ struct BudgetPlannerView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func suggestedAmount(for budget: ExpenseBudget) -> Decimal {
-        let income = budget.currencyCode == store.currencyCode
-            ? Decimal(primaryIncome + secondaryIncome)
-            : 0
-        return store.suggestedBudgetAmount(for: budget, monthlyIncome: income)
-    }
 }
 
 private struct EmptyBudgetMessage: View {
@@ -187,15 +218,13 @@ private struct EmptyBudgetMessage: View {
 }
 
 private struct BudgetProgressRow: View {
-    let budget: ExpenseBudget
-    let spent: Decimal
+    let snapshot: BudgetConsumptionSnapshot
+
+    private var budget: ExpenseBudget { snapshot.budget }
+    private var spent: Decimal { snapshot.spent }
 
     private var progress: Double {
-        guard budget.monthlyAmount > 0 else { return 0 }
-        return min(
-            NSDecimalNumber(decimal: spent / budget.monthlyAmount).doubleValue,
-            1
-        )
+        min(max(snapshot.progress, 0), 1)
     }
 
     private var color: Color {
@@ -237,6 +266,146 @@ private struct BudgetProgressRow: View {
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 5)
+    }
+}
+
+private struct BudgetConsumptionCard: View {
+    let snapshot: BudgetConsumptionSnapshot
+
+    private var progressColor: Color {
+        if snapshot.progress >= 1 { return AppTheme.red }
+        if snapshot.progress >= 0.8 { return AppTheme.orange }
+        return AppTheme.green
+    }
+
+    private var remainingText: String {
+        if snapshot.remaining >= 0 {
+            return "\(DisplayFormat.currency(snapshot.remaining, code: snapshot.budget.currencyCode)) remaining"
+        }
+        return "\(DisplayFormat.currency(abs(snapshot.remaining), code: snapshot.budget.currencyCode)) over budget"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(snapshot.budget.displayName)
+                        .font(.headline)
+                    Text(snapshot.budget.categories.joined(separator: ", "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                Spacer()
+                Text("\(Int((snapshot.progress * 100).rounded()))%")
+                    .font(.title3.bold())
+                    .foregroundStyle(progressColor)
+            }
+
+            ProgressView(value: min(max(snapshot.progress, 0), 1))
+                .tint(progressColor)
+
+            HStack {
+                BudgetMetric(
+                    title: "Budget",
+                    value: DisplayFormat.currency(
+                        snapshot.budget.monthlyAmount,
+                        code: snapshot.budget.currencyCode
+                    )
+                )
+                BudgetMetric(
+                    title: "Spent",
+                    value: DisplayFormat.currency(
+                        snapshot.spent,
+                        code: snapshot.budget.currencyCode
+                    )
+                )
+            }
+
+            HStack {
+                Label(remainingText, systemImage: snapshot.remaining >= 0 ? "wallet.pass.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(snapshot.remaining >= 0 ? AppTheme.green : AppTheme.red)
+                Spacer()
+                Label("\(snapshot.daysRemaining) days remaining", systemImage: "calendar")
+                    .foregroundStyle(.secondary)
+            }
+            .font(.caption.weight(.semibold))
+
+            Text(
+                "\(snapshot.interval.start.formatted(date: .abbreviated, time: .omitted)) – \((snapshot.interval.end.addingTimeInterval(-1)).formatted(date: .abbreviated, time: .omitted))"
+            )
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 7)
+    }
+}
+
+private struct BudgetMetric: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.bold())
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct BudgetTransactionsView: View {
+    @EnvironmentObject private var store: LedgerStore
+    @State private var selectedTransaction: LedgerTransaction?
+    @State private var searchText = ""
+    let snapshot: BudgetConsumptionSnapshot
+
+    private var transactions: [LedgerTransaction] {
+        store.transactions(for: snapshot).filter { transaction in
+            searchText.isEmpty ||
+            transaction.category.localizedCaseInsensitiveContains(searchText) ||
+            (transaction.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+            transaction.details.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    var body: some View {
+        let visibleTransactions = transactions
+        List {
+            ForEach(visibleTransactions) { transaction in
+                Button {
+                    selectedTransaction = transaction
+                } label: {
+                    TransactionRow(transaction: transaction)
+                }
+                .buttonStyle(.plain)
+            }
+            Section {
+                HStack {
+                    Text("Total · \(visibleTransactions.count) transactions")
+                    Spacer()
+                    Text(
+                        DisplayFormat.currency(
+                            visibleTransactions.reduce(Decimal.zero) { $0 + $1.amount },
+                            code: snapshot.budget.currencyCode
+                        )
+                    )
+                    .bold()
+                }
+            }
+        }
+        .navigationTitle(snapshot.budget.displayName)
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Search budget expenses")
+        .sheet(item: $selectedTransaction) { transaction in
+            TransactionSnapshotView(transaction: transaction)
+                .environmentObject(store)
+        }
     }
 }
 
