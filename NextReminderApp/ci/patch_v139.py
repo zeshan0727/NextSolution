@@ -14,7 +14,6 @@ def replace_once(path: Path, old: str, new: str) -> None:
 
 editor = SOURCES / "Editor.swift"
 
-# Dedicated stop confirmation state.
 replace_once(
     editor,
     '''    @State private var permissionDenied = false''',
@@ -22,19 +21,6 @@ replace_once(
     @State private var showStopRoutineConfirmation = false'''
 )
 
-# Allow a routine to be saved/stopped even when its current slot has already passed.
-replace_once(
-    editor,
-    '''        let validReminderTime = dueDate > Date().addingTimeInterval(-60)
-        let validDeadline = !hasDeadline || deadlineDate > dueDate
-        return hasTitle && validReminderTime && validDeadline''',
-    '''        let isStoppingExistingRoutine = reminder?.isHourlyRoutine == true && hourlyRepeatHours == 0
-        let validReminderTime = isStoppingExistingRoutine || dueDate > Date().addingTimeInterval(-60)
-        let validDeadline = isStoppingExistingRoutine || !hasDeadline || deadlineDate > dueDate
-        return hasTitle && validReminderTime && validDeadline'''
-)
-
-# Make the Off option explicit and move a former routine back to General.
 replace_once(
     editor,
     '''                Button("Off") { hourlyRepeatHours = 0 }''',
@@ -44,10 +30,12 @@ replace_once(
                     if categoryID == ReminderCategory.routines.id {
                         categoryID = ReminderCategory.general.id
                     }
+                    if dueDate <= Date() {
+                        dueDate = Date().addingTimeInterval(60)
+                    }
                 }'''
 )
 
-# Add an always-available destructive stop action for existing routines.
 replace_once(
     editor,
     '''            if hourlyRepeatHours > 0 {
@@ -73,7 +61,6 @@ replace_once(
                 VStack(alignment: .leading, spacing: 5) {'''
 )
 
-# Confirmation dialog is not dependent on the normal Save button.
 replace_once(
     editor,
     '''        .alert("Notifications Are Disabled", isPresented: $permissionDenied) {''',
@@ -92,7 +79,6 @@ replace_once(
         .alert("Notifications Are Disabled", isPresented: $permissionDenied) {'''
 )
 
-# Immediate stop implementation: remove interval, disable alerts, update, then explicitly cancel pending requests.
 replace_once(
     editor,
     '''    private func saveReminder() {''',
@@ -119,7 +105,6 @@ replace_once(
     private func saveReminder() {'''
 )
 
-# When saving with Hourly Repeat set to Off, ensure stale routine alerts are not retained.
 replace_once(
     editor,
     '''            if hourlyRepeatHours > 0 {
