@@ -7,16 +7,7 @@ PROJECT = ROOT / "project.yml"
 
 reports = REPORTS.read_text(encoding="utf-8")
 
-old_card = '''            ReportTotalCard(
-                title: "Carried Forward Balance",
-                value: carriedForwardBalance,
-                currencyCode: store.currencyCode,
-                icon: "arrow.uturn.right.circle.fill",
-                color: carriedForwardBalance >= 0 ? AppTheme.blue : AppTheme.red,
-                secondaryText: "Opening balance + prior net activity before \\(selectedInterval.start.formatted(date: .abbreviated, time: .omitted))"
-            )
-'''
-new_card = '''            ReportTotalCard(
+card = '''            ReportTotalCard(
                 title: "Carried Forward Balance",
                 value: carriedForwardBalance,
                 currencyCode: store.currencyCode,
@@ -26,39 +17,25 @@ new_card = '''            ReportTotalCard(
             )
 '''
 
-old_logic = '''    private var openingBalance: Decimal {
-        store.accounts.lazy
-            .filter {
-                !$0.isArchived &&
-                $0.currencyCode.uppercased() == store.currencyCode.uppercased()
+card_anchor = '''                .buttonStyle(.plain)
             }
-            .reduce(Decimal.zero) { $0 + $1.openingBalance }
-    }
+            ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
+'''
 
-    private var carriedForwardInterval: DateInterval? {
-        guard let earliest = store.transactions.last?.date,
-              earliest < selectedInterval.start else {
-            return nil
-        }
-        return DateInterval(start: earliest, end: selectedInterval.start)
-    }
+if card not in reports:
+    if card_anchor not in reports:
+        raise RuntimeError("Could not locate Finance Summary card insertion point")
+    reports = reports.replace(
+        card_anchor,
+        '''                .buttonStyle(.plain)
+            }
+''' + card + '''            ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
+''',
+        1,
+    )
 
-    private var carriedForwardBalance: Decimal {
-        guard let interval = carriedForwardInterval else {
-            return openingBalance
-        }
-        let historicalTotals = store.totals(in: interval)
-        return openingBalance
-            + historicalTotals.income
-            + convertedLoanMovement(in: interval)
-            - historicalTotals.expense
-    }
-
-    private var financeSummaryNetBalance: Decimal {
-        carriedForwardBalance
-            + totals.income
-            + convertedLoanMovement
-            - totals.expense
+current_logic = '''    private var financeSummaryNetBalance: Decimal {
+        totals.income + convertedLoanMovement - totals.expense
     }
 
     private var convertedLoanMovement: Decimal {
@@ -80,7 +57,7 @@ old_logic = '''    private var openingBalance: Decimal {
     }
 '''
 
-new_logic = '''    private var carriedForwardBalance: Decimal {
+legacy_logic = '''    private var carriedForwardBalance: Decimal {
         let selectedAccounts = store.accounts.filter {
             !$0.isArchived &&
             $0.currencyCode.uppercased() == store.currencyCode.uppercased()
@@ -129,15 +106,10 @@ new_logic = '''    private var carriedForwardBalance: Decimal {
     }
 '''
 
-if new_card not in reports:
-    if old_card not in reports:
-        raise RuntimeError("Could not locate the 1.3.38 carried-forward card")
-    reports = reports.replace(old_card, new_card, 1)
-
-if new_logic not in reports:
-    if old_logic not in reports:
-        raise RuntimeError("Could not locate the 1.3.38 Finance Summary logic")
-    reports = reports.replace(old_logic, new_logic, 1)
+if legacy_logic not in reports:
+    if current_logic not in reports:
+        raise RuntimeError("Could not locate current Finance Summary calculation block")
+    reports = reports.replace(current_logic, legacy_logic, 1)
 
 REPORTS.write_text(reports, encoding="utf-8")
 
@@ -146,4 +118,4 @@ project = project.replace('MARKETING_VERSION: "1.3.38"', 'MARKETING_VERSION: "1.
 project = project.replace('CURRENT_PROJECT_VERSION: "46"', 'CURRENT_PROJECT_VERSION: "47"')
 PROJECT.write_text(project, encoding="utf-8")
 
-print("Reverted Finance Summary to 1.3.37 behaviour and set version 1.3.39.")
+print("Finance Summary restored exactly to 1.3.37 behaviour; performance and logo changes retained.")
