@@ -64,7 +64,10 @@ jobs:
         run: xcodegen generate
 
       - name: Build unsigned iPhone app
+        shell: bash
         run: |
+          set -o pipefail
+          mkdir -p build
           xcodebuild \
             -project DailyLedger.xcodeproj \
             -scheme DailyLedger \
@@ -74,7 +77,23 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build
+            build 2>&1 | tee build/xcodebuild.log
+
+      - name: Capture build diagnostics
+        if: failure()
+        run: |
+          grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log > build/build-errors.txt || true
+          if [ ! -s build/build-errors.txt ]; then
+            tail -n 250 build/xcodebuild.log > build/build-errors.txt
+          fi
+
+      - name: Upload build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-Build-Diagnostics
+          path: build/build-errors.txt
+          if-no-files-found: error
 
       - name: Package for TrollStore
         run: |
