@@ -26,13 +26,30 @@ struct BudgetSettingsView: View {
                 }
             } else {
                 Section {
+                    BudgetOverviewCard(snapshots: snapshots)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 8, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
                     ForEach(snapshots) { snapshot in
-                        Button {
-                            editorRoute = BudgetEditorRoute(budget: snapshot.budget)
-                        } label: {
-                            BudgetProgressRow(snapshot: snapshot)
+                        VStack(spacing: 10) {
+                            Button {
+                                editorRoute = BudgetEditorRoute(budget: snapshot.budget)
+                            } label: {
+                                BudgetProgressRow(snapshot: snapshot)
+                            }
+                            .buttonStyle(.plain)
+
+                            if snapshot.id != snapshots.last?.id {
+                                Divider()
+                                    .padding(.horizontal, 10)
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
                     .onDelete(perform: store.deleteBudgets)
                 } header: {
@@ -94,12 +111,22 @@ struct BudgetConsumptionReportView: View {
                 }
             } else {
                 Section {
+                    BudgetOverviewCard(snapshots: snapshots)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 8, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
                     ForEach(snapshots) { snapshot in
                         NavigationLink {
                             BudgetTransactionsView(snapshot: snapshot)
                         } label: {
                             BudgetConsumptionCard(snapshot: snapshot)
                         }
+                        .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
                 } header: {
                     Text("Current Consumption")
@@ -195,6 +222,122 @@ struct BudgetPlannerView: View {
 
 }
 
+private struct BudgetCurrencySummary: Identifiable {
+    let currencyCode: String
+    let budgeted: Decimal
+    let spent: Decimal
+
+    var id: String { currencyCode }
+
+    var progress: Double {
+        guard budgeted > 0 else { return 0 }
+        return NSDecimalNumber(decimal: spent / budgeted).doubleValue
+    }
+
+    var remaining: Decimal { budgeted - spent }
+}
+
+private struct BudgetOverviewCard: View {
+    let snapshots: [BudgetConsumptionSnapshot]
+
+    private var summaries: [BudgetCurrencySummary] {
+        Dictionary(grouping: snapshots) { $0.budget.currencyCode.uppercased() }
+            .map { currencyCode, values in
+                BudgetCurrencySummary(
+                    currencyCode: currencyCode,
+                    budgeted: values.reduce(Decimal.zero) { $0 + $1.budget.monthlyAmount },
+                    spent: values.reduce(Decimal.zero) { $0 + $1.spent }
+                )
+            }
+            .sorted { $0.currencyCode < $1.currencyCode }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Label("Budget Summary", systemImage: "chart.pie.fill")
+                    .font(.headline)
+                    .foregroundStyle(AppTheme.purple)
+                Spacer()
+                Text("\(snapshots.count) budget\(snapshots.count == 1 ? "" : "s")")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+
+            ForEach(summaries) { summary in
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        BudgetSummaryMetric(
+                            title: "Budgeted",
+                            value: DisplayFormat.currency(summary.budgeted, code: summary.currencyCode)
+                        )
+                        Divider().frame(height: 34)
+                        BudgetSummaryMetric(
+                            title: "Spent",
+                            value: DisplayFormat.currency(summary.spent, code: summary.currencyCode)
+                        )
+                        Divider().frame(height: 34)
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("\(Int((summary.progress * 100).rounded()))%")
+                                .font(.title3.bold())
+                                .foregroundStyle(summary.progress >= 1 ? AppTheme.red : (summary.progress >= 0.8 ? AppTheme.orange : AppTheme.green))
+                            Text("used")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    ProgressView(value: min(max(summary.progress, 0), 1))
+                        .tint(summary.progress >= 1 ? AppTheme.red : (summary.progress >= 0.8 ? AppTheme.orange : AppTheme.green))
+
+                    HStack {
+                        Text(summary.currencyCode)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(
+                            summary.remaining >= 0
+                                ? "\(DisplayFormat.currency(summary.remaining, code: summary.currencyCode)) remaining"
+                                : "\(DisplayFormat.currency(abs(summary.remaining), code: summary.currencyCode)) over budget"
+                        )
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(summary.remaining >= 0 ? AppTheme.green : AppTheme.red)
+                    }
+                }
+
+                if summary.id != summaries.last?.id {
+                    Divider()
+                }
+            }
+        }
+        .padding(16)
+        .background(.background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(AppTheme.purple.opacity(0.16), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.05), radius: 12, y: 5)
+    }
+}
+
+private struct BudgetSummaryMetric: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.bold())
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
 private struct EmptyBudgetMessage: View {
     let title: String
     let detail: String
@@ -234,38 +377,69 @@ private struct BudgetProgressRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack {
-                Label(
-                    budget.displayName,
-                    systemImage: AppTheme.categoryIcon(budget.categories.first ?? "Other")
-                )
-                    .font(.headline)
-                Spacer()
-                if budget.alertsEnabled {
-                    Image(systemName: "bell.fill")
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: AppTheme.categoryIcon(budget.categories.first ?? "Other"))
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(color)
+                    .frame(width: 38, height: 38)
+                    .background(color.opacity(0.12), in: Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(budget.displayName)
+                        .font(.headline)
+                    Text(budget.categories.joined(separator: ", "))
                         .font(.caption)
-                        .foregroundStyle(progress >= 0.8 ? AppTheme.orange : .secondary)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("\(Int((snapshot.progress * 100).rounded()))%")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(color)
+                    if budget.alertsEnabled {
+                        Image(systemName: "bell.fill")
+                            .font(.caption2)
+                            .foregroundStyle(progress >= 0.8 ? AppTheme.orange : .secondary)
+                    }
                 }
             }
+
+            Divider()
+
             ProgressView(value: progress)
                 .tint(color)
-            Text(budget.categories.joined(separator: ", "))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-            Text("Cycle: day \(budget.cycleStartDay) to day \(budget.cycleEndDay)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            HStack {
-                Text("\(DisplayFormat.currency(spent, code: budget.currencyCode)) spent")
-                Spacer()
-                Text("\(DisplayFormat.currency(budget.monthlyAmount, code: budget.currencyCode)) budget")
+
+            HStack(spacing: 12) {
+                BudgetMetric(
+                    title: "Spent",
+                    value: DisplayFormat.currency(spent, code: budget.currencyCode)
+                )
+                BudgetMetric(
+                    title: "Budget",
+                    value: DisplayFormat.currency(budget.monthlyAmount, code: budget.currencyCode)
+                )
             }
-            .font(.caption)
+
+            HStack {
+                Label("Day \(budget.cycleStartDay)–\(budget.cycleEndDay)", systemImage: "calendar")
+                Spacer()
+                Text(snapshot.remaining >= 0 ? "Remaining \(DisplayFormat.currency(snapshot.remaining, code: budget.currencyCode))" : "Over \(DisplayFormat.currency(abs(snapshot.remaining), code: budget.currencyCode))")
+                    .foregroundStyle(snapshot.remaining >= 0 ? AppTheme.green : AppTheme.red)
+            }
+            .font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 5)
+        .padding(14)
+        .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(color.opacity(0.18), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.04), radius: 9, y: 4)
     }
 }
 
@@ -337,7 +511,13 @@ private struct BudgetConsumptionCard: View {
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 7)
+        .padding(16)
+        .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(progressColor.opacity(0.18), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.04), radius: 9, y: 4)
     }
 }
 

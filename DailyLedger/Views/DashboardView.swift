@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 private enum DashboardDatePreset: String, CaseIterable, Identifiable {
     case today = "Today"
@@ -12,6 +13,48 @@ private enum DashboardDatePreset: String, CaseIterable, Identifiable {
 private enum SpendingCardKind: String, CaseIterable, Identifiable {
     case today, yesterday, thisWeek, lastWeek
     var id: String { rawValue }
+}
+
+private struct NextSolutionHeaderLogo: View {
+    private var appIcon: UIImage? {
+        guard let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
+              let primaryIcon = icons["CFBundlePrimaryIcon"] as? [String: Any],
+              let iconFiles = primaryIcon["CFBundleIconFiles"] as? [String] else {
+            return UIImage(named: "AppIcon")
+        }
+
+        for iconName in iconFiles.reversed() {
+            if let image = UIImage(named: iconName) {
+                return image
+            }
+        }
+        return UIImage(named: "AppIcon")
+    }
+
+    var body: some View {
+        Group {
+            if let appIcon {
+                Image(uiImage: appIcon)
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFill()
+            } else {
+                Image(systemName: "wallet.pass.fill")
+                    .font(.system(size: 21, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppTheme.balanceGradient)
+            }
+        }
+        .frame(width: 48, height: 48)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(.white.opacity(0.22), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+        .accessibilityLabel("Next Solution logo")
+    }
 }
 
 struct DashboardView: View {
@@ -297,11 +340,7 @@ struct DashboardView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Image(systemName: "wallet.pass.fill")
-                .font(.system(size: 21, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 48, height: 48)
-                .background(AppTheme.balanceGradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            NextSolutionHeaderLogo()
         }
         .padding(.top, 16)
     }
