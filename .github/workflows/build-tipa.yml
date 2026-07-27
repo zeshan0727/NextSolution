@@ -2,6 +2,9 @@
 # Build trigger: budget consumption report and batched budget calculations
 name: Build Next Ledger TIPA
 
+permissions:
+  contents: write
+
 concurrency:
   group: next-ledger-${{ github.ref }}
   cancel-in-progress: true
@@ -13,12 +16,14 @@ on:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
+      - "scripts/apply_next_ledger_1_3_37.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
+      - "scripts/apply_next_ledger_1_3_37.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -30,6 +35,28 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply Next Ledger 1.3.37 source update
+        run: python3 scripts/apply_next_ledger_1_3_37.py
+
+      - name: Commit generated source update
+        if: github.event_name == 'push'
+        run: |
+          if git diff --quiet; then
+            echo "Source is already updated."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add DailyLedger/Views/BudgetSettingsView.swift \
+                  DailyLedger/Views/ReportsView.swift \
+                  DailyLedger/Views/DashboardView.swift \
+                  project.yml \
+                  .github/workflows/build-tipa.yml
+          git commit -m "Build Next Ledger 1.3.37"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Install XcodeGen
         run: brew install xcodegen dpkg ldid
