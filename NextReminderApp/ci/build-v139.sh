@@ -51,6 +51,7 @@ PY
 python3 ci/patch_v135.py
 python3 ci/patch_v136.py
 python3 ci/patch_v137.py
+python3 ci/adjust_v138_root.py
 python3 ci/patch_v138.py
 python3 ci/patch_v139.py
 
