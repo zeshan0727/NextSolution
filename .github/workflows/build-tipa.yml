@@ -1,5 +1,5 @@
 # Next Ledger 1.3.39 validated build
-# Build trigger: remove carried-forward balance while retaining performance and logo fixes
+# Build trigger: Finance Summary restored exactly to 1.3.37 behaviour
 name: Build Next Ledger TIPA
 
 permissions:
@@ -16,14 +16,14 @@ on:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
-      - "scripts/remove_carried_forward_1_3_39.py"
+      - "scripts/revert_finance_summary_to_1_3_37.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
     paths:
       - "DailyLedger/**"
       - "RootHideSMSImport/**"
-      - "scripts/remove_carried_forward_1_3_39.py"
+      - "scripts/revert_finance_summary_to_1_3_37.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -39,8 +39,8 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
-      - name: Remove carried-forward balance
-        run: python3 scripts/remove_carried_forward_1_3_39.py
+      - name: Restore Finance Summary 1.3.37
+        run: python3 scripts/revert_finance_summary_to_1_3_37.py
 
       - name: Commit generated source update
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
@@ -52,7 +52,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add DailyLedger/Views/ReportsView.swift project.yml
-          git commit -m "Remove carried-forward balance from Next Ledger 1.3.39"
+          git commit -m "Restore Finance Summary to 1.3.37 behaviour"
           TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           git push origin "HEAD:${TARGET_BRANCH}"
 
