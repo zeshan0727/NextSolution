@@ -622,7 +622,7 @@ private struct ReportDetailView: View {
                 currencyCode: store.currencyCode,
                 icon: "arrow.uturn.right.circle.fill",
                 color: carriedForwardBalance >= 0 ? AppTheme.blue : AppTheme.red,
-                secondaryText: "Opening balance before \(selectedInterval.start.formatted(date: .abbreviated, time: .omitted))"
+                secondaryText: "Opening balance + prior net activity before \(selectedInterval.start.formatted(date: .abbreviated, time: .omitted))"
             )
             ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
                 NavigationLink {
@@ -656,42 +656,47 @@ private struct ReportDetailView: View {
         }
     }
 
-    private var carriedForwardBalance: Decimal {
-        let selectedAccounts = store.accounts.filter {
-            !$0.isArchived &&
-            $0.currencyCode.uppercased() == store.currencyCode.uppercased()
-        }
-        let selectedIDs = Set(selectedAccounts.map(\.id))
-        var balance = selectedAccounts.reduce(Decimal.zero) { $0 + $1.openingBalance }
-
-        for transaction in store.transactions where transaction.date < selectedInterval.start {
-            switch transaction.type {
-            case .income:
-                if transaction.accountID.map(selectedIDs.contains) == true {
-                    balance += transaction.amount
-                }
-            case .expense:
-                if transaction.accountID.map(selectedIDs.contains) == true {
-                    balance -= transaction.amount
-                }
-            case .transfer:
-                if transaction.accountID.map(selectedIDs.contains) == true {
-                    balance -= transaction.amount
-                }
-                if transaction.destinationAccountID.map(selectedIDs.contains) == true {
-                    balance += transaction.destinationAmount ?? transaction.amount
-                }
+    private var openingBalance: Decimal {
+        store.accounts.lazy
+            .filter {
+                !$0.isArchived &&
+                $0.currencyCode.uppercased() == store.currencyCode.uppercased()
             }
+            .reduce(Decimal.zero) { $0 + $1.openingBalance }
+    }
+
+    private var carriedForwardInterval: DateInterval? {
+        guard let earliest = store.transactions.last?.date,
+              earliest < selectedInterval.start else {
+            return nil
         }
-        return balance
+        return DateInterval(start: earliest, end: selectedInterval.start)
+    }
+
+    private var carriedForwardBalance: Decimal {
+        guard let interval = carriedForwardInterval else {
+            return openingBalance
+        }
+        let historicalTotals = store.totals(in: interval)
+        return openingBalance
+            + historicalTotals.income
+            + convertedLoanMovement(in: interval)
+            - historicalTotals.expense
     }
 
     private var financeSummaryNetBalance: Decimal {
-        totals.income + convertedLoanMovement - totals.expense
+        carriedForwardBalance
+            + totals.income
+            + convertedLoanMovement
+            - totals.expense
     }
 
     private var convertedLoanMovement: Decimal {
-        store.loanNetMovements(in: selectedInterval).reduce(Decimal.zero) {
+        convertedLoanMovement(in: selectedInterval)
+    }
+
+    private func convertedLoanMovement(in interval: DateInterval) -> Decimal {
+        store.loanNetMovements(in: interval).reduce(Decimal.zero) {
             result, movement in
             switch movement.currencyCode.uppercased() {
             case "QAR":

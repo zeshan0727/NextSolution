@@ -39,6 +39,7 @@ struct BudgetSettingsView: View {
                                 editorRoute = BudgetEditorRoute(budget: snapshot.budget)
                             } label: {
                                 BudgetProgressRow(snapshot: snapshot)
+                                    .equatable()
                             }
                             .buttonStyle(.plain)
 
@@ -123,6 +124,7 @@ struct BudgetConsumptionReportView: View {
                             BudgetTransactionsView(snapshot: snapshot)
                         } label: {
                             BudgetConsumptionCard(snapshot: snapshot)
+                                .equatable()
                         }
                         .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
                         .listRowSeparator(.hidden)
@@ -137,6 +139,9 @@ struct BudgetConsumptionReportView: View {
         }
         .navigationTitle("Budget Consumption")
         .navigationBarTitleDisplayMode(.inline)
+        .transaction { transaction in
+            transaction.animation = nil
+        }
     }
 }
 
@@ -360,7 +365,7 @@ private struct EmptyBudgetMessage: View {
     }
 }
 
-private struct BudgetProgressRow: View {
+private struct BudgetProgressRow: View, Equatable {
     let snapshot: BudgetConsumptionSnapshot
 
     private var budget: ExpenseBudget { snapshot.budget }
@@ -443,7 +448,7 @@ private struct BudgetProgressRow: View {
     }
 }
 
-private struct BudgetConsumptionCard: View {
+private struct BudgetConsumptionCard: View, Equatable {
     let snapshot: BudgetConsumptionSnapshot
 
     private var progressColor: Color {

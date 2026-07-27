@@ -16,30 +16,15 @@ private enum SpendingCardKind: String, CaseIterable, Identifiable {
 }
 
 private struct NextSolutionHeaderLogo: View {
-    private var appIcon: UIImage? {
-        guard let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
-              let primaryIcon = icons["CFBundlePrimaryIcon"] as? [String: Any],
-              let iconFiles = primaryIcon["CFBundleIconFiles"] as? [String] else {
-            return UIImage(named: "AppIcon")
-        }
-
-        for iconName in iconFiles.reversed() {
-            if let image = UIImage(named: iconName) {
-                return image
-            }
-        }
-        return UIImage(named: "AppIcon")
-    }
-
     var body: some View {
         Group {
-            if let appIcon {
-                Image(uiImage: appIcon)
+            if let logo = NextSolutionLogoAsset.image {
+                Image(uiImage: logo)
                     .resizable()
                     .interpolation(.high)
-                    .scaledToFill()
+                    .scaledToFit()
             } else {
-                Image(systemName: "wallet.pass.fill")
+                Image(systemName: "shippingbox.fill")
                     .font(.system(size: 21, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -47,10 +32,10 @@ private struct NextSolutionHeaderLogo: View {
             }
         }
         .frame(width: 48, height: 48)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(Circle())
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(.white.opacity(0.22), lineWidth: 1)
+            Circle()
+                .stroke(.white.opacity(0.24), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
         .accessibilityLabel("Next Solution logo")

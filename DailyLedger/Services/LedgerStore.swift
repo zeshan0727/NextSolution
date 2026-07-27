@@ -12,6 +12,11 @@ final class LedgerStore: ObservableObject {
     private var runningBalancesByAccount: [UUID: [UUID: Decimal]] = [:]
     private var accountsByID: [UUID: LedgerAccount] = [:]
     private var currentBalances: [UUID: Decimal] = [:]
+    private var budgetSnapshotsCache: [BudgetConsumptionSnapshot] = []
+    private var budgetSnapshotDay = Date.distantPast
+    private var categoriesCache: [TransactionType: [String]] = [:]
+    private var totalsCache: [String: LedgerTotals] = [:]
+    private var loanMovementCache: [String: [LoanNetMovement]] = [:]
     private var hasLoaded = false
 
     init() {
@@ -61,6 +66,7 @@ final class LedgerStore: ObservableObject {
         runningBalances = running
         runningBalancesByAccount = accountRunning
         transactions = Array(ordered.reversed())
+        rebuildPerformanceCaches()
         if hasLoaded {
             let additions = transactions.filter { !previousIDs.contains($0.id) }
             if !additions.isEmpty {
@@ -457,6 +463,15 @@ final class LedgerStore: ObservableObject {
     func budgetConsumptionSnapshots(
         containing date: Date = Date()
     ) -> [BudgetConsumptionSnapshot] {
+        if Calendar.current.isDate(date, inSameDayAs: budgetSnapshotDay) {
+            return budgetSnapshotsCache
+        }
+        return makeBudgetConsumptionSnapshots(containing: date)
+    }
+
+    private func makeBudgetConsumptionSnapshots(
+        containing date: Date
+    ) -> [BudgetConsumptionSnapshot] {
         let budgets = settings.expenseBudgets
         let intervals = Dictionary(uniqueKeysWithValues: budgets.compactMap { budget in
             budget.dateInterval(containing: date).map { (budget.id, $0) }
@@ -470,7 +485,9 @@ final class LedgerStore: ObservableObject {
         }
         var spentByBudget: [UUID: Decimal] = [:]
         for transaction in transactions where transaction.type == .expense {
-            guard let currency = account(withID: transaction.accountID)?.currencyCode else { continue }
+            guard let currency = accountsByID[
+                transaction.accountID ?? LedgerAccount.legacyMainID
+            ]?.currencyCode else { continue }
             let key = budgetLookupKey(currency: currency, category: transaction.category)
             for budgetID in candidates[key] ?? [] {
                 guard intervals[budgetID]?.contains(transaction.date) == true else { continue }
@@ -747,23 +764,60 @@ final class LedgerStore: ObservableObject {
     }
 
     func categories(for type: TransactionType) -> [String] {
+        categoriesCache[type] ?? makeCategories(for: type)
+    }
+
+    private func makeCategories(for type: TransactionType) -> [String] {
         let defaults = type == .expense
             ? LedgerTransaction.expenseCategories
             : LedgerTransaction.incomeCategories
-        let used = transactions
+        let used = transactions.lazy
             .filter { $0.type == type }
             .map(\.category)
-        return (defaults + used).reduce(into: [String]()) { result, item in
+        var seen = Set<String>()
+        return (defaults + used).compactMap { item in
             let cleaned = item.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !cleaned.isEmpty && !result.contains(where: {
-                $0.caseInsensitiveCompare(cleaned) == .orderedSame
-            }) {
-                result.append(cleaned)
-            }
+            let key = cleaned
+                .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+                .lowercased()
+            guard !cleaned.isEmpty, seen.insert(key).inserted else { return nil }
+            return cleaned
         }
     }
 
+    private func rebuildPerformanceCaches() {
+        totalsCache.removeAll(keepingCapacity: true)
+        loanMovementCache.removeAll(keepingCapacity: true)
+        categoriesCache = [
+            .income: makeCategories(for: .income),
+            .expense: makeCategories(for: .expense)
+        ]
+        let now = Date()
+        budgetSnapshotDay = Calendar.current.startOfDay(for: now)
+        budgetSnapshotsCache = makeBudgetConsumptionSnapshots(containing: now)
+    }
+
+    private func reportCacheKey(
+        interval: DateInterval,
+        accountIDs: Set<UUID>?
+    ) -> String {
+        let accountPart = accountIDs?
+            .map(\.uuidString)
+            .sorted()
+            .joined(separator: ",") ?? "all"
+        return [
+            String(interval.start.timeIntervalSinceReferenceDate),
+            String(interval.end.timeIntervalSinceReferenceDate),
+            currencyCode.uppercased(),
+            accountPart
+        ].joined(separator: "|")
+    }
+
     func totals(in interval: DateInterval, accountIDs: Set<UUID>? = nil) -> LedgerTotals {
+        let cacheKey = reportCacheKey(interval: interval, accountIDs: accountIDs)
+        if let cached = totalsCache[cacheKey] {
+            return cached
+        }
         let selected = transactions.filter {
             interval.contains($0.date) &&
             accountsByID[$0.accountID ?? LedgerAccount.legacyMainID]?.currencyCode == currencyCode &&
@@ -789,19 +843,25 @@ final class LedgerStore: ObservableObject {
         let transfer = selected
             .filter { $0.type == .transfer }
             .reduce(Decimal.zero) { $0 + $1.amount }
-        return LedgerTotals(
+        let result = LedgerTotals(
             income: income,
             expense: expense,
             loan: loan,
             transfer: transfer,
             count: selected.count
         )
+        totalsCache[cacheKey] = result
+        return result
     }
 
     func loanNetMovements(
         in interval: DateInterval,
         accountIDs: Set<UUID>? = nil
     ) -> [LoanNetMovement] {
+        let cacheKey = reportCacheKey(interval: interval, accountIDs: accountIDs)
+        if let cached = loanMovementCache[cacheKey] {
+            return cached
+        }
         let loanAccountIDs = Set(accounts.filter {
             $0.group == .payments || $0.nature == .loan
         }.map(\.id))
@@ -826,11 +886,13 @@ final class LedgerStore: ObservableObject {
             }
         }
 
-        return Set(increases.keys).union(decreases.keys).compactMap { currency in
+        let result = Set(increases.keys).union(decreases.keys).compactMap { currency in
             let net = increases[currency, default: 0] - decreases[currency, default: 0]
             guard net != 0 else { return nil }
             return LoanNetMovement(currencyCode: currency, netAmount: net)
         }.sorted { $0.currencyCode < $1.currencyCode }
+        loanMovementCache[cacheKey] = result
+        return result
     }
 }
 
