@@ -2,46 +2,41 @@
 
 Next Job is a private iOS 16+ job tracker built for part-time accounting work received from KB Accountants.
 
-## Included in 1.0.4
+## Included in 1.0.6
 
 - Jobs with assigned date, due date, completion date, status, job type, targeted time, actual time and price
-- Create missing job types directly from the New Job or Edit Job form
-- Job Types management removed from Settings
+- Create missing job types directly from the New Job form
 - Dashboard for not started, in progress, waiting for documents, completed and overdue work
-- Dedicated Pending Payments section and Jobs filter for completed work not marked received
 - Stable multi-file import and a separate validated complete-folder import
-- Folder trees are copied as one attachment and cannot be mixed with surrounding Files items
 - Related files and completion documents stored against the correct job
-- Completion ZIP names begin with the company name and `Completion Documents`
-- Professional completion emails include the exact recorded completion date/time, job notes and completion notes
-- Payment Pending and Payment Received tracking for completed jobs
-- Standard numbered PDF invoice generation for pending payments
-- Dedicated Email tab with Gmail Direct and Apple Mail Assisted modes
-- Gmail stale-connector recovery ported from Next Reminder 1.2.4
-- Reconnect Gmail, disconnect, and local Forget Saved Connection actions
-- Connector-not-found errors automatically clear the obsolete local connector
-- Dedicated AI tab using the OpenAI Responses API to craft editable emails from the selected job status and details
-- Explicit handling for incomplete responses, refusals, API errors and token-usage reporting
-- Recommended complimentary-token-eligible GPT-5 and GPT-4.1 model snapshots
-- One portable `.nextjobbackup` file containing all jobs, payment records, invoice metadata, settings, files and imported folders
-- Google Drive backup/restore through the iOS Files provider, with staged validation and rollback
-- Background persistence, cached summaries and optimized Release compilation
+- Professional completion emails with exact recorded completion time, job notes and completion notes
+- Automatic Gmail sending from Job Details after a confirmation popup
+- Payment Pending and Payment Received tracking, pending-payment filters and PDF invoices
+- OpenAI email drafting with explicit error handling and visible token usage
+- Complete job backup and restore through the iOS Files provider
 
-## Gmail recovery behavior
+## Secure Logins vault
 
-If the scheduler was restarted, redeployed, or lost its connector database, an older connector ID may no longer exist. Next Job detects `Gmail connector not found`, clears the false connected state, and asks for a fresh connection. Email Setup also provides Reconnect Gmail Account and Forget Saved Connection so the app cannot remain trapped in an obsolete connection.
+The dedicated **Logins** tab stores website and service credentials with:
 
-## Email behavior
+- Service, website, login email or user ID, password, notes and automatically recorded dates
+- User-created categories that are added automatically when a login is saved
+- Search across service, website, login, category and notes
+- Category chips, favourites-only filtering and multiple sort modes
+- Detail, edit, favourite, copy and delete actions
+- Strong-password generation
+- Attachments from Camera, Photos/screenshots and Files
+- Quick Look preview and share/save controls for attachments
 
-Gmail Direct sends through a connected scheduler/Gmail OAuth account. Apple Mail Assisted opens the native Mail composer for review before sending. Direct Gmail attachments are limited to 10 MB each and 18 MB total; Apple Mail can be used for larger packages.
+Passwords are stored separately in the iPhone Keychain using a device-only, unlocked-device accessibility class. Password reveal, copying and editing require Face ID or the device passcode. Vault metadata and attachments use iOS complete file protection in the app's private Application Support directory. Plaintext passwords are not written into the normal Next Job JSON database or portable backup.
 
-## OpenAI behavior
+## Email behaviour
 
-The app uses the Responses API with structured output, a larger output allowance, low reasoning effort for GPT-5 models, clear incomplete/refusal errors and visible token usage. Complimentary tokens depend on OpenAI account eligibility, enabled input/output data sharing and a positive API balance; the models are not universally free.
+Gmail Direct sends through a connected scheduler/Gmail OAuth account. Job Details email actions show a confirmation popup and record email history only after scheduler acceptance. Apple Mail assisted sending remains available from the Email tab.
 
-## Google Drive behavior
+## Google Drive behaviour
 
-Install and sign in to the Google Drive iOS app, then enable Google Drive under **Files → Browse → … → Edit**. Next Job uses the iOS document provider so the complete backup can be saved to and restored from Google Drive without storing Google Drive credentials in the app.
+Install and sign in to the Google Drive iOS app, then enable Google Drive under **Files → Browse → … → Edit**. Next Job uses the iOS document provider so complete job backups can be saved to and restored from Google Drive without storing Google Drive credentials in the app.
 
 ## Build
 
@@ -52,4 +47,4 @@ xcodegen generate
 xcodebuild -project NextJob.xcodeproj -scheme NextJob -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO build
 ```
 
-The GitHub Actions workflow applies the checked-in source migrations, validates all Swift source, builds the optimized unsigned app and packages `NextJob-1.0.4.tipa`, its checksum and the transformed source archive.
+The GitHub Actions workflow applies all checked-in migrations, validates every Swift source file, builds the optimised unsigned iPhone app and packages `NextJob-1.0.6.tipa`, its checksum and the transformed source archive.
