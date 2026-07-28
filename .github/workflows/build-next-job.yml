@@ -22,7 +22,7 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Check out source
@@ -31,12 +31,12 @@ jobs:
       - name: Publish active run pointer
         if: github.event_name == 'push'
         run: |
-          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.12.txt
+          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.13.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build-run-nextjob-1.0.12.txt
+          git add build-run-nextjob-1.0.13.txt
           if ! git diff --cached --quiet; then
-            git commit -m "Record active Next Job 1.0.12 build"
+            git commit -m "Record active Next Job 1.0.13 build"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
@@ -57,6 +57,7 @@ jobs:
           python3 NextJob/Patches/apply_1_0_10.py
           python3 NextJob/Patches/apply_1_0_11.py
           python3 NextJob/Patches/apply_1_0_12.py
+          python3 NextJob/Patches/apply_1_0_13_app_store.py
 
       - name: Validate Swift syntax
         run: |
@@ -74,7 +75,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-Syntax-Log-1.0.12
+          name: NextJob-Syntax-Log-1.0.13
           path: swift-parse.log
           if-no-files-found: error
 
@@ -107,12 +108,32 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee next-job-build.log
 
+      - name: Validate App Store archive structure
+        run: |
+          set -o pipefail
+          rm -rf NextJob-AppStore-1.0.13.xcarchive
+          xcodebuild \
+            -quiet \
+            -project NextJob/NextJob.xcodeproj \
+            -scheme NextJob \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath NextJob-AppStore-1.0.13.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive 2>&1 | tee next-job-archive.log
+          test -d "NextJob-AppStore-1.0.13.xcarchive/Products/Applications/Next Job.app"
+          test -f "NextJob-AppStore-1.0.13.xcarchive/Products/Applications/Next Job.app/PrivacyInfo.xcprivacy"
+
       - name: Upload compiler log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-Compiler-Log-1.0.12
-          path: next-job-build.log
+          name: NextJob-Compiler-Log-1.0.13
+          path: |
+            next-job-build.log
+            next-job-archive.log
           if-no-files-found: ignore
 
       - name: Package for TrollStore
@@ -122,20 +143,21 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.12.tipa
-          shasum -a 256 NextJob-1.0.12.tipa > NextJob-1.0.12.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.13.tipa
+          shasum -a 256 NextJob-1.0.13.tipa > NextJob-1.0.13.sha256
 
       - name: Package transformed source
         run: |
           rm -rf NextJob/NextJob.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.12-source.zip
+          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.13-source.zip
 
-      - name: Upload TIPA and source
+      - name: Upload TIPA, App Store archive and source
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-TrollStore-1.0.12
+          name: NextJob-Release-1.0.13
           path: |
-            NextJob-1.0.12.tipa
-            NextJob-1.0.12.sha256
-            NextJob-1.0.12-source.zip
+            NextJob-1.0.13.tipa
+            NextJob-1.0.13.sha256
+            NextJob-1.0.13-source.zip
+            NextJob-AppStore-1.0.13.xcarchive
           if-no-files-found: error
