@@ -31,12 +31,12 @@ jobs:
       - name: Publish active run pointer
         if: github.event_name == 'push'
         run: |
-          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.11.txt
+          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.12.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build-run-nextjob-1.0.11.txt
+          git add build-run-nextjob-1.0.12.txt
           if ! git diff --cached --quiet; then
-            git commit -m "Record active Next Job 1.0.11 build"
+            git commit -m "Record active Next Job 1.0.12 build"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
@@ -56,6 +56,7 @@ jobs:
           python3 NextJob/Patches/normalize_1_0_10_vault_source.py
           python3 NextJob/Patches/apply_1_0_10.py
           python3 NextJob/Patches/apply_1_0_11.py
+          python3 NextJob/Patches/apply_1_0_12.py
 
       - name: Validate Swift syntax
         run: |
@@ -73,7 +74,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-Syntax-Log-1.0.11
+          name: NextJob-Syntax-Log-1.0.12
           path: swift-parse.log
           if-no-files-found: error
 
@@ -110,7 +111,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-Compiler-Log-1.0.11
+          name: NextJob-Compiler-Log-1.0.12
           path: next-job-build.log
           if-no-files-found: ignore
 
@@ -121,20 +122,20 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.11.tipa
-          shasum -a 256 NextJob-1.0.11.tipa > NextJob-1.0.11.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.12.tipa
+          shasum -a 256 NextJob-1.0.12.tipa > NextJob-1.0.12.sha256
 
       - name: Package transformed source
         run: |
           rm -rf NextJob/NextJob.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.11-source.zip
+          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.12-source.zip
 
       - name: Upload TIPA and source
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-TrollStore-1.0.11
+          name: NextJob-TrollStore-1.0.12
           path: |
-            NextJob-1.0.11.tipa
-            NextJob-1.0.11.sha256
-            NextJob-1.0.11-source.zip
+            NextJob-1.0.12.tipa
+            NextJob-1.0.12.sha256
+            NextJob-1.0.12-source.zip
           if-no-files-found: error
