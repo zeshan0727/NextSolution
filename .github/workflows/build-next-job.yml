@@ -53,6 +53,7 @@ jobs:
           python3 NextJob/Patches/apply_1_0_8.py
           python3 NextJob/Patches/apply_1_0_9.py
           python3 NextJob/Patches/apply_1_0_9_performance_io.py
+          python3 NextJob/Patches/normalize_1_0_10_vault_source.py
           python3 NextJob/Patches/apply_1_0_10.py
 
       - name: Validate Swift syntax
