@@ -121,7 +121,7 @@ struct EmailFormattingEditor: View {
     )
 }
 
-private struct EmailBodyTextView: UIViewRepresentable {
+private struct EmailBodyTextView: UIViewControllerRepresentable {
     @Binding var text: String
     @Binding var selection: NSRange
 
