@@ -57,12 +57,23 @@ jobs:
 
       - name: Validate Swift syntax
         run: |
-          find NextJob -name '*.swift' \
-            -not -path 'NextJob/Scripts/*' \
-            -print0 | while IFS= read -r -d '' file; do
-              echo "Parsing $file"
-              swiftc -frontend -parse "$file"
-            done
+          set -o pipefail
+          {
+            find NextJob -name '*.swift' \
+              -not -path 'NextJob/Scripts/*' \
+              -print0 | while IFS= read -r -d '' file; do
+                echo "Parsing $file"
+                swiftc -frontend -parse "$file"
+              done
+          } 2>&1 | tee swift-parse.log
+
+      - name: Upload syntax log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextJob-Syntax-Log-1.0.10
+          path: swift-parse.log
+          if-no-files-found: error
 
       - name: Install XcodeGen
         run: brew install xcodegen
