@@ -49,6 +49,7 @@ jobs:
           python3 NextJob/Patches/apply_1_0_5.py
           python3 NextJob/Patches/apply_1_0_6.py
           python3 NextJob/Patches/apply_1_0_7.py
+          python3 NextJob/Patches/normalize_1_0_8_source.py
           python3 NextJob/Patches/apply_1_0_8.py
 
       - name: Validate Swift syntax
