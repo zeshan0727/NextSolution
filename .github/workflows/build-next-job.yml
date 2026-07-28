@@ -31,12 +31,12 @@ jobs:
       - name: Publish active run pointer
         if: github.event_name == 'push'
         run: |
-          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.9.txt
+          echo "$GITHUB_RUN_ID" > build-run-nextjob-1.0.10.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build-run-nextjob-1.0.9.txt
+          git add build-run-nextjob-1.0.10.txt
           if ! git diff --cached --quiet; then
-            git commit -m "Record active Next Job 1.0.9 build"
+            git commit -m "Record active Next Job 1.0.10 build"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
@@ -53,6 +53,7 @@ jobs:
           python3 NextJob/Patches/apply_1_0_8.py
           python3 NextJob/Patches/apply_1_0_9.py
           python3 NextJob/Patches/apply_1_0_9_performance_io.py
+          python3 NextJob/Patches/apply_1_0_10.py
 
       - name: Validate Swift syntax
         run: |
@@ -96,7 +97,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-Compiler-Log-1.0.9
+          name: NextJob-Compiler-Log-1.0.10
           path: next-job-build.log
           if-no-files-found: ignore
 
@@ -107,20 +108,20 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.9.tipa
-          shasum -a 256 NextJob-1.0.9.tipa > NextJob-1.0.9.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextJob-1.0.10.tipa
+          shasum -a 256 NextJob-1.0.10.tipa > NextJob-1.0.10.sha256
 
       - name: Package transformed source
         run: |
           rm -rf NextJob/NextJob.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.9-source.zip
+          ditto -c -k --sequesterRsrc --keepParent NextJob NextJob-1.0.10-source.zip
 
       - name: Upload TIPA and source
         uses: actions/upload-artifact@v4
         with:
-          name: NextJob-TrollStore-1.0.9
+          name: NextJob-TrollStore-1.0.10
           path: |
-            NextJob-1.0.9.tipa
-            NextJob-1.0.9.sha256
-            NextJob-1.0.9-source.zip
+            NextJob-1.0.10.tipa
+            NextJob-1.0.10.sha256
+            NextJob-1.0.10-source.zip
           if-no-files-found: error
