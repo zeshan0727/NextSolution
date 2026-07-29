@@ -25,6 +25,10 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      - name: Generate themed app icon
+        working-directory: NextPDF
+        run: swift generate_app_icon.swift NextPDF/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+
       - name: Generate project
         working-directory: NextPDF
         run: xcodegen generate
