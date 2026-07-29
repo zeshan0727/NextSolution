@@ -7,6 +7,10 @@ on:
       - 'NextPDF/**'
       - '!NextPDF/build-output/**'
       - '.github/workflows/build-nextpdf.yml'
+  pull_request:
+    paths:
+      - 'NextPDF/**'
+      - '.github/workflows/build-nextpdf.yml'
 
 permissions:
   contents: write
@@ -67,6 +71,7 @@ jobs:
           shasum -a 256 build-output/NextPDF.tipa > build-output/NextPDF.tipa.sha256
 
       - name: Publish build result to repository
+        if: github.event_name != 'pull_request'
         working-directory: NextPDF
         run: |
           git config user.name "github-actions[bot]"
