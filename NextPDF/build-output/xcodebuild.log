@@ -9,7 +9,7 @@ Build settings from command line:
 
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
-{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:53c8a1830ca7e8c4d37cd18e265a4a928766299d, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:c3ad722f307a76642e65dc270b9ed40133dfabcd, name:My Mac }
 { platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
 note: Using codesigning identity override: 
 ComputePackagePrebuildTargetDependencyGraph
@@ -41,8 +41,8 @@ ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/X
 
 ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
 
-Build description signature: cef6f142c1038fa23429051b55555262
-Build description path: /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/XCBuildData/cef6f142c1038fa23429051b55555262.xcbuilddata
+Build description signature: a7914e19a92eb354ce5fd0168b16b537
+Build description path: /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/XCBuildData/a7914e19a92eb354ce5fd0168b16b537.xcbuilddata
 ClangStatCache /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk /Users/runner/work/NextSolution/NextSolution/NextPDF/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -o /Users/runner/work/NextSolution/NextSolution/NextPDF/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
@@ -127,13 +127,13 @@ MkDir /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
     /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app
 
-MkDir /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/unthinned (in target 'NextPDF' from project 'NextPDF')
-    cd /Users/runner/work/NextSolution/NextSolution/NextPDF
-    /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/unthinned
-
 MkDir /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/thinned (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
     /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/thinned
+
+MkDir /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/unthinned (in target 'NextPDF' from project 'NextPDF')
+    cd /Users/runner/work/NextSolution/NextSolution/NextPDF
+    /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/unthinned
 
 GenerateAssetSymbols /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF/Assets.xcassets (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
@@ -201,9 +201,9 @@ Ld /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Rel
 LinkAssetCatalog /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF/Assets.xcassets (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
     builtin-linkAssetCatalog --thinned /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/thinned --thinned-dependencies /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_generated_info.plist_unthinned --output /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app --plist-output /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/assetcatalog_generated_info.plist
+note: Emplaced /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/AppIcon60x60@2x.png (in target 'NextPDF' from project 'NextPDF')
 note: Emplaced /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/Assets.car (in target 'NextPDF' from project 'NextPDF')
 note: Emplaced /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/AppIcon76x76@2x~ipad.png (in target 'NextPDF' from project 'NextPDF')
-note: Emplaced /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/AppIcon60x60@2x.png (in target 'NextPDF' from project 'NextPDF')
 
 ProcessInfoPlistFile /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/Info.plist /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/empty-NextPDF.plist (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
@@ -212,8 +212,8 @@ ProcessInfoPlistFile /Users/runner/work/NextSolution/NextSolution/NextPDF/build/
 ExtractAppIntentsMetadata (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name NextPDF --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 16.0 --bundle-identifier com.nextsolution.nextpdf --output /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app --target-triple arm64-apple-ios16.0 --binary-file /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/NextPDF --dependency-file /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/NextPDF_dependency_info.dat --stringsdata-file /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/NextPDF.SwiftFileList --metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/NextPDF.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/NextPDF.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/NextPDF.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-07-29 13:01:27.449 appintentsmetadataprocessor[7570:25633] Starting appintentsmetadataprocessor export
-2026-07-29 13:01:27.457 appintentsmetadataprocessor[7570:25633] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-07-29 13:03:53.251 appintentsmetadataprocessor[3048:13240] Starting appintentsmetadataprocessor export
+2026-07-29 13:03:53.256 appintentsmetadataprocessor[3048:13240] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 CopySwiftLibs /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
@@ -227,8 +227,8 @@ GenerateDSYMFile /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Buil
 AppIntentsSSUTraining (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/Info.plist --temp-dir-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/ssu --bundle-id com.nextsolution.nextpdf --product-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app --extracted-metadata-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/Metadata.appintents --metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/NextPDF.DependencyMetadataFileList --archive-ssu-assets
-2026-07-29 13:01:27.499 appintentsnltrainingprocessor[7572:25655] Parsing options for appintentsnltrainingprocessor
-2026-07-29 13:01:27.501 appintentsnltrainingprocessor[7572:25655] No AppShortcuts found - Skipping.
+2026-07-29 13:03:53.293 appintentsnltrainingprocessor[3051:13265] Parsing options for appintentsnltrainingprocessor
+2026-07-29 13:03:53.294 appintentsnltrainingprocessor[3051:13265] No AppShortcuts found - Skipping.
 
 RegisterExecutionPolicyException /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
