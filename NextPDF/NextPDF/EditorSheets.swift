@@ -409,7 +409,7 @@ private struct PencilCanvas: UIViewRepresentable {
         canvas.alwaysBounceVertical = false
         canvas.alwaysBounceHorizontal = false
         canvas.drawing = drawing
-        canvas.tool = PKInkingTool(mode == .signature ? .fountainPen : .pen, color: color, width: width)
+        canvas.tool = PKInkingTool(.pen, color: color, width: width)
         return canvas
     }
 
@@ -417,7 +417,7 @@ private struct PencilCanvas: UIViewRepresentable {
         if uiView.drawing != drawing {
             uiView.drawing = drawing
         }
-        uiView.tool = PKInkingTool(mode == .signature ? .fountainPen : .pen, color: color, width: width)
+        uiView.tool = PKInkingTool(.pen, color: color, width: width)
     }
 
     final class Coordinator: NSObject, PKCanvasViewDelegate {
