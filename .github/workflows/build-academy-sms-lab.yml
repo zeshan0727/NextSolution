@@ -1,0 +1,128 @@
+name: Build Academy SMS Lab TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'AcademySMSLab/source.tgz.b64.part-*'
+      - '!AcademySMSLab/build-output/**'
+      - '.github/workflows/build-academy-sms-lab.yml'
+  pull_request:
+    paths:
+      - 'AcademySMSLab/source.tgz.b64.part-*'
+      - '.github/workflows/build-academy-sms-lab.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reconstruct source project
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat AcademySMSLab/source.tgz.b64.part-* > /tmp/academy-source.b64
+          base64 --decode /tmp/academy-source.b64 > /tmp/academy-source.tgz
+          echo "ad88dd9bc4621ee39804d851b6c794f80c15cfc703aae532ffeaf61a17abdae8  /tmp/academy-source.tgz" | shasum -a 256 -c -
+          rm -rf AcademySMSLab/work
+          mkdir -p AcademySMSLab/work
+          tar -xzf /tmp/academy-source.tgz -C AcademySMSLab/work --strip-components=1
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run core tests
+        working-directory: AcademySMSLab/work
+        run: swift test
+
+      - name: Generate app icon
+        working-directory: AcademySMSLab/work
+        run: swift generate_app_icon.swift iOS/AcademySMSLab/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+
+      - name: Generate Xcode project
+        working-directory: AcademySMSLab/work
+        run: xcodegen generate
+
+      - name: Build unsigned app
+        id: build
+        working-directory: AcademySMSLab/work
+        shell: bash
+        run: |
+          set +e
+          mkdir -p build-output
+          xcodebuild \
+            -project AcademySMSLab.xcodeproj \
+            -scheme AcademySMSLab \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build-output/xcodebuild.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          echo "exit_code=$BUILD_STATUS" >> "$GITHUB_OUTPUT"
+          if [ "$BUILD_STATUS" -eq 0 ]; then
+            echo "SUCCESS" > build-output/build-status.txt
+          else
+            echo "FAILED (xcodebuild exit code $BUILD_STATUS)" > build-output/build-status.txt
+          fi
+          exit 0
+
+      - name: Package TIPA
+        if: steps.build.outputs.exit_code == '0'
+        working-directory: AcademySMSLab/work
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload AcademySMSLab.tipa
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qry AcademySMSLab.tipa Payload
+          cp AcademySMSLab.tipa build-output/AcademySMSLab.tipa
+          shasum -a 256 build-output/AcademySMSLab.tipa > build-output/AcademySMSLab.tipa.sha256
+
+      - name: Publish build result to branch
+        if: github.event_name != 'pull_request'
+        working-directory: AcademySMSLab/work
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../build-output
+          cp build-output/build-status.txt ../build-output/
+          cp build-output/xcodebuild.log ../build-output/
+          if [ -f build-output/AcademySMSLab.tipa ]; then
+            cp build-output/AcademySMSLab.tipa ../build-output/
+            cp build-output/AcademySMSLab.tipa.sha256 ../build-output/
+          else
+            rm -f ../build-output/AcademySMSLab.tipa ../build-output/AcademySMSLab.tipa.sha256
+          fi
+          cd ../..
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f AcademySMSLab/build-output/build-status.txt AcademySMSLab/build-output/xcodebuild.log
+          if [ -f AcademySMSLab/build-output/AcademySMSLab.tipa ]; then
+            git add -f AcademySMSLab/build-output/AcademySMSLab.tipa AcademySMSLab/build-output/AcademySMSLab.tipa.sha256
+          else
+            git rm -f --ignore-unmatch AcademySMSLab/build-output/AcademySMSLab.tipa AcademySMSLab/build-output/AcademySMSLab.tipa.sha256
+          fi
+          git commit -m "Publish Academy SMS Lab test build" || true
+          git push
+
+      - name: Upload test build artifact
+        if: steps.build.outputs.exit_code == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: AcademySMSLab-TIPA
+          path: AcademySMSLab/work/AcademySMSLab.tipa
+
+      - name: Fail workflow when build failed
+        if: steps.build.outputs.exit_code != '0'
+        run: exit 1
