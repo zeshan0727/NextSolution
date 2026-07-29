@@ -9,7 +9,7 @@ Build settings from command line:
 
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
-{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:c9954e8680cf185c4e937b726bb8f800be8c9aa1, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:d0bec9a1953a38510d68e4b6ce1029a03061a6e2, name:My Mac }
 { platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
 note: Using codesigning identity override: 
 ComputePackagePrebuildTargetDependencyGraph
@@ -37,12 +37,8 @@ ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/X
 
 ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
 
-Build description signature: cbb76ec7cd4d5c49f64e9611118172ef
-Build description path: /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/XCBuildData/cbb76ec7cd4d5c49f64e9611118172ef.xcbuilddata
-ClangStatCache /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk /Users/runner/work/NextSolution/NextSolution/NextPDF/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
-    cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -o /Users/runner/work/NextSolution/NextSolution/NextPDF/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
-
+Build description signature: 2b637963428781e4ef180ca6a554aed5
+Build description path: /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/XCBuildData/2b637963428781e4ef180ca6a554aed5.xcbuilddata
 CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
     builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products
@@ -51,17 +47,21 @@ CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
     builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex
 
+ClangStatCache /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk /Users/runner/work/NextSolution/NextSolution/NextPDF/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
+    cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -o /Users/runner/work/NextSolution/NextSolution/NextPDF/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
+
 WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF-33efcad072b75fdae6c20a03d509c531-VFS-iphoneos/all-product-headers.yaml
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
     write-file /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF-33efcad072b75fdae6c20a03d509c531-VFS-iphoneos/all-product-headers.yaml
 
-CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
-    cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
-    builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
-
 CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
     builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos
+
+CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
+    cd /Users/runner/work/NextSolution/NextSolution/NextPDF/NextPDF.xcodeproj
+    builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
 
 WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/empty-NextPDF.plist (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
@@ -178,8 +178,8 @@ GenerateDSYMFile /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Buil
 ExtractAppIntentsMetadata (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name NextPDF --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 16.0 --bundle-identifier com.nextsolution.nextpdf --output /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app --target-triple arm64-apple-ios16.0 --binary-file /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/NextPDF --dependency-file /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/NextPDF_dependency_info.dat --stringsdata-file /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/NextPDF.SwiftFileList --metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/NextPDF.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/NextPDF.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/Objects-normal/arm64/NextPDF.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-07-29 12:17:34.757 appintentsmetadataprocessor[17289:47361] Starting appintentsmetadataprocessor export
-2026-07-29 12:17:34.763 appintentsmetadataprocessor[17289:47361] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-07-29 12:20:19.649 appintentsmetadataprocessor[3584:14580] Starting appintentsmetadataprocessor export
+2026-07-29 12:20:19.664 appintentsmetadataprocessor[3584:14580] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 CopySwiftLibs /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
@@ -189,8 +189,8 @@ Ignoring --strip-bitcode because --sign was not passed
 AppIntentsSSUTraining (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/Info.plist --temp-dir-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/ssu --bundle-id com.nextsolution.nextpdf --product-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app --extracted-metadata-path /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app/Metadata.appintents --metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Intermediates.noindex/NextPDF.build/Release-iphoneos/NextPDF.build/NextPDF.DependencyMetadataFileList --archive-ssu-assets
-2026-07-29 12:17:34.790 appintentsnltrainingprocessor[17293:47374] Parsing options for appintentsnltrainingprocessor
-2026-07-29 12:17:34.792 appintentsnltrainingprocessor[17293:47374] No AppShortcuts found - Skipping.
+2026-07-29 12:20:19.788 appintentsnltrainingprocessor[3587:14592] Parsing options for appintentsnltrainingprocessor
+2026-07-29 12:20:19.792 appintentsnltrainingprocessor[3587:14592] No AppShortcuts found - Skipping.
 
 RegisterExecutionPolicyException /Users/runner/work/NextSolution/NextSolution/NextPDF/build/Build/Products/Release-iphoneos/NextPDF.app (in target 'NextPDF' from project 'NextPDF')
     cd /Users/runner/work/NextSolution/NextSolution/NextPDF
