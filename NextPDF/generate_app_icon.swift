@@ -54,6 +54,24 @@ try run("/usr/bin/tar", [
     "--strip-components=1"
 ])
 
+// Keep the archived classroom source intact while applying the iOS 16-compatible
+// Section declaration required by the current Xcode compiler.
+let settingsURL = buildRoot.appendingPathComponent("iOS/AcademySMSLab/Views/SettingsView.swift")
+var settingsSource = try String(contentsOf: settingsURL, encoding: .utf8)
+settingsSource = settingsSource.replacingOccurrences(
+    of: "            Form {",
+    with: "            SwiftUI.Form {"
+)
+settingsSource = settingsSource.replacingOccurrences(
+    of: "                Section(\"Challenge access\") {",
+    with: "                Section {"
+)
+settingsSource = settingsSource.replacingOccurrences(
+    of: "                } footer: {\n                    Text(\"Completion cannot be reset inside the app. Reinstall the app to prepare a new classroom device.\")\n                }",
+    with: "                } header: {\n                    Text(\"Challenge access\")\n                } footer: {\n                    Text(\"Completion cannot be reset inside the app. Reinstall the app to prepare a new classroom device.\")\n                }"
+)
+try settingsSource.write(to: settingsURL, atomically: true, encoding: .utf8)
+
 let iconURL = buildRoot
     .appendingPathComponent("iOS/AcademySMSLab/Resources/Assets.xcassets/AppIcon.appiconset", isDirectory: true)
     .appendingPathComponent("AppIcon.png")
@@ -141,4 +159,5 @@ if let requestedPath = CommandLine.arguments.dropFirst().first {
 }
 
 print("Reconstructed Academy SMS Lab source at \(buildRoot.path)")
+print("Applied iOS 16 SwiftUI compatibility patch")
 print("Generated Academy SMS Lab icon at \(iconURL.path)")
