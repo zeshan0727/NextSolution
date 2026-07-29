@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import PDFKit
 import UniformTypeIdentifiers
 
@@ -8,6 +9,7 @@ struct ContentView: View {
     @State private var showingExporter = false
     @State private var showingTextEditor = false
     @State private var textDraft = ""
+    @State private var shareItem: ShareItem?
 
     var body: some View {
         NavigationStack {
@@ -22,13 +24,15 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                         Text("Open a PDF")
                             .font(.title2.bold())
-                        Text("Choose a PDF to edit, add text, delete annotations, or crop pages.")
+                        Text("Choose a PDF from the Files app to begin editing.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 32)
-                        Button("Choose PDF") {
+                        Button {
                             showingImporter = true
+                        } label: {
+                            Label("Choose from Files", systemImage: "folder")
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -36,7 +40,7 @@ struct ContentView: View {
             }
             .navigationTitle("Next PDF")
             .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
                         showingImporter = true
                     } label: {
@@ -45,6 +49,22 @@ struct ContentView: View {
                 }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        model.saveInsideApp()
+                    } label: {
+                        Label("Save", systemImage: "square.and.arrow.down")
+                    }
+                    .disabled(model.document == nil)
+
+                    Button {
+                        if let url = model.makeShareFile() {
+                            shareItem = ShareItem(url: url)
+                        }
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(model.document == nil)
+
                     Menu {
                         Button("Add Text", systemImage: "text.badge.plus") {
                             textDraft = ""
@@ -73,24 +93,24 @@ struct ContentView: View {
                             model.redo()
                         }
                         .disabled(!model.canRedo)
+
+                        Divider()
+
+                        Button("Export to Files", systemImage: "folder.badge.plus") {
+                            showingExporter = true
+                        }
+                        .disabled(model.document == nil)
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
-
-                    Button {
-                        showingExporter = true
-                    } label: {
-                        Label("Export", systemImage: "square.and.arrow.up")
-                    }
-                    .disabled(model.document == nil)
                 }
             }
-            .fileImporter(
-                isPresented: $showingImporter,
-                allowedContentTypes: [.pdf],
-                allowsMultipleSelection: false
-            ) { result in
-                model.open(result: result)
+            .sheet(isPresented: $showingImporter) {
+                PDFDocumentPicker { url in
+                    showingImporter = false
+                    guard let url else { return }
+                    model.open(url: url)
+                }
             }
             .fileExporter(
                 isPresented: $showingExporter,
@@ -98,7 +118,10 @@ struct ContentView: View {
                 contentType: .pdf,
                 defaultFilename: model.exportFilename
             ) { result in
-                if case .failure(let error) = result {
+                switch result {
+                case .success:
+                    model.presentMessage("The edited PDF was exported successfully.")
+                case .failure(let error):
                     model.present(error: error)
                 }
             }
@@ -108,13 +131,65 @@ struct ContentView: View {
                     showingTextEditor = false
                 }
             }
-            .alert("Next PDF", isPresented: $model.showingError) {
+            .sheet(item: $shareItem) { item in
+                ShareSheet(activityItems: [item.url])
+            }
+            .alert("Next PDF", isPresented: $model.showingAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(model.errorMessage)
+                Text(model.alertMessage)
             }
         }
     }
+}
+
+private struct ShareItem: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+private struct PDFDocumentPicker: UIViewControllerRepresentable {
+    let onPick: (URL?) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPick: onPick)
+    }
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.pdf], asCopy: true)
+        picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) { }
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let onPick: (URL?) -> Void
+
+        init(onPick: @escaping (URL?) -> Void) {
+            self.onPick = onPick
+        }
+
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            onPick(urls.first)
+        }
+
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            onPick(nil)
+        }
+    }
+}
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) { }
 }
 
 private struct TextInsertSheet: View {
@@ -195,8 +270,8 @@ final class PDFEditorModel: ObservableObject {
     }
 
     @Published var document: PDFDocument?
-    @Published var showingError = false
-    @Published var errorMessage = ""
+    @Published var showingAlert = false
+    @Published var alertMessage = ""
     @Published private(set) var canUndo = false
     @Published private(set) var canRedo = false
 
@@ -226,9 +301,8 @@ final class PDFEditorModel: ObservableObject {
         self.pdfView = pdfView
     }
 
-    func open(result: Result<[URL], Error>) {
+    func open(url: URL) {
         do {
-            guard let url = try result.get().first else { return }
             let accessed = url.startAccessingSecurityScopedResource()
             defer {
                 if accessed { url.stopAccessingSecurityScopedResource() }
@@ -247,6 +321,49 @@ final class PDFEditorModel: ObservableObject {
             refreshUndoState()
         } catch {
             present(error: error)
+        }
+    }
+
+    func saveInsideApp() {
+        do {
+            guard let data = document?.dataRepresentation() else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+
+            let documentsDirectory = try FileManager.default.url(
+                for: .documentDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            let savedFolder = documentsDirectory.appendingPathComponent("Saved PDFs", isDirectory: true)
+            try FileManager.default.createDirectory(at: savedFolder, withIntermediateDirectories: true)
+
+            let destination = uniqueDestination(in: savedFolder, filename: exportFilename)
+            try data.write(to: destination, options: .atomic)
+            presentMessage("Saved inside Next PDF. You can also find it in Files > On My iPhone > Next PDF > Saved PDFs.\n\n\(destination.lastPathComponent)")
+        } catch {
+            present(error: error)
+        }
+    }
+
+    func makeShareFile() -> URL? {
+        do {
+            guard let data = document?.dataRepresentation() else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("NextPDF-Share", isDirectory: true)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let destination = folder.appendingPathComponent(exportFilename)
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            try data.write(to: destination, options: .atomic)
+            return destination
+        } catch {
+            present(error: error)
+            return nil
         }
     }
 
@@ -316,8 +433,25 @@ final class PDFEditorModel: ObservableObject {
     }
 
     func present(error: Error) {
-        errorMessage = error.localizedDescription
-        showingError = true
+        alertMessage = error.localizedDescription
+        showingAlert = true
+    }
+
+    func presentMessage(_ message: String) {
+        alertMessage = message
+        showingAlert = true
+    }
+
+    private func uniqueDestination(in folder: URL, filename: String) -> URL {
+        let baseURL = folder.appendingPathComponent(filename)
+        guard FileManager.default.fileExists(atPath: baseURL.path) else { return baseURL }
+
+        let name = baseURL.deletingPathExtension().lastPathComponent
+        let ext = baseURL.pathExtension
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        let datedName = "\(name)-\(formatter.string(from: Date())).\(ext)"
+        return folder.appendingPathComponent(datedName)
     }
 
     private func registerUndo(undo: @escaping () -> Void, redo: @escaping () -> Void) {
