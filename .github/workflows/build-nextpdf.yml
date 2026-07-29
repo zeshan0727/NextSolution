@@ -5,7 +5,11 @@ on:
   push:
     paths:
       - 'NextPDF/**'
+      - '!NextPDF/build-output/**'
       - '.github/workflows/build-nextpdf.yml'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -22,8 +26,12 @@ jobs:
         run: xcodegen generate
 
       - name: Build unsigned app
+        id: build
         working-directory: NextPDF
+        shell: bash
         run: |
+          set +e
+          mkdir -p build-output
           xcodebuild \
             -project NextPDF.xcodeproj \
             -scheme NextPDF \
@@ -33,17 +41,47 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build
+            build 2>&1 | tee build-output/xcodebuild.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          echo "exit_code=$BUILD_STATUS" >> "$GITHUB_OUTPUT"
+          if [ "$BUILD_STATUS" -eq 0 ]; then
+            echo "SUCCESS" > build-output/build-status.txt
+          else
+            echo "FAILED (xcodebuild exit code $BUILD_STATUS)" > build-output/build-status.txt
+          fi
+          exit 0
 
       - name: Package TIPA
+        if: steps.build.outputs.exit_code == '0'
         working-directory: NextPDF
         run: |
+          rm -rf Payload NextPDF.tipa
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/NextPDF.app Payload/
           zip -r NextPDF.tipa Payload
+          cp NextPDF.tipa build-output/NextPDF.tipa
 
-      - name: Upload test build
+      - name: Publish build result to repository
+        working-directory: NextPDF
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f build-output/build-status.txt build-output/xcodebuild.log
+          if [ -f build-output/NextPDF.tipa ]; then
+            git add -f build-output/NextPDF.tipa
+          else
+            git rm -f --ignore-unmatch build-output/NextPDF.tipa
+          fi
+          git commit -m "Publish NextPDF test build" || true
+          git push
+
+      - name: Upload test build artifact
+        if: steps.build.outputs.exit_code == '0'
         uses: actions/upload-artifact@v4
         with:
           name: NextPDF-TIPA
           path: NextPDF/NextPDF.tipa
+
+      - name: Fail workflow when build failed
+        if: steps.build.outputs.exit_code != '0'
+        run: exit 1
