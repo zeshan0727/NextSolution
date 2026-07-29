@@ -1,1 +1,1 @@
-FAILED (xcodebuild exit code 65)
+SUCCESS
