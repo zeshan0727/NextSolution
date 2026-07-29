@@ -16,11 +16,22 @@ struct ContentView: View {
                     PDFKitView(document: document, model: model)
                         .ignoresSafeArea(edges: .bottom)
                 } else {
-                    ContentUnavailableView(
-                        "Open a PDF",
-                        systemImage: "doc.richtext",
-                        description: Text("Choose a PDF to start editing, adding text, deleting annotations, or cropping pages.")
-                    )
+                    VStack(spacing: 14) {
+                        Image(systemName: "doc.richtext")
+                            .font(.system(size: 54))
+                            .foregroundStyle(.secondary)
+                        Text("Open a PDF")
+                            .font(.title2.bold())
+                        Text("Choose a PDF to edit, add text, delete annotations, or crop pages.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                        Button("Choose PDF") {
+                            showingImporter = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
             }
             .navigationTitle("Next PDF")
@@ -39,16 +50,25 @@ struct ContentView: View {
                             textDraft = ""
                             showingTextEditor = true
                         }
-                        Button("Delete Selected", systemImage: "trash", role: .destructive) {
+                        .disabled(model.document == nil)
+
+                        Button("Delete Last Annotation", systemImage: "trash", role: .destructive) {
                             model.deleteSelectedAnnotation()
                         }
+                        .disabled(model.document == nil)
+
                         Button("Crop Current Page", systemImage: "crop") {
                             model.cropCurrentPage()
                         }
+                        .disabled(model.document == nil)
+
+                        Divider()
+
                         Button("Undo", systemImage: "arrow.uturn.backward") {
                             model.undo()
                         }
                         .disabled(!model.canUndo)
+
                         Button("Redo", systemImage: "arrow.uturn.forward") {
                             model.redo()
                         }
@@ -77,7 +97,11 @@ struct ContentView: View {
                 document: model.exportDocument,
                 contentType: .pdf,
                 defaultFilename: model.exportFilename
-            ) { _ in }
+            ) { result in
+                if case .failure(let error) = result {
+                    model.present(error: error)
+                }
+            }
             .sheet(isPresented: $showingTextEditor) {
                 TextInsertSheet(text: $textDraft, fonts: model.availableFonts) { text, fontName, size in
                     model.addText(text, fontName: fontName, size: size)
@@ -94,6 +118,7 @@ struct ContentView: View {
 }
 
 private struct TextInsertSheet: View {
+    @Environment(\.dismiss) private var dismiss
     @Binding var text: String
     let fonts: [String]
     let onInsert: (String, String, CGFloat) -> Void
@@ -108,6 +133,7 @@ private struct TextInsertSheet: View {
                     TextEditor(text: $text)
                         .frame(minHeight: 120)
                 }
+
                 Section("Formatting") {
                     Picker("Font", selection: $selectedFont) {
                         ForEach(fonts, id: \.self) { font in
@@ -121,7 +147,10 @@ private struct TextInsertSheet: View {
             .navigationTitle("Add Text")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { text = "" }
+                    Button("Cancel") {
+                        text = ""
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Insert") {
@@ -154,11 +183,17 @@ struct PDFKitView: UIViewRepresentable {
         if uiView.document !== document {
             uiView.document = document
         }
+        model.attach(pdfView: uiView)
     }
 }
 
 @MainActor
 final class PDFEditorModel: ObservableObject {
+    private struct EditAction {
+        let undo: () -> Void
+        let redo: () -> Void
+    }
+
     @Published var document: PDFDocument?
     @Published var showingError = false
     @Published var errorMessage = ""
@@ -167,8 +202,8 @@ final class PDFEditorModel: ObservableObject {
 
     weak var pdfView: PDFView?
     private var selectedAnnotation: PDFAnnotation?
-    private var undoStack: [() -> Void] = []
-    private var redoStack: [() -> Void] = []
+    private var undoStack: [EditAction] = []
+    private var redoStack: [EditAction] = []
     private var sourceURL: URL?
 
     var availableFonts: [String] {
@@ -178,7 +213,7 @@ final class PDFEditorModel: ObservableObject {
     }
 
     var exportFilename: String {
-        let base = sourceURL?.deletingPathExtension().lastPathComponent ?? "Edited PDF"
+        let base = sourceURL?.deletingPathExtension().lastPathComponent ?? "Edited-PDF"
         return "\(base)-edited.pdf"
     }
 
@@ -194,20 +229,24 @@ final class PDFEditorModel: ObservableObject {
     func open(result: Result<[URL], Error>) {
         do {
             guard let url = try result.get().first else { return }
-            guard url.startAccessingSecurityScopedResource() else {
-                throw CocoaError(.fileReadNoPermission)
+            let accessed = url.startAccessingSecurityScopedResource()
+            defer {
+                if accessed { url.stopAccessingSecurityScopedResource() }
             }
-            defer { url.stopAccessingSecurityScopedResource() }
-            guard let data = try? Data(contentsOf: url), let pdf = PDFDocument(data: data) else {
+
+            let data = try Data(contentsOf: url)
+            guard let pdf = PDFDocument(data: data) else {
                 throw CocoaError(.fileReadCorruptFile)
             }
+
             sourceURL = url
             document = pdf
+            selectedAnnotation = nil
             undoStack.removeAll()
             redoStack.removeAll()
             refreshUndoState()
         } catch {
-            show(error)
+            present(error: error)
         }
     }
 
@@ -216,7 +255,13 @@ final class PDFEditorModel: ObservableObject {
         let pageBounds = page.bounds(for: .mediaBox)
         let width = min(pageBounds.width * 0.72, 420)
         let height = max(size * 2.2, 44)
-        let rect = CGRect(x: pageBounds.midX - width / 2, y: pageBounds.midY - height / 2, width: width, height: height)
+        let rect = CGRect(
+            x: pageBounds.midX - width / 2,
+            y: pageBounds.midY - height / 2,
+            width: width,
+            height: height
+        )
+
         let annotation = PDFAnnotation(bounds: rect, forType: .freeText, withProperties: nil)
         annotation.contents = text
         annotation.font = UIFont(name: fontName, size: size) ?? .systemFont(ofSize: size)
@@ -225,55 +270,58 @@ final class PDFEditorModel: ObservableObject {
         page.addAnnotation(annotation)
         selectedAnnotation = annotation
 
-        registerUndo {
-            page.removeAnnotation(annotation)
-        } redo: {
-            page.addAnnotation(annotation)
-        }
+        registerUndo(
+            undo: { page.removeAnnotation(annotation) },
+            redo: { page.addAnnotation(annotation) }
+        )
     }
 
     func deleteSelectedAnnotation() {
         guard let page = pdfView?.currentPage,
               let annotation = selectedAnnotation ?? page.annotations.last else { return }
+
         page.removeAnnotation(annotation)
         selectedAnnotation = nil
-        registerUndo {
-            page.addAnnotation(annotation)
-        } redo: {
-            page.removeAnnotation(annotation)
-        }
+        registerUndo(
+            undo: { page.addAnnotation(annotation) },
+            redo: { page.removeAnnotation(annotation) }
+        )
     }
 
     func cropCurrentPage() {
         guard let page = pdfView?.currentPage else { return }
         let original = page.bounds(for: .cropBox)
-        let insetX = original.width * 0.05
-        let insetY = original.height * 0.05
-        let cropped = original.insetBy(dx: insetX, dy: insetY)
+        let cropped = original.insetBy(dx: original.width * 0.05, dy: original.height * 0.05)
+        guard cropped.width > 0, cropped.height > 0 else { return }
+
         page.setBounds(cropped, for: .cropBox)
-        registerUndo {
-            page.setBounds(original, for: .cropBox)
-        } redo: {
-            page.setBounds(cropped, for: .cropBox)
-        }
+        registerUndo(
+            undo: { page.setBounds(original, for: .cropBox) },
+            redo: { page.setBounds(cropped, for: .cropBox) }
+        )
     }
 
     func undo() {
         guard let action = undoStack.popLast() else { return }
-        action()
+        action.undo()
         redoStack.append(action)
         refreshUndoState()
     }
 
     func redo() {
         guard let action = redoStack.popLast() else { return }
-        action()
+        action.redo()
         undoStack.append(action)
         refreshUndoState()
     }
 
+    func present(error: Error) {
+        errorMessage = error.localizedDescription
+        showingError = true
+    }
+
     private func registerUndo(undo: @escaping () -> Void, redo: @escaping () -> Void) {
-        undoStack.append(undo)
+        undoStack.append(EditAction(undo: undo, redo: redo))
         redoStack.removeAll()
         refreshUndoState()
     }
@@ -281,11 +329,6 @@ final class PDFEditorModel: ObservableObject {
     private func refreshUndoState() {
         canUndo = !undoStack.isEmpty
         canRedo = !redoStack.isEmpty
-    }
-
-    private func show(_ error: Error) {
-        errorMessage = error.localizedDescription
-        showingError = true
     }
 }
 
