@@ -60,6 +60,11 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/NextPDF.app Payload/
           zip -r NextPDF.tipa Payload
           cp NextPDF.tipa build-output/NextPDF.tipa
+          rm -f build-output/NextPDF.tipa.b64.part-*
+          base64 < build-output/NextPDF.tipa | tr -d '\n' > build-output/NextPDF.tipa.b64
+          split -b 12000 -a 2 build-output/NextPDF.tipa.b64 build-output/NextPDF.tipa.b64.part-
+          rm build-output/NextPDF.tipa.b64
+          shasum -a 256 build-output/NextPDF.tipa > build-output/NextPDF.tipa.sha256
 
       - name: Publish build result to repository
         working-directory: NextPDF
@@ -68,9 +73,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f build-output/build-status.txt build-output/xcodebuild.log
           if [ -f build-output/NextPDF.tipa ]; then
-            git add -f build-output/NextPDF.tipa
+            git add -f build-output/NextPDF.tipa build-output/NextPDF.tipa.sha256 build-output/NextPDF.tipa.b64.part-*
           else
-            git rm -f --ignore-unmatch build-output/NextPDF.tipa
+            git rm -f --ignore-unmatch build-output/NextPDF.tipa build-output/NextPDF.tipa.sha256 build-output/NextPDF.tipa.b64.part-*
           fi
           git commit -m "Publish NextPDF test build" || true
           git push
