@@ -39,6 +39,11 @@ jobs:
       - name: Rebuild lines and enable pinch resizing
         run: python3 NextPDF/apply_true_text_resize_patch.py
 
+      - name: Add floating collapsible editing palette
+        run: |
+          python3 NextPDF/apply_floating_tools_patch_v2.py
+          python3 NextPDF/apply_floating_tools_compile_fix.py
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
