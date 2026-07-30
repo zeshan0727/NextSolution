@@ -197,3 +197,5 @@ jobs:
           fi
           git commit -m "Fix tutorials navigation and improve scrolling"
           git push origin main
+
+# Updated once to trigger the one-time workflow after it existed on main.
