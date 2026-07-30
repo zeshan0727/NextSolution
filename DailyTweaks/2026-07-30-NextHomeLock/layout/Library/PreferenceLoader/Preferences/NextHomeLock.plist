@@ -2,6 +2,8 @@
     entry = {
         bundle = NextHomeLockPreferences;
         cell = PSLinkCell;
+        detail = NHLRootListController;
+        isController = 1;
         label = "Next Home Lock";
     };
 }
