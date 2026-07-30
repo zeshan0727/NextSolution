@@ -2,6 +2,7 @@
 
 static BOOL NCPHasInitialState = NO;
 static BOOL NCPLastPowerConnected = NO;
+static id NCPBatteryObserver = nil;
 
 static BOOL NCPIsPowerConnected(UIDeviceBatteryState state) {
     return state == UIDeviceBatteryStateCharging || state == UIDeviceBatteryStateFull;
@@ -46,11 +47,13 @@ static void NCPHandleBatteryStateChange(NSNotification *notification) {
             UIDevice *device = UIDevice.currentDevice;
             device.batteryMonitoringEnabled = YES;
 
-            [[NSNotificationCenter defaultCenter]
+            NCPBatteryObserver = [[NSNotificationCenter defaultCenter]
                 addObserverForName:UIDeviceBatteryStateDidChangeNotification
                 object:device
                 queue:[NSOperationQueue mainQueue]
-                usingBlock:NCPHandleBatteryStateChange];
+                usingBlock:^(NSNotification *notification) {
+                    NCPHandleBatteryStateChange(notification);
+                }];
 
             // Establish the baseline after battery monitoring has had time to
             // populate. This prevents a false haptic immediately after respring.
