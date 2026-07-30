@@ -1,5 +1,6 @@
 # One-shot publication helper for the PhoneAura 0.4.15 tutorial.
 # This branch commit intentionally triggers the merged publication workflow.
+# Final tutorials-grid and sitemap publication pass.
 from pathlib import Path
 
 INDEX_PATH = Path("index.html")
