@@ -4,7 +4,7 @@ import SwiftUI
 struct NextPDFApp: App {
     var body: some Scene {
         WindowGroup {
-            RobustPDFWorkspaceView()
+            NextPDFRootView()
         }
     }
 }
