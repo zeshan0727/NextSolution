@@ -15,40 +15,6 @@ Description: Native RootHide SpringBoard tweak that automatically imports matchi
 Author: NextSolution
 Name: Daily Ledger SMS Import
 
-Package: com.nextsolution.nexthomelock
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Installed-Size: 352
-Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
-Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextHomeLock_1.0.4_RootHide.deb
-Size: 15778
-MD5sum: 41d26fece3873d6f9d3186188da7e354
-SHA1: 644b8ed2e73ddc137a11511b7d01a08d1a242a2f
-SHA256: 7fece88e46448523508f1b0e045b49dda48d83533a62eb3ddf62db97f5247f3f
-Section: Tweaks
-Priority: optional
-Description: Double-tap an empty Home Screen area to lock the device. Includes live preferences diagnostics and a Test Lock Now option.
-Author: Next Solution
-Name: Next Home Lock
-
-Package: com.nextsolution.nexthomelock
-Version: 1.0.4
-Architecture: iphoneos-arm64
-Maintainer: Next Solution
-Installed-Size: 352
-Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
-Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextHomeLock_1.0.4_Rootless.deb
-Size: 15806
-MD5sum: ef7d660e1751e8c45faf9afe5be66c
-SHA1: b9afe71cbd1711a58ca7f1dcc152bda1e37bc55e
-SHA256: fc7221755c5ac6e3c9a488a1116045870539b3802f3c6ecaf74c09c9255c2094
-Section: Tweaks
-Priority: optional
-Description: Double-tap an empty Home Screen area to lock the device. Rootless build for iOS 16.
-Author: Next Solution
-Name: Next Home Lock
-
 Package: com.nextsolution.nextmessage
 Version: 1.1.0
 Architecture: iphoneos-arm64e
@@ -179,3 +145,37 @@ Description: PhoneAura is a free modern redesign of the iOS 16 Phone app with cu
 Author: Next Solution
 Depiction: https://zeshan0727.github.io/depictions/phoneaura.html
 Name: PhoneAura
+
+Package: com.nextsolution.nexthomelock
+Version: 1.0.5
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 348
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextHomeLock_1.0.5_Rootless.deb
+Size: 12236
+MD5sum: 46ca08c86bbca11dfd535cf7abbdcd0a
+SHA1: 7abe30b5331f83849c189f3c5939653edddb505d
+SHA256: a7ec52389bdbd4bd8e959bb63a776b000eac4ff13b6688edf0badd34924743d2
+Section: Tweaks
+Priority: optional
+Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.5 keeps the verified SBIconListView runtime and replaces the diagnostic-heavy Settings page with one simple enable or disable switch.
+Author: Next Solution
+Name: Next Home Lock
+
+Package: com.nextsolution.nexthomelock
+Version: 1.0.5
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 348
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextHomeLock_1.0.5_RootHide.deb
+Size: 12262
+MD5sum: 44805104b3ea0efb36aab58be63ab534
+SHA1: 9f6a51e12dd9f21cb001d2c5df7105b5f5de8d47
+SHA256: d56c4188687d703bc7abc4f68951748bdbab739e18206376ca88df7605ab3745
+Section: Tweaks
+Priority: optional
+Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.5 keeps the verified SBIconListView runtime and replaces the diagnostic-heavy Settings page with one simple enable or disable switch.
+Author: Next Solution
+Name: Next Home Lock
