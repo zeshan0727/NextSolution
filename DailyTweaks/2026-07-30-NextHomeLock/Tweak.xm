@@ -1,13 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
-
-@interface SBLockScreenManager : NSObject
-+ (instancetype)sharedInstance;
-- (void)lockUIFromSource:(NSInteger)source withOptions:(id)options;
-@end
-
-@interface SBIconController : UIViewController
-@end
+#import <objc/message.h>
+#import <dlfcn.h>
 
 static const void *NHLGestureKey = &NHLGestureKey;
 static const void *NHLHandlerKey = &NHLHandlerKey;
@@ -21,7 +15,19 @@ static BOOL NHLClassNameContainsAny(NSString *className, NSArray<NSString *> *to
     return NO;
 }
 
-static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view) {
+static BOOL NHLRootFolderIsEditing(UIView *rootView) {
+    SEL editingSelector = NSSelectorFromString(@"isEditing");
+    if ([rootView respondsToSelector:editingSelector]) {
+        return ((BOOL (*)(id, SEL))objc_msgSend)(rootView, editingSelector);
+    }
+    return NO;
+}
+
+static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view, UIView *rootView) {
+    if (!view || !rootView || NHLRootFolderIsEditing(rootView)) {
+        return NO;
+    }
+
     static NSArray<NSString *> *blockedTokens;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -37,11 +43,13 @@ static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view) {
             @"Button",
             @"ControlCenter",
             @"Switcher",
-            @"Platter"
+            @"Platter",
+            @"Editing",
+            @"ContextMenu"
         ];
     });
 
-    BOOL foundHomeSurface = NO;
+    BOOL reachedRootFolder = NO;
     for (UIView *current = view; current != nil; current = current.superview) {
         if ([current isKindOfClass:UIControl.class]) {
             return NO;
@@ -52,14 +60,48 @@ static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view) {
             return NO;
         }
 
-        if ([className containsString:@"SBIconListView"] ||
-            [className containsString:@"SBRootFolderView"] ||
-            [className containsString:@"SBIconScrollView"]) {
-            foundHomeSurface = YES;
+        if (current == rootView || [className isEqualToString:@"SBRootFolderView"]) {
+            reachedRootFolder = YES;
+            break;
         }
     }
 
-    return foundHomeSurface;
+    return reachedRootFolder;
+}
+
+static void NHLLockDevice(void) {
+    Class managerClass = objc_getClass("SBLockScreenManager");
+    SEL sharedSelector = NSSelectorFromString(@"sharedInstance");
+    id manager = nil;
+
+    if (managerClass && [managerClass respondsToSelector:sharedSelector]) {
+        manager = ((id (*)(id, SEL))objc_msgSend)(managerClass, sharedSelector);
+    }
+
+    SEL modernLockSelector = NSSelectorFromString(@"lockUIFromSource:withOptions:");
+    if (manager && [manager respondsToSelector:modernLockSelector]) {
+        ((void (*)(id, SEL, NSInteger, id))objc_msgSend)(manager, modernLockSelector, 1, nil);
+        return;
+    }
+
+    SEL legacyLockSelector = NSSelectorFromString(@"lockUIFromSource:");
+    if (manager && [manager respondsToSelector:legacyLockSelector]) {
+        ((void (*)(id, SEL, NSInteger))objc_msgSend)(manager, legacyLockSelector, 1);
+        return;
+    }
+
+    typedef void (*SBSLockDeviceFunction)(void);
+    SBSLockDeviceFunction lockFunction = (SBSLockDeviceFunction)dlsym(RTLD_DEFAULT, "SBSLockDevice");
+    if (!lockFunction) {
+        void *framework = dlopen("/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices", RTLD_LAZY);
+        if (framework) {
+            lockFunction = (SBSLockDeviceFunction)dlsym(framework, "SBSLockDevice");
+        }
+    }
+
+    if (lockFunction) {
+        lockFunction();
+    }
 }
 
 @interface NHLGestureHandler : NSObject <UIGestureRecognizerDelegate>
@@ -67,41 +109,35 @@ static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view) {
 
 @implementation NHLGestureHandler
 
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    return gestureRecognizer.view.window != nil && !NHLRootFolderIsEditing(gestureRecognizer.view);
+}
+
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
-    return NHLTouchIsOnSafeHomeBackground(touch.view);
+    return NHLTouchIsOnSafeHomeBackground(touch.view, gestureRecognizer.view);
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
         shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    return NO;
+    return YES;
 }
 
 - (void)handleDoubleTap:(UITapGestureRecognizer *)recognizer {
-    if (recognizer.state != UIGestureRecognizerStateRecognized) {
-        return;
-    }
-
-    SBLockScreenManager *manager = [%c(SBLockScreenManager) sharedInstance];
-    if ([manager respondsToSelector:@selector(lockUIFromSource:withOptions:)]) {
-        [manager lockUIFromSource:1 withOptions:nil];
+    if (recognizer.state == UIGestureRecognizerStateRecognized) {
+        NHLLockDevice();
     }
 }
 
 @end
 
-%hook SBIconController
-
-- (void)viewDidLoad {
-    %orig;
-
-    UIView *rootView = self.view;
-    if (!rootView || objc_getAssociatedObject(rootView, NHLGestureKey)) {
+static void NHLInstallGestureOnRootFolderView(UIView *rootView) {
+    if (!rootView || !rootView.window || objc_getAssociatedObject(rootView, NHLGestureKey)) {
         return;
     }
 
     NHLGestureHandler *handler = [NHLGestureHandler new];
     UITapGestureRecognizer *gesture = [[UITapGestureRecognizer alloc] initWithTarget:handler
-                                                                              action:@selector(handleDoubleTap:)];
+                                                                             action:@selector(handleDoubleTap:)];
     gesture.numberOfTapsRequired = 2;
     gesture.numberOfTouchesRequired = 1;
     gesture.cancelsTouchesInView = NO;
@@ -112,6 +148,18 @@ static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view) {
     [rootView addGestureRecognizer:gesture];
     objc_setAssociatedObject(rootView, NHLGestureKey, gesture, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     objc_setAssociatedObject(rootView, NHLHandlerKey, handler, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+%hook SBRootFolderView
+
+- (void)didMoveToWindow {
+    %orig;
+    NHLInstallGestureOnRootFolderView((UIView *)self);
+}
+
+- (void)layoutSubviews {
+    %orig;
+    NHLInstallGestureOnRootFolderView((UIView *)self);
 }
 
 %end
