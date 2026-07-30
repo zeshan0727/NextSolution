@@ -1,0 +1,47 @@
+# Next Home Lock 1.0.0
+
+Next Home Lock adds one focused feature: double-tap a genuinely empty area of the Home Screen to lock the device.
+
+## Compatibility
+
+- iOS 15.0 and later
+- Primary test target: iPhone 14 Pro Max on iOS 16.0
+- RootHide Bootstrap build
+- Standard rootless build
+- SpringBoard only
+
+## Behaviour
+
+The gesture is installed on the Home Screen controller. It locks only after a two-tap gesture on a recognised Home Screen background surface.
+
+Touches are rejected when they originate from or pass through icons, folders, the dock, widgets, page controls, search, App Library, Today View, buttons, Control Center, the app switcher, or notification-style platter views.
+
+The recognizer does not cancel normal touches. There is no daemon, analytics, clipboard access, network activity, or background data collection.
+
+## Installation
+
+1. Install the package matching the jailbreak environment.
+2. Respring when requested.
+3. On the Home Screen, double-tap an empty space between icons.
+
+## Uninstall behaviour
+
+Uninstalling the package and respringing removes the gesture completely. No preferences or user data are stored.
+
+## Device test checklist
+
+- Double-tap empty Home Screen space locks the device.
+- Single tap does nothing.
+- Double-tapping an app icon does not lock and does not interfere with launching.
+- Double-tapping a widget does not lock.
+- Double-tapping the dock does not lock.
+- Folder, Spotlight/Search, Today View, App Library and Control Center interactions remain normal.
+- No gesture remains after uninstall and respring.
+
+## Known limitations
+
+SpringBoard view class names can differ on future iOS versions. The package is conservatively filtered and is primarily intended for iOS 15 and iOS 16.
+
+## Market comparison
+
+Havoc was reviewed for gesture-oriented rootless tweak patterns. This implementation is original, free, limited to one Home Screen action, and does not copy paid source code, assets, branding or descriptions.
