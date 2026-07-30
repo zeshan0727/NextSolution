@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <title>PhoneAura 0.4.15 — Modern iOS 16 Phone App Tweak | Next Solution</title>
+  <meta name="description" content="Download PhoneAura 0.4.15 for RootHide or rootless jailbreaks. Redesign Favorites, Recents, Contacts and Keypad on iOS 16 with fixed suggestions, smart filters and long-press phone-number editing.">
+  <meta name="keywords" content="PhoneAura tweak, iOS 16 Phone app tweak, RootHide tweak, rootless jailbreak tweak, Dopamine tweak, iPhone keypad redesign, Next Solution repo">
+  <meta name="author" content="Next Solution">
+  <link rel="canonical" href="https://nextsolution.cc/phoneaura-tweak-ios16.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Next Solution">
+  <meta property="og:url" content="https://nextsolution.cc/phoneaura-tweak-ios16.html">
+  <meta property="og:title" content="PhoneAura 0.4.15 — A Complete iOS 16 Phone App Redesign">
+  <meta property="og:description" content="Modern Favorites, smart Recents, redesigned Contacts, a stable keypad and native long-press number editing for jailbroken iOS 16.">
+  <meta property="og:image" content="https://nextsolution.cc/assets/phoneaura/phoneaura-hero.svg">
+  <meta property="og:image:alt" content="PhoneAura 0.4.15 concept preview by Next Solution">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nextsoluti0n">
+  <meta name="twitter:title" content="PhoneAura 0.4.15 for Jailbroken iOS 16">
+  <meta name="twitter:description" content="Download the RootHide or rootless build and redesign the complete iOS Phone app.">
+  <meta name="twitter:image" content="https://nextsolution.cc/assets/phoneaura/phoneaura-hero.svg">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "PhoneAura 0.4.15 — A Complete iOS 16 Phone App Redesign",
+    "description": "Feature guide, compatibility information and direct downloads for the PhoneAura 0.4.15 RootHide and rootless jailbreak tweak.",
+    "image": "https://nextsolution.cc/assets/phoneaura/phoneaura-hero.svg",
+    "datePublished": "2026-07-30",
+    "dateModified": "2026-07-30",
+    "author": {
+      "@type": "Person",
+      "name": "Zeeshan Barvi"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Next Solution",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://nextsolution.cc/favicon-32x32.png"
+      }
+    },
+    "mainEntityOfPage": "https://nextsolution.cc/phoneaura-tweak-ios16.html",
+    "about": ["iOS jailbreak", "Phone app customization", "RootHide", "rootless jailbreak"]
+  }
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #030711;
+      --bg-soft: #071224;
+      --card: rgba(12, 24, 48, .78);
+      --card-strong: rgba(16, 30, 59, .94);
+      --line: rgba(255, 255, 255, .13);
+      --text: #f7f9ff;
+      --muted: #aebbd5;
+      --purple: #7b2cff;
+      --blue: #168dff;
+      --cyan: #38d7ff;
+      --green: #32d46b;
+      --orange: #ff7a25;
+      --red: #ff5b61;
+      --gradient: linear-gradient(135deg, var(--purple), var(--blue));
+      --shadow: 0 28px 80px rgba(0, 0, 0, .44);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 8%, rgba(22, 141, 255, .23), transparent 30%),
+        radial-gradient(circle at 92% 22%, rgba(123, 44, 255, .20), transparent 32%),
+        radial-gradient(circle at 60% 92%, rgba(56, 215, 255, .10), transparent 30%),
+        linear-gradient(150deg, #02050d 0%, #071427 48%, #17082c 100%);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: linear-gradient(to bottom, #000, transparent 90%);
+    }
+
+    a { color: inherit; }
+    img { display: block; max-width: 100%; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--line);
+      background: rgba(3, 7, 17, .76);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .site-header-inner {
+      width: min(1160px, calc(100% - 32px));
+      min-height: 72px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-weight: 900;
+      letter-spacing: -.4px;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--gradient);
+      box-shadow: 0 10px 28px rgba(80, 63, 255, .35), inset 0 1px rgba(255,255,255,.3);
+    }
+
+    .brand-mark::before {
+      content: "N";
+      color: white;
+      font-weight: 950;
+      font-size: 20px;
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .header-links a {
+      padding: 9px 13px;
+      border-radius: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 750;
+      transition: .2s ease;
+    }
+
+    .header-links a:hover,
+    .header-links a:focus-visible {
+      color: white;
+      background: rgba(255,255,255,.08);
+      outline: none;
+    }
+
+    .page-shell {
+      position: relative;
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 54px 0 80px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(340px, .98fr);
+      align-items: center;
+      gap: clamp(30px, 5vw, 70px);
+      min-height: 650px;
+      padding: clamp(32px, 5vw, 64px);
+      border: 1px solid var(--line);
+      border-radius: 38px;
+      background: linear-gradient(145deg, rgba(18, 31, 61, .88), rgba(22, 10, 48, .80));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 8px 13px;
+      border: 1px solid rgba(117, 121, 255, .38);
+      border-radius: 999px;
+      color: #d9d7ff;
+      background: rgba(89, 66, 255, .16);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 16px var(--cyan);
+    }
+
+    h1, h2, h3 { line-height: 1.12; }
+    h1 {
+      margin: 0;
+      font-size: clamp(44px, 7vw, 78px);
+      letter-spacing: -3.4px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(95deg, #fff 8%, #c9d8ff 42%, #8cdbff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-copy > p {
+      max-width: 650px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 21px);
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 25px 0 0;
+    }
+
+    .mini-badge {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #dce6fb;
+      background: rgba(255,255,255,.055);
+      font-size: 13px;
+      font-weight: 780;
+    }
+
+    .hero-actions,
+    .download-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    .button {
+      min-height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 12px 19px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 16px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 850;
+      box-shadow: 0 14px 32px rgba(0,0,0,.20);
+      transition: transform .2s ease, filter .2s ease, border-color .2s ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+      border-color: rgba(255,255,255,.34);
+      outline: none;
+    }
+
+    .button.primary { background: var(--gradient); }
+    .button.secondary { background: rgba(255,255,255,.075); }
+    .button.green { background: linear-gradient(135deg, #19a64b, #38d878); }
+    .button.orange { background: linear-gradient(135deg, #f15b2a, #ff9b27); }
+
+    .hero-art {
+      position: relative;
+    }
+
+    .hero-art img {
+      width: 100%;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 24px 70px rgba(0,0,0,.46);
+    }
+
+    .notice {
+      margin: 22px 0 0;
+      padding: 14px 16px;
+      border: 1px solid rgba(56, 215, 255, .22);
+      border-radius: 16px;
+      color: #bcdcf1;
+      background: rgba(15, 92, 125, .13);
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 68px;
+    }
+
+    .section-heading {
+      max-width: 760px;
+      margin-bottom: 24px;
+    }
+
+    .section-heading .kicker {
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .section-heading h2 {
+      margin: 8px 0 10px;
+      font-size: clamp(32px, 5vw, 52px);
+      letter-spacing: -1.7px;
+    }
+
+    .section-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card,
+    .glass-card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--card);
+      box-shadow: 0 18px 48px rgba(0,0,0,.24);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .feature-card {
+      padding: 24px;
+    }
+
+    .feature-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      margin-bottom: 16px;
+      background: var(--gradient);
+      font-size: 21px;
+      font-weight: 900;
+      box-shadow: 0 12px 28px rgba(70, 77, 255, .28);
+    }
+
+    .feature-card:nth-child(2) .feature-icon { background: linear-gradient(135deg, #ff4f62, #ff8b19); }
+    .feature-card:nth-child(3) .feature-icon { background: linear-gradient(135deg, #19bca9, #168dff); }
+    .feature-card:nth-child(4) .feature-icon { background: linear-gradient(135deg, #6f63ff, #a743ff); }
+    .feature-card:nth-child(5) .feature-icon { background: linear-gradient(135deg, #18c8b7, #32d46b); }
+    .feature-card:nth-child(6) .feature-icon { background: linear-gradient(135deg, #ff5b61, #7b2cff); }
+
+    .feature-card h3 {
+      margin: 0 0 9px;
+      font-size: 20px;
+    }
+
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .visual-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    figure {
+      margin: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(7, 14, 31, .82);
+      box-shadow: var(--shadow);
+    }
+
+    figure img { width: 100%; }
+    figcaption {
+      padding: 14px 18px 17px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, .75fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .prose-card {
+      padding: clamp(24px, 4vw, 38px);
+    }
+
+    .prose-card h3 {
+      margin: 0 0 14px;
+      font-size: 27px;
+    }
+
+    .prose-card p,
+    .prose-card li { color: var(--muted); }
+    .prose-card ul,
+    .prose-card ol { padding-left: 22px; }
+    .prose-card li + li { margin-top: 10px; }
+
+    .edit-menu-table,
+    .compat-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .edit-menu-table th,
+    .edit-menu-table td,
+    .compat-table th,
+    .compat-table td {
+      padding: 14px 15px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .edit-menu-table th,
+    .compat-table th {
+      color: #fff;
+      background: rgba(111, 75, 255, .18);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .45px;
+    }
+
+    .edit-menu-table td,
+    .compat-table td { color: var(--muted); }
+    .yes { color: #6be491; font-weight: 850; }
+    .safe { color: #8bdcff; font-weight: 850; }
+
+    .download-panel {
+      padding: clamp(26px, 5vw, 46px);
+      background:
+        radial-gradient(circle at 85% 10%, rgba(22,141,255,.22), transparent 30%),
+        radial-gradient(circle at 10% 100%, rgba(123,44,255,.25), transparent 32%),
+        var(--card-strong);
+    }
+
+    .download-panel h2 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 52px);
+      letter-spacing: -1.6px;
+    }
+
+    .download-panel > p {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .package-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .package-card {
+      padding: 23px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,255,255,.055);
+    }
+
+    .package-card h3 { margin: 0 0 8px; }
+    .package-card p { margin: 0; color: var(--muted); font-size: 14px; }
+    .package-card .button { width: 100%; margin-top: 18px; }
+
+    .steps {
+      counter-reset: install-step;
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .step {
+      position: relative;
+      min-height: 78px;
+      padding: 17px 18px 17px 72px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .step::before {
+      counter-increment: install-step;
+      content: counter(install-step);
+      position: absolute;
+      left: 18px;
+      top: 17px;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      color: white;
+      background: var(--gradient);
+      font-weight: 900;
+    }
+
+    .step strong { display: block; margin-bottom: 2px; }
+    .step span { color: var(--muted); font-size: 14px; }
+
+    .warning {
+      margin-top: 20px;
+      padding: 17px 18px;
+      border: 1px solid rgba(255, 152, 64, .28);
+      border-left: 4px solid var(--orange);
+      border-radius: 17px;
+      color: #ffd7b7;
+      background: rgba(112, 55, 13, .18);
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 20px;
+      background: var(--card);
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 830;
+    }
+
+    details p { margin: 12px 0 0; color: var(--muted); }
+
+    .article-footer {
+      margin-top: 70px;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 25px;
+      text-align: center;
+      background: rgba(8, 16, 35, .75);
+    }
+
+    .article-footer p { margin: 8px auto 0; color: var(--muted); }
+    .article-footer a { color: #8fdcff; }
+
+    @media (max-width: 920px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-art { max-width: 720px; }
+      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .split { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 650px) {
+      .site-header-inner { min-height: 64px; }
+      .header-links a:not(:last-child) { display: none; }
+      .page-shell { width: min(100% - 20px, 1160px); padding-top: 24px; }
+      .hero { padding: 25px 20px; border-radius: 27px; }
+      h1 { letter-spacing: -2px; }
+      .feature-grid,
+      .package-grid,
+      .faq-grid { grid-template-columns: 1fr; }
+      .button { width: 100%; }
+      .edit-menu-table,
+      .compat-table { font-size: 13px; }
+      .edit-menu-table th,
+      .edit-menu-table td,
+      .compat-table th,
+      .compat-table td { padding: 11px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="./" aria-label="Next Solution home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Next Solution</span>
+      </a>
+      <nav class="header-links" aria-label="Article navigation">
+        <a href="./#tutorials">Tutorials</a>
+        <a href="videos">Videos</a>
+        <a href="downloads">Downloads</a>
+        <a href="#download">Get PhoneAura</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <article>
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">Next Solution Original Tweak</span>
+          <h1><span class="gradient-text">PhoneAura 0.4.15</span></h1>
+          <p>PhoneAura replaces the standard iOS 16 Phone app experience with modern Favorites, smarter Recents, redesigned Contacts and a stable, feature-rich Keypad—without moving the keypad while saved-number suggestions update.</p>
+
+          <div class="hero-badges" aria-label="Compatibility highlights">
+            <span class="mini-badge">iOS 16+</span>
+            <span class="mini-badge">RootHide arm64e</span>
+            <span class="mini-badge">Rootless arm64</span>
+            <span class="mini-badge">Sileo compatible</span>
+          </div>
+
+          <div class="hero-actions">
+            <a class="button primary" href="#download">Download PhoneAura</a>
+            <a class="button secondary" href="sileo://source/https://zeshan0727.github.io/">Add Next Solution Repo</a>
+          </div>
+
+          <p class="notice">PhoneAura requires a jailbroken device. The concept artwork on this page matches the tweak’s design direction; small spacing or system-view differences can vary by device size and enabled settings.</p>
+        </div>
+
+        <div class="hero-art">
+          <img src="assets/phoneaura/phoneaura-hero.svg" alt="PhoneAura 0.4.15 redesigned Keypad concept" width="1600" height="900">
+        </div>
+      </section>
+
+      <section class="section" id="features">
+        <div class="section-heading">
+          <span class="kicker">Major features</span>
+          <h2>A complete Phone app refresh</h2>
+          <p>PhoneAura is not only a color change. It provides custom root surfaces, practical actions and safer number handling across the main Phone app tabs.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card">
+            <div class="feature-icon">★</div>
+            <h3>Custom Favorites</h3>
+            <p>Large contact cards, quick actions and PhoneAura Studio support for selecting the people you call most.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">↻</div>
+            <h3>Smart Recents</h3>
+            <p>Filter calls by All, Dialed, Received or Missed, open a detailed call view and remove unwanted call records.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">◎</div>
+            <h3>Redesigned Contacts</h3>
+            <p>Modern contact rows, search, profile cards and direct access to saved numbers inside the PhoneAura interface.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">#</div>
+            <h3>Stable Smart Keypad</h3>
+            <p>A fixed-height saved-number suggestion area prevents the digit grid from jumping while you type.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">✂</div>
+            <h3>Long-Press Number Editing</h3>
+            <p>Use the native iOS edit menu for Cut, Copy and Paste where appropriate, including Paste to Keypad.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">N</div>
+            <h3>Next Solution Shortcut</h3>
+            <p>The upper-right Keypad logo opens the official Next Solution YouTube channel while Number Options remains available below.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="design">
+        <div class="section-heading">
+          <span class="kicker">Concept gallery</span>
+          <h2>Designed to feel modern and consistent</h2>
+          <p>The visual system uses dark navy surfaces, colorful action accents, rounded cards and a glass-style navigation dock.</p>
+        </div>
+
+        <div class="visual-grid">
+          <figure>
+            <img src="assets/phoneaura/phoneaura-keypad-concept.svg" alt="PhoneAura Keypad with fixed contact suggestion card and long-press edit menu" width="1200" height="800" loading="lazy">
+            <figcaption>Keypad concept: fixed suggestion space, preserved Number Options, Next Solution shortcut and native phone-number editing.</figcaption>
+          </figure>
+
+          <figure>
+            <img src="assets/phoneaura/phoneaura-tabs-concept.svg" alt="PhoneAura Favorites, Recents and Contacts concept screens" width="1200" height="800" loading="lazy">
+            <figcaption>Favorites, Recents and Contacts use the same card language and bottom navigation style for a unified experience.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section split" id="keypad">
+        <div class="glass-card prose-card">
+          <h3>Why the fixed keypad space matters</h3>
+          <p>In earlier builds, saved-number results could appear and disappear while typing. That changed the available vertical space and shifted the digit grid, increasing the chance of tapping the wrong number.</p>
+          <p>PhoneAura now reserves the suggestion card at all times:</p>
+          <ul>
+            <li>Matching saved contacts appear inside the reserved card.</li>
+            <li>When no contact matches, it displays <strong>Number not saved</strong>.</li>
+            <li>Before enough digits are entered, a neutral helper message appears.</li>
+            <li>The keypad digits, Call button and Delete button remain in fixed positions.</li>
+          </ul>
+        </div>
+
+        <div class="glass-card prose-card">
+          <h3>Keypad shortcuts</h3>
+          <ul>
+            <li>Long press <strong>0</strong> to enter the plus symbol.</li>
+            <li>Long press Delete to clear the complete number.</li>
+            <li>Use the lower Number Options menu to create or update a contact.</li>
+            <li>Tap the upper Next Solution logo to open the YouTube channel.</li>
+            <li>Long press the displayed number to open the editing menu.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="number-menu">
+        <div class="section-heading">
+          <span class="kicker">PhoneAura 0.4.15</span>
+          <h2>Native long-press number controls</h2>
+          <p>The editing menu changes safely depending on whether the displayed number is editable or belongs to stored contact/call data.</p>
+        </div>
+
+        <div class="glass-card prose-card">
+          <table class="edit-menu-table">
+            <thead>
+              <tr>
+                <th>Number location</th>
+                <th>Cut</th>
+                <th>Copy</th>
+                <th>Paste</th>
+                <th>Safety behavior</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Number currently typed on Keypad</td>
+                <td><span class="yes">Available</span></td>
+                <td><span class="yes">Available</span></td>
+                <td><span class="yes">Available</span></td>
+                <td>Cut clears the editable keypad value only.</td>
+              </tr>
+              <tr>
+                <td>Contacts, Favorites and contact details</td>
+                <td>Disabled</td>
+                <td><span class="yes">Available</span></td>
+                <td><span class="safe">Paste to Keypad</span></td>
+                <td>Saved contact data is not deleted or edited by the menu.</td>
+              </tr>
+              <tr>
+                <td>Recents and call-detail numbers</td>
+                <td>Disabled</td>
+                <td><span class="yes">Available</span></td>
+                <td><span class="safe">Paste to Keypad</span></td>
+                <td>Read-only history remains protected.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="compatibility">
+        <div class="section-heading">
+          <span class="kicker">Compatibility</span>
+          <h2>Choose the correct package</h2>
+          <p>RootHide and standard rootless jailbreaks use different filesystem layouts and package architectures. Install only the version matching your jailbreak.</p>
+        </div>
+
+        <div class="glass-card prose-card">
+          <table class="compat-table">
+            <thead>
+              <tr>
+                <th>Package</th>
+                <th>Architecture</th>
+                <th>Use this when</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>RootHide</strong></td>
+                <td>iphoneos-arm64e</td>
+                <td>Your device is jailbroken using the RootHide environment.</td>
+              </tr>
+              <tr>
+                <td><strong>Rootless</strong></td>
+                <td>iphoneos-arm64</td>
+                <td>You use a standard rootless jailbreak environment such as a compatible Dopamine/palera1n setup.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="warning"><strong>Do not install both variants.</strong> They use the same package identifier and are alternative builds of the same tweak.</div>
+        </div>
+      </section>
+
+      <section class="section glass-card download-panel" id="download">
+        <span class="eyebrow">Free download</span>
+        <h2>Download PhoneAura 0.4.15</h2>
+        <p>Install from the Next Solution repository for easier upgrades, or download the matching DEB directly.</p>
+
+        <div class="download-actions">
+          <a class="button primary" href="sileo://source/https://zeshan0727.github.io/">Add Repo to Sileo</a>
+          <a class="button secondary" href="https://zeshan0727.github.io/" target="_blank" rel="noopener noreferrer">Open Repo Website</a>
+        </div>
+
+        <div class="package-grid">
+          <article class="package-card">
+            <h3>RootHide Package</h3>
+            <p>For RootHide jailbreak environments. Architecture: iphoneos-arm64e.</p>
+            <a class="button green" href="https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.15_RootHide_iOS16.deb">Download RootHide DEB</a>
+          </article>
+
+          <article class="package-card">
+            <h3>Rootless Package</h3>
+            <p>For standard rootless jailbreak environments. Architecture: iphoneos-arm64.</p>
+            <a class="button orange" href="https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.15_Rootless_iOS16.deb">Download Rootless DEB</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="section split" id="install">
+        <div class="glass-card prose-card">
+          <h3>Installation steps</h3>
+          <div class="steps">
+            <div class="step"><strong>Add the Next Solution repository</strong><span>Use the Sileo button above or add https://zeshan0727.github.io/ manually.</span></div>
+            <div class="step"><strong>Search for PhoneAura</strong><span>Confirm the package page shows version 0.4.15 and the correct architecture for your jailbreak.</span></div>
+            <div class="step"><strong>Install or upgrade</strong><span>An existing PhoneAura package can be upgraded because the package identifier remains the same.</span></div>
+            <div class="step"><strong>Respring</strong><span>After installation, respring and fully close the Phone app before opening it again.</span></div>
+            <div class="step"><strong>Configure PhoneAura</strong><span>Open Settings → PhoneAura, enable the desired replacement tabs, haptics and animations.</span></div>
+          </div>
+        </div>
+
+        <div class="glass-card prose-card">
+          <h3>Recommended first test</h3>
+          <ol>
+            <li>Open Keypad and type at least two digits.</li>
+            <li>Confirm the suggestion area stays visible and the keypad does not move.</li>
+            <li>Long press the typed number and test Copy or Paste.</li>
+            <li>Open Contacts or Recents and long press a displayed number.</li>
+            <li>Check Favorites, Recents filters and the upper Next Solution logo.</li>
+          </ol>
+          <div class="warning">Keep access to your package manager and jailbreak safe mode before installing system-interface tweaks. Remove the tweak from safe mode if the Phone app becomes unstable.</div>
+        </div>
+      </section>
+
+      <section class="section" id="faq">
+        <div class="section-heading">
+          <span class="kicker">Questions</span>
+          <h2>PhoneAura FAQ</h2>
+        </div>
+
+        <div class="faq-grid">
+          <details>
+            <summary>Does PhoneAura work on stock iOS?</summary>
+            <p>No. PhoneAura is a jailbreak tweak and requires a compatible iOS 16 jailbreak environment.</p>
+          </details>
+          <details>
+            <summary>Which build should RootHide users install?</summary>
+            <p>Install the RootHide iphoneos-arm64e package. Do not install the standard rootless package alongside it.</p>
+          </details>
+          <details>
+            <summary>Why is Cut disabled on saved numbers?</summary>
+            <p>Saved contacts and call-history numbers are read-only in this menu. Disabling Cut protects stored data while still allowing Copy and Paste to Keypad.</p>
+          </details>
+          <details>
+            <summary>What appears when no saved contact matches?</summary>
+            <p>The fixed suggestion area displays “Number not saved” without moving the keypad.</p>
+          </details>
+          <details>
+            <summary>Can I turn off individual redesigned tabs?</summary>
+            <p>Yes. PhoneAura settings include separate replacement controls for Favorites, Recents, Contacts and Keypad.</p>
+          </details>
+          <details>
+            <summary>Where can I report a problem?</summary>
+            <p>Use the Next Solution YouTube channel or social links on the main website and include your iOS version, jailbreak type and PhoneAura version.</p>
+          </details>
+        </div>
+      </section>
+
+      <footer class="article-footer">
+        <strong>PhoneAura is developed by Next Solution — Zeeshan 0727.</strong>
+        <p>Read more jailbreak tutorials on <a href="./#tutorials">Next Solution</a> or visit the <a href="https://youtube.com/@zeshan0727" target="_blank" rel="noopener noreferrer">official YouTube channel</a>.</p>
+        <p>Published July 30, 2026 • Educational customization content for compatible jailbroken devices.</p>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>
