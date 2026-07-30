@@ -5,203 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#6a11cb">
   <title>Jailbreak Tutorials | Next Solution</title>
-  <meta name="description" content="Browse Next Solution's free iPhone jailbreak, PhoneAura, rootless tweak, conversion, and battery guides.">
+  <meta name="description" content="Browse Next Solution's free Next Home Lock, PhoneAura, iPhone jailbreak, rootless tweak, conversion and battery guides.">
   <link rel="canonical" href="https://nextsolution.cc/tutorials.html">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      color-scheme: light dark;
-      --primary: #6a11cb;
-      --secondary: #2575fc;
-      --accent: #00d2ff;
-      --text: #202634;
-      --muted: #667085;
-      --surface: rgba(255,255,255,.92);
-      --background: #f5f7fa;
-      --border: rgba(37,117,252,.16);
-      --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --text: #f5f7ff;
-        --muted: #b7c0d5;
-        --surface: rgba(26,31,45,.92);
-        --background: #10131c;
-        --border: rgba(255,255,255,.12);
-      }
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 96px; scrollbar-gutter: stable; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      overflow-x: clip;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 10% 0%, rgba(106,17,203,.13), transparent 28rem),
-        radial-gradient(circle at 90% 20%, rgba(37,117,252,.12), transparent 30rem),
-        var(--background);
-      line-height: 1.6;
-      -webkit-overflow-scrolling: touch;
-    }
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: .85rem max(1rem, env(safe-area-inset-right)) .85rem max(1rem, env(safe-area-inset-left));
-      color: white;
-      background: var(--gradient);
-      box-shadow: 0 8px 24px rgba(33,50,110,.18);
-    }
-    .brand { font-size: clamp(1.25rem, 3vw, 1.8rem); font-weight: 900; white-space: nowrap; }
-    nav {
-      display: flex;
-      gap: .4rem;
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    nav::-webkit-scrollbar { display: none; }
-    nav a {
-      flex: 0 0 auto;
-      padding: .55rem .85rem;
-      border-radius: .7rem;
-      color: white;
-      text-decoration: none;
-      font-weight: 700;
-      white-space: nowrap;
-      touch-action: manipulation;
-    }
-    nav a:hover, nav a:focus-visible, nav a[aria-current="page"] { background: rgba(255,255,255,.22); }
-    .hero {
-      padding: clamp(3.5rem, 9vw, 6.5rem) 1.25rem;
-      text-align: center;
-      color: white;
-      background: var(--gradient);
-    }
-    .hero h1 { margin: 0 0 .8rem; font-size: clamp(2.2rem, 7vw, 4.4rem); line-height: 1.05; }
-    .hero p { max-width: 700px; margin: 0 auto; font-size: clamp(1rem, 2.4vw, 1.25rem); opacity: .9; }
-    main { width: min(1120px, calc(100% - 2rem)); margin: clamp(2rem, 6vw, 4rem) auto; }
-    .section-heading { margin-bottom: 1.5rem; }
-    .section-heading h2 { margin: 0 0 .35rem; font-size: clamp(1.7rem, 4vw, 2.4rem); }
-    .section-heading p { margin: 0; color: var(--muted); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); gap: 1.15rem; }
-    .card {
-      display: flex;
-      flex-direction: column;
-      min-height: 260px;
-      padding: 1.4rem;
-      border: 1px solid var(--border);
-      border-radius: 1.25rem;
-      background: var(--surface);
-      box-shadow: 0 14px 38px rgba(32,48,95,.08);
-      transition: transform .2s ease, box-shadow .2s ease;
-    }
-    .card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(32,48,95,.14); }
-    .icon {
-      width: 48px;
-      height: 48px;
-      display: grid;
-      place-items: center;
-      border-radius: 14px;
-      color: white;
-      background: var(--gradient);
-      font-size: 1.25rem;
-    }
-    .card h3 { margin: 1rem 0 .45rem; font-size: 1.18rem; }
-    .card p { margin: 0 0 1.25rem; color: var(--muted); }
-    .card a {
-      margin-top: auto;
-      align-self: flex-start;
-      padding: .72rem 1rem;
-      border-radius: 999px;
-      color: white;
-      background: var(--gradient);
-      text-decoration: none;
-      font-weight: 800;
-      touch-action: manipulation;
-    }
-    .card.featured {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: minmax(300px, .95fr) minmax(0, 1.05fr);
-      min-height: 0;
-      padding: 0;
-      overflow: hidden;
-      border-color: rgba(106,17,203,.3);
-      background:
-        radial-gradient(circle at 100% 0%, rgba(37,117,252,.13), transparent 45%),
-        var(--surface);
-    }
-    .featured-media {
-      min-height: 320px;
-      background: #07111f;
-      overflow: hidden;
-    }
-    .featured-media img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      min-height: 320px;
-      object-fit: cover;
-    }
-    .featured-body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: clamp(1.5rem, 4vw, 2.5rem);
-    }
-    .featured-body h3 {
-      margin: 1rem 0 .55rem;
-      font-size: clamp(1.65rem, 4vw, 2.45rem);
-      line-height: 1.12;
-    }
-    .tags { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0 0 1.15rem; }
-    .tag {
-      padding: .35rem .65rem;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      color: var(--muted);
-      background: rgba(37,117,252,.07);
-      font-size: .78rem;
-      font-weight: 800;
-    }
-    .video-cta {
-      margin-top: 2rem;
-      padding: 1.35rem;
-      border-radius: 1.25rem;
-      text-align: center;
-      color: white;
-      background: var(--gradient);
-    }
-    .video-cta h2 { margin: 0 0 .45rem; }
-    .video-cta p { margin: 0 0 1rem; opacity: .9; }
-    .video-cta a { display: inline-block; padding: .75rem 1.1rem; border-radius: 999px; color: var(--primary); background: white; text-decoration: none; font-weight: 900; }
-    footer { padding: 2rem 1rem; text-align: center; color: var(--muted); }
-    a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-    @media (max-width: 760px) {
-      header { align-items: stretch; flex-direction: column; }
-      nav { width: 100%; }
-      .card.featured { grid-template-columns: 1fr; }
-      .featured-media, .featured-media img { min-height: 230px; }
-    }
-    @media (hover: none) { .card:hover { transform: none; } }
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-    }
-  </style>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214" crossorigin="anonymous"></script>
+  <style>
+    :root{color-scheme:light dark;--primary:#6a11cb;--secondary:#2575fc;--accent:#00d2ff;--text:#202634;--muted:#667085;--surface:rgba(255,255,255,.92);--background:#f5f7fa;--border:rgba(37,117,252,.16);--gradient:linear-gradient(135deg,var(--primary),var(--secondary))}
+    @media(prefers-color-scheme:dark){:root{--text:#f5f7ff;--muted:#b7c0d5;--surface:rgba(26,31,45,.92);--background:#10131c;--border:rgba(255,255,255,.12)}}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:96px;scrollbar-gutter:stable}body{margin:0;min-height:100vh;overflow-x:clip;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 10% 0%,rgba(106,17,203,.13),transparent 28rem),radial-gradient(circle at 90% 20%,rgba(37,117,252,.12),transparent 30rem),var(--background);line-height:1.6;-webkit-overflow-scrolling:touch}
+    header{position:sticky;top:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem max(1rem,env(safe-area-inset-right)) .85rem max(1rem,env(safe-area-inset-left));color:#fff;background:var(--gradient);box-shadow:0 8px 24px rgba(33,50,110,.18)}.brand{color:#fff;text-decoration:none;font-size:clamp(1.25rem,3vw,1.8rem);font-weight:900;white-space:nowrap}nav{display:flex;gap:.4rem;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}nav::-webkit-scrollbar{display:none}nav a{flex:0 0 auto;padding:.55rem .85rem;border-radius:.7rem;color:#fff;text-decoration:none;font-weight:700;white-space:nowrap;touch-action:manipulation}nav a:hover,nav a:focus-visible,nav a[aria-current="page"]{background:rgba(255,255,255,.22)}
+    .hero{padding:clamp(3.5rem,9vw,6.5rem) 1.25rem;text-align:center;color:#fff;background:var(--gradient)}.hero h1{margin:0 0 .8rem;font-size:clamp(2.2rem,7vw,4.4rem);line-height:1.05}.hero p{max-width:700px;margin:0 auto;font-size:clamp(1rem,2.4vw,1.25rem);opacity:.9}main{width:min(1120px,calc(100% - 2rem));margin:clamp(2rem,6vw,4rem) auto}.section-heading{margin-bottom:1.5rem}.section-heading h2{margin:0 0 .35rem;font-size:clamp(1.7rem,4vw,2.4rem)}.section-heading p{margin:0;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:1.15rem}.card{display:flex;flex-direction:column;min-height:260px;padding:1.4rem;border:1px solid var(--border);border-radius:1.25rem;background:var(--surface);box-shadow:0 14px 38px rgba(32,48,95,.08);transition:transform .2s ease,box-shadow .2s ease}.card:hover{transform:translateY(-4px);box-shadow:0 20px 44px rgba(32,48,95,.14)}.icon{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;color:#fff;background:var(--gradient);font-size:1.25rem}.card h3{margin:1rem 0 .45rem;font-size:1.18rem}.card p{margin:0 0 1.25rem;color:var(--muted)}.card>a:not(.featured-media){margin-top:auto;align-self:flex-start;padding:.72rem 1rem;border-radius:999px;color:#fff;background:var(--gradient);text-decoration:none;font-weight:800;touch-action:manipulation}
+    .card.featured{grid-column:1/-1;display:grid;grid-template-columns:minmax(300px,.95fr) minmax(0,1.05fr);min-height:0;padding:0;overflow:hidden;border-color:rgba(106,17,203,.3);background:radial-gradient(circle at 100% 0%,rgba(37,117,252,.13),transparent 45%),var(--surface)}.featured-media{min-height:320px;background:#07111f;overflow:hidden}.featured-media img{display:block;width:100%;height:100%;min-height:320px;object-fit:cover}.featured-body{display:flex;flex-direction:column;justify-content:center;padding:clamp(1.5rem,4vw,2.5rem)}.featured-body h3{margin:1rem 0 .55rem;font-size:clamp(1.65rem,4vw,2.45rem);line-height:1.12}.tags{display:flex;flex-wrap:wrap;gap:.45rem;margin:0 0 1.15rem}.tag{padding:.35rem .65rem;border:1px solid var(--border);border-radius:999px;color:var(--muted);background:rgba(37,117,252,.07);font-size:.78rem;font-weight:800}.video-cta{margin-top:2rem;padding:1.35rem;border-radius:1.25rem;text-align:center;color:#fff;background:var(--gradient)}.video-cta h2{margin:0 0 .45rem}.video-cta p{margin:0 0 1rem;opacity:.9}.video-cta a{display:inline-block;padding:.75rem 1.1rem;border-radius:999px;color:var(--primary);background:#fff;text-decoration:none;font-weight:900}footer{padding:2rem 1rem;text-align:center;color:var(--muted)}a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+    @media(max-width:760px){header{align-items:stretch;flex-direction:column}nav{width:100%}.card.featured{grid-template-columns:1fr}.featured-media,.featured-media img{min-height:230px}}@media(hover:none){.card:hover{transform:none}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
 </head>
 <body>
   <header>
-    <div class="brand">Next Solution</div>
+    <a class="brand" href="./" aria-label="Next Solution home">Next Solution</a>
     <nav aria-label="Primary navigation">
       <a href="./">Home</a>
       <a href="tutorials.html" aria-current="page">Tutorials</a>
@@ -212,7 +33,7 @@
 
   <section class="hero">
     <h1>Jailbreak Tutorials</h1>
-    <p>Clear, free guides for jailbreaking, rootless tweaks, package conversion, and iPhone customization.</p>
+    <p>Clear, free guides for Next Solution tweaks, jailbreaking, rootless packages and iPhone customization.</p>
   </section>
 
   <main>
@@ -222,51 +43,42 @@
     </div>
 
     <section class="grid" aria-label="Tutorial guides">
+      <!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->
       <article class="card featured">
-        <a class="featured-media" href="phoneaura-tweak-ios16.html" aria-label="Open the PhoneAura 0.4.16 guide" style="padding:0; border-radius:0; background:none;">
-          <img src="assets/phoneaura/phoneaura-hero.svg" alt="PhoneAura 0.4.16 redesigned iOS 16 Phone app concept" width="1600" height="900" loading="eager">
+        <a class="featured-media" href="next-home-lock-tweak-ios16.html" aria-label="Open the Next Home Lock 1.0.5 guide">
+          <img src="assets/next-home-lock/next-home-lock-hero.svg" alt="Next Home Lock 1.0.5 double-tap Home Screen lock concept" width="1600" height="900" loading="eager">
+        </a>
+        <div class="featured-body">
+          <div class="icon"><i class="fas fa-lock" aria-hidden="true"></i></div>
+          <h3>Next Home Lock 1.0.5 — Double-Tap to Lock</h3>
+          <div class="tags" aria-label="Next Home Lock compatibility">
+            <span class="tag">iOS 16+</span><span class="tag">RootHide</span><span class="tag">Rootless</span><span class="tag">Free download</span>
+          </div>
+          <p>Double-tap empty Home Screen space to lock your iPhone. Version 1.0.5 keeps the physically verified SpringBoard method and replaces the old diagnostics page with one clean enable switch.</p>
+          <a href="next-home-lock-tweak-ios16.html">Read guide &amp; download</a>
+        </div>
+      </article>
+      <!-- NEXT_HOME_LOCK_TUTORIAL_CARD_END -->
+
+      <article class="card featured">
+        <a class="featured-media" href="phoneaura-tweak-ios16.html" aria-label="Open the PhoneAura 0.4.16 guide">
+          <img src="assets/phoneaura/phoneaura-hero.svg" alt="PhoneAura 0.4.16 redesigned iOS 16 Phone app concept" width="1600" height="900" loading="lazy">
         </a>
         <div class="featured-body">
           <div class="icon"><i class="fas fa-phone-volume" aria-hidden="true"></i></div>
           <h3>PhoneAura 0.4.16 — Stable Phone App Redesign</h3>
           <div class="tags" aria-label="PhoneAura compatibility">
-            <span class="tag">iOS 16+</span>
-            <span class="tag">RootHide</span>
-            <span class="tag">Rootless</span>
-            <span class="tag">Free download</span>
+            <span class="tag">iOS 16+</span><span class="tag">RootHide</span><span class="tag">Rootless</span><span class="tag">Free download</span>
           </div>
-          <p>Redesign Favorites, Recents, Contacts and Keypad. Includes fixed saved-number suggestions, smart call filters, Number Options, direct DEB downloads and the 0.4.16 emergency stability rollback.</p>
+          <p>Redesign Favorites, Recents, Contacts and Keypad. Includes fixed saved-number suggestions, smart call filters, direct DEB downloads and the 0.4.16 stability rollback.</p>
           <a href="phoneaura-tweak-ios16.html">Read guide &amp; download</a>
         </div>
       </article>
 
-      <article class="card">
-        <div class="icon"><i class="fas fa-sync-alt" aria-hidden="true"></i></div>
-        <h3>Convert Rootful Tweaks to Rootless</h3>
-        <p>Convert older packages for Dopamine 2, XinaA15, and palera1n with troubleshooting guidance.</p>
-        <a href="convert-rootful-to-rootless.html">Read guide</a>
-      </article>
-
-      <article class="card">
-        <div class="icon"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></div>
-        <h3>Free iOS 16 Rootless Tweaks</h3>
-        <p>Browse 25+ useful rootless tweaks with repositories and installation instructions.</p>
-        <a href="ios16-rootless-tweaks.html">View tweaks</a>
-      </article>
-
-      <article class="card">
-        <div class="icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></div>
-        <h3>Complete iOS 16 Jailbreak Guide</h3>
-        <p>Follow the palera1n method step by step, including requirements and troubleshooting.</p>
-        <a href="how-to-jailbreak.html">Read tutorial</a>
-      </article>
-
-      <article class="card">
-        <div class="icon"><i class="fas fa-battery-half" aria-hidden="true"></i></div>
-        <h3>Remove the Battery Service Message</h3>
-        <p>Learn how to restore battery-health readings and remove the service message using 3uTools.</p>
-        <a href="remove-service-message-iphone.html">Read tutorial</a>
-      </article>
+      <article class="card"><div class="icon"><i class="fas fa-sync-alt" aria-hidden="true"></i></div><h3>Convert Rootful Tweaks to Rootless</h3><p>Convert older packages for Dopamine 2, XinaA15 and palera1n with troubleshooting guidance.</p><a href="convert-rootful-to-rootless.html">Read guide</a></article>
+      <article class="card"><div class="icon"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></div><h3>Free iOS 16 Rootless Tweaks</h3><p>Browse 25+ useful rootless tweaks with repositories and installation instructions.</p><a href="ios16-rootless-tweaks.html">View tweaks</a></article>
+      <article class="card"><div class="icon"><i class="fas fa-mobile-alt" aria-hidden="true"></i></div><h3>Complete iOS 16 Jailbreak Guide</h3><p>Follow the palera1n method step by step, including requirements and troubleshooting.</p><a href="how-to-jailbreak.html">Read tutorial</a></article>
+      <article class="card"><div class="icon"><i class="fas fa-battery-half" aria-hidden="true"></i></div><h3>Remove the Battery Service Message</h3><p>Learn how to restore battery-health readings and remove the service message using 3uTools.</p><a href="remove-service-message-iphone.html">Read tutorial</a></article>
     </section>
 
     <section class="video-cta">
