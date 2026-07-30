@@ -25,6 +25,9 @@ jobs:
       - name: Apply bullet-speed PDF loading
         run: python3 NextPDF/apply_bullet_speed_patch.py
 
+      - name: Connect PDF library to editor
+        run: python3 NextPDF/apply_library_router_patch.py
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
