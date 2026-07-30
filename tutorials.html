@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#6a11cb">
   <title>Jailbreak Tutorials | Next Solution</title>
-  <meta name="description" content="Browse Next Solution's free iPhone jailbreak, rootless tweak, conversion, and battery guides.">
+  <meta name="description" content="Browse Next Solution's free iPhone jailbreak, PhoneAura, rootless tweak, conversion, and battery guides.">
   <link rel="canonical" href="https://nextsolution.cc/tutorials.html">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -127,6 +127,51 @@
       font-weight: 800;
       touch-action: manipulation;
     }
+    .card.featured {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(300px, .95fr) minmax(0, 1.05fr);
+      min-height: 0;
+      padding: 0;
+      overflow: hidden;
+      border-color: rgba(106,17,203,.3);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(37,117,252,.13), transparent 45%),
+        var(--surface);
+    }
+    .featured-media {
+      min-height: 320px;
+      background: #07111f;
+      overflow: hidden;
+    }
+    .featured-media img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 320px;
+      object-fit: cover;
+    }
+    .featured-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+    }
+    .featured-body h3 {
+      margin: 1rem 0 .55rem;
+      font-size: clamp(1.65rem, 4vw, 2.45rem);
+      line-height: 1.12;
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0 0 1.15rem; }
+    .tag {
+      padding: .35rem .65rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(37,117,252,.07);
+      font-size: .78rem;
+      font-weight: 800;
+    }
     .video-cta {
       margin-top: 2rem;
       padding: 1.35rem;
@@ -143,6 +188,8 @@
     @media (max-width: 760px) {
       header { align-items: stretch; flex-direction: column; }
       nav { width: 100%; }
+      .card.featured { grid-template-columns: 1fr; }
+      .featured-media, .featured-media img { min-height: 230px; }
     }
     @media (hover: none) { .card:hover { transform: none; } }
     @media (prefers-reduced-motion: reduce) {
@@ -174,6 +221,24 @@
     </div>
 
     <section class="grid" aria-label="Tutorial guides">
+      <article class="card featured">
+        <a class="featured-media" href="phoneaura-tweak-ios16.html" aria-label="Open the PhoneAura 0.4.15 guide" style="padding:0; border-radius:0; background:none;">
+          <img src="assets/phoneaura/phoneaura-hero.svg" alt="PhoneAura 0.4.15 redesigned iOS 16 Phone app concept" width="1600" height="900" loading="eager">
+        </a>
+        <div class="featured-body">
+          <div class="icon"><i class="fas fa-phone-volume" aria-hidden="true"></i></div>
+          <h3>PhoneAura 0.4.15 — Complete Phone App Redesign</h3>
+          <div class="tags" aria-label="PhoneAura compatibility">
+            <span class="tag">iOS 16+</span>
+            <span class="tag">RootHide</span>
+            <span class="tag">Rootless</span>
+            <span class="tag">Free download</span>
+          </div>
+          <p>Redesign Favorites, Recents, Contacts and Keypad. Includes fixed saved-number suggestions, smart call filters, Number Options, direct DEB downloads and long-press Cut, Copy and Paste controls.</p>
+          <a href="phoneaura-tweak-ios16.html">Read guide &amp; download</a>
+        </div>
+      </article>
+
       <article class="card">
         <div class="icon"><i class="fas fa-sync-alt" aria-hidden="true"></i></div>
         <h3>Convert Rootful Tweaks to Rootless</h3>
