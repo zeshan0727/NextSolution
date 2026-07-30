@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>items</key>
+  <array>
+    <dict>
+      <key>cell</key><string>PSGroupCell</string>
+      <key>label</key><string>Next Home Lock Diagnostics</string>
+      <key>footerText</key><string>These values separate package installation from SpringBoard injection, gesture attachment, touch filtering and the lock command.</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Installed Version</string>
+      <key>get</key><string>installedVersion</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>SpringBoard Injection</string>
+      <key>get</key><string>injectionStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Last Loaded</string>
+      <key>get</key><string>loadedAtStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Root Folder Hook</string>
+      <key>get</key><string>rootFolderStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Gesture Attachment</string>
+      <key>get</key><string>gestureStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSGroupCell</string>
+      <key>label</key><string>Live Gesture Results</string>
+      <key>footerText</key><string>After testing a double-tap, return here and press Refresh Diagnostics.</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Last Touch Decision</string>
+      <key>get</key><string>lastTouchStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Last Gesture</string>
+      <key>get</key><string>lastGestureStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Test Command</string>
+      <key>get</key><string>testCommandStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSTitleValueCell</string>
+      <key>label</key><string>Last Lock Route</string>
+      <key>get</key><string>lastLockStatus</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSButtonCell</string>
+      <key>label</key><string>Test Lock Now</string>
+      <key>action</key><string>testLock</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSButtonCell</string>
+      <key>label</key><string>Refresh Diagnostics</string>
+      <key>action</key><string>refreshStatus</string>
+    </dict>
+  </array>
+</dict>
+</plist>
