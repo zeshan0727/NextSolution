@@ -1,0 +1,7 @@
+{
+    entry = {
+        bundle = NextHomeLockPreferences;
+        cell = PSLinkCell;
+        label = "Next Home Lock";
+    };
+}
