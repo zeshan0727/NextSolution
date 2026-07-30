@@ -28,6 +28,9 @@ jobs:
       - name: Connect PDF library to editor
         run: python3 NextPDF/apply_library_router_patch.py
 
+      - name: Fix PDFKit SwiftUI render loop
+        run: python3 NextPDF/apply_render_loop_fix.py
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
