@@ -1,0 +1,97 @@
+name: Ensure AdSense sitewide
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.html"
+      - "ads.txt"
+      - ".github/workflows/adsense-sitewide.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: adsense-sitewide-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ensure-adsense:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Add AdSense code and maintain ads.txt
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          publisher_id = "ca-pub-4770123899731214"
+          adsense_code = (
+              '  <script async src="https://pagead2.googlesyndication.com/pagead/js/'
+              'adsbygoogle.js?client=ca-pub-4770123899731214" '
+              'crossorigin="anonymous"></script>'
+          )
+
+          changed = []
+          for path in sorted(Path('.').rglob('*.html')):
+              if any(part in {'.git', 'node_modules'} for part in path.parts):
+                  continue
+
+              text = path.read_text(encoding='utf-8')
+              if publisher_id in text:
+                  continue
+
+              updated, count = re.subn(
+                  r'(?i)</head\s*>',
+                  adsense_code + '\n</head>',
+                  text,
+                  count=1,
+              )
+              if count:
+                  path.write_text(updated, encoding='utf-8')
+                  changed.append(str(path))
+
+          Path('ads.txt').write_text(
+              'google.com, pub-4770123899731214, DIRECT, f08c47fec0942fa0\n',
+              encoding='utf-8',
+          )
+
+          privacy = Path('privacy.html')
+          if privacy.exists():
+              text = privacy.read_text(encoding='utf-8')
+              old = (
+                  '    <h2>Website and advertising data</h2>\n'
+                  '    <p>The website may use standard hosting logs, cookies, or similar technologies for security, performance, analytics, and advertising. Third-party services such as Google AdSense and YouTube may process information according to their own privacy policies.</p>'
+              )
+              new = (
+                  '    <h2>Website, cookies and advertising</h2>\n'
+                  '    <p>The website may use standard hosting logs, cookies, device identifiers, or similar technologies for security, performance, analytics, and advertising.</p>\n'
+                  '    <p>Google AdSense may use cookies or similar technologies to show, measure, and personalize advertisements. Depending on your location and choices, ads may be personalized or non-personalized. Google and its advertising partners may process information such as your device, browser, approximate location, and interactions with ads according to their own policies.</p>\n'
+                  '    <p>You can learn how Google uses advertising data at <a href="https://policies.google.com/technologies/ads" rel="noopener noreferrer">Google advertising technologies</a> and manage ad personalization at <a href="https://adssettings.google.com/" rel="noopener noreferrer">Google Ads Settings</a>.</p>\n'
+                  '    <p>Where required, a consent message may be shown before advertising cookies or personalized ads are used.</p>'
+              )
+              if old in text:
+                  privacy.write_text(text.replace(old, new, 1), encoding='utf-8')
+                  changed.append('privacy.html')
+
+          print('Updated HTML files:', ', '.join(changed) if changed else 'none')
+          PY
+
+      - name: Commit updates
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "AdSense is already present on every page."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Add Google AdSense across all website pages"
+          git push
