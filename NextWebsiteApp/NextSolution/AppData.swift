@@ -7,8 +7,8 @@ enum AppData {
     static let instagramURL = URL(string: "https://instagram.com/nextsolut1on")!
     static let emailURL = URL(string: "mailto:NextSolution@zeshanbarvi.uk")!
     static let githubURL = URL(string: "https://github.com/zeshan0727/NextSolution")!
-    static let repoURL = URL(string: "https://zeshan0727.github.io/")!
-    static let sileoURL = URL(string: "sileo://source/https://zeshan0727.github.io/")!
+    static let repoURL = URL(string: "https://nextsolution.cc/")!
+    static let sileoURL = URL(string: "sileo://source/https://nextsolution.cc/")!
 
     static let tutorials: [Tutorial] = [
         Tutorial(
@@ -183,7 +183,7 @@ enum AppData {
             version: "0.4.15",
             kind: .package,
             icon: "phone.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.15_RootHide_iOS16.deb")!,
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.15_RootHide_iOS16.deb")!,
             fileName: "PhoneAura_0.4.15_RootHide_iOS16.deb",
             externalOnly: false
         ),
@@ -194,7 +194,7 @@ enum AppData {
             version: "0.4.15",
             kind: .package,
             icon: "phone.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.15_Rootless_iOS16.deb")!,
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.15_Rootless_iOS16.deb")!,
             fileName: "PhoneAura_0.4.15_Rootless_iOS16.deb",
             externalOnly: false
         ),
