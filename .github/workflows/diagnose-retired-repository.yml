@@ -1,0 +1,101 @@
+name: Diagnose Retired Repository Migration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-retired-repository.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Test every retired package and depiction URL
+        shell: bash
+        run: |
+          set +e
+          REPORT="$RUNNER_TEMP/retired-repository-migration.txt"
+          python3 - <<'PY' > "$REPORT" 2>&1
+          import hashlib
+          import re
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          text = Path('Packages').read_text()
+          stanzas = [x.strip() for x in re.split(r'\n\s*\n', text) if x.strip()]
+          old_raw = 'https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/'
+          old_site = 'https://zeshan0727.github.io/'
+          failures = 0
+
+          def field(stanza, name):
+              match = re.search(rf'^{re.escape(name)}:\s*(.+)$', stanza, re.M)
+              return match.group(1).strip() if match else None
+
+          def get(url):
+              request = urllib.request.Request(url, headers={'User-Agent': 'NextSolution-Migration-Check/1.0'})
+              with urllib.request.urlopen(request, timeout=45) as response:
+                  return response.read()
+
+          print('Retired repository migration diagnostics')
+          print('================================================')
+          for stanza in stanzas:
+              package = field(stanza, 'Package') or '?'
+              version = field(stanza, 'Version') or '?'
+              filename = field(stanza, 'Filename')
+              if filename and 'zeshan0727.github.io' in filename:
+                  url = filename
+                  if filename.startswith(old_site + 'debfiles/'):
+                      url = old_raw + 'debfiles/' + filename.rsplit('/', 1)[-1]
+                  print(f'PACKAGE {package} {version}: {url}')
+                  try:
+                      data = get(url)
+                      expected = field(stanza, 'SHA256')
+                      actual = hashlib.sha256(data).hexdigest()
+                      print(f'  OK bytes={len(data)} sha256={actual}')
+                      if expected and expected != actual:
+                          failures += 1
+                          print(f'  FAIL expected_sha256={expected}')
+                  except Exception as error:
+                      failures += 1
+                      print(f'  FAIL {type(error).__name__}: {error}')
+
+              depiction = field(stanza, 'Depiction')
+              if depiction and depiction.startswith(old_site):
+                  relative = depiction[len(old_site):]
+                  url = old_raw + relative
+                  print(f'DEPICTION {package} {version}: {url}')
+                  try:
+                      data = get(url)
+                      print(f'  OK bytes={len(data)}')
+                  except Exception as error:
+                      failures += 1
+                      print(f'  FAIL {type(error).__name__}: {error}')
+
+          print('================================================')
+          print(f'FAILURES={failures}')
+          PY
+
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p diagnostics
+          cp "$REPORT" diagnostics/retired-repository-migration.txt
+          git config user.name "Next Solution Diagnostic Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add diagnostics/retired-repository-migration.txt
+          git commit -m "Record retired repository migration diagnostics"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            git push origin HEAD:main && exit 0
+            sleep $((attempt * 3))
+          done
+          exit 1
