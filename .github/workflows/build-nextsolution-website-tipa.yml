@@ -1,4 +1,4 @@
-name: Build Next Solution Website TIPA
+name: Build Native Next Solution TIPA
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: build-nextsolution-website-tipa
+  group: build-native-nextsolution-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,6 +29,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Generate fully native SwiftUI source
+        run: python3 NextWebsiteApp/apply_native_swiftui_app.py
+
+      - name: Verify browser wrapper is removed
+        run: |
+          ! grep -R "import WebKit\|WKWebView" NextWebsiteApp/NextSolution --include='*.swift'
+          grep -R "struct HomeView\|struct TutorialsView\|struct VideosView\|struct DownloadsView\|struct UploadsView\|struct FAQView" NextWebsiteApp/NextSolution/Views.swift
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -61,7 +69,7 @@ jobs:
           BUILD_STATUS=${PIPESTATUS[0]}
           echo "exit_code=$BUILD_STATUS" >> "$GITHUB_OUTPUT"
           if [ "$BUILD_STATUS" -eq 0 ]; then
-            echo "SUCCESS" > build-output/build-status.txt
+            echo "SUCCESS - Fully native SwiftUI build" > build-output/build-status.txt
           else
             echo "FAILED (xcodebuild exit code $BUILD_STATUS)" > build-output/build-status.txt
           fi
@@ -71,37 +79,38 @@ jobs:
         if: steps.build.outputs.exit_code == '0'
         working-directory: NextWebsiteApp
         run: |
-          rm -rf Payload NextSolution-1.0.0.tipa
+          rm -rf Payload NextSolution-Native-2.0.0.tipa
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/NextSolution.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextSolution-1.0.0.tipa
-          cp NextSolution-1.0.0.tipa build-output/NextSolution-1.0.0.tipa
-          shasum -a 256 build-output/NextSolution-1.0.0.tipa > build-output/NextSolution-1.0.0.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextSolution-Native-2.0.0.tipa
+          cp NextSolution-Native-2.0.0.tipa build-output/NextSolution-Native-2.0.0.tipa
+          shasum -a 256 build-output/NextSolution-Native-2.0.0.tipa > build-output/NextSolution-Native-2.0.0.sha256
 
-      - name: Publish build result to repository
+      - name: Publish native source and build result
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: NextWebsiteApp
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add NextSolution/*.swift project.yml
           git add -f build-output/build-status.txt build-output/xcodebuild.log
-          if [ -f build-output/NextSolution-1.0.0.tipa ]; then
-            git add -f build-output/NextSolution-1.0.0.tipa build-output/NextSolution-1.0.0.sha256
+          if [ -f build-output/NextSolution-Native-2.0.0.tipa ]; then
+            git add -f build-output/NextSolution-Native-2.0.0.tipa build-output/NextSolution-Native-2.0.0.sha256
           else
-            git rm -f --ignore-unmatch build-output/NextSolution-1.0.0.tipa build-output/NextSolution-1.0.0.sha256
+            git rm -f --ignore-unmatch build-output/NextSolution-Native-2.0.0.tipa build-output/NextSolution-Native-2.0.0.sha256
           fi
-          git commit -m "Publish Next Solution website TIPA" || true
+          git commit -m "Publish native Next Solution 2.0.0" || true
           git pull --rebase origin main
           git push origin HEAD:main
 
-      - name: Upload TIPA artifact
+      - name: Upload native TIPA artifact
         if: steps.build.outputs.exit_code == '0'
         uses: actions/upload-artifact@v4
         with:
-          name: NextSolution-Website-TIPA
+          name: NextSolution-Native-TIPA
           path: |
-            NextWebsiteApp/NextSolution-1.0.0.tipa
-            NextWebsiteApp/build-output/NextSolution-1.0.0.sha256
+            NextWebsiteApp/NextSolution-Native-2.0.0.tipa
+            NextWebsiteApp/build-output/NextSolution-Native-2.0.0.sha256
           if-no-files-found: error
 
       - name: Fail workflow when build failed
