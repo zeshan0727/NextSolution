@@ -1,0 +1,50 @@
+name: Build Next Media 1.4.1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [next-media-v1]
+    paths:
+      - "NextMediaApp/**"
+      - "NextMediaPatch/**"
+      - ".github/workflows/build-nextmedia.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "NextMediaApp/**"
+      - "NextMediaPatch/**"
+      - ".github/workflows/build-nextmedia.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Build and verify Next Media 1.4.1
+        run: |
+          mkdir -p diagnostics
+          set -o pipefail
+          bash -x NextMediaApp/build141.sh 2>&1 | tee diagnostics/build141.log
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMedia-1.4.1
+          if-no-files-found: warn
+          path: |
+            projects/NextMedia/dist/NextMedia-1.4.1.ipa
+            projects/NextMedia/dist/NextMedia-1.4.1.tipa
+            projects/NextMedia/dist/NextMedia-1.4.1-source.zip
+            projects/NextMedia/dist/SHA256SUMS.txt
+            projects/NextMedia/xcodebuild.log
+            projects/NextMedia/xcodegen.log
+            projects/NextMedia/icon-step.log
+            diagnostics/build141.log
