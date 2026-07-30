@@ -6,86 +6,16 @@
   <array>
     <dict>
       <key>cell</key><string>PSGroupCell</string>
-      <key>label</key><string>Next Home Lock 1.0.4</string>
-      <key>footerText</key><string>This build uses the proven SBIconListView background-touch method and SpringBoard simulated lock-button action. The rows below show live runtime state, not only package installation.</string>
+      <key>label</key><string>Next Home Lock</string>
+      <key>footerText</key><string>Double-tap an empty Home Screen area to lock your device.</string>
     </dict>
     <dict>
       <key>cell</key><string>PSSwitchCell</string>
-      <key>label</key><string>Enable Double-Tap Lock</string>
+      <key>label</key><string>Enable Next Home Lock</string>
       <key>key</key><string>enabled</string>
       <key>default</key><true/>
       <key>get</key><string>readPreferenceValue:</string>
       <key>set</key><string>setPreferenceValue:specifier:</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Installed Version</string>
-      <key>get</key><string>installedVersion</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Runtime Method</string>
-      <key>get</key><string>implementationStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>SpringBoard Injection</string>
-      <key>get</key><string>injectionStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Last Loaded</string>
-      <key>get</key><string>loadedAtStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSGroupCell</string>
-      <key>label</key><string>Home Screen Hook</string>
-      <key>footerText</key><string>After respringing, tap an empty Home Screen area once, return here, and press Refresh Diagnostics. A reached touch hook proves the working code is running in SpringBoard.</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Icon List Class</string>
-      <key>get</key><string>iconListClassStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Touch Hook</string>
-      <key>get</key><string>touchHookStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Last Tap</string>
-      <key>get</key><string>lastTapStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSGroupCell</string>
-      <key>label</key><string>Lock Command</string>
-      <key>footerText</key><string>Test Lock Now bypasses the double-tap trigger. If it locks, injection and the lock route work; only the Home Screen touch path remains to test.</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Primary Lock Selector</string>
-      <key>get</key><string>lockSelectorStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Test Command</string>
-      <key>get</key><string>testCommandStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSTitleValueCell</string>
-      <key>label</key><string>Last Lock Route</string>
-      <key>get</key><string>lastLockStatus</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSButtonCell</string>
-      <key>label</key><string>Test Lock Now</string>
-      <key>action</key><string>testLock</string>
-    </dict>
-    <dict>
-      <key>cell</key><string>PSButtonCell</string>
-      <key>label</key><string>Refresh Diagnostics</string>
-      <key>action</key><string>refreshStatus</string>
     </dict>
   </array>
 </dict>
