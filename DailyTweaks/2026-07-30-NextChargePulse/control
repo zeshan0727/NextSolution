@@ -1,0 +1,10 @@
+Package: com.nextsolution.nextchargepulse
+Name: Next Charge Pulse
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Depends: firmware (>= 15.0), mobilesubstrate
+Description: Gives one clear success haptic when external power is connected. No settings and no background data collection.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Priority: optional
