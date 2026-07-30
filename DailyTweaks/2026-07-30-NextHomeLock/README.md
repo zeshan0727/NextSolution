@@ -2,6 +2,12 @@
 
 Next Home Lock adds one focused feature: double-tap a genuinely empty area of the Home Screen to lock the device.
 
+## Native feature verification
+
+Apple's iPhone User Guide documents the stock manual lock action as pressing the side button, with automatic locking controlled separately. AssistiveTouch can expose a Lock Screen control, but iOS 16 does not provide a built-in option to double-tap an empty Home Screen area to lock. The existing Next Solution source and package indexes were also searched for this exact feature before implementation.
+
+This replaces the withdrawn Next Charge Pulse test, which duplicated iOS charger-connect feedback.
+
 ## Compatibility
 
 - iOS 15.0 and later
