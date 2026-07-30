@@ -8,8 +8,8 @@ settings:
     PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextpdf
     SWIFT_VERSION: 5.9
     TARGETED_DEVICE_FAMILY: "1,2"
-    MARKETING_VERSION: 1.2.0
-    CURRENT_PROJECT_VERSION: 76
+    MARKETING_VERSION: 1.2.1
+    CURRENT_PROJECT_VERSION: 77
 targets:
   NextPDF:
     type: application
