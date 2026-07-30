@@ -6,23 +6,29 @@ on:
       - main
     paths:
       - ".github/scripts/publish-phoneaura-blog.py"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/scripts/publish-phoneaura-blog.py"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: publish-phoneaura-tutorial
+  group: publish-phoneaura-tutorial-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout website
+      - name: Checkout website branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Add PhoneAura to Tutorials and sitemap
         run: python3 .github/scripts/publish-phoneaura-blog.py
@@ -34,7 +40,9 @@ jobs:
           grep -q 'phoneaura-tweak-ios16.html' index.html
           grep -q 'https://nextsolution.cc/phoneaura-tweak-ios16.html' sitemap.xml
 
-      - name: Publish website changes
+      - name: Commit generated website changes
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -44,4 +52,4 @@ jobs:
             exit 0
           fi
           git commit -m "Publish PhoneAura 0.4.15 tutorial"
-          git push origin HEAD:main
+          git push origin HEAD:"$TARGET_BRANCH"
