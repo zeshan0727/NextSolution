@@ -1,0 +1,171 @@
+name: Complete Retired Repository Migration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/complete-retired-repository-migration.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: complete-retired-repository-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install compression tools
+        run: sudo apt-get update && sudo apt-get install -y xz-utils zstd
+
+      - name: Download verified historical packages and depictions
+        shell: bash
+        run: |
+          set -euo pipefail
+          OLD="https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main"
+          mkdir -p debfiles depictions
+
+          download() {
+            local file="$1" sha="$2"
+            curl -fL --retry 4 --retry-delay 2 -o "debfiles/$file" "$OLD/debfiles/$file"
+            echo "$sha  debfiles/$file" | sha256sum -c -
+          }
+
+          download "DailyLedgerSMSImport-1.4.0-roothide.deb" "757cb7e0626855d40196458e1bd7ed63d1345749878c16efd640faab8d1af33a"
+          download "NextMessage_1.1.0_RootHide_iOS16.deb" "3a5d181776dbb892510f0cd18e02c3dc9aa53baa3403d290b3633ed248d49140"
+          download "NextMessage_1.1.0_Rootless_iOS16.deb" "b371c2cecc2c1955e6f8d7d3cddc7e573b3c31574ef907bebac6dc1ad595dae2"
+          download "ShakeToRun_RootHide_1.1.0_iOS16.deb" "24ec6ef33be3fc7d27554d28dc5ef9d4b3ba601fb99c1311094db1d2f8584f8e"
+          download "NextAura_4.4.8_Rootless_iOS16.deb" "efdbc4e146fde4fd4f49257f28d1ea49228c51e15226fa67bcc46c78b70e630f"
+          download "NextAura_4.4.8_RootHide_iOS16.deb" "158d1f8b26992b879dbeef36d8c0e49de5a31d2b30b4e2a949d592a55ec437a3"
+          download "PhoneAura_0.4.16_Rootless_iOS16.deb" "953d3eadfbc379bc57349cb92ed2cad8fae78d9c35092c33bce437573fe4fbc4"
+          download "PhoneAura_0.4.16_RootHide_iOS16.deb" "c5e8f0c0e9e2b46adf82e4456d36853fd758ece9227e55766affebb9e8e90c2d"
+
+          curl -fL --retry 4 -o depictions/nextmessage.html "$OLD/depictions/nextmessage.html"
+          curl -fL --retry 4 -o depictions/nextaura.html "$OLD/depictions/nextaura.html"
+          curl -fL --retry 4 -o depictions/phoneaura.html "$OLD/depictions/phoneaura.html"
+
+      - name: Rewrite live indexes and active text references
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          packages = root / 'Packages'
+          text = packages.read_text(encoding='utf-8')
+
+          # Every old package URL becomes a local file under the active repository.
+          text = re.sub(
+              r'^Filename: https://raw\.githubusercontent\.com/zeshan0727/zeshan0727\.github\.io/main/debfiles/([^\n]+)$',
+              r'Filename: ./debfiles/\1', text, flags=re.M
+          )
+          text = re.sub(
+              r'^Filename: https://zeshan0727\.github\.io/debfiles/([^\n]+)$',
+              r'Filename: ./debfiles/\1', text, flags=re.M
+          )
+          text = text.replace('Homepage: https://zeshan0727.github.io/', 'Homepage: https://nextsolution.cc/')
+          text = re.sub(
+              r'^Depiction: https://zeshan0727\.github\.io/([^\n]+)$',
+              r'Depiction: https://nextsolution.cc/\1', text, flags=re.M
+          )
+          text = re.sub(
+              r'^Icon: https://zeshan0727\.github\.io/[^\n]+$',
+              'Icon: https://nextsolution.cc/CydiaIcon.png', text, flags=re.M
+          )
+          packages.write_text(text, encoding='utf-8')
+
+          replacements = (
+              ('https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/',
+               'https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/'),
+              ('sileo://source/https://zeshan0727.github.io/',
+               'sileo://source/https://nextsolution.cc/'),
+              ('https://zeshan0727.github.io/', 'https://nextsolution.cc/'),
+              ('http://zeshan0727.github.io/', 'https://nextsolution.cc/'),
+          )
+          allowed = {'.html', '.htm', '.md', '.txt', '.xml', '.json', '.js', '.css', '.swift', '.m', '.mm', '.h', '.xm', '.plist', '.py', '.sh'}
+          skip_names = {
+              'migrate-retired-repository.yml',
+              'diagnose-retired-repository.yml',
+              'complete-retired-repository-migration.yml',
+              'retired-repository-migration.txt',
+          }
+          for path in root.rglob('*'):
+              if not path.is_file() or '.git' in path.parts or path.name in skip_names:
+                  continue
+              if path.suffix.lower() not in allowed and path.name not in {'Packages', 'Release'}:
+                  continue
+              try:
+                  current = path.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              updated = current
+              for old, new in replacements:
+                  updated = updated.replace(old, new)
+              if updated != current:
+                  path.write_text(updated, encoding='utf-8')
+                  print(f'Updated {path}')
+          PY
+
+          ! grep -E '^(Filename|Homepage|Depiction|Icon): .*zeshan0727\.github\.io' Packages
+          for file in \
+            DailyLedgerSMSImport-1.4.0-roothide.deb \
+            NextMessage_1.1.0_RootHide_iOS16.deb \
+            NextMessage_1.1.0_Rootless_iOS16.deb \
+            ShakeToRun_RootHide_1.1.0_iOS16.deb \
+            NextAura_4.4.8_Rootless_iOS16.deb \
+            NextAura_4.4.8_RootHide_iOS16.deb \
+            PhoneAura_0.4.16_Rootless_iOS16.deb \
+            PhoneAura_0.4.16_RootHide_iOS16.deb; do
+              grep -q "^Filename: ./debfiles/$file$" Packages
+              test -f "debfiles/$file"
+          done
+
+          grep -q '^Depiction: https://nextsolution.cc/depictions/nextmessage.html$' Packages
+          grep -q '^Depiction: https://nextsolution.cc/depictions/nextaura.html$' Packages
+          grep -q '^Depiction: https://nextsolution.cc/depictions/phoneaura.html$' Packages
+
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+
+          python3 - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import re
+          path = Path('Release')
+          text = path.read_text(encoding='utf-8')
+          match = re.search(r'^Version: (\d+)\.(\d+)\.(\d+)$', text, re.M)
+          if match:
+              a, b, c = map(int, match.groups())
+              text = re.sub(r'^Version: .*$', f'Version: {a}.{b}.{c + 1}', text, flags=re.M)
+          text = re.sub(r'^Date: .*$', 'Date: ' + datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'), text, flags=re.M)
+          text = re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png', text, flags=re.M)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit migrated repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Next Solution Migration Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Fully retire old Next Solution repository links"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            git push origin HEAD:main && exit 0
+            sleep $((attempt * 3))
+          done
+          exit 1
