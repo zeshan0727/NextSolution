@@ -6,11 +6,13 @@ on:
       - main
     paths:
       - ".github/scripts/publish-phoneaura-blog.py"
+      - ".github/workflows/publish-phoneaura-tutorial.yml"
   pull_request:
     branches:
       - main
     paths:
       - ".github/scripts/publish-phoneaura-blog.py"
+      - ".github/workflows/publish-phoneaura-tutorial.yml"
   workflow_dispatch:
 
 permissions:
@@ -30,15 +32,26 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Add PhoneAura to Tutorials and sitemap
+      - name: Update PhoneAura article and listings
         run: python3 .github/scripts/publish-phoneaura-blog.py
 
-      - name: Validate generated links
+      - name: Validate generated website changes
         run: |
           test -f phoneaura-tweak-ios16.html
+          test -f tutorials.html
           test -f assets/phoneaura/phoneaura-hero.svg
-          grep -q 'phoneaura-tweak-ios16.html' index.html
+          grep -q 'PHONEAURA_RECENT_CARD_START' index.html
+          grep -q '<h2>Recent tutorials</h2>' index.html
+          grep -q 'PhoneAura 0.4.16' tutorials.html
+          grep -q 'PhoneAura 0.4.16' phoneaura-tweak-ios16.html
+          grep -q 'aria-current="page">Tutorials' phoneaura-tweak-ios16.html
+          grep -q 'PhoneAura_0.4.16_RootHide_iOS16.deb' phoneaura-tweak-ios16.html
+          grep -q 'PhoneAura_0.4.16_Rootless_iOS16.deb' phoneaura-tweak-ios16.html
           grep -q 'https://nextsolution.cc/phoneaura-tweak-ios16.html' sitemap.xml
+          if grep -q 'PhoneAura_0.4.15' phoneaura-tweak-ios16.html; then
+            echo 'Old 0.4.15 article reference remains.'
+            exit 1
+          fi
 
       - name: Commit generated website changes
         env:
@@ -46,10 +59,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html sitemap.xml
+          git add index.html tutorials.html phoneaura-tweak-ios16.html sitemap.xml
           if git diff --cached --quiet; then
-            echo "PhoneAura tutorial listing is already current."
+            echo "PhoneAura tutorial and listings are already current."
             exit 0
           fi
-          git commit -m "Publish PhoneAura 0.4.15 tutorial"
+          git commit -m "Publish PhoneAura 0.4.16 tutorial and recent card"
           git push origin HEAD:"$TARGET_BRANCH"
