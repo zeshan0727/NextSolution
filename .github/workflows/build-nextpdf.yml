@@ -36,6 +36,9 @@ jobs:
           python3 NextPDF/apply_editor_quality_patch.py
           python3 NextPDF/apply_editor_quality_compile_fix.py
 
+      - name: Rebuild lines and enable pinch resizing
+        run: python3 NextPDF/apply_true_text_resize_patch.py
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
