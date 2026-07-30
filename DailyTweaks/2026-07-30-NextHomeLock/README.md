@@ -1,12 +1,18 @@
-# Next Home Lock 1.0.0
+# Next Home Lock 1.0.1
 
 Next Home Lock adds one focused feature: double-tap a genuinely empty area of the Home Screen to lock the device.
+
+## Version 1.0.1 fix
+
+Version 1.0.0 injected into SpringBoard but attached its recognizer through `SBIconController viewDidLoad`. That is not a dependable Home Screen view lifecycle point on iOS 16, so the recognizer could remain uninstalled.
+
+Version 1.0.1 installs the recognizer directly on `SBRootFolderView`, the Home Screen container, from `didMoveToWindow` with an idempotent `layoutSubviews` fallback. It also keeps the normal `SBLockScreenManager` route and adds a dynamically resolved `SBSLockDevice` fallback.
 
 ## Native feature verification
 
 Apple's iPhone User Guide documents the stock manual lock action as pressing the side button, with automatic locking controlled separately. AssistiveTouch can expose a Lock Screen control, but iOS 16 does not provide a built-in option to double-tap an empty Home Screen area to lock. The existing Next Solution source and package indexes were also searched for this exact feature before implementation.
 
-This replaces the withdrawn Next Charge Pulse test, which duplicated iOS charger-connect feedback.
+This replaced the withdrawn Next Charge Pulse test, which duplicated iOS charger-connect feedback.
 
 ## Compatibility
 
@@ -18,17 +24,18 @@ This replaces the withdrawn Next Charge Pulse test, which duplicated iOS charger
 
 ## Behaviour
 
-The gesture is installed on the Home Screen controller. It locks only after a two-tap gesture on a recognised Home Screen background surface.
+The gesture is installed on the actual Home Screen root-folder view. It locks only after a two-tap gesture on a recognised Home Screen background surface.
 
-Touches are rejected when they originate from or pass through icons, folders, the dock, widgets, page controls, search, App Library, Today View, buttons, Control Center, the app switcher, or notification-style platter views.
+Touches are rejected when they originate from or pass through icons, folders, the dock, widgets, page controls, search, App Library, Today View, buttons, Control Center, the app switcher, context menus, editing UI, or notification-style platter views. The gesture is also disabled while the Home Screen is in icon-editing mode.
 
 The recognizer does not cancel normal touches. There is no daemon, analytics, clipboard access, network activity, or background data collection.
 
 ## Installation
 
-1. Install the package matching the jailbreak environment.
-2. Respring when requested.
-3. On the Home Screen, double-tap an empty space between icons.
+1. Refresh the Next Solution repository.
+2. Upgrade or install version 1.0.1 for the matching jailbreak environment.
+3. Respring when requested.
+4. On the Home Screen, double-tap an empty space between icons.
 
 ## Uninstall behaviour
 
@@ -36,11 +43,13 @@ Uninstalling the package and respringing removes the gesture completely. No pref
 
 ## Device test checklist
 
+- Confirm Sileo shows version 1.0.1.
 - Double-tap empty Home Screen space locks the device.
 - Single tap does nothing.
 - Double-tapping an app icon does not lock and does not interfere with launching.
 - Double-tapping a widget does not lock.
 - Double-tapping the dock does not lock.
+- The gesture is disabled while icons are being rearranged.
 - Folder, Spotlight/Search, Today View, App Library and Control Center interactions remain normal.
 - No gesture remains after uninstall and respring.
 
@@ -50,4 +59,4 @@ SpringBoard view class names can differ on future iOS versions. The package is c
 
 ## Market comparison
 
-Havoc was reviewed for gesture-oriented rootless tweak patterns. This implementation is original, free, limited to one Home Screen action, and does not copy paid source code, assets, branding or descriptions.
+Havoc and public jailbreak tweak catalogues were reviewed for gesture-oriented rootless tweak patterns. This implementation is original, free, limited to one Home Screen action, and does not copy paid source code, assets, branding or descriptions.
