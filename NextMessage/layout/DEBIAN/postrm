@@ -1,0 +1,5 @@
+#!/bin/sh
+uicache -a >/dev/null 2>&1 || true
+killall -9 Preferences >/dev/null 2>&1 || true
+killall -9 MobileSMS >/dev/null 2>&1 || true
+exit 0
