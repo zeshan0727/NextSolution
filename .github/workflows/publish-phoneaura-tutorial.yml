@@ -1,0 +1,47 @@
+name: Publish PhoneAura Tutorial
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/scripts/publish-phoneaura-blog.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-phoneaura-tutorial
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout website
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add PhoneAura to Tutorials and sitemap
+        run: python3 .github/scripts/publish-phoneaura-blog.py
+
+      - name: Validate generated links
+        run: |
+          test -f phoneaura-tweak-ios16.html
+          test -f assets/phoneaura/phoneaura-hero.svg
+          grep -q 'phoneaura-tweak-ios16.html' index.html
+          grep -q 'https://nextsolution.cc/phoneaura-tweak-ios16.html' sitemap.xml
+
+      - name: Publish website changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html sitemap.xml
+          if git diff --cached --quiet; then
+            echo "PhoneAura tutorial listing is already current."
+            exit 0
+          fi
+          git commit -m "Publish PhoneAura 0.4.15 tutorial"
+          git push origin HEAD:main
