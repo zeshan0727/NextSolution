@@ -13,7 +13,7 @@ enum AppData {
     static let tutorials: [Tutorial] = [
         Tutorial(
             id: "phoneaura",
-            title: "PhoneAura 0.4.15",
+            title: "PhoneAura 0.4.16",
             subtitle: "A complete native Phone app redesign for iOS 16 jailbreaks.",
             icon: "phone.fill",
             tags: ["iOS 16+", "RootHide", "Rootless", "Free"],
@@ -43,7 +43,7 @@ enum AppData {
                 ),
                 TutorialSection(
                     title: "Installation",
-                    body: "Add the Next Solution repository in Sileo, search for PhoneAura, confirm version 0.4.15 and the correct architecture, install, then respring.",
+                    body: "Add the Next Solution repository in Sileo, search for PhoneAura, confirm version 0.4.16 and the correct architecture, install, then respring.",
                     bullets: [
                         "Fully close the Phone app after respring.",
                         "Open Settings → PhoneAura and choose the replacement tabs.",
@@ -180,22 +180,22 @@ enum AppData {
             id: "phoneaura-roothide",
             title: "PhoneAura RootHide",
             detail: "RootHide build for iphoneos-arm64e devices.",
-            version: "0.4.15",
+            version: "0.4.16",
             kind: .package,
             icon: "phone.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.15_RootHide_iOS16.deb")!,
-            fileName: "PhoneAura_0.4.15_RootHide_iOS16.deb",
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.16_RootHide_iOS16.deb")!,
+            fileName: "PhoneAura_0.4.16_RootHide_iOS16.deb",
             externalOnly: false
         ),
         DownloadItem(
             id: "phoneaura-rootless",
             title: "PhoneAura Rootless",
             detail: "Standard rootless build for iphoneos-arm64.",
-            version: "0.4.15",
+            version: "0.4.16",
             kind: .package,
             icon: "phone.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.15_Rootless_iOS16.deb")!,
-            fileName: "PhoneAura_0.4.15_Rootless_iOS16.deb",
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.16_Rootless_iOS16.deb")!,
+            fileName: "PhoneAura_0.4.16_Rootless_iOS16.deb",
             externalOnly: false
         ),
         DownloadItem(
