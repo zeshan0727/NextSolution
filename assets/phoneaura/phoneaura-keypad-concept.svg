@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">PhoneAura smart keypad concept</title>
+  <desc id="desc">A Next Solution themed PhoneAura keypad showing fixed contact suggestions and long press editing.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050816"/><stop offset="1" stop-color="#210c3d"/></linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7b2cff"/><stop offset="1" stop-color="#168dff"/></linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ff4e67"/><stop offset="1" stop-color="#ff8b19"/></linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#000" flood-opacity=".5"/></filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <circle cx="150" cy="120" r="210" fill="#168dff" opacity=".13"/>
+  <circle cx="1050" cy="690" r="240" fill="#8f2cff" opacity=".13"/>
+
+  <g transform="translate(70 88)" font-family="Arial, sans-serif">
+    <text x="0" y="0" fill="#fff" font-size="54" font-weight="800">A keypad that stays still</text>
+    <text x="0" y="46" fill="#9faed0" font-size="23">PhoneAura reserves a fixed space for saved-number suggestions.</text>
+    <text x="0" y="80" fill="#9faed0" font-size="23">No shifting digits. No accidental wrong-number taps.</text>
+
+    <g transform="translate(0 145)">
+      <rect width="430" height="88" rx="24" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".14"/>
+      <circle cx="46" cy="44" r="25" fill="#168dff"/>
+      <path d="M34 44 h24" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+      <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Fixed suggestion area</text>
+      <text x="88" y="62" fill="#9faed0" font-size="17">Matches or “Number not saved”</text>
+    </g>
+    <g transform="translate(0 249)">
+      <rect width="430" height="88" rx="24" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".14"/>
+      <circle cx="46" cy="44" r="25" fill="#7b2cff"/>
+      <path d="M37 36 h18 v18 h-18z" fill="none" stroke="#fff" stroke-width="3"/>
+      <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Long-press edit menu</text>
+      <text x="88" y="62" fill="#9faed0" font-size="17">Cut, Copy and Paste on keypad</text>
+    </g>
+    <g transform="translate(0 353)">
+      <rect width="430" height="88" rx="24" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".14"/>
+      <circle cx="46" cy="44" r="25" fill="#ff6b43"/>
+      <circle cx="40" cy="44" r="3" fill="#fff"/><circle cx="49" cy="44" r="3" fill="#fff"/><circle cx="58" cy="44" r="3" fill="#fff"/>
+      <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Original Number Options</text>
+      <text x="88" y="62" fill="#9faed0" font-size="17">Still available inside the orange card</text>
+    </g>
+    <g transform="translate(0 457)">
+      <rect width="430" height="88" rx="24" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".14"/>
+      <circle cx="46" cy="44" r="25" fill="url(#brand)"/>
+      <path d="M37 48 L46 38 L56 48 L46 58 Z" fill="#fff"/>
+      <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Next Solution shortcut</text>
+      <text x="88" y="62" fill="#9faed0" font-size="17">Upper logo opens the YouTube channel</text>
+    </g>
+  </g>
+
+  <g transform="translate(635 32)" filter="url(#shadow)">
+    <rect width="430" height="736" rx="70" fill="#06070c" stroke="#434861" stroke-width="4"/>
+    <rect x="17" y="17" width="396" height="702" rx="57" fill="#05091a"/>
+    <rect x="148" y="27" width="134" height="34" rx="17" fill="#000"/>
+    <text x="40" y="110" fill="#fff" font-size="40" font-family="Arial, sans-serif" font-weight="800">Keypad</text>
+    <circle cx="362" cy="96" r="29" fill="url(#brand)" stroke="#fff" stroke-opacity=".35"/>
+    <path d="M352 100 L361 90 L371 100 L361 110 Z" fill="#fff"/>
+
+    <rect x="40" y="140" width="350" height="96" rx="25" fill="url(#orange)"/>
+    <text x="215" y="181" fill="#fff" font-size="29" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800">+974 5550 0727</text>
+    <text x="215" y="211" fill="#fff" opacity=".88" font-size="16" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700">Add Number                         •••</text>
+
+    <rect x="40" y="249" width="350" height="70" rx="21" fill="#17213e" stroke="#6c7898" stroke-opacity=".35"/>
+    <text x="215" y="278" fill="#fff" font-size="18" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700">Saved contact suggestion</text>
+    <text x="215" y="302" fill="#9db0d2" font-size="14" text-anchor="middle" font-family="Arial, sans-serif">This card never changes height</text>
+
+    <g transform="translate(56 343)" font-family="Arial, sans-serif" text-anchor="middle">
+      <g fill="#1a2441" stroke="#65718d" stroke-opacity=".3">
+        <rect x="0" y="0" width="92" height="60" rx="18"/><rect x="105" y="0" width="92" height="60" rx="18"/><rect x="210" y="0" width="92" height="60" rx="18"/>
+        <rect x="0" y="72" width="92" height="60" rx="18"/><rect x="105" y="72" width="92" height="60" rx="18"/><rect x="210" y="72" width="92" height="60" rx="18"/>
+        <rect x="0" y="144" width="92" height="60" rx="18"/><rect x="105" y="144" width="92" height="60" rx="18"/><rect x="210" y="144" width="92" height="60" rx="18"/>
+        <rect x="0" y="216" width="92" height="60" rx="18"/><rect x="105" y="216" width="92" height="60" rx="18"/><rect x="210" y="216" width="92" height="60" rx="18"/>
+      </g>
+      <g fill="#fff" font-size="26" font-weight="700">
+        <text x="46" y="39">1</text><text x="151" y="39">2</text><text x="256" y="39">3</text>
+        <text x="46" y="111">4</text><text x="151" y="111">5</text><text x="256" y="111">6</text>
+        <text x="46" y="183">7</text><text x="151" y="183">8</text><text x="256" y="183">9</text>
+        <text x="46" y="255">*</text><text x="151" y="255">0</text><text x="256" y="255">#</text>
+      </g>
+    </g>
+
+    <g transform="translate(138 635)">
+      <rect x="0" y="0" width="116" height="58" rx="29" fill="#31c85a"/>
+      <path d="M48 32 c7 7 16 9 24 2 l7 7 c-13 14-35 8-43-7z" fill="#fff"/>
+      <rect x="139" y="8" width="52" height="44" rx="15" fill="#1a2440"/>
+      <path d="M153 22 h24 l-4 14 h-16z" fill="#c8d1e5"/>
+    </g>
+
+    <g transform="translate(160 210)">
+      <rect x="0" y="0" width="180" height="128" rx="18" fill="#f9f9fb" filter="url(#shadow)"/>
+      <text x="20" y="28" fill="#252735" font-size="14" font-family="Arial, sans-serif" font-weight="700">Phone Number</text>
+      <text x="20" y="60" fill="#252735" font-size="16" font-family="Arial, sans-serif">Cut</text>
+      <text x="75" y="60" fill="#252735" font-size="16" font-family="Arial, sans-serif">Copy</text>
+      <text x="132" y="60" fill="#252735" font-size="16" font-family="Arial, sans-serif">Paste</text>
+      <path d="M20 78 h140" stroke="#d7d8df"/>
+      <text x="20" y="106" fill="#6b6d78" font-size="12" font-family="Arial, sans-serif">Long press the number</text>
+    </g>
+  </g>
+</svg>
