@@ -1,78 +1,101 @@
-# Next Home Lock 1.0.3
+# Next Home Lock 1.0.4
 
-Next Home Lock adds one focused feature: double-tap a genuinely empty area of the Home Screen to lock the device.
+Next Home Lock adds one focused feature: double-tap an empty Home Screen area to lock the device.
 
-## Version history and fixes
+## Why version 1.0.4 is a full rebuild
 
-### 1.0.3 diagnostics release
+Versions 1.0.0–1.0.3 used custom gesture recognizers attached through `SBIconController` or `SBRootFolderView`. Those approaches compiled and packaged correctly but failed on the physical iPhone 14 Pro Max running iOS 16.0 with RootHide.
 
-Version 1.0.3 adds a PreferenceLoader pane under **Settings → Next Home Lock**. It separates the runtime path into visible checkpoints:
+Version 1.0.4 removes that entire implementation. It now follows the established Home Screen path used by Hao Nguyen's open-source **Lock Screen Without Button** tweak:
 
-- package version installed
-- tweak loaded inside SpringBoard
-- `SBRootFolderView` class and hook reached
-- gesture recognizer attached and host class
-- last Home Screen touch accepted or rejected with its reason
-- last double-tap recognition result
-- last lock route selected
-- Settings test command received by SpringBoard
+- hook `SBIconListView`
+- observe its native `touchesEnded:withEvent:` callback
+- read the system touch tap count
+- on the second background tap, ask SpringBoard to perform `_simulateLockButtonPress`
 
-The **Test Lock Now** button sends the Darwin notification `com.nextsolution.nexthomelock.test-lock` to SpringBoard. If that button locks the phone, injection and the lock route are working and the remaining fault is in gesture attachment or filtering. If the command is not received, the pane will show that injection is not active.
+The implementation is extended with iOS 16 targeting, RootHide/rootless packaging, preference control, diagnostics and additional lock fallbacks. The upstream project is GPLv3 and is credited below.
 
-Runtime status is stored locally at `/var/mobile/Library/Preferences/com.nextsolution.nexthomelock.runtime.plist`. No network, analytics, clipboard, message or account data is accessed.
+## Working-tweak patterns adopted
 
-### 1.0.2
+The project structure was also aligned with the working Next Aura and PhoneAura packages in the Next Solution repository:
 
-Version 1.0.1 installed the gesture on `SBRootFolderView`, but the safety filter rejected every touch because the valid root class itself contains the word `Folder`. The filter now recognizes the root container before checking interactive child classes. Folder icons and folder UI remain blocked using narrower class-name checks.
-
-### 1.0.1
-
-Version 1.0.0 injected into SpringBoard but attached its recognizer through `SBIconController viewDidLoad`, which is not a dependable Home Screen view lifecycle point on iOS 16. Version 1.0.1 moved installation to `SBRootFolderView` and added compatible lock fallbacks.
-
-## Native feature verification
-
-Apple's iPhone User Guide documents the stock manual lock action as pressing the side button, with automatic locking controlled separately. AssistiveTouch can expose a Lock Screen control, but iOS 16 does not provide a built-in option to double-tap an empty Home Screen area to lock. The existing Next Solution source and package indexes were also searched for this exact feature before implementation.
+- explicit RootHide package scheme with rootless override support
+- `arm64 arm64e` build architectures
+- iOS 16 target
+- SpringBoard-only injection filter
+- `-Wl,-segalign,4000`
+- a real PreferenceLoader subproject under `/Library/PreferenceBundles`
+- `CFPreferences` for cross-process preferences and runtime diagnostics
+- Darwin notifications for live settings and the Test Lock command
 
 ## Compatibility
 
-- iOS 15.0 and later
-- Primary test target: iPhone 14 Pro Max on iOS 16.0
+- iOS 16.0 and later
+- Primary physical-device target: iPhone 14 Pro Max, iOS 16.0
 - RootHide Bootstrap build
 - Standard rootless build
 - SpringBoard only
-- PreferenceLoader required for diagnostics
+- PreferenceLoader required
 
-## Behaviour
+## Runtime behaviour
 
-The gesture is installed on the actual Home Screen root-folder view. It locks only after a two-tap gesture on a recognized Home Screen background surface.
+`SBIconListView` receives touches on the Home Screen icon-list background. A single tap continues to Apple's original implementation. A double tap requests a device lock and consumes that background double tap.
 
-Touches are rejected when they originate from or pass through icons, folder icons or folder UI, the dock, widgets, page controls, search, App Library, Today View, buttons, Control Center, the app switcher, context menus, editing UI, or notification-style platter views. The gesture is disabled while the Home Screen is in icon-editing mode.
+Lock routes are attempted in this order:
 
-The recognizer does not cancel normal touches. There is no daemon, analytics, clipboard access, network activity, or background data collection.
+1. `SpringBoard _simulateLockButtonPress`
+2. `pluginUserAgent lockAndDimDevice`
+3. `SBLockScreenManager lockUIFromSource:withOptions:`
+4. `SBLockScreenManager lockUIFromSource:`
+5. `SBSLockDevice`
 
-## Installation and diagnostic test
+## Settings diagnostics
+
+Open **Settings → Next Home Lock** after installing and respringing.
+
+The pane shows live values for:
+
+- installed version
+- runtime method
+- SpringBoard injection and PID
+- last load time
+- `SBIconListView` class availability
+- whether the native touch hook has actually run
+- the most recent tap count and view class
+- availability of `_simulateLockButtonPress`
+- whether the Settings test command reached SpringBoard
+- the final lock route selected
+
+The pane uses `CFPreferences` domains rather than a hard-coded physical plist path so RootHide path translation does not hide the runtime status.
+
+## Exact physical-device test
 
 1. Refresh the Next Solution repository.
-2. Upgrade or install version 1.0.3 for the matching jailbreak environment.
-3. Respring when requested.
-4. Open **Settings → Next Home Lock**.
-5. Confirm **SpringBoard Injection** says `Active` and **Gesture Attachment** says `Attached`.
-6. Press **Test Lock Now**. The device should lock immediately if the injected tweak and lock selector are functional.
-7. Unlock, double-tap empty Home Screen space, then return to the diagnostic pane and press **Refresh Diagnostics**.
-8. Report the exact values shown for SpringBoard Injection, Root Folder Hook, Gesture Attachment, Last Touch Decision, Last Gesture, Test Command and Last Lock Route.
+2. Install or upgrade to version 1.0.4 for the correct jailbreak environment.
+3. Perform a full respring.
+4. Open **Settings → Next Home Lock** and confirm **SpringBoard Injection** says `Active`.
+5. Press **Test Lock Now**.
+6. Unlock the phone and tap empty Home Screen space once.
+7. Return to Settings and press **Refresh Diagnostics**. **Touch Hook** should say `Reached`.
+8. Return Home and double-tap the same empty area.
+9. If it does not lock, report the values for SpringBoard Injection, Icon List Class, Touch Hook, Last Tap, Test Command and Last Lock Route.
+
+## Native-feature verification
+
+Stock iOS 16 supports locking through the side button, automatic locking and accessibility controls, but it does not provide a built-in empty-Home-Screen double-tap lock option.
+
+## Privacy and safety
+
+There is no daemon, analytics, network activity, clipboard access, message access or account-data access. Only local preference and diagnostic values are stored. The tweak is filtered to SpringBoard.
 
 ## Uninstall behaviour
 
-Uninstalling the package and respringing removes the gesture and Settings pane. The local runtime status plist may remain as harmless diagnostic history and can be deleted manually.
+Uninstalling and respringing removes the hook and Settings pane. The small `CFPreferences` diagnostic domains may remain as harmless history.
 
 ## Build validation
 
-The release workflow validates both package architectures, PreferenceLoader dependency, SpringBoard filter, dylib symbols, preference bundle, Settings entry plist, diagnostic notification name, runtime status path and version metadata. These checks confirm package structure and diagnostic instrumentation, not physical-device runtime behaviour.
+The release workflow must validate both architectures and packages, the SpringBoard filter, `SBIconListView`, `touchesEnded:withEvent:`, `_simulateLockButtonPress`, all fallback symbols, PreferenceLoader entry and bundle, `CFPreferences` domains, Darwin notifications, version metadata and source ordering. These checks are build validation; actual runtime behaviour is confirmed only by the physical-device test.
 
-## Known limitations
+## Attribution and licence
 
-SpringBoard view class names can differ between iOS versions and jailbreak environments. Version 1.0.3 is intentionally diagnostic so the exact failing runtime checkpoint can be identified on the target RootHide device.
-
-## Market comparison
-
-Havoc and public jailbreak tweak catalogues were reviewed for gesture-oriented rootless tweak patterns. This implementation is original, free, limited to one Home Screen action, and does not copy paid source code, assets, branding or descriptions.
+The core `SBIconListView` double-tap and `_simulateLockButtonPress` approach is derived from **Lock Screen Without Button** by Hao Nguyen (`haoict`), licensed under GPLv3. Next Home Lock 1.0.4 is distributed under GPLv3 and includes the upstream licence text. Next Aura and PhoneAura were used as internal working references for RootHide build, preferences and packaging conventions.
