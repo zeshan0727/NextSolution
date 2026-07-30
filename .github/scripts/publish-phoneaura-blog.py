@@ -1,3 +1,4 @@
+# One-shot publication helper for the PhoneAura 0.4.15 tutorial.
 from pathlib import Path
 
 INDEX_PATH = Path("index.html")
