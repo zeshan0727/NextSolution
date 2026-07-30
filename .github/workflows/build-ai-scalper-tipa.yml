@@ -36,6 +36,11 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      - name: Stamp app version
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.3.2" AIScalperDemo/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 5" AIScalperDemo/Info.plist
+
       - name: Build unsigned iPhone app
         run: |
           xcodebuild \
@@ -47,6 +52,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION=0.3.2 \
+            CURRENT_PROJECT_VERSION=5 \
             clean build
 
       - name: Package IPA and TIPA
