@@ -1,0 +1,55 @@
+name: Normalize NextSolution App Data
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/normalize-nextsolution-app-data.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update PhoneAura app data to current release
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('NextWebsiteApp/NextSolution/AppData.swift')
+          text = path.read_text()
+          text = text.replace('title: "PhoneAura 0.4.15"', 'title: "PhoneAura 0.4.16"')
+          text = text.replace('confirm version 0.4.15', 'confirm version 0.4.16')
+          text = text.replace('version: "0.4.15"', 'version: "0.4.16"')
+          text = text.replace('PhoneAura_0.4.15_RootHide_iOS16.deb', 'PhoneAura_0.4.16_RootHide_iOS16.deb')
+          text = text.replace('PhoneAura_0.4.15_Rootless_iOS16.deb', 'PhoneAura_0.4.16_Rootless_iOS16.deb')
+          path.write_text(text)
+          PY
+
+          grep -q 'title: "PhoneAura 0.4.16"' NextWebsiteApp/NextSolution/AppData.swift
+          grep -q 'PhoneAura_0.4.16_RootHide_iOS16.deb' NextWebsiteApp/NextSolution/AppData.swift
+          grep -q 'PhoneAura_0.4.16_Rootless_iOS16.deb' NextWebsiteApp/NextSolution/AppData.swift
+          ! grep -q 'PhoneAura_0.4.15' NextWebsiteApp/NextSolution/AppData.swift
+          ! grep -q 'zeshan0727.github.io' NextWebsiteApp/NextSolution/AppData.swift
+
+      - name: Commit corrected app data
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Next Solution Website Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add NextWebsiteApp/NextSolution/AppData.swift
+          git diff --cached --check
+          git commit -m "Use current PhoneAura packages in NextSolution app"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            git push origin HEAD:main && exit 0
+            sleep $((attempt * 3))
+          done
+          exit 1
