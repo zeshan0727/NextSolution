@@ -4,128 +4,81 @@
 #import <objc/message.h>
 #import <dlfcn.h>
 
-static NSString *const NHLVersion = @"1.0.3";
-static NSString *const NHLStatusPath = @"/var/mobile/Library/Preferences/com.nextsolution.nexthomelock.runtime.plist";
+static NSString *const NHLVersion = @"1.0.4";
+static CFStringRef const NHLPreferenceDomain = CFSTR("com.nextsolution.nexthomelock");
+static CFStringRef const NHLRuntimeDomain = CFSTR("com.nextsolution.nexthomelock.runtime");
+static CFStringRef const NHLPreferencesChanged = CFSTR("com.nextsolution.nexthomelock.preferences.changed");
 static CFStringRef const NHLTestLockNotification = CFSTR("com.nextsolution.nexthomelock.test-lock");
 
-static const void *NHLGestureKey = &NHLGestureKey;
-static const void *NHLHandlerKey = &NHLHandlerKey;
 static dispatch_queue_t NHLStatusQueue;
-static NSString *NHLLastTouchSignature;
-static NSTimeInterval NHLLastTouchWriteTime = 0;
+static BOOL NHLEnabled = YES;
 
-static void NHLWriteStatus(NSDictionary *updates) {
-    if (!updates || !NHLStatusQueue) return;
+static BOOL NHLIsSpringBoardProcess(void) {
+    NSString *bundleID = NSBundle.mainBundle.bundleIdentifier;
+    return [bundleID isEqualToString:@"com.apple.springboard"] ||
+           [[NSProcessInfo processInfo].processName isEqualToString:@"SpringBoard"];
+}
+
+static void NHLWriteStatus(NSDictionary<NSString *, id> *updates) {
+    if (!updates.count || !NHLStatusQueue) return;
 
     dispatch_async(NHLStatusQueue, ^{
-        NSMutableDictionary *status = [NSMutableDictionary dictionaryWithContentsOfFile:NHLStatusPath];
-        if (!status) status = [NSMutableDictionary dictionary];
-        [status addEntriesFromDictionary:updates];
-        status[@"updatedAt"] = @([[NSDate date] timeIntervalSince1970]);
-        [status writeToFile:NHLStatusPath atomically:YES];
+        [updates enumerateKeysAndObjectsUsingBlock:^(NSString *key, id value, BOOL *stop) {
+            CFPreferencesSetAppValue((__bridge CFStringRef)key,
+                                     (__bridge CFPropertyListRef)value,
+                                     NHLRuntimeDomain);
+        }];
+        CFPreferencesSetAppValue(CFSTR("updatedAt"),
+                                 (__bridge CFNumberRef)@([NSDate date].timeIntervalSince1970),
+                                 NHLRuntimeDomain);
+        CFPreferencesAppSynchronize(NHLRuntimeDomain);
     });
 }
 
-static void NHLRecordTouch(UIView *view, BOOL accepted, NSString *reason) {
-    NSString *className = view ? NSStringFromClass(view.class) : @"(nil)";
-    NSString *signature = [NSString stringWithFormat:@"%@|%@|%@", className, accepted ? @"YES" : @"NO", reason ?: @""];
-    NSTimeInterval now = [NSDate date].timeIntervalSince1970;
+static BOOL NHLReadEnabled(void) {
+    CFPreferencesAppSynchronize(NHLPreferenceDomain);
+    id value = CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("enabled"), NHLPreferenceDomain));
+    return value ? [value boolValue] : YES;
+}
 
-    @synchronized ([NSObject class]) {
-        if ([NHLLastTouchSignature isEqualToString:signature] && (now - NHLLastTouchWriteTime) < 1.0) return;
-        NHLLastTouchSignature = signature;
-        NHLLastTouchWriteTime = now;
-    }
-
+static void NHLReloadPreferences(void) {
+    NHLEnabled = NHLReadEnabled();
     NHLWriteStatus(@{
-        @"lastTouchClass": className,
-        @"lastTouchAccepted": @(accepted),
-        @"lastTouchReason": reason ?: @"Unknown",
-        @"lastTouchAt": @(now)
+        @"enabled": @(NHLEnabled),
+        @"preferencesReloadedAt": @([NSDate date].timeIntervalSince1970)
     });
-}
-
-static BOOL NHLClassNameContainsAny(NSString *className, NSArray<NSString *> *tokens) {
-    for (NSString *token in tokens) {
-        if ([className rangeOfString:token options:NSCaseInsensitiveSearch].location != NSNotFound) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-static BOOL NHLRootFolderIsEditing(UIView *rootView) {
-    SEL editingSelector = NSSelectorFromString(@"isEditing");
-    if ([rootView respondsToSelector:editingSelector]) {
-        return ((BOOL (*)(id, SEL))objc_msgSend)(rootView, editingSelector);
-    }
-    return NO;
-}
-
-static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view, UIView *rootView) {
-    if (!view || !rootView) {
-        NHLRecordTouch(view, NO, @"Missing touch view or gesture host");
-        return NO;
-    }
-
-    if (NHLRootFolderIsEditing(rootView)) {
-        NHLRecordTouch(view, NO, @"Home Screen is editing");
-        return NO;
-    }
-
-    static NSArray<NSString *> *blockedTokens;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        blockedTokens = @[
-            @"IconView",
-            @"FolderIcon",
-            @"FolderController",
-            @"FolderContainer",
-            @"Dock",
-            @"Widget",
-            @"PageControl",
-            @"Search",
-            @"Library",
-            @"Today",
-            @"Button",
-            @"ControlCenter",
-            @"Switcher",
-            @"Platter",
-            @"Editing",
-            @"ContextMenu"
-        ];
-    });
-
-    for (UIView *current = view; current != nil; current = current.superview) {
-        NSString *className = NSStringFromClass(current.class);
-
-        // The valid Home Screen container itself contains the word "Folder".
-        // Accept it before applying interactive-child rejection rules.
-        if (current == rootView || [className isEqualToString:@"SBRootFolderView"]) {
-            NHLRecordTouch(view, YES, @"Reached Home Screen background");
-            return YES;
-        }
-
-        if ([current isKindOfClass:UIControl.class]) {
-            NHLRecordTouch(view, NO, [NSString stringWithFormat:@"Interactive control: %@", className]);
-            return NO;
-        }
-
-        if (NHLClassNameContainsAny(className, blockedTokens)) {
-            NHLRecordTouch(view, NO, [NSString stringWithFormat:@"Blocked view: %@", className]);
-            return NO;
-        }
-    }
-
-    NHLRecordTouch(view, NO, @"Touch hierarchy did not reach gesture host");
-    return NO;
 }
 
 static NSString *NHLLockDevice(void) {
+    Class springBoardClass = objc_getClass("SpringBoard");
+    SEL sharedApplicationSelector = NSSelectorFromString(@"sharedApplication");
+    id springBoard = nil;
+
+    if (springBoardClass && [springBoardClass respondsToSelector:sharedApplicationSelector]) {
+        springBoard = ((id (*)(id, SEL))objc_msgSend)(springBoardClass, sharedApplicationSelector);
+    }
+
+    // This is the same lock route used by the established open-source
+    // Lock Screen Without Button tweak. It simulates Apple's lock-button action.
+    SEL simulatedPressSelector = NSSelectorFromString(@"_simulateLockButtonPress");
+    if (springBoard && [springBoard respondsToSelector:simulatedPressSelector]) {
+        ((void (*)(id, SEL))objc_msgSend)(springBoard, simulatedPressSelector);
+        return @"SpringBoard _simulateLockButtonPress";
+    }
+
+    SEL pluginUserAgentSelector = NSSelectorFromString(@"pluginUserAgent");
+    SEL lockAndDimSelector = NSSelectorFromString(@"lockAndDimDevice");
+    if (springBoard && [springBoard respondsToSelector:pluginUserAgentSelector]) {
+        id userAgent = ((id (*)(id, SEL))objc_msgSend)(springBoard, pluginUserAgentSelector);
+        if (userAgent && [userAgent respondsToSelector:lockAndDimSelector]) {
+            ((void (*)(id, SEL))objc_msgSend)(userAgent, lockAndDimSelector);
+            return @"SpringBoard pluginUserAgent lockAndDimDevice";
+        }
+    }
+
     Class managerClass = objc_getClass("SBLockScreenManager");
     SEL sharedSelector = NSSelectorFromString(@"sharedInstance");
     id manager = nil;
-
     if (managerClass && [managerClass respondsToSelector:sharedSelector]) {
         manager = ((id (*)(id, SEL))objc_msgSend)(managerClass, sharedSelector);
     }
@@ -133,37 +86,33 @@ static NSString *NHLLockDevice(void) {
     SEL modernLockSelector = NSSelectorFromString(@"lockUIFromSource:withOptions:");
     if (manager && [manager respondsToSelector:modernLockSelector]) {
         ((void (*)(id, SEL, NSInteger, id))objc_msgSend)(manager, modernLockSelector, 1, nil);
-        return @"SBLockScreenManager modern selector";
+        return @"SBLockScreenManager lockUIFromSource:withOptions:";
     }
 
     SEL legacyLockSelector = NSSelectorFromString(@"lockUIFromSource:");
     if (manager && [manager respondsToSelector:legacyLockSelector]) {
         ((void (*)(id, SEL, NSInteger))objc_msgSend)(manager, legacyLockSelector, 1);
-        return @"SBLockScreenManager legacy selector";
+        return @"SBLockScreenManager lockUIFromSource:";
     }
 
     typedef void (*SBSLockDeviceFunction)(void);
     SBSLockDeviceFunction lockFunction = (SBSLockDeviceFunction)dlsym(RTLD_DEFAULT, "SBSLockDevice");
     if (!lockFunction) {
         void *framework = dlopen("/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices", RTLD_LAZY);
-        if (framework) {
-            lockFunction = (SBSLockDeviceFunction)dlsym(framework, "SBSLockDevice");
-        }
+        if (framework) lockFunction = (SBSLockDeviceFunction)dlsym(framework, "SBSLockDevice");
     }
-
     if (lockFunction) {
         lockFunction();
-        return @"SBSLockDevice fallback";
+        return @"SBSLockDevice";
     }
 
     return @"No compatible lock route found";
 }
 
 static void NHLRequestLock(NSString *source) {
-    NSTimeInterval requestedAt = [NSDate date].timeIntervalSince1970;
     NHLWriteStatus(@{
         @"lastLockSource": source ?: @"Unknown",
-        @"lastLockRequestedAt": @(requestedAt),
+        @"lastLockRequestedAt": @([NSDate date].timeIntervalSince1970),
         @"lastLockRoute": @"Resolving"
     });
 
@@ -175,124 +124,95 @@ static void NHLRequestLock(NSString *source) {
     });
 }
 
-static void NHLHandleTestLockNotification(CFNotificationCenterRef center,
-                                           void *observer,
-                                           CFStringRef name,
-                                           const void *object,
-                                           CFDictionaryRef userInfo) {
+static void NHLPreferencesChangedCallback(CFNotificationCenterRef center,
+                                          void *observer,
+                                          CFStringRef name,
+                                          const void *object,
+                                          CFDictionaryRef userInfo) {
+    NHLReloadPreferences();
+}
+
+static void NHLTestLockCallback(CFNotificationCenterRef center,
+                                void *observer,
+                                CFStringRef name,
+                                const void *object,
+                                CFDictionaryRef userInfo) {
     NHLWriteStatus(@{
         @"testCommandReceived": @YES,
         @"testCommandReceivedAt": @([NSDate date].timeIntervalSince1970)
     });
     dispatch_async(dispatch_get_main_queue(), ^{
-        NHLRequestLock(@"Settings: Test Lock Now");
+        NHLRequestLock(@"Settings test command");
     });
 }
 
-@interface NHLGestureHandler : NSObject <UIGestureRecognizerDelegate>
-@end
+// Proven Home Screen path: SBIconListView receives background touches directly.
+// This intentionally replaces the unsuccessful SBRootFolderView recognizer approach.
+%hook SBIconListView
 
-@implementation NHLGestureHandler
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
+    NSUInteger tapCount = touch ? touch.tapCount : 0;
+    NSString *touchClass = touch.view ? NSStringFromClass(touch.view.class) : @"(nil)";
 
-- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
-    BOOL hasWindow = gestureRecognizer.view.window != nil;
-    BOOL editing = NHLRootFolderIsEditing(gestureRecognizer.view);
-    BOOL allowed = hasWindow && !editing;
     NHLWriteStatus(@{
-        @"lastGestureBeginAllowed": @(allowed),
-        @"lastGestureBeginReason": !hasWindow ? @"Gesture host has no window" : (editing ? @"Home Screen is editing" : @"Allowed"),
-        @"lastGestureBeginAt": @([NSDate date].timeIntervalSince1970)
+        @"iconListHookSeen": @YES,
+        @"iconListHookSeenAt": @([NSDate date].timeIntervalSince1970),
+        @"lastTouchClass": touchClass,
+        @"lastTapCount": @(tapCount),
+        @"lastTapAt": @([NSDate date].timeIntervalSince1970),
+        @"lastTouchAccepted": @(NHLEnabled && tapCount == 2)
     });
-    return allowed;
-}
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
-    return NHLTouchIsOnSafeHomeBackground(touch.view, gestureRecognizer.view);
-}
-
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
-        shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    return YES;
-}
-
-- (void)handleDoubleTap:(UITapGestureRecognizer *)recognizer {
-    if (recognizer.state == UIGestureRecognizerStateRecognized) {
-        NHLWriteStatus(@{
-            @"lastGestureRecognized": @YES,
-            @"lastGestureRecognizedAt": @([NSDate date].timeIntervalSince1970)
-        });
-        NHLRequestLock(@"Home Screen double-tap");
-    }
-}
-
-@end
-
-static void NHLInstallGestureOnRootFolderView(UIView *rootView) {
-    if (!rootView || !rootView.window || objc_getAssociatedObject(rootView, NHLGestureKey)) {
+    if (NHLEnabled && tapCount == 2) {
+        NHLRequestLock(@"SBIconListView double-tap");
         return;
     }
 
-    NHLGestureHandler *handler = [NHLGestureHandler new];
-    UITapGestureRecognizer *gesture = [[UITapGestureRecognizer alloc] initWithTarget:handler
-                                                                              action:@selector(handleDoubleTap:)];
-    gesture.numberOfTapsRequired = 2;
-    gesture.numberOfTouchesRequired = 1;
-    gesture.cancelsTouchesInView = NO;
-    gesture.delaysTouchesBegan = NO;
-    gesture.delaysTouchesEnded = NO;
-    gesture.delegate = handler;
-
-    [rootView addGestureRecognizer:gesture];
-    objc_setAssociatedObject(rootView, NHLGestureKey, gesture, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(rootView, NHLHandlerKey, handler, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    NHLWriteStatus(@{
-        @"gestureInstalled": @YES,
-        @"gestureHostClass": NSStringFromClass(rootView.class),
-        @"gestureInstalledAt": @([NSDate date].timeIntervalSince1970),
-        @"gestureCountOnHost": @(rootView.gestureRecognizers.count)
-    });
-}
-
-%hook SBRootFolderView
-
-- (void)didMoveToWindow {
     %orig;
-    NHLWriteStatus(@{
-        @"rootFolderHookSeen": @YES,
-        @"rootFolderDidMoveAt": @([NSDate date].timeIntervalSince1970)
-    });
-    NHLInstallGestureOnRootFolderView((UIView *)self);
-}
-
-- (void)layoutSubviews {
-    %orig;
-    NHLInstallGestureOnRootFolderView((UIView *)self);
 }
 
 %end
 
 %ctor {
     @autoreleasepool {
-        NHLStatusQueue = dispatch_queue_create("com.nextsolution.nexthomelock.status", DISPATCH_QUEUE_SERIAL);
+        if (!NHLIsSpringBoardProcess()) return;
+
+        NHLStatusQueue = dispatch_queue_create("com.nextsolution.nexthomelock.runtime", DISPATCH_QUEUE_SERIAL);
+        NHLReloadPreferences();
+
+        Class iconListClass = objc_getClass("SBIconListView");
+        Class springBoardClass = objc_getClass("SpringBoard");
+        id springBoard = nil;
+        if (springBoardClass && [springBoardClass respondsToSelector:@selector(sharedApplication)]) {
+            springBoard = ((id (*)(id, SEL))objc_msgSend)(springBoardClass, @selector(sharedApplication));
+        }
+
         NHLWriteStatus(@{
             @"tweakLoaded": @YES,
             @"loadedVersion": NHLVersion,
             @"loadedAt": @([NSDate date].timeIntervalSince1970),
             @"springBoardPID": @([NSProcessInfo processInfo].processIdentifier),
             @"processName": [NSProcessInfo processInfo].processName ?: @"Unknown",
-            @"rootFolderClassPresent": @(objc_getClass("SBRootFolderView") != Nil),
-            @"gestureInstalled": @NO,
-            @"testCommandReceived": @NO
+            @"bundleIdentifier": NSBundle.mainBundle.bundleIdentifier ?: @"Unknown",
+            @"iconListClassPresent": @(iconListClass != Nil),
+            @"iconListHookSeen": @NO,
+            @"simulateLockSelectorPresent": @(springBoard && [springBoard respondsToSelector:NSSelectorFromString(@"_simulateLockButtonPress")]),
+            @"testCommandReceived": @NO,
+            @"implementation": @"SBIconListView touchesEnded"
         });
 
-        CFNotificationCenterAddObserver(
-            CFNotificationCenterGetDarwinNotifyCenter(),
-            NULL,
-            NHLHandleTestLockNotification,
-            NHLTestLockNotification,
-            NULL,
-            CFNotificationSuspensionBehaviorDeliverImmediately
-        );
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                        NULL,
+                                        NHLPreferencesChangedCallback,
+                                        NHLPreferencesChanged,
+                                        NULL,
+                                        CFNotificationSuspensionBehaviorDeliverImmediately);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                        NULL,
+                                        NHLTestLockCallback,
+                                        NHLTestLockNotification,
+                                        NULL,
+                                        CFNotificationSuspensionBehaviorDeliverImmediately);
     }
 }
