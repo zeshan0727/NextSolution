@@ -1,0 +1,254 @@
+# NextSolution-native release: builds and publishes Next Home Lock inside the repo served by nextsolution.cc.
+name: Build and Publish Next Home Lock
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-nexthomelock.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nexthomelock-nextsolution-1.0.5
+  cancel-in-progress: false
+
+jobs:
+  build-validate-publish:
+    runs-on: macos-15
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out NextSolution
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build and repository tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Validate source and simple preference pane
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-07-30-NextHomeLock"
+
+          for f in Tweak.xm NextHomeLock.plist control LICENSE Makefile Preferences/Makefile Preferences/NHLRootListController.h Preferences/NHLRootListController.m Preferences/Resources/Root.plist Preferences/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/NextHomeLock.plist; do
+            test -f "$P/$f"
+          done
+
+          grep -q '^Version: 1.0.5$' "$P/control"
+          grep -q 'firmware (>= 16.0)' "$P/control"
+          grep -q 'preferenceloader' "$P/control"
+          grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
+          grep -q '^TARGET = iphone:clang:latest:16.0$' "$P/Makefile"
+          grep -q '^THEOS_PACKAGE_SCHEME ?= roothide$' "$P/Makefile"
+          grep -q 'SUBPROJECTS += Preferences' "$P/Makefile"
+          grep -q 'BUNDLE_NAME = NextHomeLockPreferences' "$P/Preferences/Makefile"
+          grep -q 'CFPreferences' "$P/Preferences/NHLRootListController.m"
+          grep -q 'Enable Next Home Lock' "$P/Preferences/Resources/Root.plist"
+          grep -q 'NHLRootListController' "$P/layout/Library/PreferenceLoader/Preferences/NextHomeLock.plist"
+          grep -q '<string>1.0.5</string>' "$P/Preferences/Resources/Info.plist"
+
+          test "$(grep -c '<string>PSSwitchCell</string>' "$P/Preferences/Resources/Root.plist")" -eq 1
+          test "$(grep -c '<string>PSButtonCell</string>' "$P/Preferences/Resources/Root.plist" || true)" -eq 0
+          test "$(grep -c '<string>PSTitleValueCell</string>' "$P/Preferences/Resources/Root.plist" || true)" -eq 0
+          ! grep -Eq 'Installed Version|Runtime Method|SpringBoard Injection|Touch Hook|Test Lock Now|Refresh Diagnostics' "$P/Preferences/Resources/Root.plist"
+
+          plutil -lint "$P/Preferences/Resources/Root.plist"
+          plutil -lint "$P/Preferences/Resources/Info.plist"
+          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/NextHomeLock.plist"
+
+          P="$P" python3 - <<'PY'
+          import os
+          from pathlib import Path
+          source = (Path(os.environ["P"]) / "Tweak.xm").read_text()
+          required = [
+              '@"1.0.5"', '%hook SBIconListView',
+              'touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event',
+              'tapCount == 2', '_simulateLockButtonPress', 'pluginUserAgent',
+              'lockAndDimDevice', 'SBLockScreenManager', 'SBSLockDevice',
+              'com.nextsolution.nexthomelock.preferences.changed',
+              'CFPreferencesCopyAppValue', '%ctor'
+          ]
+          forbidden = [
+              '%hook SBRootFolderView', '%hook SBIconController',
+              'UITapGestureRecognizer', 'NHLGestureHandler', 'gestureInstalled'
+          ]
+          for item in required:
+              assert item in source, item
+          for item in forbidden:
+              assert item not in source, item
+          assert source.index('%hook SBIconListView') < source.index('touchesEnded:(NSSet *)touches') < source.index('tapCount == 2')
+          PY
+
+      - name: Build Rootless package
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-07-30-NextHomeLock"
+          OUT="$RUNNER_TEMP/nexthomelock-release"
+          mkdir -p "$OUT"
+
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless"
+          export THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextHomeLock_1.0.5_Rootless.deb"
+
+      - name: Build RootHide package
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-07-30-NextHomeLock"
+          OUT="$RUNNER_TEMP/nexthomelock-release"
+          THEOS_COMMIT="88506b2c22e9e07dd4ed055f23c9e398a117a2c7"
+
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextHomeLock_1.0.5_RootHide.deb"
+
+      - name: Validate both packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          validate_deb() {
+            local deb="$1" arch="$2" extract
+            extract="$(mktemp -d)"
+
+            test "$(dpkg-deb -f "$deb" Package)" = "com.nextsolution.nexthomelock"
+            test "$(dpkg-deb -f "$deb" Version)" = "1.0.5"
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            dpkg-deb -f "$deb" Depends | grep -q 'firmware (>= 16.0)'
+            dpkg-deb -f "$deb" Depends | grep -q 'mobilesubstrate'
+            dpkg-deb -f "$deb" Depends | grep -q 'preferenceloader'
+
+            dpkg-deb -x "$deb" "$extract"
+            local dylib filter entry bundle binary root info
+            dylib="$(find "$extract" -type f -name 'NextHomeLock.dylib' -print -quit)"
+            filter="$(find "$extract" -type f -path '*MobileSubstrate*' -name 'NextHomeLock.plist' -print -quit)"
+            entry="$(find "$extract" -type f -path '*PreferenceLoader/Preferences*' -name 'NextHomeLock.plist' -print -quit)"
+            bundle="$(find "$extract" -type d -name 'NextHomeLockPreferences.bundle' -print -quit)"
+            binary="$(find "$bundle" -type f -name 'NextHomeLockPreferences' -print -quit)"
+            root="$(find "$bundle" -type f -name 'Root.plist' -print -quit)"
+            info="$(find "$bundle" -type f -name 'Info.plist' -print -quit)"
+            for file in "$dylib" "$filter" "$entry" "$binary" "$root" "$info"; do test -n "$file"; done
+
+            file "$dylib" | grep -q arm64
+            file "$binary" | grep -q arm64
+            grep -q com.apple.springboard "$filter"
+            grep -q NextHomeLockPreferences "$entry"
+            grep -q NHLRootListController "$entry"
+            grep -q 'Enable Next Home Lock' "$root"
+            grep -q '<string>1.0.5</string>' "$info"
+            test "$(grep -c '<string>PSSwitchCell</string>' "$root")" -eq 1
+            test "$(grep -c '<string>PSButtonCell</string>' "$root" || true)" -eq 0
+            test "$(grep -c '<string>PSTitleValueCell</string>' "$root" || true)" -eq 0
+            ! grep -Eq 'Installed Version|Runtime Method|SpringBoard Injection|Touch Hook|Test Lock Now|Refresh Diagnostics' "$root"
+            plutil -lint "$entry"
+            plutil -lint "$root"
+            plutil -lint "$info"
+
+            for symbol in SBIconListView 'touchesEnded:withEvent:' _simulateLockButtonPress pluginUserAgent lockAndDimDevice SBLockScreenManager SBSLockDevice com.nextsolution.nexthomelock.preferences.changed; do
+              strings -a "$dylib" | grep -q "$symbol"
+            done
+            strings -a "$binary" | grep -q NHLRootListController
+            strings -a "$binary" | grep -q setPreferenceValue
+            if strings -a "$dylib" | grep -Eq 'SBRootFolderView|SBIconController|NHLGestureHandler|gestureInstalled'; then
+              echo "Obsolete implementation found in $deb" >&2
+              exit 1
+            fi
+            rm -rf "$extract"
+          }
+
+          OUT="$RUNNER_TEMP/nexthomelock-release"
+          validate_deb "$OUT/NextHomeLock_1.0.5_Rootless.deb" iphoneos-arm64
+          validate_deb "$OUT/NextHomeLock_1.0.5_RootHide.deb" iphoneos-arm64e
+          shasum -a 256 "$OUT"/*.deb
+
+      - name: Publish to the nextsolution.cc repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nexthomelock-release"
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p debfiles "$RUNNER_TEMP/nhl-scan"
+            cp "$OUT"/*.deb debfiles/
+            cp "$OUT"/*.deb "$RUNNER_TEMP/nhl-scan/"
+
+            dpkg-scanpackages -m "$RUNNER_TEMP/nhl-scan" /dev/null > "$RUNNER_TEMP/nhl-stanzas"
+            sed -i '' 's|^Filename: .*/nhl-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/nhl-stanzas"
+
+            python3 - "$RUNNER_TEMP/nhl-stanzas" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          packages_path = Path("Packages")
+          existing = packages_path.read_text() if packages_path.exists() else ""
+          stanzas = [s.strip() for s in re.split(r"\n\s*\n", existing) if s.strip()]
+          stanzas = [s for s in stanzas if not re.search(r"^Package: com\.nextsolution\.nexthomelock$", s, re.M)]
+          new_text = Path(sys.argv[1]).read_text().strip()
+          new_stanzas = [s.strip() for s in re.split(r"\n\s*\n", new_text) if s.strip()]
+          packages_path.write_text("\n\n".join(stanzas + new_stanzas) + "\n")
+          PY
+
+            test "$(grep -c '^Package: com.nextsolution.nexthomelock$' Packages)" -eq 2
+            test "$(grep -c '^Version: 1.0.5$' Packages)" -ge 2
+            test "$(grep -c '^Filename: ./debfiles/NextHomeLock_1.0.5_Root' Packages)" -eq 2
+
+            gzip -9 -c Packages > Packages.gz
+            bzip2 -9 -c Packages > Packages.bz2
+            xz -9e -c Packages > Packages.xz
+            zstd -19 -q -c Packages > Packages.zst
+
+            python3 - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import re
+
+          path = Path("Release")
+          text = path.read_text() if path.exists() else "Origin: Next Solution\nLabel: Next Solution Repo\nSuite: stable\nVersion: 1.0.0\nCodename: nextsolution\nArchitectures: iphoneos-arm64 iphoneos-arm64e\nComponents: main\nDescription: Next Solution tweaks for RootHide and rootless jailbreaks\n"
+          text = re.sub(r"^Version: .*?$", "Version: 1.0.22", text, flags=re.M)
+          date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S UTC")
+          if re.search(r"^Date:", text, flags=re.M):
+              text = re.sub(r"^Date: .*?$", f"Date: {date}", text, flags=re.M)
+          else:
+              text += f"Date: {date}\n"
+          if re.search(r"^Icon:", text, flags=re.M):
+              text = re.sub(r"^Icon: .*?$", "Icon: https://nextsolution.cc/CydiaIcon.png", text, flags=re.M)
+          else:
+              text += "Icon: https://nextsolution.cc/CydiaIcon.png\n"
+          path.write_text(text)
+          PY
+
+            git add debfiles/NextHomeLock_1.0.5_Rootless.deb debfiles/NextHomeLock_1.0.5_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
+            git diff --cached --check
+            git commit -m "Publish Next Home Lock 1.0.5 to nextsolution.cc"
+            git push origin HEAD:main && exit 0
+            sleep $((attempt * 3))
+          done
+
+          echo "Unable to publish after three synchronized attempts" >&2
+          exit 1
