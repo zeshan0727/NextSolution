@@ -1,9 +1,9 @@
 Package: com.nextsolution.nexthomelock
 Name: Next Home Lock
-Version: 1.0.3
+Version: 1.0.4
 Architecture: iphoneos-arm64
-Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.3 adds a Settings diagnostics pane showing SpringBoard injection, gesture attachment, touch decisions, and a Test Lock command.
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.4 replaces the failed gesture-recognizer implementation with the proven SBIconListView touchesEnded method and SpringBoard simulated lock-button route. Includes live CFPreferences diagnostics and Test Lock Now.
 Maintainer: Next Solution
 Author: Next Solution
 Section: Tweaks
