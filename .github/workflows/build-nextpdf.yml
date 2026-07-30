@@ -31,6 +31,11 @@ jobs:
       - name: Fix PDFKit SwiftUI render loop
         run: python3 NextPDF/apply_render_loop_fix.py
 
+      - name: Match text and fix library and annotation dragging
+        run: |
+          python3 NextPDF/apply_editor_quality_patch.py
+          python3 NextPDF/apply_editor_quality_compile_fix.py
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
