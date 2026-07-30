@@ -1,0 +1,211 @@
+name: Migrate Retired Repository References
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/migrate-retired-repository.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: migrate-retired-nextsolution-repository
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install repository tools
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev xz-utils zstd
+
+      - name: Migrate indexed packages, depictions and text links
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import re
+          import urllib.request
+          from pathlib import Path
+
+          root = Path('.')
+          packages_path = root / 'Packages'
+          packages_text = packages_path.read_text(encoding='utf-8')
+          stanzas = [x.strip() for x in re.split(r'\n\s*\n', packages_text) if x.strip()]
+
+          old_raw_deb = 'https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/'
+          new_raw_deb = 'https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/'
+          old_site = 'https://zeshan0727.github.io/'
+          new_site = 'https://nextsolution.cc/'
+
+          deb_dir = root / 'debfiles'
+          deb_dir.mkdir(parents=True, exist_ok=True)
+
+          def field(stanza: str, name: str) -> str | None:
+              match = re.search(rf'^{re.escape(name)}:\s*(.+)$', stanza, re.M)
+              return match.group(1).strip() if match else None
+
+          def replace_field(stanza: str, name: str, value: str) -> str:
+              pattern = rf'^{re.escape(name)}:\s*.*$'
+              if re.search(pattern, stanza, re.M):
+                  return re.sub(pattern, f'{name}: {value}', stanza, flags=re.M)
+              return stanza + f'\n{name}: {value}'
+
+          def digest(path: Path, algorithm: str) -> str:
+              h = hashlib.new(algorithm)
+              with path.open('rb') as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          updated: list[str] = []
+          migrated_packages = 0
+          migrated_depictions = 0
+
+          for stanza in stanzas:
+              filename = field(stanza, 'Filename')
+              source_url = None
+              if filename and filename.startswith(old_raw_deb):
+                  source_url = filename
+              elif filename and filename.startswith(old_site + 'debfiles/'):
+                  source_url = old_raw_deb + filename.rsplit('/', 1)[-1]
+
+              if source_url:
+                  basename = source_url.rsplit('/', 1)[-1]
+                  target = deb_dir / basename
+                  if not target.exists():
+                      print(f'Downloading {source_url}')
+                      urllib.request.urlretrieve(source_url, target)
+                  expected_size = field(stanza, 'Size')
+                  expected_md5 = field(stanza, 'MD5sum')
+                  expected_sha1 = field(stanza, 'SHA1')
+                  expected_sha256 = field(stanza, 'SHA256')
+                  if expected_size and target.stat().st_size != int(expected_size):
+                      raise SystemExit(f'Size mismatch for {basename}')
+                  if expected_md5 and digest(target, 'md5') != expected_md5:
+                      raise SystemExit(f'MD5 mismatch for {basename}')
+                  if expected_sha1 and digest(target, 'sha1') != expected_sha1:
+                      raise SystemExit(f'SHA1 mismatch for {basename}')
+                  if expected_sha256 and digest(target, 'sha256') != expected_sha256:
+                      raise SystemExit(f'SHA256 mismatch for {basename}')
+                  stanza = replace_field(stanza, 'Filename', f'./debfiles/{basename}')
+                  migrated_packages += 1
+
+              depiction = field(stanza, 'Depiction')
+              if depiction and depiction.startswith(old_site):
+                  relative = depiction[len(old_site):]
+                  target = root / relative
+                  source = 'https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/' + relative
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  if not target.exists():
+                      print(f'Downloading depiction {source}')
+                      urllib.request.urlretrieve(source, target)
+                  stanza = replace_field(stanza, 'Depiction', new_site + relative)
+                  migrated_depictions += 1
+
+              homepage = field(stanza, 'Homepage')
+              if homepage and ('zeshan0727.github.io' in homepage):
+                  stanza = replace_field(stanza, 'Homepage', new_site)
+
+              icon = field(stanza, 'Icon')
+              if icon and ('zeshan0727.github.io' in icon):
+                  stanza = replace_field(stanza, 'Icon', new_site + 'CydiaIcon.png')
+
+              updated.append(stanza)
+
+          packages_path.write_text('\n\n'.join(updated) + '\n', encoding='utf-8')
+          print(f'Migrated {migrated_packages} package files and {migrated_depictions} depictions')
+
+          # Update active text files without touching binary packages or Git internals.
+          suffixes = {
+              '.html', '.htm', '.md', '.txt', '.xml', '.json', '.js', '.css',
+              '.swift', '.m', '.mm', '.h', '.xm', '.plist', '.yml', '.yaml',
+              '.py', '.sh', '.control'
+          }
+          exact_names = {'Release', 'Packages', 'CNAME'}
+          skip = {
+              Path('.github/workflows/migrate-retired-repository.yml'),
+          }
+          replacements = [
+              (old_raw_deb, new_raw_deb),
+              ('sileo://source/https://zeshan0727.github.io/', 'sileo://source/https://nextsolution.cc/'),
+              ('https://zeshan0727.github.io/', new_site),
+              ('http://zeshan0727.github.io/', new_site),
+          ]
+
+          for path in root.rglob('*'):
+              if not path.is_file() or '.git' in path.parts or path in skip:
+                  continue
+              if path.suffix.lower() not in suffixes and path.name not in exact_names:
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              original = text
+              for old, new in replacements:
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  print(f'Updated {path}')
+          PY
+
+      - name: Rebuild repository indexes and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -c '^Package:' Packages)" -gt 0
+          ! grep -E '^(Filename|Homepage|Depiction|Icon): .*zeshan0727\.github\.io' Packages
+          while IFS= read -r filename; do
+            test -f "${filename#./}"
+          done < <(awk '/^Filename: \.\/debfiles\//{print $2}' Packages)
+
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+
+          python3 - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import re
+
+          path = Path('Release')
+          text = path.read_text(encoding='utf-8')
+          current = re.search(r'^Version:\s*([0-9]+)\.([0-9]+)\.([0-9]+)$', text, re.M)
+          if current:
+              major, minor, patch = map(int, current.groups())
+              text = re.sub(r'^Version: .*$', f'Version: {major}.{minor}.{patch + 1}', text, flags=re.M)
+          date = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC')
+          text = re.sub(r'^Date: .*$', f'Date: {date}', text, flags=re.M)
+          text = re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png', text, flags=re.M)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          ! grep -RIl --exclude-dir=.git --exclude='migrate-retired-repository.yml' 'zeshan0727.github.io' .
+
+      - name: Commit complete migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Next Solution Migration Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Retire zeshan0727.github.io package dependencies"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            git push origin HEAD:main && exit 0
+            sleep $((attempt * 3))
+          done
+          exit 1
