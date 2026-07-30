@@ -616,33 +616,7 @@
       .compat-table th,
       .compat-table td { padding: 11px 10px; }
     }
-
-    /* PHONEAURA_SHARED_TABS_START */
-    .header-links {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    .header-links::-webkit-scrollbar { display: none; }
-    .header-links a { flex: 0 0 auto; white-space: nowrap; }
-    .header-links a[aria-current="page"] {
-      color: #fff;
-      background: rgba(255,255,255,.14);
-    }
-    @media (max-width: 650px) {
-      .site-header-inner {
-        min-height: 0;
-        align-items: stretch;
-        flex-direction: column;
-        padding: 10px 0;
-      }
-      .header-links { width: 100%; }
-      .header-links a:not(:last-child) { display: block; }
-    }
-    /* PHONEAURA_SHARED_TABS_END */
-  </style>
+</style>
 </head>
 <body>
   <header class="site-header">
@@ -723,7 +697,7 @@
           <article class="feature-card">
             <div class="feature-icon">✂</div>
             <h3>Stable Number Handling</h3>
-            <p>Version 0.4.16 removes the unsafe global edit-menu hooks from 0.4.15 and restores the stable number-display behavior used in 0.4.14.</p>
+            <p>Version 0.4.16 removes the unsafe global edit-menu hooks from 0.4.16 and restores the stable number-display behavior used in 0.4.14.</p>
           </article>
 
           <article class="feature-card">
@@ -897,7 +871,7 @@
           </details>
           <details>
             <summary>Why was long-press number editing removed?</summary>
-            <p>The 0.4.15 implementation modified UILabel behavior globally and caused the Phone app to crash on affected devices. Version 0.4.16 removes that code and restores the stable 0.4.14 runtime.</p>
+            <p>The 0.4.16 implementation modified UILabel behavior globally and caused the Phone app to crash on affected devices. Version 0.4.16 removes that code and restores the stable 0.4.14 runtime.</p>
           </details>
           <details>
             <summary>What appears when no saved contact matches?</summary>
