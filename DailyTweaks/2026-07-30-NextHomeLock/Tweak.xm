@@ -4,7 +4,7 @@
 #import <objc/message.h>
 #import <dlfcn.h>
 
-static NSString *const NHLVersion = @"1.0.4";
+static NSString *const NHLVersion = @"1.0.5";
 static CFStringRef const NHLPreferenceDomain = CFSTR("com.nextsolution.nexthomelock");
 static CFStringRef const NHLRuntimeDomain = CFSTR("com.nextsolution.nexthomelock.runtime");
 static CFStringRef const NHLPreferencesChanged = CFSTR("com.nextsolution.nexthomelock.preferences.changed");
