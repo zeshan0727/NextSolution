@@ -33,7 +33,9 @@ static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view, UIView *rootView) {
     dispatch_once(&onceToken, ^{
         blockedTokens = @[
             @"IconView",
-            @"Folder",
+            @"FolderIcon",
+            @"FolderController",
+            @"FolderContainer",
             @"Dock",
             @"Widget",
             @"PageControl",
@@ -49,24 +51,25 @@ static BOOL NHLTouchIsOnSafeHomeBackground(UIView *view, UIView *rootView) {
         ];
     });
 
-    BOOL reachedRootFolder = NO;
     for (UIView *current = view; current != nil; current = current.superview) {
+        NSString *className = NSStringFromClass(current.class);
+
+        // The valid Home Screen container itself contains the word "Folder".
+        // Accept it before applying the interactive-child rejection rules.
+        if (current == rootView || [className isEqualToString:@"SBRootFolderView"]) {
+            return YES;
+        }
+
         if ([current isKindOfClass:UIControl.class]) {
             return NO;
         }
 
-        NSString *className = NSStringFromClass(current.class);
         if (NHLClassNameContainsAny(className, blockedTokens)) {
             return NO;
         }
-
-        if (current == rootView || [className isEqualToString:@"SBRootFolderView"]) {
-            reachedRootFolder = YES;
-            break;
-        }
     }
 
-    return reachedRootFolder;
+    return NO;
 }
 
 static void NHLLockDevice(void) {
