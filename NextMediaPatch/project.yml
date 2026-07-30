@@ -1,0 +1,40 @@
+name: NextMedia
+options:
+  bundleIdPrefix: uk.zeshanbarvi
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    MARKETING_VERSION: "1.1.0"
+    CURRENT_PROJECT_VERSION: "2"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SUPPORTS_MACCATALYST: NO
+    ENABLE_BITCODE: NO
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+targets:
+  NextMedia:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: NextMedia
+        excludes:
+          - Resources
+          - Info.plist
+    resources:
+      - path: NextMedia/Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uk.zeshanbarvi.nextmedia
+        PRODUCT_NAME: NextMedia
+        INFOPLIST_FILE: NextMedia/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+    scheme:
+      testTargets: []
