@@ -1,0 +1,10 @@
+Package: com.nextsolution.nexthomelock
+Name: Next Home Lock
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Depends: firmware (>= 15.0), mobilesubstrate
+Description: Double-tap an empty area of the Home Screen to lock the device. Icon, widget, dock, folder, search, and App Library interactions are ignored.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Priority: optional
