@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">PhoneAura redesigned Phone app tabs</title>
+  <desc id="desc">Concept previews of PhoneAura Favorites, Recents and Contacts screens in a purple blue glass theme.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#040817"/><stop offset="1" stop-color="#220b3d"/></linearGradient>
+    <linearGradient id="fav" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff5b61"/><stop offset="1" stop-color="#7c4dff"/></linearGradient>
+    <linearGradient id="recent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6f63ff"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+    <linearGradient id="contact" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#18c8b7"/><stop offset="1" stop-color="#0ea5e9"/></linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="18" stdDeviation="19" flood-color="#000" flood-opacity=".5"/></filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <circle cx="170" cy="100" r="230" fill="#168dff" opacity=".12"/>
+  <circle cx="1050" cy="680" r="260" fill="#8e2cff" opacity=".12"/>
+
+  <text x="600" y="72" fill="#fff" text-anchor="middle" font-size="52" font-family="Arial, sans-serif" font-weight="800">Every Phone tab, redesigned</text>
+  <text x="600" y="110" fill="#9fafd0" text-anchor="middle" font-size="22" font-family="Arial, sans-serif">Modern cards, smart actions, filters and consistent navigation</text>
+
+  <g transform="translate(78 150)" filter="url(#shadow)" font-family="Arial, sans-serif">
+    <rect width="308" height="590" rx="50" fill="#06070d" stroke="#454a62" stroke-width="3"/>
+    <rect x="13" y="13" width="282" height="564" rx="40" fill="#05091a"/>
+    <rect x="101" y="21" width="106" height="27" rx="14" fill="#000"/>
+    <text x="28" y="88" fill="#fff" font-size="30" font-weight="800">Favorites</text>
+    <circle cx="260" cy="75" r="20" fill="#ff5b61"/><path d="M252 75 h16 M260 67 v16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <rect x="24" y="110" width="260" height="126" rx="24" fill="url(#fav)"/>
+    <circle cx="76" cy="173" r="34" fill="#fff" opacity=".22"/>
+    <path d="M59 183 c7-16 28-16 35 0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="76" cy="163" r="10" fill="#fff"/>
+    <text x="125" y="158" fill="#fff" font-size="19" font-weight="800">My Card</text>
+    <text x="125" y="184" fill="#fff" opacity=".85" font-size="14">+974 5550 0727</text>
+    <circle cx="250" cy="201" r="19" fill="#fff" opacity=".2"/><path d="M243 204 c5 5 10 6 15 2" stroke="#fff" stroke-width="3" fill="none"/>
+
+    <rect x="24" y="250" width="124" height="94" rx="19" fill="#6f63ff"/>
+    <rect x="160" y="250" width="124" height="94" rx="19" fill="#18c8b7"/>
+    <circle cx="60" cy="284" r="21" fill="#fff" opacity=".2"/><circle cx="196" cy="284" r="21" fill="#fff" opacity=".2"/>
+    <text x="38" y="326" fill="#fff" font-size="13" font-weight="700">Family</text><text x="174" y="326" fill="#fff" font-size="13" font-weight="700">Work</text>
+
+    <text x="24" y="382" fill="#fff" font-size="15" font-weight="800">Smart Shortcuts</text>
+    <rect x="24" y="398" width="124" height="74" rx="17" fill="#17213e"/><rect x="160" y="398" width="124" height="74" rx="17" fill="#17213e"/>
+    <text x="86" y="428" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">Family Group</text><text x="222" y="428" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">Work Line</text>
+    <text x="86" y="452" fill="#9eafd0" text-anchor="middle" font-size="11">4 members</text><text x="222" y="452" fill="#9eafd0" text-anchor="middle" font-size="11">Quick call</text>
+
+    <rect x="20" y="505" width="268" height="50" rx="23" fill="#101a33" stroke="#66728f" stroke-opacity=".4"/>
+    <circle cx="48" cy="530" r="16" fill="#ff5b61" opacity=".25"/><circle cx="101" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="154" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="207" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="260" cy="530" r="16" fill="#fff" opacity=".08"/>
+  </g>
+
+  <g transform="translate(446 150)" filter="url(#shadow)" font-family="Arial, sans-serif">
+    <rect width="308" height="590" rx="50" fill="#06070d" stroke="#454a62" stroke-width="3"/>
+    <rect x="13" y="13" width="282" height="564" rx="40" fill="#05091a"/>
+    <rect x="101" y="21" width="106" height="27" rx="14" fill="#000"/>
+    <text x="28" y="88" fill="#fff" font-size="30" font-weight="800">Recents</text>
+    <circle cx="260" cy="75" r="20" fill="#6f63ff"/><path d="M250 75 h20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+
+    <g transform="translate(24 112)">
+      <rect width="260" height="42" rx="20" fill="#111b35"/>
+      <rect x="3" y="3" width="60" height="36" rx="17" fill="url(#recent)"/>
+      <text x="33" y="27" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">All</text>
+      <text x="96" y="27" fill="#9eafd0" text-anchor="middle" font-size="11">Dialed</text>
+      <text x="158" y="27" fill="#9eafd0" text-anchor="middle" font-size="11">Received</text>
+      <text x="225" y="27" fill="#ff7278" text-anchor="middle" font-size="11">Missed</text>
+    </g>
+
+    <g transform="translate(24 170)">
+      <g>
+        <rect width="260" height="84" rx="18" fill="#17213d"/><rect width="5" height="84" rx="3" fill="#18c8b7"/>
+        <circle cx="38" cy="42" r="22" fill="#18c8b7" opacity=".17"/>
+        <text x="72" y="34" fill="#fff" font-size="15" font-weight="800">Amara</text><text x="72" y="57" fill="#9eafd0" font-size="11">Received · 4:12</text>
+        <circle cx="232" cy="42" r="16" fill="#18c8b7" opacity=".18"/><text x="232" y="47" fill="#18c8b7" text-anchor="middle" font-size="16" font-weight="800">i</text>
+      </g>
+      <g transform="translate(0 94)">
+        <rect width="260" height="84" rx="18" fill="#17213d"/><rect width="5" height="84" rx="3" fill="#6f63ff"/>
+        <circle cx="38" cy="42" r="22" fill="#6f63ff" opacity=".17"/>
+        <text x="72" y="34" fill="#fff" font-size="15" font-weight="800">Office</text><text x="72" y="57" fill="#9eafd0" font-size="11">Dialed · 2:48</text>
+        <circle cx="232" cy="42" r="16" fill="#6f63ff" opacity=".18"/><text x="232" y="47" fill="#6f63ff" text-anchor="middle" font-size="16" font-weight="800">i</text>
+      </g>
+      <g transform="translate(0 188)">
+        <rect width="260" height="84" rx="18" fill="#17213d"/><rect width="5" height="84" rx="3" fill="#ff5b61"/>
+        <circle cx="38" cy="42" r="22" fill="#ff5b61" opacity=".17"/>
+        <text x="72" y="34" fill="#ff7278" font-size="15" font-weight="800">Unknown</text><text x="72" y="57" fill="#9eafd0" font-size="11">Missed · Not answered</text>
+        <circle cx="232" cy="42" r="16" fill="#ff5b61" opacity=".18"/><text x="232" y="47" fill="#ff5b61" text-anchor="middle" font-size="16" font-weight="800">i</text>
+      </g>
+    </g>
+
+    <rect x="20" y="505" width="268" height="50" rx="23" fill="#101a33" stroke="#66728f" stroke-opacity=".4"/>
+    <circle cx="48" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="101" cy="530" r="16" fill="#6f63ff" opacity=".25"/><circle cx="154" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="207" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="260" cy="530" r="16" fill="#fff" opacity=".08"/>
+  </g>
+
+  <g transform="translate(814 150)" filter="url(#shadow)" font-family="Arial, sans-serif">
+    <rect width="308" height="590" rx="50" fill="#06070d" stroke="#454a62" stroke-width="3"/>
+    <rect x="13" y="13" width="282" height="564" rx="40" fill="#05091a"/>
+    <rect x="101" y="21" width="106" height="27" rx="14" fill="#000"/>
+    <text x="28" y="88" fill="#fff" font-size="30" font-weight="800">Contacts</text>
+    <circle cx="260" cy="75" r="20" fill="#18c8b7"/><path d="M250 75 h20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <rect x="24" y="108" width="260" height="45" rx="20" fill="#141f39"/>
+    <circle cx="45" cy="130" r="9" fill="none" stroke="#9eafd0" stroke-width="2"/><path d="M52 137 l7 7" stroke="#9eafd0" stroke-width="2"/>
+    <text x="70" y="136" fill="#9eafd0" font-size="13">Search contacts</text>
+
+    <g transform="translate(24 170)">
+      <g>
+        <rect width="260" height="68" rx="16" fill="#13273a" stroke="#18c8b7" stroke-opacity=".25"/>
+        <circle cx="34" cy="34" r="22" fill="#18c8b7" opacity=".2"/>
+        <text x="70" y="28" fill="#fff" font-size="14" font-weight="800">Amara Nadeem</text><text x="70" y="49" fill="#9eafd0" font-size="11">+974 5550 0727</text><text x="238" y="39" fill="#18c8b7" font-size="18">›</text>
+      </g>
+      <g transform="translate(0 78)">
+        <rect width="260" height="68" rx="16" fill="#13273a" stroke="#18c8b7" stroke-opacity=".25"/>
+        <circle cx="34" cy="34" r="22" fill="#18c8b7" opacity=".2"/>
+        <text x="70" y="28" fill="#fff" font-size="14" font-weight="800">Next Solution</text><text x="70" y="49" fill="#9eafd0" font-size="11">+974 4400 2026</text><text x="238" y="39" fill="#18c8b7" font-size="18">›</text>
+      </g>
+      <g transform="translate(0 156)">
+        <rect width="260" height="68" rx="16" fill="#13273a" stroke="#18c8b7" stroke-opacity=".25"/>
+        <circle cx="34" cy="34" r="22" fill="#18c8b7" opacity=".2"/>
+        <text x="70" y="28" fill="#fff" font-size="14" font-weight="800">Finance Office</text><text x="70" y="49" fill="#9eafd0" font-size="11">+974 4411 8899</text><text x="238" y="39" fill="#18c8b7" font-size="18">›</text>
+      </g>
+      <g transform="translate(0 234)">
+        <rect width="260" height="68" rx="16" fill="#13273a" stroke="#18c8b7" stroke-opacity=".25"/>
+        <circle cx="34" cy="34" r="22" fill="#18c8b7" opacity=".2"/>
+        <text x="70" y="28" fill="#fff" font-size="14" font-weight="800">Home</text><text x="70" y="49" fill="#9eafd0" font-size="11">+974 5566 1122</text><text x="238" y="39" fill="#18c8b7" font-size="18">›</text>
+      </g>
+    </g>
+
+    <rect x="20" y="505" width="268" height="50" rx="23" fill="#101a33" stroke="#66728f" stroke-opacity=".4"/>
+    <circle cx="48" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="101" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="154" cy="530" r="16" fill="#18c8b7" opacity=".25"/><circle cx="207" cy="530" r="16" fill="#fff" opacity=".08"/><circle cx="260" cy="530" r="16" fill="#fff" opacity=".08"/>
+  </g>
+</svg>
