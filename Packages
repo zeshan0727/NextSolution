@@ -1,0 +1,181 @@
+Package: com.nextsolution.dailyledger.smsimport
+Version: 1.4.0
+Architecture: iphoneos-arm64e
+Maintainer: NextSolution
+Installed-Size: 176
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/DailyLedgerSMSImport-1.4.0-roothide.deb
+Size: 16932
+MD5sum: 5711170bd7e2e2f20e08926db430710a
+SHA1: a53458741d1363850151a448c23993877fea009b
+SHA256: 757cb7e0626855d40196458e1bd7ed63d1345749878c16efd640faab8d1af33a
+Section: Tweaks
+Priority: optional
+Description: Native RootHide SpringBoard tweak that automatically imports matching bank SMS into Daily Ledger and vibrates after successful recording.
+Author: NextSolution
+Name: Daily Ledger SMS Import
+
+Package: com.nextsolution.nexthomelock
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 352
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextHomeLock_1.0.4_RootHide.deb
+Size: 15778
+MD5sum: 41d26fece3873d6f9d3186188da7e354
+SHA1: 644b8ed2e73ddc137a11511b7d01a08d1a242a2f
+SHA256: 7fece88e46448523508f1b0e045b49dda48d83533a62eb3ddf62db97f5247f3f
+Section: Tweaks
+Priority: optional
+Description: Double-tap an empty Home Screen area to lock the device. Includes live preferences diagnostics and a Test Lock Now option.
+Author: Next Solution
+Name: Next Home Lock
+
+Package: com.nextsolution.nexthomelock
+Version: 1.0.4
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 352
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextHomeLock_1.0.4_Rootless.deb
+Size: 15806
+MD5sum: ef7d660e1751e8c45faf9afe5be66c
+SHA1: b9afe71cbd1711a58ca7f1dcc152bda1e37bc55e
+SHA256: fc7221755c5ac6e3c9a488a1116045870539b3802f3c6ecaf74c09c9255c2094
+Section: Tweaks
+Priority: optional
+Description: Double-tap an empty Home Screen area to lock the device. Rootless build for iOS 16.
+Author: Next Solution
+Name: Next Home Lock
+
+Package: com.nextsolution.nextmessage
+Version: 1.1.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 424
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextMessage_1.1.0_RootHide_iOS16.deb
+Size: 47158
+MD5sum: df278ca66df86b7c84b8888f5bed4efb
+SHA1: 671f048fbec9b121db96f9cbfaab30b466dbb5f6
+SHA256: 3a5d181776dbb892510f0cd18e02c3dc9aa53baa3403d290b3633ed248d49140
+Section: Tweaks
+Homepage: https://nextsolution.cc/
+Description: A modern redesign for the iOS 16 Messages app with conversation cards, swipe actions, details, deletion, haptics and animations. Built for RootHide.
+Author: Next Solution - zeshan0727
+Depiction: https://zeshan0727.github.io/depictions/nextmessage.html
+Icon: https://zeshan0727.github.io/CydiaIcon.png
+Name: Next Message
+
+Package: com.nextsolution.nextmessage
+Version: 1.1.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 424
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextMessage_1.1.0_Rootless_iOS16.deb
+Size: 47254
+MD5sum: 4c3f7e41e2581be203c03301489d353c
+SHA1: 0aa17520b2145c571f41c4e64b3f431e2f2cf3ee
+SHA256: b371c2cecc2c1955e6f8d7d3cddc7e573b3c31574ef907bebac6dc1ad595dae2
+Section: Tweaks
+Homepage: https://nextsolution.cc/
+Description: A modern redesign for the iOS 16 Messages app with conversation cards, swipe actions, details, deletion, haptics and animations. Built for rootless jailbreaks.
+Author: Next Solution - zeshan0727
+Depiction: https://zeshan0727.github.io/depictions/nextmessage.html
+Icon: https://zeshan0727.github.io/CydiaIcon.png
+Name: Next Message
+
+Package: com.nextsolution.shaketorun
+Version: 1.1.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 380
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/ShakeToRun_RootHide_1.1.0_iOS16.deb
+Size: 11872
+MD5sum: 3b04ba29e3923c9af0798276be92079c
+SHA1: bf4851ab5f7812d55362e37f9360628701bf3fb3
+SHA256: 24ec6ef33be3fc7d27554d28dc5ef9d4b3ba601fb99c1311094db1d2f8584f8e
+Section: Tweaks
+Priority: optional
+Description: Detects shakes, vibrates as confirmation and runs the most recent Shortcuts automation prompt while unlocked.
+Author: Next Solution
+Name: Shake to Run Automation (RootHide)
+
+Package: com.nextsolution.unlockvibrate
+Version: 4.4.8
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 2332
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextAura_4.4.8_Rootless_iOS16.deb
+Size: 234716
+MD5sum: eb2afbe7c2d5811140e7be86f1e9a033
+SHA1: fa6485f07085bf29ad2f6409b324968d7f290554
+SHA256: efdbc4e146fde4fd4f49257f28d1ea49228c51e15226fa67bcc46c78b70e630f
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: The complete Next Solution customization suite for iOS 16 with Dynamic Island notifications, Control Center tools, haptics, thermal battery colors and safety recovery controls.
+Author: Next Solution - zeshan0727
+Depiction: https://zeshan0727.github.io/depictions/nextaura.html
+Icon: https://zeshan0727.github.io/CydiaIcon.png
+Name: NextAura
+
+Package: com.nextsolution.unlockvibrate
+Version: 4.4.8
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 2332
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/NextAura_4.4.8_RootHide_iOS16.deb
+Size: 235030
+MD5sum: 3115feb2ec38ecdc934c4e6c3ef455af
+SHA1: 7eaef7d3ceb4220dd7914c5af7ce41ec437af779
+SHA256: 158d1f8b26992b879dbeef36d8c0e49de5a31d2b30b4e2a949d592a55ec437a3
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: The complete Next Solution customization suite for iOS 16 with Dynamic Island notifications, Control Center tools, haptics, thermal battery colors and safety recovery controls.
+Author: Next Solution - zeshan0727
+Depiction: https://zeshan0727.github.io/depictions/nextaura.html
+Icon: https://zeshan0727.github.io/CydiaIcon.png
+Name: NextAura
+
+Package: com.zeshan.phoneaura
+Version: 0.4.16
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 1084
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.16_Rootless_iOS16.deb
+Size: 166812
+MD5sum: 0b033f8a7ce252dd6400d1f6dd0a6dab
+SHA1: c2bfdbd4c2506eba0e74ed4f359b34750f972d66
+SHA256: 953d3eadfbc379bc57349cb92ed2cad8fae78d9c35092c33bce437573fe4fbc4
+Section: Tweaks
+Homepage: https://nextsolution.cc/
+Description: PhoneAura is a free modern redesign of the iOS 16 Phone app with custom Favorites, smart Recents, Contacts, haptics and animations. Built for rootless jailbreaks.
+Author: Next Solution
+Depiction: https://zeshan0727.github.io/depictions/phoneaura.html
+Name: PhoneAura
+
+Package: com.zeshan.phoneaura
+Version: 0.4.16
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 1084
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Filename: https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.16_RootHide_iOS16.deb
+Size: 165562
+MD5sum: c28f125b2cdfa68b3fa40fb53c18a616
+SHA1: ffef4e94457bbcd995c8febd014fb44193cafe7b
+SHA256: c5e8f0c0e9e2b46adf82e4456d36853fd758ece9227e55766affebb9e8e90c2d
+Section: Tweaks
+Homepage: https://nextsolution.cc/
+Description: PhoneAura is a free modern redesign of the iOS 16 Phone app with custom Favorites, smart Recents, Contacts, haptics and animations. Built for RootHide.
+Author: Next Solution
+Depiction: https://zeshan0727.github.io/depictions/phoneaura.html
+Name: PhoneAura
