@@ -1,0 +1,20 @@
+name: Validate Next Home Torch Tutorial
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "next-home-torch-ios15-ios16.html"
+      - "assets/nexthometorch/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - ".github/scripts/publish-nexthometorch-blog.py"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/scripts/publish-nexthometorch-blog.py
