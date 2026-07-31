@@ -181,39 +181,39 @@ Author: Next Solution
 Name: Next Home Lock
 
 Package: com.nextsolution.nexthometorch
-Version: 1.0.1
+Version: 1.0.2
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/NextHomeTorch_1.0.1_RootHide.deb
-Size: 8604
-MD5sum: 1a2cdf6eda874d398cb9bd9356e69c26
-SHA1: 98590e0a9a2ec4116291a89e51c9b603ea136322
-SHA256: 1ffb78821cdddf66040a9f65a6b267d46615b16b8b5da37ddc95bc41c04fded0
+Filename: ./debfiles/HomeScreenFlashlight_1.0.2_RootHide.deb
+Size: 8552
+MD5sum: e6c571ced73c6757baf9d5b229880369
+SHA1: 70b569246d356a2d84187bbce45cbb1071659274
+SHA256: 86593c3814d97bd84b0a86d6a567966183591ad02d9685b2cf85bb489517b039
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
+Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Includes a simple enable or disable switch in Settings.
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
-Name: Next Home Torch
+Name: Home Screen Flashlight
 
 Package: com.nextsolution.nexthometorch
-Version: 1.0.1
+Version: 1.0.2
 Architecture: iphoneos-arm64
 Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/NextHomeTorch_1.0.1_Rootless.deb
-Size: 8680
-MD5sum: 78a0a961c6896fda18f4f9859d432f40
-SHA1: cd6ddc29e22f88478bdee551f1a25c3520ee0d7b
-SHA256: f81137d6c69bd7f0fa12274b780b5f59938655e1b2072033674cf668d27d49e9
+Filename: ./debfiles/HomeScreenFlashlight_1.0.2_Rootless.deb
+Size: 8622
+MD5sum: fa20f6c38e9a0ae9f7a6ee7e46c53a8c
+SHA1: a117427ce1cf8652cfae92ebf01a486a481b07ba
+SHA256: e9dcdf856b9cdceff11097d5366d2c8275edcb581ffccd7d1dfdebbe0b0931c4
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
+Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Includes a simple enable or disable switch in Settings.
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
-Name: Next Home Torch
+Name: Home Screen Flashlight
