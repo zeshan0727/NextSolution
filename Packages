@@ -187,10 +187,10 @@ Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeTorch_1.0.0_RootHide.deb
-Size: 8554
-MD5sum: 1ed7e2fb611b066133ded24380ba707f
-SHA1: 42296f5a983e10893655d1a7da5d98fa4e30c71e
-SHA256: 4c4e724c8d0dee4c2b1b7556362b3340bb9ea66d72d95cbd895b094c840e0cae
+Size: 8552
+MD5sum: 75cfdc2ec9450f8e808e7927e7822e04
+SHA1: 5dc1894e02d516a148f2fdf53e4ecd930a75510c
+SHA256: 130002f43ad3917d90b3543af5c093f3d86e4e7f858d96d088779650a4de0bcf
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
@@ -206,10 +206,10 @@ Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeTorch_1.0.0_Rootless.deb
-Size: 8638
-MD5sum: dda69e504cc4eb244361cbd8890a455f
-SHA1: c7028304ee21cd6624b656ac923ccb9e2bdb6819
-SHA256: f515a0f7855f0aa8df9741955f3aed568f0c314eb38140331c53f128a61f958e
+Size: 8628
+MD5sum: 599b158bbb8a3348aacdedbdcf397ae1
+SHA1: 0750a99e227f79690009660396b80be91ec95d01
+SHA256: f0b7227a078fec49cdd91f3ed53f38dc72b7fd579f82d8d766b7273b38f07a6a
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
