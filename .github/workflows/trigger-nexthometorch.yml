@@ -1,0 +1,20 @@
+name: Trigger Next Home Torch Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/trigger-nexthometorch.yml"
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch validated build workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish-nexthometorch.yml --repo zeshan0727/NextSolution --ref main
