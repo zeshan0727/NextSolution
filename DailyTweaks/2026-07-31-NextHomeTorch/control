@@ -1,9 +1,9 @@
 Package: com.nextsolution.nexthometorch
 Name: Home Screen Flashlight
-Version: 1.0.3
+Version: 1.0.4
 Architecture: iphoneos-arm64
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Uses SpringBoard and AVFoundation fallback support with a simple Settings switch.
+Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Version 1.0.4 adds verified SpringBoard injection diagnostics, a Settings test command, framework loading, haptic gesture confirmation and multiple flashlight routes.
 Maintainer: Next Solution
 Author: Next Solution
 Section: Tweaks
