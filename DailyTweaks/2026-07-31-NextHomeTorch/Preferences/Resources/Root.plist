@@ -7,7 +7,7 @@
     <dict>
       <key>cell</key><string>PSGroupCell</string>
       <key>label</key><string>Home Screen Flashlight</string>
-      <key>footerText</key><string>Double-tap an empty Home Screen area to toggle the flashlight.</string>
+      <key>footerText</key><string>Version 1.0.4. Double-tap an empty Home Screen area. A haptic confirms that the gesture hook was detected.</string>
     </dict>
     <dict>
       <key>cell</key><string>PSSwitchCell</string>
@@ -16,6 +16,15 @@
       <key>default</key><true/>
       <key>get</key><string>readPreferenceValue:</string>
       <key>set</key><string>setPreferenceValue:specifier:</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSButtonCell</string>
+      <key>label</key><string>Test Flashlight Now</string>
+      <key>action</key><string>testFlashlight</string>
+    </dict>
+    <dict>
+      <key>cell</key><string>PSGroupCell</string>
+      <key>footerText</key><string>The test reports whether the tweak loaded into SpringBoard and which flashlight route was used. This separates an injection problem from a gesture or flashlight-controller problem.</string>
     </dict>
   </array>
 </dict>
