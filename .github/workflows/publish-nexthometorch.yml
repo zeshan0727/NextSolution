@@ -1,0 +1,175 @@
+name: Build and Publish Next Home Torch
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-nexthometorch.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nexthometorch-1.0.0
+  cancel-in-progress: false
+
+jobs:
+  build-validate-publish:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Validate source and runtime decisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-07-31-NextHomeTorch"
+          for f in Tweak.xm NextHomeTorch.plist control Makefile README.md LICENSE Preferences/Makefile Preferences/NHTRootListController.h Preferences/NHTRootListController.m Preferences/Resources/Root.plist Preferences/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/NextHomeTorch.plist; do test -f "$P/$f"; done
+          grep -q '^Version: 1.0.0$' "$P/control"
+          grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
+          grep -q '^TARGET = iphone:clang:latest:15.0$' "$P/Makefile"
+          grep -q 'Bundles = ("com.apple.springboard")' "$P/NextHomeTorch.plist"
+          grep -q 'Enable Next Home Torch' "$P/Preferences/Resources/Root.plist"
+          test "$(grep -c '<string>PSSwitchCell</string>' "$P/Preferences/Resources/Root.plist")" -eq 1
+          test "$(grep -c '<string>PSButtonCell</string>' "$P/Preferences/Resources/Root.plist" || true)" -eq 0
+          ! grep -Eq 'PID|Diagnostics|Test Feature|Runtime Method|Hook Status' "$P/Preferences/Resources/Root.plist"
+          plutil -lint "$P/Preferences/Resources/Root.plist"
+          plutil -lint "$P/Preferences/Resources/Info.plist"
+          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/NextHomeTorch.plist"
+          P="$P" python3 - <<'PY'
+          import os
+          from pathlib import Path
+          source=(Path(os.environ['P'])/'Tweak.xm').read_text()
+          required=['%hook SBIconListView','touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event','touchCount == 2','touch.tapCount != 1','touch.phase != UITouchPhaseEnded','SBUIFlashlightController','sharedInstance','sharedController','level','setLevel:','respondsToSelector','NHTEnabled && allTouchesEnded && NHTToggleFlashlight()','%orig','com.nextsolution.nexthometorch.preferences.changed','CFPreferencesCopyAppValue','%ctor']
+          for item in required: assert item in source, item
+          assert source.index('respondsToSelector:levelSelector') < source.index('objc_msgSend)(controller, levelSelector)')
+          assert source.index('respondsToSelector:setLevelSelector') < source.index('objc_msgSend)(controller, setLevelSelector')
+          def accept(count, phases, taps, enabled=True, controller=True):
+              all_ended = count == 2
+              for phase, tap in zip(phases, taps):
+                  if phase != 'ended' or tap != 1: all_ended=False
+              return enabled and all_ended and controller
+          assert accept(2,['ended','ended'],[1,1])
+          assert not accept(1,['ended'],[1])
+          assert not accept(3,['ended']*3,[1]*3)
+          assert not accept(2,['ended','ended'],[1,2])
+          assert not accept(2,['moved','ended'],[1,1])
+          assert not accept(2,['ended','ended'],[1,1],False)
+          assert not accept(2,['ended','ended'],[1,1],True,False)
+          PY
+
+      - name: Build rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-07-31-NextHomeTorch"
+          OUT="$RUNNER_TEMP/nht-release"; mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$OUT/NextHomeTorch_1.0.0_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-07-31-NextHomeTorch"
+          OUT="$RUNNER_TEMP/nht-release"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach FETCH_HEAD
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$OUT/NextHomeTorch_1.0.0_RootHide.deb"
+
+      - name: Validate packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          validate() {
+            deb="$1"; arch="$2"; x="$(mktemp -d)"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.nexthometorch
+            test "$(dpkg-deb -f "$deb" Version)" = 1.0.0
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            dpkg-deb -f "$deb" Depends | grep -q preferenceloader
+            dpkg-deb -x "$deb" "$x"
+            dylib="$(find "$x" -type f -name NextHomeTorch.dylib -print -quit)"
+            filter="$(find "$x" -type f -path '*MobileSubstrate*' -name NextHomeTorch.plist -print -quit)"
+            root="$(find "$x" -type f -name Root.plist -path '*NextHomeTorchPreferences.bundle*' -print -quit)"
+            entry="$(find "$x" -type f -path '*PreferenceLoader/Preferences*' -name NextHomeTorch.plist -print -quit)"
+            for f in "$dylib" "$filter" "$root" "$entry"; do test -n "$f"; done
+            grep -q com.apple.springboard "$filter"
+            grep -q 'Enable Next Home Torch' "$root"
+            test "$(grep -c '<string>PSSwitchCell</string>' "$root")" -eq 1
+            for s in SBIconListView 'touchesEnded:withEvent:' SBUIFlashlightController setLevel: com.nextsolution.nexthometorch.preferences.changed; do strings -a "$dylib" | grep -q "$s"; done
+            rm -rf "$x"
+          }
+          O="$RUNNER_TEMP/nht-release"
+          validate "$O/NextHomeTorch_1.0.0_Rootless.deb" iphoneos-arm64
+          validate "$O/NextHomeTorch_1.0.0_RootHide.deb" iphoneos-arm64e
+          shasum -a 256 "$O"/*.deb | tee "$RUNNER_TEMP/nht-checksums.txt"
+
+      - name: Publish into NextSolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          O="$RUNNER_TEMP/nht-release"
+          git config user.name 'Next Solution Build Bot'
+          git config user.email actions@users.noreply.github.com
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p debfiles depictions "$RUNNER_TEMP/nht-scan"
+            cp "$O"/*.deb debfiles/
+            cp "$O"/*.deb "$RUNNER_TEMP/nht-scan/"
+            dpkg-scanpackages -m "$RUNNER_TEMP/nht-scan" /dev/null > "$RUNNER_TEMP/nht-stanzas"
+            sed -i '' 's|^Filename: .*/nht-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/nht-stanzas"
+            python3 - "$RUNNER_TEMP/nht-stanzas" <<'PY'
+          from pathlib import Path
+          import re,sys
+          p=Path('Packages'); old=p.read_text() if p.exists() else ''
+          st=[s.strip() for s in re.split(r'\n\s*\n',old) if s.strip()]
+          st=[s for s in st if not re.search(r'^Package: com\.nextsolution\.nexthometorch$',s,re.M)]
+          new=[s.strip() for s in re.split(r'\n\s*\n',Path(sys.argv[1]).read_text()) if s.strip()]
+          p.write_text('\n\n'.join(st+new)+'\n')
+          PY
+            test "$(grep -c '^Package: com.nextsolution.nexthometorch$' Packages)" -eq 2
+            gzip -9 -c Packages > Packages.gz
+            bzip2 -9 -c Packages > Packages.bz2
+            xz -9e -c Packages > Packages.xz
+            zstd -19 -q -c Packages > Packages.zst
+            cat > depictions/nexthometorch.html <<'HTML'
+          <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Next Home Torch 1.0.0</title><style>body{font-family:-apple-system;margin:0;padding:24px;background:#0b1020;color:#fff;line-height:1.6}.card{max-width:720px;margin:auto;padding:24px;border-radius:24px;background:#151d35}h1{margin-top:0}a{color:#6ed7ff}</style></head><body><main class="card"><h1>Next Home Torch 1.0.0</h1><p>Toggle the flashlight with one two-finger tap on empty Home Screen space.</p><p>Supports iOS 15+ with RootHide and rootless builds. Settings contains one simple enable switch.</p><p><strong>Status:</strong> Build-validated and awaiting physical-device confirmation.</p><p><a href="https://nextsolution.cc/">Next Solution Repo</a></p></main></body></html>
+          HTML
+            python3 - <<'PY'
+          from pathlib import Path
+          from datetime import datetime,timezone
+          import re
+          p=Path('Release'); t=p.read_text()
+          m=re.search(r'^Version: 1\.0\.(\d+)$',t,re.M); n=int(m.group(1))+1 if m else 1
+          t=re.sub(r'^Version: .*$',f'Version: 1.0.{n}',t,flags=re.M)
+          t=re.sub(r'^Date: .*$',f'Date: {datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S UTC")}',t,flags=re.M)
+          t=re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png',t,flags=re.M)
+          p.write_text(t)
+          PY
+            git add debfiles/NextHomeTorch_1.0.0_Rootless.deb debfiles/NextHomeTorch_1.0.0_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release depictions/nexthometorch.html
+            git diff --cached --check
+            git commit -m 'Publish Next Home Torch 1.0.0'
+            git push origin HEAD:main && exit 0
+            sleep $((attempt*3))
+          done
+          exit 1
