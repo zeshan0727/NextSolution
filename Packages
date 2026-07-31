@@ -181,39 +181,39 @@ Author: Next Solution
 Name: Next Home Lock
 
 Package: com.nextsolution.nexthometorch
-Version: 1.0.2
+Version: 1.0.4
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution
-Installed-Size: 344
+Installed-Size: 348
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/HomeScreenFlashlight_1.0.2_RootHide.deb
-Size: 8552
-MD5sum: e6c571ced73c6757baf9d5b229880369
-SHA1: 70b569246d356a2d84187bbce45cbb1071659274
-SHA256: 86593c3814d97bd84b0a86d6a567966183591ad02d9685b2cf85bb489517b039
+Filename: ./debfiles/HomeScreenFlashlight_1.0.4_RootHide.deb
+Size: 13228
+MD5sum: 58fca1804af5c4e2828d2f756e390af0
+SHA1: 14182ee1b561ba460e012bba09b37e18c7dddd1a
+SHA256: 7c464634a3f5baf098b70640c90a812481c2f91119d513586def6245bcc15fc0
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Includes a simple enable or disable switch in Settings.
+Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Version 1.0.4 adds verified SpringBoard injection diagnostics, a Settings test command, framework loading, haptic gesture confirmation and multiple flashlight routes.
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Home Screen Flashlight
 
 Package: com.nextsolution.nexthometorch
-Version: 1.0.2
+Version: 1.0.4
 Architecture: iphoneos-arm64
 Maintainer: Next Solution
-Installed-Size: 344
+Installed-Size: 348
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/HomeScreenFlashlight_1.0.2_Rootless.deb
-Size: 8622
-MD5sum: fa20f6c38e9a0ae9f7a6ee7e46c53a8c
-SHA1: a117427ce1cf8652cfae92ebf01a486a481b07ba
-SHA256: e9dcdf856b9cdceff11097d5366d2c8275edcb581ffccd7d1dfdebbe0b0931c4
+Filename: ./debfiles/HomeScreenFlashlight_1.0.4_Rootless.deb
+Size: 13282
+MD5sum: ddfcc291025f861645f767a4f44f7ccf
+SHA1: d5a6dfe3211eba27b9ac4551e538411b5c352b28
+SHA256: 08550d59745fcdaede6a4590e5950ead68be4199384c7ddcadc1a838a3cd514a
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Includes a simple enable or disable switch in Settings.
+Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Version 1.0.4 adds verified SpringBoard injection diagnostics, a Settings test command, framework loading, haptic gesture confirmation and multiple flashlight routes.
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Home Screen Flashlight
