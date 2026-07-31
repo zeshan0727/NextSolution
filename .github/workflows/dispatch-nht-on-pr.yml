@@ -14,7 +14,7 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch main release workflow
+      - name: Dispatch final release workflow
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run publish-nexthometorch.yml --repo zeshan0727/NextSolution --ref main
+        run: gh workflow run publish-nexthometorch-final.yml --repo zeshan0727/NextSolution --ref main
