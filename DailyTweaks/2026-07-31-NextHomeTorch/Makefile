@@ -8,7 +8,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = NextHomeTorch
 NextHomeTorch_FILES = Tweak.xm
 NextHomeTorch_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-nullability-completeness
-NextHomeTorch_FRAMEWORKS = UIKit Foundation
+NextHomeTorch_FRAMEWORKS = UIKit Foundation AVFoundation
 NextHomeTorch_LDFLAGS = -Wl,-segalign,4000
 
 include $(THEOS_MAKE_PATH)/tweak.mk
