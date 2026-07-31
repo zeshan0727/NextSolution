@@ -14,7 +14,7 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Fix and dispatch tutorial preparation
+      - name: Patch tutorial branch pages
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run fix-and-dispatch-nht-tutorial.yml --repo zeshan0727/NextSolution --ref main
+        run: gh workflow run patch-nexthometorch-tutorial-pages.yml --repo zeshan0727/NextSolution --ref main
