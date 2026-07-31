@@ -1,5 +1,10 @@
 from pathlib import Path
 
+
+def clean(text: str) -> str:
+    return "\n".join(line.rstrip() for line in text.splitlines()) + "\n"
+
+
 index = Path("index.html")
 text = index.read_text()
 text = text.replace(
@@ -20,7 +25,7 @@ marker = "        <!-- PHONEAURA_RECENT_CARD_END -->\n"
 if "NEXTHOMETORCH_RECENT_CARD_START" not in text:
     assert marker in text
     text = text.replace(marker, marker + card, 1)
-index.write_text(text)
+index.write_text(clean(text))
 
 tutorials = Path("tutorials.html")
 text = tutorials.read_text()
@@ -36,7 +41,7 @@ if 'href="next-home-torch-ios15-ios16.html"' not in text:
     start = text.index('<section class="grid" aria-label="Tutorial guides">')
     end = text.index("</section>", start)
     text = text[:end] + card + "\n" + text[end:]
-tutorials.write_text(text)
+tutorials.write_text(clean(text))
 
 sitemap = Path("sitemap.xml")
 text = sitemap.read_text()
@@ -45,4 +50,4 @@ if "next-home-torch-ios15-ios16.html" not in text:
     marker = '  <url><loc>https://nextsolution.cc/privacy.html</loc>'
     assert marker in text
     text = text.replace(marker, entry + marker, 1)
-sitemap.write_text(text)
+sitemap.write_text(clean(text))
