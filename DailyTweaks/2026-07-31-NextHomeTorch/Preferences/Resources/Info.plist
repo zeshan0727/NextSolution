@@ -7,7 +7,7 @@
 <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 <key>CFBundleName</key><string>Home Screen Flashlight</string>
 <key>CFBundlePackageType</key><string>BNDL</string>
-<key>CFBundleShortVersionString</key><string>1.0.2</string>
-<key>CFBundleVersion</key><string>1.0.2</string>
+<key>CFBundleShortVersionString</key><string>1.0.3</string>
+<key>CFBundleVersion</key><string>1.0.3</string>
 <key>NSPrincipalClass</key><string>NHTRootListController</string>
 </dict></plist>
