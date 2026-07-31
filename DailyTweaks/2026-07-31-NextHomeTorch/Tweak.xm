@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -26,13 +27,14 @@ static id HSFSharedFlashlightController(void) {
     for (NSString *selectorName in @[@"sharedInstance", @"sharedController"]) {
         SEL selector = NSSelectorFromString(selectorName);
         if ([controllerClass respondsToSelector:selector]) {
-            return ((id (*)(id, SEL))objc_msgSend)(controllerClass, selector);
+            id controller = ((id (*)(id, SEL))objc_msgSend)(controllerClass, selector);
+            if (controller) return controller;
         }
     }
     return nil;
 }
 
-static BOOL HSFToggleFlashlight(void) {
+static BOOL HSFToggleUsingSpringBoardController(void) {
     id controller = HSFSharedFlashlightController();
     if (!controller) return NO;
 
@@ -42,27 +44,44 @@ static BOOL HSFToggleFlashlight(void) {
         return YES;
     }
 
-    SEL levelSelector = NSSelectorFromString(@"level");
-    SEL setLevelSelector = NSSelectorFromString(@"setLevel:");
-    if ([controller respondsToSelector:levelSelector] &&
-        [controller respondsToSelector:setLevelSelector]) {
-        CGFloat currentLevel = ((CGFloat (*)(id, SEL))objc_msgSend)(controller, levelSelector);
-        CGFloat targetLevel = currentLevel > 0.01 ? 0.0 : 1.0;
-        ((void (*)(id, SEL, CGFloat))objc_msgSend)(controller, setLevelSelector, targetLevel);
-        return YES;
-    }
-
-    SEL flashlightLevelSelector = NSSelectorFromString(@"flashlightLevel");
-    SEL setFlashlightLevelSelector = NSSelectorFromString(@"setFlashlightLevel:");
-    if ([controller respondsToSelector:flashlightLevelSelector] &&
-        [controller respondsToSelector:setFlashlightLevelSelector]) {
-        CGFloat currentLevel = ((CGFloat (*)(id, SEL))objc_msgSend)(controller, flashlightLevelSelector);
-        CGFloat targetLevel = currentLevel > 0.01 ? 0.0 : 1.0;
-        ((void (*)(id, SEL, CGFloat))objc_msgSend)(controller, setFlashlightLevelSelector, targetLevel);
-        return YES;
+    for (NSArray<NSString *> *pair in @[
+        @[@"level", @"setLevel:"],
+        @[@"flashlightLevel", @"setFlashlightLevel:"]
+    ]) {
+        SEL getSelector = NSSelectorFromString(pair[0]);
+        SEL setSelector = NSSelectorFromString(pair[1]);
+        if ([controller respondsToSelector:getSelector] && [controller respondsToSelector:setSelector]) {
+            CGFloat currentLevel = ((CGFloat (*)(id, SEL))objc_msgSend)(controller, getSelector);
+            ((void (*)(id, SEL, CGFloat))objc_msgSend)(controller, setSelector, currentLevel > 0.01 ? 0.0 : 1.0);
+            return YES;
+        }
     }
 
     return NO;
+}
+
+static BOOL HSFToggleUsingAVFoundation(void) {
+    AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+    if (!device || !device.hasTorch || !device.isTorchAvailable) return NO;
+
+    NSError *error = nil;
+    if (![device lockForConfiguration:&error]) return NO;
+
+    BOOL success = NO;
+    if (device.isTorchActive) {
+        device.torchMode = AVCaptureTorchModeOff;
+        success = YES;
+    } else {
+        success = [device setTorchModeOnWithLevel:1.0 error:&error];
+    }
+
+    [device unlockForConfiguration];
+    return success;
+}
+
+static BOOL HSFToggleFlashlight(void) {
+    if (HSFToggleUsingSpringBoardController()) return YES;
+    return HSFToggleUsingAVFoundation();
 }
 
 static void HSFPreferencesChangedCallback(CFNotificationCenterRef center,
@@ -73,15 +92,17 @@ static void HSFPreferencesChangedCallback(CFNotificationCenterRef center,
     HSFReloadPreferences();
 }
 
-// Same proven gesture path used by Home Lock: SBIconListView receives
-// empty Home Screen background touches and reports tapCount == 2.
+// Uses the same verified Home Screen hook and double-tap detection as Home Lock.
 %hook SBIconListView
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     UITouch *touch = [touches anyObject];
     NSUInteger tapCount = touch ? touch.tapCount : 0;
 
-    if (HSFEnabled && tapCount == 2 && HSFToggleFlashlight()) {
+    if (HSFEnabled && tapCount == 2) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            HSFToggleFlashlight();
+        });
         return;
     }
 
