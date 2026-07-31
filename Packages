@@ -179,3 +179,41 @@ Priority: optional
 Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.5 keeps the verified SBIconListView runtime and replaces the diagnostic-heavy Settings page with one simple enable or disable switch.
 Author: Next Solution
 Name: Next Home Lock
+
+Package: com.nextsolution.nexthometorch
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextHomeTorch_1.0.0_RootHide.deb
+Size: 8554
+MD5sum: 1ed7e2fb611b066133ded24380ba707f
+SHA1: 42296f5a983e10893655d1a7da5d98fa4e30c71e
+SHA256: 4c4e724c8d0dee4c2b1b7556362b3340bb9ea66d72d95cbd895b094c840e0cae
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/nexthometorch.html
+Name: Next Home Torch
+
+Package: com.nextsolution.nexthometorch
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextHomeTorch_1.0.0_Rootless.deb
+Size: 8638
+MD5sum: dda69e504cc4eb244361cbd8890a455f
+SHA1: c7028304ee21cd6624b656ac923ccb9e2bdb6819
+SHA256: f515a0f7855f0aa8df9741955f3aed568f0c314eb38140331c53f128a61f958e
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/nexthometorch.html
+Name: Next Home Torch
