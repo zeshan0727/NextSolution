@@ -1,4 +1,4 @@
-name: Build and Publish Home Screen Flashlight 1.0.2
+name: Build and Publish Home Screen Flashlight 1.0.3
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: nextsolution-home-screen-flashlight-1.0.2
+  group: nextsolution-home-screen-flashlight-1.0.3
   cancel-in-progress: false
 
 jobs:
@@ -30,14 +30,15 @@ jobs:
           P="$GITHUB_WORKSPACE/DailyTweaks/2026-07-31-NextHomeTorch"
           for f in Tweak.xm NextHomeTorch.plist control Makefile Preferences/Makefile Preferences/NHTRootListController.m Preferences/Resources/Root.plist Preferences/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/NextHomeTorch.plist; do test -f "$P/$f"; done
           grep -q '^Name: Home Screen Flashlight$' "$P/control"
-          grep -q '^Version: 1.0.2$' "$P/control"
+          grep -q '^Version: 1.0.3$' "$P/control"
           grep -q '%hook SBIconListView' "$P/Tweak.xm"
           grep -q 'tapCount == 2' "$P/Tweak.xm"
-          ! grep -q 'allTouches.count' "$P/Tweak.xm"
-          grep -q 'toggleFlashlight' "$P/Tweak.xm"
-          grep -q 'setLevel:' "$P/Tweak.xm"
+          grep -q 'HSFToggleUsingAVFoundation' "$P/Tweak.xm"
+          grep -q 'AVCaptureDevice' "$P/Tweak.xm"
+          grep -q 'AVFoundation' "$P/Makefile"
           grep -q 'Enable Home Screen Flashlight' "$P/Preferences/Resources/Root.plist"
           grep -q 'Home Screen Flashlight' "$P/layout/Library/PreferenceLoader/Preferences/NextHomeTorch.plist"
+          grep -q '<string>1.0.3</string>' "$P/Preferences/Resources/Info.plist"
           plutil -lint "$P/Preferences/Resources/Root.plist"
           plutil -lint "$P/Preferences/Resources/Info.plist"
           plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/NextHomeTorch.plist"
@@ -49,7 +50,7 @@ jobs:
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
           export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
           rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
-          D="$(find "$P/packages" -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$D"; cp "$D" "$OUT/HomeScreenFlashlight_1.0.2_Rootless.deb"
+          D="$(find "$P/packages" -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$D"; cp "$D" "$OUT/HomeScreenFlashlight_1.0.3_Rootless.deb"
       - name: Build RootHide
         shell: bash
         run: |
@@ -62,13 +63,13 @@ jobs:
           sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
           export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
           rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
-          D="$(find "$P/packages" -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$D"; cp "$D" "$OUT/HomeScreenFlashlight_1.0.2_RootHide.deb"
+          D="$(find "$P/packages" -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$D"; cp "$D" "$OUT/HomeScreenFlashlight_1.0.3_RootHide.deb"
       - name: Validate packages
         shell: bash
         run: |
           set -euo pipefail
-          check(){ d="$1"; a="$2"; x="$(mktemp -d)"; test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.nexthometorch; test "$(dpkg-deb -f "$d" Name)" = "Home Screen Flashlight"; test "$(dpkg-deb -f "$d" Version)" = 1.0.2; test "$(dpkg-deb -f "$d" Architecture)" = "$a"; dpkg-deb -x "$d" "$x"; find "$x" -name NextHomeTorch.dylib | grep -q .; find "$x" -path '*NextHomeTorchPreferences.bundle/Root.plist' | grep -q .; find "$x" -path '*PreferenceLoader/Preferences/NextHomeTorch.plist' | grep -q .; grep -R -q 'Enable Home Screen Flashlight' "$x"; rm -rf "$x"; }
-          O="$RUNNER_TEMP/hsf-release"; check "$O/HomeScreenFlashlight_1.0.2_Rootless.deb" iphoneos-arm64; check "$O/HomeScreenFlashlight_1.0.2_RootHide.deb" iphoneos-arm64e
+          check(){ d="$1"; a="$2"; x="$(mktemp -d)"; test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.nexthometorch; test "$(dpkg-deb -f "$d" Name)" = "Home Screen Flashlight"; test "$(dpkg-deb -f "$d" Version)" = 1.0.3; test "$(dpkg-deb -f "$d" Architecture)" = "$a"; dpkg-deb -x "$d" "$x"; find "$x" -name NextHomeTorch.dylib | grep -q .; find "$x" -path '*NextHomeTorchPreferences.bundle/Root.plist' | grep -q .; find "$x" -path '*PreferenceLoader/Preferences/NextHomeTorch.plist' | grep -q .; grep -R -q 'Enable Home Screen Flashlight' "$x"; strings "$(find "$x" -name NextHomeTorch.dylib -print -quit)" | grep -q AVCaptureDevice; rm -rf "$x"; }
+          O="$RUNNER_TEMP/hsf-release"; check "$O/HomeScreenFlashlight_1.0.3_Rootless.deb" iphoneos-arm64; check "$O/HomeScreenFlashlight_1.0.3_RootHide.deb" iphoneos-arm64e
       - name: Publish repository packages
         shell: bash
         run: |
@@ -94,5 +95,5 @@ jobs:
           if m: t=re.sub(r'^Version: .*$',f'Version: {m.group(1)}.{m.group(2)}.{int(m.group(3))+1}',t,flags=re.M)
           t=re.sub(r'^Date: .*$', 'Date: '+datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'),t,flags=re.M); p.write_text(t)
           PY
-          git add debfiles/HomeScreenFlashlight_1.0.2_Rootless.deb debfiles/HomeScreenFlashlight_1.0.2_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
-          git commit -m "Publish Home Screen Flashlight 1.0.2"; git push origin HEAD:main
+          git add debfiles/HomeScreenFlashlight_1.0.3_Rootless.deb debfiles/HomeScreenFlashlight_1.0.3_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
+          git commit -m "Publish Home Screen Flashlight 1.0.3"; git push origin HEAD:main
