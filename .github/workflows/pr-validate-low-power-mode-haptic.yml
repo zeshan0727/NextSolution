@@ -25,6 +25,7 @@ jobs:
           P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-01-LowPowerModeHaptic"
           clang -std=c11 -Wall -Wextra -Werror "$P/tests/test_decision.c" -o "$RUNNER_TEMP/test_decision"
           "$RUNNER_TEMP/test_decision" | tee "$RUNNER_TEMP/decision-test.log"
+          grep -q 'lowPowerModeEnabled' "$P/Tweak.xm"
           plutil -lint "$P/LowPowerModeHaptic.plist"
           plutil -lint "$P/Preferences/Resources/Root.plist"
           plutil -lint "$P/Preferences/Resources/Info.plist"
@@ -77,9 +78,9 @@ jobs:
             test -n "$dylib"; test -n "$filter"; test -n "$root"; test -n "$entry"
             grep -q 'com.apple.springboard' "$filter"
             grep -q 'Enable Low Power Mode Haptic' "$root"
-            strings -a "$dylib" | grep -q lowPowerModeEnabled
-            strings -a "$dylib" | grep -q notificationOccurred
-            nm -u "$dylib" | grep -q NSProcessInfoPowerStateDidChangeNotification
+            strings -a "$dylib" > "$x/dylib-strings.txt"
+            grep -q 'NSProcessInfoPowerStateDidChangeNotification' "$x/dylib-strings.txt"
+            grep -q 'notificationOccurred:' "$x/dylib-strings.txt"
             rm -rf "$x"
           }
           O="$RUNNER_TEMP/lpmh-release"
