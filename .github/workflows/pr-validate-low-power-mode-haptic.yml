@@ -62,12 +62,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          check(){ d="$1"; a="$2"; x="$(mktemp -d)"; test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.lowpowermodehaptic; test "$(dpkg-deb -f "$d" Version)" = 1.0.0; test "$(dpkg-deb -f "$d" Architecture)" = "$a"; dpkg-deb -x "$d" "$x"; dylib="$(find "$x" -name LowPowerModeHaptic.dylib -print -quit)"; test -n "$dylib"; find "$x" -path '*LowPowerModeHapticPreferences.bundle/Root.plist' | grep -q .; find "$x" -path '*PreferenceLoader/Preferences/LowPowerModeHaptic.plist' | grep -q .; find "$x" -name LowPowerModeHaptic.plist -path '*DynamicLibraries*' | grep -q .; strings -a "$dylib" | grep -q NSProcessInfoPowerStateDidChangeNotification; strings -a "$dylib" | grep -q lowPowerModeEnabled; rm -rf "$x"; }
+          check(){
+            d="$1"; a="$2"; x="$(mktemp -d)"
+            echo "Validating $d as $a"
+            test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.lowpowermodehaptic
+            test "$(dpkg-deb -f "$d" Version)" = 1.0.0
+            test "$(dpkg-deb -f "$d" Architecture)" = "$a"
+            dpkg-deb -x "$d" "$x"
+            dylib="$(find "$x" -name LowPowerModeHaptic.dylib -print -quit)"
+            filter="$(find "$x" -name LowPowerModeHaptic.plist -path '*DynamicLibraries*' -print -quit)"
+            root="$(find "$x" -path '*LowPowerModeHapticPreferences.bundle/Root.plist' -print -quit)"
+            entry="$(find "$x" -path '*PreferenceLoader/Preferences/LowPowerModeHaptic.plist' -print -quit)"
+            printf 'dylib=%s\nfilter=%s\nroot=%s\nentry=%s\n' "$dylib" "$filter" "$root" "$entry"
+            test -n "$dylib"; test -n "$filter"; test -n "$root"; test -n "$entry"
+            grep -q 'com.apple.springboard' "$filter"
+            grep -q 'Enable Low Power Mode Haptic' "$root"
+            strings -a "$dylib" | grep -q lowPowerModeEnabled
+            strings -a "$dylib" | grep -q notificationOccurred
+            nm -u "$dylib" | grep -q NSProcessInfoPowerStateDidChangeNotification
+            rm -rf "$x"
+          }
           O="$RUNNER_TEMP/lpmh-release"
           check "$O/LowPowerModeHaptic_1.0.0_Rootless.deb" iphoneos-arm64
           check "$O/LowPowerModeHaptic_1.0.0_RootHide.deb" iphoneos-arm64e
           shasum -a 256 "$O"/*.deb | tee "$RUNNER_TEMP/build-validation.txt"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: low-power-mode-haptic-release
           path: |
