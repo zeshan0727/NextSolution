@@ -1,0 +1,78 @@
+name: Validate Low Power Mode Haptic Packages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "DailyTweaks/2026-08-01-LowPowerModeHaptic/**"
+      - ".github/workflows/pr-validate-low-power-mode-haptic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-validate:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install dpkg ldid
+      - name: Run deterministic checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-01-LowPowerModeHaptic"
+          clang -std=c11 -Wall -Wextra -Werror "$P/tests/test_decision.c" -o "$RUNNER_TEMP/test_decision"
+          "$RUNNER_TEMP/test_decision" | tee "$RUNNER_TEMP/decision-test.log"
+          plutil -lint "$P/LowPowerModeHaptic.plist"
+          plutil -lint "$P/Preferences/Resources/Root.plist"
+          plutil -lint "$P/Preferences/Resources/Info.plist"
+          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/LowPowerModeHaptic.plist"
+      - name: Build rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-01-LowPowerModeHaptic"
+          OUT="$RUNNER_TEMP/lpmh-release"; mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1 2>&1 | tee "$RUNNER_TEMP/rootless-build.log"
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$OUT/LowPowerModeHaptic_1.0.0_Rootless.deb"
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-01-LowPowerModeHaptic"
+          OUT="$RUNNER_TEMP/lpmh-release"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1 2>&1 | tee "$RUNNER_TEMP/roothide-build.log"
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$OUT/LowPowerModeHaptic_1.0.0_RootHide.deb"
+      - name: Validate package layouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          check(){ d="$1"; a="$2"; x="$(mktemp -d)"; test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.lowpowermodehaptic; test "$(dpkg-deb -f "$d" Version)" = 1.0.0; test "$(dpkg-deb -f "$d" Architecture)" = "$a"; dpkg-deb -x "$d" "$x"; dylib="$(find "$x" -name LowPowerModeHaptic.dylib -print -quit)"; test -n "$dylib"; find "$x" -path '*LowPowerModeHapticPreferences.bundle/Root.plist' | grep -q .; find "$x" -path '*PreferenceLoader/Preferences/LowPowerModeHaptic.plist' | grep -q .; find "$x" -name LowPowerModeHaptic.plist -path '*DynamicLibraries*' | grep -q .; strings -a "$dylib" | grep -q NSProcessInfoPowerStateDidChangeNotification; strings -a "$dylib" | grep -q lowPowerModeEnabled; rm -rf "$x"; }
+          O="$RUNNER_TEMP/lpmh-release"
+          check "$O/LowPowerModeHaptic_1.0.0_Rootless.deb" iphoneos-arm64
+          check "$O/LowPowerModeHaptic_1.0.0_RootHide.deb" iphoneos-arm64e
+          shasum -a 256 "$O"/*.deb | tee "$RUNNER_TEMP/build-validation.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: low-power-mode-haptic-release
+          path: |
+            ${{ runner.temp }}/lpmh-release/*.deb
+            ${{ runner.temp }}/decision-test.log
+            ${{ runner.temp }}/rootless-build.log
+            ${{ runner.temp }}/roothide-build.log
+            ${{ runner.temp }}/build-validation.txt
