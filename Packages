@@ -217,3 +217,41 @@ Description: Double-tap an empty Home Screen area to toggle the iPhone flashligh
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Home Screen Flashlight
+
+Package: com.nextsolution.lowpowermodehaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/LowPowerModeHaptic_1.0.0_RootHide.deb
+Size: 8260
+MD5sum: bbd01d4e9980ff7d6c63b3b2a2000bc6
+SHA1: a353fa6cbc9be2d8b28275edc6df1f5af6d86572
+SHA256: 0df80e733436b460bb273b6182ed3b90a850fb71acbf79f33bafe7d0be0f315a
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays distinct haptic feedback when iPhone Low Power Mode turns on or off. Includes one simple enable switch in Settings.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
+Name: Low Power Mode Haptic
+
+Package: com.nextsolution.lowpowermodehaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/LowPowerModeHaptic_1.0.0_Rootless.deb
+Size: 8316
+MD5sum: a7f26c8a72a21c289af87fae71ee05e9
+SHA1: 648ace332cbd0709b52a5ade3cbbb8ced968f0f8
+SHA256: 1365d250296009ef865ee25d8950a8557a8584d4181cc791f335e0b82f3abec9
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays distinct haptic feedback when iPhone Low Power Mode turns on or off. Includes one simple enable switch in Settings.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
+Name: Low Power Mode Haptic
