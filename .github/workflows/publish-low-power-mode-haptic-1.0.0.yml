@@ -1,3 +1,4 @@
+# Trigger 2: build, validate and publish the August 1 daily tweak.
 name: Build and Publish Low Power Mode Haptic 1.0.0
 
 on:
