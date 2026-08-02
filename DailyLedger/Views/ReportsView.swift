@@ -113,6 +113,33 @@ private enum FinanceSummaryCardStorage {
     }
 }
 
+private struct FinanceSummaryAccountSelection: Codable, Equatable {
+    var usesAllAccounts = true
+    var accountIDs: [UUID] = []
+
+    static func decode(_ value: String) -> FinanceSummaryAccountSelection {
+        guard let data = value.data(using: .utf8),
+              let selection = try? JSONDecoder().decode(Self.self, from: data) else {
+            return FinanceSummaryAccountSelection()
+        }
+        return selection
+    }
+
+    func encoded() -> String {
+        guard let data = try? JSONEncoder().encode(self),
+              let value = String(data: data, encoding: .utf8) else { return "" }
+        return value
+    }
+}
+
+private enum FinanceSummaryAccountFilterTarget: String, Identifiable {
+    case netBalance
+    case income
+
+    var id: String { rawValue }
+    var title: String { self == .netBalance ? "Net Balance Accounts" : "Income Accounts" }
+}
+
 struct ReportsView: View {
     @State private var searchText = ""
 
@@ -479,6 +506,8 @@ private struct ReportDetailView: View {
     @AppStorage("ReportCustomStart") private var storedCustomStart = Date().timeIntervalSince1970
     @AppStorage("ReportCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
     @AppStorage("FinanceSummaryCustomCardsV1") private var storedCustomSummaryCards = "[]"
+    @AppStorage("FinanceSummaryNetBalanceAccountsV1") private var storedNetBalanceAccounts = ""
+    @AppStorage("FinanceSummaryIncomeAccountsV1") private var storedIncomeAccounts = ""
     @State private var anchorDate = Date()
     @State private var selectedTransaction: LedgerTransaction?
     @State private var showingCustomDates = false
@@ -487,6 +516,7 @@ private struct ReportDetailView: View {
     @State private var searchText = ""
     @State private var cachedExpenseTransactions: [LedgerTransaction] = []
     @State private var editingSummaryCard: FinanceSummaryCustomCard?
+    @State private var editingAccountFilter: FinanceSummaryAccountFilterTarget?
 
     var body: some View {
         NavigationStack {
@@ -583,6 +613,24 @@ private struct ReportDetailView: View {
                         .environmentObject(store)
                 }
             }
+            .sheet(item: $editingAccountFilter) { target in
+                NavigationStack {
+                    switch target {
+                    case .netBalance:
+                        FinanceSummaryAccountFilterEditor(
+                            target: target,
+                            storedSelection: $storedNetBalanceAccounts
+                        )
+                        .environmentObject(store)
+                    case .income:
+                        FinanceSummaryAccountFilterEditor(
+                            target: target,
+                            storedSelection: $storedIncomeAccounts
+                        )
+                        .environmentObject(store)
+                    }
+                }
+            }
         }
     }
 
@@ -659,31 +707,44 @@ private struct ReportDetailView: View {
 
     private var totalCards: some View {
         VStack(spacing: 12) {
-            ReportTotalCard(
-                title: "Net Balance",
-                value: financeSummaryNetBalance,
-                currencyCode: store.currencyCode,
-                icon: "equal.circle.fill",
-                color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red
-            )
+            ZStack(alignment: .topTrailing) {
+                ReportTotalCard(
+                    title: "Net Balance",
+                    value: financeSummaryNetBalance,
+                    currencyCode: store.currencyCode,
+                    icon: "equal.circle.fill",
+                    color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red,
+                    secondaryText: accountSelectionLabel(netBalanceAccountIDs)
+                )
+                accountFilterPencil(.netBalance)
+            }
             Text("PKR loan movement converted at fixed rate: PKR 77 = QAR 1.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 12) {
-                NavigationLink {
-                    PeriodTransactionsView(kind: .income, interval: selectedInterval)
-                } label: {
-                    ReportTotalCard(
-                        title: "Income",
-                        value: totals.income,
-                        currencyCode: store.currencyCode,
-                        icon: "arrow.down.left.circle.fill",
-                        color: AppTheme.green,
-                        compact: true
-                    )
+                ZStack(alignment: .topTrailing) {
+                    NavigationLink {
+                        PeriodTransactionsView(
+                            kind: .income,
+                            interval: selectedInterval,
+                            accountIDs: incomeAccountIDs
+                        )
+                    } label: {
+                        ReportTotalCard(
+                            title: "Income",
+                            value: filteredIncome,
+                            currencyCode: store.currencyCode,
+                            icon: "arrow.down.left.circle.fill",
+                            color: AppTheme.green,
+                            compact: true,
+                            secondaryText: accountSelectionLabel(incomeAccountIDs)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    accountFilterPencil(.income, compact: true)
                 }
-                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
                 NavigationLink {
                     PeriodTransactionsView(kind: .expenses, interval: selectedInterval)
                 } label: {
@@ -825,11 +886,17 @@ private struct ReportDetailView: View {
     }
 
     private var financeSummaryNetBalance: Decimal {
-        totals.income + convertedLoanMovement - totals.expense
+        filteredNetBalanceTotals.income
+            + convertedLoanMovement(accountIDs: netBalanceAccountIDs)
+            - filteredNetBalanceTotals.expense
     }
 
     private var convertedLoanMovement: Decimal {
-        store.loanNetMovements(in: selectedInterval).reduce(Decimal.zero) {
+        convertedLoanMovement(accountIDs: nil)
+    }
+
+    private func convertedLoanMovement(accountIDs: Set<UUID>?) -> Decimal {
+        store.loanNetMovements(in: selectedInterval, accountIDs: accountIDs).reduce(Decimal.zero) {
             result, movement in
             switch movement.currencyCode.uppercased() {
             case "QAR":
@@ -840,6 +907,52 @@ private struct ReportDetailView: View {
                 return result
             }
         }
+    }
+
+    private var filteredNetBalanceTotals: LedgerTotals {
+        store.totals(in: selectedInterval, accountIDs: netBalanceAccountIDs)
+    }
+
+    private var filteredIncome: Decimal {
+        store.totals(in: selectedInterval, accountIDs: incomeAccountIDs).income
+    }
+
+    private var netBalanceAccountIDs: Set<UUID>? {
+        selectedAccountIDs(from: storedNetBalanceAccounts)
+    }
+
+    private var incomeAccountIDs: Set<UUID>? {
+        selectedAccountIDs(from: storedIncomeAccounts)
+    }
+
+    private func selectedAccountIDs(from value: String) -> Set<UUID>? {
+        let selection = FinanceSummaryAccountSelection.decode(value)
+        guard !selection.usesAllAccounts else { return nil }
+        let validIDs = Set(store.accounts.filter {
+            $0.currencyCode.caseInsensitiveCompare(store.currencyCode) == .orderedSame
+        }.map(\.id))
+        return Set(selection.accountIDs).intersection(validIDs)
+    }
+
+    private func accountSelectionLabel(_ ids: Set<UUID>?) -> String {
+        guard let ids else { return "All accounts" }
+        return "\(ids.count) selected account\(ids.count == 1 ? "" : "s")"
+    }
+
+    private func accountFilterPencil(
+        _ target: FinanceSummaryAccountFilterTarget,
+        compact: Bool = false
+    ) -> some View {
+        Button {
+            editingAccountFilter = target
+        } label: {
+            Image(systemName: "pencil")
+                .font(.caption.bold())
+                .frame(width: compact ? 28 : 31, height: compact ? 28 : 31)
+                .background(Color(.secondarySystemBackground), in: Circle())
+        }
+        .padding(compact ? 7 : 9)
+        .accessibilityLabel("Edit \(target.title)")
     }
 
     private var activityChart: some View {
@@ -1219,6 +1332,102 @@ private struct FinanceSummaryBalanceCard: View {
             RoundedRectangle(cornerRadius: 19, style: .continuous)
                 .stroke(AppTheme.purple.opacity(0.13), lineWidth: 1)
         }
+    }
+}
+
+private struct FinanceSummaryAccountFilterEditor: View {
+    @EnvironmentObject private var store: LedgerStore
+    @Environment(\.dismiss) private var dismiss
+    let target: FinanceSummaryAccountFilterTarget
+    @Binding private var storedSelection: String
+    @State private var selection: FinanceSummaryAccountSelection
+
+    init(
+        target: FinanceSummaryAccountFilterTarget,
+        storedSelection: Binding<String>
+    ) {
+        self.target = target
+        _storedSelection = storedSelection
+        _selection = State(initialValue: FinanceSummaryAccountSelection.decode(storedSelection.wrappedValue))
+    }
+
+    private var accounts: [LedgerAccount] {
+        store.activeAccounts.filter {
+            $0.currencyCode.caseInsensitiveCompare(store.currencyCode) == .orderedSame
+        }
+        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private var selectedIDs: Set<UUID> {
+        selection.usesAllAccounts ? Set(accounts.map(\.id)) : Set(selection.accountIDs)
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                HStack {
+                    Button("Select All") {
+                        selection.usesAllAccounts = true
+                        selection.accountIDs = accounts.map(\.id)
+                    }
+                    Spacer()
+                    Button("Deselect All") {
+                        selection.usesAllAccounts = false
+                        selection.accountIDs.removeAll()
+                    }
+                }
+
+                ForEach(accounts) { account in
+                    Button {
+                        toggle(account.id)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Label(account.name, systemImage: account.icon)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(DisplayFormat.currency(store.balance(for: account), code: account.currencyCode))
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                            Image(systemName: selectedIDs.contains(account.id) ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selectedIDs.contains(account.id) ? AppTheme.purple : .secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Accounts (\(selectedIDs.count) Selected)")
+            } footer: {
+                Text(target == .netBalance
+                    ? "Only transactions and loan movements from these accounts affect the Net Balance card. Custom display cards remain independent."
+                    : "Only income received in these accounts is included in the Income card and its transaction list.")
+            }
+        }
+        .navigationTitle(target.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    let validIDs = Set(accounts.map(\.id))
+                    selection.accountIDs = Array(Set(selection.accountIDs).intersection(validIDs))
+                        .sorted { $0.uuidString < $1.uuidString }
+                    storedSelection = selection.encoded()
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private func toggle(_ id: UUID) {
+        var ids = selectedIDs
+        selection.usesAllAccounts = false
+        if ids.contains(id) {
+            ids.remove(id)
+        } else {
+            ids.insert(id)
+        }
+        selection.accountIDs = Array(ids).sorted { $0.uuidString < $1.uuidString }
     }
 }
 

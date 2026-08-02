@@ -20,6 +20,7 @@ struct PeriodTransactionsView: View {
     @State private var searchText = ""
     let kind: PeriodTransactionKind
     let interval: DateInterval
+    var accountIDs: Set<UUID>? = nil
 
     var body: some View {
         List {
@@ -68,7 +69,10 @@ struct PeriodTransactionsView: View {
             switch kind {
             case .income:
                 kindMatches = store.isReportIncome(transaction) &&
-                    store.account(withID: store.reportIncomeAccountID(transaction))?.currencyCode == store.currencyCode
+                    store.account(withID: store.reportIncomeAccountID(transaction))?.currencyCode == store.currencyCode &&
+                    (accountIDs == nil || accountIDs?.contains(
+                        store.reportIncomeAccountID(transaction) ?? LedgerAccount.legacyMainID
+                    ) == true)
             case .expenses:
                 kindMatches = transaction.type == .expense &&
                     store.account(withID: transaction.accountID)?.currencyCode == store.currencyCode
