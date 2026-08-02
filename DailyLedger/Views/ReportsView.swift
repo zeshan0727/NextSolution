@@ -134,6 +134,9 @@ struct ReportsView: View {
         NavigationStack {
             List {
                 Section("Planning & Comparison") {
+                    NavigationLink { ChartOfAccountsView() } label: {
+                        Label("Chart of Accounts", systemImage: "list.bullet.rectangle.portrait.fill")
+                    }
                     NavigationLink { ReportComparisonView() } label: {
                         Label("Compare Reports", systemImage: "chart.xyaxis.line")
                     }
