@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Build trigger: compact Chart of Accounts without RootHide SMS import
+# Build trigger: compact accounts, no RootHide SMS import, dated refunds
 name: Build Next Ledger TIPA
 
 permissions:
@@ -16,12 +16,14 @@ on:
     paths:
       - "DailyLedger/**"
       - "scripts/apply_next_ledger_1_3_50_compact_no_sms.py"
+      - "scripts/fix_next_ledger_refund_swift.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
     paths:
       - "DailyLedger/**"
       - "scripts/apply_next_ledger_1_3_50_compact_no_sms.py"
+      - "scripts/fix_next_ledger_refund_swift.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -37,8 +39,10 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
-      - name: Apply compact accounts and remove SMS importer
-        run: python3 scripts/apply_next_ledger_1_3_50_compact_no_sms.py
+      - name: Apply compact accounts, SMS removal, and refunds
+        run: |
+          python3 scripts/apply_next_ledger_1_3_50_compact_no_sms.py
+          python3 scripts/fix_next_ledger_refund_swift.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -85,14 +89,14 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-compact-accounts-no-sms.tipa
-          shasum -a 256 NextLedger-1.3.50-compact-accounts-no-sms.tipa > NextLedger-1.3.50-compact-accounts-no-sms.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-refunds-compact-no-sms.tipa
+          shasum -a 256 NextLedger-1.3.50-refunds-compact-no-sms.tipa > NextLedger-1.3.50-refunds-compact-no-sms.sha256
 
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-compact-accounts-no-sms.tipa
-            NextLedger-1.3.50-compact-accounts-no-sms.sha256
+            NextLedger-1.3.50-refunds-compact-no-sms.tipa
+            NextLedger-1.3.50-refunds-compact-no-sms.sha256
           if-no-files-found: error
