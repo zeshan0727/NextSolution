@@ -237,6 +237,81 @@ final class LedgerStore: ObservableObject {
         }
     }
 
+    func saveChartCategory(type: TransactionType, originalName: String?, name: String, code: String) {
+        guard type != .transfer else { return }
+        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return }
+        updateLedger(failureMessage: "The category could not be saved.") { ledger in
+            let original = originalName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let original, !original.isEmpty,
+               original.caseInsensitiveCompare(cleaned) != .orderedSame {
+                for index in ledger.transactions.indices
+                where ledger.transactions[index].type == type &&
+                    ledger.transactions[index].category.caseInsensitiveCompare(original) == .orderedSame {
+                    ledger.transactions[index].category = cleaned
+                }
+                if type == .expense {
+                    for index in ledger.settings.vendorRules.indices
+                    where ledger.settings.vendorRules[index].category.caseInsensitiveCompare(original) == .orderedSame {
+                        ledger.settings.vendorRules[index].category = cleaned
+                    }
+                    for budgetIndex in ledger.settings.expenseBudgets.indices {
+                        for categoryIndex in ledger.settings.expenseBudgets[budgetIndex].categories.indices
+                        where ledger.settings.expenseBudgets[budgetIndex].categories[categoryIndex]
+                            .caseInsensitiveCompare(original) == .orderedSame {
+                            ledger.settings.expenseBudgets[budgetIndex].categories[categoryIndex] = cleaned
+                        }
+                    }
+                    Self.appendUnique(original, to: &ledger.settings.hiddenExpenseCategories)
+                    ledger.settings.expenseCategoryCodes.removeValue(forKey: original)
+                } else {
+                    Self.appendUnique(original, to: &ledger.settings.hiddenIncomeCategories)
+                    ledger.settings.incomeCategoryCodes.removeValue(forKey: original)
+                }
+            }
+            if type == .expense {
+                Self.appendUnique(cleaned, to: &ledger.settings.customExpenseCategories)
+                ledger.settings.hiddenExpenseCategories.removeAll {
+                    $0.caseInsensitiveCompare(cleaned) == .orderedSame
+                }
+                ledger.settings.expenseCategoryCodes[cleaned] = cleanedCode
+            } else {
+                Self.appendUnique(cleaned, to: &ledger.settings.customIncomeCategories)
+                ledger.settings.hiddenIncomeCategories.removeAll {
+                    $0.caseInsensitiveCompare(cleaned) == .orderedSame
+                }
+                ledger.settings.incomeCategoryCodes[cleaned] = cleanedCode
+            }
+        }
+    }
+
+    func deleteChartCategory(type: TransactionType, name: String) {
+        guard type != .transfer else { return }
+        let isUsed = transactions.contains {
+            $0.type == type && $0.category.caseInsensitiveCompare(name) == .orderedSame
+        }
+        guard !isUsed else {
+            errorMessage = "This category is used by transactions. Rename it instead of deleting it."
+            return
+        }
+        updateLedger(failureMessage: "The category could not be removed.") { ledger in
+            if type == .expense {
+                ledger.settings.customExpenseCategories.removeAll {
+                    $0.caseInsensitiveCompare(name) == .orderedSame
+                }
+                ledger.settings.expenseCategoryCodes.removeValue(forKey: name)
+                Self.appendUnique(name, to: &ledger.settings.hiddenExpenseCategories)
+            } else {
+                ledger.settings.customIncomeCategories.removeAll {
+                    $0.caseInsensitiveCompare(name) == .orderedSame
+                }
+                ledger.settings.incomeCategoryCodes.removeValue(forKey: name)
+                Self.appendUnique(name, to: &ledger.settings.hiddenIncomeCategories)
+            }
+        }
+    }
+
     func archiveAccount(_ account: LedgerAccount) {
         updateLedger(failureMessage: "The account could not be archived.") { ledger in
             guard let index = ledger.accounts.firstIndex(where: { $0.id == account.id }) else { return }
@@ -813,22 +888,44 @@ final class LedgerStore: ObservableObject {
         categoriesCache[type] ?? makeCategories(for: type)
     }
 
+    func chartCode(for category: String, type: TransactionType) -> String {
+        let codes = type == .expense
+            ? settings.expenseCategoryCodes
+            : settings.incomeCategoryCodes
+        return codes.first {
+            $0.key.caseInsensitiveCompare(category) == .orderedSame
+        }?.value ?? ""
+    }
+
     private func makeCategories(for type: TransactionType) -> [String] {
         let defaults = type == .expense
             ? LedgerTransaction.expenseCategories
             : LedgerTransaction.incomeCategories
+        let custom = type == .expense
+            ? settings.customExpenseCategories
+            : settings.customIncomeCategories
+        let hidden = type == .expense
+            ? settings.hiddenExpenseCategories
+            : settings.hiddenIncomeCategories
         let used = transactions.lazy
             .filter { $0.type == type }
             .map(\.category)
         var seen = Set<String>()
-        return (defaults + Array(used)).compactMap { item in
+        return (defaults + custom + Array(used)).compactMap { item in
             let cleaned = item.trimmingCharacters(in: .whitespacesAndNewlines)
             let key = cleaned
                 .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
                 .lowercased()
-            guard !cleaned.isEmpty, seen.insert(key).inserted else { return nil }
+            guard !cleaned.isEmpty,
+                  !hidden.contains(where: { $0.caseInsensitiveCompare(cleaned) == .orderedSame }),
+                  seen.insert(key).inserted else { return nil }
             return cleaned
         }
+    }
+
+    private static func appendUnique(_ value: String, to values: inout [String]) {
+        guard !values.contains(where: { $0.caseInsensitiveCompare(value) == .orderedSame }) else { return }
+        values.append(value)
     }
 
     private func rebuildPerformanceCaches() {
