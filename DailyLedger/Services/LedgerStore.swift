@@ -1,6 +1,11 @@
 import Combine
 import Foundation
 
+private struct HistoricalBalanceCacheKey: Hashable {
+    let accountIDs: [UUID]
+    let cutoff: Date
+}
+
 @MainActor
 final class LedgerStore: ObservableObject {
     @Published private(set) var transactions: [LedgerTransaction] = []
@@ -17,6 +22,7 @@ final class LedgerStore: ObservableObject {
     private var categoriesCache: [TransactionType: [String]] = [:]
     private var totalsCache: [String: LedgerTotals] = [:]
     private var loanMovementCache: [String: [LoanNetMovement]] = [:]
+    private var historicalBalanceCache: [HistoricalBalanceCacheKey: Decimal] = [:]
     private var hasLoaded = false
 
     init() {
@@ -62,6 +68,7 @@ final class LedgerStore: ObservableObject {
         accounts = ledger.accounts
         accountsByID = Dictionary(uniqueKeysWithValues: ledger.accounts.map { ($0.id, $0) })
         currentBalances = accountBalances
+        historicalBalanceCache.removeAll(keepingCapacity: true)
         settings = ledger.settings
         runningBalances = running
         runningBalancesByAccount = accountRunning
@@ -247,6 +254,45 @@ final class LedgerStore: ObservableObject {
 
     func balance(for account: LedgerAccount) -> Decimal {
         currentBalances[account.id] ?? account.openingBalance
+    }
+
+    /// Returns the combined closing balance immediately before `cutoff`.
+    /// Passing nil uses the cached current balances and avoids scanning transactions.
+    func combinedBalance(for accounts: [LedgerAccount], before cutoff: Date? = nil) -> Decimal {
+        guard let cutoff else {
+            return accounts.reduce(Decimal.zero) { $0 + balance(for: $1) }
+        }
+
+        let accountIDs = Set(accounts.map(\.id))
+        let cacheKey = HistoricalBalanceCacheKey(
+            accountIDs: accountIDs.sorted { $0.uuidString < $1.uuidString },
+            cutoff: cutoff
+        )
+        if let cached = historicalBalanceCache[cacheKey] {
+            return cached
+        }
+        var result = accounts.reduce(Decimal.zero) { $0 + $1.openingBalance }
+        for transaction in transactions where transaction.date < cutoff {
+            switch transaction.type {
+            case .income:
+                if transaction.accountID.map(accountIDs.contains) == true {
+                    result += transaction.amount
+                }
+            case .expense:
+                if transaction.accountID.map(accountIDs.contains) == true {
+                    result -= transaction.amount
+                }
+            case .transfer:
+                if transaction.accountID.map(accountIDs.contains) == true {
+                    result -= transaction.amount
+                }
+                if transaction.destinationAccountID.map(accountIDs.contains) == true {
+                    result += transaction.destinationAmount ?? transaction.amount
+                }
+            }
+        }
+        historicalBalanceCache[cacheKey] = result
+        return result
     }
 
     func runningBalance(for transactionID: UUID, accountID: UUID?) -> Decimal? {

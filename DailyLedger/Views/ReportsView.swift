@@ -61,17 +61,39 @@ private struct FinanceSummaryCustomCard: Identifiable, Codable, Equatable {
     var title: String
     var currencyCode: String
     var accountIDs: [UUID]
+    var balanceMode: String?
+    var balanceDate: Date?
 
     init(
         id: UUID = UUID(),
         title: String = "",
         currencyCode: String,
-        accountIDs: [UUID] = []
+        accountIDs: [UUID] = [],
+        balanceMode: String? = FinanceSummaryBalanceMode.current.rawValue,
+        balanceDate: Date? = nil
     ) {
         self.id = id
         self.title = title
         self.currencyCode = currencyCode
         self.accountIDs = accountIDs
+        self.balanceMode = balanceMode
+        self.balanceDate = balanceDate
+    }
+}
+
+private enum FinanceSummaryBalanceMode: String, CaseIterable, Identifiable {
+    case current
+    case closingDate
+    case reportPeriodEnd
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .current: return "Current"
+        case .closingDate: return "Closing Date"
+        case .reportPeriodEnd: return "Report End"
+        }
     }
 }
 
@@ -554,7 +576,10 @@ private struct ReportDetailView: View {
             }
             .fullScreenCover(item: $editingSummaryCard) { card in
                 NavigationStack {
-                    FinanceSummaryCardEditor(card: card)
+                    FinanceSummaryCardEditor(
+                        card: card,
+                        reportPeriodEnd: selectedInterval.end
+                    )
                         .environmentObject(store)
                 }
             }
@@ -675,17 +700,17 @@ private struct ReportDetailView: View {
             }
             ForEach(customSummaryCards) { card in
                 let accountCount = validAccountCount(card)
+                let timingLabel = customSummaryTimingLabel(card)
                 HStack(spacing: 8) {
                     Button {
                         editingSummaryCard = card
                     } label: {
-                        ReportTotalCard(
+                        FinanceSummaryBalanceCard(
                             title: customSummaryTitle(card),
                             value: customSummaryBalance(card),
                             currencyCode: card.currencyCode,
-                            icon: "wallet.pass.fill",
-                            color: AppTheme.blue,
-                            secondaryText: "\(accountCount) selected account\(accountCount == 1 ? "" : "s") · Current balance"
+                            accountCount: accountCount,
+                            timingLabel: timingLabel
                         )
                     }
                     .buttonStyle(.plain)
@@ -763,7 +788,34 @@ private struct ReportDetailView: View {
     }
 
     private func customSummaryBalance(_ card: FinanceSummaryCustomCard) -> Decimal {
-        validAccounts(card).reduce(Decimal.zero) { $0 + store.balance(for: $1) }
+        store.combinedBalance(
+            for: validAccounts(card),
+            before: customSummaryCutoff(card)
+        )
+    }
+
+    private func customSummaryCutoff(_ card: FinanceSummaryCustomCard) -> Date? {
+        switch FinanceSummaryBalanceMode(rawValue: card.balanceMode ?? "") ?? .current {
+        case .current:
+            return nil
+        case .closingDate:
+            let date = card.balanceDate ?? Date()
+            return Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: date))
+        case .reportPeriodEnd:
+            return selectedInterval.end
+        }
+    }
+
+    private func customSummaryTimingLabel(_ card: FinanceSummaryCustomCard) -> String {
+        switch FinanceSummaryBalanceMode(rawValue: card.balanceMode ?? "") ?? .current {
+        case .current:
+            return "Current balance"
+        case .closingDate:
+            return "Closing · \((card.balanceDate ?? Date()).formatted(date: .abbreviated, time: .omitted))"
+        case .reportPeriodEnd:
+            let closingDay = Calendar.current.date(byAdding: .day, value: -1, to: selectedInterval.end) ?? selectedInterval.end
+            return "Report closing · \(closingDay.formatted(date: .abbreviated, time: .omitted))"
+        }
     }
 
     private func deleteCustomSummaryCard(_ id: UUID) {
@@ -1111,14 +1163,75 @@ private struct ReportTotalCard: View {
     }
 }
 
+private struct FinanceSummaryBalanceCard: View {
+    let title: String
+    let value: Decimal
+    let currencyCode: String
+    let accountCount: Int
+    let timingLabel: String
+
+    var body: some View {
+        HStack(spacing: 13) {
+            Image(systemName: "wallet.pass.fill")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(
+                    LinearGradient(
+                        colors: [AppTheme.purple, AppTheme.blue],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(DisplayFormat.currency(value, code: currencyCode))
+                    .font(.title3.bold())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+                HStack(spacing: 5) {
+                    Label(timingLabel, systemImage: "calendar")
+                    Text("·")
+                    Text("\(accountCount) account\(accountCount == 1 ? "" : "s")")
+                }
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(AppTheme.purple)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(
+            LinearGradient(
+                colors: [Color(.systemBackground), AppTheme.purple.opacity(0.055)],
+                startPoint: .leading,
+                endPoint: .trailing
+            ),
+            in: RoundedRectangle(cornerRadius: 19, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 19, style: .continuous)
+                .stroke(AppTheme.purple.opacity(0.13), lineWidth: 1)
+        }
+    }
+}
+
 private struct FinanceSummaryCardEditor: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("FinanceSummaryCustomCardsV1") private var storedCards = "[]"
     @State private var card: FinanceSummaryCustomCard
+    let reportPeriodEnd: Date
 
-    init(card: FinanceSummaryCustomCard) {
+    init(card: FinanceSummaryCustomCard, reportPeriodEnd: Date) {
         _card = State(initialValue: card)
+        self.reportPeriodEnd = reportPeriodEnd
     }
 
     private var currencies: [String] {
@@ -1136,10 +1249,27 @@ private struct FinanceSummaryCardEditor: View {
         Set(card.accountIDs)
     }
 
+    private var balanceMode: FinanceSummaryBalanceMode {
+        FinanceSummaryBalanceMode(rawValue: card.balanceMode ?? "") ?? .current
+    }
+
+    private var previewCutoff: Date? {
+        switch balanceMode {
+        case .current:
+            return nil
+        case .closingDate:
+            let date = card.balanceDate ?? Date()
+            return Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: date))
+        case .reportPeriodEnd:
+            return reportPeriodEnd
+        }
+    }
+
     private var previewBalance: Decimal {
-        availableAccounts
-            .filter { selectedIDs.contains($0.id) }
-            .reduce(Decimal.zero) { $0 + store.balance(for: $1) }
+        store.combinedBalance(
+            for: availableAccounts.filter { selectedIDs.contains($0.id) },
+            before: previewCutoff
+        )
     }
 
     var body: some View {
@@ -1191,6 +1321,47 @@ private struct FinanceSummaryCardEditor: View {
                 Text("Only accounts using the selected currency can be combined on one card.")
             }
 
+
+            Section {
+                Picker("Balance At", selection: Binding(
+                    get: { balanceMode },
+                    set: { mode in
+                        card.balanceMode = mode.rawValue
+                        if mode == .closingDate, card.balanceDate == nil {
+                            card.balanceDate = Date()
+                        }
+                    }
+                )) {
+                    ForEach(FinanceSummaryBalanceMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if balanceMode == .closingDate {
+                    DatePicker(
+                        "Closing Date",
+                        selection: Binding(
+                            get: { card.balanceDate ?? Date() },
+                            set: { card.balanceDate = $0 }
+                        ),
+                        in: ...Date(),
+                        displayedComponents: .date
+                    )
+                } else if balanceMode == .reportPeriodEnd {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("Follows the selected Financial Summary period", systemImage: "calendar.badge.clock")
+                        Text("Closing: \((Calendar.current.date(byAdding: .day, value: -1, to: reportPeriodEnd) ?? reportPeriodEnd).formatted(date: .abbreviated, time: .omitted))")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Balance Date or Period")
+            } footer: {
+                Text("Closing Date includes every transaction recorded through the end of that day.")
+            }
+
             Section("Preview") {
                 LabeledContent(
                     card.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -1215,6 +1386,9 @@ private struct FinanceSummaryCardEditor: View {
             }
         }
         .onAppear {
+            if card.balanceMode == nil {
+                card.balanceMode = FinanceSummaryBalanceMode.current.rawValue
+            }
             if !currencies.contains(card.currencyCode.uppercased()), let first = currencies.first {
                 card.currencyCode = first
             }
