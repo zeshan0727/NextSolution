@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Build trigger: explicit transfer currencies and transaction deletion everywhere
+# Build trigger: inline transfer accounts, general sub-accounts, currency selectors and global deletion
 name: Build Next Ledger TIPA
 
 permissions:
@@ -19,6 +19,7 @@ on:
       - "scripts/fix_next_ledger_refund_swift.py"
       - "scripts/add_refund_account_picker.py"
       - "scripts/add_currency_selectors_and_global_delete.py"
+      - "scripts/add_inline_accounts_and_general_subaccounts.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
@@ -28,6 +29,7 @@ on:
       - "scripts/fix_next_ledger_refund_swift.py"
       - "scripts/add_refund_account_picker.py"
       - "scripts/add_currency_selectors_and_global_delete.py"
+      - "scripts/add_inline_accounts_and_general_subaccounts.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -49,6 +51,7 @@ jobs:
           python3 scripts/fix_next_ledger_refund_swift.py
           python3 scripts/add_refund_account_picker.py
           python3 scripts/add_currency_selectors_and_global_delete.py
+          python3 scripts/add_inline_accounts_and_general_subaccounts.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -95,14 +98,14 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-currency-selectors-global-delete.tipa
-          shasum -a 256 NextLedger-1.3.50-currency-selectors-global-delete.tipa > NextLedger-1.3.50-currency-selectors-global-delete.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-inline-accounts-subaccounts.tipa
+          shasum -a 256 NextLedger-1.3.50-inline-accounts-subaccounts.tipa > NextLedger-1.3.50-inline-accounts-subaccounts.sha256
 
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-currency-selectors-global-delete.tipa
-            NextLedger-1.3.50-currency-selectors-global-delete.sha256
+            NextLedger-1.3.50-inline-accounts-subaccounts.tipa
+            NextLedger-1.3.50-inline-accounts-subaccounts.sha256
           if-no-files-found: error
