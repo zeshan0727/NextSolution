@@ -849,11 +849,16 @@ private struct ReportDetailView: View {
     }
 
     private var formulaPositiveAccounts: [LedgerAccount] {
-        accounts(with: financeSummaryFormula.positiveAccountIDs)
+        let closing = Set(financeSummaryFormula.closingBalanceAccountIDs)
+        return accounts(with: financeSummaryFormula.positiveAccountIDs.filter { !closing.contains($0) })
     }
 
     private var formulaNegativeAccounts: [LedgerAccount] {
-        accounts(with: financeSummaryFormula.negativeAccountIDs)
+        let closing = Set(financeSummaryFormula.closingBalanceAccountIDs)
+        let positive = Set(formulaPositiveAccounts.map(\.id))
+        return accounts(with: financeSummaryFormula.negativeAccountIDs.filter {
+            !closing.contains($0) && !positive.contains($0)
+        })
     }
 
     private var formulaClosingAccounts: [LedgerAccount] {
@@ -1366,16 +1371,47 @@ private struct FinanceSummaryFormulaCard: View {
                             .background(AppTheme.purple.opacity(0.1), in: RoundedRectangle(cornerRadius: 11))
                     }
                 } else {
-                    ForEach(closingAccounts) { account in
-                        NavigationLink {
-                            AccountPeriodTransactionsView(account: account, interval: interval)
-                        } label: {
-                            formulaAccountCard(account, color: AppTheme.purple)
+                    NavigationLink {
+                        HistoricalAccountBalancesView(
+                            accounts: closingAccounts,
+                            closingDate: closingDate
+                        )
+                    } label: {
+                        VStack(alignment: .leading, spacing: 7) {
+                            HStack {
+                                Text("Closing Balance")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(AppTheme.purple)
+                            }
+                            Text(DisplayFormat.currency(closingBalance, code: currencyCode))
+                                .font(.title3.bold())
+                                .foregroundStyle(AppTheme.purple)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                            Text(closingAccounts.map(\.name).joined(separator: " + "))
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
                         }
-                        .buttonStyle(.plain)
+                        .padding(12)
+                        .background(
+                            LinearGradient(
+                                colors: [AppTheme.purple.opacity(0.18), AppTheme.blue.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(AppTheme.purple.opacity(0.24), lineWidth: 1)
+                        }
                     }
-                    Divider()
-                    formulaValueRow("Added at report start", value: closingBalance, color: AppTheme.purple)
+                    .buttonStyle(.plain)
                 }
                 Button(action: onEdit) {
                     HStack {
@@ -1569,6 +1605,87 @@ private struct AccountPeriodTransactionsView: View {
     }
 }
 
+private struct HistoricalAccountBalancesView: View {
+    @EnvironmentObject private var store: LedgerStore
+    let accounts: [LedgerAccount]
+    let closingDate: Date
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(accounts) { account in
+                    NavigationLink {
+                        AccountPeriodTransactionsView(
+                            account: account,
+                            interval: DateInterval(start: .distantPast, end: cutoff)
+                        )
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: account.icon)
+                                .foregroundStyle(AppTheme.purple)
+                                .frame(width: 34, height: 34)
+                                .background(AppTheme.purple.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(account.name).font(.body.weight(.semibold))
+                                Text("Closing · \(closingDate.formatted(date: .abbreviated, time: .omitted))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text(DisplayFormat.currency(balance(for: account), code: account.currencyCode))
+                                .font(.subheadline.bold())
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                        }
+                    }
+                }
+            } footer: {
+                Text("Balances include transactions recorded through the end of the selected closing date.")
+            }
+
+            Section {
+                HStack {
+                    Text("Combined Closing Balance").font(.headline)
+                    Spacer()
+                    Text(DisplayFormat.currency(combinedBalance, code: store.currencyCode))
+                        .font(.headline)
+                        .foregroundStyle(AppTheme.purple)
+                }
+            }
+        }
+        .navigationTitle("Closing Balances")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var cutoff: Date {
+        Calendar.current.date(
+            byAdding: .day,
+            value: 1,
+            to: Calendar.current.startOfDay(for: closingDate)
+        ) ?? closingDate
+    }
+
+    private func balance(for account: LedgerAccount) -> Decimal {
+        store.combinedBalance(for: [account], before: cutoff)
+    }
+
+    private var combinedBalance: Decimal {
+        accounts.reduce(Decimal.zero) { result, account in
+            let amount = balance(for: account)
+            if account.currencyCode.caseInsensitiveCompare(store.currencyCode) == .orderedSame {
+                return result + amount
+            }
+            if account.currencyCode.uppercased() == "PKR" && store.currencyCode.uppercased() == "QAR" {
+                return result + amount / Decimal(77)
+            }
+            if account.currencyCode.uppercased() == "QAR" && store.currencyCode.uppercased() == "PKR" {
+                return result + amount * Decimal(77)
+            }
+            return result + amount
+        }
+    }
+}
+
 private struct FinanceSummaryFormulaEditor: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
@@ -1629,9 +1746,19 @@ private struct FinanceSummaryFormulaEditor: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     let valid = Set(store.accounts.map(\.id))
-                    formula.positiveAccountIDs = sanitized(formula.positiveAccountIDs, valid: valid)
-                    formula.negativeAccountIDs = sanitized(formula.negativeAccountIDs, valid: valid)
                     formula.closingBalanceAccountIDs = sanitized(formula.closingBalanceAccountIDs, valid: valid)
+                    let closing = Set(formula.closingBalanceAccountIDs)
+                    formula.positiveAccountIDs = sanitized(
+                        formula.positiveAccountIDs.filter { !closing.contains($0) },
+                        valid: valid
+                    )
+                    let positive = Set(formula.positiveAccountIDs)
+                    formula.negativeAccountIDs = sanitized(
+                        formula.negativeAccountIDs.filter {
+                            !closing.contains($0) && !positive.contains($0)
+                        },
+                        valid: valid
+                    )
                     storedFormula = formula.encoded()
                     dismiss()
                 }
