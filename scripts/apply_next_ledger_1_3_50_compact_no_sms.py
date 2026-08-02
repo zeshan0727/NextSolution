@@ -176,9 +176,369 @@ replace_once(
     "without raw transaction descriptions, account numbers, or individual vendor descriptions.",
 )
 
+# Add a durable link between an original transaction and each reversing refund entry.
+replace_once(
+    model_path,
+    """    var destinationAmount: Decimal?
+    let createdAt: Date
+""",
+    """    var destinationAmount: Decimal?
+    var refundOfTransactionID: UUID?
+    let createdAt: Date
+""",
+)
+replace_once(
+    model_path,
+    """        destinationAccountID: UUID? = nil,
+        destinationAmount: Decimal? = nil,
+        createdAt: Date = Date()
+""",
+    """        destinationAccountID: UUID? = nil,
+        destinationAmount: Decimal? = nil,
+        refundOfTransactionID: UUID? = nil,
+        createdAt: Date = Date()
+""",
+)
+replace_once(
+    model_path,
+    """        self.destinationAccountID = destinationAccountID
+        self.destinationAmount = destinationAmount
+        self.createdAt = createdAt
+""",
+    """        self.destinationAccountID = destinationAccountID
+        self.destinationAmount = destinationAmount
+        self.refundOfTransactionID = refundOfTransactionID
+        self.createdAt = createdAt
+""",
+)
+
+# Record refunds as new opposite transactions on the selected refund date.
+refund_store_methods = r'''
+    func refundedAmount(for transaction: LedgerTransaction) -> Decimal {
+        transactions.reduce(Decimal.zero) { total, item in
+            item.refundOfTransactionID == transaction.id ? total + item.amount : total
+        }
+    }
+
+    func refundableAmount(for transaction: LedgerTransaction) -> Decimal {
+        max(Decimal.zero, transaction.amount - refundedAmount(for: transaction))
+    }
+
+    @discardableResult
+    func addRefund(
+        for transaction: LedgerTransaction,
+        amount: Decimal,
+        date: Date,
+        details: String
+    ) -> Bool {
+        guard transaction.type != .transfer, transaction.refundOfTransactionID == nil else {
+            errorMessage = "This transaction cannot be refunded."
+            return false
+        }
+        let remaining = refundableAmount(for: transaction)
+        guard amount > 0, amount <= remaining else {
+            errorMessage = "Refund amount must be greater than zero and no more than the remaining refundable amount."
+            return false
+        }
+
+        let reverseType: TransactionType = transaction.type == .expense ? .income : .expense
+        let cleanedNote = details.trimmingCharacters(in: .whitespacesAndNewlines)
+        let originalLabel: String
+        if let vendor = transaction.vendor, !vendor.isEmpty {
+            originalLabel = vendor
+        } else if !transaction.details.isEmpty {
+            originalLabel = transaction.details
+        } else {
+            originalLabel = transaction.category
+        }
+        let refundDetails = cleanedNote.isEmpty
+            ? "Refund of \(originalLabel)"
+            : "Refund of \(originalLabel) · \(cleanedNote)"
+        let refund = LedgerTransaction(
+            type: reverseType,
+            amount: amount,
+            date: date,
+            category: transaction.category,
+            vendor: transaction.vendor,
+            details: refundDetails,
+            accountID: transaction.accountID,
+            refundOfTransactionID: transaction.id
+        )
+
+        do {
+            let ledger = try LedgerDiskStore.shared.mutate { ledger in
+                ledger.transactions.append(refund)
+            }
+            apply(ledger)
+            return true
+        } catch {
+            errorMessage = "The refund could not be recorded."
+            return false
+        }
+    }
+'''
+replace_once(
+    store_path,
+    """    func dismissRecordingCard(_ id: UUID) {
+""",
+    refund_store_methods + "\n    func dismissRecordingCard(_ id: UUID) {\n",
+)
+
+# Expose Refund from every non-transfer transaction review screen.
+snapshot_path = "DailyLedger/Views/CategoryTransactionsView.swift"
+replace_once(
+    snapshot_path,
+    """    @State private var editing = false
+    @State private var splitting = false
+    let transaction: LedgerTransaction
+""",
+    """    @State private var editing = false
+    @State private var splitting = false
+    @State private var refunding = false
+    let transaction: LedgerTransaction
+""",
+)
+replace_once(
+    snapshot_path,
+    """                if !transaction.details.isEmpty {
+                    Section("Description") {
+                        Text(transaction.details)
+                            .textSelection(.enabled)
+                    }
+                }
+            }
+""",
+    r'''                if !transaction.details.isEmpty {
+                    Section("Description") {
+                        Text(transaction.details)
+                            .textSelection(.enabled)
+                    }
+                }
+
+                if transaction.refundOfTransactionID != nil {
+                    Section("Refund") {
+                        Label("Refund transaction", systemImage: "arrow.uturn.backward.circle.fill")
+                            .foregroundStyle(AppTheme.green)
+                        Text("This entry reverses an earlier transaction on this refund date.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if transaction.type != .transfer {
+                    Section("Refund") {
+                        if refundedAmount > 0 {
+                            LabeledContent(
+                                "Refunded",
+                                value: DisplayFormat.currency(refundedAmount, code: currencyCode)
+                            )
+                            LabeledContent(
+                                "Remaining",
+                                value: DisplayFormat.currency(refundableAmount, code: currencyCode)
+                            )
+                        }
+                        Button {
+                            refunding = true
+                        } label: {
+                            Label(
+                                refundableAmount > 0 ? "Record Refund" : "Fully Refunded",
+                                systemImage: "arrow.uturn.backward.circle.fill"
+                            )
+                        }
+                        .disabled(refundableAmount <= 0)
+                    } footer: {
+                        Text("A refund creates a new opposite transaction using the refund amount and refund date. The original transaction and its original date remain unchanged.")
+                    }
+                }
+            }
+''',
+)
+replace_once(
+    snapshot_path,
+    """                        if transaction.type != .transfer {
+""",
+    """                        if transaction.type != .transfer &&
+                            transaction.refundOfTransactionID == nil && refundedAmount == 0 {
+""",
+)
+replace_once(
+    snapshot_path,
+    """            .sheet(isPresented: $splitting) {
+                SplitTransactionView(transaction: transaction)
+                    .environmentObject(store)
+            }
+            .sheet(isPresented: $editing) {
+""",
+    """            .sheet(isPresented: $splitting) {
+                SplitTransactionView(transaction: transaction)
+                    .environmentObject(store)
+            }
+            .sheet(isPresented: $refunding) {
+                RefundTransactionView(transaction: transaction)
+                    .environmentObject(store)
+            }
+            .sheet(isPresented: $editing) {
+""",
+)
+replace_once(
+    snapshot_path,
+    """            }
+        }
+    }
+}
+""",
+    r'''            }
+        }
+    }
+
+    private var currencyCode: String {
+        store.account(withID: transaction.accountID)?.currencyCode ?? store.currencyCode
+    }
+
+    private var refundedAmount: Decimal {
+        store.refundedAmount(for: transaction)
+    }
+
+    private var refundableAmount: Decimal {
+        store.refundableAmount(for: transaction)
+    }
+}
+''',
+)
+
+refund_view_path = "DailyLedger/Views/RefundTransactionView.swift"
+if (ROOT / refund_view_path).exists():
+    raise RuntimeError("RefundTransactionView.swift already exists")
+write(
+    refund_view_path,
+    r'''import SwiftUI
+
+struct RefundTransactionView: View {
+    @EnvironmentObject private var store: LedgerStore
+    @Environment(\.dismiss) private var dismiss
+    let transaction: LedgerTransaction
+
+    @State private var amountText = ""
+    @State private var refundDate = Date()
+    @State private var note = ""
+    @State private var localError: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Original Transaction") {
+                    LabeledContent("Type", value: transaction.type.title)
+                    LabeledContent(
+                        "Original Amount",
+                        value: DisplayFormat.currency(transaction.amount, code: currencyCode)
+                    )
+                    if refundedAmount > 0 {
+                        LabeledContent(
+                            "Already Refunded",
+                            value: DisplayFormat.currency(refundedAmount, code: currencyCode)
+                        )
+                    }
+                    LabeledContent(
+                        "Available to Refund",
+                        value: DisplayFormat.currency(remainingAmount, code: currencyCode)
+                    )
+                    LabeledContent(
+                        "Account",
+                        value: store.account(withID: transaction.accountID)?.name ?? "Unknown"
+                    )
+                }
+
+                Section {
+                    TextField("Refund amount", text: $amountText)
+                        .keyboardType(.decimalPad)
+                    DatePicker("Refund Date", selection: $refundDate, displayedComponents: .date)
+                    TextField("Note (optional)", text: $note, axis: .vertical)
+                        .lineLimit(2...4)
+                } header: {
+                    Text("Refund Details")
+                } footer: {
+                    Text("Next Ledger records a new \(reverseType.title.lowercased()) transaction for this amount on the selected refund date. The original transaction date is not changed.")
+                }
+            }
+            .navigationTitle("Record Refund")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { saveRefund() }
+                        .disabled(!isValidAmount)
+                }
+            }
+            .onAppear {
+                if amountText.isEmpty {
+                    amountText = NSDecimalNumber(decimal: remainingAmount).stringValue
+                }
+            }
+            .alert(
+                "Refund Not Recorded",
+                isPresented: Binding(
+                    get: { localError != nil },
+                    set: { if !$0 { localError = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) { localError = nil }
+            } message: {
+                Text(localError ?? "Please check the refund details.")
+            }
+        }
+    }
+
+    private var currencyCode: String {
+        store.account(withID: transaction.accountID)?.currencyCode ?? store.currencyCode
+    }
+
+    private var refundedAmount: Decimal {
+        store.refundedAmount(for: transaction)
+    }
+
+    private var remainingAmount: Decimal {
+        store.refundableAmount(for: transaction)
+    }
+
+    private var reverseType: TransactionType {
+        transaction.type == .expense ? .income : .expense
+    }
+
+    private var parsedAmount: Decimal? {
+        let cleaned = amountText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: ",", with: "")
+        return Decimal(string: cleaned, locale: Locale(identifier: "en_US_POSIX"))
+    }
+
+    private var isValidAmount: Bool {
+        guard let amount = parsedAmount else { return false }
+        return amount > 0 && amount <= remainingAmount
+    }
+
+    private func saveRefund() {
+        guard let amount = parsedAmount else {
+            localError = "Enter a valid refund amount."
+            return
+        }
+        if store.addRefund(
+            for: transaction,
+            amount: amount,
+            date: refundDate,
+            details: note
+        ) {
+            dismiss()
+        } else {
+            localError = store.errorMessage ?? "The refund could not be recorded."
+        }
+    }
+}
+''',
+)
+
 # Ensure no RootHide importer source is present in the build workspace.
 root_hide = ROOT / "RootHideSMSImport"
 if root_hide.exists():
     shutil.rmtree(root_hide)
 
-print("Applied compact Chart of Accounts and removed RootHide SMS importer.")
+print("Applied compact accounts, removed RootHide SMS import, and added dated refunds.")
