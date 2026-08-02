@@ -1,18 +1,18 @@
 Package: com.nextsolution.nextledger
-Version: 1.3.41
+Version: 1.3.42
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution - Zeeshan Barvi
-Installed-Size: 7692
+Installed-Size: 7848
 Depends: firmware (>= 16.0)
-Filename: ./debfiles/NextLedger_1.3.41_iphoneos-arm64e.deb
-Size: 1781314
-MD5sum: 5512444e1c641a02acd8148ee38ea14a
-SHA1: 911f87bd756010516c41bc5afd9ba4114c8a0497
-SHA256: 9ea4ab68c2b78a6b95ca6da76ba29581b3dbe9c1d0ef2a6f632b18055a7aa2a3
+Filename: ./debfiles/NextLedger_1.3.42_iphoneos-arm64e.deb
+Size: 1811192
+MD5sum: a9f7a3c5bcbe70f6328b779971155efd
+SHA1: ba58875673dc2b88a6126f72ff413e1f1bd0cc19
+SHA256: da1696de09ab7e50de92f1d3795c1b431dbaeabf44e201c924a7ed2018bf4b8d
 Section: Applications
 Priority: optional
 Homepage: https://nextsolution.cc/applications/
-Description: Fast personal finance ledger with account balances, historical closing-balance cards, reports, budgets, transaction search, backup and AI-assisted insights.
+Description: Fast personal finance ledger with independent Net Balance and Income account filters, display-only custom summary cards, reports, budgets, backup and AI-assisted insights.
 Author: Next Solution - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextledger.html
 Icon: https://nextsolution.cc/CydiaIcon.png
