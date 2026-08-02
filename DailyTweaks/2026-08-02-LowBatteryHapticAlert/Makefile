@@ -6,7 +6,7 @@ INSTALL_TARGET_PROCESSES = SpringBoard
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = LowBatteryHapticAlert
-LowBatteryHapticAlert_FILES = Tweak.xm Decision.c
+LowBatteryHapticAlert_FILES = Tweak.xm
 LowBatteryHapticAlert_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-nullability-completeness
 LowBatteryHapticAlert_FRAMEWORKS = UIKit Foundation
 LowBatteryHapticAlert_LDFLAGS = -Wl,-segalign,4000
