@@ -35,7 +35,7 @@ struct ChartOfAccountsView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Chart of Accounts")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Search codes, accounts or categories")
+        .searchable(text: $searchText, prompt: "Search accounts or categories")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -72,17 +72,37 @@ struct ChartOfAccountsView: View {
             if !items.isEmpty {
                 Section {
                     ForEach(items) { account in
-                        Button { editor = .account(account.id) } label: {
-                            ChartAccountRow(account: account)
+                        HStack(spacing: 8) {
+                            NavigationLink {
+                                ChartLinkedTransactionsView(
+                                    title: account.name,
+                                    accountID: account.id,
+                                    category: nil,
+                                    type: nil
+                                )
                                 .environmentObject(store)
-                                .contentShape(Rectangle())
+                            } label: {
+                                ChartAccountRow(account: account)
+                                    .environmentObject(store)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            Button { editor = .account(account.id) } label: {
+                                Image(systemName: "pencil")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 34, height: 34)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Edit \(account.name)")
                         }
-                        .buttonStyle(.plain)
                     }
                 } header: {
                     accountSectionHeader(nature: nature, accounts: items)
                 } footer: {
-                    Text("\(items.count) account\(items.count == 1 ? "" : "s")")
+                    Text("Tap an account to view related transactions. Use the pencil to edit it.")
                 }
             }
         }
@@ -106,30 +126,48 @@ struct ChartOfAccountsView: View {
         if !categories.isEmpty {
             Section {
                 ForEach(categories, id: \.self) { category in
-                    Button { editor = .category(type, category) } label: {
-                        HStack(spacing: 12) {
-                            codeBadge(store.chartCode(for: category, type: type), tint: type == .income ? .green : .red)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(category).font(.body.weight(.semibold))
-                                Text("\(transactionCount(category: category, type: type)) transactions")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer(minLength: 8)
-                            VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 8) {
+                        NavigationLink {
+                            ChartLinkedTransactionsView(
+                                title: category,
+                                accountID: nil,
+                                category: category,
+                                type: type
+                            )
+                            .environmentObject(store)
+                        } label: {
+                            HStack(spacing: 12) {
+                                classificationBadge(
+                                    type == .income ? "INCOME" : "EXPENSE",
+                                    tint: type == .income ? .green : .red
+                                )
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(category).font(.body.weight(.semibold))
+                                    Text("\(transactionCount(category: category, type: type)) transactions")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 8)
                                 Text(categoryTotalsText(category: category, type: type))
                                     .font(.caption.bold().monospacedDigit())
                                     .multilineTextAlignment(.trailing)
                                     .lineLimit(2)
                                     .minimumScaleFactor(0.65)
-                                Image(systemName: "pencil")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.secondary)
                             }
+                            .contentShape(Rectangle())
                         }
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
+
+                        Button { editor = .category(type, category) } label: {
+                            Image(systemName: "pencil")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                                .frame(width: 34, height: 34)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Edit \(category)")
                     }
-                    .buttonStyle(.plain)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             store.deleteChartCategory(type: type, name: category)
@@ -149,7 +187,7 @@ struct ChartOfAccountsView: View {
                 }
                 .textCase(nil)
             } footer: {
-                Text("Tap a category to change its code or name. Existing transactions follow renamed categories.")
+                Text("Tap a category to view its related transactions. Use the pencil to edit its name or code.")
             }
         }
     }
@@ -189,6 +227,7 @@ struct ChartOfAccountsView: View {
         searchText.isEmpty ||
             account.name.localizedCaseInsensitiveContains(searchText) ||
             account.currencyCode.localizedCaseInsensitiveContains(searchText) ||
+            accountBadgeTitle(account).localizedCaseInsensitiveContains(searchText) ||
             (account.chartCode ?? "").localizedCaseInsensitiveContains(searchText)
     }
 
@@ -258,12 +297,25 @@ struct ChartOfAccountsView: View {
         }
     }
 
-    private func codeBadge(_ code: String, tint: Color) -> some View {
-        Text(code.isEmpty ? "—" : code)
-            .font(.caption.monospacedDigit().bold())
+    private func accountBadgeTitle(_ account: LedgerAccount) -> String {
+        switch account.nature ?? .unassigned {
+        case .bank: return "BANK"
+        case .asset: return "ASSET"
+        case .loan: return "LOAN"
+        case .control: return "CONTROL"
+        case .dailyExpense: return "EXPENSE"
+        case .unassigned: return "OTHER"
+        }
+    }
+
+    private func classificationBadge(_ text: String, tint: Color) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .bold, design: .rounded))
             .foregroundStyle(tint)
-            .frame(width: 48)
-            .padding(.vertical, 7)
+            .lineLimit(1)
+            .minimumScaleFactor(0.42)
+            .allowsTightening(true)
+            .frame(width: 48, height: 30)
             .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
 }
@@ -274,26 +326,43 @@ private struct ChartAccountRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(account.chartCode ?? "—")
-                .font(.caption.monospacedDigit().bold())
-                .foregroundStyle(AppTheme.purple)
-                .frame(width: 48)
-                .padding(.vertical, 7)
-                .background(AppTheme.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            classificationBadge
             VStack(alignment: .leading, spacing: 3) {
                 Text(account.name).font(.body.weight(.semibold))
                 Text("\(account.group.title) · \(account.currencyCode)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 3) {
-                Text(DisplayFormat.currency(store.balance(for: account), code: account.currencyCode))
-                    .font(.caption.bold().monospacedDigit())
-                Image(systemName: "pencil")
-                    .font(.caption2.bold())
-                    .foregroundStyle(.secondary)
-            }
+            Spacer(minLength: 8)
+            Text(DisplayFormat.currency(store.balance(for: account), code: account.currencyCode))
+                .font(.caption.bold().monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+        }
+    }
+
+    private var classificationBadge: some View {
+        Text(badgeTitle)
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .foregroundStyle(AppTheme.purple)
+            .lineLimit(1)
+            .minimumScaleFactor(0.42)
+            .allowsTightening(true)
+            .frame(width: 48, height: 30)
+            .background(
+                AppTheme.purple.opacity(0.12),
+                in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+            )
+    }
+
+    private var badgeTitle: String {
+        switch account.nature ?? .unassigned {
+        case .bank: return "BANK"
+        case .asset: return "ASSET"
+        case .loan: return "LOAN"
+        case .control: return "CONTROL"
+        case .dailyExpense: return "EXPENSE"
+        case .unassigned: return "OTHER"
         }
     }
 }
