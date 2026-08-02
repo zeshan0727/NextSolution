@@ -658,7 +658,7 @@ private struct ReportDetailView: View {
     }
 
     private var totalCards: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             ReportTotalCard(
                 title: "Net Balance",
                 value: financeSummaryNetBalance,
@@ -666,38 +666,44 @@ private struct ReportDetailView: View {
                 icon: "equal.circle.fill",
                 color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red
             )
+            .overlay {
+                RoundedRectangle(cornerRadius: 19, style: .continuous)
+                    .stroke(financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red, lineWidth: 2.5)
+            }
             Text("PKR loan movement converted at fixed rate: PKR 77 = QAR 1.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 12) {
-                NavigationLink {
-                    PeriodTransactionsView(kind: .income, interval: selectedInterval)
-                } label: {
-                    ReportTotalCard(
-                        title: "Income",
-                        value: totals.income,
-                        currencyCode: store.currencyCode,
-                        icon: "arrow.down.left.circle.fill",
-                        color: AppTheme.green,
-                        compact: true
-                    )
-                }
-                .buttonStyle(.plain)
-                NavigationLink {
-                    PeriodTransactionsView(kind: .expenses, interval: selectedInterval)
-                } label: {
-                    ReportTotalCard(
-                        title: "Expenses",
-                        value: totals.expense,
-                        currencyCode: store.currencyCode,
-                        icon: "arrow.up.right.circle.fill",
-                        color: AppTheme.red,
-                        compact: true
-                    )
-                }
-                .buttonStyle(.plain)
+            HStack(alignment: .top, spacing: 12) {
+                summaryColumn(
+                    title: "Added",
+                    color: AppTheme.green,
+                    primaryTitle: "Income",
+                    primaryValue: totals.income,
+                    primaryKind: .income,
+                    movements: loanIncreaseMovements
+                )
+                summaryColumn(
+                    title: "Deducted",
+                    color: AppTheme.red,
+                    primaryTitle: "Expenses",
+                    primaryValue: totals.expense,
+                    primaryKind: .expenses,
+                    movements: loanDecreaseMovements
+                )
             }
+
+            if !customSummaryCards.isEmpty {
+                HStack {
+                    Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
+                    Text("Closing Balances")
+                        .font(.caption.bold())
+                        .foregroundStyle(AppTheme.purple)
+                    Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
+                }
+                .padding(.top, 2)
+            }
+
             ForEach(customSummaryCards) { card in
                 let accountCount = validAccountCount(card)
                 let timingLabel = customSummaryTimingLabel(card)
@@ -734,36 +740,104 @@ private struct ReportDetailView: View {
                     .accessibilityLabel("Options for \(customSummaryTitle(card))")
                 }
             }
-            ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
-                NavigationLink {
-                    LoanMovementReportView()
-                } label: {
-                    ReportTotalCard(
-                        title: "\(movement.currencyCode) Loan Movement · \(movement.netAmount > 0 ? "Increased" : "Decreased")",
-                        value: abs(movement.netAmount),
-                        currencyCode: movement.currencyCode,
-                        icon: movement.netAmount > 0 ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
-                        color: movement.netAmount > 0 ? AppTheme.orange : AppTheme.green,
-                        secondaryText: movement.currencyCode.uppercased() == "PKR"
-                            ? "QAR equivalent: \(DisplayFormat.currency(abs(movement.netAmount) / Decimal(77), code: "QAR"))"
-                            : nil
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            if convertedLoanMovement != 0 {
+        }
+    }
+
+    private var loanIncreaseMovements: [LoanNetMovement] {
+        store.loanNetMovements(in: selectedInterval).filter { $0.netAmount > 0 }
+    }
+
+    private var loanDecreaseMovements: [LoanNetMovement] {
+        store.loanNetMovements(in: selectedInterval).filter { $0.netAmount < 0 }
+    }
+
+    private func summaryColumn(
+        title: String,
+        color: Color,
+        primaryTitle: String,
+        primaryValue: Decimal,
+        primaryKind: PeriodTransactionKind,
+        movements: [LoanNetMovement]
+    ) -> some View {
+        VStack(spacing: 8) {
+            Text(title.uppercased())
+                .font(.caption2.bold())
+                .foregroundStyle(color)
+                .frame(maxWidth: .infinity)
+
+            NavigationLink {
+                PeriodTransactionsView(kind: primaryKind, interval: selectedInterval)
+            } label: {
                 ReportTotalCard(
-                    title: "Net Loan Movement · \(convertedLoanMovement > 0 ? "Increased" : "Decreased")",
-                    value: abs(convertedLoanMovement),
-                    currencyCode: "QAR",
-                    icon: convertedLoanMovement > 0
-                        ? "arrow.up.right.circle.fill"
-                        : "arrow.down.right.circle.fill",
-                    color: convertedLoanMovement > 0 ? AppTheme.orange : AppTheme.green,
-                    secondaryText: "QAR movement + PKR movement ÷ 77"
+                    title: primaryTitle,
+                    value: primaryValue,
+                    currencyCode: store.currencyCode,
+                    icon: primaryKind == .income ? "arrow.down.left.circle.fill" : "arrow.up.right.circle.fill",
+                    color: color,
+                    compact: true
                 )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 19, style: .continuous)
+                        .stroke(color, lineWidth: 2.5)
+                }
+            }
+            .buttonStyle(.plain)
+
+            formulaOperator("+", color: color)
+
+            if movements.isEmpty {
+                ReportTotalCard(
+                    title: primaryKind == .income ? "Loan Increase" : "Loan Decrease",
+                    value: 0,
+                    currencyCode: store.currencyCode,
+                    icon: primaryKind == .income ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
+                    color: color,
+                    compact: true
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 19, style: .continuous)
+                        .stroke(color, lineWidth: 2.5)
+                }
+            } else {
+                ForEach(Array(movements.enumerated()), id: \.element.id) { index, movement in
+                    if index > 0 { formulaOperator("+", color: color) }
+                    NavigationLink { LoanMovementReportView() } label: {
+                        ReportTotalCard(
+                            title: primaryKind == .income ? "Loan Increase" : "Loan Decrease",
+                            value: abs(movement.netAmount),
+                            currencyCode: movement.currencyCode,
+                            icon: primaryKind == .income ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
+                            color: color,
+                            compact: true,
+                            secondaryText: movement.currencyCode.uppercased() == "PKR"
+                                ? "QAR: \(DisplayFormat.currency(abs(movement.netAmount) / Decimal(77), code: "QAR"))"
+                                : nil
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 19, style: .continuous)
+                                .stroke(color, lineWidth: 2.5)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
+        .padding(8)
+        .frame(maxWidth: .infinity)
+        .background(color.opacity(0.055), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(color.opacity(0.65), lineWidth: 2)
+        }
+    }
+
+    private func formulaOperator(_ symbol: String, color: Color) -> some View {
+        Text(symbol)
+            .font(.title3.bold())
+            .foregroundStyle(color)
+            .frame(width: 28, height: 28)
+            .background(color.opacity(0.12), in: Circle())
+            .overlay { Circle().stroke(color, lineWidth: 2) }
     }
 
     private var customSummaryCards: [FinanceSummaryCustomCard] {
@@ -1217,7 +1291,7 @@ private struct FinanceSummaryBalanceCard: View {
         )
         .overlay {
             RoundedRectangle(cornerRadius: 19, style: .continuous)
-                .stroke(AppTheme.purple.opacity(0.13), lineWidth: 1)
+                .stroke(AppTheme.purple, lineWidth: 2.5)
         }
     }
 }
