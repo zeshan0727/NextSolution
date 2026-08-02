@@ -113,16 +113,15 @@ private enum FinanceSummaryCardStorage {
     }
 }
 
-private struct FinanceSummaryAccountSelection: Codable, Equatable {
-    var usesAllAccounts = true
-    var accountIDs: [UUID] = []
+private struct FinanceSummaryFormula: Codable, Equatable {
+    var positiveAccountIDs: [UUID] = []
+    var negativeAccountIDs: [UUID] = []
+    var closingBalanceAccountIDs: [UUID] = []
 
-    static func decode(_ value: String) -> FinanceSummaryAccountSelection {
+    static func decode(_ value: String) -> Self {
         guard let data = value.data(using: .utf8),
-              let selection = try? JSONDecoder().decode(Self.self, from: data) else {
-            return FinanceSummaryAccountSelection()
-        }
-        return selection
+              let formula = try? JSONDecoder().decode(Self.self, from: data) else { return Self() }
+        return formula
     }
 
     func encoded() -> String {
@@ -130,14 +129,6 @@ private struct FinanceSummaryAccountSelection: Codable, Equatable {
               let value = String(data: data, encoding: .utf8) else { return "" }
         return value
     }
-}
-
-private enum FinanceSummaryAccountFilterTarget: String, Identifiable {
-    case netBalance
-    case income
-
-    var id: String { rawValue }
-    var title: String { self == .netBalance ? "Net Balance Accounts" : "Income Accounts" }
 }
 
 struct ReportsView: View {
@@ -506,8 +497,7 @@ private struct ReportDetailView: View {
     @AppStorage("ReportCustomStart") private var storedCustomStart = Date().timeIntervalSince1970
     @AppStorage("ReportCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
     @AppStorage("FinanceSummaryCustomCardsV1") private var storedCustomSummaryCards = "[]"
-    @AppStorage("FinanceSummaryNetBalanceAccountsV1") private var storedNetBalanceAccounts = ""
-    @AppStorage("FinanceSummaryIncomeAccountsV1") private var storedIncomeAccounts = ""
+    @AppStorage("FinanceSummaryFormulaV1") private var storedFinanceSummaryFormula = ""
     @State private var anchorDate = Date()
     @State private var selectedTransaction: LedgerTransaction?
     @State private var showingCustomDates = false
@@ -516,7 +506,7 @@ private struct ReportDetailView: View {
     @State private var searchText = ""
     @State private var cachedExpenseTransactions: [LedgerTransaction] = []
     @State private var editingSummaryCard: FinanceSummaryCustomCard?
-    @State private var editingAccountFilter: FinanceSummaryAccountFilterTarget?
+    @State private var editingFormula = false
 
     var body: some View {
         NavigationStack {
@@ -613,22 +603,10 @@ private struct ReportDetailView: View {
                         .environmentObject(store)
                 }
             }
-            .sheet(item: $editingAccountFilter) { target in
+            .sheet(isPresented: $editingFormula) {
                 NavigationStack {
-                    switch target {
-                    case .netBalance:
-                        FinanceSummaryAccountFilterEditor(
-                            target: target,
-                            storedSelection: $storedNetBalanceAccounts
-                        )
+                    FinanceSummaryFormulaEditor(storedFormula: $storedFinanceSummaryFormula)
                         .environmentObject(store)
-                    case .income:
-                        FinanceSummaryAccountFilterEditor(
-                            target: target,
-                            storedSelection: $storedIncomeAccounts
-                        )
-                        .environmentObject(store)
-                    }
                 }
             }
         }
@@ -707,43 +685,42 @@ private struct ReportDetailView: View {
 
     private var totalCards: some View {
         VStack(spacing: 12) {
-            ZStack(alignment: .topTrailing) {
-                ReportTotalCard(
-                    title: "Net Balance",
-                    value: financeSummaryNetBalance,
-                    currencyCode: store.currencyCode,
-                    icon: "equal.circle.fill",
-                    color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red,
-                    secondaryText: accountSelectionLabel(netBalanceAccountIDs)
-                )
-                accountFilterPencil(.netBalance)
-            }
+            FinanceSummaryFormulaCard(
+                value: financeSummaryNetBalance,
+                currencyCode: store.currencyCode,
+                income: totals.income,
+                loanIncrease: convertedLoanIncrease,
+                positiveAccounts: formulaPositiveAccounts,
+                positiveAccountValue: formulaPositiveMovement,
+                expenses: totals.expense,
+                loanDecrease: convertedLoanDecrease,
+                negativeAccounts: formulaNegativeAccounts,
+                negativeAccountValue: formulaNegativeMovement,
+                closingAccounts: formulaClosingAccounts,
+                closingBalance: formulaClosingBalance,
+                closingDate: selectedInterval.start,
+                interval: selectedInterval,
+                onEdit: { editingFormula = true }
+            )
+            .environmentObject(store)
             Text("PKR loan movement converted at fixed rate: PKR 77 = QAR 1.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 12) {
-                ZStack(alignment: .topTrailing) {
-                    NavigationLink {
-                        PeriodTransactionsView(
-                            kind: .income,
-                            interval: selectedInterval,
-                            accountIDs: incomeAccountIDs
-                        )
-                    } label: {
-                        ReportTotalCard(
-                            title: "Income",
-                            value: filteredIncome,
-                            currencyCode: store.currencyCode,
-                            icon: "arrow.down.left.circle.fill",
-                            color: AppTheme.green,
-                            compact: true,
-                            secondaryText: accountSelectionLabel(incomeAccountIDs)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    accountFilterPencil(.income, compact: true)
+                NavigationLink {
+                    PeriodTransactionsView(kind: .income, interval: selectedInterval)
+                } label: {
+                    ReportTotalCard(
+                        title: "Income",
+                        value: totals.income,
+                        currencyCode: store.currencyCode,
+                        icon: "arrow.down.left.circle.fill",
+                        color: AppTheme.green,
+                        compact: true
+                    )
                 }
+                .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
                 NavigationLink {
                     PeriodTransactionsView(kind: .expenses, interval: selectedInterval)
@@ -886,73 +863,99 @@ private struct ReportDetailView: View {
     }
 
     private var financeSummaryNetBalance: Decimal {
-        filteredNetBalanceTotals.income
-            + convertedLoanMovement(accountIDs: netBalanceAccountIDs)
-            - filteredNetBalanceTotals.expense
+        totals.income
+            + convertedLoanIncrease
+            + formulaPositiveMovement
+            + formulaClosingBalance
+            - totals.expense
+            - convertedLoanDecrease
+            - formulaNegativeMovement
     }
 
     private var convertedLoanMovement: Decimal {
-        convertedLoanMovement(accountIDs: nil)
+        convertedLoanIncrease - convertedLoanDecrease
     }
 
-    private func convertedLoanMovement(accountIDs: Set<UUID>?) -> Decimal {
-        store.loanNetMovements(in: selectedInterval, accountIDs: accountIDs).reduce(Decimal.zero) {
-            result, movement in
-            switch movement.currencyCode.uppercased() {
-            case "QAR":
-                return result + movement.netAmount
-            case "PKR":
-                return result + movement.netAmount / Decimal(77)
-            default:
-                return result
+    private var convertedLoanIncrease: Decimal { convertedLoanComponents.increase }
+    private var convertedLoanDecrease: Decimal { convertedLoanComponents.decrease }
+
+    private var convertedLoanComponents: (increase: Decimal, decrease: Decimal) {
+        let loanIDs = Set(store.accounts.filter {
+            $0.group == .payments || $0.nature == .loan
+        }.map(\.id))
+        var increase = Decimal.zero
+        var decrease = Decimal.zero
+        for transaction in store.transactions where selectedInterval.contains(transaction.date) {
+            if let sourceID = transaction.accountID,
+               loanIDs.contains(sourceID),
+               transaction.type == .expense || transaction.type == .transfer,
+               let account = store.account(withID: sourceID) {
+                increase += converted(transaction.amount, from: account.currencyCode)
+            }
+            if transaction.type == .transfer,
+               let destinationID = transaction.destinationAccountID,
+               loanIDs.contains(destinationID),
+               let account = store.account(withID: destinationID) {
+                decrease += converted(transaction.destinationAmount ?? transaction.amount, from: account.currencyCode)
             }
         }
+        return (increase, decrease)
     }
 
-    private var filteredNetBalanceTotals: LedgerTotals {
-        store.totals(in: selectedInterval, accountIDs: netBalanceAccountIDs)
+    private var financeSummaryFormula: FinanceSummaryFormula {
+        FinanceSummaryFormula.decode(storedFinanceSummaryFormula)
     }
 
-    private var filteredIncome: Decimal {
-        store.totals(in: selectedInterval, accountIDs: incomeAccountIDs).income
+    private var formulaPositiveAccounts: [LedgerAccount] {
+        accounts(with: financeSummaryFormula.positiveAccountIDs)
     }
 
-    private var netBalanceAccountIDs: Set<UUID>? {
-        selectedAccountIDs(from: storedNetBalanceAccounts)
+    private var formulaNegativeAccounts: [LedgerAccount] {
+        accounts(with: financeSummaryFormula.negativeAccountIDs)
     }
 
-    private var incomeAccountIDs: Set<UUID>? {
-        selectedAccountIDs(from: storedIncomeAccounts)
+    private var formulaClosingAccounts: [LedgerAccount] {
+        accounts(with: financeSummaryFormula.closingBalanceAccountIDs)
     }
 
-    private func selectedAccountIDs(from value: String) -> Set<UUID>? {
-        let selection = FinanceSummaryAccountSelection.decode(value)
-        guard !selection.usesAllAccounts else { return nil }
-        let validIDs = Set(store.accounts.filter {
-            $0.currencyCode.caseInsensitiveCompare(store.currencyCode) == .orderedSame
-        }.map(\.id))
-        return Set(selection.accountIDs).intersection(validIDs)
+    private func accounts(with ids: [UUID]) -> [LedgerAccount] {
+        let selected = Set(ids)
+        return store.activeAccounts.filter { selected.contains($0.id) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    private func accountSelectionLabel(_ ids: Set<UUID>?) -> String {
-        guard let ids else { return "All accounts" }
-        return "\(ids.count) selected account\(ids.count == 1 ? "" : "s")"
+    private var formulaPositiveMovement: Decimal {
+        movement(for: formulaPositiveAccounts)
     }
 
-    private func accountFilterPencil(
-        _ target: FinanceSummaryAccountFilterTarget,
-        compact: Bool = false
-    ) -> some View {
-        Button {
-            editingAccountFilter = target
-        } label: {
-            Image(systemName: "pencil")
-                .font(.caption.bold())
-                .frame(width: compact ? 28 : 31, height: compact ? 28 : 31)
-                .background(Color(.secondarySystemBackground), in: Circle())
+    private var formulaNegativeMovement: Decimal {
+        movement(for: formulaNegativeAccounts)
+    }
+
+    private func movement(for accounts: [LedgerAccount]) -> Decimal {
+        accounts.reduce(Decimal.zero) { result, account in
+            let start = store.combinedBalance(for: [account], before: selectedInterval.start)
+            let end = store.combinedBalance(for: [account], before: selectedInterval.end)
+            return result + abs(converted(end - start, from: account.currencyCode))
         }
-        .padding(compact ? 7 : 9)
-        .accessibilityLabel("Edit \(target.title)")
+    }
+
+    private var formulaClosingBalance: Decimal {
+        formulaClosingAccounts.reduce(Decimal.zero) { result, account in
+            result + converted(
+                store.combinedBalance(for: [account], before: selectedInterval.start),
+                from: account.currencyCode
+            )
+        }
+    }
+
+    private func converted(_ amount: Decimal, from currency: String) -> Decimal {
+        if currency.caseInsensitiveCompare(store.currencyCode) == .orderedSame { return amount }
+        switch currency.uppercased() {
+        case "PKR" where store.currencyCode.uppercased() == "QAR": return amount / Decimal(77)
+        case "QAR" where store.currencyCode.uppercased() == "PKR": return amount * Decimal(77)
+        default: return amount
+        }
     }
 
     private var activityChart: some View {
@@ -1335,73 +1338,277 @@ private struct FinanceSummaryBalanceCard: View {
     }
 }
 
-private struct FinanceSummaryAccountFilterEditor: View {
+private struct FinanceSummaryFormulaCard: View {
+    @EnvironmentObject private var store: LedgerStore
+    let value: Decimal
+    let currencyCode: String
+    let income: Decimal
+    let loanIncrease: Decimal
+    let positiveAccounts: [LedgerAccount]
+    let positiveAccountValue: Decimal
+    let expenses: Decimal
+    let loanDecrease: Decimal
+    let negativeAccounts: [LedgerAccount]
+    let negativeAccountValue: Decimal
+    let closingAccounts: [LedgerAccount]
+    let closingBalance: Decimal
+    let closingDate: Date
+    let interval: DateInterval
+    let onEdit: () -> Void
+
+    var body: some View {
+        VStack(spacing: 13) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Net Balance")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text(DisplayFormat.currency(value, code: currencyCode))
+                        .font(.title2.bold())
+                        .minimumScaleFactor(0.65)
+                        .lineLimit(1)
+                    Text("For selected report period")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button(action: onEdit) {
+                    Label("Edit", systemImage: "pencil")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(AppTheme.purple.opacity(0.13), in: Capsule())
+                }
+            }
+
+            HStack(alignment: .top, spacing: 10) {
+                formulaColumn(
+                    title: "Added",
+                    icon: "plus",
+                    color: AppTheme.green,
+                    fixedRows: [("Income", income), ("Loan Increase", loanIncrease)],
+                    accounts: positiveAccounts,
+                    aggregate: positiveAccountValue
+                )
+                formulaColumn(
+                    title: "Deducted",
+                    icon: "minus",
+                    color: AppTheme.red,
+                    fixedRows: [("Expenses", expenses), ("Loan Decrease", loanDecrease)],
+                    accounts: negativeAccounts,
+                    aggregate: negativeAccountValue
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Opening / Last Closing Balance", systemImage: "calendar.badge.clock")
+                    .font(.caption.bold())
+                    .foregroundStyle(AppTheme.purple)
+                if closingAccounts.isEmpty {
+                    Text("No closing-balance accounts added")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(closingAccounts) { account in
+                        NavigationLink {
+                            AccountPeriodTransactionsView(account: account, interval: interval)
+                        } label: {
+                            formulaAccountRow(account, color: AppTheme.purple)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Divider()
+                    formulaValueRow("Added at report start", value: closingBalance, color: AppTheme.purple)
+                }
+                Text("Closing immediately before \(closingDate.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(12)
+            .background(AppTheme.purple.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        }
+        .padding(16)
+        .background(
+            LinearGradient(
+                colors: [Color(.systemBackground), AppTheme.purple.opacity(0.055)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(AppTheme.purple.opacity(0.14), lineWidth: 1)
+        }
+    }
+
+    private func formulaColumn(
+        title: String,
+        icon: String,
+        color: Color,
+        fixedRows: [(String, Decimal)],
+        accounts: [LedgerAccount],
+        aggregate: Decimal
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: "\(icon).circle.fill")
+                .font(.caption.bold())
+                .foregroundStyle(color)
+            ForEach(Array(fixedRows.enumerated()), id: \.offset) { _, row in
+                fixedFormulaRow(row.0, value: row.1, color: color)
+            }
+            ForEach(accounts) { account in
+                NavigationLink {
+                    AccountPeriodTransactionsView(account: account, interval: interval)
+                } label: {
+                    formulaAccountRow(account, color: color)
+                }
+                .buttonStyle(.plain)
+            }
+            if !accounts.isEmpty {
+                Divider()
+                formulaValueRow("Account movements", value: aggregate, color: color)
+            }
+        }
+        .padding(11)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(color.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+    }
+
+    private func formulaValueRow(_ title: String, value: Decimal, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(DisplayFormat.currency(value, code: currencyCode))
+                .font(.caption.bold())
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func fixedFormulaRow(_ title: String, value: Decimal, color: Color) -> some View {
+        if title == "Income" {
+            NavigationLink { PeriodTransactionsView(kind: .income, interval: interval) } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
+        } else if title == "Expenses" {
+            NavigationLink { PeriodTransactionsView(kind: .expenses, interval: interval) } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink { LoanMovementReportView() } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func formulaAccountRow(_ account: LedgerAccount, color: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: account.icon)
+                .foregroundStyle(color)
+            Text(account.name)
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
+            Spacer(minLength: 2)
+            Image(systemName: "chevron.right")
+                .font(.caption2.bold())
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct AccountPeriodTransactionsView: View {
+    @EnvironmentObject private var store: LedgerStore
+    @State private var selectedTransaction: LedgerTransaction?
+    @State private var searchText = ""
+    let account: LedgerAccount
+    let interval: DateInterval
+
+    var body: some View {
+        List {
+            ForEach(transactions) { transaction in
+                Button { selectedTransaction = transaction } label: {
+                    TransactionRow(transaction: transaction, accountID: account.id)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .navigationTitle(account.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Search account transactions")
+        .overlay {
+            if transactions.isEmpty {
+                EmptyLedgerView(title: "No transactions", message: "No recorded transactions for this account in the selected period.")
+            }
+        }
+        .sheet(item: $selectedTransaction) { transaction in
+            TransactionSnapshotView(transaction: transaction).environmentObject(store)
+        }
+    }
+
+    private var transactions: [LedgerTransaction] {
+        store.transactions.filter { item in
+            let belongs = item.accountID == account.id || item.destinationAccountID == account.id
+            guard belongs, interval.contains(item.date) else { return false }
+            guard !searchText.isEmpty else { return true }
+            return item.category.localizedCaseInsensitiveContains(searchText) ||
+                (item.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                item.details.localizedCaseInsensitiveContains(searchText)
+        }
+        .sorted { $0.date > $1.date }
+    }
+}
+
+private struct FinanceSummaryFormulaEditor: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
-    let target: FinanceSummaryAccountFilterTarget
-    @Binding private var storedSelection: String
-    @State private var selection: FinanceSummaryAccountSelection
+    @Binding private var storedFormula: String
+    @State private var formula: FinanceSummaryFormula
 
-    init(
-        target: FinanceSummaryAccountFilterTarget,
-        storedSelection: Binding<String>
-    ) {
-        self.target = target
-        _storedSelection = storedSelection
-        _selection = State(initialValue: FinanceSummaryAccountSelection.decode(storedSelection.wrappedValue))
-    }
-
-    private var accounts: [LedgerAccount] {
-        store.activeAccounts.filter {
-            $0.currencyCode.caseInsensitiveCompare(store.currencyCode) == .orderedSame
-        }
-        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-    }
-
-    private var selectedIDs: Set<UUID> {
-        selection.usesAllAccounts ? Set(accounts.map(\.id)) : Set(selection.accountIDs)
+    init(storedFormula: Binding<String>) {
+        _storedFormula = storedFormula
+        _formula = State(initialValue: FinanceSummaryFormula.decode(storedFormula.wrappedValue))
     }
 
     var body: some View {
         Form {
             Section {
-                HStack {
-                    Button("Select All") {
-                        selection.usesAllAccounts = true
-                        selection.accountIDs = accounts.map(\.id)
-                    }
-                    Spacer()
-                    Button("Deselect All") {
-                        selection.usesAllAccounts = false
-                        selection.accountIDs.removeAll()
-                    }
-                }
-
-                ForEach(accounts) { account in
-                    Button {
-                        toggle(account.id)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Label(account.name, systemImage: account.icon)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Text(DisplayFormat.currency(store.balance(for: account), code: account.currencyCode))
-                                .font(.caption.bold())
-                                .foregroundStyle(.secondary)
-                            Image(systemName: selectedIDs.contains(account.id) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedIDs.contains(account.id) ? AppTheme.purple : .secondary)
-                        }
-                    }
-                }
+                Label("Income", systemImage: "plus.circle.fill")
+                Label("Loan Increase", systemImage: "plus.circle.fill")
+                accountPickerRows(selection: $formula.positiveAccountIDs, color: AppTheme.green)
             } header: {
-                Text("Accounts (\(selectedIDs.count) Selected)")
+                Text("Added to Net Balance")
             } footer: {
-                Text(target == .netBalance
-                    ? "Only transactions and loan movements from these accounts affect the Net Balance card. Custom display cards remain independent."
-                    : "Only income received in these accounts is included in the Income card and its transaction list.")
+                Text("Optional accounts add their movement during the selected report period.")
+            }
+
+            Section {
+                Label("Expenses", systemImage: "minus.circle.fill")
+                Label("Loan Decrease", systemImage: "minus.circle.fill")
+                accountPickerRows(selection: $formula.negativeAccountIDs, color: AppTheme.red)
+            } header: {
+                Text("Deducted from Net Balance")
+            } footer: {
+                Text("Optional accounts deduct their movement during the selected report period.")
+            }
+
+            Section {
+                accountPickerRows(selection: $formula.closingBalanceAccountIDs, color: AppTheme.purple)
+            } header: {
+                Text("Opening / Last Closing Balance")
+            } footer: {
+                Text("Adds the selected accounts’ closing balance immediately before the report From date.")
             }
         }
-        .navigationTitle(target.title)
+        .navigationTitle("Edit Net Balance Formula")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -1409,25 +1616,43 @@ private struct FinanceSummaryAccountFilterEditor: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    let validIDs = Set(accounts.map(\.id))
-                    selection.accountIDs = Array(Set(selection.accountIDs).intersection(validIDs))
-                        .sorted { $0.uuidString < $1.uuidString }
-                    storedSelection = selection.encoded()
+                    let valid = Set(store.accounts.map(\.id))
+                    formula.positiveAccountIDs = sanitized(formula.positiveAccountIDs, valid: valid)
+                    formula.negativeAccountIDs = sanitized(formula.negativeAccountIDs, valid: valid)
+                    formula.closingBalanceAccountIDs = sanitized(formula.closingBalanceAccountIDs, valid: valid)
+                    storedFormula = formula.encoded()
                     dismiss()
                 }
             }
         }
     }
 
-    private func toggle(_ id: UUID) {
-        var ids = selectedIDs
-        selection.usesAllAccounts = false
-        if ids.contains(id) {
-            ids.remove(id)
-        } else {
-            ids.insert(id)
+    @ViewBuilder
+    private func accountPickerRows(selection: Binding<[UUID]>, color: Color) -> some View {
+        ForEach(store.activeAccounts.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }) { account in
+            Button {
+                var ids = Set(selection.wrappedValue)
+                if ids.contains(account.id) { ids.remove(account.id) } else { ids.insert(account.id) }
+                selection.wrappedValue = ids.sorted { $0.uuidString < $1.uuidString }
+            } label: {
+                HStack {
+                    Label(account.name, systemImage: account.icon)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(account.currencyCode)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: selection.wrappedValue.contains(account.id) ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(selection.wrappedValue.contains(account.id) ? color : .secondary)
+                }
+            }
         }
-        selection.accountIDs = Array(ids).sorted { $0.uuidString < $1.uuidString }
+    }
+
+    private func sanitized(_ values: [UUID], valid: Set<UUID>) -> [UUID] {
+        Array(Set(values).intersection(valid)).sorted { $0.uuidString < $1.uuidString }
     }
 }
 
