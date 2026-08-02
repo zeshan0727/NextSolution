@@ -1,5 +1,5 @@
-# Next Ledger 1.3.48 validated build
-# Build trigger: Qatar dated closing-balance card
+# Next Ledger 1.3.49 validated build
+# Build trigger: opening balance and summary connector visuals
 name: Build Next Ledger TIPA
 
 permissions:
@@ -82,8 +82,8 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.48-qatar-closing-balance.tipa
-          shasum -a 256 NextLedger-1.3.48-qatar-closing-balance.tipa > NextLedger-1.3.48-qatar-closing-balance.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.49-opening-balance.tipa
+          shasum -a 256 NextLedger-1.3.49-opening-balance.tipa > NextLedger-1.3.49-opening-balance.sha256
 
       - name: Test SMS parser
         run: |
@@ -118,8 +118,8 @@ jobs:
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.48-qatar-closing-balance.tipa
-            NextLedger-1.3.48-qatar-closing-balance.sha256
+            NextLedger-1.3.49-opening-balance.tipa
+            NextLedger-1.3.49-opening-balance.sha256
             DailyLedgerSMSImport-1.4.0-roothide.deb
             DailyLedgerSMSImport-1.4.0-roothide.sha256
           if-no-files-found: error

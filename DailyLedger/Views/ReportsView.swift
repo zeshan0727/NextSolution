@@ -494,7 +494,6 @@ private struct ReportDetailView: View {
     @AppStorage("ReportCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
     @AppStorage("FinanceSummaryCustomCardsV1") private var storedCustomSummaryCards = "[]"
     @AppStorage("FinanceSummaryQatarClosingAccountsV1") private var storedClosingAccountIDs = "[]"
-    @AppStorage("FinanceSummaryQatarClosingDateV1") private var storedClosingDate = Date().timeIntervalSince1970
     @State private var anchorDate = Date()
     @State private var selectedTransaction: LedgerTransaction?
     @State private var showingCustomDates = false
@@ -603,8 +602,7 @@ private struct ReportDetailView: View {
             .sheet(isPresented: $editingClosingBalance) {
                 NavigationStack {
                     QatarClosingBalanceEditor(
-                        storedAccountIDs: $storedClosingAccountIDs,
-                        storedDate: $storedClosingDate
+                        storedAccountIDs: $storedClosingAccountIDs
                     )
                     .environmentObject(store)
                 }
@@ -690,7 +688,10 @@ private struct ReportDetailView: View {
                 value: financeSummaryNetBalance,
                 currencyCode: store.currencyCode,
                 icon: "equal.circle.fill",
-                color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red
+                color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red,
+                secondaryText: closingBalanceAccounts.isEmpty
+                    ? nil
+                    : "Includes opening balance: \(DisplayFormat.currency(qatarClosingBalance, code: "QAR"))"
             )
             .overlay {
                 RoundedRectangle(cornerRadius: 19, style: .continuous)
@@ -700,6 +701,10 @@ private struct ReportDetailView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            SummaryConnectorLines()
+                .frame(height: 38)
+                .padding(.horizontal, 46)
+                .accessibilityHidden(true)
             HStack(alignment: .top, spacing: 12) {
                 summaryColumn(
                     title: "Added",
@@ -721,7 +726,7 @@ private struct ReportDetailView: View {
 
             HStack {
                 Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
-                Text("Closing Balances")
+                Text("Opening Balance")
                     .font(.caption.bold())
                     .foregroundStyle(AppTheme.purple)
                 Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
@@ -769,7 +774,7 @@ private struct ReportDetailView: View {
                 editingClosingBalance = true
             } label: {
                 ReportTotalCard(
-                    title: "Closing Balance as of \(closingBalanceDate.formatted(date: .abbreviated, time: .omitted))",
+                    title: "Opening Balance as of \(selectedInterval.start.formatted(date: .abbreviated, time: .omitted))",
                     value: qatarClosingBalance,
                     currencyCode: "QAR",
                     icon: "calendar.badge.clock",
@@ -784,12 +789,8 @@ private struct ReportDetailView: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Edit Qatar closing balance accounts and date")
+            .accessibilityLabel("Edit Qatar opening balance accounts")
         }
-    }
-
-    private var closingBalanceDate: Date {
-        Date(timeIntervalSince1970: storedClosingDate)
     }
 
     private var closingBalanceAccounts: [LedgerAccount] {
@@ -799,11 +800,7 @@ private struct ReportDetailView: View {
     }
 
     private var closingBalanceCutoff: Date {
-        Calendar.current.date(
-            byAdding: .day,
-            value: 1,
-            to: Calendar.current.startOfDay(for: closingBalanceDate)
-        ) ?? closingBalanceDate
+        selectedInterval.start
     }
 
     private var qatarClosingBalance: Decimal {
@@ -966,7 +963,7 @@ private struct ReportDetailView: View {
     }
 
     private var financeSummaryNetBalance: Decimal {
-        totals.income + convertedLoanMovement - totals.expense
+        totals.income + convertedLoanMovement - totals.expense + qatarClosingBalance
     }
 
     private var convertedLoanMovement: Decimal {
@@ -1363,19 +1360,41 @@ private struct FinanceSummaryBalanceCard: View {
     }
 }
 
+private struct SummaryConnectorLines: View {
+    var body: some View {
+        GeometryReader { proxy in
+            let center = proxy.size.width / 2
+            let splitY = proxy.size.height * 0.42
+            ZStack {
+                Path { path in
+                    path.move(to: CGPoint(x: center - 2, y: 0))
+                    path.addLine(to: CGPoint(x: center - 2, y: splitY))
+                    path.addLine(to: CGPoint(x: proxy.size.width * 0.24, y: splitY))
+                    path.addLine(to: CGPoint(x: proxy.size.width * 0.24, y: proxy.size.height))
+                }
+                .stroke(AppTheme.green, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+
+                Path { path in
+                    path.move(to: CGPoint(x: center + 2, y: 0))
+                    path.addLine(to: CGPoint(x: center + 2, y: splitY))
+                    path.addLine(to: CGPoint(x: proxy.size.width * 0.76, y: splitY))
+                    path.addLine(to: CGPoint(x: proxy.size.width * 0.76, y: proxy.size.height))
+                }
+                .stroke(AppTheme.red, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+            }
+        }
+    }
+}
+
 private struct QatarClosingBalanceEditor: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
     @Binding private var storedAccountIDs: String
-    @Binding private var storedDate: Double
     @State private var selectedIDs: Set<UUID>
-    @State private var selectedDate: Date
 
-    init(storedAccountIDs: Binding<String>, storedDate: Binding<Double>) {
+    init(storedAccountIDs: Binding<String>) {
         _storedAccountIDs = storedAccountIDs
-        _storedDate = storedDate
         _selectedIDs = State(initialValue: Set(ClosingBalanceAccountStorage.decode(storedAccountIDs.wrappedValue)))
-        _selectedDate = State(initialValue: Date(timeIntervalSince1970: storedDate.wrappedValue))
     }
 
     private var qatarAccounts: [LedgerAccount] {
@@ -1385,10 +1404,6 @@ private struct QatarClosingBalanceEditor: View {
 
     var body: some View {
         Form {
-            Section("Closing Date") {
-                DatePicker("Balance as of", selection: $selectedDate, displayedComponents: .date)
-            }
-
             Section {
                 HStack {
                     Button("Select All") { selectedIDs = Set(qatarAccounts.map(\.id)) }
@@ -1412,10 +1427,10 @@ private struct QatarClosingBalanceEditor: View {
             } header: {
                 Text("Qatar Accounts (\(selectedIDs.count) Selected)")
             } footer: {
-                Text("The card totals these accounts at the end of the selected day. It does not change Net Balance or any transaction.")
+                Text("The card uses the report’s starting date and totals these accounts immediately before that period begins. It is included in Net Balance and does not modify any transaction.")
             }
         }
-        .navigationTitle("Closing Balance Card")
+        .navigationTitle("Opening Balance Card")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -1427,7 +1442,6 @@ private struct QatarClosingBalanceEditor: View {
                     storedAccountIDs = ClosingBalanceAccountStorage.encode(
                         Array(selectedIDs.intersection(valid)).sorted { $0.uuidString < $1.uuidString }
                     )
-                    storedDate = selectedDate.timeIntervalSince1970
                     dismiss()
                 }
             }
