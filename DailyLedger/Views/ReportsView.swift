@@ -117,6 +117,7 @@ private struct FinanceSummaryFormula: Codable, Equatable {
     var positiveAccountIDs: [UUID] = []
     var negativeAccountIDs: [UUID] = []
     var closingBalanceAccountIDs: [UUID] = []
+    var closingBalanceDate: Date?
 
     static func decode(_ value: String) -> Self {
         guard let data = value.data(using: .utf8),
@@ -605,7 +606,10 @@ private struct ReportDetailView: View {
             }
             .sheet(isPresented: $editingFormula) {
                 NavigationStack {
-                    FinanceSummaryFormulaEditor(storedFormula: $storedFinanceSummaryFormula)
+                    FinanceSummaryFormulaEditor(
+                        storedFormula: $storedFinanceSummaryFormula,
+                        defaultClosingDate: formulaClosingDate
+                    )
                         .environmentObject(store)
                 }
             }
@@ -698,7 +702,7 @@ private struct ReportDetailView: View {
                 negativeAccountValue: formulaNegativeMovement,
                 closingAccounts: formulaClosingAccounts,
                 closingBalance: formulaClosingBalance,
-                closingDate: selectedInterval.start,
+                closingDate: formulaClosingDate,
                 interval: selectedInterval,
                 onEdit: { editingFormula = true }
             )
@@ -707,35 +711,6 @@ private struct ReportDetailView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 12) {
-                NavigationLink {
-                    PeriodTransactionsView(kind: .income, interval: selectedInterval)
-                } label: {
-                    ReportTotalCard(
-                        title: "Income",
-                        value: totals.income,
-                        currencyCode: store.currencyCode,
-                        icon: "arrow.down.left.circle.fill",
-                        color: AppTheme.green,
-                        compact: true
-                    )
-                }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
-                NavigationLink {
-                    PeriodTransactionsView(kind: .expenses, interval: selectedInterval)
-                } label: {
-                    ReportTotalCard(
-                        title: "Expenses",
-                        value: totals.expense,
-                        currencyCode: store.currencyCode,
-                        icon: "arrow.up.right.circle.fill",
-                        color: AppTheme.red,
-                        compact: true
-                    )
-                }
-                .buttonStyle(.plain)
-            }
             ForEach(customSummaryCards) { card in
                 let accountCount = validAccountCount(card)
                 let timingLabel = customSummaryTimingLabel(card)
@@ -771,35 +746,6 @@ private struct ReportDetailView: View {
                     }
                     .accessibilityLabel("Options for \(customSummaryTitle(card))")
                 }
-            }
-            ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
-                NavigationLink {
-                    LoanMovementReportView()
-                } label: {
-                    ReportTotalCard(
-                        title: "\(movement.currencyCode) Loan Movement · \(movement.netAmount > 0 ? "Increased" : "Decreased")",
-                        value: abs(movement.netAmount),
-                        currencyCode: movement.currencyCode,
-                        icon: movement.netAmount > 0 ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
-                        color: movement.netAmount > 0 ? AppTheme.orange : AppTheme.green,
-                        secondaryText: movement.currencyCode.uppercased() == "PKR"
-                            ? "QAR equivalent: \(DisplayFormat.currency(abs(movement.netAmount) / Decimal(77), code: "QAR"))"
-                            : nil
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            if convertedLoanMovement != 0 {
-                ReportTotalCard(
-                    title: "Net Loan Movement · \(convertedLoanMovement > 0 ? "Increased" : "Decreased")",
-                    value: abs(convertedLoanMovement),
-                    currencyCode: "QAR",
-                    icon: convertedLoanMovement > 0
-                        ? "arrow.up.right.circle.fill"
-                        : "arrow.down.right.circle.fill",
-                    color: convertedLoanMovement > 0 ? AppTheme.orange : AppTheme.green,
-                    secondaryText: "QAR movement + PKR movement ÷ 77"
-                )
             }
         }
     }
@@ -872,10 +818,6 @@ private struct ReportDetailView: View {
             - formulaNegativeMovement
     }
 
-    private var convertedLoanMovement: Decimal {
-        convertedLoanIncrease - convertedLoanDecrease
-    }
-
     private var convertedLoanIncrease: Decimal { convertedLoanComponents.increase }
     private var convertedLoanDecrease: Decimal { convertedLoanComponents.decrease }
 
@@ -943,10 +885,19 @@ private struct ReportDetailView: View {
     private var formulaClosingBalance: Decimal {
         formulaClosingAccounts.reduce(Decimal.zero) { result, account in
             result + converted(
-                store.combinedBalance(for: [account], before: selectedInterval.start),
+                store.combinedBalance(for: [account], before: formulaClosingCutoff),
                 from: account.currencyCode
             )
         }
+    }
+
+    private var formulaClosingDate: Date {
+        financeSummaryFormula.closingBalanceDate ??
+            (Calendar.current.date(byAdding: .day, value: -1, to: selectedInterval.start) ?? selectedInterval.start)
+    }
+
+    private var formulaClosingCutoff: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: formulaClosingDate)) ?? selectedInterval.start
     }
 
     private func converted(_ amount: Decimal, from currency: String) -> Decimal {
@@ -1385,6 +1336,7 @@ private struct FinanceSummaryFormulaCard: View {
                 formulaColumn(
                     title: "Added",
                     icon: "plus",
+                    operatorSymbol: "+",
                     color: AppTheme.green,
                     fixedRows: [("Income", income), ("Loan Increase", loanIncrease)],
                     accounts: positiveAccounts,
@@ -1393,6 +1345,7 @@ private struct FinanceSummaryFormulaCard: View {
                 formulaColumn(
                     title: "Deducted",
                     icon: "minus",
+                    operatorSymbol: "−",
                     color: AppTheme.red,
                     fixedRows: [("Expenses", expenses), ("Loan Decrease", loanDecrease)],
                     accounts: negativeAccounts,
@@ -1405,24 +1358,34 @@ private struct FinanceSummaryFormulaCard: View {
                     .font(.caption.bold())
                     .foregroundStyle(AppTheme.purple)
                 if closingAccounts.isEmpty {
-                    Text("No closing-balance accounts added")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Button(action: onEdit) {
+                        Label("Choose accounts and closing date", systemImage: "plus.circle.fill")
+                            .font(.caption.bold())
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(10)
+                            .background(AppTheme.purple.opacity(0.1), in: RoundedRectangle(cornerRadius: 11))
+                    }
                 } else {
                     ForEach(closingAccounts) { account in
                         NavigationLink {
                             AccountPeriodTransactionsView(account: account, interval: interval)
                         } label: {
-                            formulaAccountRow(account, color: AppTheme.purple)
+                            formulaAccountCard(account, color: AppTheme.purple)
                         }
                         .buttonStyle(.plain)
                     }
                     Divider()
                     formulaValueRow("Added at report start", value: closingBalance, color: AppTheme.purple)
                 }
-                Text("Closing immediately before \(closingDate.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                Button(action: onEdit) {
+                    HStack {
+                        Text("Closing on \(closingDate.formatted(date: .abbreviated, time: .omitted))")
+                        Spacer()
+                        Image(systemName: "calendar.badge.clock")
+                    }
+                    .font(.caption2.bold())
+                    .foregroundStyle(AppTheme.purple)
+                }
             }
             .padding(12)
             .background(AppTheme.purple.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
@@ -1445,6 +1408,7 @@ private struct FinanceSummaryFormulaCard: View {
     private func formulaColumn(
         title: String,
         icon: String,
+        operatorSymbol: String,
         color: Color,
         fixedRows: [(String, Decimal)],
         accounts: [LedgerAccount],
@@ -1454,14 +1418,16 @@ private struct FinanceSummaryFormulaCard: View {
             Label(title, systemImage: "\(icon).circle.fill")
                 .font(.caption.bold())
                 .foregroundStyle(color)
-            ForEach(Array(fixedRows.enumerated()), id: \.offset) { _, row in
+            ForEach(Array(fixedRows.enumerated()), id: \.offset) { index, row in
+                if index > 0 { formulaOperator(operatorSymbol, color: color) }
                 fixedFormulaRow(row.0, value: row.1, color: color)
             }
-            ForEach(accounts) { account in
+            ForEach(Array(accounts.enumerated()), id: \.element.id) { _, account in
+                formulaOperator(operatorSymbol, color: color)
                 NavigationLink {
                     AccountPeriodTransactionsView(account: account, interval: interval)
                 } label: {
-                    formulaAccountRow(account, color: color)
+                    formulaAccountCard(account, color: color)
                 }
                 .buttonStyle(.plain)
             }
@@ -1486,7 +1452,20 @@ private struct FinanceSummaryFormulaCard: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
         }
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [color.opacity(0.16), color.opacity(0.07)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(color.opacity(0.22), lineWidth: 1)
+        }
     }
 
     @ViewBuilder
@@ -1501,8 +1480,13 @@ private struct FinanceSummaryFormulaCard: View {
                 formulaValueRow(title, value: value, color: color)
             }
             .buttonStyle(.plain)
+        } else if title == "Loan Increase" {
+            NavigationLink { PeriodTransactionsView(kind: .loanIncrease, interval: interval) } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
         } else {
-            NavigationLink { LoanMovementReportView() } label: {
+            NavigationLink { PeriodTransactionsView(kind: .loanDecrease, interval: interval) } label: {
                 formulaValueRow(title, value: value, color: color)
             }
             .buttonStyle(.plain)
@@ -1522,6 +1506,24 @@ private struct FinanceSummaryFormulaCard: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
+    }
+
+    private func formulaAccountCard(_ account: LedgerAccount, color: Color) -> some View {
+        formulaAccountRow(account, color: color)
+            .padding(10)
+            .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(color.opacity(0.2), lineWidth: 1)
+            }
+    }
+
+    private func formulaOperator(_ symbol: String, color: Color) -> some View {
+        Text(symbol)
+            .font(.headline.bold())
+            .foregroundStyle(color)
+            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
     }
 }
 
@@ -1572,10 +1574,12 @@ private struct FinanceSummaryFormulaEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Binding private var storedFormula: String
     @State private var formula: FinanceSummaryFormula
+    let defaultClosingDate: Date
 
-    init(storedFormula: Binding<String>) {
+    init(storedFormula: Binding<String>, defaultClosingDate: Date) {
         _storedFormula = storedFormula
         _formula = State(initialValue: FinanceSummaryFormula.decode(storedFormula.wrappedValue))
+        self.defaultClosingDate = defaultClosingDate
     }
 
     var body: some View {
@@ -1601,6 +1605,14 @@ private struct FinanceSummaryFormulaEditor: View {
             }
 
             Section {
+                DatePicker(
+                    "Closing Date",
+                    selection: Binding(
+                        get: { formula.closingBalanceDate ?? defaultClosingDate },
+                        set: { formula.closingBalanceDate = $0 }
+                    ),
+                    displayedComponents: .date
+                )
                 accountPickerRows(selection: $formula.closingBalanceAccountIDs, color: AppTheme.purple)
             } header: {
                 Text("Opening / Last Closing Balance")

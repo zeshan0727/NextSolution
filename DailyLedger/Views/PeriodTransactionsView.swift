@@ -4,12 +4,16 @@ enum PeriodTransactionKind {
     case income
     case expenses
     case loans
+    case loanIncrease
+    case loanDecrease
 
     var title: String {
         switch self {
         case .income: return "Income"
         case .expenses: return "Expenses"
         case .loans: return "Loans Paid"
+        case .loanIncrease: return "Loan Increase"
+        case .loanDecrease: return "Loan Decrease"
         }
     }
 }
@@ -79,6 +83,14 @@ struct PeriodTransactionsView: View {
             case .loans:
                 kindMatches = transaction.type == .transfer &&
                     store.account(withID: transaction.destinationAccountID)?.group == .payments
+            case .loanIncrease:
+                let source = store.account(withID: transaction.accountID)
+                kindMatches = (transaction.type == .expense || transaction.type == .transfer) &&
+                    (source?.group == .payments || source?.nature == .loan)
+            case .loanDecrease:
+                let destination = store.account(withID: transaction.destinationAccountID)
+                kindMatches = transaction.type == .transfer &&
+                    (destination?.group == .payments || destination?.nature == .loan)
             }
             guard kindMatches, !searchText.isEmpty else { return kindMatches }
             return transaction.category.localizedCaseInsensitiveContains(searchText) ||
@@ -90,7 +102,9 @@ struct PeriodTransactionsView: View {
 
     private var total: Decimal {
         transactions.reduce(Decimal.zero) {
-            $0 + (kind == .income ? store.reportIncomeAmount($1) : $1.amount)
+            if kind == .income { return $0 + store.reportIncomeAmount($1) }
+            if kind == .loanDecrease { return $0 + ($1.destinationAmount ?? $1.amount) }
+            return $0 + $1.amount
         }
     }
 }
