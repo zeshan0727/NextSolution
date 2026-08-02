@@ -223,7 +223,7 @@ private struct AccountDetailView: View {
     }
 }
 
-private struct AccountEditorView: View {
+struct AccountEditorView: View {
     @EnvironmentObject private var store: LedgerStore
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
@@ -232,6 +232,7 @@ private struct AccountEditorView: View {
     @State private var icon = "creditcard.fill"
     @State private var openingBalance = "0"
     @State private var nature: AccountNature = .unassigned
+    @State private var chartCode = ""
     private let account: LedgerAccount?
 
     private let currencies = ["QAR", "PKR", "USD", "GBP", "EUR", "AED", "SAR", "INR"]
@@ -247,12 +248,15 @@ private struct AccountEditorView: View {
             NSDecimalNumber(decimal: $0.openingBalance).stringValue
         } ?? "0")
         _nature = State(initialValue: account?.nature ?? .unassigned)
+        _chartCode = State(initialValue: account?.chartCode ?? "")
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Account") {
+                    TextField("Chart of accounts code", text: $chartCode)
+                        .keyboardType(.numberPad)
                     TextField("Name", text: $name)
                     Picker("Currency", selection: $currencyCode) {
                         ForEach(currencies, id: \.self) { Text($0).tag($0) }
@@ -316,6 +320,7 @@ private struct AccountEditorView: View {
             account.icon = icon
             account.openingBalance = balance
             account.nature = nature == .unassigned ? nil : nature
+            account.chartCode = cleanedChartCode.nilIfEmpty
             store.updateAccount(account)
         } else {
             store.addAccount(LedgerAccount(
@@ -324,9 +329,18 @@ private struct AccountEditorView: View {
                 group: group,
                 icon: icon,
                 openingBalance: balance,
-                nature: nature == .unassigned ? nil : nature
+                nature: nature == .unassigned ? nil : nature,
+                chartCode: cleanedChartCode.nilIfEmpty
             ))
         }
         dismiss()
     }
+
+    private var cleanedChartCode: String {
+        chartCode.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }
