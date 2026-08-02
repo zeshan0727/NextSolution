@@ -149,6 +149,16 @@ sms_fields = (
 for field in sms_fields:
     if field not in model_text:
         raise RuntimeError(f"Expected {field} in {model_path}")
+sms_normalize_block = """        if settings.smsDestinationAccountID == nil ||
+            !activeAccounts.contains(where: { $0.id == settings.smsDestinationAccountID }) {
+            settings.smsDestinationAccountID = activeAccounts.first(where: {
+                $0.name.caseInsensitiveCompare(\"Credit Card\") == .orderedSame
+            })?.id ?? fallbackID
+        }
+"""
+if model_text.count(sms_normalize_block) != 1:
+    raise RuntimeError("Expected one SMS destination normalization block")
+model_text = model_text.replace(sms_normalize_block, "", 1)
 model_lines = model_text.splitlines()
 model_text = "\n".join(
     line for line in model_lines if not any(field in line for field in sms_fields)
