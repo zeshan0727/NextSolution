@@ -337,7 +337,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Version", value: "1.3.36")
+                    LabeledContent("Version", value: "1.3.40")
                     LabeledContent("Author", value: "Next Solution – Zeeshan Barvi")
                 } header: {
                     Label("About", systemImage: "info.circle.fill")

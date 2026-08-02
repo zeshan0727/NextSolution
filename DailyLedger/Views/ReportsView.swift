@@ -56,6 +56,41 @@ private struct NatureCurrencyBalance: Identifiable {
     var id: String { currency }
 }
 
+private struct FinanceSummaryCustomCard: Identifiable, Codable, Equatable {
+    let id: UUID
+    var title: String
+    var currencyCode: String
+    var accountIDs: [UUID]
+
+    init(
+        id: UUID = UUID(),
+        title: String = "",
+        currencyCode: String,
+        accountIDs: [UUID] = []
+    ) {
+        self.id = id
+        self.title = title
+        self.currencyCode = currencyCode
+        self.accountIDs = accountIDs
+    }
+}
+
+private enum FinanceSummaryCardStorage {
+    static func decode(_ value: String) -> [FinanceSummaryCustomCard] {
+        guard let data = value.data(using: .utf8),
+              let cards = try? JSONDecoder().decode([FinanceSummaryCustomCard].self, from: data) else {
+            return []
+        }
+        return cards
+    }
+
+    static func encode(_ cards: [FinanceSummaryCustomCard]) -> String {
+        guard let data = try? JSONEncoder().encode(cards),
+              let value = String(data: data, encoding: .utf8) else { return "[]" }
+        return value
+    }
+}
+
 struct ReportsView: View {
     @State private var searchText = ""
 
@@ -421,6 +456,7 @@ private struct ReportDetailView: View {
     @AppStorage("ReportPeriodSelection") private var storedPeriod = ReportPeriod.month.rawValue
     @AppStorage("ReportCustomStart") private var storedCustomStart = Date().timeIntervalSince1970
     @AppStorage("ReportCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
+    @AppStorage("FinanceSummaryCustomCardsV1") private var storedCustomSummaryCards = "[]"
     @State private var anchorDate = Date()
     @State private var selectedTransaction: LedgerTransaction?
     @State private var showingCustomDates = false
@@ -428,6 +464,7 @@ private struct ReportDetailView: View {
     @State private var draftEndDate = Date()
     @State private var searchText = ""
     @State private var cachedExpenseTransactions: [LedgerTransaction] = []
+    @State private var editingSummaryCard: FinanceSummaryCustomCard?
 
     var body: some View {
         NavigationStack {
@@ -458,6 +495,20 @@ private struct ReportDetailView: View {
             .background(AppTheme.page)
             .navigationTitle(kind.rawValue)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if kind == .summary {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            editingSummaryCard = FinanceSummaryCustomCard(
+                                currencyCode: store.currencyCode
+                            )
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                        }
+                        .accessibilityLabel("Add custom account balance card")
+                    }
+                }
+            }
             .searchable(text: $searchText, prompt: "Search report transactions")
             .onAppear(perform: refreshExpenseCache)
             .onChange(of: anchorDate) { _ in refreshExpenseCache() }
@@ -499,6 +550,12 @@ private struct ReportDetailView: View {
                             }
                         }
                     }
+                }
+            }
+            .fullScreenCover(item: $editingSummaryCard) { card in
+                NavigationStack {
+                    FinanceSummaryCardEditor(card: card)
+                        .environmentObject(store)
                 }
             }
         }
@@ -616,14 +673,42 @@ private struct ReportDetailView: View {
                 }
                 .buttonStyle(.plain)
             }
-            ReportTotalCard(
-                title: "Carried Forward Balance",
-                value: carriedForwardBalance,
-                currencyCode: store.currencyCode,
-                icon: "arrow.uturn.right.circle.fill",
-                color: carriedForwardBalance >= 0 ? AppTheme.blue : AppTheme.red,
-                secondaryText: "Opening balance before \(selectedInterval.start.formatted(date: .abbreviated, time: .omitted))"
-            )
+            ForEach(customSummaryCards) { card in
+                let accountCount = validAccountCount(card)
+                HStack(spacing: 8) {
+                    Button {
+                        editingSummaryCard = card
+                    } label: {
+                        ReportTotalCard(
+                            title: customSummaryTitle(card),
+                            value: customSummaryBalance(card),
+                            currencyCode: card.currencyCode,
+                            icon: "wallet.pass.fill",
+                            color: AppTheme.blue,
+                            secondaryText: "\(accountCount) selected account\(accountCount == 1 ? "" : "s") · Current balance"
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    Menu {
+                        Button {
+                            editingSummaryCard = card
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            deleteCustomSummaryCard(card.id)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle.fill")
+                            .font(.title2)
+                            .frame(width: 42, height: 42)
+                    }
+                    .accessibilityLabel("Options for \(customSummaryTitle(card))")
+                }
+            }
             ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
                 NavigationLink {
                     LoanMovementReportView()
@@ -656,34 +741,35 @@ private struct ReportDetailView: View {
         }
     }
 
-    private var carriedForwardBalance: Decimal {
-        let selectedAccounts = store.accounts.filter {
-            !$0.isArchived &&
-            $0.currencyCode.uppercased() == store.currencyCode.uppercased()
-        }
-        let selectedIDs = Set(selectedAccounts.map(\.id))
-        var balance = selectedAccounts.reduce(Decimal.zero) { $0 + $1.openingBalance }
+    private var customSummaryCards: [FinanceSummaryCustomCard] {
+        FinanceSummaryCardStorage.decode(storedCustomSummaryCards)
+    }
 
-        for transaction in store.transactions where transaction.date < selectedInterval.start {
-            switch transaction.type {
-            case .income:
-                if transaction.accountID.map(selectedIDs.contains) == true {
-                    balance += transaction.amount
-                }
-            case .expense:
-                if transaction.accountID.map(selectedIDs.contains) == true {
-                    balance -= transaction.amount
-                }
-            case .transfer:
-                if transaction.accountID.map(selectedIDs.contains) == true {
-                    balance -= transaction.amount
-                }
-                if transaction.destinationAccountID.map(selectedIDs.contains) == true {
-                    balance += transaction.destinationAmount ?? transaction.amount
-                }
-            }
+    private func customSummaryTitle(_ card: FinanceSummaryCustomCard) -> String {
+        let title = card.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? "Selected Account Balance" : title
+    }
+
+    private func validAccounts(_ card: FinanceSummaryCustomCard) -> [LedgerAccount] {
+        let ids = Set(card.accountIDs)
+        return store.accounts.filter {
+            ids.contains($0.id) &&
+            $0.currencyCode.caseInsensitiveCompare(card.currencyCode) == .orderedSame
         }
-        return balance
+    }
+
+    private func validAccountCount(_ card: FinanceSummaryCustomCard) -> Int {
+        validAccounts(card).count
+    }
+
+    private func customSummaryBalance(_ card: FinanceSummaryCustomCard) -> Decimal {
+        validAccounts(card).reduce(Decimal.zero) { $0 + store.balance(for: $1) }
+    }
+
+    private func deleteCustomSummaryCard(_ id: UUID) {
+        storedCustomSummaryCards = FinanceSummaryCardStorage.encode(
+            customSummaryCards.filter { $0.id != id }
+        )
     }
 
     private var financeSummaryNetBalance: Decimal {
@@ -1022,6 +1108,136 @@ private struct ReportTotalCard: View {
         .padding(compact ? 13 : 16)
         .frame(maxWidth: .infinity)
         .background(.background, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
+    }
+}
+
+private struct FinanceSummaryCardEditor: View {
+    @EnvironmentObject private var store: LedgerStore
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("FinanceSummaryCustomCardsV1") private var storedCards = "[]"
+    @State private var card: FinanceSummaryCustomCard
+
+    init(card: FinanceSummaryCustomCard) {
+        _card = State(initialValue: card)
+    }
+
+    private var currencies: [String] {
+        Array(Set(store.activeAccounts.map { $0.currencyCode.uppercased() })).sorted()
+    }
+
+    private var availableAccounts: [LedgerAccount] {
+        store.activeAccounts.filter {
+            $0.currencyCode.caseInsensitiveCompare(card.currencyCode) == .orderedSame
+        }
+        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private var selectedIDs: Set<UUID> {
+        Set(card.accountIDs)
+    }
+
+    private var previewBalance: Decimal {
+        availableAccounts
+            .filter { selectedIDs.contains($0.id) }
+            .reduce(Decimal.zero) { $0 + store.balance(for: $1) }
+    }
+
+    var body: some View {
+        Form {
+            Section("Card") {
+                TextField("Card title", text: $card.title)
+                    .textInputAutocapitalization(.words)
+                Picker("Currency", selection: $card.currencyCode) {
+                    ForEach(currencies, id: \.self) { currency in
+                        Text(currency).tag(currency)
+                    }
+                }
+                .onChange(of: card.currencyCode) { _ in
+                    let validIDs = Set(availableAccounts.map(\.id))
+                    card.accountIDs.removeAll { !validIDs.contains($0) }
+                }
+            }
+
+            Section {
+                HStack {
+                    Button("Select All") {
+                        card.accountIDs = availableAccounts.map(\.id)
+                    }
+                    Spacer()
+                    Button("Deselect All") {
+                        card.accountIDs.removeAll()
+                    }
+                }
+
+                ForEach(availableAccounts) { account in
+                    Button {
+                        toggle(account.id)
+                    } label: {
+                        HStack {
+                            Label(account.name, systemImage: account.icon)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(DisplayFormat.currency(store.balance(for: account), code: account.currencyCode))
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                            Image(systemName: selectedIDs.contains(account.id) ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selectedIDs.contains(account.id) ? AppTheme.purple : .secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Accounts (\(card.accountIDs.count) Selected)")
+            } footer: {
+                Text("Only accounts using the selected currency can be combined on one card.")
+            }
+
+            Section("Preview") {
+                LabeledContent(
+                    card.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? "Selected Account Balance"
+                        : card.title,
+                    value: DisplayFormat.currency(previewBalance, code: card.currencyCode)
+                )
+            }
+        }
+        .navigationTitle("Account Balance Card")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    save()
+                    dismiss()
+                }
+                .disabled(card.accountIDs.isEmpty)
+            }
+        }
+        .onAppear {
+            if !currencies.contains(card.currencyCode.uppercased()), let first = currencies.first {
+                card.currencyCode = first
+            }
+        }
+    }
+
+    private func toggle(_ id: UUID) {
+        if let index = card.accountIDs.firstIndex(of: id) {
+            card.accountIDs.remove(at: index)
+        } else {
+            card.accountIDs.append(id)
+        }
+    }
+
+    private func save() {
+        var cards = FinanceSummaryCardStorage.decode(storedCards)
+        card.title = card.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let index = cards.firstIndex(where: { $0.id == card.id }) {
+            cards[index] = card
+        } else {
+            cards.append(card)
+        }
+        storedCards = FinanceSummaryCardStorage.encode(cards)
     }
 }
 
