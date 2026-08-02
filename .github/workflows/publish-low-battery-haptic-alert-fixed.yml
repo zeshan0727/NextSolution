@@ -110,8 +110,8 @@ jobs:
             grep -q 'Enable Alert' "$root"
             grep -q 'Battery Threshold' "$root"
             strings -a "$dylib" | grep -q UIDeviceBatteryLevelDidChangeNotification
-            strings -a "$dylib" | grep -q batteryMonitoringEnabled
-            strings -a "$dylib" | grep -q notificationOccurred
+            strings -a "$dylib" | grep -q 'setBatteryMonitoringEnabled:'
+            strings -a "$dylib" | grep -q 'notificationOccurred:'
             rm -rf "$x"
           }
           OUT="$RUNNER_TEMP/lbha-release"
