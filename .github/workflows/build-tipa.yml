@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Build trigger: compact accounts, refunds, and fixed/custom transfer currency rates
+# Build trigger: explicit transfer currencies and transaction deletion everywhere
 name: Build Next Ledger TIPA
 
 permissions:
@@ -18,6 +18,7 @@ on:
       - "scripts/apply_next_ledger_1_3_50_compact_no_sms.py"
       - "scripts/fix_next_ledger_refund_swift.py"
       - "scripts/add_refund_account_picker.py"
+      - "scripts/add_currency_selectors_and_global_delete.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
@@ -26,6 +27,7 @@ on:
       - "scripts/apply_next_ledger_1_3_50_compact_no_sms.py"
       - "scripts/fix_next_ledger_refund_swift.py"
       - "scripts/add_refund_account_picker.py"
+      - "scripts/add_currency_selectors_and_global_delete.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -41,11 +43,12 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
-      - name: Apply compact accounts, SMS removal, and refunds
+      - name: Apply Next Ledger feature patches
         run: |
           python3 scripts/apply_next_ledger_1_3_50_compact_no_sms.py
           python3 scripts/fix_next_ledger_refund_swift.py
           python3 scripts/add_refund_account_picker.py
+          python3 scripts/add_currency_selectors_and_global_delete.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -92,14 +95,14 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-transfer-currency-rates.tipa
-          shasum -a 256 NextLedger-1.3.50-transfer-currency-rates.tipa > NextLedger-1.3.50-transfer-currency-rates.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-currency-selectors-global-delete.tipa
+          shasum -a 256 NextLedger-1.3.50-currency-selectors-global-delete.tipa > NextLedger-1.3.50-currency-selectors-global-delete.sha256
 
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-transfer-currency-rates.tipa
-            NextLedger-1.3.50-transfer-currency-rates.sha256
+            NextLedger-1.3.50-currency-selectors-global-delete.tipa
+            NextLedger-1.3.50-currency-selectors-global-delete.sha256
           if-no-files-found: error
