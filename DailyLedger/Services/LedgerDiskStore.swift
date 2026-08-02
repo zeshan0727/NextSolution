@@ -123,6 +123,9 @@ final class LedgerDiskStore {
               let decoded = try? decoder.decode(LedgerData.self, from: data) else {
             return LedgerData()
         }
+        if data.range(of: Data("\"chartOfAccountsMigrationVersion\"".utf8)) == nil {
+            try? saveUnlocked(decoded)
+        }
         return decoded
     }
 
