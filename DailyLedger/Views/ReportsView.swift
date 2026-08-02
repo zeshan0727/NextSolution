@@ -113,6 +113,20 @@ private enum FinanceSummaryCardStorage {
     }
 }
 
+private enum ClosingBalanceAccountStorage {
+    static func decode(_ value: String) -> [UUID] {
+        guard let data = value.data(using: .utf8),
+              let ids = try? JSONDecoder().decode([UUID].self, from: data) else { return [] }
+        return ids
+    }
+
+    static func encode(_ ids: [UUID]) -> String {
+        guard let data = try? JSONEncoder().encode(ids),
+              let value = String(data: data, encoding: .utf8) else { return "[]" }
+        return value
+    }
+}
+
 struct ReportsView: View {
     @State private var searchText = ""
 
@@ -479,6 +493,8 @@ private struct ReportDetailView: View {
     @AppStorage("ReportCustomStart") private var storedCustomStart = Date().timeIntervalSince1970
     @AppStorage("ReportCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
     @AppStorage("FinanceSummaryCustomCardsV1") private var storedCustomSummaryCards = "[]"
+    @AppStorage("FinanceSummaryQatarClosingAccountsV1") private var storedClosingAccountIDs = "[]"
+    @AppStorage("FinanceSummaryQatarClosingDateV1") private var storedClosingDate = Date().timeIntervalSince1970
     @State private var anchorDate = Date()
     @State private var selectedTransaction: LedgerTransaction?
     @State private var showingCustomDates = false
@@ -487,6 +503,7 @@ private struct ReportDetailView: View {
     @State private var searchText = ""
     @State private var cachedExpenseTransactions: [LedgerTransaction] = []
     @State private var editingSummaryCard: FinanceSummaryCustomCard?
+    @State private var editingClosingBalance = false
 
     var body: some View {
         NavigationStack {
@@ -581,6 +598,15 @@ private struct ReportDetailView: View {
                         reportPeriodEnd: selectedInterval.end
                     )
                         .environmentObject(store)
+                }
+            }
+            .sheet(isPresented: $editingClosingBalance) {
+                NavigationStack {
+                    QatarClosingBalanceEditor(
+                        storedAccountIDs: $storedClosingAccountIDs,
+                        storedDate: $storedClosingDate
+                    )
+                    .environmentObject(store)
                 }
             }
         }
@@ -693,16 +719,14 @@ private struct ReportDetailView: View {
                 )
             }
 
-            if !customSummaryCards.isEmpty {
-                HStack {
-                    Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
-                    Text("Closing Balances")
-                        .font(.caption.bold())
-                        .foregroundStyle(AppTheme.purple)
-                    Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
-                }
-                .padding(.top, 2)
+            HStack {
+                Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
+                Text("Closing Balances")
+                    .font(.caption.bold())
+                    .foregroundStyle(AppTheme.purple)
+                Rectangle().frame(height: 2).foregroundStyle(AppTheme.purple)
             }
+            .padding(.top, 2)
 
             ForEach(customSummaryCards) { card in
                 let accountCount = validAccountCount(card)
@@ -740,7 +764,50 @@ private struct ReportDetailView: View {
                     .accessibilityLabel("Options for \(customSummaryTitle(card))")
                 }
             }
+
+            Button {
+                editingClosingBalance = true
+            } label: {
+                ReportTotalCard(
+                    title: "Closing Balance as of \(closingBalanceDate.formatted(date: .abbreviated, time: .omitted))",
+                    value: qatarClosingBalance,
+                    currencyCode: "QAR",
+                    icon: "calendar.badge.clock",
+                    color: AppTheme.purple,
+                    secondaryText: closingBalanceAccounts.isEmpty
+                        ? "Select Qatar accounts"
+                        : closingBalanceAccounts.map(\.name).joined(separator: " + ")
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 19, style: .continuous)
+                        .stroke(AppTheme.purple, lineWidth: 2.5)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Edit Qatar closing balance accounts and date")
         }
+    }
+
+    private var closingBalanceDate: Date {
+        Date(timeIntervalSince1970: storedClosingDate)
+    }
+
+    private var closingBalanceAccounts: [LedgerAccount] {
+        let selected = Set(ClosingBalanceAccountStorage.decode(storedClosingAccountIDs))
+        return store.activeAccounts.filter { $0.group == .qatar && selected.contains($0.id) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private var closingBalanceCutoff: Date {
+        Calendar.current.date(
+            byAdding: .day,
+            value: 1,
+            to: Calendar.current.startOfDay(for: closingBalanceDate)
+        ) ?? closingBalanceDate
+    }
+
+    private var qatarClosingBalance: Decimal {
+        store.combinedBalance(for: closingBalanceAccounts, before: closingBalanceCutoff)
     }
 
     private var loanIncreaseMovements: [LoanNetMovement] {
@@ -1293,6 +1360,82 @@ private struct FinanceSummaryBalanceCard: View {
             RoundedRectangle(cornerRadius: 19, style: .continuous)
                 .stroke(AppTheme.purple, lineWidth: 2.5)
         }
+    }
+}
+
+private struct QatarClosingBalanceEditor: View {
+    @EnvironmentObject private var store: LedgerStore
+    @Environment(\.dismiss) private var dismiss
+    @Binding private var storedAccountIDs: String
+    @Binding private var storedDate: Double
+    @State private var selectedIDs: Set<UUID>
+    @State private var selectedDate: Date
+
+    init(storedAccountIDs: Binding<String>, storedDate: Binding<Double>) {
+        _storedAccountIDs = storedAccountIDs
+        _storedDate = storedDate
+        _selectedIDs = State(initialValue: Set(ClosingBalanceAccountStorage.decode(storedAccountIDs.wrappedValue)))
+        _selectedDate = State(initialValue: Date(timeIntervalSince1970: storedDate.wrappedValue))
+    }
+
+    private var qatarAccounts: [LedgerAccount] {
+        store.activeAccounts.filter { $0.group == .qatar }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    var body: some View {
+        Form {
+            Section("Closing Date") {
+                DatePicker("Balance as of", selection: $selectedDate, displayedComponents: .date)
+            }
+
+            Section {
+                HStack {
+                    Button("Select All") { selectedIDs = Set(qatarAccounts.map(\.id)) }
+                    Spacer()
+                    Button("Deselect All") { selectedIDs.removeAll() }
+                }
+                ForEach(qatarAccounts) { account in
+                    Button { toggle(account.id) } label: {
+                        HStack(spacing: 12) {
+                            Label(account.name, systemImage: account.icon)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text("QAR")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Image(systemName: selectedIDs.contains(account.id) ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selectedIDs.contains(account.id) ? AppTheme.purple : .secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Qatar Accounts (\(selectedIDs.count) Selected)")
+            } footer: {
+                Text("The card totals these accounts at the end of the selected day. It does not change Net Balance or any transaction.")
+            }
+        }
+        .navigationTitle("Closing Balance Card")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    let valid = Set(qatarAccounts.map(\.id))
+                    storedAccountIDs = ClosingBalanceAccountStorage.encode(
+                        Array(selectedIDs.intersection(valid)).sorted { $0.uuidString < $1.uuidString }
+                    )
+                    storedDate = selectedDate.timeIntervalSince1970
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private func toggle(_ id: UUID) {
+        if selectedIDs.contains(id) { selectedIDs.remove(id) } else { selectedIDs.insert(id) }
     }
 }
 
