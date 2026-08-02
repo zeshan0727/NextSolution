@@ -14,11 +14,20 @@ private enum ChartEditorDestination: Identifiable {
 
 struct ChartOfAccountsView: View {
     @EnvironmentObject private var store: LedgerStore
+    @AppStorage("ChartOfAccountsHideZeroBalance") private var hideZeroBalanceAccounts = false
     @State private var searchText = ""
     @State private var editor: ChartEditorDestination?
 
     var body: some View {
         List {
+            Section {
+                Toggle(isOn: $hideZeroBalanceAccounts) {
+                    Label("Hide Zero-Balance Accounts", systemImage: "eye.slash.fill")
+                }
+            } footer: {
+                Text("Hide accounts whose current balance is zero. Totals remain unchanged because hidden accounts have no balance.")
+            }
+
             accountSections
             categorySection(type: .income, title: "Income", icon: "arrow.down.left.circle.fill")
             categorySection(type: .expense, title: "Expenses", icon: "arrow.up.right.circle.fill")
@@ -71,12 +80,24 @@ struct ChartOfAccountsView: View {
                         .buttonStyle(.plain)
                     }
                 } header: {
-                    Label("\(nature.title) Accounts", systemImage: natureIcon(nature))
+                    accountSectionHeader(nature: nature, accounts: items)
                 } footer: {
                     Text("\(items.count) account\(items.count == 1 ? "" : "s")")
                 }
             }
         }
+    }
+
+    private func accountSectionHeader(nature: AccountNature, accounts: [LedgerAccount]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("\(nature.title) Accounts", systemImage: natureIcon(nature))
+            Text("Total: \(accountTotalsText(accounts))")
+                .font(.caption.bold().monospacedDigit())
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+        }
+        .textCase(nil)
     }
 
     @ViewBuilder
@@ -94,10 +115,17 @@ struct ChartOfAccountsView: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            Spacer()
-                            Image(systemName: "pencil")
-                                .font(.caption.bold())
-                                .foregroundStyle(.secondary)
+                            Spacer(minLength: 8)
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text(categoryTotalsText(category: category, type: type))
+                                    .font(.caption.bold().monospacedDigit())
+                                    .multilineTextAlignment(.trailing)
+                                    .lineLimit(2)
+                                    .minimumScaleFactor(0.65)
+                                Image(systemName: "pencil")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         .contentShape(Rectangle())
                     }
@@ -111,7 +139,15 @@ struct ChartOfAccountsView: View {
                     }
                 }
             } header: {
-                Label("\(title) Categories", systemImage: icon)
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("\(title) Categories", systemImage: icon)
+                    Text("Total: \(transactionTypeTotalsText(type: type))")
+                        .font(.caption.bold().monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.7)
+                }
+                .textCase(nil)
             } footer: {
                 Text("Tap a category to change its code or name. Existing transactions follow renamed categories.")
             }
@@ -121,6 +157,7 @@ struct ChartOfAccountsView: View {
     private func accounts(for nature: AccountNature) -> [LedgerAccount] {
         store.accounts
             .filter { !$0.isArchived && ($0.nature ?? .unassigned) == nature }
+            .filter { !hideZeroBalanceAccounts || store.balance(for: $0) != 0 }
             .filter(matchesSearch)
             .sorted {
                 let left = $0.chartCode ?? "9999"
@@ -159,6 +196,55 @@ struct ChartOfAccountsView: View {
         store.transactions.lazy.filter {
             $0.type == type && $0.category.caseInsensitiveCompare(category) == .orderedSame
         }.count
+    }
+
+    private func accountTotalsText(_ accounts: [LedgerAccount]) -> String {
+        var totals: [String: Decimal] = [:]
+        for account in accounts {
+            totals[account.currencyCode, default: 0] += store.balance(for: account)
+        }
+        return formattedTotals(totals)
+    }
+
+    private func categoryTotalsText(category: String, type: TransactionType) -> String {
+        formattedTotals(transactionTotals(type: type, category: category))
+    }
+
+    private func transactionTypeTotalsText(type: TransactionType) -> String {
+        formattedTotals(transactionTotals(type: type, category: nil))
+    }
+
+    private func transactionTotals(type: TransactionType, category: String?) -> [String: Decimal] {
+        var totals: [String: Decimal] = [:]
+        for transaction in store.transactions where transaction.type == type {
+            if let category,
+               transaction.category.caseInsensitiveCompare(category) != .orderedSame {
+                continue
+            }
+
+            let accountID: UUID?
+            let amount: Decimal
+            if type == .income {
+                accountID = store.reportIncomeAccountID(transaction) ?? transaction.accountID
+                amount = store.reportIncomeAmount(transaction)
+            } else {
+                accountID = transaction.accountID
+                amount = transaction.amount
+            }
+
+            let currency = store.account(withID: accountID)?.currencyCode ?? store.currencyCode
+            totals[currency, default: 0] += amount
+        }
+        return totals
+    }
+
+    private func formattedTotals(_ totals: [String: Decimal]) -> String {
+        if totals.isEmpty {
+            return DisplayFormat.currency(0, code: store.currencyCode)
+        }
+        return totals.keys.sorted().map { currency in
+            DisplayFormat.currency(totals[currency] ?? 0, code: currency)
+        }.joined(separator: " • ")
     }
 
     private func natureIcon(_ nature: AccountNature) -> String {
