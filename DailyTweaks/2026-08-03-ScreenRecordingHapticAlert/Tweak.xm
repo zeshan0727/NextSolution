@@ -7,6 +7,7 @@ static CFStringRef const SRHPreferencesChanged = CFSTR("com.nextsolution.screenr
 static BOOL SRHEnabled = YES;
 static BOOL SRHHasInitialState = NO;
 static BOOL SRHLastCaptured = NO;
+static id SRHCaptureObserver = nil;
 
 static BOOL SRHIsSpringBoard(void) {
     NSString *bundleID = NSBundle.mainBundle.bundleIdentifier;
@@ -31,16 +32,7 @@ static void SRHHandleCaptureState(UIScreen *screen) {
     SRHLastCaptured = captured;
     SRHHasInitialState = YES;
     if (!shouldPlay) return;
-
-    // Distinct system haptics: success-like on start, warning-like on stop.
     AudioServicesPlaySystemSound(captured ? 1520 : 1521);
-}
-
-static void SRHCaptureChanged(NSNotification *notification) {
-    UIScreen *screen = [notification.object isKindOfClass:UIScreen.class] ? notification.object : UIScreen.mainScreen;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        SRHHandleCaptureState(screen);
-    });
 }
 
 static void SRHPreferencesChangedCallback(CFNotificationCenterRef center,
@@ -55,11 +47,15 @@ static void SRHPreferencesChangedCallback(CFNotificationCenterRef center,
     @autoreleasepool {
         if (!SRHIsSpringBoard()) return;
         SRHReloadPreferences();
-        SRHHandleCaptureState(UIScreen.mainScreen); // Baseline only; never haptics at load.
-        [NSNotificationCenter.defaultCenter addObserverForName:UIScreenCapturedDidChangeNotification
-                                                       object:nil
-                                                        queue:NSOperationQueue.mainQueue
-                                                   usingBlock:SRHCaptureChanged];
+        SRHHandleCaptureState(UIScreen.mainScreen);
+        SRHCaptureObserver = [NSNotificationCenter.defaultCenter
+            addObserverForName:UIScreenCapturedDidChangeNotification
+                        object:nil
+                         queue:NSOperationQueue.mainQueue
+                    usingBlock:^(NSNotification *notification) {
+                        UIScreen *screen = [notification.object isKindOfClass:UIScreen.class] ? notification.object : UIScreen.mainScreen;
+                        SRHHandleCaptureState(screen);
+                    }];
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
                                         NULL,
                                         SRHPreferencesChangedCallback,
