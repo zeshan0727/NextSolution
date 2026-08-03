@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict><key>items</key><array>
+<dict><key>cell</key><string>PSGroupCell</string><key>label</key><string>Screen Recording Haptic Alert</string><key>footerText</key><string>Plays different haptics when screen capture starts and stops.</string></dict>
+<dict><key>cell</key><string>PSSwitchCell</string><key>label</key><string>Enable Haptic Alert</string><key>key</key><string>enabled</string><key>default</key><true/><key>defaults</key><string>com.nextsolution.screenrecordinghapticalert</string><key>PostNotification</key><string>com.nextsolution.screenrecordinghapticalert.preferences.changed</string></dict>
+</array></dict></plist>
