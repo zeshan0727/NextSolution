@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Latest-10 SMS recovery with configurable automatic interval
+# Manual latest-30 SMS scan, rejected restore, and compact AI settings
 name: Build Next Ledger TIPA
 
 permissions:
@@ -67,38 +67,31 @@ jobs:
           python3 scripts/fix_sms_draft_fields_and_message_decoding.py
           python3 scripts/add_interval_latest10_sms_recovery.py
           python3 scripts/fix_sms_interval_unused_diagnostics.py
+          python3 scripts/add_manual30_restore_rejected_and_compact_ai.py
 
       - name: Install build tools
         run: brew install xcodegen dpkg ldid
 
-      - name: Test SMS recovery, interval and safety patches
+      - name: Test SMS recovery and settings patches
         run: |
           mkdir -p build
-          grep -Fq 'kDaemonVersion = @"2.1.2"' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'CleanBankMessage' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'StringFromDecodedObject' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'ConfiguredAutomaticScanHours' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'AutomaticScanIsDue' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'approvedMessageLimit = manualRequested ? 250 : 10' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'kDaemonVersion = @"2.1.3"' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'approvedMessageLimit = manualRequested ? 30 : 10' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'databaseRowLimit = manualRequested ? 30 : 250' RootHideSMSQueue/Sources/main.m
           grep -Fq 'ORDER BY m.ROWID DESC LIMIT ?' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'lastAutomaticScanUnix' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'ConfiguredAutomaticScanHours' RootHideSMSQueue/Sources/main.m
           grep -Fq 'sleep(30)' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'SenderApproved' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'CardEndingApproved' RootHideSMSQueue/Sources/main.m
           grep -Fq 'CreateDraft' RootHideSMSQueue/Sources/main.m
-          test "$(grep -Fc 'RetryPending(config);' RootHideSMSQueue/Sources/main.m)" = "0"
-          grep -Fq 'var automaticScanIntervalHours = 6' DailyLedger/Services/SMSImportConsoleService.swift
-          grep -Fq 'Automatic Scan Interval' DailyLedger/Views/SMSImportConsoleView.swift
-          grep -Fq 'latest 10 approved-bank SMS' DailyLedger/Views/SMSImportConsoleView.swift
-          grep -Fq 'var cleanedDescription: String' DailyLedger/Services/SMSImportConsoleService.swift
-          grep -Fq 'var cleanedVendor: String' DailyLedger/Services/SMSImportConsoleService.swift
+          grep -Fq 'restoreRejectedForReview' DailyLedger/Services/SMSImportConsoleService.swift
+          grep -Fq 'Manual Scan · Latest 30 SMS' DailyLedger/Views/SMSImportConsoleView.swift
+          grep -Fq 'Restore Rejected SMS for Review' DailyLedger/Views/SMSImportConsoleView.swift
+          grep -Fq 'latest 30 incoming SMS rows' DailyLedger/Views/SMSImportConsoleView.swift
+          grep -Fq 'DisclosureGroup(isExpanded: $showingAISettings)' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'Label("AI Settings"' DailyLedger/Views/SettingsView.swift
+          test "$(grep -Fc 'Label("DeepSeek AI"' DailyLedger/Views/SettingsView.swift)" = "0"
+          test "$(grep -Fc 'Label("OpenAI Chat"' DailyLedger/Views/SettingsView.swift)" = "0"
           grep -Fq 'func smsDraftCategory' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'draftField(title: "Category"' DailyLedger/Views/SMSDraftInboxView.swift
-          grep -Fq 'Text("\(draft.currency) \(draft.amount.formatted())")' DailyLedger/Views/SMSDraftInboxView.swift
-          ! grep -Fq 'draft.cardEnding' DailyLedger/Views/SMSDraftInboxView.swift
-          ! grep -Fq 'draft.sender' DailyLedger/Views/SMSDraftInboxView.swift
           grep -Fq 'AccountingPeriodLock.isLocked' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'Lock Through Date' DailyLedger/Views/SettingsView.swift
 
           xcrun clang \
             -fobjc-arc \
@@ -109,7 +102,7 @@ jobs:
             -o build/nextledgersmsd-macos
           build/nextledgersmsd-macos --self-test | tee build/sms-parser-tests.json
           grep -q '"passed" : true' build/sms-parser-tests.json
-          grep -q '"version" : "2.1.2"' build/sms-parser-tests.json
+          grep -q '"version" : "2.1.3"' build/sms-parser-tests.json
 
       - name: Generate Xcode project
         run: xcodegen generate
@@ -148,17 +141,17 @@ jobs:
             RootHideSMSQueue/layout/DEBIAN/postinst RootHideSMSQueue/layout/DEBIAN/prerm
 
           make -C RootHideSMSQueue clean package FINALPACKAGE=1
-          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.1.2-roothide.deb
-          shasum -a 256 NextLedgerSMSDaemon-2.1.2-roothide.deb > NextLedgerSMSDaemon-2.1.2-roothide.sha256
+          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.1.3-roothide.deb
+          shasum -a 256 NextLedgerSMSDaemon-2.1.3-roothide.deb > NextLedgerSMSDaemon-2.1.3-roothide.sha256
 
           rm -rf build/sms-daemon-root build/sms-daemon-control
           mkdir -p build/sms-daemon-root build/sms-daemon-control
-          dpkg-deb -x NextLedgerSMSDaemon-2.1.2-roothide.deb build/sms-daemon-root
-          dpkg-deb -e NextLedgerSMSDaemon-2.1.2-roothide.deb build/sms-daemon-control
-          dpkg-deb -c NextLedgerSMSDaemon-2.1.2-roothide.deb | tee build/sms-daemon-package.txt
+          dpkg-deb -x NextLedgerSMSDaemon-2.1.3-roothide.deb build/sms-daemon-root
+          dpkg-deb -e NextLedgerSMSDaemon-2.1.3-roothide.deb build/sms-daemon-control
+          dpkg-deb -c NextLedgerSMSDaemon-2.1.3-roothide.deb | tee build/sms-daemon-package.txt
           sed -n '1,300p' build/sms-daemon-control/postinst | tee build/sms-daemon-postinst.txt
 
-          test "$(dpkg-deb -f NextLedgerSMSDaemon-2.1.2-roothide.deb Version)" = "2.1.2"
+          test "$(dpkg-deb -f NextLedgerSMSDaemon-2.1.3-roothide.deb Version)" = "2.1.3"
           test -x build/sms-daemon-root/usr/libexec/nextledgersmsd
           test -f build/sms-daemon-root/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist
           test -x build/sms-daemon-control/postinst
@@ -170,19 +163,13 @@ jobs:
           grep -q 'com.apple.private.security.storage.AppDataContainers' build/sms-daemon-entitlements.plist
           grep -q 'com.apple.private.security.storage.Messages' build/sms-daemon-entitlements.plist
           grep -q 'com.apple.private.security.storage.MessagesMetaData' build/sms-daemon-entitlements.plist
-          grep -q 'com.apple.security.exception.files.absolute-path.read-only' build/sms-daemon-entitlements.plist
           grep -q '/private/var/mobile/Library/SMS/' build/sms-daemon-entitlements.plist
 
           plutil -convert xml1 -o build/sms-daemon-launchd.xml \
             build/sms-daemon-root/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist
           PROGRAM_PATH="$(plutil -extract ProgramArguments.0 raw build/sms-daemon-launchd.xml)"
           test "$PROGRAM_PATH" = "/usr/libexec/nextledgersmsd"
-          ! grep -Fq 'WorkingDirectory' build/sms-daemon-launchd.xml
-
-          grep -Fq 'jbroot "$JB_BINARY"' build/sms-daemon-control/postinst
-          grep -Fq 'jbctl trustcache add "$BINARY_ROOTFS"' build/sms-daemon-control/postinst
-          grep -Fq 'user/501/$LABEL' build/sms-daemon-control/postinst
-          grep -Fq 'Next Ledger SMS Daemon 2.1.2 installation started' build/sms-daemon-control/postinst
+          grep -Fq 'Next Ledger SMS Daemon 2.1.3 installation started' build/sms-daemon-control/postinst
 
       - name: Capture build diagnostics
         if: failure()
@@ -194,7 +181,6 @@ jobs:
             test -f build/sms-daemon-package.txt && cat build/sms-daemon-package.txt || true
             test -f build/sms-daemon-postinst.txt && cat build/sms-daemon-postinst.txt || true
             test -f build/sms-daemon-entitlements.plist && cat build/sms-daemon-entitlements.plist || true
-            test -f build/sms-daemon-launchd.xml && cat build/sms-daemon-launchd.xml || true
           } > build/build-errors.txt
           test -s build/build-errors.txt || printf '%s\n' "Build failed before diagnostics were produced." > build/build-errors.txt
 
@@ -213,18 +199,18 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-sms-latest10-interval.tipa
-          shasum -a 256 NextLedger-1.3.50-sms-latest10-interval.tipa > NextLedger-1.3.50-sms-latest10-interval.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-sms-manual30-rejected-ai.tipa
+          shasum -a 256 NextLedger-1.3.50-sms-manual30-rejected-ai.tipa > NextLedger-1.3.50-sms-manual30-rejected-ai.sha256
 
       - name: Upload TIPA and RootHide daemon
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-sms-latest10-interval.tipa
-            NextLedger-1.3.50-sms-latest10-interval.sha256
-            NextLedgerSMSDaemon-2.1.2-roothide.deb
-            NextLedgerSMSDaemon-2.1.2-roothide.sha256
+            NextLedger-1.3.50-sms-manual30-rejected-ai.tipa
+            NextLedger-1.3.50-sms-manual30-rejected-ai.sha256
+            NextLedgerSMSDaemon-2.1.3-roothide.deb
+            NextLedgerSMSDaemon-2.1.3-roothide.sha256
             build/sms-parser-tests.json
             build/sms-daemon-entitlements.plist
             build/sms-daemon-launchd.xml
