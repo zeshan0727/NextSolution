@@ -29,7 +29,8 @@ on:
       - "scripts/add_receivable_collection_drilldown.py"
       - "scripts/add_loan_summary_comparison_report.py"
       - "scripts/fix_loan_summary_comparison_ios16.py"
-      - "scripts/add_custom_accounting_period_to_loan_comparison.py"
+      - "scripts/add_accounting_period_setting.py"
+      - "scripts/add_custom_dates_to_loan_summary_comparison.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
@@ -49,7 +50,8 @@ on:
       - "scripts/add_receivable_collection_drilldown.py"
       - "scripts/add_loan_summary_comparison_report.py"
       - "scripts/fix_loan_summary_comparison_ios16.py"
-      - "scripts/add_custom_accounting_period_to_loan_comparison.py"
+      - "scripts/add_accounting_period_setting.py"
+      - "scripts/add_custom_dates_to_loan_summary_comparison.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -81,7 +83,8 @@ jobs:
           python3 scripts/add_receivable_collection_drilldown.py
           python3 scripts/add_loan_summary_comparison_report.py
           python3 scripts/fix_loan_summary_comparison_ios16.py
-          python3 scripts/add_custom_accounting_period_to_loan_comparison.py
+          python3 scripts/add_accounting_period_setting.py
+          python3 scripts/add_custom_dates_to_loan_summary_comparison.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
