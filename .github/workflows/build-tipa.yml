@@ -66,6 +66,7 @@ jobs:
           python3 scripts/prepare_sms_console_counter_patch.py
           python3 scripts/fix_sms_draft_fields_and_message_decoding.py
           python3 scripts/add_interval_latest10_sms_recovery.py
+          python3 scripts/fix_sms_interval_unused_diagnostics.py
 
       - name: Install build tools
         run: brew install xcodegen dpkg ldid
