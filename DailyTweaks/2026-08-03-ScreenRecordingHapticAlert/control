@@ -1,0 +1,12 @@
+Package: com.nextsolution.screenrecordinghapticalert
+Name: Screen Recording Haptic Alert
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Description: Plays distinct haptic feedback when iPhone screen recording, mirroring or AirPlay capture starts or stops.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Depiction: https://nextsolution.cc/depictions/screen-recording-haptic-alert.html
