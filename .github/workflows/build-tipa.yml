@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Build trigger: custom-date loan comparison and configurable accounting period
+# Build trigger: root SMS daemon, CBQ parser and temporary console
 name: Build Next Ledger TIPA
 
 permissions:
@@ -15,50 +15,22 @@ on:
     branches: [main]
     paths:
       - "DailyLedger/**"
-      - "scripts/apply_next_ledger_1_3_50_compact_no_sms.py"
-      - "scripts/fix_next_ledger_refund_swift.py"
-      - "scripts/add_refund_account_picker.py"
-      - "scripts/add_currency_selectors_and_global_delete.py"
-      - "scripts/add_inline_accounts_and_general_subaccounts.py"
-      - "scripts/add_parent_totals_and_statement_chart.py"
-      - "scripts/add_collapsible_chart_sections.py"
-      - "scripts/add_edit_refund_delete_swipe_actions.py"
-      - "scripts/add_bank_expenses_and_fixed_report_conversion.py"
-      - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
-      - "scripts/add_payment_receivable_payable_automation.py"
-      - "scripts/add_receivable_collection_drilldown.py"
-      - "scripts/add_loan_summary_comparison_report.py"
-      - "scripts/fix_loan_summary_comparison_ios16.py"
-      - "scripts/add_accounting_period_setting.py"
-      - "scripts/add_custom_dates_to_loan_summary_comparison.py"
+      - "RootHideSMSQueue/**"
+      - "scripts/**"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
     paths:
       - "DailyLedger/**"
-      - "scripts/apply_next_ledger_1_3_50_compact_no_sms.py"
-      - "scripts/fix_next_ledger_refund_swift.py"
-      - "scripts/add_refund_account_picker.py"
-      - "scripts/add_currency_selectors_and_global_delete.py"
-      - "scripts/add_inline_accounts_and_general_subaccounts.py"
-      - "scripts/add_parent_totals_and_statement_chart.py"
-      - "scripts/add_collapsible_chart_sections.py"
-      - "scripts/add_edit_refund_delete_swipe_actions.py"
-      - "scripts/add_bank_expenses_and_fixed_report_conversion.py"
-      - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
-      - "scripts/add_payment_receivable_payable_automation.py"
-      - "scripts/add_receivable_collection_drilldown.py"
-      - "scripts/add_loan_summary_comparison_report.py"
-      - "scripts/fix_loan_summary_comparison_ios16.py"
-      - "scripts/add_accounting_period_setting.py"
-      - "scripts/add_custom_dates_to_loan_summary_comparison.py"
+      - "RootHideSMSQueue/**"
+      - "scripts/**"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Check out source
@@ -85,9 +57,23 @@ jobs:
           python3 scripts/fix_loan_summary_comparison_ios16.py
           python3 scripts/add_accounting_period_setting.py
           python3 scripts/add_custom_dates_to_loan_summary_comparison.py
+          python3 scripts/add_root_sms_daemon_console.py
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Install build tools
+        run: brew install xcodegen dpkg ldid
+
+      - name: Test CBQ SMS parser
+        run: |
+          mkdir -p build
+          xcrun clang \
+            -fobjc-arc \
+            RootHideSMSQueue/Sources/main.m \
+            -framework Foundation \
+            -framework CoreFoundation \
+            -lsqlite3 \
+            -o build/nextledgersmsd-macos
+          build/nextledgersmsd-macos --self-test | tee build/sms-parser-tests.json
+          grep -q '"passed" : true' build/sms-parser-tests.json
 
       - name: Generate Xcode project
         run: xcodegen generate
@@ -108,18 +94,33 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee build/xcodebuild.log
 
+      - name: Build RootHide SMS daemon package
+        run: |
+          THEOS_COMMIT="88506b2c22e9e07dd4ed055f23c9e398a117a2c7"
+          git init "$RUNNER_TEMP/theos"
+          git -C "$RUNNER_TEMP/theos" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos" fetch --depth 1 origin "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos" checkout --detach "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos" submodule update --init --recursive --depth 1
+          export THEOS="$RUNNER_TEMP/theos"
+          chmod +x RootHideSMSQueue/postinst RootHideSMSQueue/prerm
+          make -C RootHideSMSQueue clean package FINALPACKAGE=1
+          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.0.0-roothide.deb
+          shasum -a 256 NextLedgerSMSDaemon-2.0.0-roothide.deb > NextLedgerSMSDaemon-2.0.0-roothide.sha256
+          dpkg-deb -c NextLedgerSMSDaemon-2.0.0-roothide.deb | tee build/sms-daemon-package.txt
+          grep -q 'nextledgersmsd' build/sms-daemon-package.txt
+          grep -q 'com.nextsolution.nextledgersmsd.plist' build/sms-daemon-package.txt
+
       - name: Capture build diagnostics
         if: failure()
         run: |
           mkdir -p build
-          grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log > build/build-errors.txt || true
-          if [ ! -s build/build-errors.txt ]; then
-            if [ -f build/xcodebuild.log ]; then
-              tail -n 250 build/xcodebuild.log > build/build-errors.txt
-            else
-              printf '%s\n' "Feature patch application failed before Xcode compilation." > build/build-errors.txt
-            fi
-          fi
+          {
+            test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true
+            test -f build/sms-parser-tests.json && cat build/sms-parser-tests.json || true
+            test -f build/sms-daemon-package.txt && cat build/sms-daemon-package.txt || true
+          } > build/build-errors.txt
+          test -s build/build-errors.txt || printf '%s\n' "Build failed before diagnostics were produced." > build/build-errors.txt
 
       - name: Upload build diagnostics
         if: failure()
@@ -136,14 +137,17 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-accounting-period-loan-comparison.tipa
-          shasum -a 256 NextLedger-1.3.50-accounting-period-loan-comparison.tipa > NextLedger-1.3.50-accounting-period-loan-comparison.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-root-sms-console.tipa
+          shasum -a 256 NextLedger-1.3.50-root-sms-console.tipa > NextLedger-1.3.50-root-sms-console.sha256
 
-      - name: Upload TIPA
+      - name: Upload TIPA and RootHide daemon
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-accounting-period-loan-comparison.tipa
-            NextLedger-1.3.50-accounting-period-loan-comparison.sha256
+            NextLedger-1.3.50-root-sms-console.tipa
+            NextLedger-1.3.50-root-sms-console.sha256
+            NextLedgerSMSDaemon-2.0.0-roothide.deb
+            NextLedgerSMSDaemon-2.0.0-roothide.sha256
+            build/sms-parser-tests.json
           if-no-files-found: error
