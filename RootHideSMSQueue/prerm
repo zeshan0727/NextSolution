@@ -1,4 +1,6 @@
 #!/bin/sh
-launchctl bootout system/com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
-launchctl remove com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
+LABEL="com.nextsolution.nextledgersmsd"
+launchctl bootout "system/$LABEL" >/dev/null 2>&1 || true
+launchctl remove "$LABEL" >/dev/null 2>&1 || true
+rm -f /rootfs/var/mobile/Library/NextLedgerSMSImport/nextledgersmsd 2>/dev/null || true
 exit 0
