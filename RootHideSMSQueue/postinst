@@ -1,0 +1,26 @@
+#!/bin/sh
+set -e
+
+STATE_DIR="/var/mobile/Library/NextLedgerSMSImport"
+mkdir -p "$STATE_DIR" "$STATE_DIR/pending" "$STATE_DIR/processed"
+chown -R mobile:mobile "$STATE_DIR" 2>/dev/null || true
+chmod 755 "$STATE_DIR" "$STATE_DIR/pending" "$STATE_DIR/processed" 2>/dev/null || true
+
+JBROOT=""
+if command -v jbroot >/dev/null 2>&1; then
+    JBROOT="$(jbroot 2>/dev/null || true)"
+elif [ -x /usr/bin/jbroot ]; then
+    JBROOT="$(/usr/bin/jbroot 2>/dev/null || true)"
+fi
+
+launchctl bootout system/com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
+for PLIST in \
+    "$JBROOT/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist" \
+    "/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist"; do
+    if [ -n "$PLIST" ] && [ -f "$PLIST" ]; then
+        launchctl bootstrap system "$PLIST" >/dev/null 2>&1 || launchctl load "$PLIST" >/dev/null 2>&1 || true
+        break
+    fi
+done
+launchctl kickstart -k system/com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
+exit 0
