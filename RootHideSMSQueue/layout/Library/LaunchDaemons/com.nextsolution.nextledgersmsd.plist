@@ -6,8 +6,10 @@
     <string>com.nextsolution.nextledgersmsd</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/libexec/nextledgersmsd</string>
+        <string>/var/mobile/Library/NextLedgerSMSImport/nextledgersmsd</string>
     </array>
+    <key>WorkingDirectory</key>
+    <string>/var/mobile/Library/NextLedgerSMSImport</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
