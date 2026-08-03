@@ -1,9 +1,9 @@
 Package: com.nextsolution.nextledger.smsdaemon
 Name: Next Ledger SMS Daemon
-Version: 2.0.3
+Version: 2.1.0
 Architecture: iphoneos-arm64e
 Depends: firmware (>= 16.0)
-Description: RootHide launch daemon that reads matching bank SMS, classifies expense, income and transfers, and records them safely in Next Ledger with a temporary diagnostic console.
+Description: RootHide launch daemon that detects only new approved bank SMS and creates review drafts in Next Ledger. Transactions are recorded only after one-by-one approval.
 Maintainer: Next Solution
 Author: Zeeshan Barvi
 Section: Utilities
