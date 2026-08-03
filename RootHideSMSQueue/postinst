@@ -1,26 +1,87 @@
 #!/bin/sh
-set -e
 
-STATE_DIR="/var/mobile/Library/NextLedgerSMSImport"
-mkdir -p "$STATE_DIR" "$STATE_DIR/pending" "$STATE_DIR/processed"
-chown -R mobile:mobile "$STATE_DIR" 2>/dev/null || true
-chmod 755 "$STATE_DIR" "$STATE_DIR/pending" "$STATE_DIR/processed" 2>/dev/null || true
+LABEL="com.nextsolution.nextledgersmsd"
+JB_BINARY="/usr/libexec/nextledgersmsd"
+JB_PLIST="/Library/LaunchDaemons/${LABEL}.plist"
+ROOTFS_STATE="/rootfs/var/mobile/Library/NextLedgerSMSImport"
+ROOTFS_BINARY="${ROOTFS_STATE}/nextledgersmsd"
+INSTALL_LOG="${ROOTFS_STATE}/install.log"
 
-JBROOT=""
-if command -v jbroot >/dev/null 2>&1; then
-    JBROOT="$(jbroot 2>/dev/null || true)"
-elif [ -x /usr/bin/jbroot ]; then
-    JBROOT="$(/usr/bin/jbroot 2>/dev/null || true)"
+mkdir -p "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
+: > "$INSTALL_LOG" 2>/dev/null || true
+exec >>"$INSTALL_LOG" 2>&1
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Next Ledger SMS Daemon 2.0.1 installation started"
+echo "bootstrap binary: $JB_BINARY"
+echo "bootstrap plist: $JB_PLIST"
+
+if [ ! -x "$JB_BINARY" ]; then
+    echo "ERROR: packaged daemon was not found at $JB_BINARY"
+else
+    cp -f "$JB_BINARY" "$ROOTFS_BINARY"
+    chown root:wheel "$ROOTFS_BINARY" 2>/dev/null || true
+    chmod 755 "$ROOTFS_BINARY" 2>/dev/null || true
+    echo "Stable daemon copied to /var/mobile/Library/NextLedgerSMSImport/nextledgersmsd"
 fi
 
-launchctl bootout system/com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
-for PLIST in \
-    "$JBROOT/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist" \
-    "/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist"; do
-    if [ -n "$PLIST" ] && [ -f "$PLIST" ]; then
-        launchctl bootstrap system "$PLIST" >/dev/null 2>&1 || launchctl load "$PLIST" >/dev/null 2>&1 || true
+chown mobile:mobile "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
+chmod 755 "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
+chown root:wheel "$ROOTFS_BINARY" 2>/dev/null || true
+
+PLIST_ROOTFS=""
+if command -v jbroot >/dev/null 2>&1; then
+    PLIST_ROOTFS="$(jbroot "$JB_PLIST" 2>/dev/null || true)"
+fi
+if [ -z "$PLIST_ROOTFS" ] || [ ! -f "$PLIST_ROOTFS" ]; then
+    PLIST_ROOTFS="$JB_PLIST"
+fi
+
+echo "Resolved launch plist: $PLIST_ROOTFS"
+launchctl bootout "system/$LABEL" >/dev/null 2>&1 || true
+launchctl remove "$LABEL" >/dev/null 2>&1 || true
+
+BOOTSTRAP_RESULT="$(launchctl bootstrap system "$PLIST_ROOTFS" 2>&1)"
+BOOTSTRAP_CODE=$?
+echo "launchctl bootstrap exit: $BOOTSTRAP_CODE"
+[ -n "$BOOTSTRAP_RESULT" ] && echo "$BOOTSTRAP_RESULT"
+
+if [ "$BOOTSTRAP_CODE" -ne 0 ]; then
+    LOAD_RESULT="$(launchctl load "$PLIST_ROOTFS" 2>&1)"
+    LOAD_CODE=$?
+    echo "launchctl load fallback exit: $LOAD_CODE"
+    [ -n "$LOAD_RESULT" ] && echo "$LOAD_RESULT"
+fi
+
+KICK_RESULT="$(launchctl kickstart -k "system/$LABEL" 2>&1)"
+KICK_CODE=$?
+echo "launchctl kickstart exit: $KICK_CODE"
+[ -n "$KICK_RESULT" ] && echo "$KICK_RESULT"
+
+sleep 2
+PRINT_RESULT="$(launchctl print "system/$LABEL" 2>&1)"
+PRINT_CODE=$?
+echo "launchctl print exit: $PRINT_CODE"
+[ -n "$PRINT_RESULT" ] && echo "$PRINT_RESULT"
+
+APP_SUPPORT=""
+for META in /rootfs/var/mobile/Containers/Data/Application/*/.com.apple.mobile_container_manager.metadata.plist; do
+    [ -f "$META" ] || continue
+    if grep -a -q "com.nextsolution.dailyledger" "$META" 2>/dev/null; then
+        CONTAINER="${META%/.com.apple.mobile_container_manager.metadata.plist}"
+        APP_SUPPORT="$CONTAINER/Library/Application Support/DailyLedger"
         break
     fi
 done
-launchctl kickstart -k system/com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
+
+if [ -n "$APP_SUPPORT" ]; then
+    mkdir -p "$APP_SUPPORT" 2>/dev/null || true
+    cp -f "$INSTALL_LOG" "$APP_SUPPORT/sms-import-install.log" 2>/dev/null || true
+    chown mobile:mobile "$APP_SUPPORT/sms-import-install.log" 2>/dev/null || true
+    chmod 644 "$APP_SUPPORT/sms-import-install.log" 2>/dev/null || true
+    echo "Installer diagnostic copied into the Next Ledger container"
+else
+    echo "WARNING: Next Ledger container was not found; open the app once and reinstall the daemon"
+fi
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] installation finished"
 exit 0
