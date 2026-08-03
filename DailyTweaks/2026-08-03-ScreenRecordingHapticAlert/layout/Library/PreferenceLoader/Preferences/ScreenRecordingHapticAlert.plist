@@ -1,0 +1,8 @@
+{
+  entry = {
+    bundle = ScreenRecordingHapticAlertPreferences;
+    cell = PSLinkCell;
+    detail = SRHRootListController;
+    label = "Screen Recording Haptic Alert";
+  };
+}
