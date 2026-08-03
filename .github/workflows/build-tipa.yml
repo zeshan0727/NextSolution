@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Build trigger: Receivable Collected card transaction drill-down
+# Build trigger: monthly loan summary comparison with fixed-rate net movement
 name: Build Next Ledger TIPA
 
 permissions:
@@ -27,6 +27,7 @@ on:
       - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
       - "scripts/add_payment_receivable_payable_automation.py"
       - "scripts/add_receivable_collection_drilldown.py"
+      - "scripts/add_loan_summary_comparison_report.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
@@ -44,6 +45,7 @@ on:
       - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
       - "scripts/add_payment_receivable_payable_automation.py"
       - "scripts/add_receivable_collection_drilldown.py"
+      - "scripts/add_loan_summary_comparison_report.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -73,6 +75,7 @@ jobs:
           python3 scripts/fix_summary_loan_sides_and_accounts_zero_filter.py
           python3 scripts/add_payment_receivable_payable_automation.py
           python3 scripts/add_receivable_collection_drilldown.py
+          python3 scripts/add_loan_summary_comparison_report.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -124,14 +127,14 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-receivable-transactions-drilldown.tipa
-          shasum -a 256 NextLedger-1.3.50-receivable-transactions-drilldown.tipa > NextLedger-1.3.50-receivable-transactions-drilldown.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-loan-summary-comparison.tipa
+          shasum -a 256 NextLedger-1.3.50-loan-summary-comparison.tipa > NextLedger-1.3.50-loan-summary-comparison.sha256
 
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-receivable-transactions-drilldown.tipa
-            NextLedger-1.3.50-receivable-transactions-drilldown.sha256
+            NextLedger-1.3.50-loan-summary-comparison.tipa
+            NextLedger-1.3.50-loan-summary-comparison.sha256
           if-no-files-found: error
