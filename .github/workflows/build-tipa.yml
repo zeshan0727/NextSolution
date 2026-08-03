@@ -103,11 +103,17 @@ jobs:
           git -C "$RUNNER_TEMP/theos" checkout --detach "$THEOS_COMMIT"
           git -C "$RUNNER_TEMP/theos" submodule update --init --recursive --depth 1
           export THEOS="$RUNNER_TEMP/theos"
-          chmod +x RootHideSMSQueue/postinst RootHideSMSQueue/prerm
+          chmod +x RootHideSMSQueue/postinst RootHideSMSQueue/prerm \
+            RootHideSMSQueue/layout/DEBIAN/postinst RootHideSMSQueue/layout/DEBIAN/prerm
           make -C RootHideSMSQueue clean package FINALPACKAGE=1
           cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.0.0-roothide.deb
           shasum -a 256 NextLedgerSMSDaemon-2.0.0-roothide.deb > NextLedgerSMSDaemon-2.0.0-roothide.sha256
           dpkg-deb -c NextLedgerSMSDaemon-2.0.0-roothide.deb | tee build/sms-daemon-package.txt
+          rm -rf build/sms-daemon-control
+          mkdir -p build/sms-daemon-control
+          dpkg-deb -e NextLedgerSMSDaemon-2.0.0-roothide.deb build/sms-daemon-control
+          test -x build/sms-daemon-control/postinst
+          test -x build/sms-daemon-control/prerm
           grep -q 'nextledgersmsd' build/sms-daemon-package.txt
           grep -q 'com.nextsolution.nextledgersmsd.plist' build/sms-daemon-package.txt
 
