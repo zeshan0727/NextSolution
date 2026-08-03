@@ -16,5 +16,8 @@ include $(THEOS_MAKE_PATH)/tool.mk
 
 before-package::
 	chmod 0755 $(THEOS_PROJECT_DIR)/postinst $(THEOS_PROJECT_DIR)/prerm
+	chmod 0755 $(THEOS_STAGING_DIR)/DEBIAN/postinst $(THEOS_STAGING_DIR)/DEBIAN/prerm
 	test -x $(THEOS_PROJECT_DIR)/postinst
 	test -x $(THEOS_PROJECT_DIR)/prerm
+	test -x $(THEOS_STAGING_DIR)/DEBIAN/postinst
+	test -x $(THEOS_STAGING_DIR)/DEBIAN/prerm
