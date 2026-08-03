@@ -178,5 +178,19 @@ replace_once(
     gState[@"lastScanRequestID"] = @(requestID);
 ''',
 )
+replace_once(
+    source,
+    '''static NSString *QueueEvent(NSDictionary *parsed, NSString *sourceKey, NSString *sender) {
+''',
+    '''__attribute__((unused)) static NSString *QueueEvent(NSDictionary *parsed, NSString *sourceKey, NSString *sender) {
+''',
+)
+replace_once(
+    source,
+    '''static void RetryPending(NSDictionary *config) {
+''',
+    '''__attribute__((unused)) static void RetryPending(NSDictionary *config) {
+''',
+)
 
-print("Fixed iOS 16 draft inbox UI, migrated old settings, coordinated file locks, and retained failed SMS rows for retry.")
+print("Fixed iOS 16 draft inbox UI, migrated old settings, coordinated file locks, retained failed SMS rows for retry, and retired direct-import warnings.")
