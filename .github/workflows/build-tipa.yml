@@ -96,7 +96,9 @@ jobs:
             build 2>&1 | tee build/xcodebuild.log
 
       - name: Build and inspect RootHide SMS daemon package
+        shell: bash
         run: |
+          set -euxo pipefail
           THEOS_COMMIT="88506b2c22e9e07dd4ed055f23c9e398a117a2c7"
           git init "$RUNNER_TEMP/theos"
           git -C "$RUNNER_TEMP/theos" remote add origin https://github.com/roothide/theos.git
@@ -114,6 +116,7 @@ jobs:
           dpkg-deb -x NextLedgerSMSDaemon-2.0.1-roothide.deb build/sms-daemon-root
           dpkg-deb -e NextLedgerSMSDaemon-2.0.1-roothide.deb build/sms-daemon-control
           dpkg-deb -c NextLedgerSMSDaemon-2.0.1-roothide.deb | tee build/sms-daemon-package.txt
+          sed -n '1,260p' build/sms-daemon-control/postinst | tee build/sms-daemon-postinst.txt
 
           test -x build/sms-daemon-root/usr/libexec/nextledgersmsd
           test -f build/sms-daemon-root/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist
@@ -127,9 +130,11 @@ jobs:
 
           plutil -convert xml1 -o build/sms-daemon-launchd.xml \
             build/sms-daemon-root/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist
-          grep -q '/var/mobile/Library/NextLedgerSMSImport/nextledgersmsd' build/sms-daemon-launchd.xml
-          grep -q 'jbroot.*JB_PLIST' build/sms-daemon-control/postinst
-          grep -q '/rootfs/var/mobile/Library/NextLedgerSMSImport' build/sms-daemon-control/postinst
+          grep -Fq '/var/mobile/Library/NextLedgerSMSImport/nextledgersmsd' build/sms-daemon-launchd.xml
+          grep -Fq 'jbroot' build/sms-daemon-control/postinst
+          grep -Fq 'JB_PLIST' build/sms-daemon-control/postinst
+          grep -Fq 'jbctl trustcache add' build/sms-daemon-control/postinst
+          grep -Fq '/rootfs/var/mobile/Library/NextLedgerSMSImport' build/sms-daemon-control/postinst
 
       - name: Capture build diagnostics
         if: failure()
@@ -139,6 +144,7 @@ jobs:
             test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true
             test -f build/sms-parser-tests.json && cat build/sms-parser-tests.json || true
             test -f build/sms-daemon-package.txt && cat build/sms-daemon-package.txt || true
+            test -f build/sms-daemon-postinst.txt && cat build/sms-daemon-postinst.txt || true
             test -f build/sms-daemon-entitlements.plist && cat build/sms-daemon-entitlements.plist || true
             test -f build/sms-daemon-launchd.xml && cat build/sms-daemon-launchd.xml || true
           } > build/build-errors.txt
@@ -174,4 +180,5 @@ jobs:
             build/sms-parser-tests.json
             build/sms-daemon-entitlements.plist
             build/sms-daemon-launchd.xml
+            build/sms-daemon-postinst.txt
           if-no-files-found: error
