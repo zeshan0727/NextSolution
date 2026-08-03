@@ -69,6 +69,7 @@ jobs:
           python3 scripts/fix_sms_interval_unused_diagnostics.py
           python3 scripts/add_manual30_restore_rejected_and_compact_ai.py
           python3 scripts/add_fawran_transfer_and_editable_sms_review.py
+          python3 scripts/fix_fawran_regex_escape.py
 
       - name: Install build tools
         run: brew install xcodegen dpkg ldid
