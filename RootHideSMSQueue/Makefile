@@ -1,6 +1,7 @@
 ARCHS = arm64
 TARGET = iphone:clang:latest:16.0
 THEOS_PACKAGE_SCHEME = roothide
+TARGET_CODESIGN_FLAGS = -S$(THEOS_PROJECT_DIR)/entitlements.plist
 
 include $(THEOS)/makefiles/common.mk
 
