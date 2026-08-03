@@ -4,48 +4,49 @@ LABEL="com.nextsolution.nextledgersmsd"
 JB_BINARY="/usr/libexec/nextledgersmsd"
 JB_PLIST="/Library/LaunchDaemons/${LABEL}.plist"
 ROOTFS_STATE="/rootfs/var/mobile/Library/NextLedgerSMSImport"
-ROOTFS_BINARY="${ROOTFS_STATE}/nextledgersmsd"
 INSTALL_LOG="${ROOTFS_STATE}/install.log"
 
 mkdir -p "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
+chown mobile:mobile "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
+chmod 755 "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
 : > "$INSTALL_LOG" 2>/dev/null || true
 exec >>"$INSTALL_LOG" 2>&1
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Next Ledger SMS Daemon 2.0.1 installation started"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Next Ledger SMS Daemon 2.0.2 installation started"
 echo "bootstrap binary: $JB_BINARY"
 echo "bootstrap plist: $JB_PLIST"
 
-if [ ! -x "$JB_BINARY" ]; then
-    echo "ERROR: packaged daemon was not found at $JB_BINARY"
-else
-    cp -f "$JB_BINARY" "$ROOTFS_BINARY"
-    chown root:wheel "$ROOTFS_BINARY" 2>/dev/null || true
-    chmod 755 "$ROOTFS_BINARY" 2>/dev/null || true
-    echo "Stable daemon copied to /var/mobile/Library/NextLedgerSMSImport/nextledgersmsd"
-fi
-
-chown mobile:mobile "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
-chmod 755 "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
-chown root:wheel "$ROOTFS_BINARY" 2>/dev/null || true
-
-if command -v jbctl >/dev/null 2>&1 && [ -x "$ROOTFS_BINARY" ]; then
-    TRUST_RESULT="$(jbctl trustcache add "$ROOTFS_BINARY" 2>&1)"
-    TRUST_CODE=$?
-    echo "jbctl trustcache add exit: $TRUST_CODE"
-    [ -n "$TRUST_RESULT" ] && echo "$TRUST_RESULT"
-else
-    echo "WARNING: jbctl was not found; relying on the embedded platform signature"
-fi
-
+BINARY_ROOTFS=""
 PLIST_ROOTFS=""
 if command -v jbroot >/dev/null 2>&1; then
+    BINARY_ROOTFS="$(jbroot "$JB_BINARY" 2>/dev/null || true)"
     PLIST_ROOTFS="$(jbroot "$JB_PLIST" 2>/dev/null || true)"
 fi
-if [ -z "$PLIST_ROOTFS" ] || [ ! -f "$PLIST_ROOTFS" ]; then
+if [ -z "$BINARY_ROOTFS" ]; then
+    BINARY_ROOTFS="$JB_BINARY"
+fi
+if [ -z "$PLIST_ROOTFS" ]; then
     PLIST_ROOTFS="$JB_PLIST"
 fi
 
+echo "Resolved daemon binary: $BINARY_ROOTFS"
 echo "Resolved launch plist: $PLIST_ROOTFS"
+
+if [ ! -x "$BINARY_ROOTFS" ]; then
+    echo "ERROR: resolved daemon binary does not exist or is not executable"
+else
+    echo "Resolved daemon binary exists and is executable"
+    if command -v jbctl >/dev/null 2>&1; then
+        TRUST_RESULT="$(jbctl trustcache add "$BINARY_ROOTFS" 2>&1)"
+        TRUST_CODE=$?
+        echo "jbctl trustcache add exit: $TRUST_CODE"
+        [ -n "$TRUST_RESULT" ] && echo "$TRUST_RESULT"
+    else
+        echo "WARNING: jbctl was not found; relying on the embedded platform signature"
+    fi
+fi
+
+launchctl bootout "user/501/$LABEL" >/dev/null 2>&1 || true
 launchctl bootout "system/$LABEL" >/dev/null 2>&1 || true
 launchctl remove "$LABEL" >/dev/null 2>&1 || true
 
@@ -61,16 +62,28 @@ if [ "$BOOTSTRAP_CODE" -ne 0 ]; then
     [ -n "$LOAD_RESULT" ] && echo "$LOAD_RESULT"
 fi
 
-KICK_RESULT="$(launchctl kickstart -k "system/$LABEL" 2>&1)"
+KICK_RESULT="$(launchctl kickstart -k "user/501/$LABEL" 2>&1)"
 KICK_CODE=$?
-echo "launchctl kickstart exit: $KICK_CODE"
+echo "launchctl user/501 kickstart exit: $KICK_CODE"
 [ -n "$KICK_RESULT" ] && echo "$KICK_RESULT"
+if [ "$KICK_CODE" -ne 0 ]; then
+    KICK_RESULT="$(launchctl kickstart -k "system/$LABEL" 2>&1)"
+    KICK_CODE=$?
+    echo "launchctl system kickstart fallback exit: $KICK_CODE"
+    [ -n "$KICK_RESULT" ] && echo "$KICK_RESULT"
+fi
 
 sleep 2
-PRINT_RESULT="$(launchctl print "system/$LABEL" 2>&1)"
+PRINT_RESULT="$(launchctl print "user/501/$LABEL" 2>&1)"
 PRINT_CODE=$?
-echo "launchctl print exit: $PRINT_CODE"
+echo "launchctl user/501 print exit: $PRINT_CODE"
 [ -n "$PRINT_RESULT" ] && echo "$PRINT_RESULT"
+if [ "$PRINT_CODE" -ne 0 ]; then
+    PRINT_RESULT="$(launchctl print "system/$LABEL" 2>&1)"
+    PRINT_CODE=$?
+    echo "launchctl system print fallback exit: $PRINT_CODE"
+    [ -n "$PRINT_RESULT" ] && echo "$PRINT_RESULT"
+fi
 
 APP_SUPPORT=""
 for META in /rootfs/var/mobile/Containers/Data/Application/*/.com.apple.mobile_container_manager.metadata.plist; do
