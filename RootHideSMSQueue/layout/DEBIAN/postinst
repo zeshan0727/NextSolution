@@ -12,7 +12,7 @@ chmod 755 "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/d
 : > "$INSTALL_LOG" 2>/dev/null || true
 exec >>"$INSTALL_LOG" 2>&1
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Next Ledger SMS Daemon 2.0.3 installation started"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Next Ledger SMS Daemon 2.1.0 installation started"
 echo "bootstrap binary: $JB_BINARY"
 echo "bootstrap plist: $JB_PLIST"
 
@@ -81,7 +81,7 @@ echo "launchctl user/501 print exit: $PRINT_CODE"
 if [ "$PRINT_CODE" -ne 0 ]; then
     PRINT_RESULT="$(launchctl print "system/$LABEL" 2>&1)"
     PRINT_CODE=$?
-    echo "launchctl system print fallback exit: $PRINT_CODE"
+echo "launchctl system print fallback exit: $PRINT_CODE"
     [ -n "$PRINT_RESULT" ] && echo "$PRINT_RESULT"
 fi
 
