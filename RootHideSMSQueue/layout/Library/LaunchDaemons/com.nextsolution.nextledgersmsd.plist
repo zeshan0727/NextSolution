@@ -6,10 +6,8 @@
     <string>com.nextsolution.nextledgersmsd</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/var/mobile/Library/NextLedgerSMSImport/nextledgersmsd</string>
+        <string>/usr/libexec/nextledgersmsd</string>
     </array>
-    <key>WorkingDirectory</key>
-    <string>/var/mobile/Library/NextLedgerSMSImport</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -18,11 +16,5 @@
     <string>Background</string>
     <key>ThrottleInterval</key>
     <integer>3</integer>
-    <key>UserName</key>
-    <string>root</string>
-    <key>StandardOutPath</key>
-    <string>/var/mobile/Library/NextLedgerSMSImport/launchd.out.log</string>
-    <key>StandardErrorPath</key>
-    <string>/var/mobile/Library/NextLedgerSMSImport/launchd.err.log</string>
 </dict>
 </plist>
