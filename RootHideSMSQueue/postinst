@@ -12,7 +12,7 @@ chmod 755 "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/d
 : > "$INSTALL_LOG" 2>/dev/null || true
 exec >>"$INSTALL_LOG" 2>&1
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Next Ledger SMS Daemon 2.0.2 installation started"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Next Ledger SMS Daemon 2.0.3 installation started"
 echo "bootstrap binary: $JB_BINARY"
 echo "bootstrap plist: $JB_PLIST"
 
