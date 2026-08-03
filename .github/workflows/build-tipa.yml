@@ -63,6 +63,7 @@ jobs:
           python3 scripts/add_sms_draft_approval_and_unrecorded_sync.py
           python3 scripts/fix_sms_draft_inbox_ios16_and_migration.py
           python3 scripts/add_selectable_accounting_period_lock.py
+          python3 scripts/prepare_sms_console_counter_patch.py
           python3 scripts/fix_sms_draft_fields_and_message_decoding.py
 
       - name: Install build tools
