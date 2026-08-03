@@ -13,3 +13,8 @@ nextledgersmsd_LIBRARIES = sqlite3
 nextledgersmsd_INSTALL_PATH = /usr/libexec
 
 include $(THEOS_MAKE_PATH)/tool.mk
+
+before-package::
+	chmod 0755 $(THEOS_PROJECT_DIR)/postinst $(THEOS_PROJECT_DIR)/prerm
+	test -x $(THEOS_PROJECT_DIR)/postinst
+	test -x $(THEOS_PROJECT_DIR)/prerm
