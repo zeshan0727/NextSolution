@@ -1,4 +1,5 @@
 from pathlib import Path
+import runpy
 
 ROOT = Path(__file__).resolve().parents[1]
 path = ROOT / "RootHideSMSQueue/Sources/main.m"
@@ -9,4 +10,6 @@ count = text.count(old)
 if count != 1:
     raise RuntimeError(f"Expected one Fawran balance regex escape, found {count}")
 path.write_text(text.replace(old, new, 1), encoding="utf-8")
-print("Fixed the Fawran attributed-message regex escape for Theos Werror builds.")
+
+runpy.run_path(str(ROOT / "scripts/prepare_financial_flow_conversion_helpers.py"), run_name="__main__")
+print("Fixed the Fawran regex escape and prepared financial conversion helpers.")
