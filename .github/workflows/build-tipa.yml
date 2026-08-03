@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Build trigger: separate loan summary sides and hide zero-balance accounts
+# Build trigger: receivable/payable payment automation and payment-to-bank income
 name: Build Next Ledger TIPA
 
 permissions:
@@ -25,6 +25,7 @@ on:
       - "scripts/add_edit_refund_delete_swipe_actions.py"
       - "scripts/add_bank_expenses_and_fixed_report_conversion.py"
       - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
+      - "scripts/add_payment_receivable_payable_automation.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
@@ -40,6 +41,7 @@ on:
       - "scripts/add_edit_refund_delete_swipe_actions.py"
       - "scripts/add_bank_expenses_and_fixed_report_conversion.py"
       - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
+      - "scripts/add_payment_receivable_payable_automation.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -67,6 +69,7 @@ jobs:
           python3 scripts/add_edit_refund_delete_swipe_actions.py
           python3 scripts/add_bank_expenses_and_fixed_report_conversion.py
           python3 scripts/fix_summary_loan_sides_and_accounts_zero_filter.py
+          python3 scripts/add_payment_receivable_payable_automation.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -113,14 +116,14 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-loan-summary-zero-account-filter.tipa
-          shasum -a 256 NextLedger-1.3.50-loan-summary-zero-account-filter.tipa > NextLedger-1.3.50-loan-summary-zero-account-filter.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-receivable-payable-automation.tipa
+          shasum -a 256 NextLedger-1.3.50-receivable-payable-automation.tipa > NextLedger-1.3.50-receivable-payable-automation.sha256
 
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-loan-summary-zero-account-filter.tipa
-            NextLedger-1.3.50-loan-summary-zero-account-filter.sha256
+            NextLedger-1.3.50-receivable-payable-automation.tipa
+            NextLedger-1.3.50-receivable-payable-automation.sha256
           if-no-files-found: error
