@@ -28,6 +28,7 @@ on:
       - "scripts/add_payment_receivable_payable_automation.py"
       - "scripts/add_receivable_collection_drilldown.py"
       - "scripts/add_loan_summary_comparison_report.py"
+      - "scripts/fix_loan_summary_comparison_ios16.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
   push:
@@ -46,6 +47,7 @@ on:
       - "scripts/add_payment_receivable_payable_automation.py"
       - "scripts/add_receivable_collection_drilldown.py"
       - "scripts/add_loan_summary_comparison_report.py"
+      - "scripts/fix_loan_summary_comparison_ios16.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
 
@@ -76,6 +78,7 @@ jobs:
           python3 scripts/add_payment_receivable_payable_automation.py
           python3 scripts/add_receivable_collection_drilldown.py
           python3 scripts/add_loan_summary_comparison_report.py
+          python3 scripts/fix_loan_summary_comparison_ios16.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
