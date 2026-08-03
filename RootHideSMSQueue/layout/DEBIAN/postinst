@@ -69,7 +69,7 @@ echo "launchctl user/501 kickstart exit: $KICK_CODE"
 if [ "$KICK_CODE" -ne 0 ]; then
     KICK_RESULT="$(launchctl kickstart -k "system/$LABEL" 2>&1)"
     KICK_CODE=$?
-echo "launchctl system kickstart fallback exit: $KICK_CODE"
+    echo "launchctl system kickstart fallback exit: $KICK_CODE"
     [ -n "$KICK_RESULT" ] && echo "$KICK_RESULT"
 fi
 
