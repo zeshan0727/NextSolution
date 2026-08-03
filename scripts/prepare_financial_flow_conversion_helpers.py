@@ -86,5 +86,53 @@ replacement = needle + r'''    func fixedReportConversionRate(from sourceCode: S
 count = text.count(needle)
 if count != 1:
     raise RuntimeError(f"Expected one financial flow helper marker, found {count}")
-path.write_text(text.replace(needle, replacement, 1), encoding="utf-8")
-print("Prepared the financial flow patch with fixed report conversion helpers.")
+text = text.replace(needle, replacement, 1)
+
+old_receivable = r'''            if !receivableMovements.isEmpty {
+                ForEach(receivableMovements) { movement in
+                    formulaOperator("+", color: color)
+                    movementCard(
+                        title: "Receivable Collected",
+                        movement: movement,
+                        icon: "person.crop.circle.badge.checkmark",
+                        color: AppTheme.blue
+                    )
+                }
+            }
+'''
+new_receivable = r'''            if !receivableMovements.isEmpty {
+                ForEach(receivableMovements) { movement in
+                    formulaOperator("+", color: color)
+                    NavigationLink {
+                        ReceivableCollectionTransactionsView(
+                            interval: selectedInterval,
+                            currencyCode: movement.currencyCode
+                        )
+                    } label: {
+                        movementCard(
+                            title: "Receivable Collected",
+                            movement: movement,
+                            icon: "person.crop.circle.badge.checkmark",
+                            color: AppTheme.blue
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+'''
+count = text.count(old_receivable)
+if count != 1:
+    raise RuntimeError(f"Expected one old receivable removal argument, found {count}")
+text = text.replace(old_receivable, new_receivable, 1)
+
+sms_marker = '''# ---------------------------------------------------------------------------
+# SMS auto record. Off = drafts. On = background record only when every mapping
+'''
+remove_unused_drilldown = '''# Remove the now-unused receivable drill-down that an earlier patch appended.\nreports_text = read(reports)\nreceivable_view_marker = "\\nprivate struct ReceivableCollectionTransactionsView: View"\nif receivable_view_marker in reports_text:\n    reports_text = reports_text[:reports_text.index(receivable_view_marker)].rstrip() + "\\n"\nwrite(reports, reports_text)\n\n\n'''
+count = text.count(sms_marker)
+if count != 1:
+    raise RuntimeError(f"Expected one SMS section marker, found {count}")
+text = text.replace(sms_marker, remove_unused_drilldown + sms_marker, 1)
+
+path.write_text(text, encoding="utf-8")
+print("Prepared report conversion helpers and the actual receivable drill-down removal.")
