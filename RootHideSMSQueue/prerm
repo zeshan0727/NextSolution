@@ -1,0 +1,4 @@
+#!/bin/sh
+launchctl bootout system/com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
+launchctl remove com.nextsolution.nextledgersmsd >/dev/null 2>&1 || true
+exit 0
