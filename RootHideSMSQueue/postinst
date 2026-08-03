@@ -28,6 +28,15 @@ chown mobile:mobile "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/proce
 chmod 755 "$ROOTFS_STATE" "$ROOTFS_STATE/pending" "$ROOTFS_STATE/processed" 2>/dev/null || true
 chown root:wheel "$ROOTFS_BINARY" 2>/dev/null || true
 
+if command -v jbctl >/dev/null 2>&1 && [ -x "$ROOTFS_BINARY" ]; then
+    TRUST_RESULT="$(jbctl trustcache add "$ROOTFS_BINARY" 2>&1)"
+    TRUST_CODE=$?
+    echo "jbctl trustcache add exit: $TRUST_CODE"
+    [ -n "$TRUST_RESULT" ] && echo "$TRUST_RESULT"
+else
+    echo "WARNING: jbctl was not found; relying on the embedded platform signature"
+fi
+
 PLIST_ROOTFS=""
 if command -v jbroot >/dev/null 2>&1; then
     PLIST_ROOTFS="$(jbroot "$JB_PLIST" 2>/dev/null || true)"
