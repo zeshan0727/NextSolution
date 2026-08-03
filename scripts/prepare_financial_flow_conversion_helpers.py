@@ -128,11 +128,11 @@ text = text.replace(old_receivable, new_receivable, 1)
 sms_marker = '''# ---------------------------------------------------------------------------
 # SMS auto record. Off = drafts. On = background record only when every mapping
 '''
-remove_unused_drilldown = '''# Remove the now-unused receivable drill-down that an earlier patch appended.\nreports_text = read(reports)\nreceivable_view_marker = "\\nprivate struct ReceivableCollectionTransactionsView: View"\nif receivable_view_marker in reports_text:\n    reports_text = reports_text[:reports_text.index(receivable_view_marker)].rstrip() + "\\n"\nwrite(reports, reports_text)\n\n\n'''
+remove_unused_drilldown = '''# Remove only the unused receivable drill-down and preserve later report views.\nreports_text = read(reports)\nreceivable_view_marker = "\\nprivate struct ReceivableCollectionTransactionsView: View"\nnext_report_view_marker = "\\nprivate struct LoanSummaryComparisonView: View"\nif receivable_view_marker in reports_text:\n    start_index = reports_text.index(receivable_view_marker)\n    if next_report_view_marker not in reports_text[start_index:]:\n        raise RuntimeError("Loan Summary view marker was not found after Receivable drill-down")\n    end_index = reports_text.index(next_report_view_marker, start_index)\n    reports_text = reports_text[:start_index].rstrip() + "\\n\\n" + reports_text[end_index:].lstrip("\\n")\nwrite(reports, reports_text)\n\n\n'''
 count = text.count(sms_marker)
 if count != 1:
     raise RuntimeError(f"Expected one SMS section marker, found {count}")
 text = text.replace(sms_marker, remove_unused_drilldown + sms_marker, 1)
 
 path.write_text(text, encoding="utf-8")
-print("Prepared report conversion helpers and the actual receivable drill-down removal.")
+print("Prepared report conversion helpers and removed only the receivable drill-down.")
