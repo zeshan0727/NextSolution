@@ -25,6 +25,7 @@ on:
       - "scripts/add_edit_refund_delete_swipe_actions.py"
       - "scripts/add_bank_expenses_and_fixed_report_conversion.py"
       - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
+      - "scripts/fix_payment_automation_patch_script.py"
       - "scripts/add_payment_receivable_payable_automation.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
@@ -41,6 +42,7 @@ on:
       - "scripts/add_edit_refund_delete_swipe_actions.py"
       - "scripts/add_bank_expenses_and_fixed_report_conversion.py"
       - "scripts/fix_summary_loan_sides_and_accounts_zero_filter.py"
+      - "scripts/fix_payment_automation_patch_script.py"
       - "scripts/add_payment_receivable_payable_automation.py"
       - "project.yml"
       - ".github/workflows/build-tipa.yml"
@@ -69,6 +71,7 @@ jobs:
           python3 scripts/add_edit_refund_delete_swipe_actions.py
           python3 scripts/add_bank_expenses_and_fixed_report_conversion.py
           python3 scripts/fix_summary_loan_sides_and_accounts_zero_filter.py
+          python3 scripts/fix_payment_automation_patch_script.py
           python3 scripts/add_payment_receivable_payable_automation.py
 
       - name: Install XcodeGen
@@ -96,9 +99,14 @@ jobs:
       - name: Capture build diagnostics
         if: failure()
         run: |
+          mkdir -p build
           grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log > build/build-errors.txt || true
           if [ ! -s build/build-errors.txt ]; then
-            tail -n 250 build/xcodebuild.log > build/build-errors.txt
+            if [ -f build/xcodebuild.log ]; then
+              tail -n 250 build/xcodebuild.log > build/build-errors.txt
+            else
+              printf '%s\n' "Feature patch application failed before Xcode compilation." > build/build-errors.txt
+            fi
           fi
 
       - name: Upload build diagnostics
