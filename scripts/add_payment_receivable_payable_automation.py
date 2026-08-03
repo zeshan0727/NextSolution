@@ -16,7 +16,7 @@ def replace_once(relative: str, old: str, new: str) -> None:
     count = text.count(old)
     if count != 1:
         raise RuntimeError(
-            f"Expected one match in {relative}, found {count}: {old[:200]!r}"
+            f"Expected one match in {relative}, found {count}: {old[:220]!r}"
         )
     write(relative, text.replace(old, new, 1))
 
@@ -32,10 +32,9 @@ def replace_range(relative: str, start_marker: str, end_marker: str, replacement
     write(relative, text[:start] + replacement + text[end:])
 
 
-# ---------------------------------------------------------------------------
-# Account model: separate amounts due to the user from amounts owed by the user.
-# Legacy Loan accounts remain supported and are treated as Payables until edited.
-# ---------------------------------------------------------------------------
+# Keep Receivable and Payable enum values for saved-data compatibility, but do
+# not automatically alter an account's native nature. Payments classification is
+# driven by the live balance instead.
 model = "DailyLedger/Models/LedgerTransaction.swift"
 replace_once(
     model,
@@ -74,7 +73,7 @@ replace_once(
     var title: String {
         switch self {
         case .unassigned: return "Unassigned"
-        case .loan: return "Loan (Legacy)"
+        case .loan: return "Loan"
         case .receivable: return "Receivable"
         case .payable: return "Payable"
         case .control: return "Control"
@@ -88,34 +87,26 @@ replace_once(
 )
 
 
-# ---------------------------------------------------------------------------
-# Accounts tab and account editor.
-# Payments are shown under Receivables and Payables without adding new collapse
-# controls. Selecting Payment Type automatically owns the account nature.
-# ---------------------------------------------------------------------------
+# Accounts tab: Payments is split visually into Receivables and Payables using
+# each account's current balance. Positive is receivable; negative is payable.
+# At zero, the opening-balance sign is used so a settled account stays on its
+# familiar side. Native nature is never changed.
 accounts = "DailyLedger/Views/AccountsView.swift"
 replace_once(
     accounts,
     "import SwiftUI\n\nstruct AccountsView: View {\n",
     '''import SwiftUI
 
-private enum PaymentAccountType: String, CaseIterable, Identifiable {
+private enum PaymentBalanceClass: String, CaseIterable, Identifiable {
     case receivable
     case payable
 
     var id: String { rawValue }
-    var title: String { self == .receivable ? "Receivable" : "Payable" }
     var pluralTitle: String { self == .receivable ? "Receivables" : "Payables" }
-    var nature: AccountNature { self == .receivable ? .receivable : .payable }
     var icon: String {
         self == .receivable
             ? "arrow.down.left.circle.fill"
             : "arrow.up.right.circle.fill"
-    }
-
-    static func effective(for account: LedgerAccount, parent: LedgerAccount? = nil) -> PaymentAccountType {
-        let nature = parent?.nature ?? account.nature
-        return nature == .receivable ? .receivable : .payable
     }
 }
 
@@ -212,17 +203,19 @@ replace_once(
         }
     }
 
-    private func paymentAccounts(_ type: PaymentAccountType) -> [LedgerAccount] {
-        accounts(in: .payments).filter { account in
-            PaymentAccountType.effective(
-                for: account,
-                parent: store.account(withID: account.parentAccountID)
-            ) == type
-        }
+    private func paymentClass(for account: LedgerAccount) -> PaymentBalanceClass {
+        let current = store.balance(for: account)
+        if current < 0 { return .payable }
+        if current > 0 { return .receivable }
+        return account.openingBalance < 0 ? .payable : .receivable
+    }
+
+    private func paymentAccounts(_ type: PaymentBalanceClass) -> [LedgerAccount] {
+        accounts(in: .payments).filter { paymentClass(for: $0) == type }
     }
 
     private func paymentGroupHeader(
-        _ type: PaymentAccountType,
+        _ type: PaymentBalanceClass,
         accounts: [LedgerAccount]
     ) -> some View {
         HStack(spacing: 10) {
@@ -258,131 +251,10 @@ replace_once(
 ''',
 )
 
-replace_once(
-    accounts,
-    '''    @State private var nature: AccountNature = .unassigned
-    @State private var chartCode = ""
-    @State private var parentAccountID: UUID?
-''',
-    '''    @State private var nature: AccountNature = .unassigned
-    @State private var paymentType: PaymentAccountType = .receivable
-    @State private var chartCode = ""
-    @State private var parentAccountID: UUID?
-''',
-)
 
-replace_once(
-    accounts,
-    '''        _nature = State(initialValue: account?.nature ?? .unassigned)
-        _chartCode = State(initialValue: account?.chartCode ?? "")
-        _parentAccountID = State(initialValue: account?.parentAccountID ?? initialParentAccountID)
-''',
-    '''        _nature = State(initialValue: account?.nature ?? .unassigned)
-        _paymentType = State(initialValue:
-            account?.nature == .receivable || (account == nil && initialGroup == .payments)
-                ? .receivable
-                : .payable
-        )
-        _chartCode = State(initialValue: account?.chartCode ?? "")
-        _parentAccountID = State(initialValue: account?.parentAccountID ?? initialParentAccountID)
-''',
-)
-
-replace_once(
-    accounts,
-    '''                    Picker("Account Nature", selection: $nature) {
-                        ForEach(AccountNature.allCases) { Text($0.title).tag($0) }
-                    }
-''',
-    '''                    if group == .payments {
-                        Picker("Payment Type", selection: $paymentType) {
-                            ForEach(PaymentAccountType.allCases) { type in
-                                Label(type.title, systemImage: type.icon).tag(type)
-                            }
-                        }
-                        .disabled(selectedParent?.group == .payments)
-                        LabeledContent(
-                            "Account Nature",
-                            value: resolvedNature?.title ?? paymentType.nature.title
-                        )
-                        Text(paymentType == .receivable
-                            ? "Receivable means this person or account owes money to you. Collections reduce its balance."
-                            : "Payable means you owe this person or account. Money received can increase the payable or loan balance.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Picker("Account Nature", selection: $nature) {
-                            ForEach(AccountNature.allCases) { value in
-                                if value != .receivable && value != .payable && value != .loan {
-                                    Text(value.title).tag(value)
-                                }
-                            }
-                        }
-                    }
-''',
-)
-
-replace_once(
-    accounts,
-    '''            .onChange(of: parentAccountID) { _ in
-                if let parent = selectedParent {
-                    group = parent.group
-                }
-            }
-''',
-    '''            .onChange(of: parentAccountID) { _ in
-                if let parent = selectedParent {
-                    group = parent.group
-                    if parent.group == .payments {
-                        paymentType = PaymentAccountType.effective(for: parent)
-                        nature = paymentType.nature
-                    }
-                }
-            }
-            .onChange(of: group) { value in
-                if value == .payments {
-                    nature = paymentType.nature
-                }
-            }
-            .onChange(of: paymentType) { value in
-                if group == .payments {
-                    nature = value.nature
-                }
-            }
-''',
-)
-
-replace_once(
-    accounts,
-    '''    private var parsedOpeningBalance: Decimal? {
-''',
-    '''    private var resolvedNature: AccountNature? {
-        if group == .payments {
-            if let parent = selectedParent, parent.group == .payments {
-                return PaymentAccountType.effective(for: parent).nature
-            }
-            return paymentType.nature
-        }
-        return nature == .unassigned ? nil : nature
-    }
-
-    private var parsedOpeningBalance: Decimal? {
-''',
-)
-
-text = read(accounts)
-old_nature = "nature == .unassigned ? nil : nature"
-count = text.count(old_nature)
-if count != 2:
-    raise RuntimeError(f"Expected two account-save nature expressions, found {count}")
-write(accounts, text.replace(old_nature, "resolvedNature"))
-
-
-# ---------------------------------------------------------------------------
-# Reporting rules.
-# Payments -> Bank is report income. Only Payable/legacy Loan accounts affect
-# loan movement cards. Receivables reduce normally but do not become loan growth.
-# ---------------------------------------------------------------------------
+# Transaction classification helpers. A Payments -> Bank receipt can be split
+# automatically when it crosses zero: first it collects the outstanding
+# receivable, and only the excess becomes a loan increase.
 store = "DailyLedger/Services/LedgerStore.swift"
 replace_once(
     store,
@@ -391,62 +263,63 @@ replace_once(
     }
 ''',
     '''    func isReportIncome(_ transaction: LedgerTransaction) -> Bool {
-        transaction.type == .income || isReportTransferIncome(transaction)
+        transaction.type == .income ||
+            (isAmaraTransfer(transaction) && !isPaymentToBankTransfer(transaction))
     }
 ''',
 )
-replace_once(
-    store,
-    '''    func reportIncomeAmount(_ transaction: LedgerTransaction) -> Decimal {
-        isAmaraTransfer(transaction)
-            ? (transaction.destinationAmount ?? transaction.amount)
-            : transaction.amount
-    }
 
-    func reportIncomeAccountID(_ transaction: LedgerTransaction) -> UUID? {
-        isAmaraTransfer(transaction) ? transaction.destinationAccountID : transaction.accountID
-    }
-''',
-    '''    func reportIncomeAmount(_ transaction: LedgerTransaction) -> Decimal {
-        isReportTransferIncome(transaction)
-            ? (transaction.destinationAmount ?? transaction.amount)
-            : transaction.amount
-    }
-
-    func reportIncomeAccountID(_ transaction: LedgerTransaction) -> UUID? {
-        isReportTransferIncome(transaction) ? transaction.destinationAccountID : transaction.accountID
-    }
-''',
-)
 replace_once(
     store,
     '''    private func isAmaraTransfer(_ transaction: LedgerTransaction) -> Bool {
 ''',
-    '''    func isPayableAccount(_ account: LedgerAccount?) -> Bool {
+    '''    func isBankAccount(_ account: LedgerAccount?) -> Bool {
         guard let account else { return false }
-        if account.nature == .receivable { return false }
-        return account.nature == .payable ||
-            account.nature == .loan ||
-            account.group == .payments
-    }
-
-    func isReceivableAccount(_ account: LedgerAccount?) -> Bool {
-        guard let account else { return false }
-        return account.nature == .receivable
+        return account.nature == .bank ||
+            account.group == .qatar ||
+            account.group == .pakistan
     }
 
     func isPaymentToBankTransfer(_ transaction: LedgerTransaction) -> Bool {
         guard transaction.type == .transfer,
               let source = account(withID: transaction.accountID),
-              let destination = account(withID: transaction.destinationAccountID),
               source.group == .payments else { return false }
-        return destination.nature == .bank ||
-            destination.group == .qatar ||
-            destination.group == .pakistan
+        return isBankAccount(account(withID: transaction.destinationAccountID))
     }
 
-    private func isReportTransferIncome(_ transaction: LedgerTransaction) -> Bool {
-        isAmaraTransfer(transaction) || isPaymentToBankTransfer(transaction)
+    func isBankToPaymentTransfer(_ transaction: LedgerTransaction) -> Bool {
+        guard transaction.type == .transfer,
+              isBankAccount(account(withID: transaction.accountID)),
+              let destination = account(withID: transaction.destinationAccountID) else {
+            return false
+        }
+        return destination.group == .payments
+    }
+
+    func paymentSourceBalanceBefore(_ transaction: LedgerTransaction) -> Decimal? {
+        guard isPaymentToBankTransfer(transaction),
+              let sourceID = transaction.accountID else { return nil }
+        guard let after = runningBalance(for: transaction.id, accountID: sourceID) else {
+            return nil
+        }
+        return after + transaction.amount
+    }
+
+    func receivableCollectionAmount(_ transaction: LedgerTransaction) -> Decimal {
+        guard let before = paymentSourceBalanceBefore(transaction), before > 0 else {
+            return 0
+        }
+        return min(transaction.amount, before)
+    }
+
+    func paymentLoanIncreaseAmount(_ transaction: LedgerTransaction) -> Decimal {
+        guard isPaymentToBankTransfer(transaction) else { return 0 }
+        return max(0, transaction.amount - receivableCollectionAmount(transaction))
+    }
+
+    func paymentLoanPaymentAmount(_ transaction: LedgerTransaction) -> Decimal {
+        guard isBankToPaymentTransfer(transaction) else { return 0 }
+        return transaction.amount
     }
 
     private func isAmaraTransfer(_ transaction: LedgerTransaction) -> Bool {
@@ -460,23 +333,288 @@ replace_once(
         }.map(\.id))
 ''',
     '''        let loanAccountIDs = Set(accounts.filter {
-            isPayableAccount($0)
+            ($0.group == .payments && balance(for: $0) < 0) ||
+                ($0.group != .payments && $0.nature == .loan)
         }.map(\.id))
 ''',
 )
 
+
+# Financial Summary: Total Money In and Total Money Out become the two main
+# columns. Detail buckets are mutually exclusive:
+# - Income excludes every Payments -> Bank transfer.
+# - Payments -> Bank is split into Receivable Collected and Loan Increase.
+# - Bank -> Payments is Loan Payments.
 reports = "DailyLedger/Views/ReportsView.swift"
 replace_once(
     reports,
-    '''        let loanAccountIDs = Set(store.accounts.filter {
-            $0.group == .payments || $0.nature == .loan
-        }.map(\.id))
+    '''            HStack(alignment: .top, spacing: 12) {
+                summaryColumn(
+                    title: "Added",
+                    color: AppTheme.green,
+                    primaryTitle: "Income",
+                    primaryValue: totals.income,
+                    primaryKind: .income,
+                    movements: loanIncreaseMovements
+                )
+                summaryColumn(
+                    title: "Deducted",
+                    color: AppTheme.red,
+                    primaryTitle: "Expenses",
+                    primaryValue: totals.expense,
+                    primaryKind: .expenses,
+                    movements: loanDecreaseMovements
+                )
+            }
 ''',
-    '''        let loanAccountIDs = Set(store.accounts.filter {
-            store.isPayableAccount($0)
-        }.map(\.id))
+    '''            HStack(alignment: .top, spacing: 12) {
+                moneyFlowColumn(
+                    title: "Total Money In",
+                    color: AppTheme.green,
+                    totalValue: totalMoneyIn,
+                    primaryTitle: "Income",
+                    primaryValue: totals.income,
+                    primaryKind: .income,
+                    movementTitle: "Loan Increase",
+                    movements: loanIncreaseMovements,
+                    receivableMovements: receivableCollectionMovements
+                )
+                moneyFlowColumn(
+                    title: "Total Money Out",
+                    color: AppTheme.red,
+                    totalValue: totalMoneyOut,
+                    primaryTitle: "Expenses",
+                    primaryValue: totals.expense,
+                    primaryKind: .expenses,
+                    movementTitle: "Loan Payments",
+                    movements: loanPaymentMovements,
+                    receivableMovements: []
+                )
+            }
 ''',
 )
+
+replace_range(
+    reports,
+    "    private var loanIncreaseMovements: [LoanNetMovement] {\n",
+    "    private func summaryColumn(\n",
+    r'''    private var loanIncreaseMovements: [LoanNetMovement] {
+        paymentMovements { transaction in
+            store.paymentLoanIncreaseAmount(transaction)
+        }
+    }
+
+    private var receivableCollectionMovements: [LoanNetMovement] {
+        paymentMovements { transaction in
+            store.receivableCollectionAmount(transaction)
+        }
+    }
+
+    private var loanPaymentMovements: [LoanNetMovement] {
+        var totalsByCurrency: [String: Decimal] = [:]
+        for transaction in store.transactions where selectedInterval.contains(transaction.date) {
+            let amount = store.paymentLoanPaymentAmount(transaction)
+            guard amount > 0,
+                  let source = store.account(withID: transaction.accountID) else { continue }
+            totalsByCurrency[source.currencyCode.uppercased(), default: 0] += amount
+        }
+        return movementRows(totalsByCurrency)
+    }
+
+    private func paymentMovements(
+        amount: (LedgerTransaction) -> Decimal
+    ) -> [LoanNetMovement] {
+        var totalsByCurrency: [String: Decimal] = [:]
+        for transaction in store.transactions where selectedInterval.contains(transaction.date) {
+            let value = amount(transaction)
+            guard value > 0,
+                  let source = store.account(withID: transaction.accountID) else { continue }
+            totalsByCurrency[source.currencyCode.uppercased(), default: 0] += value
+        }
+        return movementRows(totalsByCurrency)
+    }
+
+    private func movementRows(_ totals: [String: Decimal]) -> [LoanNetMovement] {
+        totals.compactMap { currency, amount in
+            guard amount > 0 else { return nil }
+            return LoanNetMovement(currencyCode: currency, netAmount: amount)
+        }.sorted { $0.currencyCode < $1.currencyCode }
+    }
+
+    private func convertedMovementTotal(_ movements: [LoanNetMovement]) -> Decimal {
+        movements.reduce(Decimal.zero) { total, movement in
+            guard let rate = store.fixedReportConversionRate(
+                from: movement.currencyCode,
+                to: store.currencyCode
+            ) else { return total }
+            return total + movement.netAmount * rate
+        }
+    }
+
+    private var totalMoneyIn: Decimal {
+        totals.income +
+            convertedMovementTotal(loanIncreaseMovements) +
+            convertedMovementTotal(receivableCollectionMovements)
+    }
+
+    private var totalMoneyOut: Decimal {
+        totals.expense + convertedMovementTotal(loanPaymentMovements)
+    }
+
+''',
+)
+
+replace_range(
+    reports,
+    "    private func summaryColumn(\n",
+    "    private func formulaOperator(_ symbol: String, color: Color) -> some View {\n",
+    r'''    private func moneyFlowColumn(
+        title: String,
+        color: Color,
+        totalValue: Decimal,
+        primaryTitle: String,
+        primaryValue: Decimal,
+        primaryKind: PeriodTransactionKind,
+        movementTitle: String,
+        movements: [LoanNetMovement],
+        receivableMovements: [LoanNetMovement]
+    ) -> some View {
+        VStack(spacing: 8) {
+            Text(title.uppercased())
+                .font(.caption2.bold())
+                .foregroundStyle(color)
+                .frame(maxWidth: .infinity)
+
+            ReportTotalCard(
+                title: title,
+                value: totalValue,
+                currencyCode: store.currencyCode,
+                icon: primaryKind == .income
+                    ? "arrow.down.to.line.circle.fill"
+                    : "arrow.up.to.line.circle.fill",
+                color: color,
+                compact: true
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 19, style: .continuous)
+                    .stroke(color, lineWidth: 2.4)
+            }
+
+            formulaOperator("=", color: color)
+
+            NavigationLink {
+                PeriodTransactionsView(kind: primaryKind, interval: selectedInterval)
+            } label: {
+                ReportTotalCard(
+                    title: primaryTitle,
+                    value: primaryValue,
+                    currencyCode: store.currencyCode,
+                    icon: primaryKind == .income
+                        ? "arrow.down.left.circle.fill"
+                        : "arrow.up.right.circle.fill",
+                    color: color,
+                    compact: true
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 19, style: .continuous)
+                        .stroke(color.opacity(0.65), lineWidth: 2)
+                }
+            }
+            .buttonStyle(.plain)
+
+            formulaOperator("+", color: color)
+
+            if movements.isEmpty {
+                ReportTotalCard(
+                    title: movementTitle,
+                    value: 0,
+                    currencyCode: store.currencyCode,
+                    icon: primaryKind == .income
+                        ? "arrow.up.right.circle.fill"
+                        : "arrow.down.right.circle.fill",
+                    color: color,
+                    compact: true
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 19, style: .continuous)
+                        .stroke(color.opacity(0.65), lineWidth: 2)
+                }
+            } else {
+                ForEach(Array(movements.enumerated()), id: \.element.id) { index, movement in
+                    if index > 0 { formulaOperator("+", color: color) }
+                    NavigationLink { LoanMovementReportView() } label: {
+                        movementCard(
+                            title: movementTitle,
+                            movement: movement,
+                            icon: primaryKind == .income
+                                ? "arrow.up.right.circle.fill"
+                                : "arrow.down.right.circle.fill",
+                            color: color
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if !receivableMovements.isEmpty {
+                ForEach(receivableMovements) { movement in
+                    formulaOperator("+", color: color)
+                    movementCard(
+                        title: "Receivable Collected",
+                        movement: movement,
+                        icon: "person.crop.circle.badge.checkmark",
+                        color: AppTheme.blue
+                    )
+                }
+            }
+        }
+        .padding(9)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .background(color.opacity(0.055), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(color.opacity(0.65), lineWidth: 2)
+        }
+    }
+
+    private func movementCard(
+        title: String,
+        movement: LoanNetMovement,
+        icon: String,
+        color: Color
+    ) -> some View {
+        ReportTotalCard(
+            title: title,
+            value: abs(movement.netAmount),
+            currencyCode: movement.currencyCode,
+            icon: icon,
+            color: color,
+            compact: true,
+            secondaryText: movement.currencyCode.uppercased() == "PKR"
+                ? "QAR: \(DisplayFormat.currency(abs(movement.netAmount) / Decimal(77), code: "QAR"))"
+                : nil
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 19, style: .continuous)
+                .stroke(color.opacity(0.65), lineWidth: 2)
+        }
+    }
+
+''',
+)
+
+replace_once(
+    reports,
+    '''    private var financeSummaryNetBalance: Decimal {
+        totals.income + convertedLoanMovement - totals.expense + qatarClosingBalance
+    }
+''',
+    '''    private var financeSummaryNetBalance: Decimal {
+        totalMoneyIn - totalMoneyOut + qatarClosingBalance
+    }
+''',
+)
+
 replace_once(
     reports,
     '''    private var loanAccounts: [LedgerAccount] {
@@ -484,73 +622,17 @@ replace_once(
     }
 ''',
     '''    private var loanAccounts: [LedgerAccount] {
-        store.accounts.filter { store.isPayableAccount($0) }
-    }
-''',
-)
-replace_once(
-    reports,
-    '''    private var financeSummaryNetBalance: Decimal {
-        totals.income + convertedLoanMovement - totals.expense + qatarClosingBalance
-    }
-''',
-    '''    private var financeSummaryNetBalance: Decimal {
-        totals.income + convertedLoanMovement - totals.expense + qatarClosingBalance
-            - payableToBankIncomeOverlap
-    }
-
-    private var payableToBankIncomeOverlap: Decimal {
-        store.transactions.lazy.filter {
-            selectedInterval.contains($0.date) &&
-            store.isPaymentToBankTransfer($0) &&
-            store.isPayableAccount(store.account(withID: $0.accountID))
-        }.reduce(Decimal.zero) {
-            $0 + (store.convertedReportIncomeAmount($1) ?? 0)
+        store.accounts.filter {
+            ($0.group == .payments && store.balance(for: $0) < 0) ||
+                ($0.group != .payments && $0.nature == .loan)
         }
     }
 ''',
 )
-replace_once(
-    reports,
-    '''    private func effectiveNature(_ account: LedgerAccount) -> AccountNature {
-        if account.group == .payments { return .loan }
-        if account.group == .assets { return .asset }
-        return account.nature ?? .unassigned
-    }
-''',
-    '''    private func effectiveNature(_ account: LedgerAccount) -> AccountNature {
-        if account.group == .payments {
-            return account.nature == .receivable ? .receivable : .payable
-        }
-        if account.group == .assets { return .asset }
-        return account.nature ?? .unassigned
-    }
-''',
-)
-replace_once(
-    reports,
-    '''        Set(store.accounts.filter {
-            if $0.group == .payments { return nature == .loan }
-            if $0.group == .assets { return nature == .asset }
-            return $0.nature == nature
-        }.map(\.id))
-''',
-    '''        Set(store.accounts.filter {
-            if $0.group == .payments {
-                let effective: AccountNature = $0.nature == .receivable ? .receivable : .payable
-                return nature == effective
-            }
-            if $0.group == .assets { return nature == .asset }
-            return $0.nature == nature
-        }.map(\.id))
-''',
-)
 
 
-# ---------------------------------------------------------------------------
-# Chart of Accounts: separate Receivables (asset) and Payables (liability).
-# Existing statement/account disclosure behavior remains untouched.
-# ---------------------------------------------------------------------------
+# Chart of Accounts: Payments accounts move automatically between Receivables
+# and Payables based on live balance. Saved nature is ignored for Payments.
 coa = "DailyLedger/Views/ChartOfAccountsView.swift"
 replace_once(
     coa,
@@ -621,7 +703,27 @@ replace_once(
     coa,
     '''            Text("Balance Sheet order: Bank & Cash, Assets, Loans & Payments, then Liabilities & Other. Main-account totals remain separated by currency.")
 ''',
-    '''            Text("Balance Sheet order: Bank & Cash, Assets, Receivables, Payables & Loan Liabilities, then Liabilities & Other. Main-account totals remain separated by currency.")
+    '''            Text("Payments move automatically: positive balances are Receivables and negative balances are Payables. Native account nature remains unchanged.")
+''',
+)
+replace_once(
+    coa,
+    '''    private func effectiveBucket(for account: LedgerAccount) -> BalanceSheetBucket {
+        if let parent = store.account(withID: account.parentAccountID) {
+            return directBucket(for: parent)
+        }
+        return directBucket(for: account)
+    }
+''',
+    '''    private func effectiveBucket(for account: LedgerAccount) -> BalanceSheetBucket {
+        if account.group == .payments {
+            return directBucket(for: account)
+        }
+        if let parent = store.account(withID: account.parentAccountID) {
+            return directBucket(for: parent)
+        }
+        return directBucket(for: account)
+    }
 ''',
 )
 replace_once(
@@ -636,11 +738,14 @@ replace_once(
 ''',
     '''    private func directBucket(for account: LedgerAccount) -> BalanceSheetBucket {
         let nature = account.nature ?? .unassigned
-        if nature == .receivable { return .receivables }
-        if nature == .payable || nature == .loan { return .payables }
         if account.group == .payments {
-            return nature == .receivable ? .receivables : .payables
+            let current = store.balance(for: account)
+            if current < 0 { return .payables }
+            if current > 0 { return .receivables }
+            return account.openingBalance < 0 ? .payables : .receivables
         }
+        if nature == .loan || nature == .payable { return .payables }
+        if nature == .receivable { return .receivables }
         if nature == .asset || account.group == .assets { return .assets }
         if nature == .bank || account.group == .qatar || account.group == .pakistan { return .bank }
         return .liabilitiesOther
@@ -648,4 +753,4 @@ replace_once(
 ''',
 )
 
-print("Added Receivable/Payable automation, payment grouping, COA placement, and payment-to-bank income rules.")
+print("Classified Payments by live balance and rebuilt Financial Summary with non-duplicating Money In/Out buckets.")
