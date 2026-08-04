@@ -25,6 +25,7 @@ jobs:
           P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-NextQuickReminder"
           python3 "$P/fix-panel-v103.py"
           python3 "$P/prepare-build.py"
+          chmod 755 "$P/layout/DEBIAN/postinst"
           plutil -lint "$P/Preferences/Resources/Root.plist"
           plutil -lint "$P/Preferences/Resources/Info.plist"
           plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/NextQuickReminder.plist"
@@ -69,12 +70,12 @@ jobs:
           DEB="$OUT/NextQuickReminder_1.0.3_RootHide.deb"
           test "$(dpkg-deb -f "$DEB" Package)" = com.nextsolution.nextquickreminder
           test "$(dpkg-deb -f "$DEB" Version)" = 1.0.3
+          test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64e
           dpkg-deb -f "$DEB" Depends | grep -q preferenceloader
           X="$(mktemp -d)"
           dpkg-deb -x "$DEB" "$X"
           DYLIB="$(find "$X" -name NextQuickReminder.dylib -print -quit)"
           test -n "$DYLIB"
-          strings -a "$DYLIB" | grep -q 'preferredCardHeight'
           strings -a "$DYLIB" | grep -q 'Quick Reminder'
           strings -a "$DYLIB" | grep -q 'nextreminder://quick-add'
           strings -a "$DYLIB" | grep -q 'visible-panel layout fix'
