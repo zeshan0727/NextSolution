@@ -23,6 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-NextQuickReminder"
+          python3 "$P/prepare-build.py"
           python3 -m py_compile NextReminderApp/ci/patch_v144.py NextReminderApp/ci/adjust_build_v144.py
           grep -q 'QuickTweakConsoleView' NextReminderApp/ci/patch_v144.py
           grep -q 'quick-tweak-console.json' "$P/ConsoleBridge.m"
