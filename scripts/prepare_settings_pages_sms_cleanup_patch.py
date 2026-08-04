@@ -19,6 +19,57 @@ if count != 1:
     raise RuntimeError(f"Expected one SMS state-anchor patch, found {count}")
 text = text.replace(old, new, 1)
 
+old_autosave = """console_text = console_text.replace(
+    '''        .onAppear {
+            configuration = SMSImportConsoleService.loadConfiguration()
+            applySuggestedMappings()
+            refresh()
+        }
+        .onReceive(timer) { _ in refresh() }
+''',
+    '''        .onAppear {
+            loadingConfiguration = true
+            configuration = SMSImportConsoleService.loadConfiguration()
+            applySuggestedMappings()
+            loadingConfiguration = false
+            persistConfigurationSilently()
+            refresh()
+        }
+        .onChange(of: configuration) { _ in
+            guard !loadingConfiguration else { return }
+            persistConfigurationSilently()
+        }
+        .onReceive(timer) { _ in refresh() }
+''',
+    1,
+)
+"""
+new_autosave = """autosave_pattern = re.compile(
+    r'''(?s)(        \\.onAppear \\{\\n.*?            refresh\\(\\)\\n        \\}\\n)(        \\.onReceive\\(timer\\) \\{ _ in refresh\\(\\) \\}\\n)'''
+)
+autosave_replacement = r'''        .onAppear {
+            loadingConfiguration = true
+            configuration = SMSImportConsoleService.loadConfiguration()
+            applySuggestedMappings()
+            loadingConfiguration = false
+            persistConfigurationSilently()
+            refresh()
+        }
+        .onChange(of: configuration) { _ in
+            guard !loadingConfiguration else { return }
+            persistConfigurationSilently()
+        }
+        .onReceive(timer) { _ in refresh() }
+'''
+console_text, autosave_count = autosave_pattern.subn(autosave_replacement, console_text, count=1)
+if autosave_count != 1:
+    raise RuntimeError(f"Expected one SMS settings lifecycle block, found {autosave_count}")
+"""
+count = text.count(old_autosave)
+if count != 1:
+    raise RuntimeError(f"Expected one old SMS auto-save source block, found {count}")
+text = text.replace(old_autosave, new_autosave, 1)
+
 diagnostics = r'''
 
 # Build-time diagnostics for strict workflow assertions.
@@ -55,4 +106,4 @@ if "# Build-time diagnostics for strict workflow assertions." not in text:
     text += diagnostics
 
 path.write_text(text, encoding="utf-8")
-print("Prepared the SMS console patch with a diagnostics-independent state anchor and explicit validation counts.")
+print("Prepared stable SMS state and auto-save anchors with explicit validation counts.")
