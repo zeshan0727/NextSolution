@@ -1,4 +1,5 @@
 from pathlib import Path
+import runpy
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,6 +31,11 @@ replace_once(
                     }
                     NavigationLink { ChartOfAccountsView() } label: {
 ''',
+)
+
+runpy.run_path(
+    str(ROOT / "scripts/fix_professional_report_export_compile.py"),
+    run_name="__main__",
 )
 
 print("Added the professional PDF and Excel Report Export Center to Reports.")
