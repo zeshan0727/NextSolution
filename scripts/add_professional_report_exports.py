@@ -42,6 +42,10 @@ runpy.run_path(
     run_name="__main__",
 )
 runpy.run_path(
+    str(ROOT / "scripts/prepare_sample_c_report_anchors.py"),
+    run_name="__main__",
+)
+runpy.run_path(
     str(ROOT / "scripts/apply_sample_c_screen_matched_exports.py"),
     run_name="__main__",
 )
