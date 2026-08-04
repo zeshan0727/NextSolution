@@ -8,6 +8,8 @@
         <key>cell</key><string>PSLinkCell</string>
         <key>detail</key><string>NQRRootListController</string>
         <key>label</key><string>Next Quick Reminder</string>
+        <key>isController</key><true/>
+        <key>defaults</key><string>com.nextsolution.nextquickreminder</string>
     </dict>
 </dict>
 </plist>
