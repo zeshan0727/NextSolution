@@ -71,6 +71,7 @@ jobs:
           python3 scripts/add_fawran_transfer_and_editable_sms_review.py
           python3 scripts/fix_fawran_regex_escape.py
           python3 scripts/fix_financial_summary_auto_sms_and_compact_settings.py
+          python3 scripts/prepare_settings_pages_sms_cleanup_patch.py
           python3 scripts/add_settings_pages_custom_sms_and_log_cleanup.py
 
       - name: Install build tools
