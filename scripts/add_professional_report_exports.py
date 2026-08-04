@@ -41,5 +41,9 @@ runpy.run_path(
     str(ROOT / "scripts/add_report_downloads_and_qar_consolidation.py"),
     run_name="__main__",
 )
+runpy.run_path(
+    str(ROOT / "scripts/apply_sample_c_screen_matched_exports.py"),
+    run_name="__main__",
+)
 
-print("Added professional reports, per-report downloads, and QAR/PKR consolidation.")
+print("Added professional reports with approved Sample C screen-matched exports.")
