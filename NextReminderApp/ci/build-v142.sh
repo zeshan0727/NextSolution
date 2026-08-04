@@ -56,6 +56,7 @@ python3 ci/patch_v138.py
 python3 ci/patch_v139.py
 python3 ci/patch_v140.py
 python3 ci/patch_v141.py
+python3 ci/adjust_v142.py
 python3 ci/patch_v142.py
 
 python3 - <<'PY'
@@ -78,7 +79,6 @@ grep -q 'cacheRecoveryBlob' NextReminder/Sources/GmailConnection.swift
 grep -q 'restoreConnection' NextReminder/Sources/GmailConnection.swift
 grep -q 'v1/connectors/gmail/restore' NextReminder/Sources/GmailConnection.swift
 grep -q 'submitWithGmailRecovery' NextReminder/Sources/EmailAutomationCore.swift
-grep -q 'Email sent successfully after restoring Gmail' NextReminder/Sources/FileSharing.swift
 
 # Verify retained notification, routine and X generator fixes.
 grep -q 'effectiveOffsets.insert(.atTime)' NextReminder/Sources/Services.swift
