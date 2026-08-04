@@ -70,6 +70,32 @@ if count != 1:
     raise RuntimeError(f"Expected one old SMS auto-save source block, found {count}")
 text = text.replace(old_autosave, new_autosave, 1)
 
+old_destination = """    '''static NSString *CashDestinationAccountID(NSDictionary *config, NSDictionary *ledger) {
+    NSArray *accounts = ledger[@\"accounts\"] ?: @[];
+    NSString *configured = config[@\"cashAccountID\"];
+    if (AccountExists(accounts, configured)) return configured;
+    return AccountIDByName(accounts, @[@\"cash\"]);
+}
+
+static NSString *CategoryForVendor(NSDictionary *ledger, NSString *vendor) {
+''',
+)
+"""
+new_destination = """    '''static NSString *CashDestinationAccountID(NSDictionary *config, NSDictionary *ledger) {
+    NSArray *accounts = ledger[@\"accounts\"] ?: @[];
+    NSString *configured = config[@\"cashAccountID\"];
+    if (AccountExists(accounts, configured)) return configured;
+    return AccountIDByName(accounts, @[@\"cash\"]);
+}
+
+''',
+)
+"""
+count = text.count(old_destination)
+if count != 1:
+    raise RuntimeError(f"Expected one duplicate CategoryForVendor source block, found {count}")
+text = text.replace(old_destination, new_destination, 1)
+
 diagnostics = r'''
 
 # Build-time diagnostics for strict workflow assertions.
@@ -106,4 +132,4 @@ if "# Build-time diagnostics for strict workflow assertions." not in text:
     text += diagnostics
 
 path.write_text(text, encoding="utf-8")
-print("Prepared stable SMS state and auto-save anchors with explicit validation counts.")
+print("Prepared stable SMS state, auto-save, and daemon function anchors with explicit validation counts.")
