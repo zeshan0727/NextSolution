@@ -6,6 +6,12 @@ text = path.read_text()
 
 text = text.replace('static NSString *NQRSelectedGesture = @"statusbar";', 'static NSString *NQRSelectedGesture = @"off";', 1)
 
+# Remove the old startup file logger completely. Its NSFileManager path was active
+# during SpringBoard launch and is not required by the new in-app console.
+log_path_start = text.index('static NSString *NQRLogPath(void) {')
+log_path_end = text.index('static void NQRLog(NSString *format, ...) NS_FORMAT_FUNCTION(1,2);', log_path_start)
+text = text[:log_path_start] + text[log_path_end:]
+
 start = text.index('static void NQRLog(NSString *format, ...) NS_FORMAT_FUNCTION(1,2);')
 end = text.index('static id NQRCopyPreference', start)
 safe_log = r'''static NSString *NQRLastRuntimeLog = @"Tweak loaded; no gesture has been activated yet.";
@@ -27,7 +33,9 @@ text = text[:start] + safe_log + text[end:]
 
 text = text.replace('? gesture : @"statusbar";', '? gesture : @"off";', 1)
 
-start = text.index('static void NQRInstallVolumeHook(void) {')
+# Remove all private SBVolumeControl method-hook helpers. Volume detection now uses
+# only the public system-volume notification and is installed on demand.
+start = text.index('static void (*NQROriginalVolumeUp)')
 end = text.index('\nstatic void NQRApplyGestureSelection(void)', start)
 safe_volume = r'''static BOOL NQRVolumeObserverInstalled = NO;
 
