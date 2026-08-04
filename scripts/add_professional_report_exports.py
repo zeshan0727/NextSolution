@@ -37,5 +37,9 @@ runpy.run_path(
     str(ROOT / "scripts/fix_professional_report_export_compile.py"),
     run_name="__main__",
 )
+runpy.run_path(
+    str(ROOT / "scripts/add_report_downloads_and_qar_consolidation.py"),
+    run_name="__main__",
+)
 
-print("Added the professional PDF and Excel Report Export Center to Reports.")
+print("Added professional reports, per-report downloads, and QAR/PKR consolidation.")
