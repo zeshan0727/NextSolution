@@ -6,7 +6,7 @@ INSTALL_TARGET_PROCESSES = SpringBoard
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = NextQuickReminder
-NextQuickReminder_FILES = Tweak.xm
+NextQuickReminder_FILES = Tweak.xm ConsoleBridge.m
 NextQuickReminder_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-nullability-completeness
 NextQuickReminder_FRAMEWORKS = UIKit Foundation CoreMotion
 NextQuickReminder_LDFLAGS = -Wl,-segalign,4000
