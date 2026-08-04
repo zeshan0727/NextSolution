@@ -9,9 +9,23 @@ SWIFT_B64 = 'H4sIAGzfcWoC/71aUXPbNhJ+969AOTcdck7hOOn0Lqep67OtpPHViV3Lzs1N0/FAJCS
 swift_path = SOURCES / "QuickTweakConsole.swift"
 swift_path.write_bytes(gzip.decompress(base64.b64decode(SWIFT_B64)))
 swift_text = swift_path.read_text()
-if "import Darwin" not in swift_text:
-    swift_text = swift_text.replace("import Foundation\n", "import Foundation\nimport Darwin\n", 1)
-    swift_path.write_text(swift_text)
+if "import CoreFoundation" not in swift_text:
+    swift_text = swift_text.replace("import Foundation\n", "import Foundation\nimport CoreFoundation\n", 1)
+old_notify = """        commandNotification.withCString { pointer in
+            _ = notify_post(pointer)
+        }"""
+new_notify = """        let notificationName = CFNotificationName(rawValue: commandNotification as CFString)
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            notificationName,
+            nil,
+            nil,
+            true
+        )"""
+if old_notify not in swift_text:
+    raise SystemExit("Quick tweak command notification anchor not found")
+swift_text = swift_text.replace(old_notify, new_notify, 1)
+swift_path.write_text(swift_text)
 
 settings = SOURCES / "Settings.swift"
 text = settings.read_text()
