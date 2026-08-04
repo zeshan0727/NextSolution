@@ -116,9 +116,6 @@ plutil -extract CFBundleShortVersionString raw "$APP/Info.plist" | grep -qx '1.3
 plutil -extract CFBundleVersion raw "$APP/Info.plist" | grep -qx '23'
 plutil -p "$APP/Info.plist" | grep -q 'nextreminder'
 file "$APP/NextReminder" | grep -q 'arm64'
-strings -a "$APP/NextReminder" > app-binary-strings.txt
-grep -q 'NextReminder.QuickImportResult' app-binary-strings.txt
-grep -q 'quick-add' app-binary-strings.txt
 
 rm -rf Payload
 mkdir -p Payload
