@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextquickreminder
 Name: Next Quick Reminder
-Version: 1.0.2
+Version: 1.0.3
 Architecture: iphoneos-arm64
-Description: RootHide quick reminder panel with one selectable gesture, safe SpringBoard startup, in-app console, heartbeat commands and diagnostics.
+Description: RootHide quick reminder panel with one selectable gesture, safe SpringBoard startup, visible persistent form, in-app console and diagnostics.
 Maintainer: Next Solution - Zeeshan Barvi
 Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
