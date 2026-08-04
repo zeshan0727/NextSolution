@@ -37,8 +37,7 @@ if "quickReminderImportMessage" not in root_text:
     )
     replace_once(
         root,
-        '''        .confirmationDialog(
-            "What would you like to create?",''',
+        '''        .sheet(item: $openedAutomation) { item in''',
         '''        .onReceive(NotificationCenter.default.publisher(for: .nextQuickReminderImportResult)) { notification in
             quickReminderImportMessage = notification.object as? String
             selectedTab = .reminders
@@ -51,8 +50,7 @@ if "quickReminderImportMessage" not in root_text:
         } message: {
             Text(quickReminderImportMessage ?? "Quick reminder processed.")
         }
-        .confirmationDialog(
-            "What would you like to create?",'''
+        .sheet(item: $openedAutomation) { item in'''
     )
 
 # Version metadata.
