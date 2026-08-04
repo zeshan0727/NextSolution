@@ -1,13 +1,13 @@
 {
   "name": "next-reminder-scheduler",
-  "version": "1.3.8",
+  "version": "1.3.12",
   "private": true,
-  "description": "Secure Gmail OAuth, connection health monitoring, and exact-time email scheduler for Next Reminder",
+  "description": "Secure Gmail OAuth, automatic connector recovery, connection health monitoring, and exact-time email scheduler for Next Reminder",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node apply-v138.js && node server.js",
-    "check": "node apply-v138.js && node --check server.js"
+    "start": "node apply-v138.js && node apply-v1312.js && node server.js",
+    "check": "node apply-v138.js && node apply-v1312.js && node --check server.js"
   },
   "engines": {
     "node": ">=20"
