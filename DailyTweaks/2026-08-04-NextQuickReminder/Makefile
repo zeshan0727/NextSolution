@@ -7,7 +7,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = NextQuickReminder
 NextQuickReminder_FILES = Tweak.xm ConsoleBridge.m
-NextQuickReminder_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-nullability-completeness
+NextQuickReminder_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function
 NextQuickReminder_FRAMEWORKS = UIKit Foundation CoreMotion
 NextQuickReminder_LDFLAGS = -Wl,-segalign,4000
 
