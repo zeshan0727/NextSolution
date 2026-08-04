@@ -1,0 +1,69 @@
+name: Publish Brightness Edge Haptic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-brightness-edge-haptic.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: brew install dpkg ldid xz zstd
+      - name: Test decision logic
+        run: |
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-BrightnessEdgeHaptic"
+          clang -std=c11 -Wall -Wextra -Werror -I"$P/Tests" "$P/Tests/test_brightness_decision.c" -o "$RUNNER_TEMP/tests"
+          "$RUNNER_TEMP/tests"
+          grep -q UIScreenBrightnessDidChangeNotification "$P/Tweak.xm"
+          grep -q 'com.apple.springboard' "$P/BrightnessEdgeHaptic.plist"
+          plutil -lint "$P/Preferences/Resources/Root.plist"
+          plutil -lint "$P/Preferences/Resources/Info.plist"
+          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/BrightnessEdgeHaptic.plist"
+      - name: Build rootless
+        run: |
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-BrightnessEdgeHaptic"
+          mkdir -p "$RUNNER_TEMP/out"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos"
+          export THEOS="$RUNNER_TEMP/theos" THEOS_PACKAGE_SCHEME=rootless
+          make -C "$P" clean package FINALPACKAGE=1
+          cp "$(find "$P/packages" -name '*_iphoneos-arm64.deb' -print -quit)" "$RUNNER_TEMP/out/BrightnessEdgeHaptic_1.0.0_Rootless.deb"
+      - name: Build RootHide
+        run: |
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-BrightnessEdgeHaptic"
+          git clone --recursive https://github.com/roothide/theos.git "$RUNNER_TEMP/theos-rh"
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          cp "$(find "$P/packages" -name '*_iphoneos-arm64e.deb' -print -quit)" "$RUNNER_TEMP/out/BrightnessEdgeHaptic_1.0.0_RootHide.deb"
+      - name: Validate package contents
+        run: |
+          for d in "$RUNNER_TEMP/out"/*.deb; do
+            test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.brightnessedgehaptic
+            test "$(dpkg-deb -f "$d" Version)" = 1.0.0
+            x="$(mktemp -d)"; dpkg-deb -x "$d" "$x"
+            find "$x" -name BrightnessEdgeHaptic.dylib | grep -q .
+            find "$x" -path '*BrightnessEdgeHapticPreferences.bundle/Root.plist' | grep -q .
+            find "$x" -path '*PreferenceLoader/Preferences/BrightnessEdgeHaptic.plist' | grep -q .
+          done
+      - name: Publish packages and indexes
+        run: |
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git pull --rebase origin main
+          mkdir -p debfiles
+          cp "$RUNNER_TEMP/out"/*.deb debfiles/
+          dpkg-scanpackages -m debfiles /dev/null > Packages
+          sed -i '' 's|^Filename: debfiles/|Filename: ./debfiles/|' Packages
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          git add debfiles/BrightnessEdgeHaptic_1.0.0_Root*.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst
+          git commit -m 'Publish Brightness Edge Haptic 1.0.0'
+          git push origin main
