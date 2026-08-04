@@ -96,6 +96,25 @@ if count != 1:
     raise RuntimeError(f"Expected one duplicate CategoryForVendor source block, found {count}")
 text = text.replace(old_destination, new_destination, 1)
 
+loan_reference_cleanup = r'''
+
+# Remove stale draft-approval references after the Loan Payment setting is retired.
+for swift_path in [
+    "DailyLedger/Services/LedgerStore.swift",
+    "DailyLedger/Views/SMSDraftInboxView.swift",
+]:
+    generated = read(swift_path)
+    stale_count = generated.count("configuration.loanPaymentAccountID")
+    if stale_count > 0:
+        generated = generated.replace(
+            "configuration.loanPaymentAccountID",
+            "(nil as String?)"
+        )
+        write(swift_path, generated)
+'''
+if "# Remove stale draft-approval references after the Loan Payment setting is retired." not in text:
+    text += loan_reference_cleanup
+
 diagnostics = r'''
 
 # Build-time diagnostics for strict workflow assertions.
@@ -132,4 +151,4 @@ if "# Build-time diagnostics for strict workflow assertions." not in text:
     text += diagnostics
 
 path.write_text(text, encoding="utf-8")
-print("Prepared stable SMS state, auto-save, and daemon function anchors with explicit validation counts.")
+print("Prepared stable SMS state, auto-save, daemon functions, and retired Loan Payment references.")
