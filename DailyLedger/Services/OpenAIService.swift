@@ -42,6 +42,7 @@ final class OpenAIService: ObservableObject {
         guard SecItemAdd(item as CFDictionary, nil) == errSecSuccess else {
             throw OpenAIServiceError.server("The OpenAI API key could not be saved securely.")
         }
+        try? ProtectedSecretStore.shared.save(value, for: Self.service)
     }
 
     func loadAPIKey() -> String? {
@@ -49,15 +50,22 @@ final class OpenAIService: ObservableObject {
             kSecAttrService as String: Self.service, kSecAttrAccount as String: Self.account,
             kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        if SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+           let data = result as? Data,
+           let value = String(data: data, encoding: .utf8) {
+            return value
+        }
+        guard let protectedValue = ProtectedSecretStore.shared.value(for: Self.service),
+              !protectedValue.isEmpty else { return nil }
+        try? saveAPIKey(protectedValue)
+        return protectedValue
     }
 
     func deleteAPIKey() {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.service, kSecAttrAccount as String: Self.account]
         SecItemDelete(query as CFDictionary)
+        ProtectedSecretStore.shared.removeValue(for: Self.service)
     }
 
     func request(messages: [OpenAIMessage], model: String, maxTokens: Int = 500) async throws -> String {

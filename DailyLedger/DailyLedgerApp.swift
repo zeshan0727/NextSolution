@@ -8,6 +8,7 @@ struct DailyLedgerApp: App {
 
     init() {
         BackupSyncService.shared.registerBackgroundTask()
+        BudgetNotificationService.configure()
     }
 
     var body: some Scene {

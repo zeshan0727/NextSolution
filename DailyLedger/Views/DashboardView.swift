@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 private enum DashboardDatePreset: String, CaseIterable, Identifiable {
     case today = "Today"
@@ -12,6 +13,33 @@ private enum DashboardDatePreset: String, CaseIterable, Identifiable {
 private enum SpendingCardKind: String, CaseIterable, Identifiable {
     case today, yesterday, thisWeek, lastWeek
     var id: String { rawValue }
+}
+
+private struct NextSolutionHeaderLogo: View {
+    var body: some View {
+        Group {
+            if let logo = NextSolutionLogoAsset.image {
+                Image(uiImage: logo)
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFit()
+            } else {
+                Image(systemName: "shippingbox.fill")
+                    .font(.system(size: 21, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppTheme.balanceGradient)
+            }
+        }
+        .frame(width: 48, height: 48)
+        .clipShape(Circle())
+        .overlay {
+            Circle()
+                .stroke(.white.opacity(0.24), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+        .accessibilityLabel("Next Solution logo")
+    }
 }
 
 struct DashboardView: View {
@@ -297,11 +325,7 @@ struct DashboardView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Image(systemName: "wallet.pass.fill")
-                .font(.system(size: 21, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 48, height: 48)
-                .background(AppTheme.balanceGradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            NextSolutionHeaderLogo()
         }
         .padding(.top, 16)
     }

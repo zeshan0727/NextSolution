@@ -56,6 +56,82 @@ private struct NatureCurrencyBalance: Identifiable {
     var id: String { currency }
 }
 
+private struct FinanceSummaryCustomCard: Identifiable, Codable, Equatable {
+    let id: UUID
+    var title: String
+    var currencyCode: String
+    var accountIDs: [UUID]
+    var balanceMode: String?
+    var balanceDate: Date?
+
+    init(
+        id: UUID = UUID(),
+        title: String = "",
+        currencyCode: String,
+        accountIDs: [UUID] = [],
+        balanceMode: String? = FinanceSummaryBalanceMode.current.rawValue,
+        balanceDate: Date? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.currencyCode = currencyCode
+        self.accountIDs = accountIDs
+        self.balanceMode = balanceMode
+        self.balanceDate = balanceDate
+    }
+}
+
+private enum FinanceSummaryBalanceMode: String, CaseIterable, Identifiable {
+    case current
+    case closingDate
+    case reportPeriodEnd
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .current: return "Current"
+        case .closingDate: return "Closing Date"
+        case .reportPeriodEnd: return "Report End"
+        }
+    }
+}
+
+private enum FinanceSummaryCardStorage {
+    static func decode(_ value: String) -> [FinanceSummaryCustomCard] {
+        guard let data = value.data(using: .utf8),
+              let cards = try? JSONDecoder().decode([FinanceSummaryCustomCard].self, from: data) else {
+            return []
+        }
+        return cards
+    }
+
+    static func encode(_ cards: [FinanceSummaryCustomCard]) -> String {
+        guard let data = try? JSONEncoder().encode(cards),
+              let value = String(data: data, encoding: .utf8) else { return "[]" }
+        return value
+    }
+}
+
+private struct FinanceSummaryFormula: Codable, Equatable {
+    var positiveAccountIDs: [UUID] = []
+    var negativeAccountIDs: [UUID] = []
+    var closingBalanceAccountIDs: [UUID] = []
+    var closingBalanceDate: Date?
+
+    static func decode(_ value: String) -> Self {
+        guard let data = value.data(using: .utf8),
+              let formula = try? JSONDecoder().decode(Self.self, from: data) else { return Self() }
+        return formula
+    }
+
+    func encoded() -> String {
+        guard let data = try? JSONEncoder().encode(self),
+              let value = String(data: data, encoding: .utf8) else { return "" }
+        return value
+    }
+}
+
 struct ReportsView: View {
     @State private var searchText = ""
 
@@ -66,8 +142,11 @@ struct ReportsView: View {
                     NavigationLink { ReportComparisonView() } label: {
                         Label("Compare Reports", systemImage: "chart.xyaxis.line")
                     }
-                    NavigationLink { BudgetReportView() } label: {
-                        Label("Budget Planner", systemImage: "target")
+                    NavigationLink { BudgetConsumptionReportView() } label: {
+                        Label("Budget Consumption", systemImage: "chart.bar.doc.horizontal")
+                    }
+                    NavigationLink { BudgetPlannerView() } label: {
+                        Label("Budget Suggestions", systemImage: "wand.and.stars")
                     }
                     NavigationLink { CustomAccountReportView() } label: {
                         Label("Custom Account Report", systemImage: "slider.horizontal.3")
@@ -223,30 +302,6 @@ private struct ReportComparisonView: View {
             return $0.type == .expense &&
                 store.account(withID: $0.accountID)?.currencyCode == store.currencyCode
         }.count
-    }
-}
-
-private struct BudgetReportView: View {
-    @EnvironmentObject private var store: LedgerStore
-    @AppStorage("MonthlyIncomePrimary") private var primaryIncome = 0.0
-    @AppStorage("MonthlyIncomeSecondary") private var secondaryIncome = 0.0
-    var body: some View {
-        List {
-            Section("Monthly Income") {
-                Stepper("Primary: \(DisplayFormat.currency(Decimal(primaryIncome), code: store.currencyCode))", value: $primaryIncome, in: 0...1_000_000, step: 500)
-                Stepper("Other fixed: \(DisplayFormat.currency(Decimal(secondaryIncome), code: store.currencyCode))", value: $secondaryIncome, in: 0...1_000_000, step: 500)
-            }
-            Section("Suggested Budget") {
-                budget("Essentials", 0.45); budget("Savings & goals", 0.20)
-                budget("Family & flexible", 0.20); budget("Personal", 0.10); budget("Buffer", 0.05)
-            }
-        }
-        .navigationTitle("Budget Planner")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-    private var total: Decimal { Decimal(primaryIncome + secondaryIncome) }
-    private func budget(_ title: String, _ ratio: Decimal) -> some View {
-        LabeledContent(title, value: DisplayFormat.currency(total * ratio, code: store.currencyCode))
     }
 }
 
@@ -442,6 +497,8 @@ private struct ReportDetailView: View {
     @AppStorage("ReportPeriodSelection") private var storedPeriod = ReportPeriod.month.rawValue
     @AppStorage("ReportCustomStart") private var storedCustomStart = Date().timeIntervalSince1970
     @AppStorage("ReportCustomEnd") private var storedCustomEnd = Date().timeIntervalSince1970
+    @AppStorage("FinanceSummaryCustomCardsV1") private var storedCustomSummaryCards = "[]"
+    @AppStorage("FinanceSummaryFormulaV1") private var storedFinanceSummaryFormula = ""
     @State private var anchorDate = Date()
     @State private var selectedTransaction: LedgerTransaction?
     @State private var showingCustomDates = false
@@ -449,6 +506,8 @@ private struct ReportDetailView: View {
     @State private var draftEndDate = Date()
     @State private var searchText = ""
     @State private var cachedExpenseTransactions: [LedgerTransaction] = []
+    @State private var editingSummaryCard: FinanceSummaryCustomCard?
+    @State private var editingFormula = false
 
     var body: some View {
         NavigationStack {
@@ -479,6 +538,20 @@ private struct ReportDetailView: View {
             .background(AppTheme.page)
             .navigationTitle(kind.rawValue)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if kind == .summary {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            editingSummaryCard = FinanceSummaryCustomCard(
+                                currencyCode: store.currencyCode
+                            )
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                        }
+                        .accessibilityLabel("Add custom account balance card")
+                    }
+                }
+            }
             .searchable(text: $searchText, prompt: "Search report transactions")
             .onAppear(perform: refreshExpenseCache)
             .onChange(of: anchorDate) { _ in refreshExpenseCache() }
@@ -520,6 +593,24 @@ private struct ReportDetailView: View {
                             }
                         }
                     }
+                }
+            }
+            .fullScreenCover(item: $editingSummaryCard) { card in
+                NavigationStack {
+                    FinanceSummaryCardEditor(
+                        card: card,
+                        reportPeriodEnd: selectedInterval.end
+                    )
+                        .environmentObject(store)
+                }
+            }
+            .sheet(isPresented: $editingFormula) {
+                NavigationStack {
+                    FinanceSummaryFormulaEditor(
+                        storedFormula: $storedFinanceSummaryFormula,
+                        defaultClosingDate: formulaClosingDate
+                    )
+                        .environmentObject(store)
                 }
             }
         }
@@ -598,92 +689,228 @@ private struct ReportDetailView: View {
 
     private var totalCards: some View {
         VStack(spacing: 12) {
-            ReportTotalCard(
-                title: "Net Balance",
+            FinanceSummaryFormulaCard(
                 value: financeSummaryNetBalance,
                 currencyCode: store.currencyCode,
-                icon: "equal.circle.fill",
-                color: financeSummaryNetBalance >= 0 ? AppTheme.purple : AppTheme.red
+                income: totals.income,
+                loanIncrease: convertedLoanIncrease,
+                positiveAccounts: formulaPositiveAccounts,
+                positiveAccountValue: formulaPositiveMovement,
+                expenses: totals.expense,
+                loanDecrease: convertedLoanDecrease,
+                negativeAccounts: formulaNegativeAccounts,
+                negativeAccountValue: formulaNegativeMovement,
+                closingAccounts: formulaClosingAccounts,
+                closingBalance: formulaClosingBalance,
+                closingDate: formulaClosingDate,
+                interval: selectedInterval,
+                onEdit: { editingFormula = true }
             )
+            .environmentObject(store)
             Text("PKR loan movement converted at fixed rate: PKR 77 = QAR 1.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 12) {
-                NavigationLink {
-                    PeriodTransactionsView(kind: .income, interval: selectedInterval)
-                } label: {
-                    ReportTotalCard(
-                        title: "Income",
-                        value: totals.income,
-                        currencyCode: store.currencyCode,
-                        icon: "arrow.down.left.circle.fill",
-                        color: AppTheme.green,
-                        compact: true
-                    )
+            ForEach(customSummaryCards) { card in
+                let accountCount = validAccountCount(card)
+                let timingLabel = customSummaryTimingLabel(card)
+                HStack(spacing: 8) {
+                    Button {
+                        editingSummaryCard = card
+                    } label: {
+                        FinanceSummaryBalanceCard(
+                            title: customSummaryTitle(card),
+                            value: customSummaryBalance(card),
+                            currencyCode: card.currencyCode,
+                            accountCount: accountCount,
+                            timingLabel: timingLabel
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    Menu {
+                        Button {
+                            editingSummaryCard = card
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            deleteCustomSummaryCard(card.id)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle.fill")
+                            .font(.title2)
+                            .frame(width: 42, height: 42)
+                    }
+                    .accessibilityLabel("Options for \(customSummaryTitle(card))")
                 }
-                .buttonStyle(.plain)
-                NavigationLink {
-                    PeriodTransactionsView(kind: .expenses, interval: selectedInterval)
-                } label: {
-                    ReportTotalCard(
-                        title: "Expenses",
-                        value: totals.expense,
-                        currencyCode: store.currencyCode,
-                        icon: "arrow.up.right.circle.fill",
-                        color: AppTheme.red,
-                        compact: true
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            ForEach(store.loanNetMovements(in: selectedInterval)) { movement in
-                NavigationLink {
-                    LoanMovementReportView()
-                } label: {
-                    ReportTotalCard(
-                        title: "\(movement.currencyCode) Loan Movement · \(movement.netAmount > 0 ? "Increased" : "Decreased")",
-                        value: abs(movement.netAmount),
-                        currencyCode: movement.currencyCode,
-                        icon: movement.netAmount > 0 ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
-                        color: movement.netAmount > 0 ? AppTheme.orange : AppTheme.green,
-                        secondaryText: movement.currencyCode.uppercased() == "PKR"
-                            ? "QAR equivalent: \(DisplayFormat.currency(abs(movement.netAmount) / Decimal(77), code: "QAR"))"
-                            : nil
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            if convertedLoanMovement != 0 {
-                ReportTotalCard(
-                    title: "Net Loan Movement · \(convertedLoanMovement > 0 ? "Increased" : "Decreased")",
-                    value: abs(convertedLoanMovement),
-                    currencyCode: "QAR",
-                    icon: convertedLoanMovement > 0
-                        ? "arrow.up.right.circle.fill"
-                        : "arrow.down.right.circle.fill",
-                    color: convertedLoanMovement > 0 ? AppTheme.orange : AppTheme.green,
-                    secondaryText: "QAR movement + PKR movement ÷ 77"
-                )
             }
         }
     }
 
-    private var financeSummaryNetBalance: Decimal {
-        totals.income + convertedLoanMovement - totals.expense
+    private var customSummaryCards: [FinanceSummaryCustomCard] {
+        FinanceSummaryCardStorage.decode(storedCustomSummaryCards)
     }
 
-    private var convertedLoanMovement: Decimal {
-        store.loanNetMovements(in: selectedInterval).reduce(Decimal.zero) {
-            result, movement in
-            switch movement.currencyCode.uppercased() {
-            case "QAR":
-                return result + movement.netAmount
-            case "PKR":
-                return result + movement.netAmount / Decimal(77)
-            default:
-                return result
+    private func customSummaryTitle(_ card: FinanceSummaryCustomCard) -> String {
+        let title = card.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? "Selected Account Balance" : title
+    }
+
+    private func validAccounts(_ card: FinanceSummaryCustomCard) -> [LedgerAccount] {
+        let ids = Set(card.accountIDs)
+        return store.accounts.filter {
+            ids.contains($0.id) &&
+            $0.currencyCode.caseInsensitiveCompare(card.currencyCode) == .orderedSame
+        }
+    }
+
+    private func validAccountCount(_ card: FinanceSummaryCustomCard) -> Int {
+        validAccounts(card).count
+    }
+
+    private func customSummaryBalance(_ card: FinanceSummaryCustomCard) -> Decimal {
+        store.combinedBalance(
+            for: validAccounts(card),
+            before: customSummaryCutoff(card)
+        )
+    }
+
+    private func customSummaryCutoff(_ card: FinanceSummaryCustomCard) -> Date? {
+        switch FinanceSummaryBalanceMode(rawValue: card.balanceMode ?? "") ?? .current {
+        case .current:
+            return nil
+        case .closingDate:
+            let date = card.balanceDate ?? Date()
+            return Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: date))
+        case .reportPeriodEnd:
+            return selectedInterval.end
+        }
+    }
+
+    private func customSummaryTimingLabel(_ card: FinanceSummaryCustomCard) -> String {
+        switch FinanceSummaryBalanceMode(rawValue: card.balanceMode ?? "") ?? .current {
+        case .current:
+            return "Current balance"
+        case .closingDate:
+            return "Closing · \((card.balanceDate ?? Date()).formatted(date: .abbreviated, time: .omitted))"
+        case .reportPeriodEnd:
+            let closingDay = Calendar.current.date(byAdding: .day, value: -1, to: selectedInterval.end) ?? selectedInterval.end
+            return "Report closing · \(closingDay.formatted(date: .abbreviated, time: .omitted))"
+        }
+    }
+
+    private func deleteCustomSummaryCard(_ id: UUID) {
+        storedCustomSummaryCards = FinanceSummaryCardStorage.encode(
+            customSummaryCards.filter { $0.id != id }
+        )
+    }
+
+    private var financeSummaryNetBalance: Decimal {
+        totals.income
+            + convertedLoanIncrease
+            + formulaPositiveMovement
+            + formulaClosingBalance
+            - totals.expense
+            - convertedLoanDecrease
+            - formulaNegativeMovement
+    }
+
+    private var convertedLoanIncrease: Decimal { convertedLoanComponents.increase }
+    private var convertedLoanDecrease: Decimal { convertedLoanComponents.decrease }
+
+    private var convertedLoanComponents: (increase: Decimal, decrease: Decimal) {
+        let loanIDs = Set(store.accounts.filter {
+            $0.group == .payments || $0.nature == .loan
+        }.map(\.id))
+        var increase = Decimal.zero
+        var decrease = Decimal.zero
+        for transaction in store.transactions where selectedInterval.contains(transaction.date) {
+            if let sourceID = transaction.accountID,
+               loanIDs.contains(sourceID),
+               transaction.type == .expense || transaction.type == .transfer,
+               let account = store.account(withID: sourceID) {
+                increase += converted(transaction.amount, from: account.currencyCode)
             }
+            if transaction.type == .transfer,
+               let destinationID = transaction.destinationAccountID,
+               loanIDs.contains(destinationID),
+               let account = store.account(withID: destinationID) {
+                decrease += converted(transaction.destinationAmount ?? transaction.amount, from: account.currencyCode)
+            }
+        }
+        return (increase, decrease)
+    }
+
+    private var financeSummaryFormula: FinanceSummaryFormula {
+        FinanceSummaryFormula.decode(storedFinanceSummaryFormula)
+    }
+
+    private var formulaPositiveAccounts: [LedgerAccount] {
+        let closing = Set(financeSummaryFormula.closingBalanceAccountIDs)
+        return accounts(with: financeSummaryFormula.positiveAccountIDs.filter { !closing.contains($0) })
+    }
+
+    private var formulaNegativeAccounts: [LedgerAccount] {
+        let closing = Set(financeSummaryFormula.closingBalanceAccountIDs)
+        let positive = Set(formulaPositiveAccounts.map(\.id))
+        return accounts(with: financeSummaryFormula.negativeAccountIDs.filter {
+            !closing.contains($0) && !positive.contains($0)
+        })
+    }
+
+    private var formulaClosingAccounts: [LedgerAccount] {
+        accounts(with: financeSummaryFormula.closingBalanceAccountIDs)
+    }
+
+    private func accounts(with ids: [UUID]) -> [LedgerAccount] {
+        let selected = Set(ids)
+        return store.activeAccounts.filter { selected.contains($0.id) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private var formulaPositiveMovement: Decimal {
+        movement(for: formulaPositiveAccounts)
+    }
+
+    private var formulaNegativeMovement: Decimal {
+        movement(for: formulaNegativeAccounts)
+    }
+
+    private func movement(for accounts: [LedgerAccount]) -> Decimal {
+        accounts.reduce(Decimal.zero) { result, account in
+            let start = store.combinedBalance(for: [account], before: selectedInterval.start)
+            let end = store.combinedBalance(for: [account], before: selectedInterval.end)
+            return result + abs(converted(end - start, from: account.currencyCode))
+        }
+    }
+
+    private var formulaClosingBalance: Decimal {
+        formulaClosingAccounts.reduce(Decimal.zero) { result, account in
+            result + converted(
+                store.combinedBalance(for: [account], before: formulaClosingCutoff),
+                from: account.currencyCode
+            )
+        }
+    }
+
+    private var formulaClosingDate: Date {
+        financeSummaryFormula.closingBalanceDate ??
+            (Calendar.current.date(byAdding: .day, value: -1, to: selectedInterval.start) ?? selectedInterval.start)
+    }
+
+    private var formulaClosingCutoff: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: formulaClosingDate)) ?? selectedInterval.start
+    }
+
+    private func converted(_ amount: Decimal, from currency: String) -> Decimal {
+        if currency.caseInsensitiveCompare(store.currencyCode) == .orderedSame { return amount }
+        switch currency.uppercased() {
+        case "PKR" where store.currencyCode.uppercased() == "QAR": return amount / Decimal(77)
+        case "QAR" where store.currencyCode.uppercased() == "PKR": return amount * Decimal(77)
+        default: return amount
         }
     }
 
@@ -1005,6 +1232,759 @@ private struct ReportTotalCard: View {
         .padding(compact ? 13 : 16)
         .frame(maxWidth: .infinity)
         .background(.background, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
+    }
+}
+
+private struct FinanceSummaryBalanceCard: View {
+    let title: String
+    let value: Decimal
+    let currencyCode: String
+    let accountCount: Int
+    let timingLabel: String
+
+    var body: some View {
+        HStack(spacing: 13) {
+            Image(systemName: "wallet.pass.fill")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(
+                    LinearGradient(
+                        colors: [AppTheme.purple, AppTheme.blue],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(DisplayFormat.currency(value, code: currencyCode))
+                    .font(.title3.bold())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+                HStack(spacing: 5) {
+                    Label(timingLabel, systemImage: "calendar")
+                    Text("·")
+                    Text("\(accountCount) account\(accountCount == 1 ? "" : "s")")
+                }
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(AppTheme.purple)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(
+            LinearGradient(
+                colors: [Color(.systemBackground), AppTheme.purple.opacity(0.055)],
+                startPoint: .leading,
+                endPoint: .trailing
+            ),
+            in: RoundedRectangle(cornerRadius: 19, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 19, style: .continuous)
+                .stroke(AppTheme.purple.opacity(0.13), lineWidth: 1)
+        }
+    }
+}
+
+private struct FinanceSummaryFormulaCard: View {
+    @EnvironmentObject private var store: LedgerStore
+    let value: Decimal
+    let currencyCode: String
+    let income: Decimal
+    let loanIncrease: Decimal
+    let positiveAccounts: [LedgerAccount]
+    let positiveAccountValue: Decimal
+    let expenses: Decimal
+    let loanDecrease: Decimal
+    let negativeAccounts: [LedgerAccount]
+    let negativeAccountValue: Decimal
+    let closingAccounts: [LedgerAccount]
+    let closingBalance: Decimal
+    let closingDate: Date
+    let interval: DateInterval
+    let onEdit: () -> Void
+
+    var body: some View {
+        VStack(spacing: 13) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Net Balance")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text(DisplayFormat.currency(value, code: currencyCode))
+                        .font(.title2.bold())
+                        .minimumScaleFactor(0.65)
+                        .lineLimit(1)
+                    Text("For selected report period")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button(action: onEdit) {
+                    Label("Edit", systemImage: "pencil")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(AppTheme.purple.opacity(0.13), in: Capsule())
+                }
+            }
+
+            HStack(alignment: .top, spacing: 10) {
+                formulaColumn(
+                    title: "Added",
+                    icon: "plus",
+                    operatorSymbol: "+",
+                    color: AppTheme.green,
+                    fixedRows: [("Income", income), ("Loan Increase", loanIncrease)],
+                    accounts: positiveAccounts,
+                    aggregate: positiveAccountValue
+                )
+                formulaColumn(
+                    title: "Deducted",
+                    icon: "minus",
+                    operatorSymbol: "−",
+                    color: AppTheme.red,
+                    fixedRows: [("Expenses", expenses), ("Loan Decrease", loanDecrease)],
+                    accounts: negativeAccounts,
+                    aggregate: negativeAccountValue
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Opening / Last Closing Balance", systemImage: "calendar.badge.clock")
+                    .font(.caption.bold())
+                    .foregroundStyle(AppTheme.purple)
+                if closingAccounts.isEmpty {
+                    Button(action: onEdit) {
+                        Label("Choose accounts and closing date", systemImage: "plus.circle.fill")
+                            .font(.caption.bold())
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(10)
+                            .background(AppTheme.purple.opacity(0.1), in: RoundedRectangle(cornerRadius: 11))
+                    }
+                } else {
+                    NavigationLink {
+                        HistoricalAccountBalancesView(
+                            accounts: closingAccounts,
+                            closingDate: closingDate
+                        )
+                    } label: {
+                        VStack(alignment: .leading, spacing: 7) {
+                            HStack {
+                                Text("Closing Balance")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(AppTheme.purple)
+                            }
+                            Text(DisplayFormat.currency(closingBalance, code: currencyCode))
+                                .font(.title3.bold())
+                                .foregroundStyle(AppTheme.purple)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                            Text(closingAccounts.map(\.name).joined(separator: " + "))
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                        .padding(12)
+                        .background(
+                            LinearGradient(
+                                colors: [AppTheme.purple.opacity(0.18), AppTheme.blue.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(AppTheme.purple.opacity(0.24), lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                Button(action: onEdit) {
+                    HStack {
+                        Text("Closing on \(closingDate.formatted(date: .abbreviated, time: .omitted))")
+                        Spacer()
+                        Image(systemName: "calendar.badge.clock")
+                    }
+                    .font(.caption2.bold())
+                    .foregroundStyle(AppTheme.purple)
+                }
+            }
+            .padding(12)
+            .background(AppTheme.purple.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        }
+        .padding(16)
+        .background(
+            LinearGradient(
+                colors: [Color(.systemBackground), AppTheme.purple.opacity(0.055)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(AppTheme.purple.opacity(0.14), lineWidth: 1)
+        }
+    }
+
+    private func formulaColumn(
+        title: String,
+        icon: String,
+        operatorSymbol: String,
+        color: Color,
+        fixedRows: [(String, Decimal)],
+        accounts: [LedgerAccount],
+        aggregate: Decimal
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: "\(icon).circle.fill")
+                .font(.caption.bold())
+                .foregroundStyle(color)
+            ForEach(Array(fixedRows.enumerated()), id: \.offset) { index, row in
+                if index > 0 { formulaOperator(operatorSymbol, color: color) }
+                fixedFormulaRow(row.0, value: row.1, color: color)
+            }
+            ForEach(Array(accounts.enumerated()), id: \.element.id) { _, account in
+                formulaOperator(operatorSymbol, color: color)
+                NavigationLink {
+                    AccountPeriodTransactionsView(account: account, interval: interval)
+                } label: {
+                    formulaAccountCard(account, color: color)
+                }
+                .buttonStyle(.plain)
+            }
+            if !accounts.isEmpty {
+                Divider()
+                formulaValueRow("Account movements", value: aggregate, color: color)
+            }
+        }
+        .padding(11)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(color.opacity(0.075), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+    }
+
+    private func formulaValueRow(_ title: String, value: Decimal, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(DisplayFormat.currency(value, code: currencyCode))
+                .font(.caption.bold())
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [color.opacity(0.16), color.opacity(0.07)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(color.opacity(0.22), lineWidth: 1)
+        }
+    }
+
+    @ViewBuilder
+    private func fixedFormulaRow(_ title: String, value: Decimal, color: Color) -> some View {
+        if title == "Income" {
+            NavigationLink { PeriodTransactionsView(kind: .income, interval: interval) } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
+        } else if title == "Expenses" {
+            NavigationLink { PeriodTransactionsView(kind: .expenses, interval: interval) } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
+        } else if title == "Loan Increase" {
+            NavigationLink { PeriodTransactionsView(kind: .loanIncrease, interval: interval) } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink { PeriodTransactionsView(kind: .loanDecrease, interval: interval) } label: {
+                formulaValueRow(title, value: value, color: color)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func formulaAccountRow(_ account: LedgerAccount, color: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: account.icon)
+                .foregroundStyle(color)
+            Text(account.name)
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
+            Spacer(minLength: 2)
+            Image(systemName: "chevron.right")
+                .font(.caption2.bold())
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func formulaAccountCard(_ account: LedgerAccount, color: Color) -> some View {
+        formulaAccountRow(account, color: color)
+            .padding(10)
+            .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(color.opacity(0.2), lineWidth: 1)
+            }
+    }
+
+    private func formulaOperator(_ symbol: String, color: Color) -> some View {
+        Text(symbol)
+            .font(.headline.bold())
+            .foregroundStyle(color)
+            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
+    }
+}
+
+private struct AccountPeriodTransactionsView: View {
+    @EnvironmentObject private var store: LedgerStore
+    @State private var selectedTransaction: LedgerTransaction?
+    @State private var searchText = ""
+    let account: LedgerAccount
+    let interval: DateInterval
+
+    var body: some View {
+        List {
+            ForEach(transactions) { transaction in
+                Button { selectedTransaction = transaction } label: {
+                    TransactionRow(transaction: transaction, accountID: account.id)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .navigationTitle(account.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: "Search account transactions")
+        .overlay {
+            if transactions.isEmpty {
+                EmptyLedgerView(title: "No transactions", message: "No recorded transactions for this account in the selected period.")
+            }
+        }
+        .sheet(item: $selectedTransaction) { transaction in
+            TransactionSnapshotView(transaction: transaction).environmentObject(store)
+        }
+    }
+
+    private var transactions: [LedgerTransaction] {
+        store.transactions.filter { item in
+            let belongs = item.accountID == account.id || item.destinationAccountID == account.id
+            guard belongs, interval.contains(item.date) else { return false }
+            guard !searchText.isEmpty else { return true }
+            return item.category.localizedCaseInsensitiveContains(searchText) ||
+                (item.vendor?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                item.details.localizedCaseInsensitiveContains(searchText)
+        }
+        .sorted { $0.date > $1.date }
+    }
+}
+
+private struct HistoricalAccountBalancesView: View {
+    @EnvironmentObject private var store: LedgerStore
+    let accounts: [LedgerAccount]
+    let closingDate: Date
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(accounts) { account in
+                    NavigationLink {
+                        AccountPeriodTransactionsView(
+                            account: account,
+                            interval: DateInterval(start: .distantPast, end: cutoff)
+                        )
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: account.icon)
+                                .foregroundStyle(AppTheme.purple)
+                                .frame(width: 34, height: 34)
+                                .background(AppTheme.purple.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(account.name).font(.body.weight(.semibold))
+                                Text("Closing · \(closingDate.formatted(date: .abbreviated, time: .omitted))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text(DisplayFormat.currency(balance(for: account), code: account.currencyCode))
+                                .font(.subheadline.bold())
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                        }
+                    }
+                }
+            } footer: {
+                Text("Balances include transactions recorded through the end of the selected closing date.")
+            }
+
+            Section {
+                HStack {
+                    Text("Combined Closing Balance").font(.headline)
+                    Spacer()
+                    Text(DisplayFormat.currency(combinedBalance, code: store.currencyCode))
+                        .font(.headline)
+                        .foregroundStyle(AppTheme.purple)
+                }
+            }
+        }
+        .navigationTitle("Closing Balances")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var cutoff: Date {
+        Calendar.current.date(
+            byAdding: .day,
+            value: 1,
+            to: Calendar.current.startOfDay(for: closingDate)
+        ) ?? closingDate
+    }
+
+    private func balance(for account: LedgerAccount) -> Decimal {
+        store.combinedBalance(for: [account], before: cutoff)
+    }
+
+    private var combinedBalance: Decimal {
+        accounts.reduce(Decimal.zero) { result, account in
+            let amount = balance(for: account)
+            if account.currencyCode.caseInsensitiveCompare(store.currencyCode) == .orderedSame {
+                return result + amount
+            }
+            if account.currencyCode.uppercased() == "PKR" && store.currencyCode.uppercased() == "QAR" {
+                return result + amount / Decimal(77)
+            }
+            if account.currencyCode.uppercased() == "QAR" && store.currencyCode.uppercased() == "PKR" {
+                return result + amount * Decimal(77)
+            }
+            return result + amount
+        }
+    }
+}
+
+private struct FinanceSummaryFormulaEditor: View {
+    @EnvironmentObject private var store: LedgerStore
+    @Environment(\.dismiss) private var dismiss
+    @Binding private var storedFormula: String
+    @State private var formula: FinanceSummaryFormula
+    let defaultClosingDate: Date
+
+    init(storedFormula: Binding<String>, defaultClosingDate: Date) {
+        _storedFormula = storedFormula
+        _formula = State(initialValue: FinanceSummaryFormula.decode(storedFormula.wrappedValue))
+        self.defaultClosingDate = defaultClosingDate
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Label("Income", systemImage: "plus.circle.fill")
+                Label("Loan Increase", systemImage: "plus.circle.fill")
+                accountPickerRows(selection: $formula.positiveAccountIDs, color: AppTheme.green)
+            } header: {
+                Text("Added to Net Balance")
+            } footer: {
+                Text("Optional accounts add their movement during the selected report period.")
+            }
+
+            Section {
+                Label("Expenses", systemImage: "minus.circle.fill")
+                Label("Loan Decrease", systemImage: "minus.circle.fill")
+                accountPickerRows(selection: $formula.negativeAccountIDs, color: AppTheme.red)
+            } header: {
+                Text("Deducted from Net Balance")
+            } footer: {
+                Text("Optional accounts deduct their movement during the selected report period.")
+            }
+
+            Section {
+                DatePicker(
+                    "Closing Date",
+                    selection: Binding(
+                        get: { formula.closingBalanceDate ?? defaultClosingDate },
+                        set: { formula.closingBalanceDate = $0 }
+                    ),
+                    displayedComponents: .date
+                )
+                accountPickerRows(selection: $formula.closingBalanceAccountIDs, color: AppTheme.purple)
+            } header: {
+                Text("Opening / Last Closing Balance")
+            } footer: {
+                Text("Adds the selected accounts’ closing balance immediately before the report From date.")
+            }
+        }
+        .navigationTitle("Edit Net Balance Formula")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    let valid = Set(store.accounts.map(\.id))
+                    formula.closingBalanceAccountIDs = sanitized(formula.closingBalanceAccountIDs, valid: valid)
+                    let closing = Set(formula.closingBalanceAccountIDs)
+                    formula.positiveAccountIDs = sanitized(
+                        formula.positiveAccountIDs.filter { !closing.contains($0) },
+                        valid: valid
+                    )
+                    let positive = Set(formula.positiveAccountIDs)
+                    formula.negativeAccountIDs = sanitized(
+                        formula.negativeAccountIDs.filter {
+                            !closing.contains($0) && !positive.contains($0)
+                        },
+                        valid: valid
+                    )
+                    storedFormula = formula.encoded()
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func accountPickerRows(selection: Binding<[UUID]>, color: Color) -> some View {
+        ForEach(store.activeAccounts.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }) { account in
+            Button {
+                var ids = Set(selection.wrappedValue)
+                if ids.contains(account.id) { ids.remove(account.id) } else { ids.insert(account.id) }
+                selection.wrappedValue = ids.sorted { $0.uuidString < $1.uuidString }
+            } label: {
+                HStack {
+                    Label(account.name, systemImage: account.icon)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(account.currencyCode)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: selection.wrappedValue.contains(account.id) ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(selection.wrappedValue.contains(account.id) ? color : .secondary)
+                }
+            }
+        }
+    }
+
+    private func sanitized(_ values: [UUID], valid: Set<UUID>) -> [UUID] {
+        Array(Set(values).intersection(valid)).sorted { $0.uuidString < $1.uuidString }
+    }
+}
+
+private struct FinanceSummaryCardEditor: View {
+    @EnvironmentObject private var store: LedgerStore
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("FinanceSummaryCustomCardsV1") private var storedCards = "[]"
+    @State private var card: FinanceSummaryCustomCard
+    let reportPeriodEnd: Date
+
+    init(card: FinanceSummaryCustomCard, reportPeriodEnd: Date) {
+        _card = State(initialValue: card)
+        self.reportPeriodEnd = reportPeriodEnd
+    }
+
+    private var currencies: [String] {
+        Array(Set(store.activeAccounts.map { $0.currencyCode.uppercased() })).sorted()
+    }
+
+    private var availableAccounts: [LedgerAccount] {
+        store.activeAccounts.filter {
+            $0.currencyCode.caseInsensitiveCompare(card.currencyCode) == .orderedSame
+        }
+        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private var selectedIDs: Set<UUID> {
+        Set(card.accountIDs)
+    }
+
+    private var balanceMode: FinanceSummaryBalanceMode {
+        FinanceSummaryBalanceMode(rawValue: card.balanceMode ?? "") ?? .current
+    }
+
+    private var previewCutoff: Date? {
+        switch balanceMode {
+        case .current:
+            return nil
+        case .closingDate:
+            let date = card.balanceDate ?? Date()
+            return Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: date))
+        case .reportPeriodEnd:
+            return reportPeriodEnd
+        }
+    }
+
+    private var previewBalance: Decimal {
+        store.combinedBalance(
+            for: availableAccounts.filter { selectedIDs.contains($0.id) },
+            before: previewCutoff
+        )
+    }
+
+    var body: some View {
+        Form {
+            Section("Card") {
+                TextField("Card title", text: $card.title)
+                    .textInputAutocapitalization(.words)
+                Picker("Currency", selection: $card.currencyCode) {
+                    ForEach(currencies, id: \.self) { currency in
+                        Text(currency).tag(currency)
+                    }
+                }
+                .onChange(of: card.currencyCode) { _ in
+                    let validIDs = Set(availableAccounts.map(\.id))
+                    card.accountIDs.removeAll { !validIDs.contains($0) }
+                }
+            }
+
+            Section {
+                HStack {
+                    Button("Select All") {
+                        card.accountIDs = availableAccounts.map(\.id)
+                    }
+                    Spacer()
+                    Button("Deselect All") {
+                        card.accountIDs.removeAll()
+                    }
+                }
+
+                ForEach(availableAccounts) { account in
+                    Button {
+                        toggle(account.id)
+                    } label: {
+                        HStack {
+                            Label(account.name, systemImage: account.icon)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(DisplayFormat.currency(store.balance(for: account), code: account.currencyCode))
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                            Image(systemName: selectedIDs.contains(account.id) ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selectedIDs.contains(account.id) ? AppTheme.purple : .secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Accounts (\(card.accountIDs.count) Selected)")
+            } footer: {
+                Text("Only accounts using the selected currency can be combined on one card.")
+            }
+
+
+            Section {
+                Picker("Balance At", selection: Binding(
+                    get: { balanceMode },
+                    set: { mode in
+                        card.balanceMode = mode.rawValue
+                        if mode == .closingDate, card.balanceDate == nil {
+                            card.balanceDate = Date()
+                        }
+                    }
+                )) {
+                    ForEach(FinanceSummaryBalanceMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if balanceMode == .closingDate {
+                    DatePicker(
+                        "Closing Date",
+                        selection: Binding(
+                            get: { card.balanceDate ?? Date() },
+                            set: { card.balanceDate = $0 }
+                        ),
+                        in: ...Date(),
+                        displayedComponents: .date
+                    )
+                } else if balanceMode == .reportPeriodEnd {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("Follows the selected Financial Summary period", systemImage: "calendar.badge.clock")
+                        Text("Closing: \((Calendar.current.date(byAdding: .day, value: -1, to: reportPeriodEnd) ?? reportPeriodEnd).formatted(date: .abbreviated, time: .omitted))")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Balance Date or Period")
+            } footer: {
+                Text("Closing Date includes every transaction recorded through the end of that day.")
+            }
+
+            Section("Preview") {
+                LabeledContent(
+                    card.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? "Selected Account Balance"
+                        : card.title,
+                    value: DisplayFormat.currency(previewBalance, code: card.currencyCode)
+                )
+            }
+        }
+        .navigationTitle("Account Balance Card")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    save()
+                    dismiss()
+                }
+                .disabled(card.accountIDs.isEmpty)
+            }
+        }
+        .onAppear {
+            if card.balanceMode == nil {
+                card.balanceMode = FinanceSummaryBalanceMode.current.rawValue
+            }
+            if !currencies.contains(card.currencyCode.uppercased()), let first = currencies.first {
+                card.currencyCode = first
+            }
+        }
+    }
+
+    private func toggle(_ id: UUID) {
+        if let index = card.accountIDs.firstIndex(of: id) {
+            card.accountIDs.remove(at: index)
+        } else {
+            card.accountIDs.append(id)
+        }
+    }
+
+    private func save() {
+        var cards = FinanceSummaryCardStorage.decode(storedCards)
+        card.title = card.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let index = cards.firstIndex(where: { $0.id == card.id }) {
+            cards[index] = card
+        } else {
+            cards.append(card)
+        }
+        storedCards = FinanceSummaryCardStorage.encode(cards)
     }
 }
 

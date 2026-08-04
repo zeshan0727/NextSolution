@@ -193,6 +193,113 @@ struct VendorCategoryRule: Identifiable, Codable, Equatable, Hashable {
     ]
 }
 
+struct ExpenseBudget: Identifiable, Codable, Equatable, Hashable {
+    let id: UUID
+    var name: String
+    var categories: [String]
+    var monthlyAmount: Decimal
+    var currencyCode: String
+    var alertsEnabled: Bool
+    var cycleStartDay: Int
+    var cycleEndDay: Int
+
+    init(
+        id: UUID = UUID(),
+        name: String = "",
+        categories: [String],
+        monthlyAmount: Decimal,
+        currencyCode: String,
+        alertsEnabled: Bool = true,
+        cycleStartDay: Int = 1,
+        cycleEndDay: Int = 28
+    ) {
+        self.id = id
+        self.name = name
+        self.categories = categories
+        self.monthlyAmount = monthlyAmount
+        self.currencyCode = currencyCode
+        self.alertsEnabled = alertsEnabled
+        self.cycleStartDay = min(max(cycleStartDay, 1), 28)
+        self.cycleEndDay = min(max(cycleEndDay, 1), 28)
+    }
+
+    var displayName: String {
+        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !cleaned.isEmpty { return cleaned }
+        if categories.count == 1 { return categories[0] }
+        return "Monthly Budget"
+    }
+
+    func includes(category: String) -> Bool {
+        categories.contains { $0.caseInsensitiveCompare(category) == .orderedSame }
+    }
+
+    func dateInterval(containing date: Date, calendar: Calendar = .current) -> DateInterval? {
+        let day = min(max(cycleStartDay, 1), 28)
+        var components = calendar.dateComponents([.year, .month], from: date)
+        components.day = day
+        guard var start = calendar.date(from: components) else { return nil }
+        if date < start {
+            guard let previous = calendar.date(byAdding: .month, value: -1, to: start) else {
+                return nil
+            }
+            start = previous
+        }
+
+        let endMonthOffset = cycleEndDay >= cycleStartDay ? 0 : 1
+        guard let endMonth = calendar.date(byAdding: .month, value: endMonthOffset, to: start) else {
+            return nil
+        }
+        var endComponents = calendar.dateComponents([.year, .month], from: endMonth)
+        endComponents.day = min(max(cycleEndDay, 1), 28)
+        guard let inclusiveEnd = calendar.date(from: endComponents),
+              let end = calendar.date(byAdding: .day, value: 1, to: inclusiveEnd) else {
+            return nil
+        }
+        return DateInterval(start: start, end: end)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, categories, category, monthlyAmount, currencyCode, alertsEnabled
+        case cycleStartDay, cycleEndDay
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        let legacyCategory = try values.decodeIfPresent(String.self, forKey: .category)
+        categories = try values.decodeIfPresent([String].self, forKey: .categories)
+            ?? legacyCategory.map { [$0] }
+            ?? []
+        name = try values.decodeIfPresent(String.self, forKey: .name)
+            ?? legacyCategory
+            ?? ""
+        monthlyAmount = try values.decodeIfPresent(Decimal.self, forKey: .monthlyAmount) ?? 0
+        currencyCode = try values.decodeIfPresent(String.self, forKey: .currencyCode) ?? "QAR"
+        alertsEnabled = try values.decodeIfPresent(Bool.self, forKey: .alertsEnabled) ?? true
+        cycleStartDay = min(
+            max(try values.decodeIfPresent(Int.self, forKey: .cycleStartDay) ?? 1, 1),
+            28
+        )
+        cycleEndDay = min(
+            max(try values.decodeIfPresent(Int.self, forKey: .cycleEndDay) ?? 28, 1),
+            28
+        )
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(id, forKey: .id)
+        try values.encode(name, forKey: .name)
+        try values.encode(categories, forKey: .categories)
+        try values.encode(monthlyAmount, forKey: .monthlyAmount)
+        try values.encode(currencyCode, forKey: .currencyCode)
+        try values.encode(alertsEnabled, forKey: .alertsEnabled)
+        try values.encode(cycleStartDay, forKey: .cycleStartDay)
+        try values.encode(cycleEndDay, forKey: .cycleEndDay)
+    }
+}
+
 struct LedgerSettings: Codable, Equatable {
     var currencyCode: String
     var vendorRules: [VendorCategoryRule]
@@ -203,6 +310,7 @@ struct LedgerSettings: Codable, Equatable {
     var smsRescanRequestID: Int
     var smsImporterLastCheck: Date?
     var smsImporterLastResult: String?
+    var expenseBudgets: [ExpenseBudget]
 
     init(
         currencyCode: String = "QAR",
@@ -213,7 +321,8 @@ struct LedgerSettings: Codable, Equatable {
         smsDestinationAccountID: UUID? = nil,
         smsRescanRequestID: Int = 0,
         smsImporterLastCheck: Date? = nil,
-        smsImporterLastResult: String? = nil
+        smsImporterLastResult: String? = nil,
+        expenseBudgets: [ExpenseBudget] = []
     ) {
         self.currencyCode = currencyCode
         self.vendorRules = vendorRules
@@ -224,6 +333,7 @@ struct LedgerSettings: Codable, Equatable {
         self.smsRescanRequestID = smsRescanRequestID
         self.smsImporterLastCheck = smsImporterLastCheck
         self.smsImporterLastResult = smsImporterLastResult
+        self.expenseBudgets = expenseBudgets
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -236,6 +346,7 @@ struct LedgerSettings: Codable, Equatable {
         case smsRescanRequestID
         case smsImporterLastCheck
         case smsImporterLastResult
+        case expenseBudgets
     }
 
     init(from decoder: Decoder) throws {
@@ -250,6 +361,7 @@ struct LedgerSettings: Codable, Equatable {
         smsRescanRequestID = try values.decodeIfPresent(Int.self, forKey: .smsRescanRequestID) ?? 0
         smsImporterLastCheck = try values.decodeIfPresent(Date.self, forKey: .smsImporterLastCheck)
         smsImporterLastResult = try values.decodeIfPresent(String.self, forKey: .smsImporterLastResult)
+        expenseBudgets = try values.decodeIfPresent([ExpenseBudget].self, forKey: .expenseBudgets) ?? []
     }
 }
 
@@ -260,7 +372,7 @@ struct LedgerData: Codable {
     var settings: LedgerSettings
 
     init(
-        version: Int = 3,
+        version: Int = 5,
         transactions: [LedgerTransaction] = [],
         accounts: [LedgerAccount] = [LedgerAccount.legacyMain],
         settings: LedgerSettings = LedgerSettings()
@@ -309,7 +421,7 @@ struct LedgerData: Codable {
         for index in transactions.indices where transactions[index].vendor?.isEmpty != false {
             transactions[index].vendor = LedgerTransaction.vendorFromMessage(transactions[index].details)
         }
-        version = 3
+        version = 5
     }
 }
 
