@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextquickreminder
 Name: Next Quick Reminder
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm64
-Description: RootHide quick reminder panel triggered by one selectable system gesture, with diagnostic logging.
+Description: RootHide quick reminder panel with one selectable gesture, an in-app Next Reminder console, live heartbeat, commands and diagnostic logging.
 Maintainer: Next Solution - Zeeshan Barvi
 Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
