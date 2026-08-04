@@ -1,5 +1,5 @@
 # Next Ledger 1.3.50 validated build
-# Dedicated Settings pages, persistent custom SMS mapping, and log cleanup
+# Professional PDF and real Excel exports, financial statements, and aging reports
 name: Build Next Ledger TIPA
 
 permissions:
@@ -73,11 +73,12 @@ jobs:
           python3 scripts/fix_financial_summary_auto_sms_and_compact_settings.py
           python3 scripts/prepare_settings_pages_sms_cleanup_patch.py
           python3 scripts/add_settings_pages_custom_sms_and_log_cleanup.py
+          python3 scripts/add_professional_report_exports.py
 
       - name: Install build tools
         run: brew install xcodegen dpkg ldid
 
-      - name: Test Settings pages, custom SMS mapping and log cleanup
+      - name: Test report exports, Settings pages and SMS daemon
         run: |
           mkdir -p build
           grep -Fq 'kDaemonVersion = @"2.1.6"' RootHideSMSQueue/Sources/main.m
@@ -109,6 +110,22 @@ jobs:
           test "$(grep -Fc 'SettingsSectionPage(title:' DailyLedger/Views/SettingsView.swift)" -ge "5"
           test "$(grep -Fc 'DisclosureGroup(isExpanded: settingsSectionBinding' DailyLedger/Views/SettingsView.swift)" = "0"
           test "$(grep -Fc 'expandedSettingsSection' DailyLedger/Views/SettingsView.swift)" = "0"
+
+          grep -Fq 'ProfessionalReportExportView()' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'Export PDF & Excel Reports' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'case incomeStatement = "Income Statement"' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq 'case balanceSheet = "Balance Sheet"' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq 'case payablesAging = "Payables Aging"' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq 'case receivablesAging = "Receivables Aging"' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq 'UIGraphicsPDFRenderer' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq 'StoredZipArchive.make' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq '"[Content_Types].xml"' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq 'FIFO settlement allocation' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq '0–30' DailyLedger/Services/ProfessionalReportExportService.swift
+          grep -Fq '@AppStorage("ProfessionalReportTypeV1")' DailyLedger/Views/ProfessionalReportExportView.swift
+          grep -Fq 'UIActivityViewController' DailyLedger/Views/ProfessionalReportExportView.swift
+          grep -Fq 'Generate Excel' DailyLedger/Views/ProfessionalReportExportView.swift
+          grep -Fq 'Real .xlsx workbook' DailyLedger/Views/ProfessionalReportExportView.swift
 
           grep -Fq 'account?.nature == .bank' DailyLedger/Services/LedgerStore.swift
           grep -Fq 'movementTitle: "Loan Increase"' DailyLedger/Views/ReportsView.swift
@@ -228,16 +245,16 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-settings-pages-custom-sms-log-cleanup.tipa
-          shasum -a 256 NextLedger-1.3.50-settings-pages-custom-sms-log-cleanup.tipa > NextLedger-1.3.50-settings-pages-custom-sms-log-cleanup.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.50-professional-report-exports.tipa
+          shasum -a 256 NextLedger-1.3.50-professional-report-exports.tipa > NextLedger-1.3.50-professional-report-exports.sha256
 
       - name: Upload TIPA and RootHide daemon
         uses: actions/upload-artifact@v4
         with:
           name: NextLedger-TrollStore
           path: |
-            NextLedger-1.3.50-settings-pages-custom-sms-log-cleanup.tipa
-            NextLedger-1.3.50-settings-pages-custom-sms-log-cleanup.sha256
+            NextLedger-1.3.50-professional-report-exports.tipa
+            NextLedger-1.3.50-professional-report-exports.sha256
             NextLedgerSMSDaemon-2.1.6-roothide.deb
             NextLedgerSMSDaemon-2.1.6-roothide.sha256
             build/sms-parser-tests.json
