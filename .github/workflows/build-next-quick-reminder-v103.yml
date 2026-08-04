@@ -1,4 +1,4 @@
-name: Build Next Reminder 1.3.14 and Quick Reminder 1.0.3
+name: Build Next Quick Reminder 1.0.4
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 55
+    timeout-minutes: 45
     steps:
       - name: Checkout pull request
         uses: actions/checkout@v4
@@ -19,28 +19,23 @@ jobs:
       - name: Install packaging tools
         run: brew install dpkg ldid xz
 
-      - name: Apply and validate panel fix
+      - name: Apply and validate 1.0.4 changes
         run: |
           set -euo pipefail
           P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-NextQuickReminder"
           python3 "$P/fix-panel-v103.py"
+          python3 "$P/prepare-v104.py"
           python3 "$P/prepare-build.py"
           chmod 755 "$P/layout/DEBIAN/postinst"
           plutil -lint "$P/Preferences/Resources/Root.plist"
           plutil -lint "$P/Preferences/Resources/Info.plist"
           plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/NextQuickReminder.plist"
           grep -q 'preferredCardHeight' "$P/Tweak.xm"
-          grep -q 'card.heightAnchor' "$P/Tweak.xm"
-          grep -q 'formScrollView' "$P/Tweak.xm"
-          grep -q 'visible-panel layout fix' "$P/Tweak.xm"
-          grep -q 'nextreminder://quick-add' "$P/Tweak.xm"
-          test "$(awk '/^Version:/ {print $2}' "$P/control")" = 1.0.3
-
-      - name: Build Next Reminder 1.3.14
-        run: |
-          chmod +x NextReminderApp/ci/build-v144.sh
-          set -o pipefail
-          NextReminderApp/ci/build-v144.sh 2>&1 | tee v144-app-build.log
+          grep -q 'Background Schedule installed; app will no longer open' "$P/BackgroundLockscreen.xm"
+          grep -q 'Lock Screen clock double-tap recognized' "$P/BackgroundLockscreen.xm"
+          grep -q 'NQR104WriteDatabase' "$P/BackgroundLockscreen.xm"
+          grep -q 'allowLockScreen' "$P/Preferences/Resources/Root.plist"
+          test "$(awk '/^Version:/ {print $2}' "$P/control")" = 1.0.4
 
       - name: Build RootHide quick reminder tweak
         run: |
@@ -56,46 +51,42 @@ jobs:
           git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
 
           export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
-          make -C "$P" clean package FINALPACKAGE=1 2>&1 | tee v103-tweak-build.log
+          make -C "$P" clean package FINALPACKAGE=1 2>&1 | tee v104-tweak-build.log
 
           DEB="$(find "$P/packages" -name '*_iphoneos-arm64e.deb' -print -quit)"
           test -n "$DEB"
-          cp "$DEB" "$OUT/NextQuickReminder_1.0.3_RootHide.deb"
-          ditto -c -k --sequesterRsrc --keepParent "$P" "$OUT/NextQuickReminder_1.0.3_Source.zip"
+          cp "$DEB" "$OUT/NextQuickReminder_1.0.4_RootHide.deb"
+          ditto -c -k --sequesterRsrc --keepParent "$P" "$OUT/NextQuickReminder_1.0.4_Source.zip"
 
-      - name: Verify final packages
+      - name: Verify final package
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/quick-reminder-out"
-          DEB="$OUT/NextQuickReminder_1.0.3_RootHide.deb"
+          DEB="$OUT/NextQuickReminder_1.0.4_RootHide.deb"
           test "$(dpkg-deb -f "$DEB" Package)" = com.nextsolution.nextquickreminder
-          test "$(dpkg-deb -f "$DEB" Version)" = 1.0.3
+          test "$(dpkg-deb -f "$DEB" Version)" = 1.0.4
           test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64e
           dpkg-deb -f "$DEB" Depends | grep -q preferenceloader
           X="$(mktemp -d)"
           dpkg-deb -x "$DEB" "$X"
           DYLIB="$(find "$X" -name NextQuickReminder.dylib -print -quit)"
           test -n "$DYLIB"
-          strings -a "$DYLIB" | grep -q 'Quick Reminder'
-          strings -a "$DYLIB" | grep -q 'nextreminder://quick-add'
-          strings -a "$DYLIB" | grep -q 'visible-panel layout fix'
-          shasum -a 256 "$DEB" > "$OUT/NextQuickReminder_1.0.3_RootHide-SHA256.txt"
-          test -f NextReminderApp/NextReminder-v1.3.14-unsigned.tipa
-          unzip -t NextReminderApp/NextReminder-v1.3.14-unsigned.tipa >/dev/null
+          strings -a "$DYLIB" | grep -q 'Background Schedule installed; app will no longer open'
+          strings -a "$DYLIB" | grep -q 'Reminder scheduled in background.'
+          strings -a "$DYLIB" | grep -q 'Lock Screen clock double-tap recognized'
+          strings -a "$DYLIB" | grep -q 'NextReminderDatabase.json'
+          ROOT_PLIST="$(find "$X" -path '*NextQuickReminderPreferences.bundle/Root.plist' -print -quit)"
+          grep -q 'allowLockScreen' "$ROOT_PLIST"
+          shasum -a 256 "$DEB" > "$OUT/NextQuickReminder_1.0.4_RootHide-SHA256.txt"
 
-      - name: Upload final packages
+      - name: Upload final package
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NextReminder-1.3.14-QuickReminder-1.0.3
+          name: NextQuickReminder-1.0.4-RootHide
           if-no-files-found: warn
           path: |
-            NextReminderApp/NextReminder-v1.3.14-unsigned.tipa
-            NextReminderApp/NextReminder-v1.3.14-unsigned.ipa
-            NextReminderApp/NextReminder-v1.3.14-unsigned.tipa.sha256
-            NextReminderApp/xcodebuild.log
-            v144-app-build.log
-            v103-tweak-build.log
-            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.3_RootHide.deb
-            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.3_RootHide-SHA256.txt
-            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.3_Source.zip
+            v104-tweak-build.log
+            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.4_RootHide.deb
+            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.4_RootHide-SHA256.txt
+            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.4_Source.zip
