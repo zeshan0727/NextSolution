@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 
 path = Path(__file__).parents[1] / "NextReminder" / "Sources" / "Editor.swift"
 text = path.read_text()
 
-old_can_save = '''    private var canSave: Bool {
-        let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        let validReminderTime = dueDate > Date().addingTimeInterval(-60)
-        let validDeadline = !hasDeadline || deadlineDate > dueDate
-        return hasTitle && validReminderTime && validDeadline
-    }
-'''
-new_can_save = '''    private var canSave: Bool {
+replacement = '''    private var canSave: Bool {
         let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let isExistingRepeatingReminder = reminder != nil && repeatRule != .never
         let validReminderTime = dueDate > Date().addingTimeInterval(-60) || isExistingRepeatingReminder
@@ -25,23 +19,24 @@ new_can_save = '''    private var canSave: Bool {
         }
         return Date()...Date.distantFuture
     }
+
 '''
 
-old_picker = '''                selection: $dueDate,
-                in: Date()...,
-                displayedComponents: [.date, .hourAndMinute]
-'''
-new_picker = '''                selection: $dueDate,
-                in: reminderDateRange,
-                displayedComponents: [.date, .hourAndMinute]
-'''
+pattern = re.compile(
+    r"    private var canSave: Bool \{.*?\n    \}\n\n(?=    private var emailSetupReady: Bool \{)",
+    re.S,
+)
+text, count = pattern.subn(replacement, text, count=1)
+if count != 1:
+    raise SystemExit("canSave section not found")
 
-if old_can_save not in text:
-    raise SystemExit("canSave block not found")
-if old_picker not in text:
+picker_pattern = re.compile(
+    r"(DatePicker\(\s*\n\s*\"Alert date and time\",\s*\n\s*selection: \$dueDate,\s*\n\s*)in: [^\n]+,",
+    re.S,
+)
+text, count = picker_pattern.subn(r"\1in: reminderDateRange,", text, count=1)
+if count != 1:
     raise SystemExit("reminder DatePicker range not found")
 
-text = text.replace(old_can_save, new_can_save, 1)
-text = text.replace(old_picker, new_picker, 1)
 path.write_text(text)
 print("Next Reminder v1.3.16 repeating reminder edit/save fix applied successfully.")
