@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+if command -v uicache >/dev/null 2>&1; then
+  uicache -u app.nextsolution.nextpassword >/dev/null 2>&1 || true
+fi
+
+exit 0
