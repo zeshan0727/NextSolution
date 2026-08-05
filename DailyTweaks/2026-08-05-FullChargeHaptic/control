@@ -1,0 +1,12 @@
+Package: com.nextsolution.fullchargehaptic
+Name: Full Charge Haptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Description: Plays one success haptic when the iPhone first reaches a full charge while connected to power.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Depiction: https://nextsolution.cc/depictions/fullchargehaptic.html
