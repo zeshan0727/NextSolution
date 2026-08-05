@@ -1,0 +1,124 @@
+name: Build Next Reminder 1.3.15 Scan Compression
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Apply and validate scan compression patch
+        run: |
+          set -euo pipefail
+          chmod +x NextReminderApp/ci/build-v145.sh
+          python3 NextReminderApp/ci/adjust_build_v144.py
+          python3 NextReminderApp/ci/adjust_build_v145.py
+          python3 NextReminderApp/ci/patch_v121.py
+          python3 NextReminderApp/ci/patch_v121_fixes.py
+          python3 NextReminderApp/ci/patch_v122.py
+          python3 NextReminderApp/ci/patch_v123.py
+          python3 NextReminderApp/ci/patch_v124.py
+          python3 NextReminderApp/ci/patch_v125.py
+          python3 NextReminderApp/ci/patch_v130.py
+          python3 NextReminderApp/ci/patch_v131.py
+          python3 NextReminderApp/ci/patch_v132.py
+          python3 NextReminderApp/ci/patch_v133.py
+          python3 NextReminderApp/ci/patch_v134.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('NextReminderApp/ci/patch_v135.py')
+          text = path.read_text()
+          old = '''    ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+              }
+
+              func complete''' + "'''" + ''',
+              ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+              HourlyRepeatStore.shared.remove(for: reminder.id)
+          }
+
+          func complete''' + "'''" + '''
+          '''
+          new = '''    ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+              UnattendedReminderTracker.shared.remove(reminder.id)
+              refreshUnattendedBadge()
+          }
+
+          func complete''' + "'''" + ''',
+              ''' + "'''" + '''        SelectedDayScheduleStore.shared.remove(for: reminder.id)
+              HourlyRepeatStore.shared.remove(for: reminder.id)
+              UnattendedReminderTracker.shared.remove(reminder.id)
+              refreshUnattendedBadge()
+          }
+
+          func complete''' + "'''" + '''
+          '''
+          if old in text:
+              path.write_text(text.replace(old, new, 1))
+          PY
+          python3 NextReminderApp/ci/patch_v135.py
+          python3 NextReminderApp/ci/patch_v136.py
+          python3 NextReminderApp/ci/patch_v137.py
+          python3 NextReminderApp/ci/adjust_v138_root.py
+          python3 NextReminderApp/ci/patch_v138.py
+          python3 NextReminderApp/ci/patch_v139.py
+          python3 NextReminderApp/ci/patch_v140.py
+          python3 NextReminderApp/ci/patch_v141.py
+          python3 NextReminderApp/ci/adjust_v142.py
+          python3 NextReminderApp/ci/patch_v142.py
+          python3 NextReminderApp/ci/patch_v143.py
+          python3 NextReminderApp/ci/patch_v144.py
+          python3 NextReminderApp/ci/patch_v145.py
+          FILE=NextReminderApp/NextReminder/Sources/FileSharing.swift
+          grep -q 'targetBytes = 7_500_000' "$FILE"
+          grep -q 'Compressing scanned document below 8 MB' "$FILE"
+          grep -q 'ScannedDocumentCompressor.makePDF' "$FILE"
+          grep -q 'maximumSingleAttachment = 8_000_000' "$FILE"
+          grep -q 'scanCompressionFailed' "$FILE"
+
+      - name: Reset generated sources before cumulative build
+        run: git reset --hard HEAD
+
+      - name: Build Next Reminder 1.3.15
+        run: |
+          set -o pipefail
+          chmod +x NextReminderApp/ci/build-v145.sh
+          NextReminderApp/ci/build-v145.sh 2>&1 | tee v145-app-build.log
+
+      - name: Verify package
+        run: |
+          set -euo pipefail
+          APP=NextReminderApp/build/NextReminder.app
+          TIPA=NextReminderApp/NextReminder-v1.3.15-unsigned.tipa
+          test -f "$TIPA"
+          unzip -t "$TIPA" >/dev/null
+          plutil -extract CFBundleShortVersionString raw "$APP/Info.plist" | grep -qx '1.3.15'
+          plutil -extract CFBundleVersion raw "$APP/Info.plist" | grep -qx '25'
+          strings -a "$APP/NextReminder" | grep -q 'Compressing scanned document below 8 MB'
+          strings -a "$APP/NextReminder" | grep -q 'The scan could not be compressed below 8 MB'
+          strings -a "$APP/NextReminder" | grep -q 'Scan compressed to'
+          mkdir -p "$RUNNER_TEMP/next-reminder-v145"
+          cp "$TIPA" "$RUNNER_TEMP/next-reminder-v145/"
+          cp NextReminderApp/NextReminder-v1.3.15-unsigned.tipa.sha256 "$RUNNER_TEMP/next-reminder-v145/"
+          ditto -c -k --sequesterRsrc --keepParent NextReminderApp "$RUNNER_TEMP/next-reminder-v145/NextReminder-v1.3.15-Source.zip"
+
+      - name: Upload final package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextReminder-v1.3.15-ScanCompression
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/next-reminder-v145/NextReminder-v1.3.15-unsigned.tipa
+            ${{ runner.temp }}/next-reminder-v145/NextReminder-v1.3.15-unsigned.tipa.sha256
+            ${{ runner.temp }}/next-reminder-v145/NextReminder-v1.3.15-Source.zip
+            v145-app-build.log
+            NextReminderApp/xcodebuild.log
