@@ -1,0 +1,153 @@
+name: Build PhoneAura 0.5.0 Test Packages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "PhoneAuraFeaturePack/**"
+      - ".github/workflows/build-phoneaura-050-test.yml"
+  push:
+    branches:
+      - fix/phoneaura-0416-tabs-and-recent
+    paths:
+      - "PhoneAuraFeaturePack/**"
+      - ".github/workflows/build-phoneaura-050-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: brew install dpkg ldid
+
+      - name: Validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/PhoneAuraFeaturePack"
+          for f in Makefile control PhoneAuraNativeFeatures.plist Tweak.m prepare_package.py README.md; do test -f "$P/$f"; done
+          grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
+          grep -q 'PAContactsDashboardV46' "$P/Tweak.m"
+          grep -q 'containersMatchingPredicate' "$P/Tweak.m"
+          grep -q 'predicateForContactsInContainerWithIdentifier' "$P/Tweak.m"
+          grep -q 'predicateForContactsInGroupWithIdentifier' "$P/Tweak.m"
+          grep -q 'contactBookSelector' "$P/Tweak.m"
+          grep -q 'com.apple.mobilephone' "$P/PhoneAuraNativeFeatures.plist"
+          python3 -m py_compile "$P/prepare_package.py"
+          plutil -lint "$P/PhoneAuraNativeFeatures.plist"
+
+      - name: Build rootless companion
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/PhoneAuraFeaturePack"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless"
+          export THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages" "$P/.theos"
+          make -C "$P" clean package FINALPACKAGE=1 2>&1 | tee "$RUNNER_TEMP/rootless-build.log"
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          mkdir -p "$RUNNER_TEMP/companion-rootless"
+          dpkg-deb -x "$DEB" "$RUNNER_TEMP/companion-rootless"
+          test -f "$RUNNER_TEMP/companion-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/PhoneAuraNativeFeatures.dylib"
+
+      - name: Build RootHide companion
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/PhoneAuraFeaturePack"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages" "$P/.theos"
+          make -C "$P" clean package FINALPACKAGE=1 2>&1 | tee "$RUNNER_TEMP/roothide-build.log"
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          mkdir -p "$RUNNER_TEMP/companion-roothide"
+          dpkg-deb -x "$DEB" "$RUNNER_TEMP/companion-roothide"
+          test -f "$RUNNER_TEMP/companion-roothide/Library/MobileSubstrate/DynamicLibraries/PhoneAuraNativeFeatures.dylib"
+
+      - name: Assemble PhoneAura update packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/phoneaura-050"
+          mkdir -p "$OUT"
+
+          assemble() {
+            kind="$1"; base="$2"; prefix="$3"; companion="$4"; output="$5"
+            layout="$RUNNER_TEMP/layout-$kind"
+            rm -rf "$layout"
+            dpkg-deb -R "$base" "$layout"
+            dynamic="$layout/$prefix/Library/MobileSubstrate/DynamicLibraries"
+            cp "$companion/PhoneAuraNativeFeatures.dylib" "$dynamic/PhoneAuraNativeFeatures.dylib"
+            cp "$GITHUB_WORKSPACE/PhoneAuraFeaturePack/PhoneAuraNativeFeatures.plist" "$dynamic/PhoneAuraNativeFeatures.plist"
+            ldid -S "$dynamic/PhoneAuraNativeFeatures.dylib"
+            python3 "$GITHUB_WORKSPACE/PhoneAuraFeaturePack/prepare_package.py" "$layout" --root-prefix "$prefix"
+            chmod 755 "$layout/DEBIAN/postinst" "$layout/DEBIAN/prerm" || true
+            dpkg-deb -b "$layout" "$OUT/$output"
+          }
+
+          assemble rootless \
+            "$GITHUB_WORKSPACE/debfiles/PhoneAura_0.4.16_Rootless_iOS16.deb" \
+            "var/jb" \
+            "$RUNNER_TEMP/companion-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries" \
+            "PhoneAura_0.5.0_Rootless_iOS16.deb"
+
+          assemble roothide \
+            "$GITHUB_WORKSPACE/debfiles/PhoneAura_0.4.16_RootHide_iOS16.deb" \
+            "" \
+            "$RUNNER_TEMP/companion-roothide/Library/MobileSubstrate/DynamicLibraries" \
+            "PhoneAura_0.5.0_RootHide_iOS16.deb"
+
+      - name: Validate final packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/phoneaura-050"
+          validate() {
+            deb="$1"; arch="$2"; prefix="$3"; x="$(mktemp -d)"
+            test "$(dpkg-deb -f "$deb" Package)" = com.zeshan.phoneaura
+            test "$(dpkg-deb -f "$deb" Version)" = 0.5.0
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            dpkg-deb -x "$deb" "$x"
+            dynamic="$x/$prefix/Library/MobileSubstrate/DynamicLibraries"
+            test -f "$dynamic/PhoneAura.dylib"
+            test -f "$dynamic/PhoneAuraNativeFeatures.dylib"
+            test -f "$dynamic/PhoneAuraNativeFeatures.plist"
+            grep -q com.apple.mobilephone "$dynamic/PhoneAuraNativeFeatures.plist"
+            strings -a "$dynamic/PhoneAuraNativeFeatures.dylib" | grep -q PAContactsDashboardV46
+            strings -a "$dynamic/PhoneAuraNativeFeatures.dylib" | grep -q contactBookSelection
+            strings -a "$dynamic/PhoneAuraNativeFeatures.dylib" | grep -q 'All Contacts'
+            root="$x/$prefix/Library/PreferenceBundles/PhoneAuraPrefs.bundle/Root.plist"
+            info="$x/$prefix/Library/PreferenceBundles/PhoneAuraPrefs.bundle/Info.plist"
+            plutil -lint "$root" "$info"
+            plutil -p "$root" | grep -q 'Contact Book Selector'
+            plutil -p "$info" | grep -q '0.5.0'
+            rm -rf "$x"
+          }
+          validate "$OUT/PhoneAura_0.5.0_Rootless_iOS16.deb" iphoneos-arm64 var/jb
+          validate "$OUT/PhoneAura_0.5.0_RootHide_iOS16.deb" iphoneos-arm64e ""
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
+          cp "$RUNNER_TEMP/rootless-build.log" "$OUT/"
+          cp "$RUNNER_TEMP/roothide-build.log" "$OUT/"
+
+      - name: Upload test packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhoneAura-0.5.0-test-debs
+          path: ${{ runner.temp }}/phoneaura-050/
+          retention-days: 7
