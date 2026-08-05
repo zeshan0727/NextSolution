@@ -1,12 +1,6 @@
-name: Export PhoneAura source
+name: Export PhoneAura source (manual)
 
 on:
-  push:
-    branches:
-      - fix/phoneaura-0416-tabs-and-recent
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
