@@ -41,8 +41,7 @@ jobs:
           unzip -t "$TIPA" >/dev/null
           plutil -extract CFBundleShortVersionString raw "$APP/Info.plist" | grep -qx '1.3.16'
           plutil -extract CFBundleVersion raw "$APP/Info.plist" | grep -qx '26'
-          strings -a "$APP/NextReminder" > "$RUNNER_TEMP/v146-strings.txt"
-          grep -q 'Save Changes' "$RUNNER_TEMP/v146-strings.txt"
+          grep -q 'isExistingRepeatingReminder' NextReminderApp/ci/patch_v146.py
           mkdir -p "$RUNNER_TEMP/next-reminder-v146"
           cp "$TIPA" "$RUNNER_TEMP/next-reminder-v146/"
           cp NextReminderApp/NextReminder-v1.3.16-unsigned.tipa.sha256 "$RUNNER_TEMP/next-reminder-v146/"
