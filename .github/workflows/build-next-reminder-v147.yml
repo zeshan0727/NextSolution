@@ -22,7 +22,7 @@ jobs:
           PATCH=NextReminderApp/ci/patch_v147.py
           grep -q 'CADisableMinimumFrameDurationOnPhone' "$PATCH"
           grep -q 'interactiveSpring' "$PATCH"
-          grep -q 'substantially less GPU overdraw' "$PATCH"
+          grep -q 'Color.black.opacity(0.035)' "$PATCH"
           grep -q '1.3.17' NextReminderApp/ci/adjust_build_v147.py
           grep -q "grep -qx '27'" NextReminderApp/ci/adjust_build_v147.py
 
