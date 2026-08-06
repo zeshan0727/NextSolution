@@ -8,6 +8,13 @@ on:
     paths:
       - "AspireMaintenanceSourceChunks/**"
       - ".github/workflows/build-aspire-maintenance.yml"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+    paths:
+      - "AspireMaintenanceSourceChunks/**"
+      - ".github/workflows/build-aspire-maintenance.yml"
 
 permissions:
   contents: read
