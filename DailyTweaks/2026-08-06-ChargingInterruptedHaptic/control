@@ -1,0 +1,12 @@
+Package: com.nextsolution.charginginterruptedhaptic
+Name: Charging Interrupted Haptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Description: Plays a warning haptic when the iPhone unexpectedly transitions from charging to unplugged.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Depiction: https://nextsolution.cc/depictions/charginginterruptedhaptic.html
