@@ -1,111 +1,27 @@
-name: Publish Charging Interrupted Haptic 1.0.0
+name: Dispatch Charging Interrupted Haptic Compiler
+
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [".github/workflows/publish-charging-interrupted-haptic-v1.yml"]
+    paths:
+      - ".github/workflows/publish-charging-interrupted-haptic-v1.yml"
+
 permissions:
-  contents: write
-concurrency:
-  group: publish-charging-interrupted-haptic-v1
-  cancel-in-progress: false
+  actions: write
+  contents: read
+
 jobs:
-  release:
-    runs-on: macos-15
-    timeout-minutes: 40
+  dispatch:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - name: Install tools
-        run: brew install dpkg ldid xz zstd
-      - name: Source and runtime checks
-        shell: bash
-        run: |
-          set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-06-ChargingInterruptedHaptic"
-          python3 "$P/tests/test_runtime_logic.py"
-          grep -q '^Package: com.nextsolution.charginginterruptedhaptic$' "$P/control"
-          grep -q '^Version: 1.0.0$' "$P/control"
-          grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
-          grep -q 'segalign,4000' "$P/Makefile"
-          grep -q 'com.apple.springboard' "$P/ChargingInterruptedHaptic.plist"
-          grep -q 'UIDeviceBatteryStateDidChangeNotification' "$P/Tweak.xm"
-          grep -q 'batteryMonitoringEnabled = YES' "$P/Tweak.xm"
-          grep -q 'CIHStateObserver =' "$P/Tweak.xm"
-          grep -q 'CIHPreviousState = currentState' "$P/Tweak.xm"
-          grep -q 'currentState == UIDeviceBatteryStateUnplugged' "$P/Tweak.xm"
-          grep -q 'Enable Charging Alert' "$P/Preferences/Resources/Root.plist"
-          test "$(grep -c '<string>PSSwitchCell</string>' "$P/Preferences/Resources/Root.plist")" -eq 1
-          ! grep -Eq 'Test|Diagnostic|PID|Hook|Runtime' "$P/Preferences/Resources/Root.plist"
-          plutil -lint "$P/Preferences/Resources/Root.plist"
-          plutil -lint "$P/Preferences/Resources/Info.plist"
-          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/ChargingInterruptedHaptic.plist"
-      - name: Build rootless
-        shell: bash
-        run: |
-          set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-06-ChargingInterruptedHaptic"; O="$RUNNER_TEMP/cih"; mkdir -p "$O"
-          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
-          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
-          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
-          D="$(find "$P/packages" -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$D"
-          cp "$D" "$O/ChargingInterruptedHaptic_1.0.0_Rootless.deb"
-      - name: Build RootHide
-        shell: bash
-        run: |
-          set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-06-ChargingInterruptedHaptic"; O="$RUNNER_TEMP/cih"
-          git init "$RUNNER_TEMP/theos-roothide"; git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
-          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
-          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
-          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
-          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
-          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
-          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
-          D="$(find "$P/packages" -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$D"
-          cp "$D" "$O/ChargingInterruptedHaptic_1.0.0_RootHide.deb"
-      - name: Validate packages and record report
-        shell: bash
-        run: |
-          set -euo pipefail
-          check(){ d="$1"; a="$2"; x="$(mktemp -d)"; test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.charginginterruptedhaptic; test "$(dpkg-deb -f "$d" Version)" = 1.0.0; test "$(dpkg-deb -f "$d" Architecture)" = "$a"; dpkg-deb -f "$d" Depends | grep -q preferenceloader; dpkg-deb -x "$d" "$x"; dylib="$(find "$x" -name ChargingInterruptedHaptic.dylib -print -quit)"; test -n "$dylib"; find "$x" -path '*ChargingInterruptedHapticPreferences.bundle/Root.plist' | grep -q .; find "$x" -path '*PreferenceLoader/Preferences/ChargingInterruptedHaptic.plist' | grep -q .; filter="$(find "$x" -path '*MobileSubstrate/DynamicLibraries/ChargingInterruptedHaptic.plist' -print -quit)"; grep -q com.apple.springboard "$filter"; strings -a "$dylib" | grep -q UIDeviceBatteryStateDidChangeNotification; strings -a "$dylib" | grep -q UINotificationFeedbackTypeWarning; rm -rf "$x"; }
-          O="$RUNNER_TEMP/cih"; check "$O/ChargingInterruptedHaptic_1.0.0_Rootless.deb" iphoneos-arm64; check "$O/ChargingInterruptedHaptic_1.0.0_RootHide.deb" iphoneos-arm64e
-          shasum -a 256 "$O"/*.deb | tee "$RUNNER_TEMP/charging-interrupted-haptic-build-report.txt"
-      - uses: actions/upload-artifact@v4
+      - name: Start validated compiler and publisher
+        uses: actions/github-script@v7
         with:
-          name: charging-interrupted-haptic-build-report
-          path: ${{ runner.temp }}/charging-interrupted-haptic-build-report.txt
-      - name: Publish Sileo package and indexes
-        shell: bash
-        run: |
-          set -euo pipefail
-          O="$RUNNER_TEMP/cih"; git config user.name "Next Solution Build Bot"; git config user.email "actions@users.noreply.github.com"
-          for n in 1 2 3; do
-            git fetch origin main; git reset --hard origin/main; rm -rf "$RUNNER_TEMP/cih-scan"; mkdir -p debfiles "$RUNNER_TEMP/cih-scan"
-            cp "$O"/*.deb debfiles/; cp "$O"/*.deb "$RUNNER_TEMP/cih-scan/"
-            dpkg-scanpackages -m "$RUNNER_TEMP/cih-scan" /dev/null > "$RUNNER_TEMP/cih-stanzas"
-            sed -i '' 's|^Filename: .*/cih-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/cih-stanzas"
-            python3 - "$RUNNER_TEMP/cih-stanzas" <<'PY'
-          from pathlib import Path
-          import re,sys
-          p=Path('Packages'); old=p.read_text() if p.exists() else ''
-          rows=[x.strip() for x in re.split(r'\n\s*\n',old) if x.strip()]
-          rows=[x for x in rows if not re.search(r'^Package: com\.nextsolution\.charginginterruptedhaptic$',x,re.M)]
-          new=[x.strip() for x in re.split(r'\n\s*\n',Path(sys.argv[1]).read_text()) if x.strip()]
-          p.write_text('\n\n'.join(rows+new)+'\n')
-          PY
-            test "$(grep -c '^Package: com.nextsolution.charginginterruptedhaptic$' Packages)" -eq 2
-            gzip -9 -c Packages > Packages.gz; bzip2 -9 -c Packages > Packages.bz2; xz -9e -c Packages > Packages.xz; zstd -19 -q -c Packages > Packages.zst
-            python3 - <<'PY'
-          from pathlib import Path
-          from datetime import datetime,timezone
-          import re
-          p=Path('Release'); t=p.read_text(); m=re.search(r'^Version: (\d+)\.(\d+)\.(\d+)$',t,re.M)
-          if m:t=re.sub(r'^Version: .*$',f'Version: {m.group(1)}.{m.group(2)}.{int(m.group(3))+1}',t,flags=re.M)
-          t=re.sub(r'^Date: .*$', 'Date: '+datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'),t,flags=re.M)
-          t=re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png',t,flags=re.M); p.write_text(t)
-          PY
-            git add debfiles/ChargingInterruptedHaptic_1.0.0_Rootless.deb debfiles/ChargingInterruptedHaptic_1.0.0_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
-            git diff --cached --check; git commit -m "Publish Charging Interrupted Haptic 1.0.0"; git push origin HEAD:main && exit 0; sleep $((n*4))
-          done
-          exit 1
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'publish-charging-interrupted-haptic.yml',
+              ref: 'main'
+            });
