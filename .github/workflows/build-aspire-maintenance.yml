@@ -21,7 +21,7 @@ on:
       - ".github/workflows/build-aspire-maintenance.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -119,3 +119,14 @@ jobs:
             AspireMaintenance-1.0.1.sha256
             AspireMaintenance-1.0.1-source.zip
           if-no-files-found: error
+
+      - name: Publish successful run pointer
+        if: success() && github.event_name == 'push'
+        run: |
+          mkdir -p AspireMaintenanceBuilds
+          echo "${GITHUB_RUN_ID}" > AspireMaintenanceBuilds/latest-run-id-1.0.1.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add AspireMaintenanceBuilds/latest-run-id-1.0.1.txt
+          git commit -m "Record Aspire Maintenance 1.0.1 build run ${GITHUB_RUN_ID}"
+          git push origin HEAD:agent/aspire-maintenance-1.0.1
