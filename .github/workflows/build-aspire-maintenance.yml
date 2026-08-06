@@ -4,9 +4,11 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - agent/aspire-maintenance-1.0.0
+      - agent/aspire-maintenance-1.0.1
     paths:
       - "AspireMaintenanceSourceChunks/**"
+      - "AspireMaintenancePatchScript101/**"
+      - "AspireMaintenancePatchAssets/**"
       - ".github/workflows/build-aspire-maintenance.yml"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -14,6 +16,8 @@ on:
       - main
     paths:
       - "AspireMaintenanceSourceChunks/**"
+      - "AspireMaintenancePatchScript101/**"
+      - "AspireMaintenancePatchAssets/**"
       - ".github/workflows/build-aspire-maintenance.yml"
 
 permissions:
@@ -39,6 +43,11 @@ jobs:
           PY
           ditto -x -k AspireMaintenanceSource.zip .
 
+      - name: Apply Aspire 1.0.1 fixes
+        run: |
+          cat AspireMaintenancePatchScript101/part-* > apply_aspire_1_0_1.py
+          python3 apply_aspire_1_0_1.py
+
       - name: Validate Swift syntax
         run: |
           find AspireMaintenance -name '*.swift' \
@@ -55,6 +64,7 @@ jobs:
         run: |
           xcrun --sdk macosx swift \
             AspireMaintenance/Scripts/GenerateIcon.swift \
+            AspireMaintenance/Assets.xcassets/AspireLogo.imageset/AspireLogo.png \
             AspireMaintenance/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
 
       - name: Generate Xcode project
@@ -81,7 +91,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: AspireMaintenance-Compiler-Log-1.0.0
+          name: AspireMaintenance-Compiler-Log-1.0.1
           path: aspire-maintenance-build.log
           if-no-files-found: ignore
 
@@ -92,20 +102,20 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload AspireMaintenance-1.0.0.tipa
-          shasum -a 256 AspireMaintenance-1.0.0.tipa > AspireMaintenance-1.0.0.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload AspireMaintenance-1.0.1.tipa
+          shasum -a 256 AspireMaintenance-1.0.1.tipa > AspireMaintenance-1.0.1.sha256
 
       - name: Package source
         run: |
           rm -rf AspireMaintenance/AspireMaintenance.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent AspireMaintenance AspireMaintenance-1.0.0-source.zip
+          ditto -c -k --sequesterRsrc --keepParent AspireMaintenance AspireMaintenance-1.0.1-source.zip
 
       - name: Upload TIPA and source
         uses: actions/upload-artifact@v4
         with:
-          name: AspireMaintenance-TrollStore-1.0.0
+          name: AspireMaintenance-TrollStore-1.0.1
           path: |
-            AspireMaintenance-1.0.0.tipa
-            AspireMaintenance-1.0.0.sha256
-            AspireMaintenance-1.0.0-source.zip
+            AspireMaintenance-1.0.1.tipa
+            AspireMaintenance-1.0.1.sha256
+            AspireMaintenance-1.0.1-source.zip
           if-no-files-found: error
