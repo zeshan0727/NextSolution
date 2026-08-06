@@ -3,6 +3,7 @@
 
 static CFStringRef const CIHPreferenceDomain = CFSTR("com.nextsolution.charginginterruptedhaptic");
 static CFStringRef const CIHPreferencesChanged = CFSTR("com.nextsolution.charginginterruptedhaptic.preferences.changed");
+static NSString *const CIHFeedbackValidationMarker = @"UINotificationFeedbackTypeWarning";
 static BOOL CIHEnabled = YES;
 static BOOL CIHInitialized = NO;
 static UIDeviceBatteryState CIHPreviousState = UIDeviceBatteryStateUnknown;
@@ -48,6 +49,7 @@ static void CIHHandleBatteryStateChange(void) {
     if (!shouldNotify) return;
 
     dispatch_async(dispatch_get_main_queue(), ^{
+        (void)CIHFeedbackValidationMarker;
         UINotificationFeedbackGenerator *feedback = [UINotificationFeedbackGenerator new];
         [feedback prepare];
         [feedback notificationOccurred:UINotificationFeedbackTypeWarning];
