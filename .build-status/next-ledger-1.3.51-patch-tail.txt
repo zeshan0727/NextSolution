@@ -1,0 +1,86 @@
+Applied compact accounts, removed RootHide SMS import, and added dated refunds.
+Fixed refund Swift interpolation, key paths, and iOS 16 Section layout.
+Added same-currency account selection to transaction refunds.
+Added explicit transfer currency selectors and delete actions across transaction surfaces.
+Added inline transfer account creation and one-level sub-accounts for every main account.
+Added parent consolidated totals and reorganized Chart of Accounts into Income Statement and Balance Sheet.
+Added collapsed statement sections and collapsible main-account families in Chart of Accounts.
+Added Edit > Refund > Delete swipe actions to 11 transaction surfaces: AccountsView.swift, CategoryTransactionsView.swift, ChartLinkedTransactionsView.swift, PeriodTransactionsView.swift, ReportsView.swift, TransactionsView.swift, DashboardView.swift
+Included bank-account expenses in reports and converted QAR/PKR/USD amounts using fixed rates.
+Separated gross loan summary sides and added the Accounts zero-balance filter button.
+/Users/runner/work/NextSolution/NextSolution/scripts/add_payment_receivable_payable_automation.py:333: SyntaxWarning: "\." is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\."? A raw string is also an option.
+  }.map(\.id))
+/Users/runner/work/NextSolution/NextSolution/scripts/add_payment_receivable_payable_automation.py:338: SyntaxWarning: "\." is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\."? A raw string is also an option.
+  }.map(\.id))
+Classified Payments by live balance and rebuilt Financial Summary with non-duplicating Money In/Out buckets.
+Added Receivable Collected summary-card transaction drill-down.
+Added monthly Loan Summary Comparison with original-currency detail and one fixed-rate consolidated Net Movement.
+Fixed Loan Summary Comparison consolidated rows for iOS 16.
+/Users/runner/work/NextSolution/NextSolution/scripts/add_accounting_period_setting.py:83: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  return "\(ordinalDay(accountingPeriodStartDay)) → \(ordinalDay(accountingPeriodStartDay - 1))"
+Added global Accounting Period setting with a default 26th-to-25th cycle.
+/Users/runner/work/NextSolution/NextSolution/scripts/add_custom_dates_to_loan_summary_comparison.py:77: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  "Apply Current \(accountingPeriodLabel) Period",
+/Users/runner/work/NextSolution/NextSolution/scripts/add_custom_dates_to_loan_summary_comparison.py:228: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  return "\(ordinalDay(accountingPeriodStartDay))–\(ordinalDay(accountingPeriodStartDay - 1))"
+/Users/runner/work/NextSolution/NextSolution/scripts/add_custom_dates_to_loan_summary_comparison.py:247: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  return "\(Self.periodFormatter.string(from: interval.start)) – \(Self.periodFormatter.string(from: end))"
+Added custom From/To dates and accounting-period defaults to Loan Summary Comparison.
+Added SMS importer configuration and temporary console UI.
+Added installer launch diagnostics to the temporary SMS console.
+Added protected Messages storage access, real-root path candidates, and detailed database diagnostics.
+Added sender/card safety filters, newest-first unrecorded sync, and one-by-one SMS draft approval.
+Fixed iOS 16 draft inbox UI, migrated old settings, coordinated file locks, retained failed SMS rows for retry, and retired direct-import warnings.
+Added an optional, arbitrary inclusive accounting lock date across transaction recording and mutation paths.
+Prepared the existing SMS draft counter for the final interpolation cleanup.
+Cleaned SMS extraction, simplified draft fields, and reused the latest same-vendor category.
+Added latest-10 recovery scans, a six-hour default interval, custom interval settings, and cursor-independent missed-SMS recovery.
+Marked the retained database helper unused and prepared the compact-AI state anchor.
+Added latest-30 manual scanning, rejected-SMS restore, and one compact AI settings section.
+Added Fawran incoming-transfer drafts and complete editable SMS draft review.
+Prepared report conversion helpers and removed only the receivable drill-down.
+Fixed the Fawran regex escape and prepared financial conversion helpers.
+Fixed bank/loan flow classification, removed Receivables from Financial Summary, added SMS Auto Record, and compacted Settings sections.
+Prepared stable SMS state, auto-save, daemon functions, and retired Loan Payment references.
+Added dedicated Settings pages, persistent custom SMS mapping, log cleanup, and removed Loan Payment SMS handling.
+VALIDATION RootHideSMSQueue/Sources/main.m
+  'kind = @"billPayment"': 0
+  'loan payment transfer': 0
+  'customEnding': 10
+  'ApplyMaintenanceRequests': 2
+VALIDATION DailyLedger/Services/SMSImportConsoleService.swift
+  'loanPaymentAccountID': 0
+  'var customEnding = ""': 1
+  'var customAccountID: String?': 1
+VALIDATION DailyLedger/Views/SMSImportConsoleView.swift
+  'Loan Payment Account': 0
+  'TextField("Custom card/account ending"': 1
+  'SMSImportLogsView': 2
+  '.onChange(of: configuration)': 1
+VALIDATION DailyLedger/Views/SettingsView.swift
+  'SettingsSectionPage(title:': 10
+  'DisclosureGroup(isExpanded: settingsSectionBinding': 0
+  'expandedSettingsSection': 0
+Fixed professional report chart-code formatting without cross-file private helpers.
+Added per-report PDF/Excel downloads, QAR/PKR consolidation and compact report formatting.
+Prepared unique Sample C report anchors.
+Applied Sample C, screen-matched exports, wrapped text, and reviewed-report download controls.
+Added fail-safe SMS review drafts, including CUR1 account-debit Card Payment transfer recognition.
+Added generic and CUR1 Card Payment SMS review-fallback regression tests.
+Added professional reports plus fail-safe editable SMS transfer review.
+/Users/runner/work/NextSolution/NextSolution/scripts/add_sms_realtime_progress_ai_1_3_51.py:691: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  ? "\(provider) confidence: \(confidence)%"
+Traceback (most recent call last):
+  File "/Users/runner/work/NextSolution/NextSolution/scripts/add_sms_realtime_progress_ai_1_3_51.py", line 242, in <module>
+    replace_once(
+    ~~~~~~~~~~~~^
+        view,
+        ^^^^^
+    ...<8 lines>...
+    ''',
+    ^^^^
+    )
+    ^
+  File "/Users/runner/work/NextSolution/NextSolution/scripts/add_sms_realtime_progress_ai_1_3_51.py", line 21, in replace_once
+    raise RuntimeError(f"Expected one match in {path}, found {count}: {old[:220]!r}")
+RuntimeError: Expected one match in DailyLedger/Views/SMSImportConsoleView.swift, found 2: '    @State private var notice: String?\n'
