@@ -275,3 +275,41 @@ Description: Plays distinct haptic feedback when iPhone Low Power Mode turns on 
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
 Name: Low Power Mode Haptic
+
+Package: com.nextsolution.headphonedisconnecthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 348
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_RootHide.deb
+Size: 9196
+MD5sum: eb9217c0a6e7e2e0e67dad8c6733a7c3
+SHA1: 2d8d69f01d4551d18f5750c010d0d678875e90f1
+SHA256: 31884c095a0d5c96027c07ea00f546c488d88296ddfbcf3b343c06c8eb07b154
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
+Name: Headphone Disconnect Haptic
+
+Package: com.nextsolution.headphonedisconnecthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 348
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_Rootless.deb
+Size: 9266
+MD5sum: afab977ac0bf13db4acc3382819ea272
+SHA1: ad505fb11aac895b263dd35aa0f3da4d392579f2
+SHA256: 6f200b41d9acfdaf3b777e9e1641bb41613b8c04ffe6fb081398a56731d62c3c
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
+Name: Headphone Disconnect Haptic
