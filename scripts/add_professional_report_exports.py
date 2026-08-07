@@ -50,4 +50,28 @@ runpy.run_path(
     run_name="__main__",
 )
 
-print("Added professional reports with approved Sample C screen-matched exports.")
+# Final SMS safety layer. This runs after all earlier SMS parser patches so
+# approved-bank messages that are still unknown become editable review drafts.
+# It also recognizes account-debit Card Payment messages such as CUR1 as
+# transfer review drafts rather than dropping them.
+runpy.run_path(
+    str(ROOT / "scripts/add_sms_unrecognized_review_fallback.py"),
+    run_name="__main__",
+)
+
+# Keep the established daemon package version for this repair build so the
+# existing workflow/package/install compatibility checks remain unchanged.
+replace_once(
+    "RootHideSMSQueue/Sources/main.m",
+    'static NSString *const kDaemonVersion = @"2.1.7";',
+    'static NSString *const kDaemonVersion = @"2.1.6";',
+)
+replace_once("RootHideSMSQueue/control", "Version: 2.1.7", "Version: 2.1.6")
+for path in ["RootHideSMSQueue/postinst", "RootHideSMSQueue/layout/DEBIAN/postinst"]:
+    replace_once(
+        path,
+        "Next Ledger SMS Daemon 2.1.7 installation started",
+        "Next Ledger SMS Daemon 2.1.6 installation started",
+    )
+
+print("Added professional reports plus fail-safe editable SMS transfer review.")
