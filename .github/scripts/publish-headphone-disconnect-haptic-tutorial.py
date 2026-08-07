@@ -115,15 +115,12 @@ def require(text: str, needle: str, label: str) -> None:
 
 def validate_packages() -> None:
     text = read(PACKAGES)
-    blocks = [b for b in re.split(r"\n\s*\n", text) if f"Package: {PACKAGE_ID}" in b]
+    blocks = [b for b in re.split(r"\n\s*\n", text) if re.search(rf"^Package: {re.escape(PACKAGE_ID)}$", b, re.M)]
     if len(blocks) != 2:
         raise SystemExit(f"Expected exactly two live package stanzas, found {len(blocks)}")
-    expected = {
-        "iphoneos-arm64e": ROOT_HIDE,
-        "iphoneos-arm64": ROOTLESS,
-    }
+    expected = {"iphoneos-arm64e": ROOT_HIDE, "iphoneos-arm64": ROOTLESS}
     for arch, filename in expected.items():
-        candidates = [b for b in blocks if f"Architecture: {arch}" in b]
+        candidates = [b for b in blocks if re.search(rf"^Architecture: {re.escape(arch)}$", b, re.M)]
         if len(candidates) != 1:
             raise SystemExit(f"Missing or duplicate {arch} stanza")
         block = candidates[0]
@@ -155,7 +152,6 @@ def validate() -> None:
         ("Concept artwork", "concept-art disclosure")]: require(article, needle, label)
     if article.count("pagead2.googlesyndication.com/pagead/js/adsbygoogle.js") != 1:
         raise SystemExit("AdSense loader must occur exactly once")
-    # Auto Ads is the verified site implementation; never invent a slot ID.
     if "data-ad-slot=" in article or "data-ad-client=" in article:
         raise SystemExit("Unexpected invented AdSense unit attributes")
     for text, start, end, label in [
@@ -163,7 +159,6 @@ def validate() -> None:
         (tutorials, TUTORIAL_START, TUTORIAL_END, "Tutorials card")]:
         if text.count(start) != 1 or text.count(end) != 1:
             raise SystemExit(f"{label} markers missing or duplicated")
-    # New card must remain pinned before Next Home Lock.
     if index.index(RECENT_START) > index.index("<!-- NEXT_HOME_LOCK_RECENT_CARD_START -->"):
         raise SystemExit("Homepage card is not pinned first")
     if tutorials.index(TUTORIAL_START) > tutorials.index("<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->"):
