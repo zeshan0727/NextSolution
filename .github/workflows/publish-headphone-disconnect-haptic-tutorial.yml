@@ -1,3 +1,4 @@
+# Final clean validation trigger after generated cards and sitemap were committed.
 name: Validate Headphone Disconnect Haptic Tutorial
 
 on:
