@@ -30,55 +30,11 @@ replace_once(settings,
     @FocusState private var openAIKeyFocused: Bool
 ''')
 
-replacement = '''                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
-                            Group {
-                                if showOpenAIKey {
-                                    TextField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
-                                } else {
-                                    SecureField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
-                                }
-                            }
-                            .focused($openAIKeyFocused)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .keyboardType(.asciiCapable)
-                            .textContentType(.password)
-                            .submitLabel(.done)
-                            .onSubmit { openAIKeyFocused = false }
-                            Button { showOpenAIKey.toggle(); openAIKeyFocused = true } label: {
-                                Image(systemName: showOpenAIKey ? "eye.slash" : "eye")
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        HStack(spacing: 10) {
-                            Button {
-                                if let value = UIPasteboard.general.string, !value.isEmpty {
-                                    openAIAPIKey = value.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    openAIKeyFocused = true
-                                } else {
-                                    notice = SettingsNotice(title: "Clipboard Empty", message: "Copy your OpenAI API key first, then tap Paste.")
-                                }
-                            } label: { Label("Paste", systemImage: "doc.on.clipboard") }
-                            .buttonStyle(.bordered)
-                            Button { openAIKeyFocused = true } label: { Label("Tap to Edit", systemImage: "keyboard") }
-                            .buttonStyle(.bordered)
-                            if !openAIAPIKey.isEmpty {
-                                Button(role: .destructive) { openAIAPIKey = ""; openAIKeyFocused = true } label: {
-                                    Label("Clear", systemImage: "xmark.circle")
-                                }
-                                .buttonStyle(.bordered)
-                            }
-                        }
-                        .font(.caption)
-                        Text(openAIConnected ? "OpenAI key saved. Paste a new key only to replace it." : "Tap the field or Tap to Edit for the keyboard, or copy the key and tap Paste.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-'''
+# Keep the giant Settings body small enough for Swift 5's type checker.
+# The generated SecureField is replaced by one compact computed subview.
 text = read(settings)
 pattern = r'(?ms)^\s*[^\n]*\$openAIAPIKey[^\n]*\n(?:\s*\.[^\n]*\n){0,8}'
-text, count = re.subn(pattern, replacement, text, count=1)
+text, count = re.subn(pattern, '                    openAIKeyEntry\n', text, count=1)
 if count != 1:
     for line in text.splitlines():
         if "openAIAPIKey" in line:
@@ -87,6 +43,84 @@ if count != 1:
 write(settings, text)
 
 text = read(settings)
+helper_marker = '''    private var backupDocument: BackupDocument {
+'''
+helper = '''    @ViewBuilder
+    private var openAIKeyEntry: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Group {
+                    if showOpenAIKey {
+                        TextField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
+                    } else {
+                        SecureField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
+                    }
+                }
+                .focused($openAIKeyFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .textContentType(.password)
+                .submitLabel(.done)
+                .onSubmit { openAIKeyFocused = false }
+
+                Button {
+                    showOpenAIKey.toggle()
+                    openAIKeyFocused = true
+                } label: {
+                    Image(systemName: showOpenAIKey ? "eye.slash" : "eye")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(showOpenAIKey ? "Hide API key" : "Show API key")
+            }
+
+            HStack(spacing: 10) {
+                Button {
+                    if let value = UIPasteboard.general.string, !value.isEmpty {
+                        openAIAPIKey = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                        openAIKeyFocused = true
+                    } else {
+                        notice = SettingsNotice(
+                            title: "Clipboard Empty",
+                            message: "Copy your OpenAI API key first, then tap Paste."
+                        )
+                    }
+                } label: {
+                    Label("Paste", systemImage: "doc.on.clipboard")
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    openAIKeyFocused = true
+                } label: {
+                    Label("Tap to Edit", systemImage: "keyboard")
+                }
+                .buttonStyle(.bordered)
+
+                if !openAIAPIKey.isEmpty {
+                    Button(role: .destructive) {
+                        openAIAPIKey = ""
+                        openAIKeyFocused = true
+                    } label: {
+                        Label("Clear", systemImage: "xmark.circle")
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .font(.caption)
+
+            Text(openAIConnected
+                 ? "OpenAI key saved. Paste a new key only to replace it."
+                 : "Tap the field or Tap to Edit for the keyboard, or copy the key and tap Paste.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+'''
+if helper_marker not in text:
+    raise RuntimeError("Settings backupDocument marker not found")
+text = text.replace(helper_marker, helper + helper_marker, 1)
 text = text.replace('''            .onAppear {
                 selectedCurrency = store.currencyCode
             }
@@ -105,6 +139,4 @@ text = text.replace('''            try OpenAIService.shared.saveAPIKey(openAIAPI
 ''',1)
 text = re.sub(r'LabeledContent\("Version", value: "[^"]+"\)', 'LabeledContent("Version", value: "1.3.54")', text, count=1)
 write(settings, text)
-print("Prepared Next Ledger 1.3.54 API-key keyboard, paste, reveal, clear and saved-key status controls.")
-
-# Clean build trigger after final generated-binding anchor fix.
+print("Prepared Next Ledger 1.3.54 compile-safe API-key keyboard, paste, reveal, clear and saved-key controls.")
