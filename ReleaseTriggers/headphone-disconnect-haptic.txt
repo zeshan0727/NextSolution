@@ -1,0 +1,1 @@
+Headphone Disconnect Haptic 1.0.0 release trigger after exact release workflow validation passed.
