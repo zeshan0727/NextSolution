@@ -1,1 +1,1 @@
-Headphone Disconnect Haptic 1.0.0 release trigger after corrected binary validation.
+Headphone Disconnect Haptic 1.0.0 release trigger after packaged plist validation fix.
