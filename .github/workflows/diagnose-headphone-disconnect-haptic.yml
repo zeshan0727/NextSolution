@@ -1,4 +1,3 @@
-# Retrigger 2: rerun after preference-bundle linker fix.
 name: Diagnose Headphone Disconnect Haptic Build
 
 on:
@@ -8,12 +7,18 @@ on:
     paths:
       - ".github/workflows/diagnose-headphone-disconnect-haptic.yml"
       - "DailyTweaks/2026-08-07-HeadphoneDisconnectHaptic/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-headphone-disconnect-haptic.yml"
+      - "DailyTweaks/2026-08-07-HeadphoneDisconnectHaptic/**"
+      - "Diagnostics/headphone-disconnect-haptic-pr-trigger.txt"
 
 permissions:
   contents: write
 
 concurrency:
-  group: diagnose-headphone-disconnect-haptic
+  group: diagnose-headphone-disconnect-haptic-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -27,7 +32,8 @@ jobs:
       - name: Install tools
         run: brew install dpkg ldid
 
-      - name: Compile both variants and persist full diagnostic output
+      - name: Compile both variants and write full report
+        id: compile
         shell: bash
         run: |
           set +e
@@ -62,7 +68,8 @@ jobs:
             ROOTHIDE_RC=$?
           fi
 
-          mkdir -p diagnostics
+          mkdir -p Diagnostics
+          REPORT="$GITHUB_WORKSPACE/Diagnostics/headphone-disconnect-haptic-build.txt"
           {
             echo "Headphone Disconnect Haptic 1.0.0 diagnostic compiler report"
             echo "Source deterministic checks exit: $SOURCE_RC"
@@ -85,15 +92,41 @@ jobs:
             echo
             echo "===== ROOTHIDE BUILD ====="
             cat "$R/roothide-build.log" 2>/dev/null
-          } > diagnostics/headphone-disconnect-haptic-build.txt
+          } > "$REPORT"
 
+          echo "source_rc=$SOURCE_RC" >> "$GITHUB_OUTPUT"
+          echo "rootless_rc=$ROOTLESS_RC" >> "$GITHUB_OUTPUT"
+          echo "roothide_rc=$ROOTHIDE_RC" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headphone-disconnect-haptic-diagnostic-report
+          path: Diagnostics/headphone-disconnect-haptic-build.txt
+          if-no-files-found: error
+
+      - name: Persist diagnostic report on main
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
           git fetch origin main
+          cp Diagnostics/headphone-disconnect-haptic-build.txt "$RUNNER_TEMP/hdh-report.txt"
           git checkout main
           git pull --rebase origin main
-          git add diagnostics/headphone-disconnect-haptic-build.txt
+          mkdir -p Diagnostics
+          cp "$RUNNER_TEMP/hdh-report.txt" Diagnostics/headphone-disconnect-haptic-build.txt
+          git add Diagnostics/headphone-disconnect-haptic-build.txt
           git commit -m "Record Headphone Disconnect Haptic diagnostic build" || true
           git push origin main
 
-          if [ "$SOURCE_RC" -ne 0 ] || [ "$ROOTLESS_RC" -ne 0 ] || [ "$ROOTHIDE_RC" -ne 0 ]; then exit 1; fi
+      - name: Enforce successful compilation
+        shell: bash
+        run: |
+          test "${{ steps.compile.outputs.source_rc }}" = "0"
+          test "${{ steps.compile.outputs.rootless_rc }}" = "0"
+          test "${{ steps.compile.outputs.roothide_rc }}" = "0"
