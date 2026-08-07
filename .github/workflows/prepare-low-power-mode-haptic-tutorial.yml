@@ -1,0 +1,56 @@
+name: Prepare Low Power Mode Haptic Tutorial
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - tutorial/low-power-mode-haptic-1.0.0
+    paths:
+      - ".github/workflows/prepare-low-power-mode-haptic-tutorial.yml"
+      - ".github/scripts/publish-low-power-mode-haptic-tutorial.py"
+      - "low-power-mode-haptic-tweak-ios16.html"
+      - "assets/low-power-mode-haptic/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prepare-low-power-mode-haptic-tutorial
+  cancel-in-progress: false
+
+jobs:
+  prepare-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: tutorial/low-power-mode-haptic-1.0.0
+          fetch-depth: 0
+      - name: Prepare website cards and sitemap
+        run: python3 .github/scripts/publish-low-power-mode-haptic-tutorial.py
+      - name: Validate idempotency, SEO, downloads and AdSense
+        run: |
+          python3 .github/scripts/publish-low-power-mode-haptic-tutorial.py --check
+          before="$(sha256sum index.html tutorials.html sitemap.xml)"
+          python3 .github/scripts/publish-low-power-mode-haptic-tutorial.py
+          after="$(sha256sum index.html tutorials.html sitemap.xml)"
+          test "$before" = "$after"
+          test "$(grep -c 'ca-pub-4770123899731214' low-power-mode-haptic-tweak-ios16.html)" -eq 1
+          test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' low-power-mode-haptic-tweak-ios16.html)" -eq 1
+          grep -q 'https://nextsolution.cc/debfiles/LowPowerModeHaptic_1.0.0_RootHide.deb' low-power-mode-haptic-tweak-ios16.html
+          grep -q 'https://nextsolution.cc/debfiles/LowPowerModeHaptic_1.0.0_Rootless.deb' low-power-mode-haptic-tweak-ios16.html
+          grep -q 'aria-current="page"' low-power-mode-haptic-tweak-ios16.html
+          grep -q '"@type":"TechArticle"' low-power-mode-haptic-tweak-ios16.html
+          ! grep -R -E 'zeshan0727\.github\.io|raw\.githubusercontent\.com/zeshan0727/zeshan0727\.github\.io' low-power-mode-haptic-tweak-ios16.html index.html tutorials.html sitemap.xml
+      - name: Commit prepared tutorial changes
+        run: |
+          git config user.name "Next Solution Tutorial Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html tutorials.html sitemap.xml low-power-mode-haptic-tweak-ios16.html assets/low-power-mode-haptic .github/scripts/publish-low-power-mode-haptic-tutorial.py .github/workflows/prepare-low-power-mode-haptic-tutorial.yml
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "Tutorial branch already prepared"
+          else
+            git commit -m "Prepare Low Power Mode Haptic tutorial for approval"
+            git push origin HEAD:tutorial/low-power-mode-haptic-1.0.0
+          fi
