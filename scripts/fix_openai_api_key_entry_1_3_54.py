@@ -1,57 +1,134 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def read(path: str) -> str:
+def read(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def write(path: str, content: str) -> None:
-    (ROOT / path).write_text(content, encoding="utf-8")
+def write(path, text):
+    (ROOT / path).write_text(text, encoding="utf-8")
 
 
-def replace_once(path: str, old: str, new: str) -> None:
+def replace_once(path, old, new):
     text = read(path)
-    count = text.count(old)
-    if count != 1:
-        raise RuntimeError(f"Expected one match in {path}, found {count}: {old[:220]!r}")
+    if text.count(old) != 1:
+        raise RuntimeError(f"Expected one match in {path}: {old[:120]!r}")
     write(path, text.replace(old, new, 1))
-
 
 replace_once("project.yml", 'MARKETING_VERSION: "1.3.53"', 'MARKETING_VERSION: "1.3.54"')
 replace_once("project.yml", 'CURRENT_PROJECT_VERSION: "61"', 'CURRENT_PROJECT_VERSION: "62"')
-
 settings = "DailyLedger/Views/SettingsView.swift"
 
-replace_once(
-    settings,
-    '''    @State private var openAIAPIKey = ""\n    @State private var openAIConnected = OpenAIService.shared.hasAPIKey\n    @State private var testingOpenAI = false\n''',
-    '''    @State private var openAIAPIKey = ""\n    @State private var openAIConnected = OpenAIService.shared.hasAPIKey\n    @State private var testingOpenAI = false\n    @State private var showOpenAIKey = false\n    @FocusState private var openAIKeyFocused: Bool\n''',
-)
+replace_once(settings,
+'''    @State private var openAIAPIKey = ""
+    @State private var openAIConnected = OpenAIService.shared.hasAPIKey
+    @State private var testingOpenAI = false
+''',
+'''    @State private var openAIAPIKey = ""
+    @State private var openAIConnected = OpenAIService.shared.hasAPIKey
+    @State private var testingOpenAI = false
+    @State private var showOpenAIKey = false
+    @FocusState private var openAIKeyFocused: Bool
+''')
 
-old = '''                    SecureField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)\n                        .textInputAutocapitalization(.never).autocorrectionDisabled()\n'''
-new = '''                    VStack(alignment: .leading, spacing: 8) {\n                        HStack(spacing: 8) {\n                            Group {\n                                if showOpenAIKey {\n                                    TextField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)\n                                } else {\n                                    SecureField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)\n                                }\n                            }\n                            .focused($openAIKeyFocused)\n                            .textInputAutocapitalization(.never)\n                            .autocorrectionDisabled()\n                            .keyboardType(.asciiCapable)\n                            .textContentType(.password)\n                            .submitLabel(.done)\n                            .onSubmit { openAIKeyFocused = false }\n\n                            Button {\n                                showOpenAIKey.toggle()\n                                openAIKeyFocused = true\n                            } label: {\n                                Image(systemName: showOpenAIKey ? "eye.slash" : "eye")\n                            }\n                            .buttonStyle(.plain)\n                            .accessibilityLabel(showOpenAIKey ? "Hide API key" : "Show API key")\n                        }\n\n                        HStack(spacing: 12) {\n                            Button {\n                                if let value = UIPasteboard.general.string {\n                                    openAIAPIKey = value.trimmingCharacters(in: .whitespacesAndNewlines)\n                                    openAIKeyFocused = true\n                                } else {\n                                    notice = SettingsNotice(title: "Clipboard Empty", message: "Copy your OpenAI API key first, then tap Paste.")\n                                }\n                            } label: {\n                                Label("Paste", systemImage: "doc.on.clipboard")\n                            }\n                            .buttonStyle(.bordered)\n\n                            Button {\n                                openAIKeyFocused = true\n                            } label: {\n                                Label("Tap to Edit", systemImage: "keyboard")\n                            }\n                            .buttonStyle(.bordered)\n\n                            if !openAIAPIKey.isEmpty {\n                                Button(role: .destructive) {\n                                    openAIAPIKey = ""\n                                    openAIKeyFocused = true\n                                } label: {\n                                    Label("Clear", systemImage: "xmark.circle")\n                                }\n                                .buttonStyle(.bordered)\n                            }\n                        }\n                        .font(.caption)\n\n                        if openAIConnected {\n                            Text("A saved OpenAI API key is available to SMS AI recovery. Paste a new key only if you want to replace it.")\n                                .font(.caption)\n                                .foregroundStyle(.secondary)\n                        } else {\n                            Text("Tap the field or Tap to Edit to open the keyboard. You can also copy your key and use Paste.")\n                                .font(.caption)\n                                .foregroundStyle(.secondary)\n                        }\n                    }\n'''
-replace_once(settings, old, new)
+replacement = '''                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Group {
+                                if showOpenAIKey {
+                                    TextField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
+                                } else {
+                                    SecureField(openAIConnected ? "Enter replacement API key" : "OpenAI API key", text: $openAIAPIKey)
+                                }
+                            }
+                            .focused($openAIKeyFocused)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.asciiCapable)
+                            .textContentType(.password)
+                            .submitLabel(.done)
+                            .onSubmit { openAIKeyFocused = false }
 
-replace_once(
-    settings,
-    '''            .onAppear {\n                selectedCurrency = store.currencyCode\n            }\n''',
-    '''            .onAppear {\n                selectedCurrency = store.currencyCode\n                openAIConnected = OpenAIService.shared.hasAPIKey\n            }\n''',
-)
+                            Button {
+                                showOpenAIKey.toggle()
+                                openAIKeyFocused = true
+                            } label: {
+                                Image(systemName: showOpenAIKey ? "eye.slash" : "eye")
+                            }
+                            .buttonStyle(.plain)
+                        }
 
-replace_once(
-    settings,
-    '''            try OpenAIService.shared.saveAPIKey(openAIAPIKey)\n            openAIAPIKey = ""\n            openAIConnected = true\n            notice = SettingsNotice(title: "OpenAI Connected", message: "The API key was saved securely in this iPhone's Keychain.")\n''',
-    '''            try OpenAIService.shared.saveAPIKey(openAIAPIKey)\n            openAIAPIKey = ""\n            openAIKeyFocused = false\n            openAIConnected = OpenAIService.shared.hasAPIKey\n            notice = SettingsNotice(title: "OpenAI Connected", message: "The API key was saved securely in this iPhone's Keychain and is ready for SMS AI recovery.")\n''',
-)
+                        HStack(spacing: 10) {
+                            Button {
+                                if let value = UIPasteboard.general.string, !value.isEmpty {
+                                    openAIAPIKey = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    openAIKeyFocused = true
+                                } else {
+                                    notice = SettingsNotice(title: "Clipboard Empty", message: "Copy your OpenAI API key first, then tap Paste.")
+                                }
+                            } label: {
+                                Label("Paste", systemImage: "doc.on.clipboard")
+                            }
+                            .buttonStyle(.bordered)
 
-replace_once(
-    settings,
-    '''                    LabeledContent("Version", value: "1.3.41")\n''',
-    '''                    LabeledContent("Version", value: "1.3.54")\n''',
-)
+                            Button {
+                                openAIKeyFocused = true
+                            } label: {
+                                Label("Tap to Edit", systemImage: "keyboard")
+                            }
+                            .buttonStyle(.bordered)
 
-print("Prepared Next Ledger 1.3.54 OpenAI API key keyboard, paste, reveal and clear controls.")
+                            if !openAIAPIKey.isEmpty {
+                                Button(role: .destructive) {
+                                    openAIAPIKey = ""
+                                    openAIKeyFocused = true
+                                } label: {
+                                    Label("Clear", systemImage: "xmark.circle")
+                                }
+                                .buttonStyle(.bordered)
+                            }
+                        }
+                        .font(.caption)
 
-# Build trigger: API key entry fix.
+                        Text(openAIConnected
+                             ? "OpenAI key saved. Paste a new key only to replace it."
+                             : "Tap the field or Tap to Edit for the keyboard, or copy the key and tap Paste.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+'''
+
+text = read(settings)
+pattern = r'(?ms)^\s*SecureField\([^\n]*text:\s*\$openAIAPIKey\)[^\n]*\n(?:\s*\.[^\n]*\n){0,8}'
+text, count = re.subn(pattern, replacement, text, count=1)
+if count != 1:
+    raise RuntimeError(f"Expected one generated OpenAI API key field, replaced {count}")
+write(settings, text)
+
+text = read(settings)
+text = text.replace(
+'''            .onAppear {
+                selectedCurrency = store.currencyCode
+            }
+''',
+'''            .onAppear {
+                selectedCurrency = store.currencyCode
+                openAIConnected = OpenAIService.shared.hasAPIKey
+            }
+''', 1)
+text = text.replace(
+'''            try OpenAIService.shared.saveAPIKey(openAIAPIKey)
+            openAIAPIKey = ""
+            openAIConnected = true
+''',
+'''            try OpenAIService.shared.saveAPIKey(openAIAPIKey)
+            openAIAPIKey = ""
+            openAIKeyFocused = false
+            openAIConnected = OpenAIService.shared.hasAPIKey
+''', 1)
+text = re.sub(r'LabeledContent\("Version", value: "[^"]+"\)', 'LabeledContent("Version", value: "1.3.54")', text, count=1)
+write(settings, text)
+
+print("Prepared Next Ledger 1.3.54 API-key keyboard, paste, reveal, clear and saved-key status controls.")
