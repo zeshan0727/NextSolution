@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Headphone Disconnect Haptic — Next Solution</title>
+  <style>
+    :root{color-scheme:light dark;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+    body{margin:0;padding:24px;background:#0b1020;color:#f7f8ff}
+    main{max-width:720px;margin:auto}
+    .card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:22px;margin:14px 0}
+    h1{font-size:30px;margin:0 0 8px}h2{font-size:19px;margin:0 0 8px}p,li{line-height:1.55;color:#d9dded}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(126,87,255,.2);margin:4px 5px 4px 0;font-size:13px}
+  </style>
+</head>
+<body><main>
+  <div class="card">
+    <h1>Headphone Disconnect Haptic</h1>
+    <p>One focused warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.</p>
+    <span class="badge">Version 1.0.0</span><span class="badge">iOS 15+</span><span class="badge">RootHide</span><span class="badge">Rootless</span>
+  </div>
+  <div class="card"><h2>How it behaves</h2><p>The tweak reacts only to an actual old-device-unavailable audio-route event. Connecting headphones, ordinary audio-session category changes and switching directly between personal-audio outputs do not produce the warning.</p></div>
+  <div class="card"><h2>Settings</h2><p>A single <strong>Enable Disconnect Alert</strong> switch is available in Settings. No diagnostic or developer controls are included in the release pane.</p></div>
+  <div class="card"><h2>Compatibility</h2><p>Built for iOS 15 and later, with RootHide <code>iphoneos-arm64e</code> and standard rootless <code>iphoneos-arm64</code> variants. Physical-device confirmation is still required after installation.</p></div>
+</main></body></html>
