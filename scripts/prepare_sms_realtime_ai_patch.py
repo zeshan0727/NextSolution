@@ -34,6 +34,17 @@ if needle in text:
 elif replacement not in text:
     raise RuntimeError("Could not locate ambiguous SMS console notice-state patch")
 
+# The realtime patch itself is Python generating Objective-C. The regex therefore
+# needs two backslashes in the generated Objective-C string, which means four in
+# the Python source. A single generated \s is only a warning with macOS clang but
+# becomes a hard -Werror failure in the RootHide/Theos build.
+old_regex = 'Capture(@"\\\\b(QAR|QR|USD|PKR|AED|SAR|EUR|GBP)\\\\s*[0-9]", filtered, 1)'
+new_regex = 'Capture(@"\\\\\\\\b(QAR|QR|USD|PKR|AED|SAR|EUR|GBP)\\\\\\\\s*[0-9]", filtered, 1)'
+if old_regex in text:
+    text = text.replace(old_regex, new_regex, 1)
+elif new_regex not in text:
+    raise RuntimeError("Could not locate typedstream currency regex escape")
+
 # Keep Swift actor inference simple for iOS 16 / Swift 5.7 compatibility. These
 # methods are invoked from SwiftUI view tasks and update local @State.
 text = text.replace(
@@ -48,4 +59,4 @@ text = text.replace(
 )
 
 path.write_text(text, encoding="utf-8")
-print("Prepared stable first-match anchors and Swift 5.7 AI review helpers.")
+print("Prepared stable SMS realtime/AI patch anchors and strict Theos regex escaping.")
