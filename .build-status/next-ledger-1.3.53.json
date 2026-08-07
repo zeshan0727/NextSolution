@@ -1,0 +1,10 @@
+{
+  "status": "cancelled",
+  "run_id": "31217287819",
+  "run_number": "17",
+  "source_sha": "387e830d25fc5b63e5abeaff83fc5b234489f940",
+  "app_version": "1.3.53",
+  "app_build": "61",
+  "daemon_version": "2.2.0",
+  "artifact_name": "NextLedger-1.3.53-Realtime-OpenAI-SMS-Recovery"
+}
