@@ -58,6 +58,10 @@ runpy.run_path(
     str(ROOT / "scripts/add_sms_unrecognized_review_fallback.py"),
     run_name="__main__",
 )
+runpy.run_path(
+    str(ROOT / "scripts/add_sms_fallback_selftest.py"),
+    run_name="__main__",
+)
 
 # Keep the established daemon package version for this repair build so the
 # existing workflow/package/install compatibility checks remain unchanged.
