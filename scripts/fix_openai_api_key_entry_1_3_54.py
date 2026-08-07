@@ -53,3 +53,5 @@ replace_once(
 )
 
 print("Prepared Next Ledger 1.3.54 OpenAI API key keyboard, paste, reveal and clear controls.")
+
+# Build trigger: API key entry fix.
