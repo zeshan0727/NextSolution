@@ -36,8 +36,9 @@ static BOOL LooksLikeTransactionForReview(NSString *text) {
     if (currency.length == 0) return NO;
 
     NSArray<NSString *> *signals = @[
-        @"credited", @"debited", @"used for", @"purchase", @"withdrawal",
-        @"transfer", @"fawran", @"instant payment", @"received", @"sent",
+        @"credited", @"debited", @"a/c debit", @"account debit",
+        @"used for", @"purchase", @"withdrawal", @"transfer", @"fawran",
+        @"instant payment", @"card payment", @"received", @"sent",
         @"payment", @"remittance"
     ];
     for (NSString *signal in signals) {
@@ -59,8 +60,10 @@ static NSDictionary *ReviewDraftForUnrecognizedBankSMS(NSString *text, NSDate *f
     if ([amount isEqualToNumber:NSDecimalNumber.notANumber] || amount.doubleValue <= 0) return nil;
 
     NSString *lower = clean.lowercaseString;
+    BOOL accountDebit = [lower containsString:@"a/c debit"] || [lower containsString:@"account debit"];
     NSString *kind = @"reviewTransaction";
-    if ([lower containsString:@"transfer"] ||
+    if ((accountDebit && [lower containsString:@"card payment"]) ||
+        [lower containsString:@"transfer"] ||
         [lower containsString:@"fawran"] ||
         [lower containsString:@"instant payment"] ||
         [lower containsString:@"remittance"] ||
@@ -69,6 +72,7 @@ static NSDictionary *ReviewDraftForUnrecognizedBankSMS(NSString *text, NSDate *f
     } else if ([lower containsString:@"credited"] || [lower containsString:@"received"]) {
         kind = @"reviewIncome";
     } else if ([lower containsString:@"debited"] ||
+               accountDebit ||
                [lower containsString:@"used for"] ||
                [lower containsString:@"purchase"] ||
                [lower containsString:@"withdrawal"]) {
@@ -77,9 +81,16 @@ static NSDictionary *ReviewDraftForUnrecognizedBankSMS(NSString *text, NSDate *f
 
     NSString *ending = Capture(@"\\*\\*(\\d{4,8})", clean, 1);
     if (!ending) ending = Capture(@"\\b(?:Current\\s+)?Acc(?:ount)?\\s+x{2,}(\\d{4,8})\\b", clean, 1);
+    if (!ending) ending = Capture(@"\\b([A-Za-z][A-Za-z0-9_-]{1,15})\\s+a/c\\s+debit\\b", clean, 1);
+    if (!ending) ending = Capture(@"\\b([A-Za-z][A-Za-z0-9_-]{1,15})\\s+account\\s+debit\\b", clean, 1);
     if (!ending) ending = @"";
+    ending = ending.uppercaseString;
 
-    NSString *vendor = Capture(@"\\bref\\s+(.+?)(?=\\s+withM-|\\s+at\\s+\\d{1,2}:\\d{2}|$)", clean, 1);
+    NSString *vendor = nil;
+    if (accountDebit) {
+        vendor = Capture(@"\\bfor\\s+(.+?)(?=\\s+at\\s+\\d{1,2}:\\d{2}|$)", clean, 1);
+    }
+    if (!vendor) vendor = Capture(@"\\bref\\s+(.+?)(?=\\s+withM-|\\s+at\\s+\\d{1,2}:\\d{2}|$)", clean, 1);
     if (!vendor) vendor = Capture(@"\\bat\\s+(.+?)(?=\\s+at\\s+\\d{1,2}:\\d{2}|\\s+on\\s+\\d|\\s+balance|\\s+available|$)", clean, 1);
     if (!vendor) vendor = Capture(@"\\bfrom\\s+(.+?)(?=\\s+at\\s+\\d|\\s+on\\s+\\d|$)", clean, 1);
     vendor = CleanWhitespace(vendor ?: @"Review Required");
@@ -129,6 +140,13 @@ replace_once(
     '''        (long)blankBodies,\n        (long)reviewFallbacks,\n        (long)parseFailures,\n''',
 )
 
+# Parser regression test for account-debit card-payment transfer SMS without a numeric card ending.
+replace_once(
+    source,
+    '''    ];\n    NSMutableArray *results = [NSMutableArray array];\n''',
+    '''        ,@{\n            @"name": @"current account card payment transfer",\n            @"sms": @"CUR1 a/c debit\\nQAR 200.00\\nfor Card Payment\\nat 19:48, 07-Aug-26\\nCUR1 Balance: QAR 1,358.55\\nCard Available Balance: QAR -3,495.91",\n            @"kind": @"reviewTransfer", @"ending": @"CUR1", @"amount": @"200"\n        }\n    ];\n    NSMutableArray *results = [NSMutableArray array];\n''',
+)
+
 # App-side suggestions: the fallback is always editable and never auto-recorded.
 service = "DailyLedger/Services/SMSImportConsoleService.swift"
 service_text = read(service)
@@ -153,4 +171,4 @@ for path in ["RootHideSMSQueue/postinst", "RootHideSMSQueue/layout/DEBIAN/postin
         "Next Ledger SMS Daemon 2.1.7 installation started",
     )
 
-print("Added fail-safe approved-bank SMS review drafts and blocked uncertain messages from Auto Record.")
+print("Added fail-safe SMS review drafts, including CUR1 account-debit Card Payment transfer recognition.")
