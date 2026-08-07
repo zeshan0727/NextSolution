@@ -106,3 +106,5 @@ text = text.replace('''            try OpenAIService.shared.saveAPIKey(openAIAPI
 text = re.sub(r'LabeledContent\("Version", value: "[^"]+"\)', 'LabeledContent("Version", value: "1.3.54")', text, count=1)
 write(settings, text)
 print("Prepared Next Ledger 1.3.54 API-key keyboard, paste, reveal, clear and saved-key status controls.")
+
+# Clean build trigger after final generated-binding anchor fix.
