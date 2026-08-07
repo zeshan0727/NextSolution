@@ -1,0 +1,145 @@
+name: Build Next Ledger 1.3.57 OpenAI Save + SMS Auto Link
+
+permissions:
+  contents: write
+
+concurrency:
+  group: next-ledger-1-3-57-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "DailyLedger/**"
+      - "RootHideSMSQueue/**"
+      - "scripts/**"
+      - "project.yml"
+      - ".github/workflows/build-next-ledger-1.3.57.yml"
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply Next Ledger patches
+        run: bash scripts/apply_next_ledger_1_3_57.sh
+
+      - name: Install build tools
+        run: brew install xcodegen dpkg ldid
+
+      - name: Validate OpenAI save and SMS auto-link
+        run: |
+          mkdir -p build
+          grep -Fq 'MARKETING_VERSION: "1.3.57"' project.yml
+          grep -Fq 'CURRENT_PROJECT_VERSION: "65"' project.yml
+          grep -Fq 'try ProtectedSecretStore.shared.save(value, for: Self.service)' DailyLedger/Services/OpenAIService.swift
+          grep -Fq '_ = SecItemAdd(item as CFDictionary, nil) // best-effort mirror' DailyLedger/Services/OpenAIService.swift
+          grep -Fq 'Saved & Connected · SMS AI will use this OpenAI key automatically.' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'Label("Save OpenAI API Key", systemImage: "checkmark.circle.fill")' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'await SMSOpenAIAutoRecoveryCoordinator.shared.processPending()' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'actor SMSOpenAIAutoRecoveryCoordinator' DailyLedger/Services/SMSAIRecognitionService.swift
+          grep -Fq 'guard OpenAIService.shared.hasAPIKey else { return }' DailyLedger/Services/SMSAIRecognitionService.swift
+          grep -Fq 'Automatic · OpenAI' DailyLedger/Views/SMSImportConsoleView.swift
+          grep -Fq 'QueueAICandidate' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'applyAIRecovery' DailyLedger/Services/SMSImportConsoleService.swift
+          xcrun clang -fobjc-arc RootHideSMSQueue/Sources/main.m -framework Foundation -framework CoreFoundation -lsqlite3 -o build/nextledgersmsd-macos
+          build/nextledgersmsd-macos --self-test | tee build/sms-parser-tests.json
+          grep -q '"passed" : true' build/sms-parser-tests.json
+          grep -q '"version" : "2.2.0"' build/sms-parser-tests.json
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild -project DailyLedger.xcodeproj -scheme DailyLedger -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
+
+      - name: Build RootHide SMS daemon 2.2.0
+        shell: bash
+        run: |
+          set -euxo pipefail
+          THEOS_COMMIT="88506b2c22e9e07dd4ed055f23c9e398a117a2c7"
+          git init "$RUNNER_TEMP/theos"
+          git -C "$RUNNER_TEMP/theos" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos" fetch --depth 1 origin "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos" checkout --detach "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos" submodule update --init --recursive --depth 1
+          export THEOS="$RUNNER_TEMP/theos"
+          cmp RootHideSMSQueue/postinst RootHideSMSQueue/layout/DEBIAN/postinst
+          chmod +x RootHideSMSQueue/postinst RootHideSMSQueue/prerm RootHideSMSQueue/layout/DEBIAN/postinst RootHideSMSQueue/layout/DEBIAN/prerm
+          make -C RootHideSMSQueue clean package FINALPACKAGE=1
+          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.2.0-roothide.deb
+          test "$(dpkg-deb -f NextLedgerSMSDaemon-2.2.0-roothide.deb Version)" = "2.2.0"
+          shasum -a 256 NextLedgerSMSDaemon-2.2.0-roothide.deb > NextLedgerSMSDaemon-2.2.0-roothide.sha256
+
+      - name: Package Next Ledger 1.3.57 TIPA
+        run: |
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.57-openai-save-sms-autolink.tipa
+          shasum -a 256 NextLedger-1.3.57-openai-save-sms-autolink.tipa > NextLedger-1.3.57-openai-save-sms-autolink.sha256
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-1.3.57-OpenAI-Save-SMS-AutoLink
+          path: |
+            NextLedger-1.3.57-openai-save-sms-autolink.tipa
+            NextLedger-1.3.57-openai-save-sms-autolink.sha256
+            NextLedgerSMSDaemon-2.2.0-roothide.deb
+            NextLedgerSMSDaemon-2.2.0-roothide.sha256
+            build/sms-parser-tests.json
+          if-no-files-found: error
+
+      - name: Capture diagnostics
+        if: failure()
+        run: |
+          mkdir -p build
+          { test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true; } > build/next-ledger-1.3.57-errors.txt
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-1.3.57-Diagnostics
+          path: build/next-ledger-1.3.57-errors.txt
+          if-no-files-found: warn
+
+      - name: Publish build status
+        if: always()
+        shell: bash
+        run: |
+          STATUS="${{ job.status }}"
+          git reset --hard HEAD
+          git clean -fd
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B build-status "origin/$GITHUB_REF_NAME"
+          mkdir -p .build-status
+          cat > .build-status/next-ledger-1.3.57.json <<EOF
+          {
+            "status": "${STATUS}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "source_sha": "${GITHUB_SHA}",
+            "app_version": "1.3.57",
+            "app_build": "65",
+            "daemon_version": "2.2.0",
+            "artifact_name": "NextLedger-1.3.57-OpenAI-Save-SMS-AutoLink"
+          }
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .build-status/next-ledger-1.3.57.json
+          git commit -m "Record Next Ledger 1.3.57 build status" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
