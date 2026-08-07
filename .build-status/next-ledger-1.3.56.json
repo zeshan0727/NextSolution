@@ -1,0 +1,10 @@
+{
+  "status": "failure",
+  "run_id": "31222509411",
+  "run_number": "1",
+  "source_sha": "d9a8ed721113b6f9895921ac74a57eb60c3383f4",
+  "app_version": "1.3.56",
+  "app_build": "64",
+  "daemon_version": "2.2.0",
+  "artifact_name": "NextLedger-1.3.56-Auto-OpenAI-SMS"
+}
