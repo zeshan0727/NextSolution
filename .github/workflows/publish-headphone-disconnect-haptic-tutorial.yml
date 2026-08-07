@@ -1,0 +1,77 @@
+name: Validate Headphone Disconnect Haptic Tutorial
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "headphone-disconnect-haptic-tweak-ios16.html"
+      - "assets/headphone-disconnect-haptic/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - "Packages"
+      - ".github/scripts/publish-headphone-disconnect-haptic-tutorial.py"
+      - ".github/workflows/publish-headphone-disconnect-haptic-tutorial.yml"
+  push:
+    branches: [main]
+    paths:
+      - "headphone-disconnect-haptic-tweak-ios16.html"
+      - "assets/headphone-disconnect-haptic/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - ".github/scripts/publish-headphone-disconnect-haptic-tutorial.py"
+      - ".github/workflows/publish-headphone-disconnect-haptic-tutorial.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+      - name: Prepare idempotent website changes
+        run: python3 .github/scripts/publish-headphone-disconnect-haptic-tutorial.py
+      - name: Validate prepared tutorial
+        run: python3 .github/scripts/publish-headphone-disconnect-haptic-tutorial.py --check
+      - name: Additional publication checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          A=headphone-disconnect-haptic-tweak-ios16.html
+          test -f "$A"
+          test -f assets/headphone-disconnect-haptic/headphone-disconnect-haptic-hero.svg
+          test -f assets/headphone-disconnect-haptic/headphone-disconnect-haptic-features.svg
+          test -f assets/headphone-disconnect-haptic/headphone-disconnect-haptic-settings.svg
+          grep -q 'href="./"' "$A"
+          grep -q 'href="tutorials.html" aria-current="page"' "$A"
+          grep -q 'href="videos.html"' "$A"
+          grep -q 'href="./#faq"' "$A"
+          grep -q 'Headphone Disconnect Haptic 1.0.0' "$A"
+          grep -q 'https://nextsolution.cc/debfiles/HeadphoneDisconnectHaptic_1.0.0_RootHide.deb' "$A"
+          grep -q 'https://nextsolution.cc/debfiles/HeadphoneDisconnectHaptic_1.0.0_Rootless.deb' "$A"
+          test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' "$A")" -eq 1
+          grep -q 'ca-pub-4770123899731214' "$A"
+          ! grep -R -q 'zeshan0727.github.io' "$A" index.html tutorials.html sitemap.xml .github/scripts/publish-headphone-disconnect-haptic-tutorial.py
+          grep -q 'HEADPHONE_DISCONNECT_HAPTIC_RECENT_CARD_START' index.html
+          grep -q 'HEADPHONE_DISCONNECT_HAPTIC_TUTORIAL_CARD_START' tutorials.html
+          grep -q 'https://nextsolution.cc/headphone-disconnect-haptic-tweak-ios16.html' sitemap.xml
+      - name: Commit generated page-list updates to tutorial branch
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- index.html tutorials.html sitemap.xml; then
+            echo 'No generated website-list changes to commit.'
+            exit 0
+          fi
+          git config user.name 'Next Solution Tutorial Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html tutorials.html sitemap.xml
+          git commit -m 'Prepare Headphone Disconnect Haptic tutorial cards and sitemap'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
