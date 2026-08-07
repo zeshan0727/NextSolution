@@ -1,0 +1,50 @@
+name: Inspect Headphone Disconnect Haptic Packages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "Diagnostics/headphone-package-inspect-trigger.txt"
+      - ".github/workflows/inspect-headphone-disconnect-packages.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-packages:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install dpkg ldid
+      - name: Build and preserve both packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-07-HeadphoneDisconnectHaptic"
+          O="$RUNNER_TEMP/hdh-packages"; mkdir -p "$O"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$O/HeadphoneDisconnectHaptic_1.0.0_Rootless.deb"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$O/HeadphoneDisconnectHaptic_1.0.0_RootHide.deb"
+          for d in "$O"/*.deb; do
+            echo "===== $d ====="
+            dpkg-deb -I "$d"
+            x="$(mktemp -d)"; dpkg-deb -x "$d" "$x"; find "$x" -type f -print | sort; rm -rf "$x"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: headphone-disconnect-haptic-built-packages
+          path: ${{ runner.temp }}/hdh-packages/*.deb
+          if-no-files-found: error
