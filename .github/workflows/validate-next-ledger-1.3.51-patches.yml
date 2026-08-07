@@ -5,10 +5,6 @@ permissions:
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "scripts/**"
-      - ".github/workflows/validate-next-ledger-1.3.51-patches.yml"
 
 jobs:
   validate:
