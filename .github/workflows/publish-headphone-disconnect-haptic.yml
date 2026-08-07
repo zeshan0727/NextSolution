@@ -52,6 +52,8 @@ jobs:
           grep -q 'com.apple.springboard' "$P/HeadphoneDisconnectHaptic.plist"
           grep -q 'AVAudioSessionRouteChangeNotification' "$P/Tweak.xm"
           grep -q 'AVAudioSessionRouteChangeReasonOldDeviceUnavailable' "$P/Tweak.xm"
+          grep -q 'UINotificationFeedbackTypeWarning' "$P/Tweak.xm"
+          grep -q 'notificationOccurred:UINotificationFeedbackTypeWarning' "$P/Tweak.xm"
           grep -q 'HDHRouteObserver =' "$P/Tweak.xm"
           grep -A4 'addObserverForName:AVAudioSessionRouteChangeNotification' "$P/Tweak.xm" | grep -q 'object:nil'
           ! grep -q 'object:session' "$P/Tweak.xm"
@@ -125,12 +127,13 @@ jobs:
             R="$(find "$X" -type f -path '*HeadphoneDisconnectHapticPreferences.bundle/Root.plist' -print -quit)"
             E="$(find "$X" -type f -path '*PreferenceLoader/Preferences/HeadphoneDisconnectHaptic.plist' -print -quit)"
             Y="$(find "$X" -type f -name HeadphoneDisconnectHaptic.dylib -print -quit)"
-            test -n "$F"; test -n "$R"; test -n "$E"; test -n "$Y"
+            test -n "$F"; test -n "$R"; test -n "$E"; test -s "$Y"
             grep -q 'com.apple.springboard' "$F"
             grep -q 'Enable Disconnect Alert' "$R"
             test "$(grep -c '<string>PSSwitchCell</string>' "$R")" -eq 1
             strings -a "$Y" | grep -q AVAudioSessionRouteChangeNotification
-            strings -a "$Y" | grep -q UINotificationFeedbackTypeWarning
+            strings -a "$Y" | grep -q UINotificationFeedbackGenerator
+            strings -a "$Y" | grep -q 'notificationOccurred:'
             rm -rf "$X"
           }
           check "$O/HeadphoneDisconnectHaptic_1.0.0_Rootless.deb" iphoneos-arm64
