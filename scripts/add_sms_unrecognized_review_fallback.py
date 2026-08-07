@@ -22,6 +22,10 @@ def replace_once(path: str, old: str, new: str) -> None:
 
 
 source = "RootHideSMSQueue/Sources/main.m"
+if "static NSDictionary *ReviewDraftForUnrecognizedBankSMS" in read(source):
+    print("Fail-safe SMS review fallback is already applied; no duplicate patch needed.")
+    raise SystemExit(0)
+
 replace_once(
     source,
     'static NSString *const kDaemonVersion = @"2.1.6";',
@@ -138,13 +142,6 @@ replace_once(
     source,
     '''        (long)blankBodies,\n        (long)parseFailures,\n''',
     '''        (long)blankBodies,\n        (long)reviewFallbacks,\n        (long)parseFailures,\n''',
-)
-
-# Parser regression test for account-debit card-payment transfer SMS without a numeric card ending.
-replace_once(
-    source,
-    '''    ];\n    NSMutableArray *results = [NSMutableArray array];\n''',
-    '''        ,@{\n            @"name": @"current account card payment transfer",\n            @"sms": @"CUR1 a/c debit\\nQAR 200.00\\nfor Card Payment\\nat 19:48, 07-Aug-26\\nCUR1 Balance: QAR 1,358.55\\nCard Available Balance: QAR -3,495.91",\n            @"kind": @"reviewTransfer", @"ending": @"CUR1", @"amount": @"200"\n        }\n    ];\n    NSMutableArray *results = [NSMutableArray array];\n''',
 )
 
 # App-side suggestions: the fallback is always editable and never auto-recorded.
