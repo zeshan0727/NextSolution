@@ -1,3 +1,4 @@
+# Retrigger 1: diagnostic workflow now exists on main.
 name: Diagnose Headphone Disconnect Haptic Build
 
 on:
