@@ -1,3 +1,4 @@
+# Retrigger 1: workflow now exists on main; this change intentionally dispatches the configured push path.
 name: Build Validate and Publish Headphone Disconnect Haptic
 
 on:
