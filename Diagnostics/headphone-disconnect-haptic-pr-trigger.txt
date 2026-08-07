@@ -1,0 +1,1 @@
+Temporary diagnostic PR trigger for Headphone Disconnect Haptic 1.0.0. Do not merge.
