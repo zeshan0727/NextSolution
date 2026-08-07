@@ -11,6 +11,13 @@ on:
       - "scripts/add_sms_unrecognized_review_fallback.py"
       - "scripts/add_sms_fallback_selftest.py"
       - ".github/workflows/build-sms-review-fallback.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "DailyLedger/**"
+      - "RootHideSMSQueue/**"
+      - "scripts/**"
+      - ".github/workflows/build-sms-review-fallback.yml"
   workflow_dispatch:
 
 jobs:
@@ -20,6 +27,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - name: Apply Next Ledger feature patches
         run: |
