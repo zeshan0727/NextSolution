@@ -29,6 +29,7 @@ static BOOL HDHIsPersonalAudioPort(NSString *portType) {
 }
 
 static BOOL HDHRouteHasPersonalAudio(AVAudioSessionRouteDescription *route) {
+    if (!route) return NO;
     for (AVAudioSessionPortDescription *output in route.outputs) {
         if (HDHIsPersonalAudioPort(output.portType)) return YES;
     }
@@ -78,9 +79,11 @@ static void HDHPreferencesChangedCallback(CFNotificationCenterRef center, void *
         AVAudioSession *session = AVAudioSession.sharedInstance;
         (void)session.currentRoute;
 
+        // Observe all route-change notifications. Apple does not guarantee a specific notification object,
+        // so filtering to object:session could silently miss a hardware disconnect event.
         HDHRouteObserver = [NSNotificationCenter.defaultCenter
             addObserverForName:AVAudioSessionRouteChangeNotification
-                        object:session
+                        object:nil
                          queue:nil
                     usingBlock:^(NSNotification *note) {
             HDHHandleRouteChange(note);
