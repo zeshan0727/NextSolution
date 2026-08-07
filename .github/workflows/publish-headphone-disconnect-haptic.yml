@@ -64,7 +64,7 @@ jobs:
           grep -q 'CFPreferencesCopyAppValue' "$P/Preferences/HDHRootListController.m"
           grep -q 'CFNotificationCenterPostNotification' "$P/Preferences/HDHRootListController.m"
           grep -q 'Enable Disconnect Alert' "$P/Preferences/Resources/Root.plist"
-          test "$(grep -c '<string>PSSwitchCell</string>' "$P/Preferences/Resources/Root.plist")" -eq 1
+          test "$(grep -c 'PSSwitchCell' "$P/Preferences/Resources/Root.plist")" -eq 1
           ! grep -Eq 'Test|Diagnostic|PID|Hook|Runtime|Class|Selector' "$P/Preferences/Resources/Root.plist"
           plutil -lint "$P/Preferences/Resources/Root.plist"
           plutil -lint "$P/Preferences/Resources/Info.plist"
@@ -130,7 +130,7 @@ jobs:
             test -n "$F"; test -n "$R"; test -n "$E"; test -s "$Y"
             grep -q 'com.apple.springboard' "$F"
             grep -q 'Enable Disconnect Alert' "$R"
-            test "$(grep -c '<string>PSSwitchCell</string>' "$R")" -eq 1
+            test "$(grep -c 'PSSwitchCell' "$R")" -eq 1
             strings -a "$Y" | grep -q AVAudioSessionRouteChangeNotification
             strings -a "$Y" | grep -q UINotificationFeedbackGenerator
             strings -a "$Y" | grep -q 'notificationOccurred:'
