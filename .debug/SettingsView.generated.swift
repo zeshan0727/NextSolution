@@ -234,14 +234,7 @@ struct SettingsView: View {
                                     Spacer()
                                     if testingOpenAI { ProgressView() }
                                 }
-
-                                SecureField(
-                                    openAIConnected ? "Enter a replacement OpenAI key" : "OpenAI API key",
-                    OpenAIAPIKeyEntryView(apiKey: $openAIAPIKey, connected: openAIConnected)
-                                )
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-
+                                OpenAIAPIKeyEntryView(apiKey: $openAIAPIKey, connected: openAIConnected)
                                 Picker("OpenAI Text Model", selection: $openAIModel) {
                                     ForEach(OpenAIService.selectableModels, id: \.self) { model in
                                         Text(modelLabel(model)).tag(model)
