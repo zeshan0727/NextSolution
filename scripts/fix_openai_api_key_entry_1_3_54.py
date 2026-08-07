@@ -19,22 +19,18 @@ replace_once("project.yml", 'MARKETING_VERSION: "1.3.53"', 'MARKETING_VERSION: "
 replace_once("project.yml", 'CURRENT_PROJECT_VERSION: "61"', 'CURRENT_PROJECT_VERSION: "62"')
 settings = "DailyLedger/Views/SettingsView.swift"
 
-# Keep only the API-key string/connection state in the already-large SettingsView.
-# Focus/reveal/clipboard UI state lives in a separate child View so Swift does not
-# need to type-check it as part of the giant Settings body expression.
+# The generated AI page uses a multiline SecureField. Replace that entire view,
+# including its two modifiers, with one standalone child view invocation.
 text = read(settings)
-pattern = r'(?ms)^\s*[^\n]*\$openAIAPIKey[^\n]*\n(?:\s*\.[^\n]*\n){0,8}'
+pattern = r'''(?ms)^\s*SecureField\(\s*\n\s*openAIConnected\s*\?\s*"Enter a replacement OpenAI key"\s*:\s*"OpenAI API key",\s*\n\s*text:\s*\$openAIAPIKey\s*\n\s*\)\s*\n\s*\.textInputAutocapitalization\(\.never\)\s*\n\s*\.autocorrectionDisabled\(\)\s*\n'''
 text, count = re.subn(
     pattern,
-    '                    OpenAIAPIKeyEntryView(apiKey: $openAIAPIKey, connected: openAIConnected)\n',
+    '                                OpenAIAPIKeyEntryView(apiKey: $openAIAPIKey, connected: openAIConnected)\n',
     text,
     count=1,
 )
 if count != 1:
-    for line in text.splitlines():
-        if "openAIAPIKey" in line:
-            print("OPENAI-LINE:", line)
-    raise RuntimeError(f"Expected one generated OpenAI API key binding, replaced {count}")
+    raise RuntimeError(f"Expected one complete generated OpenAI SecureField block, replaced {count}")
 
 text = text.replace('''            .onAppear {
                 selectedCurrency = store.currencyCode
@@ -146,4 +142,4 @@ if child_marker not in text:
     raise RuntimeError("ImportDocumentPicker marker not found")
 text = text.replace(child_marker, child + child_marker, 1)
 write(settings, text)
-print("Prepared Next Ledger 1.3.54 standalone API-key editor with keyboard, paste, reveal, clear and saved-key status.")
+print("Prepared Next Ledger 1.3.54 with the complete OpenAI SecureField replaced by a standalone editable key view.")
