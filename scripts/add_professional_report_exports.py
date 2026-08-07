@@ -63,8 +63,8 @@ runpy.run_path(
     run_name="__main__",
 )
 
-# Keep the established daemon package version for this repair build so the
-# existing workflow/package/install compatibility checks remain unchanged.
+# Keep the established daemon package version for the repair layer; the 1.3.51
+# realtime patch bumps it to 2.1.8 after this script completes.
 replace_once(
     "RootHideSMSQueue/Sources/main.m",
     'static NSString *const kDaemonVersion = @"2.1.7";',
@@ -77,5 +77,12 @@ for path in ["RootHideSMSQueue/postinst", "RootHideSMSQueue/layout/DEBIAN/postin
         "Next Ledger SMS Daemon 2.1.7 installation started",
         "Next Ledger SMS Daemon 2.1.6 installation started",
     )
+
+# Stabilize the final 1.3.51 patch against generated nested Swift views before
+# the workflow executes it on the next line.
+runpy.run_path(
+    str(ROOT / "scripts/prepare_sms_realtime_ai_patch.py"),
+    run_name="__main__",
+)
 
 print("Added professional reports plus fail-safe editable SMS transfer review.")
