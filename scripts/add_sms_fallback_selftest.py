@@ -4,6 +4,13 @@ ROOT = Path(__file__).resolve().parents[1]
 path = ROOT / "RootHideSMSQueue/Sources/main.m"
 text = path.read_text(encoding="utf-8")
 
+if (
+    'unrecognized transfer review fallback' in text
+    and 'current account card payment transfer' in text
+):
+    print("SMS fallback regression tests are already applied; no duplicate patch needed.")
+    raise SystemExit(0)
+
 old = '''        @{
             @"name": @"incoming Fawran transfer",
             @"sms": @"Current Acc xxx364001 credited with QAR 1,000.00 for Fawran instant payment ref zeeshan,MOHAMED ASHFAAQ MOHAMED AZW withM-33510982 at 16:09, 03-Aug-26 Current Acc Bal: QAR 2,596.69",
@@ -20,6 +27,11 @@ new = '''        @{
             @"name": @"unrecognized transfer review fallback",
             @"sms": @"Transfer notification QAR 825.50 sent to beneficiary TEST PERSON reference X992 at 18:42, 07-Aug-26 account balance QAR 1,900.00",
             @"kind": @"reviewTransfer", @"ending": @"", @"amount": @"825.50", @"reviewFallback": @YES
+        },
+        @{
+            @"name": @"current account card payment transfer",
+            @"sms": @"CUR1 a/c debit\\nQAR 200.00\\nfor Card Payment\\nat 19:48, 07-Aug-26\\nCUR1 Balance: QAR 1,358.55\\nCard Available Balance: QAR -3,495.91",
+            @"kind": @"reviewTransfer", @"ending": @"CUR1", @"amount": @"200", @"reviewFallback": @YES
         }
     ];
 '''
@@ -52,4 +64,4 @@ if count != 1:
 text = text.replace(multiline, one_line, 1)
 
 path.write_text(text, encoding="utf-8")
-print("Added unrecognized transfer review-fallback regression test and normalized its safety assertion.")
+print("Added generic and CUR1 Card Payment SMS review-fallback regression tests.")
