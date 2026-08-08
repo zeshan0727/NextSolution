@@ -39,37 +39,39 @@ tutorial_card=f'''      <!-- {SLUG}_TUTORIAL_CARD_START -->
 
 '''
 
-def replace_marked(text, start, end, block):
-    pattern=re.compile(r'\s*<!-- '+re.escape(start)+r' -->.*?<!-- '+re.escape(end)+r' -->\s*', re.S)
-    text=pattern.sub('\n', text)
-    return text, block
+def remove_marked(text, start, end):
+    pattern=re.compile(r'^[ \t]*<!-- '+re.escape(start)+r' -->.*?^[ \t]*<!-- '+re.escape(end)+r' -->\n?', re.M|re.S)
+    return pattern.sub('', text)
 
 changed=[]
 
-p=Path('index.html'); text=p.read_text()
-text,_=replace_marked(text,f'{SLUG}_RECENT_CARD_START',f'{SLUG}_RECENT_CARD_END',recent)
-anchor='        <!-- NEXT_HOME_LOCK_RECENT_CARD_START -->'
-if anchor not in text: raise SystemExit('Recent tutorials anchor missing')
-text=text.replace(anchor,recent+anchor,1)
+p=Path('index.html'); text=remove_marked(p.read_text(),f'{SLUG}_RECENT_CARD_START',f'{SLUG}_RECENT_CARD_END')
+anchor='<!-- NEXT_HOME_LOCK_RECENT_CARD_START -->'
+pos=text.find(anchor)
+if pos < 0: raise SystemExit('Recent tutorials anchor missing')
+line_start=text.rfind('\n',0,pos)+1
+text=text[:line_start]+recent+text[line_start:]
 p.write_text(text); changed.append(str(p))
 
-p=Path('tutorials.html'); text=p.read_text()
-text,_=replace_marked(text,f'{SLUG}_TUTORIAL_CARD_START',f'{SLUG}_TUTORIAL_CARD_END',tutorial_card)
-anchor='      <!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->'
-if anchor not in text: raise SystemExit('Tutorial grid anchor missing')
-text=text.replace(anchor,tutorial_card+anchor,1)
+p=Path('tutorials.html'); text=remove_marked(p.read_text(),f'{SLUG}_TUTORIAL_CARD_START',f'{SLUG}_TUTORIAL_CARD_END')
+anchor='<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->'
+pos=text.find(anchor)
+if pos < 0: raise SystemExit('Tutorial grid anchor missing')
+line_start=text.rfind('\n',0,pos)+1
+text=text[:line_start]+tutorial_card+text[line_start:]
 p.write_text(text); changed.append(str(p))
 
 p=Path('sitemap.xml'); text=p.read_text()
 entry=f'  <url><loc>https://nextsolution.cc/{ARTICLE}</loc><lastmod>2026-08-08</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>\n'
-text=re.sub(r'\s*<url><loc>https://nextsolution\.cc/'+re.escape(ARTICLE)+r'</loc>.*?</url>\s*','\n',text)
-anchor='  <url><loc>https://nextsolution.cc/privacy.html</loc>'
-if anchor not in text: raise SystemExit('Sitemap anchor missing')
-text=text.replace(anchor,entry+anchor,1)
+text=re.sub(r'^[ \t]*<url><loc>https://nextsolution\.cc/'+re.escape(ARTICLE)+r'</loc>.*?</url>\n?', '', text, flags=re.M)
+anchor='<url><loc>https://nextsolution.cc/privacy.html</loc>'
+pos=text.find(anchor)
+if pos < 0: raise SystemExit('Sitemap anchor missing')
+line_start=text.rfind('\n',0,pos)+1
+text=text[:line_start]+entry+text[line_start:]
 p.write_text(text); changed.append(str(p))
 
-article=Path(ARTICLE).read_text()
-packages=Path('Packages').read_text()
+article=Path(ARTICLE).read_text(); packages=Path('Packages').read_text()
 assert article.count(ADS)==1, 'tutorial must contain exactly one verified AdSense publisher script'
 assert 'ca-pub-4770123899731214' in article
 assert 'zeshan0727.github.io' not in article
