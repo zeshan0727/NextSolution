@@ -1,0 +1,154 @@
+              NavigationLink { DashboardTransactionsView(kind: .profitLoss, month: selectedMonth) } label: {
+                            SummaryCard(title: "Profit / Loss", value: store.currency(profit), subtitle: profit >= 0 ? "Profit" : "Loss", icon: "chart.line.uptrend.xyaxis", emphasized: true)
+                        }.buttonStyle(.plain)
+                    }
+''', "dashboard links")
+transaction_view = '''enum DashboardTransactionKind: String, Hashable {
+    case invoiced, collected, expenses, profitLoss
+    var title: String {
+        switch self {
+        case .invoiced: return "Invoiced Transactions"
+        case .collected: return "Payments Received"
+        case .expenses: return "Expense Transactions"
+        case .profitLoss: return "Profit & Loss Transactions"
+        }
+    }
+}
+
+struct DashboardTransactionsView: View {
+    @EnvironmentObject private var store: AspireStore
+    let kind: DashboardTransactionKind
+    let month: Date
+    private var serviceInvoices: [Invoice] { store.invoicesForServiceMonth(month) }
+    private var receivedInvoices: [Invoice] { store.paymentsReceived(in: month) }
+    private var monthExpenses: [Expense] { store.expensesForMonth(month) }
+
+    var body: some View {
+        List {
+            switch kind {
+            case .invoiced:
+                Section(DateFormatter.monthAndYear.string(from: month)) {
+                    if serviceInvoices.isEmpty { EmptyInlineView(icon: "doc.text", text: "No invoices for this service month") }
+                    else { ForEach(serviceInvoices) { invoice in NavigationLink { InvoiceDetailView(invoiceID: invoice.id) } label: { InvoiceRow(invoice: invoice) } } }
+                }
+            case .collected:
+                Section(DateFormatter.monthAndYear.string(from: month)) {
+                    if receivedInvoices.isEmpty { EmptyInlineView(icon: "banknote", text: "No payments received in this month") }
+                    else { ForEach(receivedInvoices) { invoice in NavigationLink { InvoiceDetailView(invoiceID: invoice.id) } label: { InvoiceRow(invoice: invoice) } } }
+                }
+            case .expenses:
+                Section(DateFormatter.monthAndYear.string(from: month)) {
+                    if monthExpenses.isEmpty { EmptyInlineView(icon: "fuelpump", text: "No expenses recorded in this month") }
+                    else { ForEach(monthExpenses) { expense in ExpenseRow(expense: expense) } }
+                }
+            case .profitLoss:
+                Section("Invoice Income • \\(store.currency(store.invoicedIncome(in: month)))") {
+                    if serviceInvoices.isEmpty { EmptyInlineView(icon: "doc.text", text: "No invoice income") }
+                    else { ForEach(serviceInvoices) { invoice in NavigationLink { InvoiceDetailView(invoiceID: invoice.id) } label: { InvoiceRow(invoice: invoice) } } }
+                }
+                Section("Expenses • \\(store.currency(store.expensesTotal(in: month)))") {
+                    if monthExpenses.isEmpty { EmptyInlineView(icon: "fuelpump", text: "No expenses") }
+                    else { ForEach(monthExpenses) { expense in ExpenseRow(expense: expense) } }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle(kind.title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+'''
+s = replace_once(s, 'struct VisitProgressSection: View {\n', transaction_view + 'struct VisitProgressSection: View {\n', "transaction list view")
+s = replace_once(s, '''    private var monthExpenses: [Expense] {
+        store.expenses.filter { Calendar.current.isDate($0.date, equalTo: month, toGranularity: .month) }
+    }
+''', '''    private var monthExpenses: [Expense] {
+        store.expensesForMonth(month)
+    }
+''', "finance expenses helper")
+s = s.replace('    @State private var showingPayment = false\n', '', 1)
+s = s.replace('                .sheet(isPresented: $showingPayment) { PaymentEntryView(invoice: invoice) }\n', '', 1)
+s = replace_once(s, '''            HStack(spacing: 10) {
+                ActionButton(title: "Share PDF", icon: "square.and.arrow.up", style: .neutral) { sharePDF(invoice: invoice, customer: customer) }
+                ActionButton(title: "Record Payment", icon: "banknote.fill", style: .gold) { showingPayment = true }
+                    .disabled(invoice.status == .paid || invoice.status == .void)
+            }
+''', '''            HStack(spacing: 10) {
+                ActionButton(title: "Share PDF", icon: "square.and.arrow.up", style: .neutral) { sharePDF(invoice: invoice, customer: customer) }
+                ActionButton(title: invoice.status == .paid ? "Unmark Payment" : "Mark Received", icon: invoice.status == .paid ? "arrow.uturn.backward.circle.fill" : "banknote.fill", style: invoice.status == .paid ? .neutral : .gold) {
+                    store.toggleInvoicePayment(invoice.id)
+                }.disabled(invoice.status == .void)
+            }
+''', "payment action")
+s = replace_once(s, '''struct ExpenseEditorView: View {
+    @EnvironmentObject private var store: AspireStore
+    @Environment(\\.dismiss) private var dismiss
+    @State private var date = Date()
+    @State private var category: ExpenseCategory = .fuel
+    @State private var vendor = ""
+    @State private var amount = 0.0
+    @State private var paymentAccount = "Cash"
+    @State private var notes = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Expense") {
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                    Picker("Category", selection: $category) { ForEach(ExpenseCategory.allCases) { Text($0.rawValue).tag($0) } }
+                    TextField("Vendor / payee", text: $vendor)
+                    TextField("Amount", value: $amount, format: .number.precision(.fractionLength(2))).keyboardType(.decimalPad)
+                    TextField("Paid from", text: $paymentAccount)
+                }
+                Section("Notes") { TextField("Description or receipt reference", text: $notes, axis: .vertical).lineLimit(2...5) }
+            }
+            .navigationTitle("Add Expense")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        store.addExpense(Expense(date: date, category: category, vendor: vendor, amount: amount, paymentAccount: paymentAccount, notes: notes))
+                        dismiss()
+                    }.disabled(amount <= 0)
+                }
+            }
+        }
+    }
+}
+''', '''struct ExpenseEditorView: View {
+    @EnvironmentObject private var store: AspireStore
+    @Environment(\\.dismiss) private var dismiss
+    @State private var date = Date()
+    @State private var category: ExpenseCategory = .fuel
+    @State private var vendor = ""
+    @State private var amountText = ""
+    @State private var paymentAccount = "Cash"
+    @State private var notes = ""
+    @State private var saveError: String?
+
+    private var parsedAmount: Double? {
+        var cleaned = amountText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.contains(",") && cleaned.contains(".") { cleaned = cleaned.replacingOccurrences(of: ",", with: "") }
+        else { cleaned = cleaned.replacingOccurrences(of: ",", with: ".") }
+        guard let value = Double(cleaned), value.isFinite, value > 0 else { return nil }
+        return value
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Expense") {
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                    Picker("Category", selection: $category) { ForEach(ExpenseCategory.allCases) { Text($0.rawValue).tag($0) } }
+                    TextField("Vendor / payee", text: $vendor)
+                    TextField("Amount", text: $amountText).keyboardType(.decimalPad)
+                    TextField("Paid from", text: $paymentAccount)
+                }
+                Section("Notes") { TextField("Description or receipt reference", text: $notes, axis: .vertical).lineLimit(2...5) }
+            }
+            .navigationTitle("Add Expense")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss
