@@ -322,9 +322,9 @@ Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/ThermalWarningHaptic_1.0.0_Rootless.deb
 Size: 8250
-MD5sum: c9f365fe3f8596415add69207a981f04
-SHA1: 57dc6e0dce3256c23e4b16e9e632bd31a910822f
-SHA256: 08d9bfed94799c6cab4d2c233a24055e3b57c5e3b6636c7a9b1059a1ccc95bb0
+MD5sum: 4e8e475ba17649ad5d808a6a7a60b005
+SHA1: 23fd9809b560d2df9067fc3011f1718a2160182a
+SHA256: 52760b899c980c060214f8ccd666e956ecd76f7b2dba56a1f49c06b128cdafd0
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
@@ -340,10 +340,10 @@ Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/ThermalWarningHaptic_1.0.0_RootHide.deb
-Size: 8178
-MD5sum: 9c972ff7568be2c45f6b55f8a0fe6d70
-SHA1: 2ffa0963eee9151c9a5c1542bb13acdd98c863f1
-SHA256: c219dd0b43d0dd475ab1cb1af85f3735245611450720f763490357fc1b6d6ce9
+Size: 8188
+MD5sum: 817e4c9d39bc92dfc04ed3b02f0a7458
+SHA1: b5c0c35a603974f05f078ebfc3d04ccde365d264
+SHA256: c1ece6c7c2f03d1ea6e0e7579ce0a0e2433c29be01bc1f86ba866f406fd3366b
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
