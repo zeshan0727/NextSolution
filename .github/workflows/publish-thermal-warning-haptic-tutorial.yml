@@ -1,0 +1,79 @@
+name: Validate Thermal Warning Haptic Tutorial
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "thermal-warning-haptic-tweak-ios16.html"
+      - "assets/thermal-warning-haptic/**"
+      - ".github/scripts/publish-thermal-warning-haptic-tutorial.py"
+      - ".github/workflows/publish-thermal-warning-haptic-tutorial.yml"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+  push:
+    branches: [main, tutorial/thermal-warning-haptic-1.0.0]
+    paths:
+      - "thermal-warning-haptic-tweak-ios16.html"
+      - "assets/thermal-warning-haptic/**"
+      - ".github/scripts/publish-thermal-warning-haptic-tutorial.py"
+      - ".github/workflows/publish-thermal-warning-haptic-tutorial.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: thermal-warning-haptic-tutorial-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Generate idempotent website updates
+        run: python3 .github/scripts/publish-thermal-warning-haptic-tutorial.py
+      - name: Validate tutorial publication set
+        shell: bash
+        run: |
+          set -euo pipefail
+          A=thermal-warning-haptic-tweak-ios16.html
+          test -f "$A"
+          test -f assets/thermal-warning-haptic/thermal-warning-haptic-hero.svg
+          test -f assets/thermal-warning-haptic/thermal-warning-haptic-settings.svg
+          grep -q 'Thermal Warning Haptic 1.0.0' "$A"
+          grep -q 'href="./">Home</a>' "$A"
+          grep -q 'href="tutorials.html" aria-current="page">Tutorials</a>' "$A"
+          grep -q 'href="videos.html">Videos</a>' "$A"
+          grep -q 'href="./#faq">FAQ</a>' "$A"
+          grep -q '"@type":"TechArticle"' "$A"
+          test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214' "$A")" -eq 1
+          ! grep -q 'zeshan0727.github.io' "$A" index.html tutorials.html sitemap.xml
+          grep -q 'https://nextsolution.cc/debfiles/ThermalWarningHaptic_1.0.0_RootHide.deb' "$A"
+          grep -q 'https://nextsolution.cc/debfiles/ThermalWarningHaptic_1.0.0_Rootless.deb' "$A"
+          test "$(grep -c 'THERMAL_WARNING_HAPTIC_RECENT_CARD_START' index.html)" -eq 1
+          test "$(grep -c 'THERMAL_WARNING_HAPTIC_TUTORIAL_CARD_START' tutorials.html)" -eq 1
+          test "$(grep -c 'https://nextsolution.cc/thermal-warning-haptic-tweak-ios16.html' sitemap.xml)" -eq 1
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          ET.parse('sitemap.xml')
+          print('sitemap XML: PASS')
+          PY
+          sha256sum index.html tutorials.html sitemap.xml > /tmp/before.sha
+          python3 .github/scripts/publish-thermal-warning-haptic-tutorial.py
+          sha256sum index.html tutorials.html sitemap.xml > /tmp/after.sha
+          diff -u /tmp/before.sha /tmp/after.sha
+          echo 'Thermal Warning Haptic tutorial validation: PASS'
+      - name: Commit generated website files to preparation branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/tutorial/thermal-warning-haptic-1.0.0'
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html tutorials.html sitemap.xml; then exit 0; fi
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html tutorials.html sitemap.xml
+          git commit -m 'Prepare Thermal Warning Haptic tutorial cards and sitemap'
+          git pull --rebase origin tutorial/thermal-warning-haptic-1.0.0
+          git push origin HEAD:tutorial/thermal-warning-haptic-1.0.0
