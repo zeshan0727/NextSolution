@@ -1,0 +1,9 @@
+Package: com.zeshan.phoneaura.nativefeatures.build
+Name: PhoneAura Native Features Build Component
+Version: 0.5.0
+Architecture: iphoneos-arm64
+Description: Build-only companion component for PhoneAura 0.5.0.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Development
+Depends: mobilesubstrate
