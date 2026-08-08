@@ -61,8 +61,10 @@ jobs:
           ET.parse('sitemap.xml')
           print('sitemap XML: PASS')
           PY
+          sha256sum index.html tutorials.html sitemap.xml > /tmp/before.sha
           python3 .github/scripts/publish-thermal-warning-haptic-tutorial.py
-          git diff --exit-code index.html tutorials.html sitemap.xml
+          sha256sum index.html tutorials.html sitemap.xml > /tmp/after.sha
+          diff -u /tmp/before.sha /tmp/after.sha
           echo 'Thermal Warning Haptic tutorial validation: PASS'
       - name: Commit generated website files to preparation branch
         if: github.event_name == 'push' && github.ref == 'refs/heads/tutorial/thermal-warning-haptic-1.0.0'
