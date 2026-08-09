@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>entry</key>
+  <dict>
+    <key>bundle</key><string>Charge80HapticPreferences</string>
+    <key>cell</key><string>PSLinkCell</string>
+    <key>detail</key><string>C80RootListController</string>
+    <key>label</key><string>Charge 80 Haptic</string>
+  </dict>
+</dict>
+</plist>
