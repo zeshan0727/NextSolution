@@ -366,3 +366,5 @@ replace_once(
 )
 
 print("Prepared Next Ledger 1.3.60: direct Income + Refunds + Loans Increased; direct Expenses + Loans Paid; internal transfers excluded from Financial Summary.")
+
+# clean build trigger 2026-08-09
