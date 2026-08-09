@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import <math.h>
 
 static CFStringRef const C80PreferenceDomain = CFSTR("com.nextsolution.charge80haptic");
 static CFStringRef const C80PreferencesChanged = CFSTR("com.nextsolution.charge80haptic.preferences.changed");
