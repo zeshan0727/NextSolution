@@ -1,0 +1,26 @@
+name: Debug Next Ledger SMS Review 1.3.62
+permissions:
+  contents: write
+on:
+  push:
+    paths:
+      - ".github/workflows/debug-next-ledger-sms-review-1.3.62.yml"
+      - "scripts/debug_sms_review_1_3_62_trigger.txt"
+jobs:
+  dump:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash scripts/apply_next_ledger_1_3_62.sh
+      - name: Publish generated review source
+        run: |
+          mkdir -p .debug
+          cp DailyLedger/Views/SMSLatest15ReviewView.swift .debug/SMSLatest15ReviewView-1.3.62.swift
+          git reset --hard HEAD
+          git clean -fd
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B debug-source "origin/$GITHUB_REF_NAME"
+          mkdir -p .debug
+          cp "$RUNNER_TEMP/nonexistent" /dev/null 2>/dev/null || true
