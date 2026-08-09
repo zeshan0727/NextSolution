@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/diagnose-charge80haptic.yml"
       - "DailyTweaks/2026-08-09-Charge80Haptic/**"
+      - "ReleaseTriggers/charge80haptic-diagnostic.txt"
 
 permissions:
   contents: write
