@@ -1,0 +1,40 @@
+name: Debug Next Ledger Financial Summary 1.3.59
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/debug-next-ledger-financial-summary-1.3.59.yml"
+      - "scripts/debug-financial-summary-1.3.59-trigger.txt"
+
+jobs:
+  publish:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply current 1.3.59 build chain
+        run: bash scripts/apply_next_ledger_1_3_59.sh
+      - name: Publish generated financial source
+        shell: bash
+        run: |
+          rm -rf .debug-generated/financial-summary-1.3.59
+          mkdir -p .debug-generated/financial-summary-1.3.59/DailyLedger/Views
+          mkdir -p .debug-generated/financial-summary-1.3.59/DailyLedger/Services
+          mkdir -p .debug-generated/financial-summary-1.3.59/DailyLedger/Models
+          cp DailyLedger/Views/ReportsView.swift .debug-generated/financial-summary-1.3.59/DailyLedger/Views/
+          cp DailyLedger/Services/LedgerStore.swift .debug-generated/financial-summary-1.3.59/DailyLedger/Services/
+          cp DailyLedger/Models/LedgerTransaction.swift .debug-generated/financial-summary-1.3.59/DailyLedger/Models/
+          git reset --hard HEAD
+          git clean -fd -e .debug-generated
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B debug-publish "origin/$GITHUB_REF_NAME"
+          git add -f .debug-generated/financial-summary-1.3.59
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Publish generated Next Ledger 1.3.59 financial source" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
