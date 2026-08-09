@@ -1,0 +1,69 @@
+name: Validate Charge 80 Haptic Tutorial
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "charge80haptic-tweak-ios16.html"
+      - "assets/charge80haptic/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - ".github/scripts/publish-charge80haptic-tutorial.py"
+      - ".github/workflows/publish-charge80haptic-tutorial.yml"
+  push:
+    branches: [main]
+    paths:
+      - "charge80haptic-tweak-ios16.html"
+      - "assets/charge80haptic/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+      - name: Generate publication files
+        run: python3 .github/scripts/publish-charge80haptic-tutorial.py
+      - name: Validate exact release and website rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          A=charge80haptic-tweak-ios16.html
+          test -f "$A"
+          test -f assets/charge80haptic/charge80haptic-hero.svg
+          test -f assets/charge80haptic/charge80haptic-settings.svg
+          grep -q 'Charge 80 Haptic 1.0.0' "$A"
+          grep -q 'href="./"' "$A"
+          grep -q 'href="tutorials.html" aria-current="page"' "$A"
+          grep -q 'href="videos.html"' "$A"
+          grep -q 'href="./#faq"' "$A"
+          grep -q 'https://nextsolution.cc/debfiles/Charge80Haptic_1.0.0_RootHide.deb' "$A"
+          grep -q 'https://nextsolution.cc/debfiles/Charge80Haptic_1.0.0_Rootless.deb' "$A"
+          grep -q '"@type":"TechArticle"' "$A"
+          test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' "$A")" -eq 1
+          grep -q 'ca-pub-4770123899731214' "$A"
+          ! grep -R -q 'zeshan0727.github.io' "$A" assets/charge80haptic .github/scripts/publish-charge80haptic-tutorial.py
+          test "$(grep -c 'CHARGE80HAPTIC_RECENT_CARD_START' index.html)" -eq 1
+          test "$(grep -c 'CHARGE80HAPTIC_TUTORIAL_CARD_START' tutorials.html)" -eq 1
+          test "$(grep -c 'https://nextsolution.cc/charge80haptic-tweak-ios16.html' sitemap.xml)" -eq 1
+      - name: Commit generated branch updates
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then exit 0; fi
+          git config user.name "Next Solution Tutorial Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html tutorials.html sitemap.xml
+          git commit -m "Prepare Charge 80 Haptic tutorial cards and sitemap"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
