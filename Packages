@@ -351,3 +351,41 @@ Description: Plays one warning haptic when the iPhone newly enters a serious or 
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/thermalwarninghaptic.html
 Name: Thermal Warning Haptic
+
+Package: com.nextsolution.charge80haptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/Charge80Haptic_1.0.0_Rootless.deb
+Size: 8534
+MD5sum: 494b67abd4e5ee8df6573b22077ab783
+SHA1: c12ae1ebe83aa837e3e6371fea00db3eaa83a06a
+SHA256: ba500b028c929e6405f72c4cc89665c002c0bcdde0bf81b0979af00b4b8b6b99
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays one success haptic when the iPhone crosses 80% battery while connected to power.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/charge80haptic.html
+Name: Charge 80 Haptic
+
+Package: com.nextsolution.charge80haptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/Charge80Haptic_1.0.0_RootHide.deb
+Size: 8470
+MD5sum: 91d48a94d263cd9dd0507955af0daa20
+SHA1: 2acc5e4faea962455b969b57d75ffef4a023723e
+SHA256: 8e871b46dadedb5444e3c9c33f513b650ca4fc4fa2ca4d12c656c8d7a73e62e3
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays one success haptic when the iPhone crosses 80% battery while connected to power.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/charge80haptic.html
+Name: Charge 80 Haptic
