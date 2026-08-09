@@ -1,18 +1,18 @@
-name: Build Next Ledger 1.3.61 Reliable SMS Capture History AI
+name: Build Next Ledger 1.3.62 Capture First SMS Registered
 
 permissions:
   contents: write
 
 concurrency:
-  group: next-ledger-1-3-61-${{ github.ref }}
+  group: next-ledger-1-3-62-registered-${{ github.ref }}
   cancel-in-progress: true
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "scripts/fix_sms_capture_history_ai_1_3_61.py"
-      - "scripts/apply_next_ledger_1_3_61.sh"
+      - "scripts/fix_sms_capture_first_1_3_62.py"
+      - "scripts/apply_next_ledger_1_3_62.sh"
       - ".github/workflows/build-next-ledger-1.3.61.yml"
 
 jobs:
@@ -25,42 +25,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply Next Ledger 1.3.61 patches
-        run: bash scripts/apply_next_ledger_1_3_61.sh
+      - name: Apply 1.3.62 patches
+        run: bash scripts/apply_next_ledger_1_3_62.sh
 
-      - name: Validate reliable SMS capture design
+      - name: Validate capture-first runtime
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build
-          grep -Fq 'MARKETING_VERSION: "1.3.61"' project.yml
-          grep -Fq 'CURRENT_PROJECT_VERSION: "69"' project.yml
-          grep -Fq 'kDaemonVersion = @"2.2.2"' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'Version: 2.2.2' RootHideSMSQueue/control
-          grep -Fq 'Typedstream-safe bounded scan' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'body could not be decoded safely. Keep for user review.' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'ATM Cash Deposit' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'Reversal of transaction on your card ending' RootHideSMSQueue/Sources/main.m
-          grep -Fq '@"cashDeposit"' RootHideSMSQueue/Sources/main.m
-          grep -Fq '@"reversal"' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'CFNotificationCenterPostNotification' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'historyContext(for item' DailyLedger/Views/SMSLatest15ReviewView.swift
-          grep -Fq 'Previous ledger/category hints' DailyLedger/Views/SMSLatest15ReviewView.swift
-          grep -Fq 'ATM cash deposit credited => usually Cash to Bank transfer' DailyLedger/Views/SMSLatest15ReviewView.swift
-          grep -Fq 'card reversal => Refund' DailyLedger/Views/SMSLatest15ReviewView.swift
-          grep -Fq 'draft.kind == "cashback" || draft.kind == "reversal"' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'case "withdrawal", "incomingTransfer", "cashDeposit", "reviewTransfer"' DailyLedger/Services/SMSImportConsoleService.swift
-          if grep -Fq 'unarchiveObjectWithData:data' RootHideSMSQueue/Sources/main.m; then
-            echo 'ERROR: unsafe NSKeyedUnarchiver remains in SMS daemon'
-            exit 1
-          fi
-
-          xcrun clang -fobjc-arc RootHideSMSQueue/Sources/main.m \
-            -framework Foundation -framework CoreFoundation -lsqlite3 \
-            -o build/nextledgersmsd-macos
+          grep -Fq 'MARKETING_VERSION: "1.3.62"' project.yml
+          grep -Fq 'CURRENT_PROJECT_VERSION: "70"' project.yml
+          grep -Fq 'kDaemonVersion = @"2.2.3"' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'CaptureLatestApprovedMessagesForReview' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'sleep(5);' RootHideSMSQueue/Sources/main.m
+          if grep -Fq 'if (!manualRequested && !AutomaticScanIsDue(config, scanDate))' RootHideSMSQueue/Sources/main.m; then exit 1; fi
+          grep -Fq 'approvedMessageLimit = manualRequested ? 15 : 50' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'databaseRowLimit = manualRequested ? 15 : 500' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'Date().timeIntervalSince(requested) <= 45' DailyLedger/Views/SMSImportConsoleView.swift
+          xcrun clang -fobjc-arc RootHideSMSQueue/Sources/main.m -framework Foundation -framework CoreFoundation -lsqlite3 -o build/nextledgersmsd-macos
           build/nextledgersmsd-macos --self-test | tee build/sms-parser-tests.json
           grep -q '"passed" : true' build/sms-parser-tests.json
-          grep -q '"version" : "2.2.2"' build/sms-parser-tests.json
+          grep -q '"version" : "2.2.3"' build/sms-parser-tests.json
           grep -q '"name" : "ATM cash deposit"' build/sms-parser-tests.json
           grep -q '"name" : "CB card purchase exact format"' build/sms-parser-tests.json
           grep -q '"name" : "CB reversal refund"' build/sms-parser-tests.json
@@ -75,18 +60,9 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xcodebuild \
-            -project DailyLedger.xcodeproj \
-            -scheme DailyLedger \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tee build/xcodebuild.log
+          xcodebuild -project DailyLedger.xcodeproj -scheme DailyLedger -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
 
-      - name: Build RootHide SMS daemon 2.2.2
+      - name: Build RootHide SMS daemon 2.2.3
         shell: bash
         run: |
           set -euxo pipefail
@@ -100,45 +76,31 @@ jobs:
           cmp RootHideSMSQueue/postinst RootHideSMSQueue/layout/DEBIAN/postinst
           chmod +x RootHideSMSQueue/postinst RootHideSMSQueue/prerm RootHideSMSQueue/layout/DEBIAN/postinst RootHideSMSQueue/layout/DEBIAN/prerm
           make -C RootHideSMSQueue clean package FINALPACKAGE=1
-          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.2.2-roothide.deb
-          test "$(dpkg-deb -f NextLedgerSMSDaemon-2.2.2-roothide.deb Version)" = "2.2.2"
-          shasum -a 256 NextLedgerSMSDaemon-2.2.2-roothide.deb > NextLedgerSMSDaemon-2.2.2-roothide.sha256
+          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.2.3-roothide.deb
+          test "$(dpkg-deb -f NextLedgerSMSDaemon-2.2.3-roothide.deb Version)" = "2.2.3"
+          shasum -a 256 NextLedgerSMSDaemon-2.2.3-roothide.deb > NextLedgerSMSDaemon-2.2.3-roothide.sha256
 
-      - name: Package Next Ledger 1.3.61 TIPA
+      - name: Package 1.3.62 TIPA
         run: |
           APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
           test -n "$APP_PATH"
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.61-reliable-sms-history-ai.tipa
-          shasum -a 256 NextLedger-1.3.61-reliable-sms-history-ai.tipa > NextLedger-1.3.61-reliable-sms-history-ai.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.62-capture-first-sms.tipa
+          shasum -a 256 NextLedger-1.3.62-capture-first-sms.tipa > NextLedger-1.3.62-capture-first-sms.sha256
 
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: NextLedger-1.3.61-Reliable-SMS-History-AI
+          name: NextLedger-1.3.62-Capture-First-SMS
           path: |
-            NextLedger-1.3.61-reliable-sms-history-ai.tipa
-            NextLedger-1.3.61-reliable-sms-history-ai.sha256
-            NextLedgerSMSDaemon-2.2.2-roothide.deb
-            NextLedgerSMSDaemon-2.2.2-roothide.sha256
+            NextLedger-1.3.62-capture-first-sms.tipa
+            NextLedger-1.3.62-capture-first-sms.sha256
+            NextLedgerSMSDaemon-2.2.3-roothide.deb
+            NextLedgerSMSDaemon-2.2.3-roothide.sha256
             build/sms-parser-tests.json
           if-no-files-found: error
-
-      - name: Capture diagnostics
-        if: failure()
-        run: |
-          mkdir -p build
-          { test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true; } > build/next-ledger-1.3.61-errors.txt
-
-      - name: Upload diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: NextLedger-1.3.61-Diagnostics
-          path: build/next-ledger-1.3.61-errors.txt
-          if-no-files-found: warn
 
       - name: Publish build status
         if: always()
@@ -150,22 +112,20 @@ jobs:
           git fetch origin "$GITHUB_REF_NAME"
           git checkout -B build-status "origin/$GITHUB_REF_NAME"
           mkdir -p .build-status
-          cat > .build-status/next-ledger-1.3.61.json <<EOF
+          cat > .build-status/next-ledger-1.3.62.json <<EOF
           {
             "status": "${STATUS}",
             "run_id": "${GITHUB_RUN_ID}",
             "run_number": "${GITHUB_RUN_NUMBER}",
             "source_sha": "${GITHUB_SHA}",
-            "app_version": "1.3.61",
-            "app_build": "69",
-            "daemon_version": "2.2.2",
-            "artifact_name": "NextLedger-1.3.61-Reliable-SMS-History-AI"
+            "app_version": "1.3.62",
+            "app_build": "70",
+            "daemon_version": "2.2.3",
+            "artifact_name": "NextLedger-1.3.62-Capture-First-SMS"
           }
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .build-status/next-ledger-1.3.61.json
-          git commit -m "Record Next Ledger 1.3.61 build status" || exit 0
+          git add .build-status/next-ledger-1.3.62.json
+          git commit -m "Record Next Ledger 1.3.62 build status" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}
-
-# authoritative trigger
