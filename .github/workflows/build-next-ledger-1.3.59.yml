@@ -48,6 +48,7 @@ jobs:
           grep -Fq 'CollectLatestIncomingMessagesForReview(database, 15)' RootHideSMSQueue/Sources/main.m
           grep -Fq 'Manual scan finished.' RootHideSMSQueue/Sources/main.m
           grep -Fq 'gState[@"scanInProgress"] = @NO' RootHideSMSQueue/Sources/main.m
+          grep -Fq 'Manual scan stopped because the Messages database is unreadable.' RootHideSMSQueue/Sources/main.m
           grep -Fq 'struct SMSLatest15ReviewView: View' DailyLedger/Views/SMSLatest15ReviewView.swift
           grep -Fq 'Text(item.details)' DailyLedger/Views/SMSLatest15ReviewView.swift
           grep -Fq 'ProgressView(value: aiProgress)' DailyLedger/Views/SMSLatest15ReviewView.swift
@@ -174,3 +175,5 @@ jobs:
           git add .build-status/next-ledger-1.3.59.json
           git commit -m "Record Next Ledger 1.3.59 build status" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}
+
+# forced repaired build trigger
