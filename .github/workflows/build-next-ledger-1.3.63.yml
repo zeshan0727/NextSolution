@@ -1,0 +1,95 @@
+name: Build Next Ledger 1.3.63 SMS Review Manual Fallback
+permissions:
+  contents: write
+concurrency:
+  group: next-ledger-1-3-63-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/fix_sms_review_manual_ai_1_3_63.py"
+      - "scripts/apply_next_ledger_1_3_63.sh"
+      - ".github/workflows/build-next-ledger-1.3.63.yml"
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply 1.3.63
+        run: bash scripts/apply_next_ledger_1_3_63.sh
+      - name: Validate review fix
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          grep -Fq 'MARKETING_VERSION: "1.3.63"' project.yml
+          grep -Fq 'CURRENT_PROJECT_VERSION: "71"' project.yml
+          grep -Fq 'Label("Book As", systemImage: "square.and.pencil")' DailyLedger/Views/SMSLatest15ReviewView.swift
+          grep -Fq 'Button("Income")' DailyLedger/Views/SMSLatest15ReviewView.swift
+          grep -Fq 'Button("Expense")' DailyLedger/Views/SMSLatest15ReviewView.swift
+          grep -Fq 'Button("Transfer")' DailyLedger/Views/SMSLatest15ReviewView.swift
+          grep -Fq 'Button("Refund")' DailyLedger/Views/SMSLatest15ReviewView.swift
+          grep -Fq 'JSONSerialization.jsonObject' DailyLedger/Views/SMSLatest15ReviewView.swift
+          grep -Fq 'kept Pending' DailyLedger/Views/SMSLatest15ReviewView.swift
+          grep -Fq 'Manual Review' DailyLedger/Views/SMSLatest15ReviewView.swift
+          xcrun clang -fobjc-arc RootHideSMSQueue/Sources/main.m -framework Foundation -framework CoreFoundation -lsqlite3 -o build/nextledgersmsd-macos
+          build/nextledgersmsd-macos --self-test | tee build/sms-parser-tests.json
+          grep -q '"passed" : true' build/sms-parser-tests.json
+          grep -q '"version" : "2.2.3"' build/sms-parser-tests.json
+      - run: brew install xcodegen dpkg ldid
+      - run: xcodegen generate
+      - name: Build iPhone app
+        run: |
+          set -o pipefail
+          xcodebuild -project DailyLedger.xcodeproj -scheme DailyLedger -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
+      - name: Build daemon 2.2.3
+        run: |
+          set -euxo pipefail
+          THEOS_COMMIT="88506b2c22e9e07dd4ed055f23c9e398a117a2c7"
+          git init "$RUNNER_TEMP/theos"
+          git -C "$RUNNER_TEMP/theos" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos" fetch --depth 1 origin "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos" checkout --detach "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos" submodule update --init --recursive --depth 1
+          export THEOS="$RUNNER_TEMP/theos"
+          chmod +x RootHideSMSQueue/postinst RootHideSMSQueue/prerm RootHideSMSQueue/layout/DEBIAN/postinst RootHideSMSQueue/layout/DEBIAN/prerm
+          make -C RootHideSMSQueue clean package FINALPACKAGE=1
+          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.2.3-roothide.deb
+      - name: Package TIPA
+        run: |
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload && mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.63-sms-review-manual-fallback.tipa
+          shasum -a 256 NextLedger-1.3.63-sms-review-manual-fallback.tipa > NextLedger-1.3.63-sms-review-manual-fallback.sha256
+          shasum -a 256 NextLedgerSMSDaemon-2.2.3-roothide.deb > NextLedgerSMSDaemon-2.2.3-roothide.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-1.3.63-SMS-Review-Manual-Fallback
+          path: |
+            NextLedger-1.3.63-sms-review-manual-fallback.tipa
+            NextLedger-1.3.63-sms-review-manual-fallback.sha256
+            NextLedgerSMSDaemon-2.2.3-roothide.deb
+            NextLedgerSMSDaemon-2.2.3-roothide.sha256
+            build/sms-parser-tests.json
+      - name: Publish status
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          git reset --hard HEAD
+          git clean -fd
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B build-status "origin/$GITHUB_REF_NAME"
+          mkdir -p .build-status
+          cat > .build-status/next-ledger-1.3.63.json <<EOF
+          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","source_sha":"${GITHUB_SHA}","app_version":"1.3.63","app_build":"71","daemon_version":"2.2.3","artifact_name":"NextLedger-1.3.63-SMS-Review-Manual-Fallback"}
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .build-status/next-ledger-1.3.63.json
+          git commit -m "Record Next Ledger 1.3.63 build status" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
