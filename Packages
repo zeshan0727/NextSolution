@@ -359,10 +359,10 @@ Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/Charge80Haptic_1.0.0_Rootless.deb
-Size: 8540
-MD5sum: 3c15a0bbc615a46e269fb2d0a24aec31
-SHA1: acd27647e5a9461e646aa642a3af9ad159fb2af8
-SHA256: cdf80cff88acb8c2346f09f78fc075e97d9391defdd56862157d1cd744988517
+Size: 8542
+MD5sum: 863fb95a524ecfe92f10bba73ac9df34
+SHA1: 6e7ac67e40d5c6a7c908695ef8210ba833c43904
+SHA256: 11d5ff1fa983d41e07a103e342d383579dfa237c321ece5dbe1e95d0c395bccd
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
@@ -378,10 +378,10 @@ Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/Charge80Haptic_1.0.0_RootHide.deb
-Size: 8474
-MD5sum: 8b701d976a9b2b1da9b184e9468737f0
-SHA1: da90b44ed9476d9c127ca989ad811a52f233ce4d
-SHA256: c8bc67b449d771a83922317a8da8f79167415684a0d1f08ad9f307813b66e479
+Size: 8468
+MD5sum: f0523d09570c32c967ba934ec3540cd2
+SHA1: 364096329dda1eaec1f582691c8e93e2a6e9815f
+SHA256: b52a692ac0034d0e8f6b0ab07b7beb874bc405581444a2cc2a4cf4fb4f2d858f
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
