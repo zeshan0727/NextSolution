@@ -1,0 +1,6 @@
+Charge 80 Haptic 1.0.0: BUILD VALIDATION PASS
+Deterministic runtime checks: PASS (10 cases)
+Rootless package: PASS
+RootHide package: PASS
+1196e5dbcac9868428bddb6c30502a79a5764e6946a9b7e5a8efd864808958eb  /Users/runner/work/_temp/c80/Charge80Haptic_1.0.0_RootHide.deb
+d334e2518fdf573a7627413b73bd510846b260034253ae2fc0b068baa138711e  /Users/runner/work/_temp/c80/Charge80Haptic_1.0.0_Rootless.deb
