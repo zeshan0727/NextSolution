@@ -16,11 +16,15 @@ jobs:
       - run: bash scripts/apply_next_ledger_1_3_62.sh
       - name: Publish generated review source
         run: |
-          mkdir -p .debug
-          cp DailyLedger/Views/SMSLatest15ReviewView.swift .debug/SMSLatest15ReviewView-1.3.62.swift
+          cp DailyLedger/Views/SMSLatest15ReviewView.swift "$RUNNER_TEMP/SMSLatest15ReviewView-1.3.62.swift"
           git reset --hard HEAD
           git clean -fd
           git fetch origin "$GITHUB_REF_NAME"
           git checkout -B debug-source "origin/$GITHUB_REF_NAME"
           mkdir -p .debug
-          cp "$RUNNER_TEMP/nonexistent" /dev/null 2>/dev/null || true
+          cp "$RUNNER_TEMP/SMSLatest15ReviewView-1.3.62.swift" .debug/SMSLatest15ReviewView-1.3.62.swift
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .debug/SMSLatest15ReviewView-1.3.62.swift
+          git commit -m "Publish generated SMS review 1.3.62" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
