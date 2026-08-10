@@ -389,3 +389,41 @@ Description: Plays one success haptic when the iPhone crosses 80% battery while 
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/charge80haptic.html
 Name: Charge 80 Haptic
+
+Package: com.nextsolution.wifidrophaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/WiFiDropHaptic_1.0.0_Rootless.deb
+Size: 8110
+MD5sum: 69c4ca974e7082923c2a6d2997572b19
+SHA1: 8fcd4e00aa2d66c15405e1636da11b62e8f35641
+SHA256: 404da67033ffe521031735e0f38a250a5be600be9e3bef6e3f178b45de0150fb
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays one warning haptic when the active network path leaves Wi-Fi.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/wifidrophaptic.html
+Name: Wi-Fi Drop Haptic
+
+Package: com.nextsolution.wifidrophaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/WiFiDropHaptic_1.0.0_RootHide.deb
+Size: 8024
+MD5sum: 197b41d55d3b60f3bbda978b1a1cbc39
+SHA1: e7f2f11b31f25fe886b3404a7adee485ebe2b5e1
+SHA256: 092bed33e373381af0471c129355d65bb8960fa2ada7ae6fe1e01df9b0b04ee6
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays one warning haptic when the active network path leaves Wi-Fi.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/wifidrophaptic.html
+Name: Wi-Fi Drop Haptic
