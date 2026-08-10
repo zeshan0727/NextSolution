@@ -397,10 +397,10 @@ Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/WiFiDropHaptic_1.0.0_Rootless.deb
-Size: 8110
-MD5sum: 69c4ca974e7082923c2a6d2997572b19
-SHA1: 8fcd4e00aa2d66c15405e1636da11b62e8f35641
-SHA256: 404da67033ffe521031735e0f38a250a5be600be9e3bef6e3f178b45de0150fb
+Size: 8106
+MD5sum: 7121aa635951a7f5d1f456dce21b83cd
+SHA1: 10fc7bcafc142df584820998f0d5bce0de0b2c31
+SHA256: 54dba68f9739b76a204f76cf67d55e652f4e176c775b35d8e0296c0c8bf8ab5a
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
@@ -416,10 +416,10 @@ Maintainer: Next Solution
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/WiFiDropHaptic_1.0.0_RootHide.deb
-Size: 8024
-MD5sum: 197b41d55d3b60f3bbda978b1a1cbc39
-SHA1: e7f2f11b31f25fe886b3404a7adee485ebe2b5e1
-SHA256: 092bed33e373381af0471c129355d65bb8960fa2ada7ae6fe1e01df9b0b04ee6
+Size: 8030
+MD5sum: 7a65a4d343188ffbccb0509cbbfc7d76
+SHA1: 7d99897d15cf70f52f719682a22aed69f1b1e195
+SHA256: 322f10a659e7501f082cce0e7792ff9bc1f2a173bf02bb292dc152ba6573e430
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
