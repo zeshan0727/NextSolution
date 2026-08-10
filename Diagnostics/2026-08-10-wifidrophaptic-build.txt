@@ -1,0 +1,6 @@
+Wi-Fi Drop Haptic 1.0.0: BUILD VALIDATION PASS
+Deterministic runtime checks: PASS (8 cases)
+Rootless package: PASS
+RootHide package: PASS
+8f68d7b4b24cdba972cb0f2f96309377a74d29b01d86eb76a0c7add7a53c3dc8  /Users/runner/work/_temp/wdh/WiFiDropHaptic_1.0.0_RootHide.deb
+e76378937034520184d8eeaa3656b0266229fca2c22804105641c194c6c24f86  /Users/runner/work/_temp/wdh/WiFiDropHaptic_1.0.0_Rootless.deb
