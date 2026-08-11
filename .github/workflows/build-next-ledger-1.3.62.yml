@@ -29,7 +29,8 @@ jobs:
           set -euo pipefail
           grep -Fq 'MARKETING_VERSION: "1.3.70"' project.yml
           grep -Fq 'CURRENT_PROJECT_VERSION: "78"' project.yml
-          grep -Fq 'currencyCode: movement.currencyCode' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'financialSummaryMovementDestination(' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'currencyCode: movement.currencyCode' DailyLedger/Views/ReportsView.swift || grep -Fq 'currencyCode: currencyCode' DailyLedger/Views/ReportsView.swift
           grep -Fq 'let currencyCode: String?' DailyLedger/Views/PeriodTransactionsView.swift
           grep -Fq 'currencyCode: String? = nil' DailyLedger/Views/PeriodTransactionsView.swift
           grep -Fq '(kind == .loanIncreased || kind == .loans)' DailyLedger/Views/PeriodTransactionsView.swift
