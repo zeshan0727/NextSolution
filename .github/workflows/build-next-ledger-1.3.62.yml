@@ -11,6 +11,8 @@ on:
       - ".github/workflows/build-next-ledger-1.3.62.yml"
       - "scripts/apply_next_ledger_1_3_70.sh"
       - "scripts/fix_financial_summary_currency_drilldown_1_3_70.py"
+      - "scripts/fix_financial_summary_currency_compile_1_3_70.py"
+      - "scripts/fix_financial_summary_currency_initializer_1_3_70.py"
 jobs:
   build:
     runs-on: macos-15
@@ -28,7 +30,8 @@ jobs:
           grep -Fq 'MARKETING_VERSION: "1.3.70"' project.yml
           grep -Fq 'CURRENT_PROJECT_VERSION: "78"' project.yml
           grep -Fq 'currencyCode: movement.currencyCode' DailyLedger/Views/ReportsView.swift
-          grep -Fq 'let currencyCode: String? = nil' DailyLedger/Views/PeriodTransactionsView.swift
+          grep -Fq 'let currencyCode: String?' DailyLedger/Views/PeriodTransactionsView.swift
+          grep -Fq 'currencyCode: String? = nil' DailyLedger/Views/PeriodTransactionsView.swift
           grep -Fq '(kind == .loanIncreased || kind == .loans)' DailyLedger/Views/PeriodTransactionsView.swift
           grep -Fq 'store.account(withID: transaction.accountID)?.currencyCode != currencyCode' DailyLedger/Views/PeriodTransactionsView.swift
           grep -Fq 'currencyCode ?? store.currencyCode' DailyLedger/Views/PeriodTransactionsView.swift
@@ -64,8 +67,8 @@ jobs:
           mkdir -p build
           {
             grep -E "error:|fatal error:|BUILD FAILED" build/xcodebuild.log || true
-            echo "--- ReportsView 1010-1110 ---"
-            nl -ba DailyLedger/Views/ReportsView.swift | sed -n '1010,1110p'
+            echo "--- ReportsView 1010-1210 ---"
+            nl -ba DailyLedger/Views/ReportsView.swift | sed -n '1010,1210p'
             echo "--- PeriodTransactionsView ---"
             cat DailyLedger/Views/PeriodTransactionsView.swift
           } > build/next-ledger-1.3.70-diagnostics.txt
