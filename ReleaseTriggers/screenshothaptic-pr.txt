@@ -1,0 +1,1 @@
+Observable diagnostic run for Screenshot Haptic 1.0.0.
