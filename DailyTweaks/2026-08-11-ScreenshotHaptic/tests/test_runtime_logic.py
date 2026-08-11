@@ -17,14 +17,15 @@ for enabled, event, expected, label in cases:
 
 root = Path(__file__).resolve().parents[1]
 src = (root / "Tweak.xm").read_text()
+registration = "SSHScreenshotObserver = [[NSNotificationCenter defaultCenter]"
 assert "UIApplicationUserDidTakeScreenshotNotification" in src
 assert "SSHIsSpringBoard" in src and "com.apple.springboard" in src
-assert "SSHScreenshotObserver =" in src, "observer must be retained"
+assert registration in src, "observer registration must be retained"
 assert "SSHReloadPreferences();" in src
 assert "CFPreferencesCopyAppValue" in src
 assert "CFNotificationCenterAddObserver" in src
 assert "UINotificationFeedbackTypeSuccess" in src
-assert src.index("if (!SSHIsSpringBoard()) return;") < src.index("SSHScreenshotObserver ="), "process guard must precede observer registration"
+assert src.index("if (!SSHIsSpringBoard()) return;") < src.index(registration), "process guard must precede observer registration"
 assert src.index("if (!SSHShouldNotify(SSHEnabled, YES)) return;") < src.index("notificationOccurred:UINotificationFeedbackTypeSuccess"), "decision gate must precede feedback"
 assert "SBRootFolderView" not in src and "UIGestureRecognizer" not in src, "must not use unverified private-view gesture lifecycle"
 print("Screenshot Haptic deterministic runtime checks: PASS (4 decision cases + source invariants)")
