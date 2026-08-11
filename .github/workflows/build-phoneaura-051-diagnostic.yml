@@ -54,7 +54,7 @@ jobs:
           xcrun --sdk iphoneos clang \
             -fobjc-arc -arch arm64 -miphoneos-version-min=15.0 \
             -isysroot "$SDK" -O2 -Wall -Wextra \
-            -framework UIKit -framework Foundation -framework CoreFoundation \
+            -framework UIKit -framework Foundation -framework CoreFoundation -framework CoreGraphics -framework QuartzCore \
             "$P/ConsoleApp.m" -o "$RUNNER_TEMP/PhoneAuraConsole"
           ldid -S "$RUNNER_TEMP/PhoneAuraConsole"
           file "$RUNNER_TEMP/PhoneAuraConsole"
