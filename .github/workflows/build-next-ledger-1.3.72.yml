@@ -1,6 +1,6 @@
 name: Debug Next Ledger 1.3.72 SMS Scheduling
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: next-ledger-1-3-72-sms-debug-${{ github.ref }}
   cancel-in-progress: true
@@ -15,18 +15,20 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Apply 1.3.72
         run: bash scripts/apply_next_ledger_1_3_72.sh
-      - name: Collect generated SMS sources
+      - name: Publish generated SMS sources
         shell: bash
         run: |
-          mkdir -p generated
-          cp RootHideSMSQueue/Sources/main.m generated/nextledgersmsd-2.2.3.m
-          cp DailyLedger/Views/SMSImportConsoleView.swift generated/SMSImportConsoleView.swift
-          cp DailyLedger/Services/SMSImportConsoleService.swift generated/SMSImportConsoleService.swift
-          grep -R -n "scanInterval\|recovery\|AutomaticScan\|sleep(\|autoRecord\|scanRequest" RootHideSMSQueue/Sources/main.m DailyLedger/Views/SMSImportConsoleView.swift DailyLedger/Services/SMSImportConsoleService.swift > generated/matches.txt || true
-      - uses: actions/upload-artifact@v4
-        with:
-          name: NextLedger-1.3.72-SMS-Scheduling-Generated
-          path: generated
-          if-no-files-found: error
+          mkdir -p .debug/sms-schedule-1.3.72
+          cp RootHideSMSQueue/Sources/main.m .debug/sms-schedule-1.3.72/nextledgersmsd-2.2.3.m
+          cp DailyLedger/Views/SMSImportConsoleView.swift .debug/sms-schedule-1.3.72/SMSImportConsoleView.swift
+          cp DailyLedger/Services/SMSImportConsoleService.swift .debug/sms-schedule-1.3.72/SMSImportConsoleService.swift
+          grep -R -n "scanInterval\|recovery\|AutomaticScan\|sleep(\|autoRecord\|scanRequest" RootHideSMSQueue/Sources/main.m DailyLedger/Views/SMSImportConsoleView.swift DailyLedger/Services/SMSImportConsoleService.swift > .debug/sms-schedule-1.3.72/matches.txt || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .debug/sms-schedule-1.3.72
+          git commit -m "Publish generated 1.3.72 SMS scheduling sources" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
