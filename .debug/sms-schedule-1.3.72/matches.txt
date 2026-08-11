@@ -1,0 +1,33 @@
+RootHideSMSQueue/Sources/main.m:270:        @"autoRecord": @NO,
+RootHideSMSQueue/Sources/main.m:277:        @"scanRequestID": @0
+RootHideSMSQueue/Sources/main.m:967:        AddLog(@"info", @"Queued SMS row %lld for OpenAI database recovery.", rowID);
+RootHideSMSQueue/Sources/main.m:1237:    if (![config[@"autoRecord"] boolValue]) return ImportResultWaitingForMapping;
+RootHideSMSQueue/Sources/main.m:1284:static NSInteger ConfiguredAutomaticScanHours(NSDictionary *config) {
+RootHideSMSQueue/Sources/main.m:1290:__attribute__((unused)) static BOOL AutomaticScanIsDue(NSDictionary *config, NSDate *now) {
+RootHideSMSQueue/Sources/main.m:1291:    NSTimeInterval last = [gState[@"lastAutomaticScanUnix"] doubleValue];
+RootHideSMSQueue/Sources/main.m:1293:    NSTimeInterval interval = (NSTimeInterval)ConfiguredAutomaticScanHours(config) * 60.0 * 60.0;
+RootHideSMSQueue/Sources/main.m:1301:    NSInteger requestID = [config[@"scanRequestID"] integerValue];
+RootHideSMSQueue/Sources/main.m:1406:    NSInteger autoRecorded = 0;
+RootHideSMSQueue/Sources/main.m:1461:                AddLog(@"warning", @"Approved-bank SMS row %lld was not classified locally; queued for OpenAI recovery: %@", rowID, preview);
+RootHideSMSQueue/Sources/main.m:1489:                autoRecorded += 1;
+RootHideSMSQueue/Sources/main.m:1490:            } else if (automaticResult == ImportResultDuplicate && [config[@"autoRecord"] boolValue]) {
+RootHideSMSQueue/Sources/main.m:1508:    gState[@"lastAutomaticScanUnix"] = @(scanDate.timeIntervalSince1970);
+RootHideSMSQueue/Sources/main.m:1509:    gState[@"automaticScanIntervalHours"] = @(ConfiguredAutomaticScanHours(config));
+RootHideSMSQueue/Sources/main.m:1521:    NSString *mode = manualRequested ? @"Manual recovery scan" : @"Realtime capture/parser scan";
+RootHideSMSQueue/Sources/main.m:1528:        (long)autoRecorded,
+RootHideSMSQueue/Sources/main.m:1537:        (long)ConfiguredAutomaticScanHours(config),
+RootHideSMSQueue/Sources/main.m:1538:        ConfiguredAutomaticScanHours(config) == 1 ? @"" : @"s"];
+RootHideSMSQueue/Sources/main.m:1608:        @"name": @"attributed-body CUR1 recovery",
+RootHideSMSQueue/Sources/main.m:1642:            gState[@"lastAutomaticScanUnix"] = @(NSDate.date.timeIntervalSince1970);
+RootHideSMSQueue/Sources/main.m:1655:            sleep(5);
+DailyLedger/Views/SMSImportConsoleView.swift:24:                Toggle("Auto Record", isOn: $configuration.autoRecord)
+DailyLedger/Views/SMSImportConsoleView.swift:294:        if requestScan { configuration.scanRequestID += 1 }
+DailyLedger/Views/SMSImportConsoleView.swift:314:            configuration.scanRequestID += 1
+DailyLedger/Views/SMSImportConsoleView.swift:379:            // Database recovery is highest priority. One source row is sent once;
+DailyLedger/Views/SMSImportConsoleView.swift:393:            // Refresh after recovery so newly created AI drafts are not immediately
+DailyLedger/Services/SMSImportConsoleService.swift:6:    var autoRecord = false
+DailyLedger/Services/SMSImportConsoleService.swift:14:    var scanRequestID = 0
+DailyLedger/Services/SMSImportConsoleService.swift:18:        case autoRecord
+DailyLedger/Services/SMSImportConsoleService.swift:26:        case scanRequestID
+DailyLedger/Services/SMSImportConsoleService.swift:34:        autoRecord = try container.decodeIfPresent(Bool.self, forKey: .autoRecord) ?? false
+DailyLedger/Services/SMSImportConsoleService.swift:42:        scanRequestID = try container.decodeIfPresent(Int.self, forKey: .scanRequestID) ?? 0
