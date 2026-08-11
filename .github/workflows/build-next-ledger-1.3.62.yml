@@ -14,6 +14,7 @@ on:
       - "scripts/relax_fixed_liability_summary_anchor_1_3_68.py"
       - "scripts/preserve_far_export_in_1_3_68_patch.py"
       - "scripts/fix_next_ledger_1_3_68_compile.py"
+      - "scripts/fix_next_ledger_1_3_68_ios16_sections.py"
 jobs:
   build:
     runs-on: macos-15
@@ -39,6 +40,7 @@ jobs:
           grep -Fq '"Repaid / Settled"' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq '"Outstanding Liability"' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq 'Section("Recent Repayments")' DailyLedger/Views/FixedAccountingRegistersView.swift
+          grep -Fq 'Text("Ledger Settlement")' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq 'A linked liability moves here automatically' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq 'private struct FixedAssetRegisterExportView: View' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq 'LabeledContent("Version", value: "1.3.68")' DailyLedger/Views/SettingsView.swift
@@ -72,8 +74,8 @@ jobs:
           mkdir -p build
           {
             test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true
-            echo "--- FixedAccountingRegistersView.swift lines 770-930 ---"
-            nl -ba DailyLedger/Views/FixedAccountingRegistersView.swift | sed -n '770,930p' || true
+            echo "--- FixedAccountingRegistersView.swift liability area ---"
+            nl -ba DailyLedger/Views/FixedAccountingRegistersView.swift | sed -n '770,1180p' || true
           } | tee build/next-ledger-1.3.68-errors.txt
       - uses: actions/upload-artifact@v4
         if: failure()
@@ -99,4 +101,4 @@ jobs:
           git add .build-status/next-ledger-1.3.68.json
           git commit -m "Record Next Ledger 1.3.68 build status" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}
-# compiler-safe liability-editor workflow trigger
+# iOS16-compatible liability-settlement workflow trigger
