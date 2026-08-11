@@ -1,9 +1,0 @@
-Screenshot Haptic 1.0.0 diagnostic compiler
-BUILD VALIDATION PASS
-Deterministic runtime checks: PASS
-Rootless package build and inspection: PASS
-RootHide package build and inspection: PASS
-Observable diagnostic workflow run: 31454697385
-Diagnostic artifact: screenshothaptic-diagnostic (artifact 9087620210)
-Artifact digest: sha256:fadfcc276f4e87a025f43a4aeb5fe55576d7267d0f71ae6c207fbb55e3a17c5a
-Runtime status: build-validated; awaiting physical-device test

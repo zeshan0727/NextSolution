@@ -427,3 +427,39 @@ Description: Plays one warning haptic when the active network path leaves Wi-Fi.
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/wifidrophaptic.html
 Name: Wi-Fi Drop Haptic
+
+Package: com.nextsolution.screenshothaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/ScreenshotHaptic_1.0.0_RootHide.deb
+Size: 7806
+MD5sum: b5cd44db5037759850f38c1dfc5c71ba
+SHA1: db23d804a1136684879931dcd0d644943215ae2e
+SHA256: 8c0decd47514ca99affa27f2374cf8eedaa185651bec9d59698b13ce22a7d3bb
+Section: Tweaks
+Homepage: https://nextsolution.cc/
+Description: Plays one success haptic after iOS confirms a screenshot was taken.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/screenshothaptic.html
+Name: Screenshot Haptic
+
+Package: com.nextsolution.screenshothaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/ScreenshotHaptic_1.0.0_Rootless.deb
+Size: 7866
+MD5sum: 7d23662f843c718aafb760ad1d2f7ff1
+SHA1: a546a9a600c09204483c2883a41753e09b72a816
+SHA256: 24900b809ba48aa77ce6d98fdfa091928cd78ba612ace8f0cd96e56df1db3919
+Section: Tweaks
+Homepage: https://nextsolution.cc/
+Description: Plays one success haptic after iOS confirms a screenshot was taken.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/screenshothaptic.html
+Name: Screenshot Haptic
