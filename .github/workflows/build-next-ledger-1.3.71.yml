@@ -1,0 +1,99 @@
+name: Build Next Ledger 1.3.71 Developer Lab
+permissions:
+  contents: write
+concurrency:
+  group: next-ledger-1-3-71-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build-next-ledger-1.3.71.yml"
+      - "scripts/apply_next_ledger_1_3_71.sh"
+      - "scripts/add_developer_lab_1_3_71.py"
+      - "DailyLedger/Views/DeveloperLabView.swift"
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply 1.3.71
+        run: bash scripts/apply_next_ledger_1_3_71.sh
+      - name: Validate Developer Lab wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'MARKETING_VERSION: "1.3.71"' project.yml
+          grep -Fq 'CURRENT_PROJECT_VERSION: "79"' project.yml
+          grep -Fq 'DeveloperLabView()' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'LabeledContent("Version", value: "1.3.71")' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'struct DeveloperLabView: View' DailyLedger/Views/DeveloperLabView.swift
+          grep -Fq 'DeveloperActivityChart(' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'devShowSummaryLoans' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'devShowPKRConversion' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'effectiveDashboardGridColumns' DailyLedger/Views/DashboardView.swift
+          grep -Fq 'devShowRunningBalance' DailyLedger/Views/Components.swift
+          grep -Fq '.developerSurface()' DailyLedger/Views/ReportsView.swift
+          grep -Fq '.developerSurface()' DailyLedger/Views/DashboardView.swift
+          test "$(grep -o 'static let [A-Za-z0-9_]* = \"NLDev' DailyLedger/Views/DeveloperLabView.swift | wc -l | tr -d ' ')" -ge 50
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: Build unsigned iPhone app
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild -project DailyLedger.xcodeproj -scheme DailyLedger -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
+      - name: Package TIPA
+        run: |
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload && mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.71-developer-lab.tipa
+          shasum -a 256 NextLedger-1.3.71-developer-lab.tipa > NextLedger-1.3.71-developer-lab.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-1.3.71-Developer-Lab
+          path: |
+            NextLedger-1.3.71-developer-lab.tipa
+            NextLedger-1.3.71-developer-lab.sha256
+          if-no-files-found: error
+      - name: Capture diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p build
+          {
+            echo "--- Build errors ---"
+            test -f build/xcodebuild.log && grep -E "error:|fatal error:|BUILD FAILED|SwiftCompile" build/xcodebuild.log || true
+            echo "--- Developer Lab references ---"
+            grep -R -n "NLDev\|DeveloperLab\|developerSurface\|DeveloperActivityChart" DailyLedger/Views/DeveloperLabView.swift DailyLedger/Views/ReportsView.swift DailyLedger/Views/DashboardView.swift DailyLedger/Views/Components.swift | head -n 400 || true
+          } > build/next-ledger-1.3.71-diagnostics.txt
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: NextLedger-1.3.71-Diagnostics
+          path: build/next-ledger-1.3.71-diagnostics.txt
+          if-no-files-found: warn
+      - name: Publish status
+        if: always()
+        shell: bash
+        run: |
+          STATUS="${{ job.status }}"
+          git reset --hard HEAD
+          git clean -fd
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B build-status "origin/$GITHUB_REF_NAME"
+          mkdir -p .build-status
+          cat > .build-status/next-ledger-1.3.71.json <<EOF
+          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","source_sha":"${GITHUB_SHA}","app_version":"1.3.71","app_build":"79","daemon_version":"2.2.3","artifact_name":"NextLedger-1.3.71-Developer-Lab"}
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .build-status/next-ledger-1.3.71.json
+          git commit -m "Record Next Ledger 1.3.71 build status" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
