@@ -67,9 +67,14 @@ jobs:
           if-no-files-found: error
       - name: Capture diagnostics
         if: failure()
+        shell: bash
         run: |
           mkdir -p build
-          { test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true; } > build/next-ledger-1.3.68-errors.txt
+          {
+            test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true
+            echo "--- FixedAccountingRegistersView.swift lines 770-845 ---"
+            nl -ba DailyLedger/Views/FixedAccountingRegistersView.swift | sed -n '770,845p' || true
+          } | tee build/next-ledger-1.3.68-errors.txt
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -94,4 +99,4 @@ jobs:
           git add .build-status/next-ledger-1.3.68.json
           git commit -m "Record Next Ledger 1.3.68 build status" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}
-# final forced workflow trigger after validation correction
+# source-context diagnostic trigger
