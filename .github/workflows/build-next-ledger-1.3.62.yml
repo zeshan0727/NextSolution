@@ -12,6 +12,8 @@ on:
       - "scripts/apply_next_ledger_1_3_68.sh"
       - "scripts/fix_fixed_liability_settlement_1_3_68.py"
       - "scripts/relax_fixed_liability_summary_anchor_1_3_68.py"
+      - "scripts/preserve_far_export_in_1_3_68_patch.py"
+      - "scripts/fix_next_ledger_1_3_68_compile.py"
 jobs:
   build:
     runs-on: macos-15
@@ -34,10 +36,11 @@ jobs:
           grep -Fq 'func fixedLiabilityRepaymentTransactions' DailyLedger/Services/LedgerStore.swift
           grep -Fq 'transaction.destinationAccountID == liabilityID' DailyLedger/Services/LedgerStore.swift
           grep -Fq 'repayments += effectiveDestinationAmount(transaction)' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'LabeledContent("Repaid / Settled"' DailyLedger/Views/FixedAccountingRegistersView.swift
-          grep -Fq 'LabeledContent("Outstanding Liability"' DailyLedger/Views/FixedAccountingRegistersView.swift
+          grep -Fq '"Repaid / Settled"' DailyLedger/Views/FixedAccountingRegistersView.swift
+          grep -Fq '"Outstanding Liability"' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq 'Section("Recent Repayments")' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq 'A linked liability moves here automatically' DailyLedger/Views/FixedAccountingRegistersView.swift
+          grep -Fq 'private struct FixedAssetRegisterExportView: View' DailyLedger/Views/FixedAccountingRegistersView.swift
           grep -Fq 'LabeledContent("Version", value: "1.3.68")' DailyLedger/Views/SettingsView.swift
       - run: brew install xcodegen
       - run: xcodegen generate
@@ -91,4 +94,4 @@ jobs:
           git add .build-status/next-ledger-1.3.68.json
           git commit -m "Record Next Ledger 1.3.68 build status" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}
-# compatibility-fixed workflow trigger
+# final validation-format workflow trigger
