@@ -1,1 +1,1 @@
-{"status":"cancelled","run_id":"31500686229","run_number":"4","source_sha":"219fa5d9da7b8e6f00d3361bfa2a967738bc24dd","app_version":"1.3.72","app_build":"80","daemon_version":"2.2.3","artifact_name":"NextLedger-1.3.72-ERP-Accounting-Center"}
+{"status":"success","run_id":"31500850227","run_number":"5","source_sha":"08323f0756543f93dcff6966b0839e7306910374","app_version":"1.3.72","app_build":"80","daemon_version":"2.2.3","artifact_name":"NextLedger-1.3.72-ERP-Accounting-Center"}
