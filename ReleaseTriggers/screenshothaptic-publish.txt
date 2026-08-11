@@ -1,1 +1,0 @@
-Publish Screenshot Haptic 1.0.0 after diagnostic workflow run 31454697385 passed both rootless and RootHide builds and package inspection.
