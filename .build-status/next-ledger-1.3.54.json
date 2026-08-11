@@ -1,8 +1,8 @@
 {
-  "status": "cancelled",
-  "run_id": "31468477647",
-  "run_number": "54",
-  "source_sha": "1afda3f178b3218da5cbcf6be6ed4a21c5d3f38a",
+  "status": "success",
+  "run_id": "31468803494",
+  "run_number": "56",
+  "source_sha": "4982053e7ca0a58e75fe89cf9ed8b19a504f94fb",
   "app_version": "1.3.54",
   "app_build": "62",
   "daemon_version": "2.2.0",
