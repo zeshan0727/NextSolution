@@ -1,0 +1,1 @@
+Observable diagnostic rerun for Screenshot Haptic 1.0.0 after ordering-check correction.
