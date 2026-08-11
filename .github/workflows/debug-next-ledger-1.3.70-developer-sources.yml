@@ -1,0 +1,43 @@
+name: Debug Next Ledger 1.3.70 Developer Sources
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/debug-next-ledger-1.3.70-developer-sources-trigger.txt"
+      - ".github/workflows/debug-next-ledger-1.3.70-developer-sources.yml"
+
+jobs:
+  generate:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patches through 1.3.70
+        run: bash scripts/apply_next_ledger_1_3_70.sh
+      - name: Publish generated sources for inspection
+        shell: bash
+        run: |
+          rm -rf .debug-generated/next-ledger-1.3.70-developer
+          mkdir -p .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Views
+          mkdir -p .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Theme
+          cp DailyLedger/Views/SettingsView.swift .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Views/
+          cp DailyLedger/Views/ReportsView.swift .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Views/
+          cp DailyLedger/Views/PeriodTransactionsView.swift .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Views/
+          cp DailyLedger/Views/DashboardView.swift .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Views/
+          cp DailyLedger/Views/Components.swift .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Views/
+          cp DailyLedger/Theme/AppTheme.swift .debug-generated/next-ledger-1.3.70-developer/DailyLedger/Theme/
+          cp project.yml .debug-generated/next-ledger-1.3.70-developer/project.yml
+          git reset --hard HEAD
+          git clean -fd -e .debug-generated
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B debug-publish "origin/$GITHUB_REF_NAME"
+          git add -f .debug-generated/next-ledger-1.3.70-developer
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Publish generated Next Ledger 1.3.70 developer sources" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
