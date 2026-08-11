@@ -1,0 +1,212 @@
+name: Build PhoneAura 0.5.1 Diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "PhoneAuraDiagnostics/**"
+      - ".github/workflows/build-phoneaura-051-diagnostic.yml"
+  push:
+    branches:
+      - fix/phoneaura-0416-tabs-and-recent
+    paths:
+      - "PhoneAuraDiagnostics/**"
+      - ".github/workflows/build-phoneaura-051-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: brew install dpkg ldid
+
+      - name: Validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/PhoneAuraDiagnostics"
+          for f in Makefile control PhoneAuraDiagnostics.plist DiagnosticsTweak.m ConsoleApp.m ConsoleInfo.plist prepare_package.py README.md; do test -f "$P/$f"; done
+          grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
+          grep -q 'PhoneAuraDiagnostics.dylib' "$P/DiagnosticsTweak.m"
+          grep -q 'PhoneAuraNativeFeatures.dylib' "$P/DiagnosticsTweak.m"
+          grep -q 'Run Full Diagnosis' "$P/ConsoleApp.m"
+          grep -q 'Test Favorites' "$P/ConsoleApp.m"
+          grep -q 'Test Recents' "$P/ConsoleApp.m"
+          grep -q 'Test Contacts + Accounts' "$P/ConsoleApp.m"
+          grep -q 'Test Keypad' "$P/ConsoleApp.m"
+          grep -q 'Import Latest MobilePhone Crash' "$P/ConsoleApp.m"
+          python3 -m py_compile "$P/prepare_package.py"
+          plutil -lint "$P/PhoneAuraDiagnostics.plist" "$P/ConsoleInfo.plist"
+
+      - name: Build PhoneAura Console app
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/PhoneAuraDiagnostics"
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun --sdk iphoneos clang \
+            -fobjc-arc -arch arm64 -miphoneos-version-min=15.0 \
+            -isysroot "$SDK" -O2 -Wall -Wextra \
+            -framework UIKit -framework Foundation -framework CoreFoundation \
+            "$P/ConsoleApp.m" -o "$RUNNER_TEMP/PhoneAuraConsole"
+          ldid -S "$RUNNER_TEMP/PhoneAuraConsole"
+          file "$RUNNER_TEMP/PhoneAuraConsole"
+          otool -L "$RUNNER_TEMP/PhoneAuraConsole"
+
+      - name: Build rootless passive diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/PhoneAuraDiagnostics"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless"
+          export THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages" "$P/.theos"
+          make -C "$P" clean package FINALPACKAGE=1 STRIP=0 2>&1 | tee "$RUNNER_TEMP/rootless-build.log"
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          mkdir -p "$RUNNER_TEMP/diag-rootless"
+          dpkg-deb -x "$DEB" "$RUNNER_TEMP/diag-rootless"
+          test -f "$RUNNER_TEMP/diag-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries/PhoneAuraDiagnostics.dylib"
+
+      - name: Build RootHide passive diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/PhoneAuraDiagnostics"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          cp "$P/control" "$RUNNER_TEMP/control.backup"
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages" "$P/.theos"
+          make -C "$P" clean package FINALPACKAGE=1 STRIP=0 2>&1 | tee "$RUNNER_TEMP/roothide-build.log"
+          mv "$RUNNER_TEMP/control.backup" "$P/control"
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          mkdir -p "$RUNNER_TEMP/diag-roothide"
+          dpkg-deb -x "$DEB" "$RUNNER_TEMP/diag-roothide"
+          test -f "$RUNNER_TEMP/diag-roothide/Library/MobileSubstrate/DynamicLibraries/PhoneAuraDiagnostics.dylib"
+
+      - name: Assemble diagnostic recovery packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/phoneaura-051-diagnostic"
+          mkdir -p "$OUT"
+
+          assemble() {
+            kind="$1"; base="$2"; prefix="$3"; diagdir="$4"; output="$5"
+            layout="$RUNNER_TEMP/layout-$kind"
+            rm -rf "$layout"
+            dpkg-deb -R "$base" "$layout"
+
+            dynamic="$layout/$prefix/Library/MobileSubstrate/DynamicLibraries"
+            apps="$layout/$prefix/Applications"
+            mkdir -p "$dynamic" "$apps/PhoneAuraConsole.app"
+
+            rm -f "$dynamic/PhoneAuraNativeFeatures.dylib" "$dynamic/PhoneAuraNativeFeatures.plist"
+
+            cp "$diagdir/PhoneAuraDiagnostics.dylib" "$dynamic/PhoneAuraDiagnostics.dylib"
+            cp "$GITHUB_WORKSPACE/PhoneAuraDiagnostics/PhoneAuraDiagnostics.plist" "$dynamic/PhoneAuraDiagnostics.plist"
+            ldid -S "$dynamic/PhoneAuraDiagnostics.dylib"
+
+            cp "$RUNNER_TEMP/PhoneAuraConsole" "$apps/PhoneAuraConsole.app/PhoneAuraConsole"
+            cp "$GITHUB_WORKSPACE/PhoneAuraDiagnostics/ConsoleInfo.plist" "$apps/PhoneAuraConsole.app/Info.plist"
+            cp "$apps/PhoneAuraStudio.app/icon.png" "$apps/PhoneAuraConsole.app/icon.png"
+            chmod 755 "$apps/PhoneAuraConsole.app/PhoneAuraConsole"
+            ldid -S "$apps/PhoneAuraConsole.app/PhoneAuraConsole"
+
+            python3 "$GITHUB_WORKSPACE/PhoneAuraDiagnostics/prepare_package.py" "$layout" --root-prefix "$prefix"
+            chmod 755 "$layout/DEBIAN/postinst" "$layout/DEBIAN/prerm" || true
+            dpkg-deb -b "$layout" "$OUT/$output"
+          }
+
+          assemble rootless \
+            "$GITHUB_WORKSPACE/debfiles/PhoneAura_0.4.16_Rootless_iOS16.deb" \
+            "var/jb" \
+            "$RUNNER_TEMP/diag-rootless/var/jb/Library/MobileSubstrate/DynamicLibraries" \
+            "PhoneAura_0.5.1_Diagnostic_Rootless_iOS16.deb"
+
+          assemble roothide \
+            "$GITHUB_WORKSPACE/debfiles/PhoneAura_0.4.16_RootHide_iOS16.deb" \
+            "" \
+            "$RUNNER_TEMP/diag-roothide/Library/MobileSubstrate/DynamicLibraries" \
+            "PhoneAura_0.5.1_Diagnostic_RootHide_iOS16.deb"
+
+      - name: Validate final packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/phoneaura-051-diagnostic"
+          validate() {
+            deb="$1"; base="$2"; arch="$3"; prefix="$4"; x="$(mktemp -d)"; b="$(mktemp -d)"
+            test "$(dpkg-deb -f "$deb" Package)" = com.zeshan.phoneaura
+            test "$(dpkg-deb -f "$deb" Version)" = 0.5.1
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            dpkg-deb -x "$deb" "$x"
+            dpkg-deb -x "$base" "$b"
+            dynamic="$x/$prefix/Library/MobileSubstrate/DynamicLibraries"
+            basedynamic="$b/$prefix/Library/MobileSubstrate/DynamicLibraries"
+            apps="$x/$prefix/Applications"
+
+            test -f "$dynamic/PhoneAura.dylib"
+            test -f "$dynamic/PhoneAuraDiagnostics.dylib"
+            test -f "$dynamic/PhoneAuraDiagnostics.plist"
+            test ! -e "$dynamic/PhoneAuraNativeFeatures.dylib"
+            test ! -e "$dynamic/PhoneAuraNativeFeatures.plist"
+            cmp "$dynamic/PhoneAura.dylib" "$basedynamic/PhoneAura.dylib"
+
+            test -f "$apps/PhoneAuraStudio.app/PhoneAuraStudio"
+            test -f "$apps/PhoneAuraConsole.app/PhoneAuraConsole"
+            test -f "$apps/PhoneAuraConsole.app/Info.plist"
+            plutil -lint "$apps/PhoneAuraConsole.app/Info.plist"
+            plutil -p "$apps/PhoneAuraConsole.app/Info.plist" | grep -q 'com.zeshan.phoneaura.console'
+
+            grep -q com.apple.mobilephone "$dynamic/PhoneAuraDiagnostics.plist"
+            strings -a "$dynamic/PhoneAuraDiagnostics.dylib" | grep -q 'FULL DIAGNOSIS START'
+            strings -a "$dynamic/PhoneAuraDiagnostics.dylib" | grep -q 'PhoneAuraNativeFeatures.dylib'
+            strings -a "$apps/PhoneAuraConsole.app/PhoneAuraConsole" | grep -q 'Run Full Diagnosis'
+            strings -a "$apps/PhoneAuraConsole.app/PhoneAuraConsole" | grep -q 'Import Latest MobilePhone Crash'
+
+            root="$x/$prefix/Library/PreferenceBundles/PhoneAuraPrefs.bundle/Root.plist"
+            plutil -lint "$root"
+            plutil -p "$root" | grep -q 'PHONEAURA 0.5.1 DIAGNOSTIC'
+            plutil -p "$root" | grep -q 'DIAGNOSTIC CONSOLE'
+            ! plutil -p "$root" | grep -q 'Contact Book Selector'
+            rm -rf "$x" "$b"
+          }
+
+          validate "$OUT/PhoneAura_0.5.1_Diagnostic_Rootless_iOS16.deb" \
+            "$GITHUB_WORKSPACE/debfiles/PhoneAura_0.4.16_Rootless_iOS16.deb" iphoneos-arm64 var/jb
+          validate "$OUT/PhoneAura_0.5.1_Diagnostic_RootHide_iOS16.deb" \
+            "$GITHUB_WORKSPACE/debfiles/PhoneAura_0.4.16_RootHide_iOS16.deb" iphoneos-arm64e ""
+
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
+          cp "$RUNNER_TEMP/rootless-build.log" "$OUT/"
+          cp "$RUNNER_TEMP/roothide-build.log" "$OUT/"
+          printf '%s\n' \
+            'PhoneAura 0.5.1 Diagnostic Recovery' \
+            'Base PhoneAura.dylib: unchanged from 0.4.16' \
+            'PhoneAuraNativeFeatures 0.5.0 hook: removed from package' \
+            'Passive PhoneAuraDiagnostics dylib: included' \
+            'PhoneAura Console app: included' \
+            > "$OUT/VALIDATION.txt"
+
+      - name: Upload diagnostic packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhoneAura-0.5.1-diagnostic-debs
+          path: ${{ runner.temp }}/phoneaura-051-diagnostic/
+          retention-days: 14
