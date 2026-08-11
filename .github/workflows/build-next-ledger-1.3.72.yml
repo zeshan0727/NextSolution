@@ -1,125 +1,32 @@
-name: Build Next Ledger 1.3.72 ERP Accounting Center
+name: Debug Next Ledger 1.3.72 SMS Scheduling
 permissions:
-  contents: write
+  contents: read
 concurrency:
-  group: next-ledger-1-3-72-${{ github.ref }}
+  group: next-ledger-1-3-72-sms-debug-${{ github.ref }}
   cancel-in-progress: true
 on:
   workflow_dispatch:
   push:
     paths:
       - ".github/workflows/build-next-ledger-1.3.72.yml"
-      - "scripts/apply_next_ledger_1_3_72.sh"
-      - "scripts/materialize_erp_1_3_72.py"
-      - "scripts/materialize_erp_patcher_1_3_72.py"
-      - "scripts/erp_1_3_72_blob/**"
-      - "scripts/erp_1_3_72_patcher_blob/**"
 jobs:
-  build:
+  debug:
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Apply 1.3.72 ERP Accounting Center
+      - name: Apply 1.3.72
         run: bash scripts/apply_next_ledger_1_3_72.sh
-      - name: Validate ERP engine wiring
+      - name: Collect generated SMS sources
         shell: bash
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          checks = {
-              "project.yml": ['MARKETING_VERSION: "1.3.72"', 'CURRENT_PROJECT_VERSION: "80"'],
-              "DailyLedger/Views/SettingsView.swift": ['ERP / Accounting Center', 'ERPAccountingCenterView()', 'LabeledContent("Version", value: "1.3.72")'],
-              "DailyLedger/Models/LedgerTransaction.swift": ['struct ERPTransactionDimension', 'var dimensions: [ERPTransactionDimension]?', 'ERPDepreciationConvention'],
-              "DailyLedger/Services/LedgerStore.swift": ['ERPAccountingEngine.configurationFingerprint()', 'ERPKey.reportPaymentPositiveAsReceivable', 'erpPostingError', 'convertedFinancialSummaryLoanIncreaseAmount'],
-              "DailyLedger/Services/ERPAccountingEngine.swift": ['enum ERPKey', 'static func rate(', 'static func applyPreset(', 'func erpSummaryNetBalance(', 'func erpCustomReportLineValue('],
-              "DailyLedger/Views/AddTransactionView.swift": ['ERPTransactionDimensionsEditor', 'saved = store.add(', 'transaction.dimensions = dimensions'],
-              "DailyLedger/Views/TransferView.swift": ['ERPTransactionDimensionsEditor', 'ERPAccountingEngine.rate(', 'dimensions: dimensions'],
-              "DailyLedger/Views/ReportsView.swift": ['ERPReportDesignerView()', 'ERPTaxReportView()', 'erpSummaryNetBalance', 'movementSecondaryText'],
-              "DailyLedger/Views/ERPReportDesignerView.swift": ['ERPReportLineDefinition', 'Management Summary', 'Net Cash Flow'],
-              "DailyLedger/Views/FixedAccountingRegistersView.swift": ['fixedAssetDefaultResidualPercent', 'value.residualValue = ERPAccountingEngine.round'],
-          }
-          for path, needles in checks.items():
-              text = Path(path).read_text(encoding='utf-8')
-              for needle in needles:
-                  if needle not in text:
-                      raise SystemExit(f'Missing {needle!r} in {path}')
-          engine = Path('DailyLedger/Services/ERPAccountingEngine.swift').read_text(encoding='utf-8')
-          key_count = engine.count('static let ') - engine.count('static let allSimpleKeys')
-          if key_count < 90:
-              raise SystemExit(f'Expected at least 90 ERP configuration constants, got {key_count}')
-          for path in [
-              'DailyLedger/Views/ERPAccountingCenterView.swift',
-              'DailyLedger/Views/ERPCurrencySettingsView.swift',
-              'DailyLedger/Views/ERPDimensionSettingsView.swift',
-              'DailyLedger/Views/ERPTaxSettingsView.swift',
-              'DailyLedger/Views/ERPReportDesignerView.swift',
-          ]:
-              if not Path(path).stat().st_size:
-                  raise SystemExit(f'Empty ERP view: {path}')
-          print(f'ERP validation passed with {key_count} configuration constants.')
-          PY
-      - run: brew install xcodegen
-      - run: xcodegen generate
-      - name: Build unsigned iPhone app
-        shell: bash
-        run: |
-          set -o pipefail
-          mkdir -p build
-          xcodebuild -project DailyLedger.xcodeproj -scheme DailyLedger -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
-      - name: Package TIPA
-        shell: bash
-        run: |
-          set -euo pipefail
-          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
-          test -n "$APP_PATH"
-          rm -rf Payload && mkdir Payload
-          cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.72-erp-accounting-center.tipa
-          shasum -a 256 NextLedger-1.3.72-erp-accounting-center.tipa > NextLedger-1.3.72-erp-accounting-center.sha256
+          mkdir -p generated
+          cp RootHideSMSQueue/Sources/main.m generated/nextledgersmsd-2.2.3.m
+          cp DailyLedger/Views/SMSImportConsoleView.swift generated/SMSImportConsoleView.swift
+          cp DailyLedger/Services/SMSImportConsoleService.swift generated/SMSImportConsoleService.swift
+          grep -R -n "scanInterval\|recovery\|AutomaticScan\|sleep(\|autoRecord\|scanRequest" RootHideSMSQueue/Sources/main.m DailyLedger/Views/SMSImportConsoleView.swift DailyLedger/Services/SMSImportConsoleService.swift > generated/matches.txt || true
       - uses: actions/upload-artifact@v4
         with:
-          name: NextLedger-1.3.72-ERP-Accounting-Center
-          path: |
-            NextLedger-1.3.72-erp-accounting-center.tipa
-            NextLedger-1.3.72-erp-accounting-center.sha256
+          name: NextLedger-1.3.72-SMS-Scheduling-Generated
+          path: generated
           if-no-files-found: error
-      - name: Capture diagnostics
-        if: failure()
-        shell: bash
-        run: |
-          mkdir -p build
-          {
-            echo "--- Build errors ---"
-            test -f build/xcodebuild.log && grep -E "error:|fatal error:|BUILD FAILED|SwiftCompile" build/xcodebuild.log || true
-            echo "--- ERP references ---"
-            grep -R -n "ERPAccounting\|ERPKey\|ERPReport\|ERPTransactionDimension" DailyLedger/Services/ERPAccountingEngine.swift DailyLedger/Services/LedgerStore.swift DailyLedger/Views/ERP*.swift DailyLedger/Views/ReportsView.swift DailyLedger/Views/AddTransactionView.swift DailyLedger/Views/TransferView.swift | head -n 700 || true
-          } > build/next-ledger-1.3.72-diagnostics.txt
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: NextLedger-1.3.72-Diagnostics
-          path: build/next-ledger-1.3.72-diagnostics.txt
-          if-no-files-found: warn
-      - name: Publish status
-        if: always()
-        shell: bash
-        run: |
-          STATUS="${{ job.status }}"
-          git reset --hard HEAD
-          git clean -fd
-          git fetch origin "$GITHUB_REF_NAME"
-          git checkout -B build-status "origin/$GITHUB_REF_NAME"
-          mkdir -p .build-status
-          cat > .build-status/next-ledger-1.3.72.json <<EOF
-          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","run_number":"${GITHUB_RUN_NUMBER}","source_sha":"${GITHUB_SHA}","app_version":"1.3.72","app_build":"80","daemon_version":"2.2.3","artifact_name":"NextLedger-1.3.72-ERP-Accounting-Center"}
-          EOF
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .build-status/next-ledger-1.3.72.json
-          git commit -m "Record Next Ledger 1.3.72 build status" || exit 0
-          git push origin HEAD:${GITHUB_REF_NAME}
-# authoritative post-validation Xcode trigger
