@@ -1,20 +1,16 @@
-name: Build Next Ledger 1.3.68 Fixed Liability Settlements
+name: Build Next Ledger 1.3.70 Financial Summary Currency Drilldowns
 permissions:
   contents: write
 concurrency:
-  group: next-ledger-1-3-68-registered-${{ github.ref }}
+  group: next-ledger-1-3-70-registered-${{ github.ref }}
   cancel-in-progress: true
 on:
   workflow_dispatch:
   push:
     paths:
       - ".github/workflows/build-next-ledger-1.3.62.yml"
-      - "scripts/apply_next_ledger_1_3_68.sh"
-      - "scripts/fix_fixed_liability_settlement_1_3_68.py"
-      - "scripts/relax_fixed_liability_summary_anchor_1_3_68.py"
-      - "scripts/preserve_far_export_in_1_3_68_patch.py"
-      - "scripts/fix_next_ledger_1_3_68_compile.py"
-      - "scripts/fix_next_ledger_1_3_68_ios16_sections.py"
+      - "scripts/apply_next_ledger_1_3_70.sh"
+      - "scripts/fix_financial_summary_currency_drilldown_1_3_70.py"
 jobs:
   build:
     runs-on: macos-15
@@ -23,27 +19,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Apply 1.3.68
-        run: bash scripts/apply_next_ledger_1_3_68.sh
-      - name: Validate liability settlement accounting
+      - name: Apply 1.3.70
+        run: bash scripts/apply_next_ledger_1_3_70.sh
+      - name: Validate currency-specific Financial Summary drilldowns
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'MARKETING_VERSION: "1.3.68"' project.yml
-          grep -Fq 'CURRENT_PROJECT_VERSION: "76"' project.yml
-          grep -Fq 'struct FixedLiabilityLedgerSnapshot' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'nature == .loan || nature == .fixedLiability' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'func fixedLiabilitySnapshot' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'func fixedLiabilityRepaymentTransactions' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'transaction.destinationAccountID == liabilityID' DailyLedger/Services/LedgerStore.swift
-          grep -Fq 'repayments += effectiveDestinationAmount(transaction)' DailyLedger/Services/LedgerStore.swift
-          grep -Fq '"Repaid / Settled"' DailyLedger/Views/FixedAccountingRegistersView.swift
-          grep -Fq '"Outstanding Liability"' DailyLedger/Views/FixedAccountingRegistersView.swift
-          grep -Fq 'Section("Recent Repayments")' DailyLedger/Views/FixedAccountingRegistersView.swift
-          grep -Fq 'Text("Ledger Settlement")' DailyLedger/Views/FixedAccountingRegistersView.swift
-          grep -Fq 'A linked liability moves here automatically' DailyLedger/Views/FixedAccountingRegistersView.swift
-          grep -Fq 'private struct FixedAssetRegisterExportView: View' DailyLedger/Views/FixedAccountingRegistersView.swift
-          grep -Fq 'LabeledContent("Version", value: "1.3.68")' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'MARKETING_VERSION: "1.3.70"' project.yml
+          grep -Fq 'CURRENT_PROJECT_VERSION: "78"' project.yml
+          grep -Fq 'currencyCode: movement.currencyCode' DailyLedger/Views/ReportsView.swift
+          grep -Fq 'let currencyCode: String? = nil' DailyLedger/Views/PeriodTransactionsView.swift
+          grep -Fq '(kind == .loanIncreased || kind == .loans)' DailyLedger/Views/PeriodTransactionsView.swift
+          grep -Fq 'store.account(withID: transaction.accountID)?.currencyCode != currencyCode' DailyLedger/Views/PeriodTransactionsView.swift
+          grep -Fq 'currencyCode ?? store.currencyCode' DailyLedger/Views/PeriodTransactionsView.swift
+          grep -Fq 'store.financialSummaryLoanPaidAmount($1)' DailyLedger/Views/PeriodTransactionsView.swift
+          grep -Fq 'LabeledContent("Version", value: "1.3.70")' DailyLedger/Views/SettingsView.swift
       - run: brew install xcodegen
       - run: xcodegen generate
       - name: Build unsigned iPhone app
@@ -58,31 +48,15 @@ jobs:
           test -n "$APP_PATH"
           rm -rf Payload && mkdir Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.68-fixed-liability-settlements.tipa
-          shasum -a 256 NextLedger-1.3.68-fixed-liability-settlements.tipa > NextLedger-1.3.68-fixed-liability-settlements.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.70-financial-summary-currency-filter.tipa
+          shasum -a 256 NextLedger-1.3.70-financial-summary-currency-filter.tipa > NextLedger-1.3.70-financial-summary-currency-filter.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: NextLedger-1.3.68-Fixed-Liability-Settlements
+          name: NextLedger-1.3.70-Financial-Summary-Currency-Filter
           path: |
-            NextLedger-1.3.68-fixed-liability-settlements.tipa
-            NextLedger-1.3.68-fixed-liability-settlements.sha256
+            NextLedger-1.3.70-financial-summary-currency-filter.tipa
+            NextLedger-1.3.70-financial-summary-currency-filter.sha256
           if-no-files-found: error
-      - name: Capture diagnostics
-        if: failure()
-        shell: bash
-        run: |
-          mkdir -p build
-          {
-            test -f build/xcodebuild.log && grep -E "error:|fatal error:|SwiftCompile|BUILD FAILED" build/xcodebuild.log || true
-            echo "--- FixedAccountingRegistersView.swift liability area ---"
-            nl -ba DailyLedger/Views/FixedAccountingRegistersView.swift | sed -n '770,1180p' || true
-          } | tee build/next-ledger-1.3.68-errors.txt
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: NextLedger-1.3.68-Diagnostics
-          path: build/next-ledger-1.3.68-errors.txt
-          if-no-files-found: warn
       - name: Publish status
         if: always()
         shell: bash
@@ -93,12 +67,11 @@ jobs:
           git fetch origin "$GITHUB_REF_NAME"
           git checkout -B build-status "origin/$GITHUB_REF_NAME"
           mkdir -p .build-status
-          cat > .build-status/next-ledger-1.3.68.json <<EOF
-          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","source_sha":"${GITHUB_SHA}","app_version":"1.3.68","app_build":"76","daemon_version":"2.2.3","artifact_name":"NextLedger-1.3.68-Fixed-Liability-Settlements"}
+          cat > .build-status/next-ledger-1.3.70.json <<EOF
+          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","source_sha":"${GITHUB_SHA}","app_version":"1.3.70","app_build":"78","daemon_version":"2.2.3","artifact_name":"NextLedger-1.3.70-Financial-Summary-Currency-Filter"}
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .build-status/next-ledger-1.3.68.json
-          git commit -m "Record Next Ledger 1.3.68 build status" || exit 0
+          git add .build-status/next-ledger-1.3.70.json
+          git commit -m "Record Next Ledger 1.3.70 build status" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}
-# iOS16-compatible liability-settlement workflow trigger
