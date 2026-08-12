@@ -1,0 +1,86 @@
+name: Diagnose Internet Lost Haptic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/diagnose-internet-lost-haptic.yml']
+permissions:
+  contents: write
+concurrency:
+  group: diagnose-internet-lost-haptic-1.0.0
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: brew install dpkg ldid
+      - name: Deterministic and source checks
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-12-InternetLostHaptic"
+          python3 "$P/tests/test_runtime.py" | tee "$RUNNER_TEMP/runtime.txt"
+          grep -q 'previousStatus == nw_path_status_satisfied' "$P/Tweak.xm"
+          grep -q 'currentStatus == nw_path_status_unsatisfied' "$P/Tweak.xm"
+          grep -q 'ILHPreviousStatus = currentStatus' "$P/Tweak.xm"
+          grep -q 'nw_path_monitor_create' "$P/Tweak.xm"
+          grep -q 'com.apple.springboard' "$P/InternetLostHaptic.plist"
+          grep -q 'CFPreferencesCopyAppValue' "$P/Tweak.xm"
+          grep -q 'CFNotificationCenterGetDarwinNotifyCenter' "$P/Preferences/ILHRootListController.m"
+          grep -q -- '-segalign,4000' "$P/Makefile"
+          plutil -lint "$P/Preferences/Resources/Root.plist"
+          plutil -lint "$P/Preferences/Resources/Info.plist"
+          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/InternetLostHaptic.plist"
+      - name: Build rootless
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-12-InternetLostHaptic"; mkdir -p "$RUNNER_TEMP/out"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos"
+          export THEOS="$RUNNER_TEMP/theos" THEOS_PACKAGE_SCHEME=rootless
+          make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$RUNNER_TEMP/out/InternetLostHaptic_1.0.0_Rootless.deb"
+      - name: Build RootHide
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-12-InternetLostHaptic"
+          git init "$RUNNER_TEMP/theos-rh"
+          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$D"
+          cp "$D" "$RUNNER_TEMP/out/InternetLostHaptic_1.0.0_RootHide.deb"
+      - name: Inspect both packages and record output
+        run: |
+          set -euo pipefail
+          : > internet-lost-haptic-build.txt
+          cat "$RUNNER_TEMP/runtime.txt" >> internet-lost-haptic-build.txt
+          for d in "$RUNNER_TEMP/out"/*.deb; do
+            test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.internetlosthaptic
+            test "$(dpkg-deb -f "$d" Version)" = 1.0.0
+            dpkg-deb -f "$d" Architecture | tee -a internet-lost-haptic-build.txt
+            dpkg-deb -f "$d" Depends | grep -q preferenceloader
+            x="$(mktemp -d)"; dpkg-deb -x "$d" "$x"
+            dylib="$(find "$x" -name InternetLostHaptic.dylib -print -quit)"; test -n "$dylib"
+            find "$x" -path '*InternetLostHapticPreferences.bundle/Root.plist' | grep -q .
+            find "$x" -path '*PreferenceLoader/Preferences/InternetLostHaptic.plist' | grep -q .
+            strings -a "$dylib" | grep -q nw_path_monitor_create
+            strings -a "$dylib" | grep -q com.nextsolution.internetlosthaptic
+            shasum -a 256 "$d" | tee -a internet-lost-haptic-build.txt
+          done
+          echo 'DIAGNOSTIC BUILD PASS' | tee -a internet-lost-haptic-build.txt
+      - name: Persist diagnostic record
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git pull --rebase origin main
+          git add internet-lost-haptic-build.txt
+          git commit -m 'Record Internet Lost Haptic diagnostic build PASS'
+          git push origin main
