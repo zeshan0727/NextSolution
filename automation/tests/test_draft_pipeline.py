@@ -114,6 +114,36 @@ class DraftPipelineTests(unittest.TestCase):
             with patch.object(sys, "argv", argv), redirect_stdout(io.StringIO()):
                 self.assertEqual(main(), 3)
 
+    def test_cli_uses_evergreen_once_when_release_queue_is_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "state.json"
+            output = root / "draft"
+            state = deepcopy(self.state)
+            state["evergreen"] = state.pop("pending")
+            state["pending"] = {}
+            state_path.write_text(json.dumps(state))
+            argv = [
+                "draft_pipeline",
+                "--state",
+                str(state_path),
+                "--fixture-article",
+                str(FIXTURES / "article-draft.json"),
+                "--output",
+                str(output),
+                "--write-state",
+            ]
+            with patch.object(sys, "argv", argv), redirect_stdout(io.StringIO()):
+                self.assertEqual(main(), 0)
+            manifest = json.loads((output / "manifest.json").read_text())
+            saved = json.loads(state_path.read_text())
+            self.assertEqual(manifest["candidate"]["selection_pool"], "evergreen")
+            self.assertTrue(
+                all(item.get("drafted_at") for item in saved["evergreen"].values())
+            )
+            with patch.object(sys, "argv", argv), redirect_stdout(io.StringIO()):
+                self.assertEqual(main(), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "packages": {},
+  "evergreen": {},
   "sources": {},
   "pending": {
     "com.example.focuscards|1.2.0|iphoneos-arm64": {

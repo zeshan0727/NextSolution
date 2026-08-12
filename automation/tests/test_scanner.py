@@ -11,6 +11,7 @@ from automation.scanner import (
     normalize_package,
     scan_source,
     suppress_first_seen_sources,
+    update_evergreen_catalog,
     update_pending_queue,
 )
 
@@ -205,6 +206,78 @@ class ScannerPolicyTests(unittest.TestCase):
         refreshed = pending[old["release_identity"]]
         self.assertEqual(refreshed["drafted_at"], old["drafted_at"])
         self.assertEqual(refreshed["candidate_fingerprint"], "abc123")
+
+    def test_verified_release_enters_evergreen_catalog(self) -> None:
+        record = package()
+        catalog = update_evergreen_catalog(
+            {}, [record], {"example"}, "2026-08-12T00:00:00+00:00"
+        )
+        saved = catalog[record["release_identity"]]
+        self.assertTrue(saved["publish_eligible"])
+        self.assertEqual(saved["change_type"], "evergreen")
+        self.assertEqual(saved["cataloged_at"], "2026-08-12T00:00:00+00:00")
+
+    def test_unverified_or_blocked_release_is_not_evergreen(self) -> None:
+        observed = package()
+        observed["source_tier"] = "observe"
+        blocked = package(version="2.0")
+        blocked["blockers"] = ["checksum_conflict"]
+        catalog = update_evergreen_catalog(
+            {}, [observed, blocked], {"example"}, "2026-08-12T00:00:00+00:00"
+        )
+        self.assertEqual(catalog, {})
+
+    def test_evergreen_marker_survives_refresh(self) -> None:
+        record = package()
+        saved = dict(record)
+        saved.update(
+            {
+                "publish_eligible": True,
+                "drafted_at": "2026-08-11T01:00:00+00:00",
+                "draft_target": "example-cards-tweak.html",
+                "candidate_fingerprint": "abc123",
+                "cataloged_at": "2026-08-11T00:00:00+00:00",
+            }
+        )
+        catalog = update_evergreen_catalog(
+            {record["release_identity"]: saved},
+            [record],
+            {"example"},
+            "2026-08-12T00:00:00+00:00",
+        )
+        refreshed = catalog[record["release_identity"]]
+        self.assertEqual(refreshed["drafted_at"], saved["drafted_at"])
+        self.assertEqual(refreshed["cataloged_at"], saved["cataloged_at"])
+
+    def test_evergreen_survives_outage_but_not_successful_blocked_refresh(self) -> None:
+        record = package()
+        saved = dict(record, publish_eligible=True)
+        existing = {record["release_identity"]: saved}
+        during_outage = update_evergreen_catalog(
+            existing, [], set(), "2026-08-12T00:00:00+00:00"
+        )
+        self.assertIn(record["release_identity"], during_outage)
+        blocked = package(version="2.0")
+        blocked["blockers"] = ["checksum_conflict"]
+        after_refresh = update_evergreen_catalog(
+            existing, [blocked], {"example"}, "2026-08-12T00:00:00+00:00"
+        )
+        self.assertEqual(after_refresh, {})
+
+    def test_current_identity_supersedes_outage_copy_from_another_source(self) -> None:
+        old = package(version="1.0")
+        existing = {old["release_identity"]: dict(old, publish_eligible=True)}
+        current = package(version="2.0")
+        current["source_id"] = "replacement"
+        current["source_name"] = "Replacement Repo"
+        catalog = update_evergreen_catalog(
+            existing,
+            [current],
+            {"replacement"},
+            "2026-08-12T00:00:00+00:00",
+        )
+        self.assertNotIn(old["release_identity"], catalog)
+        self.assertIn(current["release_identity"], catalog)
 
 
 if __name__ == "__main__":

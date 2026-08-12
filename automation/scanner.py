@@ -282,7 +282,13 @@ def load_registry(path: Path) -> dict[str, Any]:
 
 def load_state(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"schema_version": 1, "packages": {}, "pending": {}, "sources": {}}
+        return {
+            "schema_version": 1,
+            "packages": {},
+            "pending": {},
+            "evergreen": {},
+            "sources": {},
+        }
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1 or not isinstance(data.get("packages"), dict):
         raise ValueError("state file must use schema_version 1 and contain packages{}")
@@ -290,8 +296,11 @@ def load_state(path: Path) -> dict[str, Any]:
         raise ValueError("state file sources must be an object")
     if not isinstance(data.get("pending", {}), dict):
         raise ValueError("state file pending must be an object")
+    if not isinstance(data.get("evergreen", {}), dict):
+        raise ValueError("state file evergreen must be an object")
     data.setdefault("sources", {})
     data.setdefault("pending", {})
+    data.setdefault("evergreen", {})
     return data
 
 
@@ -446,6 +455,64 @@ def update_pending_queue(
     return dict(sorted(pending.items()))
 
 
+def update_evergreen_catalog(
+    existing: dict[str, Any],
+    latest: list[dict[str, Any]],
+    successful_source_ids: set[str],
+    generated_at: str,
+) -> dict[str, dict[str, Any]]:
+    """Persist safe current metadata for non-repeating evergreen drafts.
+
+    Entries from unavailable sources survive until that source recovers. A
+    successful source refresh replaces its previous catalog entries, which
+    means removed, superseded, or newly blocked releases cannot remain eligible.
+    """
+
+    current_identities = {
+        str(record.get("identity", "")) for record in latest if record.get("identity")
+    }
+    catalog = {
+        key: dict(value)
+        for key, value in existing.items()
+        if isinstance(key, str)
+        and isinstance(value, dict)
+        and str(value.get("source_id", "")) not in successful_source_ids
+        and str(value.get("identity", "")) not in current_identities
+    }
+    required = (
+        "identity",
+        "release_identity",
+        "package",
+        "name",
+        "version",
+        "architecture",
+        "description",
+        "author",
+        "sha256",
+        "source_id",
+        "source_name",
+        "source_url",
+    )
+    for record in latest:
+        if record.get("source_tier") != "verified" or record.get("blockers"):
+            continue
+        if any(not str(record.get(field, "")).strip() for field in required):
+            continue
+        release_identity = str(record["release_identity"])
+        refreshed = dict(record)
+        refreshed["change_type"] = "evergreen"
+        refreshed["previous_version"] = None
+        refreshed["publish_eligible"] = True
+        old = existing.get(release_identity, {})
+        refreshed["cataloged_at"] = old.get("cataloged_at", generated_at)
+        refreshed["detected_at"] = old.get("detected_at", generated_at)
+        for key in ("drafted_at", "draft_target", "candidate_fingerprint"):
+            if old.get(key):
+                refreshed[key] = old[key]
+        catalog[release_identity] = refreshed
+    return dict(sorted(catalog.items()))
+
+
 def _markdown(report: dict[str, Any]) -> str:
     stats = report["stats"]
     lines = [
@@ -465,6 +532,7 @@ def _markdown(report: dict[str, Any]) -> str:
         f"- Checksum conflicts: **{stats['checksum_conflicts']}**",
         f"- Historical changes baselined: **{stats['baseline_suppressed']}**",
         f"- Eligible releases waiting in queue: **{stats['pending_eligible']}**",
+        f"- Verified evergreen releases available: **{stats['evergreen_eligible']}**",
         "",
         "The scanner never changes website files, package binaries, or links. Scanner state is written only when explicitly enabled.",
         "",
@@ -543,6 +611,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     next_pending = update_pending_queue(
         state.get("pending", {}), latest, changes, generated_at
     )
+    next_evergreen = update_evergreen_catalog(
+        state.get("evergreen", {}), latest, successful_source_ids, generated_at
+    )
     next_source_state = {
         source_id: dict(value) for source_id, value in state.get("sources", {}).items()
     }
@@ -582,6 +653,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "pending_eligible": sum(
                 bool(item.get("publish_eligible")) for item in next_pending.values()
             ),
+            "evergreen_total": len(next_evergreen),
+            "evergreen_eligible": sum(
+                bool(item.get("publish_eligible")) and not item.get("drafted_at")
+                for item in next_evergreen.values()
+            ),
         },
         "sources": [
             {
@@ -611,6 +687,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "updated_at": generated_at,
             "packages": next_state,
             "pending": next_pending,
+            "evergreen": next_evergreen,
             "sources": next_source_state,
         }
         args.state.parent.mkdir(parents=True, exist_ok=True)

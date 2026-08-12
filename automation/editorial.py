@@ -30,7 +30,7 @@ INFRASTRUCTURE_PREFIXES = (
 
 
 class NoCandidateError(RuntimeError):
-    """Raised when no pending release passes the editorial gates."""
+    """Raised when no release in either editorial pool passes the gates."""
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -107,7 +107,11 @@ def build_candidates(
     pending: Iterable[dict[str, Any]],
     categories: dict[str, Any],
     site: dict[str, Any],
+    *,
+    selection_pool: str = "pending",
 ) -> list[dict[str, Any]]:
+    if selection_pool not in {"pending", "evergreen"}:
+        raise ValueError(f"unsupported editorial pool: {selection_pool}")
     excluded_sources = {str(value) for value in site.get("excluded_source_ids", [])}
     groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for item in pending:
@@ -146,7 +150,14 @@ def build_candidates(
             key=lambda item: (item["architecture"], item["release_identity"]),
         )
         primary["category"] = classify_category(primary, categories)
-        base_slug = slugify(str(primary["name"]))
+        primary["selection_pool"] = selection_pool
+        try:
+            base_slug = slugify(str(primary["name"]))
+        except ValueError:
+            # A package whose display name contains no ASCII letters or digits
+            # cannot produce a stable website path without transliteration.
+            # Skip that one catalog entry rather than stopping the entire run.
+            continue
         if not base_slug.endswith("tweak"):
             base_slug += "-tweak"
         primary["slug"] = base_slug
@@ -169,10 +180,20 @@ def select_candidate(
     pending = state.get("pending", {})
     if not isinstance(pending, dict):
         raise ValueError("scanner state pending must be an object")
-    candidates = build_candidates(pending.values(), categories, site)
-    if not candidates:
-        raise NoCandidateError("no eligible editorial candidate is waiting")
-    return candidates[0]
+    candidates = build_candidates(
+        pending.values(), categories, site, selection_pool="pending"
+    )
+    if candidates:
+        return candidates[0]
+    evergreen = state.get("evergreen", {})
+    if not isinstance(evergreen, dict):
+        raise ValueError("scanner state evergreen must be an object")
+    candidates = build_candidates(
+        evergreen.values(), categories, site, selection_pool="evergreen"
+    )
+    if candidates:
+        return candidates[0]
+    raise NoCandidateError("no eligible undrafted release or evergreen tweak is waiting")
 
 
 def mark_candidate_drafted(
@@ -183,16 +204,26 @@ def mark_candidate_drafted(
     draft_target: str,
     candidate_fingerprint: str,
 ) -> None:
-    pending = state.get("pending")
-    if not isinstance(pending, dict):
-        raise ValueError("scanner state pending must be an object")
     release_identities = candidate.get("release_identities", [])
     if not release_identities:
         raise ValueError("candidate does not contain release identities")
-    for release_identity in release_identities:
-        queued = pending.get(release_identity)
-        if not isinstance(queued, dict):
-            raise ValueError(f"pending release disappeared: {release_identity}")
-        queued["drafted_at"] = drafted_at
-        queued["draft_target"] = draft_target
-        queued["candidate_fingerprint"] = candidate_fingerprint
+    package = str(candidate.get("package", ""))
+    version = str(candidate.get("version", ""))
+    marked = 0
+    for pool_name in ("pending", "evergreen"):
+        pool = state.get(pool_name, {})
+        if not isinstance(pool, dict):
+            raise ValueError(f"scanner state {pool_name} must be an object")
+        for queued in pool.values():
+            if not isinstance(queued, dict):
+                continue
+            if str(queued.get("package", "")) != package or str(
+                queued.get("version", "")
+            ) != version:
+                continue
+            queued["drafted_at"] = drafted_at
+            queued["draft_target"] = draft_target
+            queued["candidate_fingerprint"] = candidate_fingerprint
+            marked += 1
+    if marked == 0:
+        raise ValueError("selected release disappeared from editorial state")
