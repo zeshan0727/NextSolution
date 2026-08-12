@@ -62,16 +62,27 @@ jobs:
           : > internet-lost-haptic-build.txt
           cat "$RUNNER_TEMP/runtime.txt" >> internet-lost-haptic-build.txt
           for d in "$RUNNER_TEMP/out"/*.deb; do
+            echo "=== $(basename "$d") ===" | tee -a internet-lost-haptic-build.txt
+            dpkg-deb -f "$d" | tee -a internet-lost-haptic-build.txt
             test "$(dpkg-deb -f "$d" Package)" = com.nextsolution.internetlosthaptic
             test "$(dpkg-deb -f "$d" Version)" = 1.0.0
-            dpkg-deb -f "$d" Architecture | tee -a internet-lost-haptic-build.txt
-            dpkg-deb -f "$d" Depends | grep -q preferenceloader
+            arch="$(dpkg-deb -f "$d" Architecture)"
+            case "$(basename "$d")" in
+              *RootHide.deb) test "$arch" = iphoneos-arm64e ;;
+              *Rootless.deb) test "$arch" = iphoneos-arm64 ;;
+              *) exit 1 ;;
+            esac
+            depends="$(dpkg-deb -f "$d" Depends)"; echo "Depends-check: $depends" | tee -a internet-lost-haptic-build.txt
+            echo "$depends" | grep -q 'firmware (>= 15.0)'
+            echo "$depends" | grep -q 'mobilesubstrate'
+            echo "$depends" | grep -q 'preferenceloader'
             x="$(mktemp -d)"; dpkg-deb -x "$d" "$x"
+            find "$x" -type f | sed "s#$x##" | sort | tee -a internet-lost-haptic-build.txt
             dylib="$(find "$x" -name InternetLostHaptic.dylib -print -quit)"; test -n "$dylib"
-            find "$x" -path '*InternetLostHapticPreferences.bundle/Root.plist' | grep -q .
-            find "$x" -path '*PreferenceLoader/Preferences/InternetLostHaptic.plist' | grep -q .
-            strings -a "$dylib" | grep -q nw_path_monitor_create
-            strings -a "$dylib" | grep -q com.nextsolution.internetlosthaptic
+            test -n "$(find "$x" -path '*InternetLostHapticPreferences.bundle/Root.plist' -print -quit)"
+            test -n "$(find "$x" -path '*PreferenceLoader/Preferences/InternetLostHaptic.plist' -print -quit)"
+            nm -u "$dylib" 2>/dev/null | grep -q 'nw_path_monitor_create'
+            strings -a "$dylib" | grep -q 'com.nextsolution.internetlosthaptic'
             shasum -a 256 "$d" | tee -a internet-lost-haptic-build.txt
           done
           echo 'DIAGNOSTIC BUILD PASS' | tee -a internet-lost-haptic-build.txt
