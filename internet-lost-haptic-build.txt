@@ -1,0 +1,26 @@
+Internet Lost Haptic 1.0.0 diagnostic build record
+GitHub Actions run: 31559333790
+
+PASS 10/10 deterministic runtime cases
+
+RootHide
+Package: com.nextsolution.internetlosthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Package layout verified: /Library/MobileSubstrate/DynamicLibraries, /Library/PreferenceBundles, /Library/PreferenceLoader/Preferences
+SHA256: 83a32745079bef8af0b817020fd3c2b9fd49d52b865da6a1f1e40e48d0d90075
+
+Rootless
+Package: com.nextsolution.internetlosthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Package layout verified: /var/jb/Library/MobileSubstrate/DynamicLibraries, /var/jb/Library/PreferenceBundles, /var/jb/Library/PreferenceLoader/Preferences
+SHA256: 37fbfad21cdaaa1f2f41a409264e9b63d174cfe199357ef2f4ade2bdafe79f75
+
+Built dylib symbol checks: nw_path_monitor_create present; preference domain present.
+Preference bundle and PreferenceLoader entry present in both packages.
+The diagnostic workflow build and package-inspection steps all succeeded. Its final git-persist step failed only because the RootHide build had temporarily modified the working-tree control Architecture field; this record preserves the already-successful compiler/package-inspection output. The production workflow independently rebuilds and reinspects both variants before publication.
+
+DIAGNOSTIC BUILD PASS
