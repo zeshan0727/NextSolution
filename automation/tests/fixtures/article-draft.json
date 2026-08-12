@@ -1,0 +1,80 @@
+{
+  "title": "Focus Cards 1.2.0: Home Screen Cards and Layout Controls",
+  "meta_description": "Focus Cards 1.2.0 adds configurable Home Screen cards, spacing and color controls. Check its official source for current compatibility details.",
+  "summary": "Focus Cards is described by its package metadata as a Home Screen customization tweak built around configurable cards, spacing controls and color options. Version 1.2.0 is listed for both iphoneos-arm64 and iphoneos-arm64e architectures. Those architecture labels identify the available package variants, but they do not by themselves confirm support for every device or jailbreak setup. Readers should compare their environment with the official source information before installing either variant.",
+  "what_it_does": [
+    "Adds configurable cards to the Home Screen according to the package description.",
+    "Includes controls related to card spacing.",
+    "Includes color options for the card presentation.",
+    "Uses PreferenceLoader as one of the listed dependencies, indicating that configuration is expected through a settings interface.",
+    "Provides separate package variants for iphoneos-arm64 and iphoneos-arm64e environments."
+  ],
+  "compatibility_note": "The supplied metadata lists iphoneos-arm64 and iphoneos-arm64e variants and includes a tag indicating a minimum of iOS 16.0. This information does not confirm every device, later system release, bootstrap or jailbreak combination. Check the architecture used by your package manager, read the developer's current notes, and do not treat the presence of a package variant as a guarantee that it matches your particular setup.",
+  "installation_steps": [
+    "Open your package manager and confirm that the official Example Developer Repo is already configured and refreshing without errors.",
+    "Open the Focus Cards package page and verify that it shows version 1.2.0 from the expected developer and source.",
+    "Compare the offered architecture with your jailbreak environment; select only the iphoneos-arm64 or iphoneos-arm64e variant that your setup requires.",
+    "Read the package description, dependencies, price information and any compatibility notes shown on the official source before confirming installation.",
+    "Allow the package manager to resolve its listed dependencies, including PreferenceLoader, without adding replacement packages from an unrelated source.",
+    "After installation, follow only the respring or restart instruction presented by the package manager, then locate the tweak's settings before changing several options at once."
+  ],
+  "safety_notes": [
+    "Create a current backup and keep access to your package manager before changing Home Screen components.",
+    "Do not install both architecture variants, and do not obtain a repackaged binary from an unofficial download page.",
+    "If the developer page does not explicitly cover your exact setup, treat compatibility as unconfirmed rather than assuming support.",
+    "Change one setting at a time so that an unwanted layout result can be traced and reversed more easily."
+  ],
+  "faq": [
+    {
+      "question": "What does Focus Cards 1.2.0 change?",
+      "answer": "Its supplied package description says that it adds configurable cards to the Home Screen and includes spacing and color controls. The metadata does not provide a complete catalogue of every setting, so the official package page remains the place to confirm the current option list."
+    },
+    {
+      "question": "Which package architecture should be installed?",
+      "answer": "The feed lists iphoneos-arm64 and iphoneos-arm64e variants. Use only the variant required by your jailbreak environment and package manager. If you cannot identify that environment confidently, verify it before installing rather than selecting a package by trial and error."
+    },
+    {
+      "question": "Is support for every iOS 16 device confirmed?",
+      "answer": "No. A supplied tag indicates a minimum of iOS 16.0, but the metadata does not confirm every device, system point release, bootstrap or jailbreak combination. Consult the developer's current compatibility notes for your exact setup."
+    },
+    {
+      "question": "Where should the package be obtained?",
+      "answer": "Use the official developer repository shown on the page. Avoid mirrors and repackaged files because their contents and update path cannot be established from the supplied package metadata."
+    }
+  ],
+  "youtube_title": "Focus Cards 1.2.0 Explained: Home Screen Cards and Compatibility",
+  "youtube_hook": "Focus Cards 1.2.0 is listed as a Home Screen customization tweak with card, spacing and color controls, but the two available architecture labels make one check essential before installation. This video separates confirmed package facts from details that still need verification on the official source.",
+  "youtube_chapters": [
+    {
+      "heading": "What this release actually confirms",
+      "narration": "Start with the information that can be confirmed directly from the package record. The tweak is named Focus Cards, the listed release is version 1.2.0, and the description says it adds configurable cards to the Home Screen. It also mentions spacing controls and color options. That is the reliable feature boundary for this video. A short package description does not establish the exact number of card styles, the location of every control, or how the finished layout looks on every screen size. When recording this section, keep the package page visible and point to the name, version, developer and description. Avoid filling gaps with assumptions. The useful question is not whether the description sounds promising; it is whether those documented controls match what the viewer wants to change. Explain that the rest of the video will distinguish metadata facts, architecture choices and items that must still be checked on the developer page. That approach gives viewers enough information to decide whether further investigation is worthwhile without presenting an unverified demonstration as fact.",
+      "visual_instruction": "Record the official package page and slowly highlight the package name, version, description and developer. Blur account information and do not display an unofficial download page."
+    },
+    {
+      "heading": "Understanding the two architecture variants",
+      "narration": "The feed contains an iphoneos-arm64 variant and an iphoneos-arm64e variant for the same version. These labels matter because they represent different jailbreak package environments. They are not two visual editions and they should not be installed together. Show the architecture field from each official package entry, then show where the active package manager identifies the current environment, if that information is available on the recording device. Do not name a particular jailbreak unless the official source or the actual device screen confirms it. A viewer who is uncertain should pause here and verify the environment before proceeding. Installing by guessing can create dependency problems or leave a package unable to load. The safest instruction is simple: use the architecture expected by the existing bootstrap and package manager. Also explain that the existence of a build does not guarantee every device or operating-system point release is supported. Architecture is one compatibility fact, not the complete compatibility answer. This distinction is especially important in a tutorial because a clear warning can prevent viewers from copying an installation path that belongs to a different setup.",
+      "visual_instruction": "Capture both official architecture labels and the recording device's package-manager environment screen. Add an on-screen note saying that viewers must verify their own architecture."
+    },
+    {
+      "heading": "What the compatibility metadata does and does not say",
+      "narration": "The supplied tag indicates a minimum of iOS 16.0. Present that as a metadata statement, not as a universal promise. It tells us that the package record was tagged with that minimum, but it does not list every supported device, system update, bootstrap or configuration. The recording should zoom in on the tag or compatibility field when it is visible on the official page. Then open the developer's current notes and look for more specific information. If those notes do not mention the exact test device, say clearly that the combination remains unconfirmed. This is also the place to explain dependencies. The package lists MobileSubstrate and PreferenceLoader. Those names show that the package expects a tweak-injection environment and a settings-loading component, but they do not prove that any random version of those dependencies is suitable. Let the package manager resolve dependencies from configured trusted sources. Do not tell viewers to replace packages manually merely to force installation. A careful compatibility section may feel slower than a one-click instruction, but it protects the audience from interpreting a short feed entry as a complete support matrix.",
+      "visual_instruction": "Show the compatibility tag, architecture field and dependency list from the official package metadata. If developer notes are available, scroll them without implying anything not written there."
+    },
+    {
+      "heading": "A careful installation walkthrough",
+      "narration": "For the installation sequence, begin in the package manager with the official Example Developer Repo already added. Refresh sources and confirm there are no repository errors. Search for Focus Cards, open the result, and verify the developer, source and version before pressing any installation control. Next, compare the architecture shown by the package with the active environment. Read the description, current compatibility note and any price information displayed by the official source. The metadata supplied to this draft does not state a price, so the video must not label the package as free or paid unless the live official page establishes that fact. Review the dependency changes proposed by the package manager. If the transaction wants to remove unexpected core components or pull substitutes from an unfamiliar repository, stop instead of forcing it. When the transaction looks consistent with the official package, the person recording can decide whether to proceed on a suitable test device. Afterward, follow the package manager's own respring or restart prompt. This narration provides a useful process while avoiding a claim that installation has succeeded on setups that were never demonstrated.",
+      "visual_instruction": "Use authentic screen recording from a suitable jailbroken device. Show source refresh, package verification and the transaction preview. Cut the recording before confirmation if installation has not been personally verified."
+    },
+    {
+      "heading": "Reviewing settings without inventing features",
+      "narration": "The metadata lists PreferenceLoader, so a settings interface is expected, but the supplied facts do not enumerate every switch or slider. If an authentic installation is available, open the settings page and describe only the controls that are actually visible in the recording. Begin with the card configuration areas, then spacing and color options if those controls appear. Keep the original screen state documented so each adjustment can be reversed. Change one option, return to the Home Screen, and record the result before adjusting another. This makes the footage more informative and helps viewers understand which control caused which visual change. If no authentic installation is available, replace this section with a package-page explanation and say that the exact interface still needs verification; do not generate mock settings screens and present them as real. The purpose of this chapter is to turn a short metadata description into a responsible review method. A viewer should leave knowing what is confirmed, what an authentic screen recording demonstrates, and what remains outside the available evidence. That honesty also makes the video more durable when a later release changes the settings layout.",
+      "visual_instruction": "Only show real settings and Home Screen footage from the recorded device. Label any concept graphic as a concept and do not substitute it for an authentic demonstration."
+    },
+    {
+      "heading": "Decision checklist and final cautions",
+      "narration": "Finish with a compact decision checklist. First, confirm that Focus Cards version 1.2.0 is still the current release on the official source. Second, verify whether the device needs iphoneos-arm64 or iphoneos-arm64e and install only that variant. Third, compare the developer's current compatibility notes with the exact device, operating-system version and jailbreak environment. Fourth, review the MobileSubstrate and PreferenceLoader dependencies through the package manager rather than downloading replacements from an unrelated site. Fifth, make a current backup and retain access to the package manager before changing a Home Screen component. Finally, remember the limits of this report: the supplied metadata confirms the package identity, version, architectures, brief feature description, author, dependencies and compatibility tag. It does not independently establish stability, battery impact, performance, price or support for every setup. Invite viewers to use the official source link in the description and to share only clearly identified device information when asking for help. End by explaining that a later video can cover a real on-device demonstration once authentic footage and a matching supported environment are available, rather than turning missing evidence into confident claims.",
+      "visual_instruction": "Display a six-point checklist over authentic package and device footage, then end on the official source page and the Next Solution channel branding."
+    }
+  ],
+  "youtube_description": "Focus Cards 1.2.0 is documented as a Home Screen tweak with configurable cards, spacing controls and color options. This draft explains the package metadata, the iphoneos-arm64 and iphoneos-arm64e variants, the listed dependencies and the compatibility details that still require confirmation. Use the official source shown below the final video, verify your exact jailbreak environment, and avoid unofficial package mirrors."
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "categories": [
+    {
+      "id": "home-screen",
+      "label": "Home Screen",
+      "keywords": ["home screen", "homescreen", "springboard", "icon", "dock", "folder", "widget"]
+    },
+    {
+      "id": "lock-screen",
+      "label": "Lock Screen",
+      "keywords": ["lock screen", "lockscreen", "always on", "passcode", "face id"]
+    },
+    {
+      "id": "control-center",
+      "label": "Control Center",
+      "keywords": ["control center", "controlcentre", "ccmodule", "ccsupport", "toggle"]
+    },
+    {
+      "id": "notifications",
+      "label": "Notifications",
+      "keywords": ["notification", "banner", "alert", "badge", "do not disturb"]
+    },
+    {
+      "id": "messages-phone",
+      "label": "Messages & Phone",
+      "keywords": ["message", "imessage", "sms", "phone app", "dialer", "call", "facetime", "contact"]
+    },
+    {
+      "id": "media",
+      "label": "Media",
+      "keywords": ["music", "audio", "video", "player", "now playing", "youtube", "camera", "photo"]
+    },
+    {
+      "id": "productivity",
+      "label": "Productivity",
+      "keywords": ["shortcut", "automation", "clipboard", "calendar", "reminder", "notes", "workflow"]
+    },
+    {
+      "id": "privacy-security",
+      "label": "Privacy & Security",
+      "keywords": ["privacy", "security", "protect", "permission", "firewall", "network", "block"]
+    },
+    {
+      "id": "visual-customization",
+      "label": "Visual Customization",
+      "keywords": ["theme", "color", "blur", "animation", "appearance", "font", "visual", "wallpaper"]
+    },
+    {
+      "id": "system-utilities",
+      "label": "System & Utilities",
+      "keywords": []
+    }
+  ]
+}

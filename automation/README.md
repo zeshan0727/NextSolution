@@ -5,6 +5,14 @@ jailbreak repositories. The first workflow is intentionally a dry run: it reads
 APT `Packages` indexes, produces a report artifact, and cannot modify the live
 website.
 
+The second workflow runs once per day and can generate one draft bundle from a
+new eligible release. It uses the OpenAI Responses API only when
+`OPENAI_API_KEY` exists as an encrypted repository secret. The model produces
+strict structured text; trusted Python code escapes and renders the HTML. A
+second model call and deterministic quality gates must both approve the draft.
+The bundle remains a GitHub Actions artifact and is never published by this
+workflow.
+
 ## Safety and editorial rules
 
 - Never download, unpack, mirror, or execute third-party `.deb` files.
@@ -22,6 +30,9 @@ website.
   The official source/developer page must remain available directly.
 - No automated clicks, impressions, views, subscriptions, watch time, or other
   fake engagement are permitted.
+- A release is marked drafted only after the article, SEO metadata, discovery
+  fragments and 8–12 minute video-script bundle pass every gate. This prevents
+  repeated API spending on the same version.
 
 ## Run locally
 
@@ -29,6 +40,9 @@ website.
 python3 -m unittest discover -s automation/tests -v
 python3 -m automation.scanner --require-verified 0
 python3 -m automation.scanner --only chariz,nextsolution --tiers verified
+python3 -m automation.draft_pipeline \
+  --state automation/tests/fixtures/editorial-state.json \
+  --fixture-article automation/tests/fixtures/article-draft.json
 ```
 
 Reports are written to `automation/out/` and ignored by Git. The committed state

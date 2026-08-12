@@ -6,10 +6,12 @@ from unittest.mock import patch
 from automation.scanner import (
     classify_changes,
     deduplicate,
+    latest_releases,
     load_registry,
     normalize_package,
     scan_source,
     suppress_first_seen_sources,
+    update_pending_queue,
 )
 
 
@@ -84,6 +86,17 @@ class ScannerPolicyTests(unittest.TestCase):
         self.assertEqual(len(conflicts), 1)
         self.assertIn("checksum_conflict", selected[0]["blockers"])
 
+    def test_observe_source_cannot_outrank_verified_source(self) -> None:
+        verified = package(version="1.0")
+        observed = package(version="99.0")
+        observed["source_id"] = "unreviewed-mirror"
+        observed["source_tier"] = "observe"
+        observed["blockers"] = ["source_requires_review"]
+        selected = latest_releases([verified, observed])
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0]["version"], "1.0")
+        self.assertEqual(selected[0]["source_tier"], "verified")
+
     def test_same_version_checksum_change_is_blocked(self) -> None:
         record = package(sha="b" * 64)
         state = {
@@ -136,6 +149,62 @@ class ScannerPolicyTests(unittest.TestCase):
         self.assertEqual(len(retained), 1)
         self.assertEqual(retained[0]["change_type"], "updated")
         self.assertEqual(suppressed, 0)
+
+    def test_eligible_change_stays_in_pending_queue(self) -> None:
+        record = package(version="1.1")
+        record["change_type"] = "updated"
+        record["previous_version"] = "1.0"
+        record["publish_eligible"] = True
+        pending = update_pending_queue({}, [record], [record], "2026-08-12T00:00:00+00:00")
+        self.assertIn(record["release_identity"], pending)
+        self.assertEqual(pending[record["release_identity"]]["detected_at"], "2026-08-12T00:00:00+00:00")
+
+    def test_newer_blocked_release_removes_stale_pending_item(self) -> None:
+        old = package(version="1.0")
+        old["change_type"] = "new"
+        old["previous_version"] = None
+        old["publish_eligible"] = True
+        old["detected_at"] = "2026-08-11T00:00:00+00:00"
+        current = package(version="1.1")
+        current["blockers"] = ["checksum_conflict"]
+        pending = update_pending_queue(
+            {old["release_identity"]: old},
+            [current],
+            [],
+            "2026-08-12T00:00:00+00:00",
+        )
+        self.assertEqual(pending, {})
+
+    def test_pending_item_is_preserved_during_source_failure(self) -> None:
+        old = package(version="1.0")
+        old["detected_at"] = "2026-08-11T00:00:00+00:00"
+        pending = update_pending_queue(
+            {old["release_identity"]: old},
+            [],
+            [],
+            "2026-08-12T00:00:00+00:00",
+        )
+        self.assertIn(old["release_identity"], pending)
+
+    def test_drafted_marker_survives_the_next_scan(self) -> None:
+        old = package(version="1.0")
+        old["change_type"] = "new"
+        old["previous_version"] = None
+        old["publish_eligible"] = True
+        old["detected_at"] = "2026-08-11T00:00:00+00:00"
+        old["drafted_at"] = "2026-08-11T01:00:00+00:00"
+        old["draft_target"] = "example-cards-tweak.html"
+        old["candidate_fingerprint"] = "abc123"
+        current = package(version="1.0")
+        pending = update_pending_queue(
+            {old["release_identity"]: old},
+            [current],
+            [],
+            "2026-08-12T00:00:00+00:00",
+        )
+        refreshed = pending[old["release_identity"]]
+        self.assertEqual(refreshed["drafted_at"], old["drafted_at"])
+        self.assertEqual(refreshed["candidate_fingerprint"], "abc123")
 
 
 if __name__ == "__main__":
