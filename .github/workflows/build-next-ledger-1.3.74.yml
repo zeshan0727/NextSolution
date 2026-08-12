@@ -1,0 +1,125 @@
+name: Build Next Ledger 1.3.74 AI Privacy + Settings
+permissions:
+  contents: write
+concurrency:
+  group: next-ledger-1-3-74-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build-next-ledger-1.3.74.yml"
+      - "scripts/apply_next_ledger_1_3_74.sh"
+      - "scripts/fix_ai_settings_1_3_74.py"
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 1.3.74
+        run: bash scripts/apply_next_ledger_1_3_74.sh
+
+      - name: Validate AI privacy and Settings cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          python3 -m py_compile scripts/fix_ai_settings_1_3_74.py
+          grep -Fq 'MARKETING_VERSION: "1.3.74"' project.yml
+          grep -Fq 'CURRENT_PROJECT_VERSION: "82"' project.yml
+          grep -Fq 'static let fetchStep = 10' DailyLedger/Services/AITransactionContextService.swift
+          grep -Fq 'func load10More' DailyLedger/Services/AITransactionContextService.swift
+          grep -Fq 'func clear()' DailyLedger/Services/AITransactionContextService.swift
+          grep -Fq 'Fetch Latest 10' DailyLedger/Services/AITransactionContextService.swift
+          grep -Fq 'Load 10 More' DailyLedger/Services/AITransactionContextService.swift
+          grep -Fq 'Clear Fetched Data' DailyLedger/Services/AITransactionContextService.swift
+          grep -Fq 'AITransactionContextControls()' DailyLedger/Views/OpenAIChatView.swift
+          grep -Fq 'You have no automatic ledger access.' DailyLedger/Views/OpenAIChatView.swift
+          grep -Fq 'Section("AI Data Access")' DailyLedger/Views/InsightsView.swift
+          grep -Fq 'Analyze only this user-fetched Next Ledger transaction snapshot.' DailyLedger/Views/InsightsView.swift
+          grep -Fq 'Next Ledger Settings' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'SettingsHomeLinkLabel' DailyLedger/Views/SettingsView.swift
+          grep -Fq 'LabeledContent("Version", value: "1.3.74")' DailyLedger/Views/SettingsView.swift
+          if grep -Fq 'DeveloperLabView()' DailyLedger/Views/SettingsView.swift; then
+            echo 'Developer Lab is still visible in Settings' >&2
+            exit 1
+          fi
+          if grep -Fq 'ERPAccountingCenterView()' DailyLedger/Views/SettingsView.swift; then
+            echo 'ERP Accounting Center is still visible in Settings' >&2
+            exit 1
+          fi
+          if grep -Fq 'Label("Developer Lab"' DailyLedger/Views/SettingsView.swift; then
+            echo 'Developer Lab label is still visible in Settings' >&2
+            exit 1
+          fi
+          if grep -Fq 'ERP / Accounting Center' DailyLedger/Views/SettingsView.swift; then
+            echo 'ERP Accounting Center label is still visible in Settings' >&2
+            exit 1
+          fi
+
+      - run: brew install xcodegen
+      - run: xcodegen generate
+
+      - name: Build iPhone app
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild -project DailyLedger.xcodeproj -scheme DailyLedger -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
+
+      - name: Package TIPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload && mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.74-ai-privacy-settings.tipa
+          shasum -a 256 NextLedger-1.3.74-ai-privacy-settings.tipa > NextLedger-1.3.74-ai-privacy-settings.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-1.3.74-AI-Privacy-Settings
+          path: |
+            NextLedger-1.3.74-ai-privacy-settings.tipa
+            NextLedger-1.3.74-ai-privacy-settings.sha256
+          if-no-files-found: error
+
+      - name: Capture diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p build
+          grep -E 'error:|fatal error:|BUILD FAILED|SwiftCompile|Traceback|RuntimeError' build/xcodebuild.log > build/next-ledger-1.3.74-errors.txt 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: NextLedger-1.3.74-Diagnostics
+          path: |
+            build/xcodebuild.log
+            build/next-ledger-1.3.74-errors.txt
+          if-no-files-found: warn
+
+      - name: Publish status
+        if: always()
+        shell: bash
+        run: |
+          STATUS="${{ job.status }}"
+          git reset --hard HEAD
+          git clean -fd
+          git fetch origin "$GITHUB_REF_NAME"
+          git checkout -B build-status "origin/$GITHUB_REF_NAME"
+          mkdir -p .build-status
+          cat > .build-status/next-ledger-1.3.74.json <<EOF
+          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","source_sha":"${GITHUB_SHA}","app_version":"1.3.74","app_build":"82","artifact_name":"NextLedger-1.3.74-AI-Privacy-Settings"}
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .build-status/next-ledger-1.3.74.json
+          git commit -m "Record Next Ledger 1.3.74 build status" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}
