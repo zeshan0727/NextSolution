@@ -1,0 +1,1 @@
+"""Next Solution editorial automation."""

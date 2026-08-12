@@ -1,0 +1,454 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "max_articles_per_day": 1,
+    "official_source_link_required": true,
+    "optional_ad_link_must_be_labelled": true,
+    "shortener_enabled": false,
+    "third_party_binaries_must_not_be_downloaded": true
+  },
+  "sources": [
+    {
+      "id": "0xkuj-yourepo",
+      "name": "0xkuj YouRepo",
+      "url": "https://0xkuj.yourepo.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "akusio",
+      "name": "Akusio",
+      "url": "https://akusio.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "alias20",
+      "name": "Alias20",
+      "url": "https://alias20.gitlab.io/apt/",
+      "tier": "observe"
+    },
+    {
+      "id": "alo-works",
+      "name": "Alo Works",
+      "url": "https://alo.works/",
+      "tier": "observe"
+    },
+    {
+      "id": "anthopak",
+      "name": "AnthoPak",
+      "url": "https://repo.anthopak.dev/",
+      "tier": "verified"
+    },
+    {
+      "id": "anubis-tweaks",
+      "name": "Anubis Tweaks",
+      "url": "https://anubistweaks.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "arm64-debs-yourepo",
+      "name": "arm64-debs YouRepo",
+      "url": "https://arm64-debs.yourepo.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "bigboss",
+      "name": "BigBoss",
+      "url": "http://apt.thebigboss.org/repofiles/cydia/",
+      "tier": "verified",
+      "feed_paths": [
+        "dists/stable/main/binary-iphoneos-arm/Packages.bz2",
+        "dists/stable/main/binary-iphoneos-arm/Packages.gz",
+        "dists/stable/main/binary-iphoneos-arm/Packages",
+        "Packages.bz2",
+        "Packages.gz",
+        "Packages"
+      ]
+    },
+    {
+      "id": "blatants",
+      "name": "Blatants",
+      "url": "https://repo.blatants.fyi/",
+      "tier": "observe"
+    },
+    {
+      "id": "brendonjkding",
+      "name": "Brendon JK Ding",
+      "url": "https://brendonjkding.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "chariz",
+      "name": "Chariz",
+      "url": "https://repo.chariz.com/",
+      "tier": "verified"
+    },
+    {
+      "id": "codeymoore",
+      "name": "Codey Moore",
+      "url": "https://codeymoore.github.io/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "creaturecoding",
+      "name": "CreatureCoding",
+      "url": "https://creaturecoding.com/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "cydiageek-yourepo",
+      "name": "CydiaGeek YouRepo",
+      "url": "https://cydiageek.yourepo.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "cypwn",
+      "name": "CyPwn",
+      "url": "https://repo.cypwn.xyz/",
+      "tier": "excluded",
+      "reason": "Provenance is not approved for unattended editorial publication."
+    },
+    {
+      "id": "dcsyhi1998",
+      "name": "DCSYHI 1998",
+      "url": "https://dcsyhi1998.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "deno-io",
+      "name": "Deno iOS Repo",
+      "url": "https://6gr8.github.io/deno.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "dhinakg",
+      "name": "Dhinak G",
+      "url": "https://dhinakg.github.io/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "dirtybeans",
+      "name": "DirtyBeans",
+      "url": "https://dirtybeans.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "winaviation",
+      "name": "Win Aviation",
+      "url": "https://winaviation.github.io/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "nahtedetihw",
+      "name": "nahtedetihw",
+      "url": "https://nahtedetihw.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "fouad-raheb",
+      "name": "Fouad Raheb",
+      "url": "https://apt.fouadraheb.com/",
+      "tier": "verified"
+    },
+    {
+      "id": "geometric",
+      "name": "Geometric Software",
+      "url": "https://apt.geometricsoftware.se/",
+      "tier": "verified"
+    },
+    {
+      "id": "havoc",
+      "name": "Havoc",
+      "url": "https://havoc.app/",
+      "tier": "verified"
+    },
+    {
+      "id": "i0s-tweak3r-betas",
+      "name": "i0s-tweak3r Betas",
+      "url": "https://i0s-tweak3r-betas.yourepo.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "iarrays",
+      "name": "iArrays",
+      "url": "http://apt.iarrays.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "ichitaso",
+      "name": "Ichitaso",
+      "url": "https://cydia.ichitaso.com/",
+      "tier": "verified"
+    },
+    {
+      "id": "idevicehacked",
+      "name": "iDeviceHacked",
+      "url": "https://idevicehacked.com/",
+      "tier": "excluded",
+      "reason": "Provenance is not approved for unattended editorial publication."
+    },
+    {
+      "id": "igg",
+      "name": "iGG",
+      "url": "http://aquawu.github.io/igg/",
+      "tier": "excluded",
+      "reason": "Game-mod content is outside the unattended editorial policy."
+    },
+    {
+      "id": "iosgods",
+      "name": "iOSGods",
+      "url": "https://iosgods.com/repo/",
+      "tier": "excluded",
+      "reason": "Game-mod content is outside the unattended editorial policy."
+    },
+    {
+      "id": "jjolano",
+      "name": "Julio Verne / jjolano",
+      "url": "https://ios.jjolano.me/",
+      "tier": "verified"
+    },
+    {
+      "id": "level3tjg",
+      "name": "Level3TJg",
+      "url": "https://level3tjg.me/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "limneos",
+      "name": "Limneos",
+      "url": "http://limneos.net/repo/",
+      "tier": "verified"
+    },
+    {
+      "id": "macthemes",
+      "name": "MacThemes",
+      "url": "https://macthemes.me/",
+      "tier": "observe"
+    },
+    {
+      "id": "repo-co-kr",
+      "name": "repo.co.kr",
+      "url": "https://repo.co.kr/",
+      "tier": "observe"
+    },
+    {
+      "id": "rpgfarm",
+      "name": "RPGFarm",
+      "url": "https://repo.rpgfarm.com/",
+      "tier": "excluded",
+      "reason": "Game-mod content is outside the unattended editorial policy."
+    },
+    {
+      "id": "miro92",
+      "name": "Miro92",
+      "url": "https://repo.miro92.com/",
+      "tier": "verified"
+    },
+    {
+      "id": "nathan4s",
+      "name": "Nathan4s",
+      "url": "https://nathan4s.lol/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "nextsolution",
+      "name": "Next Solution",
+      "url": "https://nextsolution.cc/",
+      "tier": "verified"
+    },
+    {
+      "id": "niceios",
+      "name": "NiceiOS",
+      "url": "http://repo.niceios.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "niceios-global",
+      "name": "NiceiOS Global",
+      "url": "https://global.niceios.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "nicho1as",
+      "name": "Nicho1as",
+      "url": "https://repo.nicho1as.dev/",
+      "tier": "observe"
+    },
+    {
+      "id": "nightwind",
+      "name": "Nightwind",
+      "url": "https://nightwinddev.github.io/",
+      "tier": "verified"
+    },
+    {
+      "id": "ellekit",
+      "name": "ElleKit",
+      "url": "https://ellekit.space/",
+      "tier": "verified"
+    },
+    {
+      "id": "opa334",
+      "name": "opa334",
+      "url": "https://opa334.github.io/",
+      "tier": "verified"
+    },
+    {
+      "id": "paisseon",
+      "name": "Paisseon",
+      "url": "https://paisseon.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "pixelomer",
+      "name": "PixelOmer",
+      "url": "http://repo.pixelomer.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "poomsmart",
+      "name": "PoomSmart",
+      "url": "https://poomsmart.github.io/repo/",
+      "tier": "verified"
+    },
+    {
+      "id": "procursus",
+      "name": "Procursus",
+      "url": "https://apt.procurs.us/",
+      "tier": "verified",
+      "feed_paths": [
+        "dists/1900/main/binary-iphoneos-arm64/Packages.xz",
+        "dists/1900/main/binary-iphoneos-arm64/Packages.gz",
+        "dists/1900/main/binary-iphoneos-arm64/Packages",
+        "dists/1900/main/binary-iphoneos-arm/Packages.xz",
+        "dists/1900/main/binary-iphoneos-arm/Packages.gz",
+        "dists/1900/main/binary-iphoneos-arm/Packages"
+      ]
+    },
+    {
+      "id": "roothide-procursus",
+      "name": "RootHide Procursus",
+      "url": "https://roothide.github.io/procursus/",
+      "tier": "verified",
+      "feed_paths": [
+        "dists/iphoneos-arm64e/1900/main/binary-iphoneos-arm64e/Packages.xz",
+        "dists/iphoneos-arm64e/1900/main/binary-iphoneos-arm64e/Packages.gz",
+        "dists/iphoneos-arm64e/1900/main/binary-iphoneos-arm64e/Packages",
+        "dists/iphoneos-arm64e/1900/main/binary-iphoneos-arm64/Packages.xz",
+        "dists/iphoneos-arm64e/1900/main/binary-iphoneos-arm64/Packages.gz",
+        "dists/iphoneos-arm64e/1900/main/binary-iphoneos-arm64/Packages"
+      ]
+    },
+    {
+      "id": "amgios",
+      "name": "AMG iOS",
+      "url": "http://apt.amgios.com/",
+      "tier": "observe"
+    },
+    {
+      "id": "rob311",
+      "name": "Rob311",
+      "url": "http://cydia.rob311.com/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "alfhaily",
+      "name": "Alfhaily",
+      "url": "https://apt.alfhaily.me/",
+      "tier": "observe"
+    },
+    {
+      "id": "roothide",
+      "name": "RootHide",
+      "url": "https://roothide.github.io/",
+      "tier": "verified"
+    },
+    {
+      "id": "skitty",
+      "name": "Skitty",
+      "url": "https://skitty.xyz/repo/",
+      "tier": "verified"
+    },
+    {
+      "id": "skypain",
+      "name": "SkyPain",
+      "url": "https://skypain.github.io/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "sparkdev",
+      "name": "SparkDev",
+      "url": "https://sparkdev.me/",
+      "tier": "verified"
+    },
+    {
+      "id": "tigisoftware",
+      "name": "Tigi Software",
+      "url": "http://tigisoftware.com/cydia/",
+      "tier": "verified"
+    },
+    {
+      "id": "tinyapps",
+      "name": "TinyApps",
+      "url": "https://apt.tinyapps.cn/",
+      "tier": "observe"
+    },
+    {
+      "id": "uckermark",
+      "name": "Uckermark",
+      "url": "https://repo.uckermark.dev/",
+      "tier": "observe"
+    },
+    {
+      "id": "udevsharold",
+      "name": "Udevs Harold",
+      "url": "https://udevsharold.github.io/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "uncore",
+      "name": "Uncore",
+      "url": "https://repo.uncore.me/",
+      "tier": "observe"
+    },
+    {
+      "id": "wilsonthewolf",
+      "name": "Wilson the Wolf",
+      "url": "https://wilsonthewolf.github.io/repo/",
+      "tier": "observe"
+    },
+    {
+      "id": "yourepo-directory",
+      "name": "YouRepo directory",
+      "url": "https://yourepo.com/",
+      "tier": "excluded",
+      "reason": "This is a repository directory, not one approved publisher feed."
+    },
+    {
+      "id": "yourepo-directory-www",
+      "name": "YouRepo directory (www)",
+      "url": "https://www.yourepo.com/",
+      "tier": "excluded",
+      "reason": "This is a duplicate repository directory URL."
+    },
+    {
+      "id": "zebra",
+      "name": "Zebra",
+      "url": "https://getzbra.com/repo/",
+      "tier": "verified",
+      "redirect_hosts": [
+        "repo.getzbra.com"
+      ]
+    },
+    {
+      "id": "zeroxjf",
+      "name": "ZeroXJF",
+      "url": "https://zeroxjf.github.io/",
+      "tier": "observe"
+    },
+    {
+      "id": "zsaaiq",
+      "name": "ZSAaiq Jailbreak Repo",
+      "url": "https://zsaaiq.github.io/jailbreakrepo/",
+      "tier": "observe"
+    }
+  ]
+}
