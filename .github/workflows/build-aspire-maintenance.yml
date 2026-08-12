@@ -95,7 +95,7 @@ jobs:
           path: aspire-maintenance-build.log
           if-no-files-found: ignore
 
-      - name: Package for TrollStore
+      - name: Package for TrollStore and signing tools
         run: |
           APP_PATH="$(find build-aspire-maintenance/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
           test -n "$APP_PATH"
@@ -103,30 +103,35 @@ jobs:
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
           ditto -c -k --sequesterRsrc --keepParent Payload AspireMaintenance-1.0.1.tipa
+          cp AspireMaintenance-1.0.1.tipa AspireMaintenance-1.0.1-unsigned.ipa
           shasum -a 256 AspireMaintenance-1.0.1.tipa > AspireMaintenance-1.0.1.sha256
+          shasum -a 256 AspireMaintenance-1.0.1-unsigned.ipa > AspireMaintenance-1.0.1-unsigned.ipa.sha256
 
       - name: Package source
         run: |
           rm -rf AspireMaintenance/AspireMaintenance.xcodeproj
           ditto -c -k --sequesterRsrc --keepParent AspireMaintenance AspireMaintenance-1.0.1-source.zip
 
-      - name: Upload TIPA and source
+      - name: Upload TIPA IPA and source
         uses: actions/upload-artifact@v4
         with:
           name: AspireMaintenance-TrollStore-1.0.1
           path: |
             AspireMaintenance-1.0.1.tipa
+            AspireMaintenance-1.0.1-unsigned.ipa
+            AspireMaintenance-1.0.1-unsigned.ipa.sha256
             AspireMaintenance-1.0.1.sha256
             AspireMaintenance-1.0.1-source.zip
           if-no-files-found: error
 
-      - name: Publish successful run pointer
+      - name: Publish temporary unsigned IPA
         if: success() && github.event_name == 'push'
         run: |
-          mkdir -p AspireMaintenanceBuilds
-          echo "${GITHUB_RUN_ID}" > AspireMaintenanceBuilds/latest-run-id-1.0.1.txt
+          mkdir -p TemporaryDownloads
+          cp AspireMaintenance-1.0.1-unsigned.ipa TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa
+          cp AspireMaintenance-1.0.1-unsigned.ipa.sha256 TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa.sha256
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add AspireMaintenanceBuilds/latest-run-id-1.0.1.txt
-          git commit -m "Record Aspire Maintenance 1.0.1 build run ${GITHUB_RUN_ID}"
+          git add TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa.sha256
+          git commit -m "Publish temporary Aspire Maintenance 1.0.1 unsigned IPA"
           git push origin HEAD:agent/aspire-maintenance-1.0.1
