@@ -27,6 +27,19 @@ class EditorialTests(unittest.TestCase):
     def test_slugify_is_path_safe(self) -> None:
         self.assertEqual(slugify("Fócus Cards 2.0!"), "focus-cards-2-0")
 
+    def test_non_ascii_only_name_does_not_stop_other_candidates(self) -> None:
+        valid = copy.deepcopy(next(iter(self.state["pending"].values())))
+        unsluggable = copy.deepcopy(valid)
+        unsluggable["package"] = "com.example.symbols"
+        unsluggable["identity"] = "com.example.symbols|iphoneos-arm64"
+        unsluggable["release_identity"] = "com.example.symbols|1.2.0|iphoneos-arm64"
+        unsluggable["name"] = "中文"
+        candidates = build_candidates(
+            [unsluggable, valid], self.categories, self.site
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(candidates[0]["package"], "com.example.focuscards")
+
     def test_home_screen_category_comes_from_facts(self) -> None:
         item = next(iter(self.state["pending"].values()))
         category = classify_category(item, self.categories)

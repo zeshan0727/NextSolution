@@ -151,7 +151,13 @@ def build_candidates(
         )
         primary["category"] = classify_category(primary, categories)
         primary["selection_pool"] = selection_pool
-        base_slug = slugify(str(primary["name"]))
+        try:
+            base_slug = slugify(str(primary["name"]))
+        except ValueError:
+            # A package whose display name contains no ASCII letters or digits
+            # cannot produce a stable website path without transliteration.
+            # Skip that one catalog entry rather than stopping the entire run.
+            continue
         if not base_slug.endswith("tweak"):
             base_slug += "-tweak"
         primary["slug"] = base_slug
