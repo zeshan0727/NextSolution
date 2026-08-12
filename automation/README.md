@@ -6,7 +6,8 @@ APT `Packages` indexes, produces a report artifact, and cannot modify the live
 website.
 
 The second workflow runs once per day and can generate one draft bundle from a
-new eligible release. It uses the OpenAI Responses API only when
+new eligible release or, when that queue is empty, one undrafted package from
+the verified-source evergreen catalog. It uses the OpenAI Responses API only when
 `OPENAI_API_KEY` exists as an encrypted repository secret. The model produces
 strict structured text; trusted Python code escapes and renders the HTML. A
 second model call and deterministic quality gates must both approve the draft.
@@ -33,6 +34,8 @@ workflow.
 - A release is marked drafted only after the article, SEO metadata, discovery
   fragments and 8–12 minute video-script bundle pass every gate. This prevents
   repeated API spending on the same version.
+- Draft markers are shared between the new-release queue and evergreen catalog,
+  so architecture variants and later scans cannot repeat the same version.
 
 ## Run locally
 
