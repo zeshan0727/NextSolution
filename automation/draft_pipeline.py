@@ -249,17 +249,18 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
         for item in article["faq"]
     )
     architectures = ", ".join(candidate["architectures"])
-    return f"""<!doctype html>
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#05070d">
+  <meta name="theme-color" content="#f3f5f6">
   <title>{esc(article['title'])} | {esc(site['site_name'])}</title>
   <meta name="description" content="{esc(article['meta_description'])}">
+  <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="{esc(canonical)}">
   <link rel="alternate" type="application/rss+xml" title="{esc(site['site_name'])} articles" href="/feed.xml">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" href="/NextSolutionRepoIcon.png">
   <link rel="stylesheet" href="/assets/site.css">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="{esc(site['site_name'])}">
@@ -273,10 +274,13 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={esc(site['adsense_client'])}" crossorigin="anonymous"></script>
 </head>
 <body>
+  <div class="topline">
+    <div class="topline-inner"><span>Independent iPhone jailbreak publication</span><span class="topline-status"><i aria-hidden="true"></i> New verified article daily at 06:00 Qatar time</span></div>
+  </div>
   <header class="site-header">
     <div class="nav-shell">
-      <a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><span class="brand-mark" aria-hidden="true">N</span><span>{esc(site['site_name'])}</span></a>
-      <nav aria-label="Primary navigation"><ul class="nav-links"><li><a href="/">Home</a></li><li><a href="/tutorials.html" aria-current="page">Guides</a></li><li><a href="/videos.html">Videos</a></li><li><a href="/#faq">FAQ</a></li></ul></nav>
+      <a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><span class="brand-mark" aria-hidden="true">N</span><span class="brand-copy"><strong>Next</strong><small>solution</small></span></a>
+      <nav aria-label="Primary navigation"><ul class="nav-links"><li><a href="/">Blog</a></li><li><a href="/tutorials.html#verified-articles" aria-current="page">Cydia Tweaks</a></li><li><a href="/tutorials.html#jailbreak-guides">Jailbreak</a></li><li><a href="/videos.html">Videos</a></li></ul></nav>
     </div>
   </header>
   <main class="container article-main">
@@ -312,7 +316,15 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
       </div>
     </article>
   </main>
-  <footer class="site-footer"><div class="footer-shell"><div><strong>{esc(site['site_name'])}</strong><p>Independent jailbreak tutorials, verified tweak information, and original iPhone customization videos by {esc(site['author_name'])}.</p></div><div class="footer-links"><a href="/">Home</a><a href="/tutorials.html">Guides</a><a href="/videos.html">Videos</a><a href="/feed.xml">RSS</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div></footer>
+  <footer class="site-footer">
+    <div class="footer-shell">
+      <div class="footer-brand"><a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><span class="brand-mark" aria-hidden="true">N</span><span class="brand-copy"><strong>Next</strong><small>solution</small></span></a><p>Independent jailbreak news, verified tweak information, practical guides, and original videos by {esc(site['author_name'])}.</p></div>
+      <div class="footer-column"><strong>Read</strong><a href="/#latest">Latest articles</a><a href="/tutorials.html#verified-articles">Cydia tweaks</a><a href="/tutorials.html#jailbreak-guides">Jailbreak guides</a><a href="/videos.html">Videos</a></div>
+      <div class="footer-column"><strong>Follow</strong><a href="/feed.xml">RSS feed</a><a href="https://youtube.com/@zeshan0727" rel="noopener noreferrer">YouTube</a></div>
+      <div class="footer-column"><strong>Legal</strong><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div>
+    </div>
+    <div class="footer-bottom"><div class="container"><span>© 2026 {esc(site['site_name'])}</span><span>Articles publish daily at 06:00 Qatar time</span></div></div>
+  </footer>
 </body>
 </html>
 """
