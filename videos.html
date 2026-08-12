@@ -8,7 +8,6 @@
   <meta name="description" content="Watch Next Solution jailbreak tutorials, rootless tweak reviews, and original iPhone customization videos.">
   <link rel="canonical" href="https://nextsolution.cc/videos.html">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <link rel="preconnect" href="https://www.googleapis.com">
   <link rel="preconnect" href="https://www.youtube.com">
   <link rel="stylesheet" href="assets/site.css">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214" crossorigin="anonymous"></script>
@@ -42,10 +41,18 @@
           <a class="button button-youtube" href="https://youtube.com/@zeshan0727" target="_blank" rel="noopener noreferrer">Open YouTube channel</a>
         </div>
 
-        <div class="status-panel" id="status" role="status">Loading the latest videos…</div>
-        <section class="video-grid" id="videos" aria-live="polite" aria-label="Next Solution video tutorials"></section>
-        <div class="load-row"><button class="button button-primary load-more" id="loadMore" type="button" hidden>Load more videos</button></div>
-        <div class="status-panel" id="fallback" hidden>Videos could not be loaded right now. You can still <a class="text-link" href="https://youtube.com/@zeshan0727" target="_blank" rel="noopener noreferrer">watch them directly on YouTube</a>.</div>
+        <section class="video-grid" aria-label="Next Solution video tutorials">
+          <article class="video-card playlist-card">
+            <div class="video-frame">
+              <iframe loading="lazy" src="https://www.youtube.com/embed/videoseries?list=UUyj0U_7r0gcQgL-fNvf9NYg" title="Uploads from the Next Solution YouTube channel" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+            <div class="video-info">
+              <h3>Uploads from Next Solution</h3>
+              <p>Select a video inside the player to browse the channel's uploads without relying on a separate API key.</p>
+              <div class="video-meta"><span>Playlist maintained by YouTube</span><a href="https://youtube.com/@zeshan0727/videos" target="_blank" rel="noopener noreferrer">View all videos on YouTube</a></div>
+            </div>
+          </article>
+        </section>
       </div>
     </section>
 
@@ -63,104 +70,5 @@
       <div class="footer-links"><a href="./">Home</a><a href="tutorials.html">Guides</a><a href="feed.xml">RSS</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="mailto:NextSolution@zeshanbarvi.uk">Contact</a></div>
     </div>
   </footer>
-
-  <script>
-    (() => {
-      'use strict';
-
-      const apiKey = 'AIzaSyDYe_SEtiDPtOd09aVOd4wR362jyC3cIRc';
-      const channelId = 'UCyj0U_7r0gcQgL-fNvf9NYg';
-      const maxResults = 9;
-      let nextPageToken = '';
-      let loading = false;
-
-      const container = document.getElementById('videos');
-      const status = document.getElementById('status');
-      const fallback = document.getElementById('fallback');
-      const loadMore = document.getElementById('loadMore');
-
-      const formatDate = value => new Intl.DateTimeFormat(undefined, {
-        year: 'numeric', month: 'short', day: 'numeric'
-      }).format(new Date(value));
-
-      const createVideoCard = item => {
-        const videoId = item.id.videoId;
-        const snippet = item.snippet;
-        const article = document.createElement('article');
-        article.className = 'video-card';
-
-        const frame = document.createElement('div');
-        frame.className = 'video-frame';
-        const iframe = document.createElement('iframe');
-        iframe.loading = 'lazy';
-        iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-        iframe.title = snippet.title;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        iframe.allowFullscreen = true;
-        frame.appendChild(iframe);
-
-        const info = document.createElement('div');
-        info.className = 'video-info';
-        const title = document.createElement('h3');
-        title.textContent = snippet.title;
-        const description = document.createElement('p');
-        const cleanDescription = (snippet.description || '').trim();
-        description.textContent = cleanDescription ? `${cleanDescription.slice(0, 145)}${cleanDescription.length > 145 ? '…' : ''}` : 'Watch this tutorial on the Next Solution YouTube channel.';
-
-        const meta = document.createElement('div');
-        meta.className = 'video-meta';
-        const date = document.createElement('span');
-        date.textContent = formatDate(snippet.publishedAt);
-        const watch = document.createElement('a');
-        watch.href = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
-        watch.target = '_blank';
-        watch.rel = 'noopener noreferrer';
-        watch.textContent = 'Watch on YouTube';
-        meta.append(date, watch);
-
-        info.append(title, description, meta);
-        article.append(frame, info);
-        return article;
-      };
-
-      async function loadVideos() {
-        if (loading) return;
-        loading = true;
-        loadMore.disabled = true;
-        status.hidden = container.children.length > 0;
-        status.textContent = container.children.length ? 'Loading more videos…' : 'Loading the latest videos…';
-        fallback.hidden = true;
-
-        const token = nextPageToken ? `&pageToken=${encodeURIComponent(nextPageToken)}` : '';
-        const url = `https://www.googleapis.com/youtube/v3/search?key=${encodeURIComponent(apiKey)}&channelId=${encodeURIComponent(channelId)}&part=snippet,id&order=date&type=video&maxResults=${maxResults}${token}`;
-
-        try {
-          const response = await fetch(url);
-          if (!response.ok) throw new Error(`YouTube request failed: ${response.status}`);
-          const data = await response.json();
-          const items = Array.isArray(data.items) ? data.items : [];
-          const fragment = document.createDocumentFragment();
-          items.forEach(item => {
-            if (item.id && item.id.videoId) fragment.appendChild(createVideoCard(item));
-          });
-          container.appendChild(fragment);
-          nextPageToken = data.nextPageToken || '';
-          status.hidden = true;
-          loadMore.hidden = !nextPageToken;
-        } catch (error) {
-          console.error(error);
-          status.hidden = true;
-          fallback.hidden = false;
-          loadMore.hidden = true;
-        } finally {
-          loading = false;
-          loadMore.disabled = false;
-        }
-      }
-
-      loadMore.addEventListener('click', loadVideos);
-      loadVideos();
-    })();
-  </script>
 </body>
 </html>
