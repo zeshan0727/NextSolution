@@ -3,7 +3,8 @@ name: Verified tweak article publisher
 on:
   workflow_dispatch:
   schedule:
-    - cron: "37 4 * * *"
+    # 01:00 UTC is 04:00 in Qatar (UTC+3, no daylight-saving changes).
+    - cron: "0 1 * * *"
   pull_request:
     paths:
       - "automation/**"
