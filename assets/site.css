@@ -410,6 +410,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible {
 .video-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .video-card { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--panel); box-shadow: var(--shadow-soft); transition: transform .2s ease, border-color .2s ease; }
 .video-card:hover { transform: translateY(-4px); border-color: var(--line-strong); }
+.playlist-card { grid-column: 1 / -1; width: min(100%, 1000px); justify-self: center; }
 .video-frame { position: relative; aspect-ratio: 16 / 9; background: #03050a; }
 .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .video-info { padding: 18px; }
