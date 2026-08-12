@@ -1,0 +1,67 @@
+name: Prepare Screenshot Haptic Tutorial
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [tutorial/screenshothaptic-1.0.0]
+    paths:
+      - "screenshothaptic-tweak-ios16.html"
+      - "assets/screenshothaptic/**"
+      - ".github/scripts/publish-screenshothaptic-tutorial.py"
+      - ".github/workflows/publish-screenshothaptic-tutorial.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "screenshothaptic-tweak-ios16.html"
+      - "assets/screenshothaptic/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - ".github/scripts/publish-screenshothaptic-tutorial.py"
+      - ".github/workflows/publish-screenshothaptic-tutorial.yml"
+permissions:
+  contents: write
+jobs:
+  prepare-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Verify published package source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -c '^Package: com.nextsolution.screenshothaptic$' Packages)" -eq 2
+          grep -q '^Filename: ./debfiles/ScreenshotHaptic_1.0.0_RootHide.deb$' Packages
+          grep -q '^Filename: ./debfiles/ScreenshotHaptic_1.0.0_Rootless.deb$' Packages
+          test -s debfiles/ScreenshotHaptic_1.0.0_RootHide.deb
+          test -s debfiles/ScreenshotHaptic_1.0.0_Rootless.deb
+      - name: Generate cards and sitemap
+        if: github.event_name == 'push'
+        run: python3 .github/scripts/publish-screenshothaptic-tutorial.py
+      - name: Validate tutorial publication
+        run: python3 .github/scripts/publish-screenshothaptic-tutorial.py --check
+      - name: Validate SEO navigation AdSense and package links
+        shell: bash
+        run: |
+          set -euo pipefail
+          A=screenshothaptic-tweak-ios16.html
+          grep -q '<link rel="canonical" href="https://nextsolution.cc/screenshothaptic-tweak-ios16.html">' "$A"
+          grep -q '"@type":"TechArticle"' "$A"
+          grep -q 'href="./"' "$A"; grep -q 'href="tutorials.html" aria-current="page"' "$A"; grep -q 'href="videos.html"' "$A"; grep -q 'href="./#faq"' "$A"
+          grep -q 'ca-pub-4770123899731214' "$A"
+          test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' "$A")" -eq 1
+          ! grep -R -q 'zeshan0727.github.io' "$A" .github/scripts/publish-screenshothaptic-tutorial.py assets/screenshothaptic index.html tutorials.html sitemap.xml
+          grep -q 'SCREENSHOTHAPTIC_RECENT_CARD_START' index.html
+          grep -q 'SCREENSHOTHAPTIC_TUTORIAL_CARD_START' tutorials.html
+          grep -q 'https://nextsolution.cc/screenshothaptic-tweak-ios16.html' sitemap.xml
+      - name: Commit generated website files to tutorial branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'; git config user.email 'actions@users.noreply.github.com'
+          git add index.html tutorials.html sitemap.xml
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Prepare Screenshot Haptic tutorial cards and sitemap'
+          git push origin HEAD:tutorial/screenshothaptic-1.0.0
