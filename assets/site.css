@@ -164,9 +164,9 @@ a:focus-visible, button:focus-visible, summary:focus-visible {
 .home-hero::after {
   content: "";
   position: absolute;
-  width: 560px;
-  height: 560px;
-  right: -240px;
+  width: min(560px, 100%);
+  aspect-ratio: 1;
+  right: 0;
   top: 16px;
   z-index: -1;
   border-radius: 50%;
