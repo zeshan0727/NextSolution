@@ -282,13 +282,16 @@ def load_registry(path: Path) -> dict[str, Any]:
 
 def load_state(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"schema_version": 1, "packages": {}, "sources": {}}
+        return {"schema_version": 1, "packages": {}, "pending": {}, "sources": {}}
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1 or not isinstance(data.get("packages"), dict):
         raise ValueError("state file must use schema_version 1 and contain packages{}")
     if not isinstance(data.get("sources", {}), dict):
         raise ValueError("state file sources must be an object")
+    if not isinstance(data.get("pending", {}), dict):
+        raise ValueError("state file pending must be an object")
     data.setdefault("sources", {})
+    data.setdefault("pending", {})
     return data
 
 
@@ -319,10 +322,20 @@ def deduplicate(records: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], li
 
 
 def latest_releases(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    tier_rank = {"verified": 0, "observe": 1, "excluded": 2}
     identities: dict[str, list[dict[str, Any]]] = {}
     for record in records:
         identities.setdefault(record["identity"], []).append(record)
-    return [dict(newest(values)) for _, values in sorted(identities.items())]
+    selected: list[dict[str, Any]] = []
+    for _, values in sorted(identities.items()):
+        best_rank = min(tier_rank[str(value["source_tier"])] for value in values)
+        best_tier = [
+            value
+            for value in values
+            if tier_rank[str(value["source_tier"])] == best_rank
+        ]
+        selected.append(dict(newest(best_tier)))
+    return selected
 
 
 def classify_changes(
@@ -384,6 +397,55 @@ def suppress_first_seen_sources(
     return retained, len(changes) - len(retained)
 
 
+def update_pending_queue(
+    existing: dict[str, Any],
+    latest: list[dict[str, Any]],
+    changes: list[dict[str, Any]],
+    generated_at: str,
+) -> dict[str, dict[str, Any]]:
+    """Keep eligible changes queued until a later publisher acknowledges them."""
+
+    pending = {
+        key: dict(value)
+        for key, value in existing.items()
+        if isinstance(key, str) and isinstance(value, dict)
+    }
+    current_by_identity = {item["identity"]: item for item in latest}
+
+    for release_identity, queued in list(pending.items()):
+        identity = queued.get("identity")
+        current = current_by_identity.get(identity)
+        if current is None:
+            # Preserve the queue entry when its source is temporarily absent.
+            continue
+        comparison = compare_versions(
+            str(current.get("version", "")), str(queued.get("version", ""))
+        )
+        if comparison > 0:
+            # A newer release supersedes this entry. The new release is added
+            # below only if it passes every safety gate.
+            del pending[release_identity]
+            continue
+        if current.get("release_identity") == release_identity:
+            refreshed = dict(current)
+            refreshed["change_type"] = queued.get("change_type", "new")
+            refreshed["previous_version"] = queued.get("previous_version")
+            refreshed["detected_at"] = queued.get("detected_at", generated_at)
+            for key in ("drafted_at", "draft_target", "candidate_fingerprint"):
+                if queued.get(key):
+                    refreshed[key] = queued[key]
+            refreshed["publish_eligible"] = not refreshed.get("blockers")
+            pending[release_identity] = refreshed
+
+    for change in changes:
+        if not change.get("publish_eligible"):
+            continue
+        queued = dict(change)
+        queued["detected_at"] = generated_at
+        pending[change["release_identity"]] = queued
+    return dict(sorted(pending.items()))
+
+
 def _markdown(report: dict[str, Any]) -> str:
     stats = report["stats"]
     lines = [
@@ -402,6 +464,7 @@ def _markdown(report: dict[str, Any]) -> str:
         f"- Eligible after safety gates: **{stats['publish_eligible']}**",
         f"- Checksum conflicts: **{stats['checksum_conflicts']}**",
         f"- Historical changes baselined: **{stats['baseline_suppressed']}**",
+        f"- Eligible releases waiting in queue: **{stats['pending_eligible']}**",
         "",
         "The scanner never changes website files, package binaries, or links. Scanner state is written only when explicitly enabled.",
         "",
@@ -477,6 +540,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
 
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    next_pending = update_pending_queue(
+        state.get("pending", {}), latest, changes, generated_at
+    )
     next_source_state = {
         source_id: dict(value) for source_id, value in state.get("sources", {}).items()
     }
@@ -512,6 +578,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "publish_eligible": sum(item["publish_eligible"] for item in changes),
             "checksum_conflicts": len(conflicts),
             "baseline_suppressed": baseline_suppressed,
+            "pending_total": len(next_pending),
+            "pending_eligible": sum(
+                bool(item.get("publish_eligible")) for item in next_pending.values()
+            ),
         },
         "sources": [
             {
@@ -540,6 +610,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "schema_version": 1,
             "updated_at": generated_at,
             "packages": next_state,
+            "pending": next_pending,
             "sources": next_source_state,
         }
         args.state.parent.mkdir(parents=True, exist_ok=True)

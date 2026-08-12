@@ -1,0 +1,124 @@
+name: Tweak article generator — draft only
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 4 * * *"
+  pull_request:
+    paths:
+      - "automation/**"
+      - ".github/workflows/tweak-feed-dry-run.yml"
+      - ".github/workflows/tweak-draft-generator.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextsolution-content-state
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run deterministic tests
+        run: python3 -m unittest discover -s automation/tests -v
+
+      - name: Render fixture bundle on pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 -m automation.draft_pipeline \
+            --state automation/tests/fixtures/editorial-state.json \
+            --fixture-article automation/tests/fixtures/article-draft.json \
+            --output automation/out/fixture-draft
+
+      - name: Restore scanner and editorial state
+        if: github.event_name != 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: automation/runtime-state
+          key: tweak-feed-state-v1-${{ github.run_id }}
+          restore-keys: |
+            tweak-feed-state-v1-
+
+      - name: Prepare empty state when cache is unavailable
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ ! -f automation/runtime-state/known-packages.json ]; then
+            mkdir -p automation/runtime-state
+            cp automation/state/known-packages.json automation/runtime-state/known-packages.json
+          fi
+
+      - name: Check encrypted OpenAI secret
+        if: github.event_name != 'pull_request'
+        id: api
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -n "${OPENAI_API_KEY:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "### Draft generator paused" >> "$GITHUB_STEP_SUMMARY"
+            echo "OPENAI_API_KEY is not configured as an encrypted repository secret." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Generate one verified draft
+        if: github.event_name != 'pull_request' && steps.api.outputs.enabled == 'true'
+        id: generate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5.6-luna
+        shell: bash
+        run: |
+          mkdir -p automation/out
+          set +e
+          python3 -m automation.draft_pipeline \
+            --state automation/runtime-state/known-packages.json \
+            --write-state \
+            --output automation/out/draft | tee automation/out/draft-run.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -eq 3 ]; then
+            echo "drafted=false" >> "$GITHUB_OUTPUT"
+            echo "### Draft generator" >> "$GITHUB_STEP_SUMMARY"
+            echo "No undrafted eligible release is waiting." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
+          echo "drafted=true" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('automation/out/draft/manifest.json').read_text())
+          quality = manifest['deterministic_quality']['metrics']
+          with Path(__import__('os').environ['GITHUB_STEP_SUMMARY']).open('a') as summary:
+              summary.write('### Draft created — not published\n\n')
+              summary.write(f"- Target preview: `{manifest['target_path']}`\n")
+              summary.write(f"- Article bundle words: **{quality['draft_words']}**\n")
+              summary.write(f"- Video narration words: **{quality['youtube_narration_words']}**\n")
+              summary.write('- Independent verifier: **approved**\n')
+              summary.write('- Publication authorization: **false**\n')
+          PY
+
+      - name: Save editorial state after a verified draft
+        if: github.event_name != 'pull_request' && steps.generate.outputs.drafted == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: automation/runtime-state
+          key: tweak-feed-state-v1-${{ github.run_id }}
+
+      - name: Upload draft bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tweak-draft-${{ github.run_number }}
+          path: automation/out/
+          if-no-files-found: ignore
+          retention-days: 14

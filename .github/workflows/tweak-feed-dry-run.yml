@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tweak-feed-dry-run
+  group: nextsolution-content-state
   cancel-in-progress: true
 
 jobs:
