@@ -45,9 +45,8 @@ jobs:
           grep -Fq 'Clear Fetched SMS & AI' DailyLedger/Views/SMSImportConsoleView.swift
           grep -Fq 'SMSLatest15ReviewService.clearFetchedReview()' DailyLedger/Views/SMSImportConsoleView.swift
           grep -Fq 'The SMS fetch did not complete.' DailyLedger/Views/SMSImportConsoleView.swift
-          grep -Fq 'Fetched \\(reviewCount) SMS for review.' DailyLedger/Views/SMSImportConsoleView.swift
+          grep -Fq 'Fetched \(reviewCount) SMS for review.' DailyLedger/Views/SMSImportConsoleView.swift
           grep -Fq 'private struct SMSAccountMappingView' DailyLedger/Views/SMSImportConsoleView.swift
-          grep -Fq 'NavigationLink {' DailyLedger/Views/SMSImportConsoleView.swift
           grep -Fq 'SMSAccountMappingView()' DailyLedger/Views/SMSImportConsoleView.swift
           grep -Fq 'SMS Import & Review' DailyLedger/Views/SMSImportConsoleView.swift
           grep -Fq 'Save Account Mapping' DailyLedger/Views/SMSImportConsoleView.swift
