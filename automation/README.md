@@ -33,7 +33,10 @@ python3 -m automation.scanner --only chariz,nextsolution --tiers verified
 
 Reports are written to `automation/out/` and ignored by Git. The committed state
 file remains unchanged unless `--write-state` is explicitly supplied. The
-scheduled workflow does not supply it.
+scheduled workflow stores runtime state in a GitHub Actions cache, not in the
+repository. Every source is baselined on its first successful scan so historical
+catalog entries—or entries from a source recovering later—cannot be mistaken for
+new releases.
 
 ## Rollout gates
 

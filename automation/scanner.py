@@ -282,10 +282,13 @@ def load_registry(path: Path) -> dict[str, Any]:
 
 def load_state(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"schema_version": 1, "packages": {}}
+        return {"schema_version": 1, "packages": {}, "sources": {}}
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1 or not isinstance(data.get("packages"), dict):
         raise ValueError("state file must use schema_version 1 and contain packages{}")
+    if not isinstance(data.get("sources", {}), dict):
+        raise ValueError("state file sources must be an object")
+    data.setdefault("sources", {})
     return data
 
 
@@ -367,6 +370,20 @@ def classify_changes(
     return changes, next_state
 
 
+def suppress_first_seen_sources(
+    changes: list[dict[str, Any]], first_seen_sources: set[str]
+) -> tuple[list[dict[str, Any]], int]:
+    """Baseline a source on its first successful scan.
+
+    This prevents an existing catalog from becoming a publication queue when a
+    source is added, when the workflow runs for the first time, or when a source
+    recovers after being unavailable during the initial baseline.
+    """
+
+    retained = [item for item in changes if item["source_id"] not in first_seen_sources]
+    return retained, len(changes) - len(retained)
+
+
 def _markdown(report: dict[str, Any]) -> str:
     stats = report["stats"]
     lines = [
@@ -384,8 +401,9 @@ def _markdown(report: dict[str, Any]) -> str:
         f"- Changes detected: **{stats['changes']}**",
         f"- Eligible after safety gates: **{stats['publish_eligible']}**",
         f"- Checksum conflicts: **{stats['checksum_conflicts']}**",
+        f"- Historical changes baselined: **{stats['baseline_suppressed']}**",
         "",
-        "No website files, package binaries, links, or state were changed by this dry run.",
+        "The scanner never changes website files, package binaries, or links. Scanner state is written only when explicitly enabled.",
         "",
         "## Eligible changes (preview only)",
         "",
@@ -439,7 +457,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     records = [package for result in results for package in result.packages]
     unique_releases, conflicts = deduplicate(records)
     latest = latest_releases(unique_releases)
-    changes, next_state = classify_changes(latest, state)
+    raw_changes, next_state = classify_changes(latest, state)
+    successful_source_ids = {
+        result.source["id"] for result in results if result.error is None
+    }
+    known_source_ids = set(state.get("sources", {}))
+    first_seen_sources = (
+        successful_source_ids - known_source_ids if args.baseline_new_sources else set()
+    )
+    changes, baseline_suppressed = suppress_first_seen_sources(
+        raw_changes, first_seen_sources
+    )
     verified_successes = sum(
         1 for result in results if result.error is None and result.source["tier"] == "verified"
     )
@@ -449,11 +477,30 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         )
 
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    next_source_state = {
+        source_id: dict(value) for source_id, value in state.get("sources", {}).items()
+    }
+    for result in results:
+        if result.error is not None:
+            continue
+        entry = next_source_state.setdefault(
+            result.source["id"],
+            {
+                "initialized_at": generated_at,
+                "tier": result.source["tier"],
+            },
+        )
+        entry["last_success_at"] = generated_at
+        entry["tier"] = result.source["tier"]
     report = {
         "schema_version": 1,
-        "mode": "dry-run" if not args.write_state else "state-update",
+        "mode": "stateless-dry-run" if not args.write_state else "stateful-dry-run",
         "generated_at": generated_at,
         "policy": registry.get("policy", {}),
+        "baseline": {
+            "first_seen_sources": sorted(first_seen_sources),
+            "suppressed_changes": baseline_suppressed,
+        },
         "stats": {
             "sources_attempted": len(results),
             "sources_successful": sum(result.error is None for result in results),
@@ -464,6 +511,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "changes": len(changes),
             "publish_eligible": sum(item["publish_eligible"] for item in changes),
             "checksum_conflicts": len(conflicts),
+            "baseline_suppressed": baseline_suppressed,
         },
         "sources": [
             {
@@ -492,6 +540,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "schema_version": 1,
             "updated_at": generated_at,
             "packages": next_state,
+            "sources": next_source_state,
         }
         args.state.parent.mkdir(parents=True, exist_ok=True)
         args.state.write_text(json.dumps(state_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -510,6 +559,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=10)
     parser.add_argument("--max-items", type=int, default=250)
     parser.add_argument("--require-verified", type=int, default=1)
+    parser.add_argument(
+        "--baseline-new-sources",
+        action="store_true",
+        help="Suppress changes when a source succeeds for the first time.",
+    )
     parser.add_argument(
         "--write-state",
         action="store_true",

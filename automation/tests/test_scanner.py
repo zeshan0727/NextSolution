@@ -9,6 +9,7 @@ from automation.scanner import (
     load_registry,
     normalize_package,
     scan_source,
+    suppress_first_seen_sources,
 )
 
 
@@ -111,6 +112,30 @@ class ScannerPolicyTests(unittest.TestCase):
         }
         _, next_state = classify_changes([], state)
         self.assertIn("com.example.unavailable|iphoneos-arm64", next_state)
+
+    def test_first_successful_source_is_baselined(self) -> None:
+        record = package()
+        changes, _ = classify_changes([record], {"packages": {}})
+        retained, suppressed = suppress_first_seen_sources(changes, {"example"})
+        self.assertEqual(retained, [])
+        self.assertEqual(suppressed, 1)
+
+    def test_initialized_source_can_emit_a_future_update(self) -> None:
+        record = package(version="1.1")
+        state = {
+            "packages": {
+                record["identity"]: {
+                    "version": "1.0",
+                    "sha256": "a" * 64,
+                    "source_id": "example",
+                }
+            }
+        }
+        changes, _ = classify_changes([record], state)
+        retained, suppressed = suppress_first_seen_sources(changes, set())
+        self.assertEqual(len(retained), 1)
+        self.assertEqual(retained[0]["change_type"], "updated")
+        self.assertEqual(suppressed, 0)
 
 
 if __name__ == "__main__":
