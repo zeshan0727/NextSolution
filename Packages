@@ -463,3 +463,39 @@ Description: Plays one success haptic after iOS confirms a screenshot was taken.
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/screenshothaptic.html
 Name: Screenshot Haptic
+
+Package: com.nextsolution.internetlosthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/InternetLostHaptic_1.0.0_RootHide.deb
+Size: 7990
+MD5sum: 7b7e35c4679b27396cf0b08af71763c6
+SHA1: 3975287fd3c8291e12adca04bb3e543d1b24e394
+SHA256: b733da65c0feb733ecc5f38c567ac54c1507ddbe06bfcdcc884e92b10823553d
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays one warning haptic when a usable network path becomes unavailable.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html
+Name: Internet Lost Haptic
+
+Package: com.nextsolution.internetlosthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/InternetLostHaptic_1.0.0_Rootless.deb
+Size: 8050
+MD5sum: 25d76e1808bd7327e9813165f5bbbc77
+SHA1: 6770e39818a5e603b2ec32af0be5e5cfe927a299
+SHA256: 0a5edebc57f5fe802dd06fb120c444ee51a964e0a4397aa31356fb894779f1ed
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays one warning haptic when a usable network path becomes unavailable.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html
+Name: Internet Lost Haptic
