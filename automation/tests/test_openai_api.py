@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from automation.openai_api import OpenAIAPIError, structured_response
+from automation.schemas import ARTICLE_SCHEMA
 
 
 class FakeResponse:
@@ -21,6 +22,12 @@ class FakeResponse:
 
 
 class OpenAIClientTests(unittest.TestCase):
+    def test_article_schema_enforces_deterministic_collection_limits(self) -> None:
+        self.assertEqual(ARTICLE_SCHEMA["properties"]["what_it_does"]["minItems"], 3)
+        self.assertEqual(ARTICLE_SCHEMA["properties"]["faq"]["minItems"], 3)
+        self.assertEqual(ARTICLE_SCHEMA["properties"]["youtube_chapters"]["maxItems"], 9)
+        self.assertEqual(ARTICLE_SCHEMA["properties"]["youtube_title"]["maxLength"], 100)
+
     def test_request_is_structured_stateless_and_bounded(self) -> None:
         response_payload = {
             "id": "resp_test",

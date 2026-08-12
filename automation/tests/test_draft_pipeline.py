@@ -12,6 +12,7 @@ from unittest.mock import patch
 from xml.etree import ElementTree
 
 from automation.draft_pipeline import (
+    generate_draft,
     render_article,
     main,
     validate_article,
@@ -88,6 +89,93 @@ class DraftPipelineTests(unittest.TestCase):
             ElementTree.fromstring((output / "sitemap-entry.xml").read_text())
             ElementTree.fromstring((output / "rss-item.xml").read_text())
             self.assertTrue((output / "youtube-script.md").exists())
+
+    def test_rejected_generation_gets_one_bounded_repair_and_recheck(self) -> None:
+        rejected = deepcopy(self.article)
+        rejected["faq"] = rejected["faq"][:1]
+        rejected["summary"] += " It supports iOS 18."
+        rejected_verdict = {
+            "approved": False,
+            "issues": ["Unsupported compatibility claim."],
+            "unsupported_claims": ["It supports iOS 18."],
+            "notes": "repair required",
+        }
+        approved_verdict = {
+            "approved": True,
+            "issues": [],
+            "unsupported_claims": [],
+            "notes": "approved",
+        }
+        responses = [
+            (rejected, {"response_id": "writer"}),
+            (rejected_verdict, {"response_id": "verifier-1"}),
+            (self.article, {"response_id": "repair"}),
+            (approved_verdict, {"response_id": "verifier-2"}),
+        ]
+        with patch(
+            "automation.draft_pipeline.structured_response", side_effect=responses
+        ) as mocked:
+            article, verifier, metadata = generate_draft(self.candidate, self.site)
+        self.assertEqual(mocked.call_count, 4)
+        self.assertEqual(article, self.article)
+        self.assertTrue(verifier["approved"])
+        self.assertTrue(metadata["repair_attempted"])
+        self.assertIn("faq must contain 3-6 items", metadata["initial_rejection"]["deterministic_issues"])
+        repair_payload = mocked.call_args_list[2].kwargs["input_payload"]
+        self.assertIn("Unsupported compatibility claim.", repair_payload["rejection_reasons"])
+        self.assertIn("unsupported iOS version claim", " ".join(repair_payload["rejection_reasons"]))
+
+    def test_approved_generation_skips_repair(self) -> None:
+        approved_verdict = {
+            "approved": True,
+            "issues": [],
+            "unsupported_claims": [],
+            "notes": "approved",
+        }
+        responses = [
+            (self.article, {"response_id": "writer"}),
+            (approved_verdict, {"response_id": "verifier"}),
+        ]
+        with patch(
+            "automation.draft_pipeline.structured_response", side_effect=responses
+        ) as mocked:
+            article, verifier, metadata = generate_draft(self.candidate, self.site)
+        self.assertEqual(mocked.call_count, 2)
+        self.assertEqual(article, self.article)
+        self.assertTrue(verifier["approved"])
+        self.assertFalse(metadata["repair_attempted"])
+
+    def test_verifier_rejection_without_details_still_triggers_repair(self) -> None:
+        rejected_verdict = {
+            "approved": False,
+            "issues": [],
+            "unsupported_claims": [],
+            "notes": "rejected",
+        }
+        approved_verdict = {
+            "approved": True,
+            "issues": [],
+            "unsupported_claims": [],
+            "notes": "approved",
+        }
+        responses = [
+            (self.article, {"response_id": "writer"}),
+            (rejected_verdict, {"response_id": "verifier-1"}),
+            (self.article, {"response_id": "repair"}),
+            (approved_verdict, {"response_id": "verifier-2"}),
+        ]
+        with patch(
+            "automation.draft_pipeline.structured_response", side_effect=responses
+        ) as mocked:
+            _, verifier, metadata = generate_draft(self.candidate, self.site)
+        self.assertEqual(mocked.call_count, 4)
+        self.assertTrue(verifier["approved"])
+        self.assertTrue(metadata["repair_attempted"])
+        repair_payload = mocked.call_args_list[2].kwargs["input_payload"]
+        self.assertEqual(
+            repair_payload["rejection_reasons"],
+            ["The independent verifier rejected the draft without a detailed reason."],
+        )
 
     def test_cli_marks_fixture_release_and_does_not_repeat_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

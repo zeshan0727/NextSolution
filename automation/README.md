@@ -11,6 +11,10 @@ the verified-source evergreen catalog. It uses the OpenAI Responses API only whe
 `OPENAI_API_KEY` exists as an encrypted repository secret. The model produces
 strict structured text; trusted Python code escapes and renders the HTML. A
 second model call and deterministic quality gates must both approve the draft.
+If either rejects the first result, one bounded corrective rewrite receives the
+exact rejection reasons and must pass the same deterministic gates plus a fresh
+independent verification. A second failure stops the run rather than weakening
+the checks or spending through an unbounded retry loop.
 The bundle remains a GitHub Actions artifact and is never published by this
 workflow.
 

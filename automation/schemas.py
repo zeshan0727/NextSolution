@@ -5,44 +5,70 @@ from __future__ import annotations
 from typing import Any
 
 
+NON_EMPTY_STRING: dict[str, Any] = {"type": "string", "minLength": 1}
+
+
 ARTICLE_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "title": {"type": "string"},
-        "meta_description": {"type": "string"},
-        "summary": {"type": "string"},
-        "what_it_does": {"type": "array", "items": {"type": "string"}},
-        "compatibility_note": {"type": "string"},
-        "installation_steps": {"type": "array", "items": {"type": "string"}},
-        "safety_notes": {"type": "array", "items": {"type": "string"}},
+        "title": NON_EMPTY_STRING,
+        "meta_description": {
+            "type": "string",
+            "minLength": 110,
+            "maxLength": 165,
+        },
+        "summary": NON_EMPTY_STRING,
+        "what_it_does": {
+            "type": "array",
+            "items": NON_EMPTY_STRING,
+            "minItems": 3,
+            "maxItems": 7,
+        },
+        "compatibility_note": NON_EMPTY_STRING,
+        "installation_steps": {
+            "type": "array",
+            "items": NON_EMPTY_STRING,
+            "minItems": 4,
+            "maxItems": 8,
+        },
+        "safety_notes": {
+            "type": "array",
+            "items": NON_EMPTY_STRING,
+            "minItems": 2,
+            "maxItems": 6,
+        },
         "faq": {
             "type": "array",
+            "minItems": 3,
+            "maxItems": 6,
             "items": {
                 "type": "object",
                 "properties": {
-                    "question": {"type": "string"},
-                    "answer": {"type": "string"},
+                    "question": NON_EMPTY_STRING,
+                    "answer": NON_EMPTY_STRING,
                 },
                 "required": ["question", "answer"],
                 "additionalProperties": False,
             },
         },
-        "youtube_title": {"type": "string"},
-        "youtube_hook": {"type": "string"},
+        "youtube_title": {"type": "string", "minLength": 1, "maxLength": 100},
+        "youtube_hook": NON_EMPTY_STRING,
         "youtube_chapters": {
             "type": "array",
+            "minItems": 5,
+            "maxItems": 9,
             "items": {
                 "type": "object",
                 "properties": {
-                    "heading": {"type": "string"},
-                    "narration": {"type": "string"},
-                    "visual_instruction": {"type": "string"},
+                    "heading": NON_EMPTY_STRING,
+                    "narration": NON_EMPTY_STRING,
+                    "visual_instruction": NON_EMPTY_STRING,
                 },
                 "required": ["heading", "narration", "visual_instruction"],
                 "additionalProperties": False,
             },
         },
-        "youtube_description": {"type": "string"},
+        "youtube_description": NON_EMPTY_STRING,
     },
     "required": [
         "title",
