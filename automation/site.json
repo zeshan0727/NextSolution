@@ -8,6 +8,11 @@
   "adsense_client": "ca-pub-4770123899731214",
   "default_model": "gpt-5.6-luna",
   "excluded_source_ids": ["nextsolution"],
+  "publishing": {
+    "enabled": true,
+    "max_per_day": 1,
+    "timezone": "Asia/Qatar"
+  },
   "shortener": {
     "enabled": false,
     "provider": "ShrinkMe",

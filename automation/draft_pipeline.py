@@ -90,6 +90,9 @@ def _compact_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         "facts_url",
         "source_name",
         "source_url",
+        "source_tier",
+        "blockers",
+        "publish_eligible",
         "change_type",
         "selection_pool",
         "previous_version",
@@ -186,19 +189,44 @@ def _safe_url(value: str) -> str:
     parsed = urlparse(value)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError(f"unsafe external URL: {value}")
+    if parsed.username or parsed.password:
+        raise ValueError(f"credentials are not allowed in external URLs: {value}")
     return html.escape(value, quote=True)
+
+
+def article_source_url(candidate: dict[str, Any]) -> str:
+    """Return a direct verified package page when its mapping is deterministic."""
+    source_url = str(candidate["source_url"])
+    source = urlparse(source_url)
+    facts = urlparse(str(candidate.get("facts_url", "")))
+    if (
+        source.scheme == "https"
+        and source.netloc == "havoc.app"
+        and facts.scheme == "https"
+        and facts.netloc == "havoc.app"
+        and re.fullmatch(r"/package/[A-Za-z0-9._-]+/depiction\.json", facts.path)
+    ):
+        return f"https://havoc.app{facts.path.removesuffix('/depiction.json')}"
+    return source_url
+
+
+def display_author(value: Any) -> str:
+    """Remove a package-control email suffix from the public byline."""
+    text = str(value).strip()
+    return re.sub(r"\s*<[^<>]+>\s*$", "", text).strip() or text
 
 
 def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dict[str, Any]) -> str:
     esc = lambda value: html.escape(str(value), quote=True)
     base_url = str(site["base_url"]).rstrip("/")
     canonical = f"{base_url}/{candidate['slug']}.html"
-    source_url = _safe_url(str(candidate["source_url"]))
+    source_url = _safe_url(article_source_url(candidate))
+    author = display_author(candidate["author"])
     published = datetime.now(timezone.utc).date().isoformat()
     category = candidate["category"]
     json_ld = {
         "@context": "https://schema.org",
-        "@type": "Article",
+        "@type": "TechArticle",
         "headline": article["title"],
         "description": article["meta_description"],
         "datePublished": published,
@@ -225,46 +253,66 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05070d">
   <title>{esc(article['title'])} | {esc(site['site_name'])}</title>
   <meta name="description" content="{esc(article['meta_description'])}">
   <link rel="canonical" href="{esc(canonical)}">
+  <link rel="alternate" type="application/rss+xml" title="{esc(site['site_name'])} articles" href="/feed.xml">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="stylesheet" href="/assets/site.css">
   <meta property="og:type" content="article">
+  <meta property="og:site_name" content="{esc(site['site_name'])}">
   <meta property="og:url" content="{esc(canonical)}">
   <meta property="og:title" content="{esc(article['title'])}">
   <meta property="og:description" content="{esc(article['meta_description'])}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{esc(article['title'])}">
+  <meta name="twitter:description" content="{esc(article['meta_description'])}">
   <script type="application/ld+json">{json_ld_text}</script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={esc(site['adsense_client'])}" crossorigin="anonymous"></script>
-  <style>
-    :root{{--primary:#6a11cb;--secondary:#2575fc;--bg:#f5f7fb;--surface:#fff;--text:#1e2430;--muted:#667085;--border:#dfe5f2}}
-    @media(prefers-color-scheme:dark){{:root{{--bg:#0d111b;--surface:#181e2c;--text:#f4f6fb;--muted:#b0b9cd;--border:#30394c}}}}
-    *{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
-    header{{padding:1rem;color:#fff;background:linear-gradient(135deg,var(--primary),var(--secondary))}}header div,main,footer{{width:min(900px,calc(100% - 2rem));margin:auto}}header a{{color:#fff;text-decoration:none;font-weight:900}}
-    main{{padding:3rem 0}}article{{padding:clamp(1.25rem,4vw,3rem);border:1px solid var(--border);border-radius:1.5rem;background:var(--surface)}}h1{{font-size:clamp(2rem,6vw,3.6rem);line-height:1.08}}h2{{margin-top:2.4rem}}.meta,.note{{color:var(--muted)}}.facts{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem;margin:1.4rem 0}}.facts div{{padding:1rem;border:1px solid var(--border);border-radius:1rem}}.button{{display:inline-block;padding:.75rem 1rem;border-radius:.8rem;color:#fff;background:linear-gradient(135deg,var(--primary),var(--secondary));text-decoration:none;font-weight:800}}details{{margin:.7rem 0;padding:.8rem 1rem;border:1px solid var(--border);border-radius:.8rem}}summary{{font-weight:800;cursor:pointer}}footer{{padding:0 0 3rem;color:var(--muted)}}
-  </style>
 </head>
 <body>
-  <header><div><a href="./">{esc(site['site_name'])}</a></div></header>
-  <main><article>
-    <p class="meta">{esc(category['label'])} · Package release information</p>
-    <h1>{esc(article['title'])}</h1>
-    <p>{esc(article['summary'])}</p>
-    <div class="facts">
-      <div><strong>Version</strong><br>{esc(candidate['version'])}</div>
-      <div><strong>Architectures</strong><br>{esc(architectures)}</div>
-      <div><strong>Developer</strong><br>{esc(candidate['author'])}</div>
-      <div><strong>Source</strong><br>{esc(candidate['source_name'])}</div>
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><span class="brand-mark" aria-hidden="true">N</span><span>{esc(site['site_name'])}</span></a>
+      <nav aria-label="Primary navigation"><ul class="nav-links"><li><a href="/">Home</a></li><li><a href="/tutorials.html" aria-current="page">Guides</a></li><li><a href="/videos.html">Videos</a></li><li><a href="/#faq">FAQ</a></li></ul></nav>
     </div>
-    <p><a class="button" href="{source_url}" rel="nofollow noopener noreferrer">Open official developer/source page</a></p>
-    <p class="note">This article links to the official source page. Confirm price, compatibility and installation details there before installing.</p>
-    <h2>What the metadata says it does</h2><ul>{feature_items}</ul>
-    <h2>Compatibility</h2><p>{esc(article['compatibility_note'])}</p>
-    <h2>How to install carefully</h2><ol>{install_items}</ol>
-    <h2>Before you install</h2><ul>{safety_items}</ul>
-    <h2>Frequently asked questions</h2>{faq_items}
-    <p class="meta">Package identifier: <code>{esc(candidate['package'])}</code> · Published {published}</p>
-  </article></main>
-  <footer><p>© {datetime.now(timezone.utc).year} {esc(site['site_name'])}. This is an informational jailbreak-tweak guide.</p></footer>
+  </header>
+  <main class="container article-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/tutorials.html">Guides</a><span aria-hidden="true">/</span><span>{esc(candidate['name'])}</span></nav>
+    <article>
+      <header class="article-hero">
+        <span class="article-kicker">{esc(category['label'])} · Verified-source package information</span>
+        <h1 class="gradient-text">{esc(article['title'])}</h1>
+        <p class="article-summary">{esc(article['summary'])}</p>
+        <div class="fact-grid">
+          <div class="fact-box"><span>Version</span><strong>{esc(candidate['version'])}</strong></div>
+          <div class="fact-box"><span>Architecture</span><strong>{esc(architectures)}</strong></div>
+          <div class="fact-box"><span>Author</span><strong>{esc(author)}</strong></div>
+          <div class="fact-box"><span>Source</span><strong>{esc(candidate['source_name'])}</strong></div>
+        </div>
+      </header>
+      <div class="article-layout">
+        <div class="article-content">
+          <h2>What the package metadata says it does</h2><ul>{feature_items}</ul>
+          <h2>Compatibility information</h2><p>{esc(article['compatibility_note'])}</p>
+          <h2>How to install carefully</h2><ol>{install_items}</ol>
+          <h2>Before you install</h2><ul>{safety_items}</ul>
+          <h2>Frequently asked questions</h2><div class="faq-list">{faq_items}</div>
+          <div class="article-disclaimer"><strong>Important:</strong> Package metadata is not a complete compatibility or safety guarantee. Back up important data and verify current details for your exact device and environment before installing.</div>
+          <p class="article-footnote">Package identifier: <code>{esc(candidate['package'])}</code> · Published {published} · Informational guide generated from verified-source metadata and independently checked before publication.</p>
+        </div>
+        <aside class="article-sidebar" aria-label="Source information">
+          <h2>Verify current details</h2>
+          <p>Check price, licensing, compatibility, dependencies, and release notes on the linked source page.</p>
+          <a class="button button-primary" href="{source_url}" rel="nofollow noopener noreferrer">Open source page</a>
+          <p class="source-note">Direct source link. No third-party package file is mirrored by this article.</p>
+        </aside>
+      </div>
+    </article>
+  </main>
+  <footer class="site-footer"><div class="footer-shell"><div><strong>{esc(site['site_name'])}</strong><p>Independent jailbreak tutorials, verified tweak information, and original iPhone customization videos by {esc(site['author_name'])}.</p></div><div class="footer-links"><a href="/">Home</a><a href="/tutorials.html">Guides</a><a href="/videos.html">Videos</a><a href="/feed.xml">RSS</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div></footer>
 </body>
 </html>
 """
@@ -298,7 +346,7 @@ def render_youtube_script(article: dict[str, Any], candidate: dict[str, Any], si
             "",
             article["youtube_description"],
             "",
-            f"Official source: {candidate['source_url']}",
+            f"Official source: {article_source_url(candidate)}",
             f"Website: {site['base_url']}",
             "",
             "Do not upload this script as a slideshow or synthetic mass-produced video. Add real device footage, original commentary, and an honest demonstration of what can be confirmed.",

@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: nextsolution-content-state
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   scan:

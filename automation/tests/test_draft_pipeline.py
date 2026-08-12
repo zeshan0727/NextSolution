@@ -12,6 +12,8 @@ from unittest.mock import patch
 from xml.etree import ElementTree
 
 from automation.draft_pipeline import (
+    article_source_url,
+    display_author,
     generate_draft,
     render_article,
     main,
@@ -60,9 +62,20 @@ class DraftPipelineTests(unittest.TestCase):
         )
         self.assertIsNotNone(match)
         payload = json.loads(match.group(1))
-        self.assertEqual(payload["@type"], "Article")
+        self.assertEqual(payload["@type"], "TechArticle")
         self.assertIn("https://example.com/repo/", rendered)
         self.assertNotIn("https://example.com/depictions/", rendered)
+
+    def test_havoc_depiction_maps_to_direct_package_page(self) -> None:
+        candidate = deepcopy(self.candidate)
+        candidate["source_url"] = "https://havoc.app/"
+        candidate["facts_url"] = "https://havoc.app/package/example/depiction.json"
+        self.assertEqual(
+            article_source_url(candidate), "https://havoc.app/package/example"
+        )
+
+    def test_public_author_omits_control_file_email(self) -> None:
+        self.assertEqual(display_author("Example Dev <dev@example.com>"), "Example Dev")
 
     def test_artifact_bundle_is_explicitly_non_publishing(self) -> None:
         quality = validate_article(self.article, self.candidate)

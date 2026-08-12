@@ -1,0 +1,37 @@
+{
+  "entries": [
+    {
+      "article_sha256": "1df7679367acb096cc531995e0a4baaa68731ff93a482a1b181d94393f6ecd08",
+      "candidate_fingerprint": "b8c9a1cd18ecc02b854d4909cbf559d0b43c0cbc5bbff92d089f2f2439938126",
+      "category": {
+        "id": "messages-phone",
+        "label": "Messages & Phone"
+      },
+      "description": "Phonehub 1.1.3 is a package for the iOS Phone app with listed Caller ID engines, Auto Redial, Smart Loudspeaker, dual-SIM selection, and interface refinements.",
+      "href": "phonehub-tweak.html",
+      "modified_at": "2026-08-12T15:11:37+00:00",
+      "name": "Phonehub",
+      "package": "eg.anubistweaks.phonehub",
+      "published_at": "2026-08-12T15:11:37+00:00",
+      "selection_pool": "evergreen",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/phonehub",
+      "source_url": "https://havoc.app/",
+      "title": "Phonehub 1.1.3: Caller ID, Auto Redial, and Phone App Features",
+      "version": "1.1.3"
+    }
+  ],
+  "events": [
+    {
+      "action": "create",
+      "candidate_fingerprint": "b8c9a1cd18ecc02b854d4909cbf559d0b43c0cbc5bbff92d089f2f2439938126",
+      "href": "phonehub-tweak.html",
+      "package": "eg.anubistweaks.phonehub",
+      "published_at": "2026-08-12T15:11:37+00:00",
+      "run_id": "approved-test-31607004739",
+      "version": "1.1.3"
+    }
+  ],
+  "schema_version": 1,
+  "updated_at": "2026-08-12T15:11:37+00:00"
+}
