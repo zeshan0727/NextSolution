@@ -19,5 +19,11 @@ if removed != 2:
 if "sourceForAI" in text or "guidForAI" in text or "guidBytesForAI" in text:
     raise RuntimeError("Obsolete automatic AI source variables still remain")
 
+old_helper = "static BOOL QueueAICandidate(NSString *text, NSString *sourceKey, NSString *sender, sqlite3_int64 rowID, NSDate *date) {"
+new_helper = "__attribute__((unused)) static BOOL QueueAICandidate(NSString *text, NSString *sourceKey, NSString *sender, sqlite3_int64 rowID, NSDate *date) {"
+if old_helper not in text:
+    raise RuntimeError("QueueAICandidate helper anchor not found")
+text = text.replace(old_helper, new_helper, 1)
+
 path.write_text(text, encoding="utf-8")
-print("Removed obsolete automatic-AI source variables after disabling daemon AI queueing.")
+print("Removed automatic-AI call variables and retired the unused daemon AI helper.")
