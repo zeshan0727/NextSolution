@@ -1,16 +1,16 @@
-name: Build Next Ledger 1.3.73 Scheduled SMS Daemon
+name: Build Next Ledger 1.3.74 Low-Power SMS Service
 permissions:
   contents: write
 concurrency:
-  group: next-ledger-1-3-73-${{ github.ref }}
+  group: next-ledger-1-3-74-${{ github.ref }}
   cancel-in-progress: true
 on:
   workflow_dispatch:
   push:
     paths:
       - ".github/workflows/build-next-ledger-1.3.72.yml"
-      - "scripts/apply_next_ledger_1_3_73.sh"
-      - "scripts/fix_sms_scheduled_daemon_1_3_73.py"
+      - "scripts/apply_next_ledger_1_3_74.sh"
+      - "scripts/fix_sms_low_power_no_auto_ai_1_3_74.py"
 jobs:
   build:
     runs-on: macos-15
@@ -19,34 +19,59 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Apply 1.3.73
-        run: bash scripts/apply_next_ledger_1_3_73.sh
-      - name: Validate scheduled SMS architecture
+      - name: Apply 1.3.74
+        run: bash scripts/apply_next_ledger_1_3_74.sh
+      - name: Validate low-power SMS architecture
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build
-          grep -Fq 'MARKETING_VERSION: "1.3.73"' project.yml
-          grep -Fq 'CURRENT_PROJECT_VERSION: "81"' project.yml
-          grep -Fq 'kDaemonVersion = @"2.2.4"' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'realtimeCaptureEnabled' RootHideSMSQueue/Sources/main.m
-          grep -Fq '!AutomaticScanIsDue(config, scanDate)' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'dispatch_semaphore_wait(gDaemonWakeSemaphore, deadline)' RootHideSMSQueue/Sources/main.m
-          grep -Fq 'sms-daemon-wake' DailyLedger/Services/SMSImportConsoleService.swift
-          grep -Fq 'Realtime SMS Capture' DailyLedger/Views/SMSImportConsoleView.swift
-          grep -Fq 'Scheduled SMS Scan Interval' DailyLedger/Views/SMSImportConsoleView.swift
-          if grep -Fq 'Capture-first mode: discovery is realtime; interval no longer gates sms.db reads.' RootHideSMSQueue/Sources/main.m; then
-            echo 'Old forced-realtime gate removal is still present' >&2
-            exit 1
-          fi
-          if grep -Fq 'sleep(5);' RootHideSMSQueue/Sources/main.m; then
-            echo 'Old continuous 5-second polling loop is still present' >&2
-            exit 1
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          project = Path('project.yml').read_text()
+          daemon = Path('RootHideSMSQueue/Sources/main.m').read_text()
+          service = Path('DailyLedger/Services/SMSImportConsoleService.swift').read_text()
+          view = Path('DailyLedger/Views/SMSImportConsoleView.swift').read_text()
+          review = Path('DailyLedger/Views/SMSLatest15ReviewView.swift').read_text()
+          plist = Path('RootHideSMSQueue/layout/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist').read_text()
+          postinst = Path('RootHideSMSQueue/postinst').read_text()
+
+          required = {
+              'project version': ('MARKETING_VERSION: "1.3.74"' in project and 'CURRENT_PROJECT_VERSION: "82"' in project),
+              'daemon 2.2.5': 'kDaemonVersion = @"2.2.5"' in daemon,
+              'scheduled due gate': '!AutomaticScanIsDue(config, scanDate)' in daemon,
+              'one-shot scanner': 'One-shot service: scan if due/requested' in daemon,
+              'watch-file app wake': 'sms-daemon-wake.trigger' in service,
+              '2 second console refresh': 'Timer.publish(every: 2.0' in view,
+              'manual AI retained': 'Ask AI' in review,
+              'launchd hourly due check': '<key>StartInterval</key>' in plist and '<integer>3600</integer>' in plist,
+              'launchd WatchPaths': '<key>WatchPaths</key>' in plist and '__NEXTLEDGER_WAKE_PATH__' in plist,
+              'postinst dynamic wake path': 'sms-daemon-wake.trigger' in postinst and '__NEXTLEDGER_WAKE_PATH__' in postinst,
+          }
+          for name, ok in required.items():
+              if not ok:
+                  raise SystemExit(f'Missing validation: {name}')
+
+          forbidden = {
+              'KeepAlive': '<key>KeepAlive</key>' in plist,
+              'resident while loop': 'while (true)' in daemon,
+              'dispatch semaphore': 'dispatch_semaphore_wait' in daemon,
+              'realtime config': 'realtimeCaptureEnabled' in daemon or 'realtimeCaptureEnabled' in service or 'realtimeCaptureEnabled' in view,
+              'automatic AI enqueue': re.search(r'(?m)^\s+QueueAICandidate\(', daemon) is not None,
+              'automatic AI runner': 'startAIRecognitionIfNeeded' in view,
+              'fast console timer': 'Timer.publish(every: 0.35' in view,
+          }
+          for name, present in forbidden.items():
+              if present:
+                  raise SystemExit(f'Forbidden low-power behavior remains: {name}')
+          print('Low-power SMS architecture validation passed.')
+          PY
           xcrun clang -fobjc-arc RootHideSMSQueue/Sources/main.m -framework Foundation -framework CoreFoundation -lsqlite3 -o build/nextledgersmsd-macos
           build/nextledgersmsd-macos --self-test | tee build/sms-parser-tests.json
           grep -q '"passed" : true' build/sms-parser-tests.json
-          grep -q '"version" : "2.2.4"' build/sms-parser-tests.json
+          grep -q '"version" : "2.2.5"' build/sms-parser-tests.json
       - run: brew install xcodegen dpkg ldid
       - run: xcodegen generate
       - name: Build iPhone app
@@ -54,7 +79,7 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -project DailyLedger.xcodeproj -scheme DailyLedger -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
-      - name: Build daemon 2.2.4
+      - name: Build daemon 2.2.5
         shell: bash
         run: |
           set -euxo pipefail
@@ -67,7 +92,7 @@ jobs:
           export THEOS="$RUNNER_TEMP/theos"
           chmod +x RootHideSMSQueue/postinst RootHideSMSQueue/prerm RootHideSMSQueue/layout/DEBIAN/postinst RootHideSMSQueue/layout/DEBIAN/prerm
           make -C RootHideSMSQueue clean package FINALPACKAGE=1
-          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.2.4-roothide.deb
+          cp RootHideSMSQueue/packages/*.deb NextLedgerSMSDaemon-2.2.5-roothide.deb
       - name: Package TIPA
         shell: bash
         run: |
@@ -76,17 +101,17 @@ jobs:
           test -n "$APP_PATH"
           rm -rf Payload && mkdir Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.73-scheduled-sms-daemon.tipa
-          shasum -a 256 NextLedger-1.3.73-scheduled-sms-daemon.tipa > NextLedger-1.3.73-scheduled-sms-daemon.sha256
-          shasum -a 256 NextLedgerSMSDaemon-2.2.4-roothide.deb > NextLedgerSMSDaemon-2.2.4-roothide.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.74-low-power-sms.tipa
+          shasum -a 256 NextLedger-1.3.74-low-power-sms.tipa > NextLedger-1.3.74-low-power-sms.sha256
+          shasum -a 256 NextLedgerSMSDaemon-2.2.5-roothide.deb > NextLedgerSMSDaemon-2.2.5-roothide.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: NextLedger-1.3.73-Scheduled-SMS-Daemon
+          name: NextLedger-1.3.74-Low-Power-SMS
           path: |
-            NextLedger-1.3.73-scheduled-sms-daemon.tipa
-            NextLedger-1.3.73-scheduled-sms-daemon.sha256
-            NextLedgerSMSDaemon-2.2.4-roothide.deb
-            NextLedgerSMSDaemon-2.2.4-roothide.sha256
+            NextLedger-1.3.74-low-power-sms.tipa
+            NextLedger-1.3.74-low-power-sms.sha256
+            NextLedgerSMSDaemon-2.2.5-roothide.deb
+            NextLedgerSMSDaemon-2.2.5-roothide.sha256
             build/sms-parser-tests.json
           if-no-files-found: error
       - name: Capture diagnostics
@@ -94,12 +119,19 @@ jobs:
         shell: bash
         run: |
           mkdir -p build
-          grep -E 'error:|fatal error:|BUILD FAILED|SwiftCompile' build/xcodebuild.log > build/next-ledger-1.3.73-errors.txt 2>/dev/null || true
+          {
+            echo '--- Build errors ---'
+            test -f build/xcodebuild.log && grep -E 'error:|fatal error:|BUILD FAILED|SwiftCompile' build/xcodebuild.log || true
+            echo '--- launchd plist ---'
+            cat RootHideSMSQueue/layout/Library/LaunchDaemons/com.nextsolution.nextledgersmsd.plist || true
+            echo '--- SMS low-power markers ---'
+            grep -R -n 'KeepAlive\|StartInterval\|WatchPaths\|QueueAICandidate\|realtimeCaptureEnabled\|One-shot service' RootHideSMSQueue DailyLedger/Views/SMSImportConsoleView.swift DailyLedger/Services/SMSImportConsoleService.swift || true
+          } > build/next-ledger-1.3.74-diagnostics.txt
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: NextLedger-1.3.73-Diagnostics
-          path: build/next-ledger-1.3.73-errors.txt
+          name: NextLedger-1.3.74-Diagnostics
+          path: build/next-ledger-1.3.74-diagnostics.txt
           if-no-files-found: warn
       - name: Publish status
         if: always()
@@ -111,11 +143,11 @@ jobs:
           git fetch origin "$GITHUB_REF_NAME"
           git checkout -B build-status "origin/$GITHUB_REF_NAME"
           mkdir -p .build-status
-          cat > .build-status/next-ledger-1.3.73.json <<EOF
-          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","source_sha":"${GITHUB_SHA}","app_version":"1.3.73","app_build":"81","daemon_version":"2.2.4","artifact_name":"NextLedger-1.3.73-Scheduled-SMS-Daemon"}
+          cat > .build-status/next-ledger-1.3.74.json <<EOF
+          {"status":"${STATUS}","run_id":"${GITHUB_RUN_ID}","source_sha":"${GITHUB_SHA}","app_version":"1.3.74","app_build":"82","daemon_version":"2.2.5","artifact_name":"NextLedger-1.3.74-Low-Power-SMS"}
           EOF
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .build-status/next-ledger-1.3.73.json
-          git commit -m "Record Next Ledger 1.3.73 build status" || exit 0
+          git config user.email "4189823+github-actions[bot]@users.noreply.github.com"
+          git add .build-status/next-ledger-1.3.74.json
+          git commit -m "Record Next Ledger 1.3.74 build status" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}
