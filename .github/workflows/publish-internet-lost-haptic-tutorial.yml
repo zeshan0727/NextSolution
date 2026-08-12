@@ -1,0 +1,66 @@
+name: Prepare Internet Lost Haptic Tutorial
+on:
+  workflow_dispatch:
+  push:
+    branches: [tutorial/internet-lost-haptic-1.0.0]
+    paths:
+      - "internet-lost-haptic-tweak-ios16.html"
+      - "assets/internetlosthaptic/**"
+      - ".github/scripts/publish-internet-lost-haptic-tutorial.py"
+      - ".github/workflows/publish-internet-lost-haptic-tutorial.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "internet-lost-haptic-tweak-ios16.html"
+      - "assets/internetlosthaptic/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - ".github/scripts/publish-internet-lost-haptic-tutorial.py"
+      - ".github/workflows/publish-internet-lost-haptic-tutorial.yml"
+permissions:
+  contents: write
+jobs:
+  prepare-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Verify published package source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -c '^Package: com.nextsolution.internetlosthaptic$' Packages)" -eq 2
+          grep -q '^Filename: ./debfiles/InternetLostHaptic_1.0.0_RootHide.deb$' Packages
+          grep -q '^Filename: ./debfiles/InternetLostHaptic_1.0.0_Rootless.deb$' Packages
+          test -s debfiles/InternetLostHaptic_1.0.0_RootHide.deb
+          test -s debfiles/InternetLostHaptic_1.0.0_Rootless.deb
+      - name: Generate cards and sitemap
+        if: github.event_name == 'push'
+        run: python3 .github/scripts/publish-internet-lost-haptic-tutorial.py
+      - name: Validate tutorial publication
+        run: python3 .github/scripts/publish-internet-lost-haptic-tutorial.py --check
+      - name: Validate SEO navigation AdSense and package links
+        shell: bash
+        run: |
+          set -euo pipefail
+          A=internet-lost-haptic-tweak-ios16.html
+          grep -q '<link rel="canonical" href="https://nextsolution.cc/internet-lost-haptic-tweak-ios16.html">' "$A"
+          grep -q '"@type":"TechArticle"' "$A"
+          grep -q 'href="./"' "$A"; grep -q 'href="tutorials.html" aria-current="page"' "$A"; grep -q 'href="videos.html"' "$A"; grep -q 'href="./#faq"' "$A"
+          grep -q 'ca-pub-4770123899731214' "$A"
+          test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' "$A")" -eq 1
+          ! grep -R -q 'zeshan0727.github.io' "$A" .github/scripts/publish-internet-lost-haptic-tutorial.py assets/internetlosthaptic index.html tutorials.html sitemap.xml
+          grep -q 'INTERNET_LOST_HAPTIC_RECENT_CARD_START' index.html
+          grep -q 'INTERNET_LOST_HAPTIC_TUTORIAL_CARD_START' tutorials.html
+          grep -q 'https://nextsolution.cc/internet-lost-haptic-tweak-ios16.html' sitemap.xml
+      - name: Commit generated website files to tutorial branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'; git config user.email 'actions@users.noreply.github.com'
+          git add index.html tutorials.html sitemap.xml
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Prepare Internet Lost Haptic tutorial cards and sitemap'
+          git push origin HEAD:tutorial/internet-lost-haptic-1.0.0
