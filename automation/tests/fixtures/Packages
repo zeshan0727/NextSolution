@@ -1,0 +1,28 @@
+Package: com.example.focuscards
+Name: Focus Cards
+Version: 1.2.0
+Architecture: iphoneos-arm64
+Description: Adds configurable cards to the iOS Home Screen.
+ Includes per-page spacing and color controls.
+ .
+ Settings are available through PreferenceLoader.
+Author: Example Developer <developer@example.com>
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader
+Filename: ./debs/com.example.focuscards_1.2.0_iphoneos-arm64.deb
+SHA256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Depiction: https://example.com/depictions/focuscards
+
+Package: invalid-no-version
+Architecture: iphoneos-arm64
+Description: This paragraph must be ignored by normalization.
+
+Package: com.example.focuscards
+Name: Focus Cards
+Version: 1.1.0~beta1
+Architecture: iphoneos-arm64
+Description: An earlier beta package retained in the feed for testing.
+Author: Example Developer
+Section: Tweaks
+Filename: ./debs/old.deb
+SHA256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb

@@ -1,0 +1,3 @@
+automation/out/
+__pycache__/
+*.py[cod]
