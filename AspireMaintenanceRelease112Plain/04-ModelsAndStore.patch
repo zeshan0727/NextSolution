@@ -1,0 +1,21 @@
+diff -ruN /mnt/data/aspire111_base/AspireMaintenance/ModelsAndStore.swift /mnt/data/aspire111_work/AspireMaintenance/ModelsAndStore.swift
+--- /mnt/data/aspire111_base/AspireMaintenance/ModelsAndStore.swift	2026-08-13 16:09:32.000000000 +0000
++++ /mnt/data/aspire111_work/AspireMaintenance/ModelsAndStore.swift	2026-08-13 16:37:27.707087774 +0000
+@@ -55,6 +55,8 @@
+     var isActive: Bool
+     /// Nil in older backups; nil is treated as monthly maintenance for backward compatibility.
+     var customerType: CustomerType? = nil
++    /// Optional for backward-compatible decoding. Archived customers stay in history but are hidden from active workflows.
++    var isArchived: Bool? = nil
+     var createdAt: Date = Date()
+ }
+ 
+@@ -264,7 +266,7 @@
+ 
+     var company: CompanyProfile { data.company }
+     var customers: [Customer] { data.customers.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending } }
+-    var activeCustomers: [Customer] { customers.filter(\.isActive) }
++    var activeCustomers: [Customer] { customers.filter { $0.isActive && !$0.resolvedArchived } }
+     var monthlyMaintenanceCustomers: [Customer] { activeCustomers.filter { $0.resolvedType == .monthlyMaintenance } }
+     var invoices: [Invoice] { data.invoices.sorted { $0.issueDate > $1.issueDate } }
+     var expenses: [Expense] { data.expenses.sorted { $0.date > $1.date } }
