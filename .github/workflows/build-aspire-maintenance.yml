@@ -10,7 +10,7 @@ on:
       - "AspireMaintenancePatchScript101/**"
       - "AspireMaintenancePatchAssets/**"
       - "AspireMaintenanceRelease110/**"
-      - "AspireMaintenanceRelease112Overrides/**"
+      - "AspireMaintenanceRelease112Final/**"
       - ".github/workflows/build-aspire-maintenance.yml"
 
 permissions:
@@ -51,16 +51,16 @@ jobs:
           PY
           patch --batch -p2 -d AspireMaintenance < /tmp/aspire111.patch
 
-      - name: Apply Aspire 1.1.2 source overrides
+      - name: Apply Aspire 1.1.2 fixes
         run: |
-          cat AspireMaintenanceRelease112Overrides/part-* > /tmp/aspire112-overrides.b64
+          cat AspireMaintenanceRelease112Final/part-* > /tmp/aspire112.b64
           python3 - <<'PY'
           from pathlib import Path
-          import base64
-          encoded = Path("/tmp/aspire112-overrides.b64").read_text().strip()
-          Path("/tmp/aspire112-overrides.tar.gz").write_bytes(base64.b64decode(encoded))
+          import base64, gzip
+          encoded = Path("/tmp/aspire112.b64").read_text().strip()
+          Path("/tmp/aspire112.patch").write_bytes(gzip.decompress(base64.b64decode(encoded)))
           PY
-          tar -xzf /tmp/aspire112-overrides.tar.gz -C AspireMaintenance
+          patch --batch -p2 -d AspireMaintenance < /tmp/aspire112.patch
           grep -q 'MARKETING_VERSION: "1.1.2"' AspireMaintenance/project.yml
           grep -q 'CURRENT_PROJECT_VERSION: "5"' AspireMaintenance/project.yml
 
@@ -86,17 +86,7 @@ jobs:
       - name: Build unsigned iPhone Release app
         run: |
           set -o pipefail
-          xcodebuild \
-            -quiet \
-            -project AspireMaintenance/AspireMaintenance.xcodeproj \
-            -scheme AspireMaintenance \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build-aspire-maintenance \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tee aspire-maintenance-build.log
+          xcodebuild -quiet -project AspireMaintenance/AspireMaintenance.xcodeproj -scheme AspireMaintenance -configuration Release -sdk iphoneos -derivedDataPath build-aspire-maintenance CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee aspire-maintenance-build.log
 
       - name: Upload compiler log
         if: failure()
