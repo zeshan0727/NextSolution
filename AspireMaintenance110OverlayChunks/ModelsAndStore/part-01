@@ -1,0 +1,265 @@
+turn (data.employees ?? []).first { $0.id == id }
+    }
+
+    func advancePayment(id: UUID) -> AdvancePayment? {
+        (data.advancePayments ?? []).first { $0.id == id }
+    }
+
+    func refunds(for expenseID: UUID) -> [ExpenseRefund] {
+        expenseRefunds.filter { $0.expenseID == expenseID }
+    }
+
+    func netAmount(for expense: Expense) -> Double {
+        let refunded = refunds(for: expense.id).reduce(0) { $0 + $1.amount }
+        return max(0, expense.amount - refunded)
+    }
+
+    func outstanding(for customerID: UUID) -> Double {
+        invoices(for: customerID).filter { $0.status != .void }.reduce(0) { $0 + $1.outstanding }
+    }
+
+    func visits(in month: Date) -> [MaintenanceVisit] {
+        visits.filter { Calendar.current.isDate($0.date, equalTo: month, toGranularity: .month) }
+    }
+
+    /// Maps recorded visits to the customer's planned monthly slots. Explicit slot numbers
+    /// are preserved; older visits without a slot are assigned chronologically to the first
+    /// available slots so existing data remains useful after upgrading.
+    func visitAssignments(for customerID: UUID, in month: Date) -> [Int: MaintenanceVisit] {
+        let monthVisits = visits(for: customerID, in: month).sorted { $0.date < $1.date }
+        guard let customer = customer(id: customerID) else { return [:] }
+        let planned = max(1, customer.plannedVisitsPerMonth)
+        var assignments: [Int: MaintenanceVisit] = [:]
+        var unassigned: [MaintenanceVisit] = []
+
+        for visit in monthVisits {
+            if let number = visit.visitNumber, number >= 1, number <= planned, assignments[number] == nil {
+                assignments[number] = visit
+            } else {
+                unassigned.append(visit)
+            }
+        }
+
+        for visit in unassigned {
+            guard let slot = (1...planned).first(where: { assignments[$0] == nil }) else { break }
+            assignments[slot] = visit
+        }
+        return assignments
+    }
+
+    func completedVisitCount(for customerID: UUID, in month: Date) -> Int {
+        visitAssignments(for: customerID, in: month).count
+    }
+
+    func remainingVisitCount(for customerID: UUID, in month: Date) -> Int {
+        guard let customer = customer(id: customerID) else { return 0 }
+        return max(0, customer.plannedVisitsPerMonth - completedVisitCount(for: customerID, in: month))
+    }
+
+    @discardableResult
+    func recordVisitSlot(customerID: UUID, slot: Int, date: Date, employeeID: UUID?, notes: String = "") -> Bool {
+        guard let customer = customer(id: customerID) else {
+            lastErrorMessage = "Customer not found."
+            return false
+        }
+        guard slot >= 1, slot <= max(1, customer.plannedVisitsPerMonth) else {
+            lastErrorMessage = "Invalid visit number."
+            return false
+        }
+        let existing = visitAssignments(for: customerID, in: date)
+        guard existing[slot] == nil else {
+            lastErrorMessage = "This visit is already marked as completed."
+            return false
+        }
+        let employeeName = employee(id: employeeID)?.name ?? ""
+        data.visits.append(MaintenanceVisit(
+            customerID: customerID,
+            date: date,
+            staffName: employeeName,
+            workDone: "Garden maintenance visit \(slot) of \(customer.plannedVisitsPerMonth)",
+            notes: notes,
+            employeeID: employeeID,
+            visitNumber: slot
+        ))
+        return persist()
+    }
+
+    func updateCompany(_ company: CompanyProfile) {
+        data.company = company
+        persist()
+    }
+
+    func updateEmailConfiguration(_ configuration: EmailConfiguration) {
+        data.emailConfiguration = configuration
+        persist()
+    }
+
+    func updateAppLogoData(_ logoData: Data?) {
+        data.appLogoData = logoData
+        persist()
+    }
+
+    func updateInvoicePDFSettings(_ settings: InvoicePDFSettings) {
+        data.invoicePDFSettings = settings
+        persist()
+    }
+
+    func addEmployee(_ employee: Employee) {
+        var employees = data.employees ?? []
+        employees.append(employee)
+        data.employees = employees
+        persist()
+    }
+
+    func updateEmployee(_ employee: Employee) {
+        var employees = data.employees ?? []
+        guard let index = employees.firstIndex(where: { $0.id == employee.id }) else { return }
+        employees[index] = employee
+        data.employees = employees
+        persist()
+    }
+
+    func deleteEmployee(_ id: UUID) {
+        var employees = data.employees ?? []
+        employees.removeAll { $0.id == id }
+        data.employees = employees
+        persist()
+    }
+
+    func replaceBankAccounts(_ accounts: [BankAccount]) {
+        var normalized = accounts
+        if !normalized.isEmpty && !normalized.contains(where: \.isDefault) {
+            normalized[0].isDefault = true
+        }
+        data.bankAccounts = normalized
+        persist()
+    }
+
+    func addBankAccount(_ account: BankAccount) {
+        var accounts = data.bankAccounts ?? []
+        var newAccount = account
+        if accounts.isEmpty { newAccount.isDefault = true }
+        if newAccount.isDefault {
+            accounts = accounts.map {
+                var copy = $0
+                copy.isDefault = false
+                return copy
+            }
+        }
+        accounts.append(newAccount)
+        data.bankAccounts = accounts
+        persist()
+    }
+
+    func updateBankAccount(_ account: BankAccount) {
+        var accounts = data.bankAccounts ?? []
+        guard let index = accounts.firstIndex(where: { $0.id == account.id }) else { return }
+        if account.isDefault {
+            for i in accounts.indices { accounts[i].isDefault = false }
+        }
+        accounts[index] = account
+        data.bankAccounts = accounts
+        persist()
+    }
+
+    func deleteBankAccount(_ id: UUID) {
+        var accounts = data.bankAccounts ?? []
+        let wasDefault = accounts.first(where: { $0.id == id })?.isDefault == true
+        accounts.removeAll { $0.id == id }
+        if wasDefault, !accounts.isEmpty { accounts[0].isDefault = true }
+        data.bankAccounts = accounts
+        persist()
+    }
+
+    func addCustomer(_ customer: Customer) {
+        data.customers.append(customer)
+        persist()
+    }
+
+    func updateCustomer(_ customer: Customer) {
+        guard let index = data.customers.firstIndex(where: { $0.id == customer.id }) else { return }
+        data.customers[index] = customer
+        persist()
+    }
+
+    func deleteCustomers(at offsets: IndexSet, from displayedCustomers: [Customer]) {
+        let ids = offsets.map { displayedCustomers[$0].id }
+        data.customers.removeAll { ids.contains($0.id) }
+        data.visits.removeAll { ids.contains($0.customerID) }
+        data.invoices.removeAll { ids.contains($0.customerID) }
+        persist()
+    }
+
+    func addVisit(_ visit: MaintenanceVisit) {
+        data.visits.append(visit)
+        persist()
+    }
+
+    @discardableResult
+    func createMonthlyInvoice(for customer: Customer, serviceMonth: Date, customAmount: Double? = nil, employeeID: UUID? = nil) -> Invoice {
+        let calendar = Calendar.current
+        let normalizedMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: serviceMonth)) ?? serviceMonth
+        let issueDate = Date()
+        let dueDate = calendar.date(byAdding: .day, value: max(0, company.paymentTermsDays), to: issueDate) ?? issueDate
+        let monthName = DateFormatter.monthAndYear.string(from: normalizedMonth)
+        let amount = customAmount ?? customer.monthlyRate
+        let invoice = Invoice(
+            number: nextInvoiceNumber(for: issueDate),
+            customerID: customer.id,
+            issueDate: issueDate,
+            dueDate: dueDate,
+            serviceMonth: normalizedMonth,
+            lineItems: [InvoiceLineItem(description: "Garden Maintenance Charges (Monthly) – \(monthName)", quantity: 1, unitPrice: amount)],
+            status: .draft,
+            amountPaid: 0,
+            notes: company.invoiceTerms,
+            sentAt: nil,
+            paidAt: nil,
+            employeeID: employeeID
+        )
+        data.invoices.append(invoice)
+        persist()
+        return invoice
+    }
+
+    func addInvoice(_ invoice: Invoice) {
+        data.invoices.append(invoice)
+        persist()
+    }
+
+    func updateInvoice(_ invoice: Invoice) {
+        guard let index = data.invoices.firstIndex(where: { $0.id == invoice.id }) else { return }
+        data.invoices[index] = invoice
+        persist()
+    }
+
+    func markInvoiceSent(_ id: UUID) {
+        guard let index = data.invoices.firstIndex(where: { $0.id == id }) else { return }
+        data.invoices[index].status = data.invoices[index].amountPaid > 0 ? .partial : .sent
+        data.invoices[index].sentAt = Date()
+        persist()
+    }
+
+    func recordPayment(invoiceID: UUID, amount: Double, paymentDate: Date) {
+        guard let index = data.invoices.firstIndex(where: { $0.id == invoiceID }) else { return }
+        let newPaid = min(data.invoices[index].total, max(0, data.invoices[index].amountPaid + amount))
+        data.invoices[index].amountPaid = newPaid
+        if newPaid >= data.invoices[index].total - 0.005 {
+            data.invoices[index].status = .paid
+            data.invoices[index].paidAt = paymentDate
+        } else if newPaid > 0 {
+            data.invoices[index].status = .partial
+            data.invoices[index].paidAt = paymentDate
+        }
+        persist()
+    }
+
+    /// One-touch full payment toggle. A second touch reverses an accidental receipt.
+    func toggleInvoicePayment(_ invoiceID: UUID, paymentDate: Date = Date()) {
+        guard let index = data.invoices.firstIndex(where: { $0.id == invoiceID }) else { return }
+        guard data.invoices[index].status != .void else { return }
+
+        if data.invoices[index].status == .paid {
+            data.invoices[index].amountPaid = 0
+            data.invoices[index].paidAt = nil
+            data.invoices[in
