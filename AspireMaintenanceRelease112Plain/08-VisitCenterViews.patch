@@ -1,0 +1,13 @@
+diff -ruN /mnt/data/aspire111_base/AspireMaintenance/VisitCenterViews.swift /mnt/data/aspire111_work/AspireMaintenance/VisitCenterViews.swift
+--- /mnt/data/aspire111_base/AspireMaintenance/VisitCenterViews.swift	2026-08-13 16:09:32.000000000 +0000
++++ /mnt/data/aspire111_work/AspireMaintenance/VisitCenterViews.swift	2026-08-13 16:40:21.805979264 +0000
+@@ -266,7 +266,8 @@
+ 
+                         VStack(alignment: .leading, spacing: 10) {
+                             SectionHeader(title: "Visit Details", subtitle: "Choose employee/date, then tap an orange visit button to mark it complete")
+-                            DatePicker("Visit date", selection: $visitDate, displayedComponents: [.date, .hourAndMinute])
++                            DatePicker("Visit date", selection: $visitDate, displayedComponents: .date)
++                            DatePicker("Visit time", selection: $visitDate, displayedComponents: .hourAndMinute)
+                             Picker("Job done by", selection: $employeeID) {
+                                 Text("Not selected").tag(UUID?.none)
+                                 ForEach(store.activeEmployees) { employee in Text(employee.name).tag(Optional(employee.id)) }
