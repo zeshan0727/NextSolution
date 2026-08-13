@@ -55,10 +55,14 @@ jobs:
           test -d "$EXT"
           test -x "$EXT/NextReminderLiveActivity"
           plutil -extract CFBundleShortVersionString raw "$EXT/Info.plist" | grep -qx '1.3.19'
-          strings -a "$APP/NextReminder" | grep -q 'Email Schedules'
-          strings -a "$APP/NextReminder" | grep -q 'Extend 10 Minutes'
-          strings -a "$EXT/NextReminderLiveActivity" | grep -q 'Completed'
-          strings -a "$EXT/NextReminderLiveActivity" | grep -q 'Extend 10m'
+          APP_STRINGS="$RUNNER_TEMP/nextreminder-v149-app-strings.txt"
+          EXT_STRINGS="$RUNNER_TEMP/nextreminder-v149-ext-strings.txt"
+          strings -a "$APP/NextReminder" > "$APP_STRINGS"
+          strings -a "$EXT/NextReminderLiveActivity" > "$EXT_STRINGS"
+          grep -q 'Email Schedules' "$APP_STRINGS"
+          grep -q 'Extend 10 Minutes' "$APP_STRINGS"
+          grep -q 'Completed' "$EXT_STRINGS"
+          grep -q 'Extend 10m' "$EXT_STRINGS"
           mkdir -p "$RUNNER_TEMP/next-reminder-v149"
           cp "$TIPA" "$RUNNER_TEMP/next-reminder-v149/NextReminder-v1.3.19-LiveActivity-EmailSchedules.tipa"
           cp NextReminderApp/NextReminder-v1.3.19-unsigned.tipa.sha256 "$RUNNER_TEMP/next-reminder-v149/NextReminder-v1.3.19-SHA256.txt"
