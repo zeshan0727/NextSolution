@@ -1,0 +1,183 @@
+from pathlib import Path
+import base64
+import json
+
+ROOT = Path("AspireMaintenance")
+ASSETS = Path("AspireMaintenancePatchAssets")
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    if old not in text:
+        raise RuntimeError(f"Patch target not found: {label}")
+    return text.replace(old, new, 1)
+
+
+# Official Aspire Garden logo supplied for the company app.
+logo_b64 = "".join(path.read_text().strip() for path in sorted(ASSETS.glob("logo-part-*")))
+logo_dir = ROOT / "Assets.xcassets" / "AspireLogo.imageset"
+logo_dir.mkdir(parents=True, exist_ok=True)
+(logo_dir / "AspireLogo.png").write_bytes(base64.b64decode(logo_b64))
+(logo_dir / "Contents.json").write_text(json.dumps({
+    "images": [
+        {"filename": "AspireLogo.png", "idiom": "universal", "scale": "1x"},
+        {"idiom": "universal", "scale": "2x"},
+        {"idiom": "universal", "scale": "3x"}
+    ],
+    "info": {"author": "xcode", "version": 1}
+}, indent=2))
+
+# Store fixes: reliable expense persistence, payment toggle and service-month income.
+p = ROOT / "ModelsAndStore.swift"
+s = p.read_text()
+s = replace_once(s, '''    func recordPayment(invoiceID: UUID, amount: Double, paymentDate: Date) {
+        guard let index = data.invoices.firstIndex(where: { $0.id == invoiceID }) else { return }
+        let newPaid = min(data.invoices[index].total, max(0, data.invoices[index].amountPaid + amount))
+        data.invoices[index].amountPaid = newPaid
+        if newPaid >= data.invoices[index].total - 0.005 {
+            data.invoices[index].status = .paid
+            data.invoices[index].paidAt = paymentDate
+        } else if newPaid > 0 {
+            data.invoices[index].status = .partial
+        }
+        persist()
+    }
+''', '''    func recordPayment(invoiceID: UUID, amount: Double, paymentDate: Date) {
+        guard let index = data.invoices.firstIndex(where: { $0.id == invoiceID }) else { return }
+        let newPaid = min(data.invoices[index].total, max(0, data.invoices[index].amountPaid + amount))
+        data.invoices[index].amountPaid = newPaid
+        if newPaid >= data.invoices[index].total - 0.005 {
+            data.invoices[index].status = .paid
+            data.invoices[index].paidAt = paymentDate
+        } else if newPaid > 0 {
+            data.invoices[index].status = .partial
+            data.invoices[index].paidAt = paymentDate
+        }
+        persist()
+    }
+
+    /// One-touch full payment toggle. A second touch reverses an accidental receipt.
+    func toggleInvoicePayment(_ invoiceID: UUID, paymentDate: Date = Date()) {
+        guard let index = data.invoices.firstIndex(where: { $0.id == invoiceID }) else { return }
+        guard data.invoices[index].status != .void else { return }
+
+        if data.invoices[index].status == .paid {
+            data.invoices[index].amountPaid = 0
+            data.invoices[index].paidAt = nil
+            data.invoices[index].status = data.invoices[index].sentAt == nil ? .draft : .sent
+        } else {
+            data.invoices[index].amountPaid = data.invoices[index].total
+            data.invoices[index].paidAt = paymentDate
+            data.invoices[index].status = .paid
+        }
+        persist()
+    }
+''', "payment toggle")
+s = replace_once(s, '''    func addExpense(_ expense: Expense) {
+        data.expenses.append(expense)
+        persist()
+    }
+''', '''    @discardableResult
+    func addExpense(_ expense: Expense) -> Bool {
+        guard expense.amount.isFinite, expense.amount > 0 else {
+            lastErrorMessage = "Enter a valid expense amount greater than zero."
+            return false
+        }
+        var updated = data
+        updated.expenses.append(expense)
+        data = updated
+        return persist()
+    }
+''', "expense save")
+s = replace_once(s, '''    func invoicedIncome(in month: Date) -> Double {
+        data.invoices.filter {
+            $0.status != .void && Calendar.current.isDate($0.issueDate, equalTo: month, toGranularity: .month)
+        }.reduce(0) { $0 + $1.total }
+    }
+
+    func collectedIncome(in month: Date) -> Double {
+        data.invoices.filter {
+            guard let paidAt = $0.paidAt else { return false }
+            return Calendar.current.isDate(paidAt, equalTo: month, toGranularity: .month)
+        }.reduce(0) { $0 + $1.amountPaid }
+    }
+
+    func expensesTotal(in month: Date) -> Double {
+        data.expenses.filter {
+            Calendar.current.isDate($0.date, equalTo: month, toGranularity: .month)
+        }.reduce(0) { $0 + $1.amount }
+    }
+''', '''    /// Revenue belongs to the maintenance service month, regardless of when the invoice
+    /// was created or when its payment was received.
+    func invoicedIncome(in month: Date) -> Double {
+        invoicesForServiceMonth(month).reduce(0) { $0 + $1.total }
+    }
+
+    func invoicesForServiceMonth(_ month: Date) -> [Invoice] {
+        invoices.filter {
+            $0.status != .void && Calendar.current.isDate($0.serviceMonth, equalTo: month, toGranularity: .month)
+        }
+    }
+
+    func collectedIncome(in month: Date) -> Double {
+        paymentsReceived(in: month).reduce(0) { $0 + $1.amountPaid }
+    }
+
+    func paymentsReceived(in month: Date) -> [Invoice] {
+        invoices.filter {
+            guard $0.status != .void, let paidAt = $0.paidAt else { return false }
+            return Calendar.current.isDate(paidAt, equalTo: month, toGranularity: .month)
+        }
+    }
+
+    func expensesForMonth(_ month: Date) -> [Expense] {
+        expenses.filter { Calendar.current.isDate($0.date, equalTo: month, toGranularity: .month) }
+    }
+
+    func expensesTotal(in month: Date) -> Double {
+        expensesForMonth(month).reduce(0) { $0 + $1.amount }
+    }
+''', "service month finance")
+s = replace_once(s, '''    private func persist() {
+        do {
+            let encoded = try encoder.encode(data)
+            try encoded.write(to: dataURL, options: .atomic)
+            objectWillChange.send()
+        } catch {
+            lastErrorMessage = error.localizedDescription
+        }
+    }
+''', '''    @discardableResult
+    private func persist() -> Bool {
+        do {
+            let encoded = try encoder.encode(data)
+            try encoded.write(to: dataURL, options: [.atomic, .completeFileProtectionUnlessOpen])
+            objectWillChange.send()
+            return true
+        } catch {
+            lastErrorMessage = "Unable to save Aspire data: \\(error.localizedDescription)"
+            return false
+        }
+    }
+''', "persist return status")
+p.write_text(s)
+
+# Dashboard cards open their underlying transactions.
+p = ROOT / "Views.swift"
+s = p.read_text()
+s = replace_once(s, '''                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        SummaryCard(title: "Invoiced", value: store.currency(invoiced), subtitle: DateFormatter.monthAndYear.string(from: selectedMonth), icon: "doc.text.fill")
+                        SummaryCard(title: "Collected", value: store.currency(collected), subtitle: "Payments received", icon: "checkmark.circle.fill")
+                        SummaryCard(title: "Expenses", value: store.currency(expenses), subtitle: "Recorded costs", icon: "fuelpump.fill")
+                        SummaryCard(title: "Profit / Loss", value: store.currency(profit), subtitle: profit >= 0 ? "Profit" : "Loss", icon: "chart.line.uptrend.xyaxis", emphasized: true)
+                    }
+''', '''                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        NavigationLink { DashboardTransactionsView(kind: .invoiced, month: selectedMonth) } label: {
+                            SummaryCard(title: "Invoiced", value: store.currency(invoiced), subtitle: DateFormatter.monthAndYear.string(from: selectedMonth), icon: "doc.text.fill")
+                        }.buttonStyle(.plain)
+                        NavigationLink { DashboardTransactionsView(kind: .collected, month: selectedMonth) } label: {
+                            SummaryCard(title: "Collected", value: store.currency(collected), subtitle: "Payments received", icon: "checkmark.circle.fill")
+                        }.buttonStyle(.plain)
+                        NavigationLink { DashboardTransactionsView(kind: .expenses, month: selectedMonth) } label: {
+                            SummaryCard(title: "Expenses", value: store.currency(expenses), subtitle: "Recorded costs", icon: "fuelpump.fill")
+                        }.buttonStyle(.plain)
+           

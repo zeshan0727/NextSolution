@@ -1,0 +1,121 @@
+() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { saveExpense() }.disabled(parsedAmount == nil) }
+            }
+            .alert("Expense Not Saved", isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
+                Button("OK", role: .cancel) {}
+            } message: { Text(saveError ?? "Enter a valid amount.") }
+        }
+    }
+
+    private func saveExpense() {
+        guard let amount = parsedAmount else { saveError = "Enter a valid expense amount greater than zero."; return }
+        let expense = Expense(date: date, category: category, vendor: vendor.trimmingCharacters(in: .whitespacesAndNewlines), amount: amount, paymentAccount: paymentAccount.trimmingCharacters(in: .whitespacesAndNewlines), notes: notes.trimmingCharacters(in: .whitespacesAndNewlines))
+        if store.addExpense(expense) { dismiss() }
+        else { saveError = store.lastErrorMessage ?? "The expense could not be saved." }
+    }
+}
+''', "expense editor")
+s = replace_once(s, '''struct AspireHeaderCard: View {
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                Circle().stroke(Color.aspireGreen, lineWidth: 4)
+                Text("a").font(.system(size: 42, weight: .bold)).foregroundStyle(Color.aspireGreen)
+                Image(systemName: "leaf.fill").font(.caption).foregroundStyle(Color.aspireGold).offset(x: 14, y: -12)
+            }
+            .frame(width: 68, height: 68)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("ASPIRE GARDEN").font(.title3.weight(.heavy)).foregroundStyle(Color.aspireGreen)
+                Text("Garden Maintenance • Customers • Invoices • Profit & Loss")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .aspirePanel()
+    }
+}
+''', '''struct AspireHeaderCard: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image("AspireLogo").resizable().scaledToFit().frame(maxWidth: 300, maxHeight: 150)
+                .accessibilityLabel("Aspire Green Garden Designing and Works LLC logo")
+            Text("Garden Maintenance • Customers • Invoices • Profit & Loss")
+                .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .aspirePanel()
+    }
+}
+''', "dashboard logo")
+p.write_text(s)
+
+# PDF uses the official logo rather than the placeholder letter mark.
+p = ROOT / "Services.swift"
+s = p.read_text().replace("AspireMaintenance-iOS/1.0.0", "AspireMaintenance-iOS/1.0.1")
+s = replace_once(s, '''    private func drawLogoAndHeader(company: CompanyProfile) {
+        let logoRect = CGRect(x: 42, y: 38, width: 72, height: 72)
+        let path = UIBezierPath(ovalIn: logoRect)
+        green.setStroke()
+        path.lineWidth = 5
+        path.stroke()
+        drawText("a", in: CGRect(x: 57, y: 39, width: 45, height: 55), font: .systemFont(ofSize: 49, weight: .bold), color: green, alignment: .center)
+        let leaf = UIBezierPath()
+        leaf.move(to: CGPoint(x: 78, y: 78))
+        leaf.addCurve(to: CGPoint(x: 98, y: 59), controlPoint1: CGPoint(x: 79, y: 65), controlPoint2: CGPoint(x: 90, y: 56))
+        leaf.addCurve(to: CGPoint(x: 78, y: 78), controlPoint1: CGPoint(x: 101, y: 70), controlPoint2: CGPoint(x: 92, y: 79))
+        gold.setFill()
+        leaf.fill()
+
+        drawText(company.tradingName.uppercased(), in: CGRect(x: 130, y: 40, width: 290, height: 30), font: .systemFont(ofSize: 24, weight: .bold), color: green)
+        drawText(company.fullName, in: CGRect(x: 130, y: 70, width: 315, height: 38), font: .systemFont(ofSize: 11, weight: .medium), color: dark)
+        let contact = [company.address, company.phone, company.email, company.website].filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.joined(separator: "  •  ")
+        drawText(contact, in: CGRect(x: 42, y: 118, width: 510, height: 28), font: .systemFont(ofSize: 8.5), color: .darkGray)
+        green.setFill()
+        UIRectFill(CGRect(x: 42, y: 150, width: 510, height: 1.5))
+    }
+''', '''    private func drawLogoAndHeader(company: CompanyProfile) {
+        if let logo = UIImage(named: "AspireLogo") {
+            logo.draw(in: CGRect(x: 42, y: 28, width: 128, height: 104), blendMode: .normal, alpha: 1)
+        } else {
+            drawText("ASPIRE GARDEN", in: CGRect(x: 42, y: 58, width: 128, height: 30), font: .systemFont(ofSize: 15, weight: .bold), color: green, alignment: .center)
+        }
+        drawText(company.fullName, in: CGRect(x: 176, y: 44, width: 205, height: 42), font: .systemFont(ofSize: 14, weight: .bold), color: green)
+        drawText(company.tradingName, in: CGRect(x: 176, y: 88, width: 205, height: 20), font: .systemFont(ofSize: 10, weight: .medium), color: dark)
+        let contact = [company.address, company.phone, company.email, company.website].filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.joined(separator: "  •  ")
+        drawText(contact, in: CGRect(x: 42, y: 124, width: 510, height: 22), font: .systemFont(ofSize: 8.5), color: .darkGray)
+        green.setFill()
+        UIRectFill(CGRect(x: 42, y: 150, width: 510, height: 1.5))
+    }
+''', "PDF logo")
+p.write_text(s)
+
+# Version and app icon generator.
+p = ROOT / "project.yml"
+p.write_text(p.read_text().replace('MARKETING_VERSION: "1.0.0"', 'MARKETING_VERSION: "1.0.1"').replace('CURRENT_PROJECT_VERSION: "1"', 'CURRENT_PROJECT_VERSION: "2"'))
+p = ROOT / "README.md"
+p.write_text(p.read_text().replace('# Aspire Maintenance 1.0.0 Test', '# Aspire Maintenance 1.0.1 Test'))
+
+icon_script = r'''import AppKit
+
+let arguments = CommandLine.arguments
+guard arguments.count >= 3 else { fputs("Usage: GenerateIcon.swift <logo-path> <output-path>\n", stderr); exit(2) }
+guard let logo = NSImage(contentsOfFile: arguments[1]) else { fputs("Unable to load Aspire logo\n", stderr); exit(3) }
+let size = NSSize(width: 1024, height: 1024)
+let image = NSImage(size: size)
+image.lockFocus()
+let canvas = NSRect(origin: .zero, size: size)
+NSColor(calibratedRed: 0.97, green: 0.985, blue: 0.965, alpha: 1).setFill(); canvas.fill()
+let border = NSBezierPath(roundedRect: canvas.insetBy(dx: 38, dy: 38), xRadius: 180, yRadius: 180)
+border.lineWidth = 24; NSColor(calibratedRed: 0.10, green: 0.48, blue: 0.29, alpha: 1).setStroke(); border.stroke()
+let target = NSRect(x: 92, y: 132, width: 840, height: 760)
+let sourceRatio = logo.size.width / max(logo.size.height, 1); let targetRatio = target.width / target.height
+let drawRect: NSRect
+if sourceRatio > targetRatio { let height = target.width / sourceRatio; drawRect = NSRect(x: target.minX, y: target.midY - height / 2, width: target.width, height: height) }
+else { let width = target.height * sourceRatio; drawRect = NSRect(x: target.midX - width / 2, y: target.minY, width: width, height: target.height) }
+logo.draw(in: drawRect, from: .zero, operation: .sourceOver, fraction: 1)
+image.unlockFocus()
+guard let tiff = image.tiffRepresentation, let bitmap = NSBitmapImageRep(data: tiff), let png = bitmap.representation(using: .png, properties: [:]) else { fputs("Unable to generate Aspire app icon\n", stderr); exit(4) }
+try png.write(to: URL(fileURLWithPath: arguments[2]), options: .atomic)
+'''
+(ROOT / "Scripts" / "GenerateIcon.swift").write_text(icon_script)
+print("Aspire Maintenance 1.0.1 patch applied")
