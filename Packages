@@ -499,3 +499,39 @@ Description: Plays one warning haptic when a usable network path becomes unavail
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html
 Name: Internet Lost Haptic
+
+Package: com.nextsolution.cleanhomelabels
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/CleanHomeLabels_1.0.0_RootHide.deb
+Size: 7780
+MD5sum: ca7a9f0c231eb47f6767344913436650
+SHA1: 923688454b66bfa8e594e136bc4e60235d770d5a
+SHA256: 196c625fffaa553ea2684033b60327748df532dcb7405340aae17a637fb59b43
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Hides SpringBoard icon names for a cleaner Home Screen while leaving icons and badges intact.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
+Name: Clean Home Labels
+
+Package: com.nextsolution.cleanhomelabels
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Solution
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/CleanHomeLabels_1.0.0_Rootless.deb
+Size: 7862
+MD5sum: 56ec3733bea4951f1d6b77c107c2fd05
+SHA1: 79880d33b1356bf9618e5b84231e976dd47cdb93
+SHA256: 9f9628a846c1de271c222124ef9225c5b9553bd4a1214941161046dbf4259bb3
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Hides SpringBoard icon names for a cleaner Home Screen while leaving icons and badges intact.
+Author: Next Solution
+Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
+Name: Clean Home Labels
