@@ -1,6 +1,27 @@
 {
   "entries": [
     {
+      "article_sha256": "84cfe12a9fb7c21411ec58a31221fcbeb953ba7fa8cd9098b30732b859f99294",
+      "candidate_fingerprint": "2b128f4cef100c4351183a80b5cd9bd6553d6b9725c653c6fe867dc7bbde2cb8",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Review PodsGrant 0.5.4, its listed purpose, iphoneos-arm architecture, dependencies, and the checks to complete before installation.",
+      "href": "podsgrant-tweak.html",
+      "image": "assets/articles/podsgrant-tweak-hero.svg",
+      "modified_at": "2026-08-13T20:52:48+00:00",
+      "name": "PodsGrant",
+      "package": "com.lns.pogr",
+      "published_at": "2026-08-13T20:52:48+00:00",
+      "selection_pool": "pending",
+      "source_name": "BigBoss",
+      "source_page_url": "http://apt.thebigboss.org/repofiles/cydia/",
+      "source_url": "http://apt.thebigboss.org/repofiles/cydia/",
+      "title": "PodsGrant 0.5.4: AirPods Compatibility Tweak for Older Devices",
+      "version": "0.5.4"
+    },
+    {
       "article_sha256": "93079501e2cd65e07dac3598ef3a71f07dc43c8d09165eb2f8b40a46c36fa06c",
       "candidate_fingerprint": "f787902b4dd36eef554d9229cd9b6bf193c0f9f11b4b9726fd5dd2b394348e7b",
       "category": {
@@ -150,8 +171,17 @@
       "published_at": "2026-08-13T17:33:41+00:00",
       "run_id": "31726241340",
       "version": "1.6.1"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "2b128f4cef100c4351183a80b5cd9bd6553d6b9725c653c6fe867dc7bbde2cb8",
+      "href": "podsgrant-tweak.html",
+      "package": "com.lns.pogr",
+      "published_at": "2026-08-13T20:52:48+00:00",
+      "run_id": "31742932222",
+      "version": "0.5.4"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-13T17:33:41+00:00"
+  "updated_at": "2026-08-13T20:52:48+00:00"
 }
