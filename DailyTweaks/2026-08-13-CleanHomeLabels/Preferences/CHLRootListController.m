@@ -1,10 +1,9 @@
 #import "CHLRootListController.h"
 #import <Preferences/PSSpecifier.h>
-#import <spawn.h>
 
-extern char **environ;
 static CFStringRef const CHLPreferenceDomain = CFSTR("com.nextsolution.cleanhomelabels");
 static CFStringRef const CHLPreferencesChanged = CFSTR("com.nextsolution.cleanhomelabels.preferences.changed");
+static CFStringRef const CHLRespringRequested = CFSTR("com.nextsolution.cleanhomelabels.respring");
 
 @implementation CHLRootListController
 - (NSArray *)specifiers {
@@ -26,8 +25,6 @@ static CFStringRef const CHLPreferencesChanged = CFSTR("com.nextsolution.cleanho
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CHLPreferencesChanged, NULL, NULL, true);
 }
 - (void)respring {
-    pid_t pid;
-    const char *args[] = {"/usr/bin/killall", "-9", "SpringBoard", NULL};
-    posix_spawn(&pid, args[0], NULL, NULL, (char *const *)args, environ);
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CHLRespringRequested, NULL, NULL, true);
 }
 @end

@@ -6,6 +6,7 @@ SRC = (ROOT / 'Tweak.xm').read_text()
 FILTER = (ROOT / 'CleanHomeLabels.plist').read_text()
 CONTROL = (ROOT / 'control').read_text()
 PREFS = (ROOT / 'Preferences/Resources/Root.plist').read_text()
+PREFCTL = (ROOT / 'Preferences/CHLRootListController.m').read_text()
 
 
 def resolved_hidden(enabled: bool, requested_hidden: bool) -> bool:
@@ -24,11 +25,13 @@ for enabled, requested, expected, name in cases:
 assert '%hook SBIconView' in SRC
 assert '- (void)setLabelHidden:(BOOL)hidden' in SRC
 assert '%orig(CHLResolvedHidden(CHLEnabled, hidden));' in SRC
-assert 'CHLIsSpringBoardProcess()' in SRC
+assert 'if (!CHLIsSpringBoardProcess()) return;' in SRC
 assert 'com.apple.springboard' in FILTER and 'Bundles' in FILTER
 assert 'CFPreferencesCopyAppValue' in SRC and 'CFNotificationCenterAddObserver' in SRC
+assert 'CHLRespringRequested' in SRC and 'kill(getpid(), SIGTERM)' in SRC
+assert 'CHLRespringRequested' in PREFCTL and '/usr/bin/' not in PREFCTL
 assert 'Package: com.nextsolution.cleanhomelabels' in CONTROL
 assert 'Architecture: iphoneos-arm64' in CONTROL
 assert 'Hide Icon Names' in PREFS and 'Apply &amp; Respring' in PREFS
 assert 'zeshan0727.github.io' not in '\n'.join(p.read_text(errors='ignore') for p in ROOT.rglob('*') if p.is_file())
-print('PASS 12/12 deterministic/source validation cases')
+print('PASS 14/14 deterministic/source validation cases')
