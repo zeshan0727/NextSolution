@@ -97,7 +97,9 @@ replace_once(
 ''',
     '''        let data = try encoder.encode(database)
         try data.write(to: fileURL, options: [.atomic])
-        let notificationName = "com.nextsolution.nextreminder.database.changed" as CFString
+        let notificationName = CFNotificationName(
+            rawValue: "com.nextsolution.nextreminder.database.changed" as CFString
+        )
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
             notificationName,
