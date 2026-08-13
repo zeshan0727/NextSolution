@@ -1,0 +1,9 @@
+Package: com.zeshan.phoneaura.diagnostics.buildhelper
+Name: PhoneAura Diagnostics Build Helper
+Version: 0.5.1
+Architecture: iphoneos-arm64
+Description: Build helper for the PhoneAura passive diagnostic runtime.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Development
+Depends: mobilesubstrate

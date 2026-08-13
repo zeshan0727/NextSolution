@@ -1,0 +1,23 @@
+name: Export PhoneAura source (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+      - name: Archive source tree
+        run: |
+          zip -r phoneaura-source.zip . -x '.git/*' 'phoneaura-source.zip'
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: phoneaura-source
+          path: phoneaura-source.zip
+          retention-days: 1

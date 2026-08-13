@@ -1,0 +1,16 @@
+name: Deprecated PhoneAura 0.5.0 Test Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deprecated:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deprecated build notice
+        run: |
+          echo "PhoneAura 0.5.0 is deprecated because its PhoneAuraNativeFeatures companion hook caused runtime breakage on-device."
+          echo "Use the PhoneAura 0.5.1 Diagnostic Recovery workflow instead."
