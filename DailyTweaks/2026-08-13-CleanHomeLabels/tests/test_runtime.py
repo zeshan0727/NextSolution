@@ -33,5 +33,7 @@ assert 'CHLRespringRequested' in PREFCTL and '/usr/bin/' not in PREFCTL
 assert 'Package: com.nextsolution.cleanhomelabels' in CONTROL
 assert 'Architecture: iphoneos-arm64' in CONTROL
 assert 'Hide Icon Names' in PREFS and 'Apply &amp; Respring' in PREFS
-assert 'zeshan0727.github.io' not in '\n'.join(p.read_text(errors='ignore') for p in ROOT.rglob('*') if p.is_file())
+legacy_domain = 'zeshan0727' + '.github.io'
+production_files = [p for p in ROOT.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p != Path(__file__).resolve()]
+assert legacy_domain not in '\n'.join(p.read_text(errors='ignore') for p in production_files)
 print('PASS 14/14 deterministic/source validation cases')
