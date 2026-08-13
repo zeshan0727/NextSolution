@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - agent/aspire-maintenance-1.0.1
+      - agent/aspire-maintenance-1.1.0
     paths:
       - "AspireMaintenanceSourceChunks/**"
       - "AspireMaintenancePatchScript101/**"
       - "AspireMaintenancePatchAssets/**"
+      - "AspireMaintenancePatch110/**"
       - ".github/workflows/build-aspire-maintenance.yml"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -18,6 +19,7 @@ on:
       - "AspireMaintenanceSourceChunks/**"
       - "AspireMaintenancePatchScript101/**"
       - "AspireMaintenancePatchAssets/**"
+      - "AspireMaintenancePatch110/**"
       - ".github/workflows/build-aspire-maintenance.yml"
 
 permissions:
@@ -47,6 +49,20 @@ jobs:
         run: |
           cat AspireMaintenancePatchScript101/part-* > apply_aspire_1_0_1.py
           python3 apply_aspire_1_0_1.py
+
+      - name: Apply Aspire 1.1.0 feature patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+          for name in ["aspire110.patch.gz.b64", "visitcenter.patch.gz.b64"]:
+              encoded = (Path("AspireMaintenancePatch110") / name).read_text().strip()
+              patch_data = gzip.decompress(base64.b64decode(encoded))
+              out = Path("/tmp") / name.replace(".gz.b64", "")
+              out.write_bytes(patch_data)
+          PY
+          patch --batch -p2 -d AspireMaintenance < /tmp/aspire110.patch
+          patch --batch -p2 -d AspireMaintenance < /tmp/visitcenter.patch
 
       - name: Validate Swift syntax
         run: |
@@ -91,7 +107,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: AspireMaintenance-Compiler-Log-1.0.1
+          name: AspireMaintenance-Compiler-Log-1.1.0
           path: aspire-maintenance-build.log
           if-no-files-found: ignore
 
@@ -102,36 +118,36 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload AspireMaintenance-1.0.1.tipa
-          cp AspireMaintenance-1.0.1.tipa AspireMaintenance-1.0.1-unsigned.ipa
-          shasum -a 256 AspireMaintenance-1.0.1.tipa > AspireMaintenance-1.0.1.sha256
-          shasum -a 256 AspireMaintenance-1.0.1-unsigned.ipa > AspireMaintenance-1.0.1-unsigned.ipa.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload AspireMaintenance-1.1.0.tipa
+          cp AspireMaintenance-1.1.0.tipa AspireMaintenance-1.1.0-unsigned.ipa
+          shasum -a 256 AspireMaintenance-1.1.0.tipa > AspireMaintenance-1.1.0.sha256
+          shasum -a 256 AspireMaintenance-1.1.0-unsigned.ipa > AspireMaintenance-1.1.0-unsigned.ipa.sha256
 
       - name: Package source
         run: |
           rm -rf AspireMaintenance/AspireMaintenance.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent AspireMaintenance AspireMaintenance-1.0.1-source.zip
+          ditto -c -k --sequesterRsrc --keepParent AspireMaintenance AspireMaintenance-1.1.0-source.zip
 
       - name: Upload TIPA IPA and source
         uses: actions/upload-artifact@v4
         with:
-          name: AspireMaintenance-TrollStore-1.0.1
+          name: AspireMaintenance-1.1.0
           path: |
-            AspireMaintenance-1.0.1.tipa
-            AspireMaintenance-1.0.1-unsigned.ipa
-            AspireMaintenance-1.0.1-unsigned.ipa.sha256
-            AspireMaintenance-1.0.1.sha256
-            AspireMaintenance-1.0.1-source.zip
+            AspireMaintenance-1.1.0.tipa
+            AspireMaintenance-1.1.0-unsigned.ipa
+            AspireMaintenance-1.1.0-unsigned.ipa.sha256
+            AspireMaintenance-1.1.0.sha256
+            AspireMaintenance-1.1.0-source.zip
           if-no-files-found: error
 
       - name: Publish temporary unsigned IPA
         if: success() && github.event_name == 'push'
         run: |
           mkdir -p TemporaryDownloads
-          cp AspireMaintenance-1.0.1-unsigned.ipa TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa
-          cp AspireMaintenance-1.0.1-unsigned.ipa.sha256 TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa.sha256
+          cp AspireMaintenance-1.1.0-unsigned.ipa TemporaryDownloads/AspireMaintenance-1.1.0-unsigned.ipa
+          cp AspireMaintenance-1.1.0-unsigned.ipa.sha256 TemporaryDownloads/AspireMaintenance-1.1.0-unsigned.ipa.sha256
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa TemporaryDownloads/AspireMaintenance-1.0.1-unsigned.ipa.sha256
-          git commit -m "Publish temporary Aspire Maintenance 1.0.1 unsigned IPA"
-          git push origin HEAD:agent/aspire-maintenance-1.0.1
+          git add TemporaryDownloads/AspireMaintenance-1.1.0-unsigned.ipa TemporaryDownloads/AspireMaintenance-1.1.0-unsigned.ipa.sha256
+          git commit -m "Publish temporary Aspire Maintenance 1.1.0 unsigned IPA"
+          git push origin HEAD:agent/aspire-maintenance-1.1.0
