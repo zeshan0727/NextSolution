@@ -11,58 +11,26 @@ def replace_once(path: Path, old: str, new: str) -> None:
         raise SystemExit(f"Expected text not found in {path}: {old[:260]!r}")
     path.write_text(text.replace(old, new, 1))
 
-# Make standalone email scheduling impossible to miss: expose it directly from
-# the center Add button and from a dedicated envelope-clock toolbar button.
+# 1) Make standalone email scheduling obvious from the normal Reminders screen.
+# The cumulative app no longer has a center Add tab, so expose both a dedicated
+# envelope-clock shortcut and a New Scheduled Email item in the existing + menu.
 root_view = SOURCES / "RootReminders.swift"
 replace_once(
     root_view,
-    '''    @EnvironmentObject private var emailAutomationStore: EmailAutomationStore
-
-    @State private var selectedTab: AppTab = .reminders''',
-    '''    @EnvironmentObject private var emailAutomationStore: EmailAutomationStore
-    @EnvironmentObject private var scheduledEmailStore: ScheduledEmailStore
-
-    @State private var selectedTab: AppTab = .reminders'''
-)
-replace_once(
-    root_view,
-    '''    @State private var openedEmailReminder: IdentifiedReminderID?
-''',
-    '''    @State private var openedEmailReminder: IdentifiedReminderID?
-    @State private var showNewScheduledEmail = false
-'''
-)
-replace_once(
-    root_view,
-    '''            Button("New Reminder") { addFlow = .reminder }
-            Button("New Social Automation") { addFlow = .automation }
-            Button("Cancel", role: .cancel) {}''',
-    '''            Button("New Reminder") { addFlow = .reminder }
-            Button("New Scheduled Email") { showNewScheduledEmail = true }
-            Button("New Social Automation") { addFlow = .automation }
-            Button("Cancel", role: .cancel) {}'''
-)
-replace_once(
-    root_view,
-    '''        .sheet(item: $openedAutomation) { item in
-''',
-    '''        .sheet(isPresented: $showNewScheduledEmail) {
-            NavigationStack {
-                EmailScheduleEditorView(item: nil)
-            }
-            .environmentObject(scheduledEmailStore)
-        }
-        .sheet(item: $openedAutomation) { item in
-'''
-)
-replace_once(
-    root_view,
     '''struct RemindersView: View {
     @EnvironmentObject private var store: ReminderStore
 ''',
     '''struct RemindersView: View {
     @EnvironmentObject private var store: ReminderStore
     @EnvironmentObject private var scheduledEmailStore: ScheduledEmailStore
+'''
+)
+replace_once(
+    root_view,
+    '''    @State private var isAddingReminder = false
+''',
+    '''    @State private var isAddingReminder = false
+    @State private var isAddingScheduledEmail = false
 '''
 )
 replace_once(
@@ -73,7 +41,19 @@ replace_once(
                 } label: {
                     Image(systemName: "calendar")
                 }
-''',
+                Button {
+                    isShowingFilters = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .accessibilityLabel("Advanced filters")
+                Button {
+                    isAddingReminder = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityLabel("New reminder")
+            }''',
     '''            ToolbarItemGroup(placement: .navigationBarTrailing) {
                 NavigationLink {
                     EmailSchedulesView()
@@ -81,18 +61,64 @@ replace_once(
                 } label: {
                     Image(systemName: "envelope.badge.clock.fill")
                 }
-                .accessibilityLabel("Email schedules")
+                .accessibilityLabel("Automatic email schedules")
+
                 NavigationLink {
                     CalendarRemindersView()
                 } label: {
                     Image(systemName: "calendar")
                 }
+                Button {
+                    isShowingFilters = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .accessibilityLabel("Advanced filters")
+                Menu {
+                    Button {
+                        isAddingReminder = true
+                    } label: {
+                        Label("New Reminder", systemImage: "bell.badge.fill")
+                    }
+                    Button {
+                        isAddingScheduledEmail = true
+                    } label: {
+                        Label("New Scheduled Email", systemImage: "envelope.badge.clock.fill")
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityLabel("Create")
+            }'''
+)
+replace_once(
+    root_view,
+    '''        .sheet(isPresented: $isAddingReminder) {
+            NavigationStack {
+                ReminderEditorView(reminder: nil)
+            }
+            .environmentObject(store)
+        }
+''',
+    '''        .sheet(isPresented: $isAddingReminder) {
+            NavigationStack {
+                ReminderEditorView(reminder: nil)
+            }
+            .environmentObject(store)
+        }
+        .sheet(isPresented: $isAddingScheduledEmail) {
+            NavigationStack {
+                EmailScheduleEditorView(item: nil)
+            }
+            .environmentObject(scheduledEmailStore)
+        }
 '''
 )
 
-# The iOS 16.0 RootHide live-card fallback updates the same JSON database from
-# SpringBoard. Refresh from disk when the app becomes active so Completed / Extend
-# changes are immediately reflected in the app without requiring a force quit.
+# 2) The iOS 16.0 RootHide due live-card fallback writes Completed / Extend
+# directly to NextReminderDatabase.json while the app is suspended. Reload those
+# changes whenever the app becomes active. Only rebuild local notifications here;
+# do NOT touch email automation, so opening the app can never cause email sending.
 services = SOURCES / "Services.swift"
 anchor = '''    var pendingReminders: [ReminderItem] {
 '''
@@ -102,13 +128,13 @@ method = '''    func refreshFromDisk() {
             reminders = database.reminders
             categories = database.categories.isEmpty ? [.personal, .general] : database.categories
             let pending = pendingReminders
+            let categoryNames = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0.name) })
             Task {
                 for reminder in pending {
                     await NotificationManager.shared.schedule(
                         reminder,
-                        categoryName: category(for: reminder.categoryID).name
+                        categoryName: categoryNames[reminder.categoryID] ?? ReminderCategory.general.name
                     )
-                    await EmailAutomationManager.shared.sync(reminder)
                 }
             }
         } catch {
@@ -133,7 +159,7 @@ replace_once(
 '''
 )
 
-# Version 1.3.20 build 30.
+# 3) Version 1.3.20 build 30.
 project = ROOT / "project.yml"
 text = project.read_text()
 text = text.replace('CFBundleShortVersionString: "1.3.19"', 'CFBundleShortVersionString: "1.3.20"')
