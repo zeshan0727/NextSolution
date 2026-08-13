@@ -26,6 +26,7 @@ jobs:
           python3 "$P/fix-panel-v103.py"
           python3 "$P/prepare-v104.py"
           python3 "$P/prepare-v105.py"
+          python3 "$P/compile-fix-v105.py"
           python3 "$P/prepare-build.py"
           chmod 755 "$P/layout/DEBIAN/postinst"
           plutil -lint "$P/Preferences/Resources/Root.plist"
@@ -40,6 +41,7 @@ jobs:
           grep -q 'Volume Down hold' "$P/MultiTriggersSettings.xm"
           grep -q 'Quick Access' "$P/MultiTriggersSettings.xm"
           grep -q 'PRIVATE_FRAMEWORKS = Preferences' "$P/Preferences/Makefile"
+          grep -q 'BOOL needsNewWindow' "$P/MultiTriggersSettings.xm"
           test "$(awk '/^Version:/ {print $2}' "$P/control")" = 1.0.5
 
       - name: Build RootHide quick reminder tweak
