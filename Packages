@@ -537,18 +537,18 @@ Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
 Name: Clean Home Labels
 
 Package: com.nextsolution.nextquickreminder
-Version: 1.0.6
+Version: 1.0.8
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution - Zeeshan Barvi
-Installed-Size: 536
+Installed-Size: 584
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
-Filename: ./debfiles/NextQuickReminder_1.0.6_RootHide.deb
-Size: 71952
-MD5sum: 600fec091f901fc4a58b34959da0371a
-SHA1: dec10bc911141ee13a68f9a43367c54ad66f92a3
-SHA256: 67359fc13d2e9898f9ecf3b056ee307fd5275eadebc5d4b01aa036aa20782af3
+Filename: ./debfiles/NextQuickReminder_1.0.8_RootHide.deb
+Size: 82840
+MD5sum: 82e9bf72147b75627a6c4fbd926e5952
+SHA1: d2351fdfb4a84a0fd26d68663424b966cf2c3242
+SHA256: ae5ad812f008a9ab236badd14ed575d0f46752bbe61e8db7618da00a2ab623ba
 Section: Tweaks
-Description: RootHide quick reminder card with reliable multi-trigger access, Lock Screen support, background saving, in-panel Quick Access settings, and restored keyboard input.
+Description: RootHide quick reminder with reliable multi-trigger access, keyboard input, background saving, and iOS 16 Dynamic Island integration through Apple SpringBoard System Aperture instead of a separate reminder window.
 Author: Next Solution - Zeeshan Barvi
 Name: Next Quick Reminder
