@@ -1,0 +1,13 @@
+diff -ruN /mnt/data/aspire111_base/AspireMaintenance/CommercialModels.swift /mnt/data/aspire111_work/AspireMaintenance/CommercialModels.swift
+--- /mnt/data/aspire111_base/AspireMaintenance/CommercialModels.swift	2026-08-13 16:09:32.000000000 +0000
++++ /mnt/data/aspire111_work/AspireMaintenance/CommercialModels.swift	2026-08-13 16:37:27.707291281 +0000
+@@ -82,6 +82,9 @@
+     var notes: String
+     var status: QuotationStatus
+     var employeeID: UUID? = nil
++    /// Invoice created from this quotation, if the accepted quote has been converted.
++    var convertedInvoiceID: UUID? = nil
++    var acceptedAt: Date? = nil
+     var createdAt: Date = Date()
+ 
+     var subtotal: Double { lineItems.reduce(0) { $0 + $1.amount } }
