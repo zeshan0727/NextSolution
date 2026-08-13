@@ -1,0 +1,193 @@
+diff -ruN /mnt/data/aspire111_base/AspireMaintenance/CommercialServices.swift /mnt/data/aspire111_work/AspireMaintenance/CommercialServices.swift
+--- /mnt/data/aspire111_base/AspireMaintenance/CommercialServices.swift	2026-08-13 16:09:32.000000000 +0000
++++ /mnt/data/aspire111_work/AspireMaintenance/CommercialServices.swift	2026-08-13 16:42:56.115758184 +0000
+@@ -12,82 +12,127 @@
+         company: CompanyProfile,
+         bankAccount: BankAccount?,
+         appLogoData: Data?,
+-        employeeName: String?
++        employeeName: String?,
++        settings: QuotationPDFSettings = PrintCenterPreferences.quotationSettings(),
++        layout: PDFDocumentLayout = PrintCenterPreferences.quotationLayout()
+     ) -> Data {
+         UIGraphicsPDFRenderer(bounds: page).pdfData { context in
+             context.beginPage()
+             UIColor.white.setFill(); UIRectFill(page)
+             green.setFill(); UIRectFill(CGRect(x: 0, y: 0, width: page.width, height: 12))
+ 
+-            if let image = appLogoData.flatMap(UIImage.init(data:)) ?? UIImage(named: "AspireLogo") {
+-                image.draw(in: aspectFit(image.size, in: CGRect(x: 42, y: 24, width: 125, height: 100)))
++            if settings.showLogo {
++                let frame = zone("logo", layout: layout).rect(in: page)
++                if let image = settings.logoData.flatMap(UIImage.init(data:)) ?? appLogoData.flatMap(UIImage.init(data:)) ?? UIImage(named: "AspireLogo") {
++                    image.draw(in: aspectFit(image.size, in: frame))
++                }
+             }
+ 
+-            draw(company.fullName, CGRect(x: 176, y: 38, width: 220, height: 46), 14, .bold, green)
+-            let contact = [company.address, company.phone, company.email, company.website].filter { !$0.isEmpty }.joined(separator: "  •  ")
+-            draw(contact, CGRect(x: 42, y: 126, width: 510, height: 22), 8.5, .regular, .darkGray)
+-            draw("QUOTATION", CGRect(x: 370, y: 34, width: 182, height: 48), 31, .heavy, dark, .right)
+-            draw(quotation.number, CGRect(x: 370, y: 88, width: 182, height: 18), 10.5, .semibold, green, .right)
+-            green.setFill(); UIRectFill(CGRect(x: 42, y: 150, width: 510, height: 1.5))
+-
+-            draw("QUOTATION TO", CGRect(x: 42, y: 172, width: 220, height: 20), 13, .bold, green)
+-            draw(customer.name, CGRect(x: 42, y: 195, width: 270, height: 40), 14, .bold, dark)
+-            let details = [customer.address, customer.phone, customer.email].filter { !$0.isEmpty }.joined(separator: "\n")
+-            draw(details, CGRect(x: 42, y: 235, width: 270, height: 56), 9.5, .regular, .darkGray)
+-
+-            let metaLabels = "QUOTE DATE\nVALID UNTIL\nWORK TYPE" + (employeeName == nil ? "" : "\nPREPARED BY")
+-            let metaValues = DateFormatter.shortDate.string(from: quotation.issueDate) + "\n" + DateFormatter.shortDate.string(from: quotation.validUntil) + "\n" + quotation.jobType.rawValue + (employeeName.map { "\n\($0)" } ?? "")
+-            draw(metaLabels, CGRect(x: 340, y: 176, width: 90, height: 100), 9, .bold, dark)
+-            draw(metaValues, CGRect(x: 430, y: 176, width: 122, height: 100), 9, .regular, dark, .right)
+-
+-            let top: CGFloat = 305
+-            green.setFill(); UIRectFill(CGRect(x: 42, y: top, width: 510, height: 30))
+-            draw("DESCRIPTION", CGRect(x: 52, y: top + 7, width: 280, height: 16), 10, .bold, .white)
+-            draw("QTY", CGRect(x: 345, y: top + 7, width: 45, height: 16), 10, .bold, .white, .center)
+-            draw("PRICE", CGRect(x: 397, y: top + 7, width: 65, height: 16), 10, .bold, .white, .right)
+-            draw("AMOUNT", CGRect(x: 472, y: top + 7, width: 70, height: 16), 10, .bold, .white, .right)
+-
+-            var y = top + 30
+-            for item in quotation.lineItems.prefix(7) {
+-                UIColor(white: 0.96, alpha: 1).setFill(); UIRectFill(CGRect(x: 42, y: y, width: 510, height: 43))
+-                draw(item.description, CGRect(x: 52, y: y + 7, width: 280, height: 30), 9.5, .medium, dark)
+-                draw(String(format: "%.2f", item.quantity), CGRect(x: 345, y: y + 12, width: 45, height: 18), 9.5, .regular, dark, .center)
+-                draw(CurrencyFormatter.string(item.unitPrice, code: company.currencyCode), CGRect(x: 397, y: y + 12, width: 65, height: 18), 8.5, .regular, dark, .right)
+-                draw(CurrencyFormatter.string(item.amount, code: company.currencyCode), CGRect(x: 468, y: y + 12, width: 74, height: 18), 8.5, .semibold, dark, .right)
+-                y += 45
+-            }
+-
+-            let summaryY = min(y + 10, 665)
+-            draw("SUBTOTAL", CGRect(x: 370, y: summaryY, width: 78, height: 18), 10, .bold, dark)
+-            draw(CurrencyFormatter.string(quotation.subtotal, code: company.currencyCode), CGRect(x: 448, y: summaryY, width: 104, height: 18), 10, .semibold, dark, .right)
+-            if quotation.discountAmount > 0 {
+-                let discountLabel = quotation.discountMode == .percentage ? String(format: "DISCOUNT %.2f%%", quotation.discountValue) : "DISCOUNT"
+-                draw(discountLabel, CGRect(x: 370, y: summaryY + 22, width: 100, height: 18), 10, .bold, .systemRed)
+-                draw("-" + CurrencyFormatter.string(quotation.discountAmount, code: company.currencyCode), CGRect(x: 448, y: summaryY + 22, width: 104, height: 18), 10, .semibold, .systemRed, .right)
+-            }
+-            gold.setFill(); UIRectFill(CGRect(x: 340, y: summaryY + 46, width: 212, height: 40))
+-            draw("TOTAL", CGRect(x: 352, y: summaryY + 57, width: 72, height: 18), 13, .heavy, dark)
+-            draw(CurrencyFormatter.string(quotation.total, code: company.currencyCode), CGRect(x: 425, y: summaryY + 57, width: 115, height: 18), 13, .heavy, dark, .right)
+-
+-            if !quotation.notes.isEmpty {
+-                draw("TERMS / NOTES", CGRect(x: 42, y: 700, width: 220, height: 20), 12, .bold, green)
+-                draw(quotation.notes, CGRect(x: 42, y: 724, width: 510, height: 60), 9.5, .regular, dark)
++            if settings.showCompany {
++                let frame = zone("company", layout: layout).rect(in: page)
++                let name = settings.companyOverride.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? company.fullName : settings.companyOverride
++                draw(name, frame, 14, .bold, green)
+             }
+ 
+-            green.setFill(); UIRectFill(CGRect(x: 0, y: 816, width: page.width, height: 26))
+-            draw("Aspire Green Garden Designing and Works LLC", CGRect(x: 42, y: 822, width: 510, height: 14), 8, .medium, .white, .center)
++            if settings.showContact {
++                let frame = zone("contact", layout: layout).rect(in: page)
++                let automatic = [company.address, company.phone, company.email, company.website].filter { !$0.isEmpty }.joined(separator: "  •  ")
++                let contact = settings.contactOverride.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? automatic : settings.contactOverride
++                draw(contact, frame, 8.5, .regular, .darkGray)
++            }
++
++            let titleFrame = zone("title", layout: layout).rect(in: page)
++            draw(settings.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "QUOTATION" : settings.title,
++                 CGRect(x: titleFrame.minX, y: titleFrame.minY, width: titleFrame.width, height: titleFrame.height * 0.62),
++                 30, .heavy, dark, .right)
++            draw(quotation.number,
++                 CGRect(x: titleFrame.minX, y: titleFrame.minY + titleFrame.height * 0.64, width: titleFrame.width, height: titleFrame.height * 0.25),
++                 10.5, .semibold, green, .right)
++
++            if settings.showCustomer {
++                let frame = zone("customer", layout: layout).rect(in: page)
++                draw(settings.customerTitle, CGRect(x: frame.minX, y: frame.minY, width: frame.width, height: 20), 13, .bold, green)
++                draw(customer.name, CGRect(x: frame.minX, y: frame.minY + 23, width: frame.width, height: 36), 14, .bold, dark)
++                let details = [customer.address, customer.phone, customer.email].filter { !$0.isEmpty }.joined(separator: "\n")
++                draw(details, CGRect(x: frame.minX, y: frame.minY + 60, width: frame.width, height: max(18, frame.height - 60)), 9.5, .regular, .darkGray)
++            }
++
++            if settings.showMeta {
++                let frame = zone("meta", layout: layout).rect(in: page)
++                let labels = "QUOTE DATE\nVALID UNTIL\nWORK TYPE" + (employeeName == nil ? "" : "\nPREPARED BY")
++                let values = DateFormatter.shortDate.string(from: quotation.issueDate) + "\n" + DateFormatter.shortDate.string(from: quotation.validUntil) + "\n" + quotation.jobType.rawValue + (employeeName.map { "\n\($0)" } ?? "")
++                draw(labels, CGRect(x: frame.minX, y: frame.minY, width: frame.width * 0.45, height: frame.height), 9, .bold, dark)
++                draw(values, CGRect(x: frame.minX + frame.width * 0.46, y: frame.minY, width: frame.width * 0.54, height: frame.height), 9, .regular, dark, .right)
++            }
++
++            if settings.showItems { drawItems(quotation: quotation, company: company, frame: zone("items", layout: layout).rect(in: page)) }
++
++            if settings.showNotes, !quotation.notes.isEmpty {
++                let frame = zone("notes", layout: layout).rect(in: page)
++                draw(settings.notesTitle, CGRect(x: frame.minX, y: frame.minY, width: frame.width, height: 20), 12, .bold, green)
++                draw(quotation.notes, CGRect(x: frame.minX, y: frame.minY + 24, width: frame.width, height: max(16, frame.height - 24)), 9.5, .regular, dark)
++            }
++
++            if settings.showFooter {
++                let frame = zone("footer", layout: layout).rect(in: page)
++                green.setFill(); UIRectFill(frame)
++                draw(settings.footerText, frame.insetBy(dx: 10, dy: 5), 8, .medium, .white, .center)
++            }
++        }
++    }
++
++    private func drawItems(quotation: Quotation, company: CompanyProfile, frame: CGRect) {
++        let headerHeight: CGFloat = min(30, max(22, frame.height * 0.12))
++        green.setFill(); UIRectFill(CGRect(x: frame.minX, y: frame.minY, width: frame.width, height: headerHeight))
++
++        let descW = frame.width * 0.56
++        let qtyW = frame.width * 0.10
++        let priceW = frame.width * 0.15
++        let amountW = frame.width - descW - qtyW - priceW
++        let x0 = frame.minX
++        draw("DESCRIPTION", CGRect(x: x0 + 10, y: frame.minY + 7, width: descW - 14, height: 16), 9.5, .bold, .white)
++        draw("QTY", CGRect(x: x0 + descW, y: frame.minY + 7, width: qtyW, height: 16), 9.5, .bold, .white, .center)
++        draw("PRICE", CGRect(x: x0 + descW + qtyW, y: frame.minY + 7, width: priceW, height: 16), 9.5, .bold, .white, .right)
++        draw("AMOUNT", CGRect(x: x0 + descW + qtyW + priceW, y: frame.minY + 7, width: amountW - 8, height: 16), 9.5, .bold, .white, .right)
++
++        let summaryHeight: CGFloat = quotation.discountAmount > 0 ? 90 : 66
++        let availableRows = max(1, min(7, quotation.lineItems.count))
++        let rowArea = max(50, frame.height - headerHeight - summaryHeight)
++        let rowHeight = max(34, min(48, rowArea / CGFloat(availableRows)))
++        var y = frame.minY + headerHeight
++
++        for item in quotation.lineItems.prefix(7) {
++            UIColor(white: 0.96, alpha: 1).setFill(); UIRectFill(CGRect(x: frame.minX, y: y, width: frame.width, height: rowHeight - 2))
++            draw(item.description, CGRect(x: x0 + 10, y: y + 6, width: descW - 14, height: rowHeight - 10), 9.2, .medium, dark)
++            draw(String(format: "%.2f", item.quantity), CGRect(x: x0 + descW, y: y + 10, width: qtyW, height: 18), 9.2, .regular, dark, .center)
++            draw(CurrencyFormatter.string(item.unitPrice, code: company.currencyCode), CGRect(x: x0 + descW + qtyW, y: y + 10, width: priceW, height: 18), 8.4, .regular, dark, .right)
++            draw(CurrencyFormatter.string(item.amount, code: company.currencyCode), CGRect(x: x0 + descW + qtyW + priceW, y: y + 10, width: amountW - 8, height: 18), 8.4, .semibold, dark, .right)
++            y += rowHeight
++            if y > frame.maxY - summaryHeight { break }
+         }
++
++        let summaryY = min(max(y + 6, frame.maxY - summaryHeight), frame.maxY - summaryHeight)
++        draw("SUBTOTAL", CGRect(x: frame.maxX - 182, y: summaryY, width: 78, height: 18), 9.5, .bold, dark)
++        draw(CurrencyFormatter.string(quotation.subtotal, code: company.currencyCode), CGRect(x: frame.maxX - 104, y: summaryY, width: 104, height: 18), 9.5, .semibold, dark, .right)
++        var totalY = summaryY + 22
++        if quotation.discountAmount > 0 {
++            let discountLabel = quotation.discountMode == .percentage ? String(format: "DISCOUNT %.2f%%", quotation.discountValue) : "DISCOUNT"
++            draw(discountLabel, CGRect(x: frame.maxX - 182, y: summaryY + 22, width: 100, height: 18), 9.5, .bold, .systemRed)
++            draw("-" + CurrencyFormatter.string(quotation.discountAmount, code: company.currencyCode), CGRect(x: frame.maxX - 104, y: summaryY + 22, width: 104, height: 18), 9.5, .semibold, .systemRed, .right)
++            totalY += 22
++        }
++        gold.setFill(); UIRectFill(CGRect(x: frame.maxX - 212, y: totalY + 2, width: 212, height: 38))
++        draw("TOTAL", CGRect(x: frame.maxX - 200, y: totalY + 12, width: 72, height: 18), 12.5, .heavy, dark)
++        draw(CurrencyFormatter.string(quotation.total, code: company.currencyCode), CGRect(x: frame.maxX - 127, y: totalY + 12, width: 115, height: 18), 12.5, .heavy, dark, .right)
++    }
++
++    private func zone(_ key: String, layout: PDFDocumentLayout) -> PDFZoneFrame {
++        layout.frame(key, fallback: PDFDocumentLayout.quotationDefault.zones[key] ?? PDFZoneFrame(x: 0.1, y: 0.1, width: 0.3, height: 0.1))
+     }
+ 
+     private func draw(_ text: String, _ rect: CGRect, _ size: CGFloat, _ weight: UIFont.Weight, _ color: UIColor, _ alignment: NSTextAlignment = .left) {
+-        let paragraph = NSMutableParagraphStyle()
+-        paragraph.alignment = alignment
+-        paragraph.lineBreakMode = .byWordWrapping
+-        (text as NSString).draw(in: rect, withAttributes: [
+-            .font: UIFont.systemFont(ofSize: size, weight: weight),
+-            .foregroundColor: color,
+-            .paragraphStyle: paragraph
+-        ])
++        let paragraph = NSMutableParagraphStyle(); paragraph.alignment = alignment; paragraph.lineBreakMode = .byWordWrapping
++        (text as NSString).draw(in: rect, withAttributes: [.font: UIFont.systemFont(ofSize: size, weight: weight), .foregroundColor: color, .paragraphStyle: paragraph])
+     }
+ 
+     private func aspectFit(_ imageSize: CGSize, in bounds: CGRect) -> CGRect {
