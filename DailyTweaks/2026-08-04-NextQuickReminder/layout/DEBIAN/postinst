@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+mkdir -p /var/mobile/Library/Logs 2>/dev/null || true
+printf '%s\n' "$(date '+%Y-%m-%d %H:%M:%S') | Next Quick Reminder 1.0.1 installed; restarting Settings and SpringBoard." >> /var/mobile/Library/Logs/NextQuickReminder-install.log 2>/dev/null || true
+
+killall -9 Preferences 2>/dev/null || true
+killall -9 SpringBoard 2>/dev/null || true
+
+exit 0
