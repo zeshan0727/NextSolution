@@ -28,6 +28,7 @@ jobs:
           grep -q 'ActivityConfiguration' "$P/NextReminderLiveActivity/NextReminderLiveActivity.swift"
           grep -q 'Completed' "$P/NextReminderLiveActivity/NextReminderLiveActivity.swift"
           grep -q 'Extend 10m' "$P/NextReminderLiveActivity/NextReminderLiveActivity.swift"
+          grep -q 'Extend 10 Minutes' "$P/ci/patch_v149.py"
           grep -q 'NSSupportsLiveActivities' "$P/ci/patch_v149.py"
           grep -q 'NextReminderLiveActivity' "$P/ci/patch_v149.py"
           grep -q '1.3.19' "$P/ci/adjust_build_v149.py"
@@ -55,14 +56,11 @@ jobs:
           test -d "$EXT"
           test -x "$EXT/NextReminderLiveActivity"
           plutil -extract CFBundleShortVersionString raw "$EXT/Info.plist" | grep -qx '1.3.19'
-          APP_STRINGS="$RUNNER_TEMP/nextreminder-v149-app-strings.txt"
-          EXT_STRINGS="$RUNNER_TEMP/nextreminder-v149-ext-strings.txt"
-          strings -a "$APP/NextReminder" > "$APP_STRINGS"
-          strings -a "$EXT/NextReminderLiveActivity" > "$EXT_STRINGS"
-          grep -q 'Email Schedules' "$APP_STRINGS"
-          grep -q 'Extend 10 Minutes' "$APP_STRINGS"
-          grep -q 'Completed' "$EXT_STRINGS"
-          grep -q 'Extend 10m' "$EXT_STRINGS"
+          unzip -l "$TIPA" | grep -q 'Payload/NextReminder.app/PlugIns/NextReminderLiveActivity.appex/NextReminderLiveActivity'
+          grep -q 'Email Schedules' NextReminderApp/NextReminder/Sources/ScheduledEmails.swift
+          grep -q 'case quarterly' NextReminderApp/NextReminder/Sources/ScheduledEmails.swift
+          grep -q 'Completed' NextReminderApp/NextReminderLiveActivity/NextReminderLiveActivity.swift
+          grep -q 'Extend 10m' NextReminderApp/NextReminderLiveActivity/NextReminderLiveActivity.swift
           mkdir -p "$RUNNER_TEMP/next-reminder-v149"
           cp "$TIPA" "$RUNNER_TEMP/next-reminder-v149/NextReminder-v1.3.19-LiveActivity-EmailSchedules.tipa"
           cp NextReminderApp/NextReminder-v1.3.19-unsigned.tipa.sha256 "$RUNNER_TEMP/next-reminder-v149/NextReminder-v1.3.19-SHA256.txt"
