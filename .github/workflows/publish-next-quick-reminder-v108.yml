@@ -38,12 +38,14 @@ jobs:
           python3 "$P/prepare-v106.py"
           python3 "$P/prepare-v107.py"
           python3 "$P/prepare-v108.py"
+          python3 "$P/compile-fix-v108.py"
           python3 "$P/prepare-build.py"
           chmod 755 "$P/layout/DEBIAN/postinst"
           test "$(awk '/^Version:/ {print $2}' "$P/control")" = 1.0.8
           grep -q 'SystemApertureReminder.xm' "$P/Makefile"
           ! grep -q 'DueReminderLiveCard.xm' "$P/Makefile"
           grep -q 'SBSystemApertureWindow' "$P/SystemApertureReminder.xm"
+          grep -q 'DISPATCH_BLOCK_INHERIT_QOS_CLASS' "$P/SystemApertureReminder.xm"
           grep -q 'MCMMetadataIdentifier' "$P/SystemApertureReminder.xm"
           grep -q 'nqr106_prepareKeyboardForResponder' "$P/Tweak.xm"
 
