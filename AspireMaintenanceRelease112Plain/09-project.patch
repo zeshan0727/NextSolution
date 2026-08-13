@@ -1,0 +1,14 @@
+diff -ruN /mnt/data/aspire111_base/AspireMaintenance/project.yml /mnt/data/aspire111_work/AspireMaintenance/project.yml
+--- /mnt/data/aspire111_base/AspireMaintenance/project.yml	2026-08-13 16:09:32.000000000 +0000
++++ /mnt/data/aspire111_work/AspireMaintenance/project.yml	2026-08-13 16:49:03.650902254 +0000
+@@ -11,8 +11,8 @@
+     TARGETED_DEVICE_FAMILY: "1"
+     SUPPORTS_MACCATALYST: "NO"
+     CODE_SIGN_STYLE: Automatic
+-    MARKETING_VERSION: "1.1.1"
+-    CURRENT_PROJECT_VERSION: "4"
++    MARKETING_VERSION: "1.1.2"
++    CURRENT_PROJECT_VERSION: "5"
+   configs:
+     Release:
+       SWIFT_OPTIMIZATION_LEVEL: "-O"
