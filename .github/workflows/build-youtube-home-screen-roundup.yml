@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - agent/youtube-top-home-screen-video
+      - "agent/youtube-**"
     paths:
       - "video-production/top-home-screen-tweaks/**"
       - ".github/workflows/build-youtube-home-screen-roundup.yml"

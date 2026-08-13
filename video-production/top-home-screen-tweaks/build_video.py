@@ -307,6 +307,40 @@ def media_duration(path: Path) -> float:
     return float(value)
 
 
+def speech_duration_bounds(text: str) -> tuple[float, float]:
+    """Return conservative duration limits for intelligible English narration."""
+    words = len(re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", text))
+    if words < 1:
+        raise ValueError("narration must contain at least one word")
+    # Reject partial/truncated speech and accidental extreme pacing. The range
+    # deliberately allows natural pauses and presenter-style emphasis.
+    return words / 230 * 60, words / 85 * 60
+
+
+def validated_speech(
+    text: str,
+    target: Path,
+    *,
+    api_key: str,
+    voice: str,
+    attempts: int = 3,
+) -> float:
+    minimum, maximum = speech_duration_bounds(text)
+    observed = 0.0
+    for attempt in range(attempts):
+        generate_speech(text, target, api_key=api_key, voice=voice)
+        observed = media_duration(target)
+        if minimum <= observed <= maximum:
+            return observed
+        target.unlink(missing_ok=True)
+        if attempt < attempts - 1:
+            time.sleep(2**attempt)
+    raise RuntimeError(
+        "speech duration failed validation after regeneration: "
+        f"observed={observed:.3f}s expected={minimum:.3f}-{maximum:.3f}s"
+    )
+
+
 def caption_chunks(text: str, max_chars: int = 52) -> list[str]:
     chunks: list[str] = []
     for sentence in re.split(r"(?<=[.!?])\s+", text.strip()):
@@ -394,8 +428,9 @@ def render_video(content: dict[str, Any], output: Path, *, api_key: str, voice: 
         audio = output / f"scene-{index + 1:02d}.aac"
         video = output / f"scene-{index + 1:02d}.mp4"
         slide = output / "slides" / f"scene-{index + 1:02d}.png"
-        generate_speech(str(scene["narration"]), audio, api_key=api_key, voice=voice)
-        duration = media_duration(audio)
+        duration = validated_speech(
+            str(scene["narration"]), audio, api_key=api_key, voice=voice
+        )
         fade_out = max(0.0, duration - 0.3)
         zoom_direction = 0.00008 if index % 2 == 0 else 0.00006
         filter_graph = (
@@ -566,6 +601,15 @@ def main() -> int:
         "model": MODEL if args.render else None,
         "voice": args.voice if args.render else None,
         "voice_disclosure": content["voice_disclosure"],
+        "scenes": [
+            {
+                "index": item.index + 1,
+                "title": item.title,
+                "start_seconds": round(item.start, 3),
+                "duration_seconds": round(item.duration, 3),
+            }
+            for item in timings
+        ],
         "files": {
             "video": "top-8-home-screen-tweaks-2026.mp4" if args.render else None,
             "thumbnail": "thumbnail.png",
