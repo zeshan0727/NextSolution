@@ -6,13 +6,17 @@ YouTube video. It produces:
 
 - a 1920×1080 MP4 with burned-in captions;
 - a 1280×720 thumbnail;
+- eight 1080×1920 Shorts, one self-contained segment per tweak;
+- eight vertical Short covers and individual SRT caption files;
 - an SRT caption file;
-- a title, description, tags and chapter list; and
+- long-video and Shorts titles, descriptions, tags and source credits; and
 - a manifest recording the model, voice and disclosure.
 
 The narration is an editorial comparison based on source listings. It does not
 claim hands-on testing. The intro and YouTube description both disclose that the
-voice is AI-generated.
+voice is AI-generated. The feature imagery uses resized screenshots published by
+the package marketplace or developer and composes them inside a consistent frame.
+See `VISUAL_SOURCES.md` for the exact source record.
 
 ## Local design preview
 
@@ -34,6 +38,6 @@ OPENAI_API_KEY=... python3 video-production/top-home-screen-tweaks/build_video.p
   --output video-output/top-home-screen-tweaks
 ```
 
-Review the MP4, thumbnail, description and captions before publishing. Confirm
-the destination channel, visibility and final metadata at the YouTube publish
-step.
+Review the long MP4, all eight Shorts, covers, descriptions and captions before
+publishing. Confirm the destination channel, visibility and final metadata at
+the YouTube publish step.
