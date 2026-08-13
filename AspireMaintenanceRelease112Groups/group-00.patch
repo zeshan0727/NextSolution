@@ -1,0 +1,80 @@
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -89,19 +89,19 @@
+ 
+             VStack(alignment: .leading, spacing: 6) {
+                 Text(customer.name)
+-                    .font(.system(size: 16, weight: .semibold))
++                    .font(.system(size: 15, weight: .semibold))
+                     .foregroundStyle(.primary)
+                     .lineLimit(2)
+-                    .minimumScaleFactor(0.78)
++                    .minimumScaleFactor(0.72)
+                     .fixedSize(horizontal: false, vertical: true)
+ 
+                 HStack(spacing: 6) {
+                     Label(customer.resolvedType.shortTitle, systemImage: customer.resolvedType.icon)
+-                    Text(customer.isActive ? "ACTIVE" : "INACTIVE")
++                    Text(customer.resolvedArchived ? "ARCHIVED" : (customer.isActive ? "ACTIVE" : "INACTIVE"))
+                         .font(.system(size: 8, weight: .heavy))
+                         .padding(.horizontal, 6).padding(.vertical, 2)
+-                        .background((customer.isActive ? Color.aspireGreen : .gray).opacity(0.12), in: Capsule())
+-                        .foregroundStyle(customer.isActive ? Color.aspireGreen : .secondary)
++                        .background((customer.resolvedArchived ? Color.orange : (customer.isActive ? Color.aspireGreen : .gray)).opacity(0.12), in: Capsule())
++                        .foregroundStyle(customer.resolvedArchived ? Color.orange : (customer.isActive ? Color.aspireGreen : .secondary))
+                 }
+                 .font(.caption2.weight(.semibold))
+                 .foregroundStyle(.secondary)
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -559,14 +559,14 @@
+             }
+             Section("Invoices") {
+                 NavigationLink { InvoiceSettingsView() } label: { SettingsRow(icon: "doc.text.fill", title: "Invoice Settings", subtitle: "Prefix, currency, terms and overdue days") }
+-                NavigationLink { InvoiceReportCenterView(sampleInvoiceID: nil) } label: { SettingsRow(icon: "doc.richtext.fill", title: "Invoice PDF Report Center", subtitle: "Live PDF layout, text, logo and image editor") }
++                NavigationLink { PrintCenterView() } label: { SettingsRow(icon: "printer.fill", title: "Print Center", subtitle: "Invoice, quotation and payment receipt PDF format editors") }
+             }
+             Section("Connectivity & Data") {
+                 NavigationLink { EmailAndDataSettingsView() } label: { SettingsRow(icon: "envelope.badge.fill", title: "Email, Alerts & Backup", subtitle: "Gmail connection, notifications and data backup") }
+             }
+             Section("Application") {
+                 LabeledContent("App", value: "Aspire Maintenance")
+-                LabeledContent("Version", value: "1.1.1")
++                LabeledContent("Version", value: "1.1.2")
+             }
+         }
+         .navigationTitle("Settings")
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -896,6 +896,7 @@
+     let sampleInvoiceID: UUID?
+ 
+     @State private var draft = InvoicePDFSettings.aspireDefault
++    @State private var layout = PDFDocumentLayout.invoiceDefault
+     @State private var previewImage: UIImage?
+     @State private var selectedZone: PDFEditableZone?
+     @State private var overlaySelection: OverlaySelection?
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -921,14 +922,18 @@
+                             .buttonStyle(.borderedProminent).tint(.aspireGreen)
+                         Button { importingImage = true } label: { Label("Add from Files", systemImage: "folder.badge.plus") }.buttonStyle(.bordered)
+                         Spacer()
+-                        Button("Reset") { draft = .aspireDefault; schedulePreview() }.buttonStyle(.bordered)
++                        Button("Reset") {
++                            draft = .aspireDefault
++                            layout = .invoiceDefault
++                            schedulePreview()
++                        }.buttonStyle(.bordered)
+                     }
+                     .font(.caption.weight(.semibold))
+ 
+-                    Text("Tap any marked PDF area to edit or hide it. Tap a photo to replace, resize, reposition or remove it.")
++                    Text("Drag any marked invoice block to reposition it. Tap a block to edit text, visibility, exact position and size. Tap a photo to replace, resize, reposition or remove it.")
+                         .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+ 
+-                    PDFEditablePreview(image: previewImage, settings: draft, onZone: { selectedZone = $0 }, onOverlay: { overlaySelection = OverlaySelection(id: $0) })
++                    PDFEditablePreview(image: previewImage, settings: draft, layout: $layout, onZone: { selectedZone = $0 }, onOverlay: { overlaySelection = OverlaySelection(id: $0) })
+                         .frame(maxWidth: 520)
+ 
+                     VStack(alignment: .leading, spacing: 8) {
