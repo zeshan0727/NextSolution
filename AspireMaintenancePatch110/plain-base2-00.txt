@@ -1,0 +1,179 @@
+# Aspire Maintenance 1.1.0 source patch continuation; first line is ignored when assembling.
+           }
++            .frame(width: 48, height: 48)
++
++            VStack(alignment: .leading, spacing: 4) {
++                HStack(spacing: 6) {
++                    Text(customer.name).font(.headline).lineLimit(1)
++                    Text(customer.isActive ? "ACTIVE" : "INACTIVE")
++                        .font(.system(size: 8, weight: .heavy))
++                        .padding(.horizontal, 6).padding(.vertical, 2)
++                        .background((customer.isActive ? Color.aspireGreen : .gray).opacity(0.12), in: Capsule())
++                        .foregroundStyle(customer.isActive ? Color.aspireGreen : .secondary)
++                }
++                if !customer.address.isEmpty {
++                    Label(customer.address, systemImage: "mappin.and.ellipse")
++                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
++                } else if !customer.phone.isEmpty {
++                    Label(customer.phone, systemImage: "phone")
++                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
++                }
++                HStack(spacing: 10) {
++                    Label("\(completedVisits)/\(customer.plannedVisitsPerMonth) visits", systemImage: "leaf.fill")
++                    if outstanding > 0 { Text("Due \(store.currency(outstanding))") }
++                }
++                .font(.caption2.weight(.semibold))
++                .foregroundStyle(outstanding > 0 ? Color.orange : .secondary)
++            }
++            Spacer(minLength: 6)
++            VStack(alignment: .trailing, spacing: 3) {
++                Text(store.currency(customer.monthlyRate)).font(.subheadline.weight(.bold))
++                Text("monthly").font(.caption2).foregroundStyle(.secondary)
++            }
++        }
++        .padding(.vertical, 4)
++    }
++}
++
++// MARK: - Receivables & Advance Collections
++
++struct ReceivableListView: View {
++    @EnvironmentObject private var store: AspireStore
++    let kind: ReceivableDashboardKind
++
++    private var invoices: [Invoice] {
++        switch kind {
++        case .outstanding: return store.invoices.filter { $0.status != .void && $0.outstanding > 0 }
++        case .overdue: return store.overdueInvoices()
++        case .longOverdue: return store.longOverdueInvoices()
++        case .advances: return []
++        }
++    }
++
++    var body: some View {
++        List {
++            if kind == .advances {
++                Section("Total • \(store.currency(store.advanceTotal()))") {
++                    if store.advancePayments.isEmpty {
++                        EmptyInlineView(icon: "banknote", text: "No advance collections recorded")
++                    } else {
++                        ForEach(store.advancePayments) { payment in
++                            AdvancePaymentRow(payment: payment)
++                        }
++                    }
++                }
++            } else {
++                Section("\(invoices.count) invoice(s) • \(store.currency(invoices.reduce(0) { $0 + $1.outstanding }))") {
++                    if invoices.isEmpty {
++                        EmptyInlineView(icon: "checkmark.seal", text: "No matching receivables")
++                    } else {
++                        ForEach(invoices) { invoice in
++                            NavigationLink { InvoiceDetailView(invoiceID: invoice.id) } label: { InvoiceRow(invoice: invoice) }
++                        }
++                    }
++                }
++            }
++        }
++        .listStyle(.insetGrouped)
++        .navigationTitle(kind.title)
++        .navigationBarTitleDisplayMode(.inline)
++    }
++}
++
++struct AdvancePaymentRow: View {
++    @EnvironmentObject private var store: AspireStore
++    let payment: AdvancePayment
++
++    var body: some View {
++        HStack(spacing: 12) {
++            Image(systemName: "banknote.fill")
++                .foregroundStyle(Color.aspireGreen)
++                .frame(width: 34, height: 34)
++                .background(Color.aspireGreen.opacity(0.1), in: RoundedRectangle(cornerRadius: 9))
++            VStack(alignment: .leading, spacing: 2) {
++                Text(store.customer(id: payment.customerID)?.name ?? "Unknown Customer").font(.subheadline.weight(.semibold))
++                Text(DateFormatter.shortDate.string(from: payment.date) + (payment.reference.isEmpty ? "" : " • \(payment.reference)"))
++                    .font(.caption).foregroundStyle(.secondary)
++            }
++            Spacer()
++            Text(store.currency(payment.amount)).font(.subheadline.weight(.bold)).foregroundStyle(Color.aspireGreen)
++        }
++    }
++}
++
++struct AdvancePaymentEditorView: View {
++    @EnvironmentObject private var store: AspireStore
++    @Environment(\.dismiss) private var dismiss
++    let preselectedCustomer: Customer?
++
++    @State private var customerID: UUID?
++    @State private var date = Date()
++    @State private var amountText = ""
++    @State private var paymentAccount = "Cash / Bank"
++    @State private var reference = ""
++    @State private var notes = ""
++    @State private var employeeID: UUID?
++    @State private var error: String?
++
++    init(preselectedCustomer: Customer? = nil) {
++        self.preselectedCustomer = preselectedCustomer
++        _customerID = State(initialValue: preselectedCustomer?.id)
++    }
++
++    private var parsedAmount: Double? {
++        Double(amountText.replacingOccurrences(of: ",", with: "."))
++    }
++
++    var body: some View {
++        NavigationStack {
++            Form {
++                Section("Customer") {
++                    Picker("Customer", selection: $customerID) {
++                        Text("Select customer").tag(UUID?.none)
++                        ForEach(store.customers) { Text($0.name).tag(Optional($0.id)) }
++                    }
++                    DatePicker("Collection date", selection: $date, displayedComponents: .date)
++                }
++                Section("Advance Collection") {
++                    TextField("Amount", text: $amountText).keyboardType(.decimalPad)
++                    TextField("Received into", text: $paymentAccount)
++                    TextField("Reference / receipt no.", text: $reference)
++                    Picker("Collected by", selection: $employeeID) {
++                        Text("Not selected").tag(UUID?.none)
++                        ForEach(store.activeEmployees) { Text($0.name).tag(Optional($0.id)) }
++                    }
++                    TextField("Notes", text: $notes, axis: .vertical).lineLimit(2...5)
++                }
++            }
++            .navigationTitle("Collect Advance")
++            .navigationBarTitleDisplayMode(.inline)
++            .toolbar {
++                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
++                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() }.disabled(customerID == nil || (parsedAmount ?? 0) <= 0) }
++            }
++            .alert("Advance Not Saved", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
++                Button("OK", role: .cancel) {}
++            } message: { Text(error ?? "") }
++        }
++    }
++
++    private func save() {
++        guard let customerID, let amount = parsedAmount, amount > 0 else { return }
++        let payment = AdvancePayment(
++            customerID: customerID,
++            date: date,
++            amount: amount,
++            paymentAccount: paymentAccount.trimmingCharacters(in: .whitespacesAndNewlines),
++            reference: reference.trimmingCharacters(in: .whitespacesAndNewlines),
++            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
++            employeeID: employeeID
++        )
++        if store.addAdvancePayment(payment) { dismiss() }
++        else { error = store.lastErrorMessage ?? "Unable to save advance collection." }
++    }
++}
++
++// MARK: - Expense Review, Refund & Delete
++
++struct ExpenseDetailView: View {
++    @EnvironmentObject private var store: 
