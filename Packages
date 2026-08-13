@@ -544,10 +544,10 @@ Installed-Size: 584
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
 Filename: ./debfiles/NextQuickReminder_1.0.7_RootHide.deb
-Size: 82184
-MD5sum: b0f4ff0733f47686bcbc747cbaa4826c
-SHA1: feee90ef06397cf1b949ab0ce3059625f2833f04
-SHA256: 9cc733794049f8fd2d4355bcbfa5058f41f44f1630faf4b76ce30cd7d0a78c2c
+Size: 81912
+MD5sum: d40e7e6e98ee1d19ecf90b0c88bfdacc
+SHA1: 4596e61ab059a872771dae6d384f906e4efce910
+SHA256: 80db49c81ee74fbd5f0f66626742918fe937f8acac6f2d2b50541f35217844a6
 Section: Tweaks
 Description: RootHide quick reminder with reliable multi-trigger access, keyboard input, background saving, and an iOS 16.0 Lock Screen due-reminder live-card fallback with Completed and Extend controls.
 Author: Next Solution - Zeeshan Barvi
