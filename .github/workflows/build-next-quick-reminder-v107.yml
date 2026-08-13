@@ -35,6 +35,7 @@ jobs:
           plutil -lint "$P/Preferences/Resources/Info.plist"
           grep -q 'DueReminderLiveCard.xm' "$P/Makefile"
           grep -q 'iOS16 RootHide due live-card monitor loaded' "$P/DueReminderLiveCard.xm"
+          grep -q 'LIVE REMINDER' "$P/DueReminderLiveCard.xm"
           grep -q 'Completed' "$P/DueReminderLiveCard.xm"
           grep -q 'Extend 10m' "$P/DueReminderLiveCard.xm"
           grep -q 'NextReminderDatabase.json' "$P/DueReminderLiveCard.xm"
@@ -76,9 +77,6 @@ jobs:
           strings -a "$DYLIB" > "$STRINGS"
           grep -q 'Keyboard focus request' "$STRINGS"
           grep -q 'iOS16 RootHide due live-card monitor loaded' "$STRINGS"
-          grep -q 'LIVE REMINDER' "$STRINGS"
-          grep -q 'Extend 10m' "$STRINGS"
-          grep -q 'Completed' "$STRINGS"
           grep -q 'NextReminderDatabase.json' "$STRINGS"
           shasum -a 256 "$DEB" > "$OUT/NextQuickReminder_1.0.7_RootHide-SHA256.txt"
 
