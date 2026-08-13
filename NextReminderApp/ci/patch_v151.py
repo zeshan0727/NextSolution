@@ -11,65 +11,23 @@ def replace_once(path: Path, old: str, new: str) -> None:
         raise SystemExit(f"Expected text not found in {path}: {old[:260]!r}")
     path.write_text(text.replace(old, new, 1))
 
-# 1) Make Email Schedules visible from the center Add button as well as the
-# Reminders toolbar. This removes any ambiguity about where email-only schedules live.
+# v1.3.20 already exposes Email Schedules with the envelope-clock toolbar icon
+# and + -> New Scheduled Email. Add a large always-visible summary card to the
+# main Reminders screen so saved email-only schedules are impossible to miss.
 root = SOURCES / "RootReminders.swift"
 replace_once(
     root,
-    '''    @EnvironmentObject private var emailAutomationStore: EmailAutomationStore
-
-    @State private var selectedTab: AppTab = .reminders''',
-    '''    @EnvironmentObject private var emailAutomationStore: EmailAutomationStore
-    @EnvironmentObject private var scheduledEmailStore: ScheduledEmailStore
-
-    @State private var selectedTab: AppTab = .reminders'''
-)
-replace_once(
-    root,
-    '''    @State private var openedEmailReminder: IdentifiedReminderID?
-''',
-    '''    @State private var openedEmailReminder: IdentifiedReminderID?
-    @State private var showNewEmailSchedule = false
-'''
-)
-replace_once(
-    root,
-    '''            Button("New Reminder") { addFlow = .reminder }
-            Button("New Social Automation") { addFlow = .automation }
-            Button("Cancel", role: .cancel) {}''',
-    '''            Button("New Reminder") { addFlow = .reminder }
-            Button("New Scheduled Email") { showNewEmailSchedule = true }
-            Button("New Social Automation") { addFlow = .automation }
-            Button("Cancel", role: .cancel) {}'''
-)
-replace_once(
-    root,
-    '''        .sheet(item: $openedAutomation) { item in
-''',
-    '''        .sheet(isPresented: $showNewEmailSchedule) {
-            NavigationStack {
-                EmailScheduleEditorView(item: nil)
-            }
-            .environmentObject(scheduledEmailStore)
-        }
-        .sheet(item: $openedAutomation) { item in
-'''
-)
-
-# 2) Prominent Email Schedules summary inside Reminders. Users can see the count,
-# next scheduled email, open the full list, or create one directly.
-replace_once(
-    root,
     '''                header
+                WorkweekPerformanceCard()
                 quickFilters
-                categoryFilters
 ''',
     '''                header
                 emailSchedulesSummary
+                WorkweekPerformanceCard()
                 quickFilters
-                categoryFilters
 '''
 )
+
 anchor = '''    private var header: some View {
 '''
 summary_view = '''    private var emailSchedulesSummary: some View {
@@ -126,9 +84,9 @@ if anchor not in root.read_text():
     raise SystemExit("Reminders header anchor not found")
 root.write_text(root.read_text().replace(anchor, summary_view + anchor, 1))
 
-# 3) Every database save notifies the SpringBoard tweak immediately. This fixes
-# stale Dynamic Island reminders after delete/complete/extend and avoids waiting
-# for a polling interval.
+# Every reminder database save notifies SpringBoard immediately. This lets the
+# System Aperture tweak remove a due item as soon as the reminder is deleted,
+# completed, or extended instead of showing stale data.
 services = SOURCES / "Services.swift"
 if 'import CoreFoundation\n' not in services.read_text():
     replace_once(services, 'import Combine\n', 'import Combine\nimport CoreFoundation\n')
@@ -150,7 +108,7 @@ replace_once(
 '''
 )
 
-# 4) Version 1.3.21 build 31.
+# Version 1.3.21 build 31.
 project = ROOT / "project.yml"
 text = project.read_text()
 text = text.replace('CFBundleShortVersionString: "1.3.20"', 'CFBundleShortVersionString: "1.3.21"')
