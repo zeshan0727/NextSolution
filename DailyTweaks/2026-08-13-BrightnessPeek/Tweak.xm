@@ -1,5 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import <QuartzCore/QuartzCore.h>
+#import <math.h>
 
 static CFStringRef const BPPreferenceDomain = CFSTR("com.nextsolution.brightnesspeek");
 static CFStringRef const BPPreferencesChanged = CFSTR("com.nextsolution.brightnesspeek.preferences.changed");
@@ -39,6 +41,11 @@ static void BPEnsureOverlay(void) {
     BPWindow.userInteractionEnabled = NO;
     BPWindow.hidden = YES;
 
+    UIViewController *controller = [UIViewController new];
+    controller.view.backgroundColor = UIColor.clearColor;
+    controller.view.userInteractionEnabled = NO;
+    BPWindow.rootViewController = controller;
+
     CGFloat width = 92.0, height = 38.0;
     BPLabel = [[UILabel alloc] initWithFrame:CGRectMake((CGRectGetWidth(screenBounds)-width)/2.0, 54.0, width, height)];
     BPLabel.backgroundColor = [UIColor colorWithWhite:0.08 alpha:0.86];
@@ -48,7 +55,7 @@ static void BPEnsureOverlay(void) {
     BPLabel.layer.cornerRadius = 19.0;
     BPLabel.layer.masksToBounds = YES;
     BPLabel.accessibilityLabel = @"Screen brightness";
-    [BPWindow addSubview:BPLabel];
+    [controller.view addSubview:BPLabel];
 }
 
 static void BPShowCurrentBrightness(void) {
