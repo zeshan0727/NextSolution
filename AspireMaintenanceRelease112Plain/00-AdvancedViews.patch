@@ -1,0 +1,263 @@
+diff -ruN /mnt/data/aspire111_base/AspireMaintenance/AdvancedViews.swift /mnt/data/aspire111_work/AspireMaintenance/AdvancedViews.swift
+--- /mnt/data/aspire111_base/AspireMaintenance/AdvancedViews.swift	2026-08-13 16:09:32.000000000 +0000
++++ /mnt/data/aspire111_work/AspireMaintenance/AdvancedViews.swift	2026-08-13 16:49:03.650620377 +0000
+@@ -89,19 +89,19 @@
+ 
+             VStack(alignment: .leading, spacing: 6) {
+                 Text(customer.name)
+-                    .font(.system(size: 16, weight: .semibold))
++                    .font(.system(size: 15, weight: .semibold))
+                     .foregroundStyle(.primary)
+                     .lineLimit(2)
+-                    .minimumScaleFactor(0.78)
++                    .minimumScaleFactor(0.72)
+                     .fixedSize(horizontal: false, vertical: true)
+ 
+                 HStack(spacing: 6) {
+                     Label(customer.resolvedType.shortTitle, systemImage: customer.resolvedType.icon)
+-                    Text(customer.isActive ? "ACTIVE" : "INACTIVE")
++                    Text(customer.resolvedArchived ? "ARCHIVED" : (customer.isActive ? "ACTIVE" : "INACTIVE"))
+                         .font(.system(size: 8, weight: .heavy))
+                         .padding(.horizontal, 6).padding(.vertical, 2)
+-                        .background((customer.isActive ? Color.aspireGreen : .gray).opacity(0.12), in: Capsule())
+-                        .foregroundStyle(customer.isActive ? Color.aspireGreen : .secondary)
++                        .background((customer.resolvedArchived ? Color.orange : (customer.isActive ? Color.aspireGreen : .gray)).opacity(0.12), in: Capsule())
++                        .foregroundStyle(customer.resolvedArchived ? Color.orange : (customer.isActive ? Color.aspireGreen : .secondary))
+                 }
+                 .font(.caption2.weight(.semibold))
+                 .foregroundStyle(.secondary)
+@@ -559,14 +559,14 @@
+             }
+             Section("Invoices") {
+                 NavigationLink { InvoiceSettingsView() } label: { SettingsRow(icon: "doc.text.fill", title: "Invoice Settings", subtitle: "Prefix, currency, terms and overdue days") }
+-                NavigationLink { InvoiceReportCenterView(sampleInvoiceID: nil) } label: { SettingsRow(icon: "doc.richtext.fill", title: "Invoice PDF Report Center", subtitle: "Live PDF layout, text, logo and image editor") }
++                NavigationLink { PrintCenterView() } label: { SettingsRow(icon: "printer.fill", title: "Print Center", subtitle: "Invoice, quotation and payment receipt PDF format editors") }
+             }
+             Section("Connectivity & Data") {
+                 NavigationLink { EmailAndDataSettingsView() } label: { SettingsRow(icon: "envelope.badge.fill", title: "Email, Alerts & Backup", subtitle: "Gmail connection, notifications and data backup") }
+             }
+             Section("Application") {
+                 LabeledContent("App", value: "Aspire Maintenance")
+-                LabeledContent("Version", value: "1.1.1")
++                LabeledContent("Version", value: "1.1.2")
+             }
+         }
+         .navigationTitle("Settings")
+@@ -896,6 +896,7 @@
+     let sampleInvoiceID: UUID?
+ 
+     @State private var draft = InvoicePDFSettings.aspireDefault
++    @State private var layout = PDFDocumentLayout.invoiceDefault
+     @State private var previewImage: UIImage?
+     @State private var selectedZone: PDFEditableZone?
+     @State private var overlaySelection: OverlaySelection?
+@@ -921,14 +922,18 @@
+                             .buttonStyle(.borderedProminent).tint(.aspireGreen)
+                         Button { importingImage = true } label: { Label("Add from Files", systemImage: "folder.badge.plus") }.buttonStyle(.bordered)
+                         Spacer()
+-                        Button("Reset") { draft = .aspireDefault; schedulePreview() }.buttonStyle(.bordered)
++                        Button("Reset") {
++                            draft = .aspireDefault
++                            layout = .invoiceDefault
++                            schedulePreview()
++                        }.buttonStyle(.bordered)
+                     }
+                     .font(.caption.weight(.semibold))
+ 
+-                    Text("Tap any marked PDF area to edit or hide it. Tap a photo to replace, resize, reposition or remove it.")
++                    Text("Drag any marked invoice block to reposition it. Tap a block to edit text, visibility, exact position and size. Tap a photo to replace, resize, reposition or remove it.")
+                         .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+ 
+-                    PDFEditablePreview(image: previewImage, settings: draft, onZone: { selectedZone = $0 }, onOverlay: { overlaySelection = OverlaySelection(id: $0) })
++                    PDFEditablePreview(image: previewImage, settings: draft, layout: $layout, onZone: { selectedZone = $0 }, onOverlay: { overlaySelection = OverlaySelection(id: $0) })
+                         .frame(maxWidth: 520)
+ 
+                     VStack(alignment: .leading, spacing: 8) {
+@@ -947,14 +952,25 @@
+                 }.padding()
+             }
+             .background(Color(.systemGroupedBackground))
+-            .navigationTitle("Invoice PDF Report Center")
++            .navigationTitle("Invoice PDF Format")
+             .navigationBarTitleDisplayMode(.inline)
+             .toolbar {
+                 ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+-                ToolbarItem(placement: .confirmationAction) { Button("Save") { store.updateInvoicePDFSettings(draft); message = "Invoice PDF layout saved." } }
++                ToolbarItem(placement: .confirmationAction) {
++                    Button("Save") {
++                        store.updateInvoicePDFSettings(draft)
++                        PrintCenterPreferences.saveInvoiceLayout(layout)
++                        message = "Invoice PDF format saved."
++                    }
++                }
++            }
++            .onAppear {
++                draft = store.invoicePDFSettings
++                layout = PrintCenterPreferences.invoiceLayout()
++                schedulePreview()
+             }
+-            .onAppear { draft = store.invoicePDFSettings; schedulePreview() }
+             .onChange(of: draft) { _ in schedulePreview() }
++            .onChange(of: layout) { _ in schedulePreview() }
+             .onChange(of: addPhotoItem) { item in
+                 guard let item else { return }
+                 Task {
+@@ -972,11 +988,11 @@
+                 } catch { message = error.localizedDescription }
+             }
+             .sheet(item: $selectedZone) { zone in
+-                if zone == .logo { PDFLogoEditorView(settings: $draft) }
+-                else { PDFZoneEditorView(zone: zone, settings: $draft) }
++                if zone == .logo { PDFLogoEditorView(settings: $draft, layout: $layout) }
++                else { PDFZoneEditorView(zone: zone, settings: $draft, layout: $layout) }
+             }
+             .sheet(item: $overlaySelection) { selection in PDFOverlayImageEditorView(overlayID: selection.id, settings: $draft) }
+-            .alert("PDF Report Center", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) { Button("OK", role: .cancel) {} } message: { Text(message ?? "") }
++            .alert("PDF Print Center", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) { Button("OK", role: .cancel) {} } message: { Text(message ?? "") }
+         }
+     }
+ 
+@@ -988,15 +1004,16 @@
+     private func schedulePreview() {
+         previewTask?.cancel()
+         let snapshot = draft
++        let layoutSnapshot = layout
+         let pair = sample
+         let company = store.company
+         let bank = store.defaultBankAccount
+         let appLogo = store.appLogoData
+         let employee = store.employee(id: pair.0.employeeID)?.name
+         previewTask = Task { @MainActor in
+-            try? await Task.sleep(nanoseconds: 180_000_000)
++            try? await Task.sleep(nanoseconds: 150_000_000)
+             guard !Task.isCancelled else { return }
+-            let data = InvoicePDFService().makePDF(invoice: pair.0, customer: pair.1, company: company, settings: snapshot, bankAccount: bank, appLogoData: appLogo, employeeName: employee)
++            let data = InvoicePDFService().makePDF(invoice: pair.0, customer: pair.1, company: company, settings: snapshot, bankAccount: bank, appLogoData: appLogo, employeeName: employee, layout: layoutSnapshot)
+             guard !Task.isCancelled else { return }
+             if let document = PDFDocument(data: data), let page = document.page(at: 0) {
+                 previewImage = page.thumbnail(of: CGSize(width: 714, height: 1010), for: .mediaBox)
+@@ -1008,10 +1025,12 @@
+ struct PDFEditablePreview: View {
+     let image: UIImage?
+     let settings: InvoicePDFSettings
++    @Binding var layout: PDFDocumentLayout
+     let onZone: (PDFEditableZone) -> Void
+     let onOverlay: (UUID) -> Void
+ 
+     private let ratio: CGFloat = 595.2 / 841.8
++    @State private var dragStart: [String: PDFZoneFrame] = [:]
+ 
+     var body: some View {
+         GeometryReader { geo in
+@@ -1020,17 +1039,36 @@
+             ZStack(alignment: .topLeading) {
+                 if let image { Image(uiImage: image).resizable().scaledToFit().frame(width: width, height: height) }
+                 else { ProgressView().frame(width: width, height: height) }
++
+                 ForEach(PDFEditableZone.allCases) { zone in
+-                    let r = zoneRect(zone, width: width, height: height)
+-                    Button { onZone(zone) } label: {
+-                        RoundedRectangle(cornerRadius: 4)
+-                            .stroke(Color.aspireGold.opacity(0.9), style: StrokeStyle(lineWidth: 1.4, dash: [5, 4]))
+-                            .background(Color.aspireGold.opacity(0.025))
+-                    }
+-                    .buttonStyle(.plain)
+-                    .frame(width: r.width, height: r.height)
+-                    .position(x: r.midX, y: r.midY)
++                    let key = zone.rawValue
++                    let fallback = PDFDocumentLayout.invoiceDefault.zones[key] ?? PDFZoneFrame(x: 0.1, y: 0.1, width: 0.3, height: 0.1)
++                    let frame = layout.frame(key, fallback: fallback)
++                    let r = CGRect(x: width * CGFloat(frame.x), y: height * CGFloat(frame.y), width: width * CGFloat(frame.width), height: height * CGFloat(frame.height))
++                    RoundedRectangle(cornerRadius: 5)
++                        .stroke(Color.aspireGold.opacity(0.95), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
++                        .background(Color.aspireGold.opacity(0.035))
++                        .overlay(alignment: .topLeading) {
++                            Text(zone.title).font(.system(size: 8, weight: .bold)).padding(.horizontal, 4).padding(.vertical, 2).background(.thinMaterial, in: Capsule()).padding(3)
++                        }
++                        .contentShape(Rectangle())
++                        .frame(width: r.width, height: r.height)
++                        .position(x: r.midX, y: r.midY)
++                        .onTapGesture { onZone(zone) }
++                        .gesture(
++                            DragGesture(minimumDistance: 3)
++                                .onChanged { value in
++                                    let start = dragStart[key] ?? frame
++                                    if dragStart[key] == nil { dragStart[key] = frame }
++                                    var moved = start
++                                    moved.x = max(0, min(1 - moved.width, start.x + Double(value.translation.width / width)))
++                                    moved.y = max(0, min(1 - moved.height, start.y + Double(value.translation.height / height)))
++                                    layout.setFrame(moved, for: key)
++                                }
++                                .onEnded { _ in dragStart[key] = nil }
++                        )
+                 }
++
+                 ForEach(settings.overlayImages) { overlay in
+                     Button { onOverlay(overlay.id) } label: {
+                         RoundedRectangle(cornerRadius: 4).stroke(Color.aspireGreen, lineWidth: 2)
+@@ -1047,36 +1085,24 @@
+         }
+         .aspectRatio(ratio, contentMode: .fit)
+     }
+-
+-    private func zoneRect(_ zone: PDFEditableZone, width: CGFloat, height: CGFloat) -> CGRect {
+-        let n: CGRect
+-        switch zone {
+-        case .logo: n = CGRect(x: 0.07, y: 0.025, width: 0.22, height: 0.13)
+-        case .companyName: n = CGRect(x: 0.30, y: 0.045, width: 0.35, height: 0.07)
+-        case .companyContact: n = CGRect(x: 0.07, y: 0.145, width: 0.86, height: 0.035)
+-        case .invoiceTitle: n = CGRect(x: 0.63, y: 0.035, width: 0.30, height: 0.09)
+-        case .paymentStatus: n = CGRect(x: 0.68, y: 0.925, width: 0.25, height: 0.035)
+-        case .billTo: n = CGRect(x: 0.07, y: 0.20, width: 0.46, height: 0.14)
+-        case .invoiceMeta: n = CGRect(x: 0.57, y: 0.20, width: 0.36, height: 0.12)
+-        case .items: n = CGRect(x: 0.07, y: 0.355, width: 0.86, height: 0.22)
+-        case .payment: n = CGRect(x: 0.07, y: 0.615, width: 0.56, height: 0.16)
+-        case .terms: n = CGRect(x: 0.07, y: 0.815, width: 0.62, height: 0.11)
+-        case .footer: n = CGRect(x: 0.01, y: 0.965, width: 0.98, height: 0.032)
+-        }
+-        return CGRect(x: n.minX * width, y: n.minY * height, width: n.width * width, height: n.height * height)
+-    }
+ }
+ 
+ struct PDFZoneEditorView: View {
+     @Environment(\.dismiss) private var dismiss
+     let zone: PDFEditableZone
+     @Binding var settings: InvoicePDFSettings
++    @Binding var layout: PDFDocumentLayout
++
++    private var fallback: PDFZoneFrame {
++        PDFDocumentLayout.invoiceDefault.zones[zone.rawValue] ?? PDFZoneFrame(x: 0.1, y: 0.1, width: 0.3, height: 0.1)
++    }
+ 
+     var body: some View {
+         NavigationStack {
+             Form {
+                 Section(zone.title) { controls }
+-                Section { Text("Changes are shown in the live PDF preview after this window closes or while values settle.").font(.footnote).foregroundStyle(.secondary) }
++                PDFZonePositionControls(layout: $layout, key: zone.rawValue, fallback: fallback)
++                Section { Text("Drag this block directly on the live preview, or use these controls for precise position and size.").font(.footnote).foregroundStyle(.secondary) }
+             }
+             .navigationTitle(zone.title)
+             .navigationBarTitleDisplayMode(.inline)
+@@ -1124,10 +1150,13 @@
+ struct PDFLogoEditorView: View {
+     @Environment(\.dismiss) private var dismiss
+     @Binding var settings: InvoicePDFSettings
++    @Binding var layout: PDFDocumentLayout
+     @State private var photoItem: PhotosPickerItem?
+     @State private var importing = false
+     @State private var message: String?
+ 
++    private var fallback: PDFZoneFrame { PDFDocumentLayout.invoiceDefault.zones["logo"]! }
++
+     var body: some View {
+         NavigationStack {
+             Form {
+@@ -1138,6 +1167,7 @@
+                     Button { importing = true } label: { Label("Choose from Files", systemImage: "folder") }
+                     if settings.logoData != nil { Button("Use Dashboard / Default Aspire Logo", role: .destructive) { settings.logoData = nil } }
+                 }
++                PDFZonePositionControls(layout: $layout, key: "logo", fallback: fallback)
+             }
+             .navigationTitle("Invoice Logo")
+             .navigationBarTitleDisplayMode(.inline)
