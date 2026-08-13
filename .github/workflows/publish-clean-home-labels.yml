@@ -1,9 +1,10 @@
+# Explicit production trigger after diagnostic PASS
 name: Publish Clean Home Labels
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['clean-home-labels-build.txt']
+    paths: ['clean-home-labels-build.txt', '.github/workflows/publish-clean-home-labels.yml']
 permissions:
   contents: write
 concurrency:
