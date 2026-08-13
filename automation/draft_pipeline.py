@@ -25,6 +25,7 @@ from automation.editorial import (
 )
 from automation.openai_api import OpenAIAPIError, structured_response
 from automation.schemas import ARTICLE_SCHEMA, VERDICT_SCHEMA
+from automation.visuals import render_article_visual, visual_alt, visual_relative_path
 
 
 WRITER_INSTRUCTIONS = """You are the Next Solution technical editor. Write an original, useful draft about one iOS jailbreak tweak using only the supplied facts.
@@ -220,6 +221,8 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
     esc = lambda value: html.escape(str(value), quote=True)
     base_url = str(site["base_url"]).rstrip("/")
     canonical = f"{base_url}/{candidate['slug']}.html"
+    image_path = visual_relative_path(candidate)
+    image_url = f"{base_url}/{image_path}"
     source_url = _safe_url(article_source_url(candidate))
     author = display_author(candidate["author"])
     published = datetime.now(timezone.utc).date().isoformat()
@@ -232,8 +235,15 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
         "datePublished": published,
         "dateModified": published,
         "author": {"@type": "Person", "name": site["author_name"], "url": site["author_url"]},
-        "publisher": {"@type": "Organization", "name": site["site_name"], "url": base_url},
+        "publisher": {
+            "@type": "Organization",
+            "name": site["site_name"],
+            "url": base_url,
+            "logo": f"{base_url}/NextSolutionRepoIcon.png",
+            "sameAs": [site["youtube_channel_url"]],
+        },
         "mainEntityOfPage": canonical,
+        "image": image_url,
     }
     json_ld_text = (
         json.dumps(json_ld, separators=(",", ":"), ensure_ascii=False)
@@ -260,26 +270,31 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="{esc(canonical)}">
   <link rel="alternate" type="application/rss+xml" title="{esc(site['site_name'])} articles" href="/feed.xml">
-  <link rel="icon" type="image/png" href="/NextSolutionRepoIcon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/brand/next-solution-mark.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="stylesheet" href="/assets/site.css">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="{esc(site['site_name'])}">
   <meta property="og:url" content="{esc(canonical)}">
   <meta property="og:title" content="{esc(article['title'])}">
   <meta property="og:description" content="{esc(article['meta_description'])}">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="{esc(image_url)}">
+  <meta property="og:image:alt" content="{esc(visual_alt(candidate))}">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(article['title'])}">
   <meta name="twitter:description" content="{esc(article['meta_description'])}">
+  <meta name="twitter:image" content="{esc(image_url)}">
   <script type="application/ld+json">{json_ld_text}</script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={esc(site['adsense_client'])}" crossorigin="anonymous"></script>
 </head>
 <body>
   <div class="topline">
-    <div class="topline-inner"><span>Independent iPhone jailbreak publication</span><span class="topline-status"><i aria-hidden="true"></i> New verified article daily at 06:00 Qatar time</span></div>
+    <div class="topline-inner"><span>iPhone jailbreak guides, tweak reviews and practical fixes</span><span class="topline-status"><i aria-hidden="true"></i> Direct links to original sources</span></div>
   </div>
   <header class="site-header">
     <div class="nav-shell">
-      <a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><span class="brand-mark" aria-hidden="true">N</span><span class="brand-copy"><strong>Next</strong><small>solution</small></span></a>
+      <a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><img class="brand-logo" src="/assets/brand/next-solution-mark.svg" alt="" width="52" height="52"><span class="brand-name"><strong>Next</strong> Solution</span></a>
       <nav aria-label="Primary navigation"><ul class="nav-links"><li><a href="/">Blog</a></li><li><a href="/tutorials.html#verified-articles" aria-current="page">Cydia Tweaks</a></li><li><a href="/tutorials.html#jailbreak-guides">Jailbreak</a></li><li><a href="/videos.html">Videos</a></li></ul></nav>
     </div>
   </header>
@@ -297,6 +312,10 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
           <div class="fact-box"><span>Source</span><strong>{esc(candidate['source_name'])}</strong></div>
         </div>
       </header>
+      <figure class="article-visual">
+        <img src="/{esc(image_path)}" alt="{esc(visual_alt(candidate))}" width="1600" height="900">
+        <figcaption>Original Next Solution concept artwork based on the package's listed feature category; it is not a developer screenshot.</figcaption>
+      </figure>
       <div class="article-layout">
         <div class="article-content">
           <h2>What the package metadata says it does</h2><ul>{feature_items}</ul>
@@ -305,7 +324,7 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
           <h2>Before you install</h2><ul>{safety_items}</ul>
           <h2>Frequently asked questions</h2><div class="faq-list">{faq_items}</div>
           <div class="article-disclaimer"><strong>Important:</strong> Package metadata is not a complete compatibility or safety guarantee. Back up important data and verify current details for your exact device and environment before installing.</div>
-          <p class="article-footnote">Package identifier: <code>{esc(candidate['package'])}</code> · Published {published} · Informational guide generated from verified-source metadata and independently checked before publication.</p>
+          <p class="article-footnote">Package identifier: <code>{esc(candidate['package'])}</code> · Published {published} · Source details checked against the linked package listing.</p>
         </div>
         <aside class="article-sidebar" aria-label="Source information">
           <h2>Verify current details</h2>
@@ -318,12 +337,12 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
   </main>
   <footer class="site-footer">
     <div class="footer-shell">
-      <div class="footer-brand"><a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><span class="brand-mark" aria-hidden="true">N</span><span class="brand-copy"><strong>Next</strong><small>solution</small></span></a><p>Independent jailbreak news, verified tweak information, practical guides, and original videos by {esc(site['author_name'])}.</p></div>
+      <div class="footer-brand"><a class="brand" href="/" aria-label="{esc(site['site_name'])} home"><img class="brand-logo" src="/assets/brand/next-solution-mark.svg" alt="" width="52" height="52"><span class="brand-name"><strong>Next</strong> Solution</span></a><p>Jailbreak news, useful tweak information, practical guides, and original videos by {esc(site['author_name'])}.</p></div>
       <div class="footer-column"><strong>Read</strong><a href="/#latest">Latest articles</a><a href="/tutorials.html#verified-articles">Cydia tweaks</a><a href="/tutorials.html#jailbreak-guides">Jailbreak guides</a><a href="/videos.html">Videos</a></div>
       <div class="footer-column"><strong>Follow</strong><a href="/feed.xml">RSS feed</a><a href="https://youtube.com/@zeshan0727" rel="noopener noreferrer">YouTube</a></div>
       <div class="footer-column"><strong>Legal</strong><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div>
     </div>
-    <div class="footer-bottom"><div class="container"><span>© 2026 {esc(site['site_name'])}</span><span>Articles publish daily at 06:00 Qatar time</span></div></div>
+    <div class="footer-bottom"><div class="container"><span>© 2026 {esc(site['site_name'])}</span><span>iPhone jailbreak guides, tweaks &amp; videos</span></div></div>
   </footer>
 </body>
 </html>
@@ -439,6 +458,9 @@ def write_artifacts(
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "article.html").write_text(
         render_article(article, candidate, site), encoding="utf-8"
+    )
+    (output_dir / "article-visual.svg").write_text(
+        render_article_visual(candidate, article), encoding="utf-8"
     )
     (output_dir / "youtube-script.md").write_text(
         render_youtube_script(article, candidate, site), encoding="utf-8"

@@ -19,6 +19,7 @@ from xml.etree import ElementTree
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from automation.draft_pipeline import article_source_url, render_article, validate_article
+from automation.visuals import render_article_visual, visual_relative_path
 
 
 AUDIT_SCHEMA_VERSION = 1
@@ -28,6 +29,7 @@ TUTORIALS_START = "<!-- AUTO_ARTICLES_TUTORIALS_START -->"
 TUTORIALS_END = "<!-- AUTO_ARTICLES_TUTORIALS_END -->"
 SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
 SAFE_TARGET = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,118}[a-z0-9])?\.html$")
+SAFE_VISUAL = re.compile(r"^assets/articles/[a-z0-9](?:[a-z0-9-]{0,118}[a-z0-9])?-hero\.svg$")
 
 
 class PublishingError(RuntimeError):
@@ -40,6 +42,8 @@ class PreflightResult:
     reason: str
     local_day: str
     published_today: int
+    max_today: int
+    boost_active: bool
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -83,7 +87,20 @@ def _policy(site: dict[str, Any]) -> tuple[dict[str, Any], ZoneInfo]:
     if not isinstance(publishing, dict):
         raise PublishingError("site publishing policy is missing")
     if publishing.get("max_per_day") != 1:
-        raise PublishingError("publishing.max_per_day must remain exactly 1")
+        raise PublishingError("publishing.max_per_day must remain exactly 1 outside the launch boost")
+    if not isinstance(publishing.get("boost_max_per_day"), int) or not 1 <= publishing["boost_max_per_day"] <= 8:
+        raise PublishingError("publishing.boost_max_per_day must be between 1 and 8")
+    if publishing.get("boost_interval_hours") != 3:
+        raise PublishingError("publishing.boost_interval_hours must remain exactly 3")
+    boost_until = publishing.get("boost_until")
+    if not isinstance(boost_until, str):
+        raise PublishingError("publishing.boost_until must be configured")
+    try:
+        parsed_boost_until = datetime.fromisoformat(boost_until.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise PublishingError("publishing.boost_until is invalid") from exc
+    if parsed_boost_until.tzinfo is None:
+        raise PublishingError("publishing.boost_until must contain a timezone")
     timezone_name = publishing.get("timezone")
     if not isinstance(timezone_name, str) or not timezone_name:
         raise PublishingError("publishing.timezone must be configured")
@@ -95,11 +112,16 @@ def _policy(site: dict[str, Any]) -> tuple[dict[str, Any], ZoneInfo]:
 
 
 def preflight(
-    site: dict[str, Any], audit: dict[str, Any], *, now: datetime
+    site: dict[str, Any],
+    audit: dict[str, Any],
+    *,
+    now: datetime,
+    trigger_schedule: str | None = None,
 ) -> PreflightResult:
     publishing, local_timezone = _policy(site)
     local_day = now.astimezone(local_timezone).date().isoformat()
     events_today = 0
+    event_times: list[datetime] = []
     for event in audit["events"]:
         if not isinstance(event, dict) or not isinstance(event.get("published_at"), str):
             raise PublishingError("publication audit contains an invalid event")
@@ -111,15 +133,29 @@ def preflight(
             raise PublishingError("publication audit contains an invalid timestamp") from exc
         if published_at.tzinfo is None:
             raise PublishingError("publication timestamps must contain a timezone")
+        published_at = published_at.astimezone(timezone.utc)
+        event_times.append(published_at)
         if published_at.astimezone(local_timezone).date().isoformat() == local_day:
             events_today += 1
+    boost_until = datetime.fromisoformat(
+        str(publishing["boost_until"]).replace("Z", "+00:00")
+    ).astimezone(timezone.utc)
+    boost_active = now.astimezone(timezone.utc) < boost_until
+    max_today = int(publishing["boost_max_per_day"] if boost_active else publishing["max_per_day"])
     if publishing.get("enabled") is not True:
-        return PreflightResult(False, "kill-switch-disabled", local_day, events_today)
-    if events_today >= 1:
-        return PreflightResult(False, "daily-limit-reached", local_day, events_today)
+        return PreflightResult(False, "kill-switch-disabled", local_day, events_today, max_today, boost_active)
+    if trigger_schedule and trigger_schedule == publishing.get("boost_cron") and not boost_active:
+        return PreflightResult(False, "launch-boost-ended", local_day, events_today, max_today, boost_active)
+    if events_today >= max_today:
+        return PreflightResult(False, "publication-limit-reached", local_day, events_today, max_today, boost_active)
+    if boost_active and event_times:
+        latest = max(event_times)
+        interval_seconds = int(publishing["boost_interval_hours"]) * 3600
+        if (now.astimezone(timezone.utc) - latest).total_seconds() < interval_seconds:
+            return PreflightResult(False, "three-hour-interval-not-reached", local_day, events_today, max_today, boost_active)
     if site.get("shortener", {}).get("enabled") is not False:
-        return PreflightResult(False, "shortener-must-remain-disabled", local_day, events_today)
-    return PreflightResult(True, "ready", local_day, events_today)
+        return PreflightResult(False, "shortener-must-remain-disabled", local_day, events_today, max_today, boost_active)
+    return PreflightResult(True, "ready", local_day, events_today, max_today, boost_active)
 
 
 def _safe_external_url(value: Any) -> str:
@@ -216,14 +252,21 @@ def _render_card(entry: dict[str, Any], *, indent: str) -> str:
     esc = lambda value: html.escape(str(value), quote=True)
     category = entry.get("category", {})
     label = category.get("label", "Tweak information") if isinstance(category, dict) else "Tweak information"
+    image = entry.get("image")
+    if isinstance(image, str) and SAFE_VISUAL.fullmatch(image):
+        visual = f'{indent}  <a class="card-media" href="{esc(entry["href"])}" aria-label="Open {esc(entry["title"])}"><img src="{esc(image)}" alt="" width="1600" height="900" loading="lazy"></a>'
+        card_class = "content-card has-visual"
+    else:
+        visual = f'{indent}  <div class="card-icon" aria-hidden="true">{esc(_card_icon(str(entry["name"])))}</div>'
+        card_class = "content-card"
     return "\n".join(
         (
-            f'{indent}<article class="content-card">',
+            f'{indent}<article class="{card_class}">',
             f'{indent}  <div class="card-meta"><span class="tag">{esc(label)}</span><span class="tag">{esc(entry["source_name"])}</span></div>',
-            f'{indent}  <div class="card-icon" aria-hidden="true">{esc(_card_icon(str(entry["name"])))}</div>',
+            visual,
             f'{indent}  <h3>{esc(entry["title"])}</h3>',
             f'{indent}  <p>{esc(entry["description"])}</p>',
-            f'{indent}  <a class="card-link" href="{esc(entry["href"])}">Read verified guide →</a>',
+            f'{indent}  <a class="card-link" href="{esc(entry["href"])}">Read guide →</a>',
             f"{indent}</article>",
         )
     )
@@ -231,7 +274,7 @@ def _render_card(entry: dict[str, Any], *, indent: str) -> str:
 
 def _render_cards(entries: list[dict[str, Any]], *, limit: int, indent: str) -> str:
     current = sorted(
-        entries,
+        (entry for entry in entries if entry.get("entry_type") != "editorial"),
         key=lambda item: str(item.get("modified_at") or item.get("published_at") or ""),
         reverse=True,
     )[:limit]
@@ -357,6 +400,8 @@ def publish(
 
     target_path = str(manifest["target_path"])
     target = repository_root / target_path
+    visual_path = visual_relative_path(candidate)
+    visual_target = repository_root / visual_path
     matching_entry = next(
         (
             entry
@@ -400,6 +445,7 @@ def publish(
         "selection_pool": candidate["selection_pool"],
         "candidate_fingerprint": fingerprint,
         "article_sha256": article_hash,
+        "image": visual_path,
         "published_at": (
             matching_entry.get("published_at") if matching_entry else published_at
         ),
@@ -456,6 +502,8 @@ def publish(
     )
 
     target.write_text(rendered_article, encoding="utf-8")
+    visual_target.parent.mkdir(parents=True, exist_ok=True)
+    visual_target.write_text(render_article_visual(candidate, article), encoding="utf-8")
     index_path.write_text(next_index, encoding="utf-8")
     tutorials_path.write_text(next_tutorials, encoding="utf-8")
     (repository_root / "feed.xml").write_text(next_feed, encoding="utf-8")
@@ -473,6 +521,10 @@ def publish(
         "action": action,
         "article_sha256": article_hash,
         "local_day": status.local_day,
+        "visual_path": visual_path,
+        "publication_number": status.published_today + 1,
+        "max_today": status.max_today,
+        "boost_active": status.boost_active,
     }
 
 
@@ -488,6 +540,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--now")
     parser.add_argument("--run-id", default="local")
     parser.add_argument("--github-output", type=Path)
+    parser.add_argument("--trigger-schedule")
     parser.add_argument("--confirm-live", action="store_true")
     return parser.parse_args()
 
@@ -502,12 +555,19 @@ def main() -> int:
         audit = load_audit(audit_path)
         now = _parse_now(args.now)
         if args.command == "preflight":
-            result = preflight(site, audit, now=now)
+            result = preflight(
+                site,
+                audit,
+                now=now,
+                trigger_schedule=args.trigger_schedule,
+            )
             payload = {
                 "allowed": result.allowed,
                 "reason": result.reason,
                 "local_day": result.local_day,
                 "published_today": result.published_today,
+                "max_today": result.max_today,
+                "boost_active": result.boost_active,
             }
             _write_github_output(args.github_output, payload)
         else:

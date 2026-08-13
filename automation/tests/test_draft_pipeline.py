@@ -102,6 +102,15 @@ class DraftPipelineTests(unittest.TestCase):
             ElementTree.fromstring((output / "sitemap-entry.xml").read_text())
             ElementTree.fromstring((output / "rss-item.xml").read_text())
             self.assertTrue((output / "youtube-script.md").exists())
+            self.assertTrue((output / "article-visual.svg").exists())
+
+    def test_reader_article_hides_internal_automation_language(self) -> None:
+        rendered = render_article(self.article, self.candidate, self.site)
+        lowered = rendered.lower()
+        self.assertNotIn("daily automation", lowered)
+        self.assertNotIn("automated editor", lowered)
+        self.assertNotIn("generated from", lowered)
+        self.assertIn("article-visual", lowered)
 
     def test_rejected_generation_gets_one_bounded_repair_and_recheck(self) -> None:
         rejected = deepcopy(self.article)
