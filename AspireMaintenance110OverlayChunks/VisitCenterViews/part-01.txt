@@ -1,0 +1,185 @@
+// Aspire Visit Center source continuation; CI strips this header before concatenation.
+aspireGreen : Color.orange)
+                }
+                .frame(width: 48, height: 48)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(progress.customer.name).font(.headline).foregroundStyle(.primary).lineLimit(1)
+                    if !progress.customer.address.isEmpty {
+                        Text(progress.customer.address).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(isComplete ? "COMPLETED" : "\(progress.remaining) LEFT")
+                        .font(.caption2.weight(.heavy))
+                        .foregroundStyle(isComplete ? Color.aspireGreen : Color.orange)
+                    Text("\(progress.completed)/\(progress.customer.plannedVisitsPerMonth)")
+                        .font(.headline.weight(.bold))
+                }
+            }
+
+            ProgressView(value: Double(min(progress.completed, progress.customer.plannedVisitsPerMonth)), total: Double(max(1, progress.customer.plannedVisitsPerMonth)))
+                .tint(isComplete ? .aspireGreen : .orange)
+
+            HStack(spacing: 6) {
+                let assignments = store.visitAssignments(for: progress.customer.id, in: month)
+                ForEach(1...max(1, progress.customer.plannedVisitsPerMonth), id: \.self) { slot in
+                    let done = assignments[slot] != nil
+                    HStack(spacing: 4) {
+                        Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                        Text(VisitOrdinal.text(slot))
+                    }
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(done ? Color.aspireGreen : Color.orange)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 7)
+                    .background((done ? Color.aspireGreen : Color.orange).opacity(0.08), in: Capsule())
+                }
+            }
+        }
+        .aspirePanel()
+    }
+}
+
+struct CompletedVisitsList: View {
+    @EnvironmentObject private var store: AspireStore
+    let monthVisits: [MaintenanceVisit]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "Completed Visits", subtitle: "All recorded maintenance visits for the selected month")
+            if monthVisits.isEmpty {
+                EmptyInlineView(icon: "leaf", text: "No completed visits recorded")
+            } else {
+                ForEach(monthVisits) { visit in
+                    NavigationLink {
+                        if let customer = store.customer(id: visit.customerID) {
+                            VisitCustomerDetailView(customerID: customer.id, month: visit.date)
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(Color.aspireGreen)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(store.customer(id: visit.customerID)?.name ?? "Unknown Customer")
+                                    .font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                                HStack(spacing: 5) {
+                                    Text(visit.visitNumber.map { VisitOrdinal.text($0) + " visit" } ?? "Maintenance visit")
+                                    Text("•")
+                                    Text(DateFormatter.shortDate.string(from: visit.date))
+                                }
+                                .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if let employee = store.employee(id: visit.employeeID) {
+                                Text(employee.name).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                            }
+                            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 5)
+                    }
+                    .buttonStyle(.plain)
+                    if visit.id != monthVisits.last?.id { Divider() }
+                }
+            }
+        }
+        .aspirePanel()
+    }
+}
+
+struct VisitCustomerDetailView: View {
+    @EnvironmentObject private var store: AspireStore
+    let customerID: UUID
+    let month: Date
+    @State private var visitDate = Date()
+    @State private var employeeID: UUID?
+    @State private var notes = ""
+    @State private var message: String?
+
+    private var customer: Customer? { store.customer(id: customerID) }
+    private var assignments: [Int: MaintenanceVisit] { store.visitAssignments(for: customerID, in: month) }
+
+    var body: some View {
+        Group {
+            if let customer {
+                ScrollView {
+                    LazyVStack(spacing: 15) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(customer.name).font(.title3.bold())
+                                    Text(DateFormatter.monthAndYear.string(from: month)).font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                let done = assignments.count
+                                Text("\(done)/\(customer.plannedVisitsPerMonth)")
+                                    .font(.title2.bold())
+                                    .foregroundStyle(done >= customer.plannedVisitsPerMonth ? Color.aspireGreen : Color.orange)
+                            }
+                            ProgressView(value: Double(min(assignments.count, customer.plannedVisitsPerMonth)), total: Double(max(1, customer.plannedVisitsPerMonth)))
+                                .tint(assignments.count >= customer.plannedVisitsPerMonth ? .aspireGreen : .orange)
+                        }
+                        .aspirePanel()
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            SectionHeader(title: "Visit Details", subtitle: "Choose employee/date, then tap an orange visit button to mark it complete")
+                            DatePicker("Visit date", selection: $visitDate, displayedComponents: [.date, .hourAndMinute])
+                            Picker("Job done by", selection: $employeeID) {
+                                Text("Not selected").tag(UUID?.none)
+                                ForEach(store.activeEmployees) { employee in Text(employee.name).tag(Optional(employee.id)) }
+                            }
+                            TextField("Visit notes (optional)", text: $notes, axis: .vertical).lineLimit(2...4)
+                        }
+                        .aspirePanel()
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            SectionHeader(title: "Planned Visits", subtitle: "Orange = pending • Green = completed")
+                            let columns = [GridItem(.adaptive(minimum: 135), spacing: 10)]
+                            LazyVGrid(columns: columns, spacing: 10) {
+                                ForEach(1...max(1, customer.plannedVisitsPerMonth), id: \.self) { slot in
+                                    VisitSlotButton(
+                                        slot: slot,
+                                        visit: assignments[slot],
+                                        action: { complete(slot: slot) }
+                                    )
+                                }
+                            }
+                        }
+                        .aspirePanel()
+
+                        if !assignments.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                SectionHeader(title: "Completed This Month", subtitle: "Recorded date and employee")
+                                ForEach(assignments.keys.sorted(), id: \.self) { slot in
+                                    if let visit = assignments[slot] {
+                                        HStack(spacing: 10) {
+                                            Image(systemName: "checkmark.seal.fill").foregroundStyle(Color.aspireGreen)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text("\(VisitOrdinal.text(slot)) Visit").font(.subheadline.weight(.semibold))
+                                                Text(DateFormatter.shortDateTime.string(from: visit.date)).font(.caption).foregroundStyle(.secondary)
+                                            }
+                                            Spacer()
+                                            Text(store.employee(id: visit.employeeID)?.name ?? visit.staffName)
+                                                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                        }
+                                    }
+                                }
+                            }
+                            .aspirePanel()
+                        }
+                    }
+                    .padding()
+                }
+                .background(Color(.systemGroupedBackground))
+                .navigationTitle("Record Visit")
+                .navigationBarTitleDisplayMode(.inline)
+            } else {
+                FullEmptyView(title: "Customer Not Found", icon: "person.crop.circle.badge.exclamationmark", message: "This customer is no longer available.")
+            }
+        }
+        .onAppear {
+            visitDate = VisitDateDefaults.date(in: month)
+        }
+        .alert("Visit Center", isPresented: Binding(g
