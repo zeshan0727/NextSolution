@@ -1,0 +1,74 @@
+// Final SwiftUI Visit Center source segment.
+et: { message != nil }, set: { if !$0 { message = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(message ?? "") }
+    }
+
+    private func complete(slot: Int) {
+        guard assignments[slot] == nil else { return }
+        if store.recordVisitSlot(customerID: customerID, slot: slot, date: visitDate, employeeID: employeeID, notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            notes = ""
+        } else {
+            message = store.lastErrorMessage ?? "Unable to record visit."
+        }
+    }
+}
+
+struct VisitSlotButton: View {
+    let slot: Int
+    let visit: MaintenanceVisit?
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 7) {
+                Image(systemName: visit == nil ? "clock.badge.checkmark" : "checkmark.circle.fill")
+                    .font(.title2)
+                Text("\(VisitOrdinal.text(slot)) Visit").font(.subheadline.weight(.bold))
+                Text(visit.map { DateFormatter.shortDate.string(from: $0.date) } ?? "Tap to mark done")
+                    .font(.caption2)
+                    .opacity(0.85)
+            }
+            .foregroundStyle(visit == nil ? Color.orange : Color.aspireGreen)
+            .frame(maxWidth: .infinity, minHeight: 96)
+            .background((visit == nil ? Color.orange : Color.aspireGreen).opacity(0.10), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .stroke((visit == nil ? Color.orange : Color.aspireGreen).opacity(0.35), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(visit != nil)
+    }
+}
+
+enum VisitOrdinal {
+    static func text(_ value: Int) -> String {
+        let mod100 = value % 100
+        if 11...13 ~= mod100 { return "\(value)th" }
+        switch value % 10 {
+        case 1: return "\(value)st"
+        case 2: return "\(value)nd"
+        case 3: return "\(value)rd"
+        default: return "\(value)th"
+        }
+    }
+}
+
+enum VisitDateDefaults {
+    static func date(in month: Date) -> Date {
+        let calendar = Calendar.current
+        if calendar.isDate(month, equalTo: Date(), toGranularity: .month) { return Date() }
+        let comps = calendar.dateComponents([.year, .month], from: month)
+        return calendar.date(from: comps) ?? month
+    }
+}
+
+extension DateFormatter {
+    static let shortDateTime: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
+}
