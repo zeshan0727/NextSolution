@@ -1,0 +1,58 @@
+// Continuation of Aspire Maintenance 1.1.0 Swift source assembled by CI.
+issueDate) == month
+        }.count + 1
+        return String(format: "%@-%@-%03d", prefix, month, sameMonthCount)
+    }
+
+    @discardableResult
+    private func persist() -> Bool {
+        do {
+            let encoded = try encoder.encode(data)
+            try encoded.write(to: dataURL, options: [.atomic, .completeFileProtectionUnlessOpen])
+            objectWillChange.send()
+            return true
+        } catch {
+            lastErrorMessage = "Unable to save Aspire data: \(error.localizedDescription)"
+            return false
+        }
+    }
+}
+
+// MARK: - Formatting
+
+enum CurrencyFormatter {
+    static func string(_ amount: Double, code: String) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = code.isEmpty ? "AED" : code
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: amount)) ?? String(format: "%@ %.2f", code, amount)
+    }
+}
+
+extension DateFormatter {
+    static let monthAndYear: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter
+    }()
+
+    static let invoiceMonth: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMM"
+        return formatter
+    }()
+
+    static let shortDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }()
+}
+
+extension Calendar {
+    func addingMonths(_ value: Int, to date: Date) -> Date {
+        self.date(byAdding: .month, value: value, to: date) ?? date
+    }
+}
