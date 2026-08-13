@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    if: github.head_ref == 'agent/nextaura-4.5.0-notification-island-controls'
+    if: github.head_ref == 'agent/nextaura-4.5.0-notification-island-controls' || github.head_ref == 'agent/nextaura-4.4.9-notification-island'
     runs-on: macos-15
     timeout-minutes: 50
     steps:
