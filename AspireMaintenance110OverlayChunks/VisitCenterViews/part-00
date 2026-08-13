@@ -1,0 +1,138 @@
+import SwiftUI
+
+enum VisitCenterFilter: String, CaseIterable, Identifiable {
+    case all = "All"
+    case pending = "Pending"
+    case completed = "Completed"
+    var id: String { rawValue }
+}
+
+struct VisitCenterView: View {
+    @EnvironmentObject private var store: AspireStore
+    @State private var month = Date()
+    @State private var filter: VisitCenterFilter = .all
+
+    private var customerProgress: [VisitCustomerProgress] {
+        store.activeCustomers.map { customer in
+            let completed = store.completedVisitCount(for: customer.id, in: month)
+            return VisitCustomerProgress(customer: customer, completed: completed, remaining: max(0, customer.plannedVisitsPerMonth - completed))
+        }
+        .sorted {
+            if $0.remaining == 0 && $1.remaining != 0 { return false }
+            if $0.remaining != 0 && $1.remaining == 0 { return true }
+            if $0.remaining != $1.remaining { return $0.remaining > $1.remaining }
+            return $0.customer.name.localizedCaseInsensitiveCompare($1.customer.name) == .orderedAscending
+        }
+    }
+
+    private var filteredCustomers: [VisitCustomerProgress] {
+        switch filter {
+        case .all: return customerProgress
+        case .pending: return customerProgress.filter { $0.remaining > 0 }
+        case .completed: return customerProgress.filter { $0.remaining == 0 }
+        }
+    }
+
+    private var monthVisits: [MaintenanceVisit] {
+        store.visits(in: month).sorted { $0.date > $1.date }
+    }
+
+    private var totalPlanned: Int { customerProgress.reduce(0) { $0 + $1.customer.plannedVisitsPerMonth } }
+    private var totalCompleted: Int { customerProgress.reduce(0) { $0 + min($1.completed, $1.customer.plannedVisitsPerMonth) } }
+    private var totalPending: Int { max(0, totalPlanned - totalCompleted) }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                ScrollView {
+                    LazyVStack(spacing: 14) {
+                        MonthPicker(month: $month)
+
+                        HStack(spacing: 10) {
+                            VisitSummaryCard(title: "Done", value: "\(totalCompleted)", icon: "checkmark.circle.fill", good: true)
+                            VisitSummaryCard(title: "Pending", value: "\(totalPending)", icon: "clock.fill", good: false)
+                            VisitSummaryCard(title: "Planned", value: "\(totalPlanned)", icon: "calendar", good: nil)
+                        }
+
+                        Picker("Visit view", selection: $filter) {
+                            ForEach(VisitCenterFilter.allCases) { item in Text(item.rawValue).tag(item) }
+                        }
+                        .pickerStyle(.segmented)
+
+                        if filter == .completed {
+                            CompletedVisitsList(monthVisits: monthVisits)
+                        } else if filteredCustomers.isEmpty {
+                            FullEmptyView(
+                                title: filter == .pending ? "All Visits Completed" : "No Active Customers",
+                                icon: filter == .pending ? "checkmark.seal.fill" : "person.2",
+                                message: filter == .pending ? "There are no pending planned visits for this month." : "Add or activate customers to begin visit tracking."
+                            )
+                            .frame(minHeight: 280)
+                        } else {
+                            ForEach(filteredCustomers) { progress in
+                                NavigationLink {
+                                    VisitCustomerDetailView(customerID: progress.customer.id, month: month)
+                                } label: {
+                                    VisitCenterCustomerCard(progress: progress, month: month)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    .padding()
+                }
+                .background(Color(.systemGroupedBackground))
+            }
+            .navigationTitle("Visit Center")
+            .toolbar {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    NavigationLink { CustomersView() } label: { Image(systemName: "person.2.fill") }
+                    NavigationLink { SettingsView() } label: { Image(systemName: "gearshape.fill") }
+                }
+            }
+        }
+    }
+}
+
+struct VisitCustomerProgress: Identifiable {
+    let customer: Customer
+    let completed: Int
+    let remaining: Int
+    var id: UUID { customer.id }
+}
+
+struct VisitSummaryCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let good: Bool?
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.headline)
+                .foregroundStyle(good == true ? Color.aspireGreen : good == false ? Color.orange : Color.aspireGold)
+            Text(value).font(.title3.bold())
+            Text(title).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+struct VisitCenterCustomerCard: View {
+    @EnvironmentObject private var store: AspireStore
+    let progress: VisitCustomerProgress
+    let month: Date
+
+    private var isComplete: Bool { progress.remaining == 0 }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().fill((isComplete ? Color.aspireGreen : Color.orange).opacity(0.12))
+                    Text(progress.customer.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1).uppercased())
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(isComplete ? Color.
