@@ -1,6 +1,27 @@
 {
   "entries": [
     {
+      "article_sha256": "237e032a717ae8807eaebb1ac0595e2087ad96c799f02ae40f3bc306965e3997",
+      "candidate_fingerprint": "14eb1e26e2a63ce00658465c0168553063600c2798e7682ec1e12c19af43124c",
+      "category": {
+        "id": "media",
+        "label": "Media"
+      },
+      "description": "Reo 4.0.1 is an updated jailbreak tweak from Mysteryexe, described as a “Fancy Dancy player for LS.” Review its package details, dependencies, architectures, and a—",
+      "href": "reo-tweak.html",
+      "image": "assets/articles/reo-tweak-hero.svg",
+      "modified_at": "2026-08-13T14:10:20+00:00",
+      "name": "Reo",
+      "package": "com.reo.mystery",
+      "published_at": "2026-08-13T14:10:20+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/reo",
+      "source_url": "https://havoc.app/",
+      "title": "Reo 4.0.1: A “Fancy Dancy” Player for LS",
+      "version": "4.0.1"
+    },
+    {
       "article_sha256": "b2688408fbe15128cc0aaca3087cf4d452604d18b83401f2e2d254a6c24299a5",
       "category": {
         "id": "home-screen",
@@ -90,8 +111,17 @@
       "published_at": "2026-08-13T07:30:00+00:00",
       "run_id": "editorial-launch-boost",
       "version": "2026"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "14eb1e26e2a63ce00658465c0168553063600c2798e7682ec1e12c19af43124c",
+      "href": "reo-tweak.html",
+      "package": "com.reo.mystery",
+      "published_at": "2026-08-13T14:10:20+00:00",
+      "run_id": "31708649012",
+      "version": "4.0.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-13T07:30:00+00:00"
+  "updated_at": "2026-08-13T14:10:20+00:00"
 }
