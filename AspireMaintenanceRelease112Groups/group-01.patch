@@ -1,0 +1,84 @@
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -947,14 +952,25 @@
+                 }.padding()
+             }
+             .background(Color(.systemGroupedBackground))
+-            .navigationTitle("Invoice PDF Report Center")
++            .navigationTitle("Invoice PDF Format")
+             .navigationBarTitleDisplayMode(.inline)
+             .toolbar {
+                 ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+-                ToolbarItem(placement: .confirmationAction) { Button("Save") { store.updateInvoicePDFSettings(draft); message = "Invoice PDF layout saved." } }
++                ToolbarItem(placement: .confirmationAction) {
++                    Button("Save") {
++                        store.updateInvoicePDFSettings(draft)
++                        PrintCenterPreferences.saveInvoiceLayout(layout)
++                        message = "Invoice PDF format saved."
++                    }
++                }
++            }
++            .onAppear {
++                draft = store.invoicePDFSettings
++                layout = PrintCenterPreferences.invoiceLayout()
++                schedulePreview()
+             }
+-            .onAppear { draft = store.invoicePDFSettings; schedulePreview() }
+             .onChange(of: draft) { _ in schedulePreview() }
++            .onChange(of: layout) { _ in schedulePreview() }
+             .onChange(of: addPhotoItem) { item in
+                 guard let item else { return }
+                 Task {
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -972,11 +988,11 @@
+                 } catch { message = error.localizedDescription }
+             }
+             .sheet(item: $selectedZone) { zone in
+-                if zone == .logo { PDFLogoEditorView(settings: $draft) }
+-                else { PDFZoneEditorView(zone: zone, settings: $draft) }
++                if zone == .logo { PDFLogoEditorView(settings: $draft, layout: $layout) }
++                else { PDFZoneEditorView(zone: zone, settings: $draft, layout: $layout) }
+             }
+             .sheet(item: $overlaySelection) { selection in PDFOverlayImageEditorView(overlayID: selection.id, settings: $draft) }
+-            .alert("PDF Report Center", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) { Button("OK", role: .cancel) {} } message: { Text(message ?? "") }
++            .alert("PDF Print Center", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) { Button("OK", role: .cancel) {} } message: { Text(message ?? "") }
+         }
+     }
+ 
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -988,15 +1004,16 @@
+     private func schedulePreview() {
+         previewTask?.cancel()
+         let snapshot = draft
++        let layoutSnapshot = layout
+         let pair = sample
+         let company = store.company
+         let bank = store.defaultBankAccount
+         let appLogo = store.appLogoData
+         let employee = store.employee(id: pair.0.employeeID)?.name
+         previewTask = Task { @MainActor in
+-            try? await Task.sleep(nanoseconds: 180_000_000)
++            try? await Task.sleep(nanoseconds: 150_000_000)
+             guard !Task.isCancelled else { return }
+-            let data = InvoicePDFService().makePDF(invoice: pair.0, customer: pair.1, company: company, settings: snapshot, bankAccount: bank, appLogoData: appLogo, employeeName: employee)
++            let data = InvoicePDFService().makePDF(invoice: pair.0, customer: pair.1, company: company, settings: snapshot, bankAccount: bank, appLogoData: appLogo, employeeName: employee, layout: layoutSnapshot)
+             guard !Task.isCancelled else { return }
+             if let document = PDFDocument(data: data), let page = document.page(at: 0) {
+                 previewImage = page.thumbnail(of: CGSize(width: 714, height: 1010), for: .mediaBox)
+--- a/AdvancedViews.swift
++++ b/AdvancedViews.swift
+@@ -1008,10 +1025,12 @@
+ struct PDFEditablePreview: View {
+     let image: UIImage?
+     let settings: InvoicePDFSettings
++    @Binding var layout: PDFDocumentLayout
+     let onZone: (PDFEditableZone) -> Void
+     let onOverlay: (UUID) -> Void
+ 
+     private let ratio: CGFloat = 595.2 / 841.8
++    @State private var dragStart: [String: PDFZoneFrame] = [:]
+ 
+     var body: some View {
+         GeometryReader { geo in
