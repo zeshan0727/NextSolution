@@ -3,11 +3,10 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-// iOS 16.0 has Apple's System Aperture / Dynamic Island UI, but the public
-// ActivityKit API for third-party apps starts at iOS 16.1. This RootHide module
-// therefore renders the due reminder inside SpringBoard's real
-// SBSystemApertureWindow instead of creating a separate UIWindow.
-
+// iOS 16.0 has Apple's Dynamic Island/System Aperture, but public ActivityKit
+// for third-party apps starts at iOS 16.1. On the jailbroken iOS 16.0 target we
+// place the due-reminder presentation inside SpringBoard's real
+// SBSystemApertureWindow instead of creating a separate due-reminder UIWindow.
 @interface SBSystemApertureWindow : UIWindow
 @end
 
@@ -41,15 +40,11 @@ static BOOL NQR108IsLocked(void) {
 static NSDate *NQR108DateFromJSON(id value) {
     if (![value isKindOfClass:NSString.class]) return nil;
     NSString *text = (NSString *)value;
-    if (@available(iOS 10.0, *)) {
-        NSISO8601DateFormatter *iso = [NSISO8601DateFormatter new];
-        NSDate *date = [iso dateFromString:text];
-        if (date) return date;
-        iso.formatOptions = NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
-        date = [iso dateFromString:text];
-        if (date) return date;
-    }
-    return nil;
+    NSISO8601DateFormatter *iso = [NSISO8601DateFormatter new];
+    NSDate *date = [iso dateFromString:text];
+    if (date) return date;
+    iso.formatOptions = NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
+    return [iso dateFromString:text];
 }
 
 static NSString *NQR108JSONStringFromDate(NSDate *date) {
@@ -58,14 +53,15 @@ static NSString *NQR108JSONStringFromDate(NSDate *date) {
     return [iso stringFromDate:date];
 }
 
-static NSString *NQR108ActiveContainerPath(void) {
+static NSString *NQR108ActiveDatabasePath(void) {
     NSFileManager *fm = NSFileManager.defaultManager;
     NSArray<NSString *> *roots = @[@"/var/mobile/Containers/Data/Application", @"/private/var/mobile/Containers/Data/Application"];
     NSString *fallback = nil;
     NSDate *fallbackDate = nil;
 
     for (NSString *root in roots) {
-        for (NSString *container in [fm contentsOfDirectoryAtPath:root error:nil] ?: @[]) {
+        NSArray *containers = [fm contentsOfDirectoryAtPath:root error:nil] ?: @[];
+        for (NSString *container in containers) {
             NSString *containerPath = [root stringByAppendingPathComponent:container];
             NSString *metadataPath = [containerPath stringByAppendingPathComponent:@".com.apple.mobile_container_manager.metadata.plist"];
             NSDictionary *metadata = [NSDictionary dictionaryWithContentsOfFile:metadataPath];
@@ -73,15 +69,12 @@ static NSString *NQR108ActiveContainerPath(void) {
             NSString *db = [containerPath stringByAppendingPathComponent:@"Library/Application Support/NextReminder/NextReminderDatabase.json"];
             if (![fm fileExistsAtPath:db]) continue;
 
-            if ([identifier isEqualToString:@"com.nextsolution.nextreminder"]) {
-                return db;
-            }
+            if ([identifier isEqualToString:@"com.nextsolution.nextreminder"]) return db;
 
-            NSDictionary *attrs = [fm attributesOfItemAtPath:db error:nil];
-            NSDate *modified = attrs[NSFileModificationDate];
-            if (!fallbackDate || [modified compare:fallbackDate] == NSOrderedDescending) {
-                fallbackDate = modified;
+            NSDate *modified = [fm attributesOfItemAtPath:db error:nil][NSFileModificationDate];
+            if (!fallbackDate || (modified && [modified compare:fallbackDate] == NSOrderedDescending)) {
                 fallback = db;
+                fallbackDate = modified;
             }
         }
     }
@@ -89,19 +82,19 @@ static NSString *NQR108ActiveContainerPath(void) {
 }
 
 static BOOL NQR108ReloadDatabase(BOOL force) {
-    NSString *path = NQR108ActiveContainerPath();
+    NSString *path = NQR108ActiveDatabasePath();
     if (!path.length) {
         NQR108DatabasePath = nil;
+        NQR108DatabaseModifiedAt = nil;
         NQR108Reminders = @[];
         NQR108Categories = @[];
         return YES;
     }
 
-    NSDictionary *attrs = [NSFileManager.defaultManager attributesOfItemAtPath:path error:nil];
-    NSDate *modified = attrs[NSFileModificationDate];
+    NSDate *modified = [NSFileManager.defaultManager attributesOfItemAtPath:path error:nil][NSFileModificationDate];
     BOOL pathChanged = ![NQR108DatabasePath isEqualToString:path];
-    BOOL modifiedChanged = !NQR108DatabaseModifiedAt || ![NQR108DatabaseModifiedAt isEqualToDate:modified];
-    if (!force && !pathChanged && !modifiedChanged) return NO;
+    BOOL modificationChanged = !NQR108DatabaseModifiedAt || ![NQR108DatabaseModifiedAt isEqualToDate:modified];
+    if (!force && !pathChanged && !modificationChanged) return NO;
 
     NSData *data = [NSData dataWithContentsOfFile:path];
     NSDictionary *database = data.length ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
@@ -163,7 +156,13 @@ static BOOL NQR108WriteDatabase(NSMutableDictionary *database) {
     if (ok) {
         NQR108DatabaseModifiedAt = nil;
         NQR108ReloadDatabase(YES);
-        CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.nextsolution.nextreminder.database.changed"), NULL, NULL, true);
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFSTR("com.nextsolution.nextreminder.database.changed"),
+            NULL,
+            NULL,
+            true
+        );
     }
     return ok;
 }
@@ -244,6 +243,7 @@ static BOOL NQR108ApplyAction(NSString *reminderID, BOOL completed, NSTimeInterv
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (!self) return nil;
+
     self.backgroundColor = UIColor.blackColor;
     self.layer.cornerRadius = 28.0;
     self.layer.cornerCurve = kCACornerCurveContinuous;
@@ -281,9 +281,9 @@ static BOOL NQR108ApplyAction(NSString *reminderID, BOOL completed, NSTimeInterv
     _extendButton.layer.cornerRadius = 13;
     [_extendButton addTarget:self action:@selector(extendTapped) forControlEvents:UIControlEventTouchUpInside];
 
-    for (UIView *v in @[_iconLabel, _titleLabel, _metaLabel, _completeButton, _extendButton]) {
-        v.translatesAutoresizingMaskIntoConstraints = NO;
-        [self addSubview:v];
+    for (UIView *view in @[_iconLabel, _titleLabel, _metaLabel, _completeButton, _extendButton]) {
+        view.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addSubview:view];
     }
 
     [NSLayoutConstraint activateConstraints:@[
@@ -303,7 +303,7 @@ static BOOL NQR108ApplyAction(NSString *reminderID, BOOL completed, NSTimeInterv
         [_extendButton.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-12],
         [_extendButton.heightAnchor constraintEqualToConstant:42],
         [_extendButton.leadingAnchor constraintEqualToAnchor:_completeButton.trailingAnchor constant:8],
-        [_completeButton.widthAnchor constraintEqualToAnchor:_extendButton.widthAnchor],
+        [_completeButton.widthAnchor constraintEqualToAnchor:_extendButton.widthAnchor]
     ]];
 
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressed:)];
@@ -315,10 +315,9 @@ static BOOL NQR108ApplyAction(NSString *reminderID, BOOL completed, NSTimeInterv
 
 - (void)applyReminder:(NSDictionary *)reminder {
     self.reminderID = [reminder[@"id"] isKindOfClass:NSString.class] ? reminder[@"id"] : @"";
-    NSString *title = [reminder[@"title"] isKindOfClass:NSString.class] ? reminder[@"title"] : @"Reminder due";
+    self.titleLabel.text = [reminder[@"title"] isKindOfClass:NSString.class] ? reminder[@"title"] : @"Reminder due";
     NSString *category = NQR108CategoryName(reminder[@"categoryID"]);
     NSString *priority = [reminder[@"priority"] isKindOfClass:NSString.class] ? [reminder[@"priority"] capitalizedString] : @"Medium";
-    self.titleLabel.text = title;
     self.metaLabel.text = [NSString stringWithFormat:@"%@ • %@ priority", category, priority];
 }
 
@@ -327,6 +326,7 @@ static BOOL NQR108ApplyAction(NSString *reminderID, BOOL completed, NSTimeInterv
     self.completeButton.hidden = !expanded;
     self.extendButton.hidden = !expanded;
     self.metaLabel.hidden = !expanded;
+
     CGFloat width = expanded ? MIN(UIScreen.mainScreen.bounds.size.width - 28.0, 402.0) : 250.0;
     CGFloat height = expanded ? 124.0 : 54.0;
     CGFloat y = expanded ? 84.0 : 8.0;
@@ -336,14 +336,25 @@ static BOOL NQR108ApplyAction(NSString *reminderID, BOOL completed, NSTimeInterv
         self.layer.cornerRadius = expanded ? 30.0 : 27.0;
         [self layoutIfNeeded];
     };
-    if (animated) [UIView animateWithDuration:0.32 delay:0 usingSpringWithDamping:0.86 initialSpringVelocity:0.15 options:UIViewAnimationOptionCurveEaseInOut animations:changes completion:nil];
-    else changes();
+    if (animated) {
+        [UIView animateWithDuration:0.32
+                              delay:0
+             usingSpringWithDamping:0.86
+              initialSpringVelocity:0.15
+                            options:UIViewAnimationOptionCurveEaseInOut
+                         animations:changes
+                         completion:nil];
+    } else {
+        changes();
+    }
 }
 
 - (void)longPressed:(UILongPressGestureRecognizer *)gesture {
     if (gesture.state == UIGestureRecognizerStateBegan) [self setExpanded:!NQR108Expanded animated:YES];
 }
-- (void)cardTapped { if (!NQR108Expanded) [self setExpanded:YES animated:YES]; }
+- (void)cardTapped {
+    if (!NQR108Expanded) [self setExpanded:YES animated:YES];
+}
 - (void)completeTapped {
     if (self.reminderID.length) NQR108ApplyAction(self.reminderID, YES, 0);
     UINotificationFeedbackGenerator *feedback = [UINotificationFeedbackGenerator new];
@@ -356,23 +367,36 @@ static BOOL NQR108ApplyAction(NSString *reminderID, BOOL completed, NSTimeInterv
 }
 @end
 
+static void NQR108RemoveIslandOnMain(void) {
+    if (NQR108CollapseBlock) {
+        dispatch_block_cancel(NQR108CollapseBlock);
+        NQR108CollapseBlock = nil;
+    }
+    [NQR108IslandView removeFromSuperview];
+    NQR108IslandView = nil;
+    NQR108CurrentReminder = nil;
+    NQR108Expanded = YES;
+}
+
 static void NQR108RemoveIsland(void) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [NQR108IslandView removeFromSuperview];
-        NQR108IslandView = nil;
-        NQR108CurrentReminder = nil;
-        NQR108Expanded = YES;
-    });
+    if (NSThread.isMainThread) {
+        NQR108RemoveIslandOnMain();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{ NQR108RemoveIslandOnMain(); });
+    }
 }
 
 static void NQR108PresentReminder(NSDictionary *reminder) {
     SBSystemApertureWindow *window = NQR108SystemApertureWindow;
     if (!window || !reminder) return;
+
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *reminderID = [reminder[@"id"] isKindOfClass:NSString.class] ? reminder[@"id"] : nil;
         if ([NQR108CurrentReminder[@"id"] isEqual:reminderID] && NQR108IslandView.superview == window) return;
-        NQR108RemoveIsland();
+
+        NQR108RemoveIslandOnMain();
         NQR108CurrentReminder = reminder;
+
         NQR108ApertureCard *card = [[NQR108ApertureCard alloc] initWithFrame:CGRectZero];
         [card applyReminder:reminder];
         [window addSubview:card];
@@ -381,13 +405,16 @@ static void NQR108PresentReminder(NSDictionary *reminder) {
         window.userInteractionEnabled = YES;
         [window bringSubviewToFront:card];
 
-        if (NQR108CollapseBlock) dispatch_block_cancel(NQR108CollapseBlock);
-        NQR108CollapseBlock = dispatch_block_create(0, ^{
+        NQR108CollapseBlock = dispatch_block_create(DISPATCH_BLOCK_INHERIT_QOS, ^{
             if ([NQR108IslandView isKindOfClass:NQR108ApertureCard.class]) {
                 [(NQR108ApertureCard *)NQR108IslandView setExpanded:NO animated:YES];
             }
         });
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), NQR108CollapseBlock);
+        dispatch_after(
+            dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.0 * NSEC_PER_SEC)),
+            dispatch_get_main_queue(),
+            NQR108CollapseBlock
+        );
         NSLog(@"[NextQuickReminder] Reminder presented inside Apple's SBSystemApertureWindow: %@", reminder[@"title"]);
     });
 }
@@ -443,7 +470,7 @@ __attribute__((constructor)) static void NQR108SystemApertureInit(void) {
                 NQR108Evaluate();
             }];
             [NQR108Timer fire];
-            NSLog(@"[NextQuickReminder] 1.0.8 Apple System Aperture reminder integration loaded; no separate due-reminder UIWindow");
+            NSLog(@"[NextQuickReminder] Apple System Aperture reminder integration loaded; no separate due-reminder UIWindow");
         });
     }
 }
