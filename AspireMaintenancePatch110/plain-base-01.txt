@@ -1,0 +1,112 @@
+# Aspire Maintenance 1.1.0 SwiftUI source diff continuation; build script removes this header.
+se .payment: return "Payment Details"
++        case .terms: return "Terms / Notes"
++        case .footer: return "Footer"
++        }
++    }
++}
++
++enum ReceivableDashboardKind: String, CaseIterable, Identifiable {
++    case outstanding
++    case overdue
++    case longOverdue
++    case advances
++
++    var id: String { rawValue }
++    var title: String {
++        switch self {
++        case .outstanding: return "Outstanding Receivables"
++        case .overdue: return "Overdue Receivables"
++        case .longOverdue: return "30+ Days Receivables"
++        case .advances: return "Advance Collections"
++        }
++    }
++}
+diff -ruN '--exclude=AppIcon-1024.png' aspire101orig/AspireMaintenance/AdvancedViews.swift aspire110/AspireMaintenance/AdvancedViews.swift
+--- aspire101orig/AspireMaintenance/AdvancedViews.swift	1970-01-01 00:00:00.000000000 +0000
++++ aspire110/AspireMaintenance/AdvancedViews.swift	2026-08-13 12:57:39.970570172 +0000
+@@ -0,0 +1,1180 @@
++import PDFKit
++import PhotosUI
++import SwiftUI
++import UniformTypeIdentifiers
++
++// MARK: - Editable Aspire Branding
++
++struct EditableAspireHeaderCard: View {
++    @EnvironmentObject private var store: AspireStore
++    @State private var selectedPhoto: PhotosPickerItem?
++    @State private var loading = false
++
++    var body: some View {
++        VStack(spacing: 8) {
++            PhotosPicker(selection: $selectedPhoto, matching: .images) {
++                ZStack(alignment: .bottomTrailing) {
++                    StoredLogoView(data: store.appLogoData)
++                        .frame(maxWidth: 300, minHeight: 110, maxHeight: 150)
++                    Image(systemName: "photo.badge.plus")
++                        .font(.caption.weight(.bold))
++                        .padding(8)
++                        .background(.ultraThinMaterial, in: Circle())
++                        .padding(4)
++                }
++            }
++            .buttonStyle(.plain)
++            .accessibilityLabel("Change Aspire dashboard logo")
++
++            Text(loading ? "Updating logo…" : "Tap the logo to change it from Photos")
++                .font(.caption2)
++                .foregroundStyle(.secondary)
++            Text("Garden Maintenance • Customers • Invoices • Profit & Loss")
++                .font(.caption)
++                .foregroundStyle(.secondary)
++                .multilineTextAlignment(.center)
++        }
++        .frame(maxWidth: .infinity)
++        .aspirePanel()
++        .onChange(of: selectedPhoto) { item in
++            guard let item else { return }
++            loading = true
++            Task {
++                defer { loading = false }
++                if let data = try? await item.loadTransferable(type: Data.self),
++                   let optimized = ImageUtilities.normalizedImageData(data) {
++                    store.updateAppLogoData(optimized)
++                }
++            }
++        }
++    }
++}
++
++struct StoredLogoView: View {
++    var data: Data?
++
++    var body: some View {
++        Group {
++            if let data, let image = UIImage(data: data) {
++                Image(uiImage: image).resizable().scaledToFit()
++            } else {
++                Image("AspireLogo").resizable().scaledToFit()
++            }
++        }
++        .accessibilityLabel("Aspire Green Garden logo")
++    }
++}
++
++// MARK: - Enhanced Customers
++
++struct EnhancedCustomerRow: View {
++    @EnvironmentObject private var store: AspireStore
++    let customer: Customer
++
++    private var completedVisits: Int { store.visits(for: customer.id, in: Date()).count }
++    private var outstanding: Double { store.outstanding(for: customer.id) }
++
++    var body: some View {
++        HStack(spacing: 12) {
++            ZStack {
++                Circle().fill(Color.aspireGreen.opacity(0.12))
++                Text(customer.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1).uppercased())
++                    .font(.headline.weight(.heavy))
++                    .foregroundStyle(Color.aspireGreen)
++  
