@@ -1,0 +1,66 @@
+name: Build Next Reminder 1.3.15 Scan Compression
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Validate v1.3.15 patch sources
+        run: |
+          set -euo pipefail
+          PATCH=NextReminderApp/ci/patch_v145.py
+          grep -q 'targetBytes = 7_500_000' "$PATCH"
+          grep -q 'Compressing scanned document below 8 MB' "$PATCH"
+          grep -q 'ScannedDocumentCompressor.makePDF' "$PATCH"
+          grep -q 'maximumSingleAttachment = 8_000_000' "$PATCH"
+          grep -q 'scanCompressionFailed' "$PATCH"
+          grep -q '1.3.15' NextReminderApp/ci/adjust_build_v145.py
+          grep -q "grep -qx '25'" NextReminderApp/ci/adjust_build_v145.py
+
+      - name: Build Next Reminder 1.3.15
+        run: |
+          set -o pipefail
+          chmod +x NextReminderApp/ci/build-v145.sh
+          NextReminderApp/ci/build-v145.sh 2>&1 | tee v145-app-build.log
+
+      - name: Verify package
+        run: |
+          set -euo pipefail
+          APP=NextReminderApp/build/NextReminder.app
+          TIPA=NextReminderApp/NextReminder-v1.3.15-unsigned.tipa
+          test -f "$TIPA"
+          unzip -t "$TIPA" >/dev/null
+          plutil -extract CFBundleShortVersionString raw "$APP/Info.plist" | grep -qx '1.3.15'
+          plutil -extract CFBundleVersion raw "$APP/Info.plist" | grep -qx '25'
+          strings -a "$APP/NextReminder" > "$RUNNER_TEMP/next-reminder-v145-strings.txt"
+          grep -q 'Compressing scanned document below 8 MB' "$RUNNER_TEMP/next-reminder-v145-strings.txt"
+          grep -q 'The scan could not be compressed below 8 MB' "$RUNNER_TEMP/next-reminder-v145-strings.txt"
+          grep -q 'Scan compressed to' "$RUNNER_TEMP/next-reminder-v145-strings.txt"
+          mkdir -p "$RUNNER_TEMP/next-reminder-v145"
+          cp "$TIPA" "$RUNNER_TEMP/next-reminder-v145/"
+          cp NextReminderApp/NextReminder-v1.3.15-unsigned.tipa.sha256 "$RUNNER_TEMP/next-reminder-v145/"
+          ditto -c -k --sequesterRsrc --keepParent NextReminderApp "$RUNNER_TEMP/next-reminder-v145/NextReminder-v1.3.15-Source.zip"
+
+      - name: Upload final package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextReminder-v1.3.15-ScanCompression
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/next-reminder-v145/NextReminder-v1.3.15-unsigned.tipa
+            ${{ runner.temp }}/next-reminder-v145/NextReminder-v1.3.15-unsigned.tipa.sha256
+            ${{ runner.temp }}/next-reminder-v145/NextReminder-v1.3.15-Source.zip
+            v145-app-build.log
+            NextReminderApp/xcodebuild.log
