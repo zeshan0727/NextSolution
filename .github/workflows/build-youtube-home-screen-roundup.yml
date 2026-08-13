@@ -1,0 +1,78 @@
+name: Build YouTube Home Screen roundup
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - agent/youtube-top-home-screen-video
+    paths:
+      - "video-production/top-home-screen-tweaks/**"
+      - ".github/workflows/build-youtube-home-screen-roundup.yml"
+      - "NextSolutionRepoIcon.png"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: youtube-home-screen-roundup
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install render dependency
+        run: python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+
+      - name: Check encrypted OpenAI secret
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY is not configured as an encrypted repository secret." >&2
+            exit 1
+          fi
+
+      - name: Render narrated video package
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python3 video-production/top-home-screen-tweaks/build_video.py \
+            --render \
+            --output video-output/top-home-screen-tweaks
+
+      - name: Validate output
+        run: |
+          test -s video-output/top-home-screen-tweaks/top-8-home-screen-tweaks-2026.mp4
+          test -s video-output/top-home-screen-tweaks/thumbnail.png
+          test -s video-output/top-home-screen-tweaks/captions.srt
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height \
+            -show_entries format=duration,size \
+            -of json \
+            video-output/top-home-screen-tweaks/top-8-home-screen-tweaks-2026.mp4 \
+            | tee video-output/top-home-screen-tweaks/ffprobe.json
+
+      - name: Remove intermediate speech and render files
+        run: |
+          rm -f video-output/top-home-screen-tweaks/scene-*.aac
+          rm -f video-output/top-home-screen-tweaks/scene-*.mp4
+          rm -f video-output/top-home-screen-tweaks/joined.mp4
+          rm -f video-output/top-home-screen-tweaks/concat.txt
+
+      - name: Upload review package
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-top-home-screen-tweaks-${{ github.run_number }}
+          path: video-output/top-home-screen-tweaks/
+          if-no-files-found: error
+          retention-days: 14
