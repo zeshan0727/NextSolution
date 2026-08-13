@@ -535,3 +535,20 @@ Description: Hides SpringBoard icon names for a cleaner Home Screen while leavin
 Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
 Name: Clean Home Labels
+
+Package: com.nextsolution.nextquickreminder
+Version: 1.0.6
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution - Zeeshan Barvi
+Installed-Size: 536
+Depends: mobilesubstrate, preferenceloader
+Conflicts: com.nextsolution.nextquickreminder.beta
+Filename: ./debfiles/NextQuickReminder_1.0.6_RootHide.deb
+Size: 71922
+MD5sum: c88198fc8584de0ef1c9562b414dae57
+SHA1: cd78983c1bbeec3058a451d7c276bd4efb48de5d
+SHA256: 9e3d11b54ca572a6bcdc41ea5d1055737d0cdda92b9419569a8c9f6be4815d8b
+Section: Tweaks
+Description: RootHide quick reminder card with reliable multi-trigger access, Lock Screen support, background saving, in-panel Quick Access settings, and restored keyboard input.
+Author: Next Solution - Zeeshan Barvi
+Name: Next Quick Reminder
