@@ -1,5 +1,5 @@
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import tempfile
@@ -24,11 +24,9 @@ class PublisherTests(unittest.TestCase):
         base_site = load_json(AUTOMATION / "site.json")
         cls.site = deepcopy(base_site)
         cls.site["base_url"] = "https://nextsolution.cc"
-        cls.site["publishing"] = {
-            "enabled": True,
-            "max_per_day": 1,
-            "timezone": "Asia/Qatar",
-        }
+        cls.site["publishing"]["enabled"] = True
+        cls.site["publishing"]["max_per_day"] = 1
+        cls.site["publishing"]["timezone"] = "Asia/Qatar"
         cls.site["shortener"]["enabled"] = False
         cls.candidate = select_candidate(state, categories, cls.site)
         cls.article = load_json(FIXTURES / "article-draft.json")
@@ -84,21 +82,41 @@ class PublisherTests(unittest.TestCase):
         audit_path.parent.mkdir(parents=True)
         return audit_path
 
-    def test_preflight_obeys_kill_switch_and_qatar_daily_limit(self) -> None:
+    def test_preflight_obeys_kill_switch_and_three_hour_boost(self) -> None:
         ready = preflight(self.site, self.empty_audit(), now=NOW)
         self.assertTrue(ready.allowed)
         self.assertEqual(ready.local_day, "2026-08-12")
+        self.assertTrue(ready.boost_active)
+        self.assertEqual(ready.max_today, 8)
         disabled = deepcopy(self.site)
         disabled["publishing"]["enabled"] = False
         self.assertEqual(
             preflight(disabled, self.empty_audit(), now=NOW).reason,
             "kill-switch-disabled",
         )
-        audit = self.empty_audit()
-        audit["events"].append({"published_at": "2026-08-12T00:01:00+00:00"})
-        blocked = preflight(self.site, audit, now=NOW)
+        recent = self.empty_audit()
+        recent["events"].append(
+            {"published_at": (NOW - timedelta(hours=2)).isoformat()}
+        )
+        blocked = preflight(self.site, recent, now=NOW)
         self.assertFalse(blocked.allowed)
-        self.assertEqual(blocked.reason, "daily-limit-reached")
+        self.assertEqual(blocked.reason, "three-hour-interval-not-reached")
+
+    def test_preflight_returns_to_one_per_day_after_boost(self) -> None:
+        after_boost = datetime(2026, 8, 17, 6, 30, tzinfo=timezone.utc)
+        audit = self.empty_audit()
+        audit["events"].append({"published_at": "2026-08-17T03:10:00+00:00"})
+        blocked = preflight(self.site, audit, now=after_boost)
+        self.assertFalse(blocked.allowed)
+        self.assertFalse(blocked.boost_active)
+        self.assertEqual(blocked.reason, "publication-limit-reached")
+        expired_trigger = preflight(
+            self.site,
+            self.empty_audit(),
+            now=after_boost,
+            trigger_schedule=self.site["publishing"]["boost_cron"],
+        )
+        self.assertEqual(expired_trigger.reason, "launch-boost-ended")
 
     def test_publish_writes_article_cards_feed_sitemap_and_audit(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -118,6 +136,9 @@ class PublisherTests(unittest.TestCase):
             target = root / f"{self.candidate['slug']}.html"
             self.assertTrue(target.exists())
             self.assertIn("/assets/site.css", target.read_text())
+            visual = root / "assets" / "articles" / f"{self.candidate['slug']}-hero.svg"
+            self.assertTrue(visual.exists())
+            self.assertIn("<svg", visual.read_text())
             self.assertIn(self.article["title"], (root / "index.html").read_text())
             self.assertIn(self.article["title"], (root / "tutorials.html").read_text())
             feed = ElementTree.fromstring((root / "feed.xml").read_text())
@@ -129,7 +150,46 @@ class PublisherTests(unittest.TestCase):
             self.assertEqual(len(audit["events"]), 1)
             self.assertEqual(audit["events"][0]["run_id"], "123")
             self.assertEqual(
-                preflight(self.site, audit, now=NOW).reason, "daily-limit-reached"
+                preflight(self.site, audit, now=NOW).reason,
+                "three-hour-interval-not-reached",
+            )
+
+    def test_editorial_entry_stays_in_feed_without_duplicate_generated_card(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            audit_path = self.prepare_root(root)
+            audit = self.empty_audit()
+            editorial_title = "Top Home Screen Tweaks"
+            editorial_time = (NOW - timedelta(hours=3)).isoformat()
+            audit["entries"].append(
+                {
+                    "entry_type": "editorial",
+                    "package": "editorial.home-screen",
+                    "href": "top-home-screen-tweaks.html",
+                    "title": editorial_title,
+                    "description": "A source-checked editorial roundup.",
+                    "category": {"id": "home-screen", "label": "Home Screen"},
+                    "published_at": editorial_time,
+                    "modified_at": editorial_time,
+                }
+            )
+            audit["events"].append({"published_at": editorial_time})
+            publish(
+                repository_root=root,
+                manifest=self.manifest(),
+                site=self.site,
+                audit=audit,
+                audit_path=audit_path,
+                now=NOW,
+                run_id="editorial-preservation",
+                confirm_live=True,
+            )
+            self.assertNotIn(editorial_title, (root / "index.html").read_text())
+            self.assertIn(editorial_title, (root / "feed.xml").read_text())
+            next_audit = json.loads(audit_path.read_text())
+            self.assertEqual(len(next_audit["entries"]), 2)
+            self.assertTrue(
+                any(entry.get("entry_type") == "editorial" for entry in next_audit["entries"])
             )
 
     def test_duplicate_candidate_is_a_safe_noop_on_a_later_day(self) -> None:

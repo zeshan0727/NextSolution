@@ -5,11 +5,19 @@ on:
   schedule:
     # 03:00 UTC is 06:00 in Qatar (UTC+3, no daylight-saving changes).
     - cron: "0 3 * * *"
+    # During the three-day launch boost, frequent gates make the three-hour
+    # publishing interval resilient to delayed Actions starts. Preflight stops
+    # early without an API request until three hours have actually elapsed.
+    # After the boost, preflight closes this path before API use and daily publishing remains.
+    - cron: "*/15 * * * *"
   pull_request:
     paths:
       - "automation/**"
       - "assets/site.css"
+      - "assets/articles/**"
+      - "assets/brand/**"
       - "index.html"
+      - "top-home-screen-tweaks.html"
       - "tutorials.html"
       - "videos.html"
       - "sitemap.xml"
@@ -66,12 +74,13 @@ jobs:
         with:
           ref: main
 
-      - name: Enforce kill switch and daily limit before API use
+      - name: Enforce kill switch and publication timing before API use
         id: gate
         run: |
           mkdir -p automation/out
           python3 -m automation.publisher preflight \
             --repository-root . \
+            --trigger-schedule "${{ github.event.schedule }}" \
             --github-output "$GITHUB_OUTPUT" | tee automation/out/publisher-preflight.log
           allowed=$(python3 -c 'import json; print(str(json.load(open("automation/out/publisher-preflight.log"))["allowed"]).lower())')
           reason=$(python3 -c 'import json; print(json.load(open("automation/out/publisher-preflight.log"))["reason"])')
@@ -154,16 +163,17 @@ jobs:
         if: steps.publication.outputs.published == 'true'
         env:
           TARGET_PATH: ${{ steps.publication.outputs.target_path }}
+          VISUAL_PATH: ${{ steps.publication.outputs.visual_path }}
           ARTICLE_TITLE: ${{ steps.publication.outputs.title }}
         run: |
           git config user.name "nextsolution-publisher[bot]"
           git config user.email "nextsolution-publisher[bot]@users.noreply.github.com"
-          git add -- "$TARGET_PATH" index.html tutorials.html feed.xml sitemap.xml automation/published-articles.json
+          git add -- "$TARGET_PATH" "$VISUAL_PATH" index.html tutorials.html feed.xml sitemap.xml automation/published-articles.json
           git commit -m "Publish verified tweak article: $ARTICLE_TITLE"
           git push origin HEAD:main
           echo "### Article published" >> "$GITHUB_STEP_SUMMARY"
           echo "- Page: https://nextsolution.cc/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Daily publication count: **1 of 1**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Publication count today: **${{ steps.publication.outputs.publication_number }} of ${{ steps.publication.outputs.max_today }}**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Independent verifier: **approved**" >> "$GITHUB_STEP_SUMMARY"
           echo "- ShrinkMe: **disabled**" >> "$GITHUB_STEP_SUMMARY"
 
