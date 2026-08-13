@@ -544,10 +544,10 @@ Installed-Size: 536
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
 Filename: ./debfiles/NextQuickReminder_1.0.6_RootHide.deb
-Size: 72016
-MD5sum: 2e6d60835fc426687c1dfd7d1b356de6
-SHA1: 0e079c77f62c50950f3e251db3800de41ca4b4a5
-SHA256: 8444f74b5c7175b22387fba652e3c7190f10a0a18acbe965286d789262e268f4
+Size: 72224
+MD5sum: 76288586d138d9a626ad3b9bbd5e98a9
+SHA1: bcfa4d80ba13a405226a6b387601eb62627e3f3c
+SHA256: 4b6953ee5d05221e83f484cd19e77ff36ba11c964dc043061d55fcdf4445f5c3
 Section: Tweaks
 Description: RootHide quick reminder card with reliable multi-trigger access, Lock Screen support, background saving, in-panel Quick Access settings, and restored keyboard input.
 Author: Next Solution - Zeeshan Barvi
