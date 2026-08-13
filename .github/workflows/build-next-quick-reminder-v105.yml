@@ -78,12 +78,14 @@ jobs:
           dpkg-deb -x "$DEB" "$X"
           DYLIB="$(find "$X" -name NextQuickReminder.dylib -print -quit)"
           test -n "$DYLIB"
-          strings -a "$DYLIB" | grep -q 'Multi-trigger engine loaded'
-          strings -a "$DYLIB" | grep -q 'Volume Up hold'
-          strings -a "$DYLIB" | grep -q 'Volume Down hold'
-          strings -a "$DYLIB" | grep -q 'status-bar time double tap'
-          strings -a "$DYLIB" | grep -q 'Quick Access'
-          strings -a "$DYLIB" | grep -q 'Reminder scheduled in background.'
+          STRINGS="$RUNNER_TEMP/nextquickreminder-strings.txt"
+          strings -a "$DYLIB" > "$STRINGS"
+          grep -q 'Multi-trigger engine loaded' "$STRINGS"
+          grep -q 'Volume Up hold' "$STRINGS"
+          grep -q 'Volume Down hold' "$STRINGS"
+          grep -q 'status-bar time double tap' "$STRINGS"
+          grep -q 'Quick Access' "$STRINGS"
+          grep -q 'Reminder scheduled in background.' "$STRINGS"
           PREF_BUNDLE="$(find "$X" -path '*NextQuickReminderPreferences.bundle' -type d -print -quit)"
           test -n "$PREF_BUNDLE"
           test -f "$PREF_BUNDLE/NextQuickReminderPreferences"
