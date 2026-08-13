@@ -69,8 +69,10 @@ new = '''    self.backgroundColor = UIColor.clearColor;\n    self.layer.cornerCu
 if old in s:
     s = s.replace(old, new, 1)
 
+# Keep one visual layer per action button. UIButtonConfiguration was drawing a
+# second inner capsule and could initially offset the title until first touch.
 old = '''    longPress.minimumPressDuration = 0.35;\n    [self addGestureRecognizer:longPress];\n    return self;\n}\n'''
-new = '''    longPress.minimumPressDuration = 0.35;\n    [self addGestureRecognizer:longPress];\n\n    if (@available(iOS 15.0, *)) {\n        UIButtonConfiguration *openConfig = [UIButtonConfiguration filledButtonConfiguration];\n        openConfig.title = @"Open";\n        openConfig.cornerStyle = UIButtonConfigurationCornerStyleCapsule;\n        openConfig.baseBackgroundColor = UIColor.systemBlueColor;\n        openConfig.baseForegroundColor = UIColor.whiteColor;\n        self.openButton.configuration = openConfig;\n\n        UIButtonConfiguration *dismissConfig = [UIButtonConfiguration grayButtonConfiguration];\n        dismissConfig.title = @"Dismiss";\n        dismissConfig.cornerStyle = UIButtonConfigurationCornerStyleCapsule;\n        dismissConfig.baseForegroundColor = UIColor.whiteColor;\n        self.dismissButton.configuration = dismissConfig;\n    }\n    [self applyAppearance];\n    return self;\n}\n'''
+new = '''    longPress.minimumPressDuration = 0.35;\n    [self addGestureRecognizer:longPress];\n\n    if (@available(iOS 15.0, *)) {\n        self.openButton.configuration = nil;\n        self.dismissButton.configuration = nil;\n    }\n    [self.openButton setTitle:@"Open" forState:UIControlStateNormal];\n    [self.dismissButton setTitle:@"Dismiss" forState:UIControlStateNormal];\n    self.openButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;\n    self.openButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;\n    self.dismissButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;\n    self.dismissButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;\n    self.openButton.titleLabel.textAlignment = NSTextAlignmentCenter;\n    self.dismissButton.titleLabel.textAlignment = NSTextAlignmentCenter;\n    self.openButton.titleEdgeInsets = UIEdgeInsetsZero;\n    self.dismissButton.titleEdgeInsets = UIEdgeInsetsZero;\n    self.openButton.contentEdgeInsets = UIEdgeInsetsZero;\n    self.dismissButton.contentEdgeInsets = UIEdgeInsetsZero;\n    self.openButton.backgroundColor = UIColor.systemBlueColor;\n    self.dismissButton.backgroundColor = [UIColor colorWithWhite:0.22 alpha:1.0];\n    self.openButton.layer.cornerRadius = 11.0;\n    self.dismissButton.layer.cornerRadius = 11.0;\n    self.openButton.clipsToBounds = YES;\n    self.dismissButton.clipsToBounds = YES;\n    [self applyAppearance];\n    return self;\n}\n'''
 if old in s:
     s = s.replace(old, new, 1)
 
@@ -78,6 +80,11 @@ old = '''- (void)layoutSubviews {\n    [super layoutSubviews];\n    CGFloat scal
 new = '''- (void)layoutSubviews {\n    [super layoutSubviews];\n    self.backgroundEffectView.frame = self.bounds;\n    self.backgroundTintView.frame = self.bounds;\n    CGFloat scale = NANFloat(@"NotificationIslandTextScale", 1.0, 0.80, 1.35);\n'''
 if old in s:
     s = s.replace(old, new, 1)
+
+old_buttons = '''        self.openButton.frame = CGRectMake(10, buttonY, buttonWidth, buttonHeight);\n        self.dismissButton.frame = CGRectMake(CGRectGetMaxX(self.openButton.frame) + 10, buttonY, buttonWidth, buttonHeight);\n        self.titleLabel.hidden = NO;\n'''
+new_buttons = '''        self.openButton.frame = CGRectMake(10, buttonY, buttonWidth, buttonHeight);\n        self.dismissButton.frame = CGRectMake(CGRectGetMaxX(self.openButton.frame) + 10, buttonY, buttonWidth, buttonHeight);\n        self.openButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;\n        self.dismissButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;\n        self.openButton.titleLabel.textAlignment = NSTextAlignmentCenter;\n        self.dismissButton.titleLabel.textAlignment = NSTextAlignmentCenter;\n        [self.openButton setNeedsLayout];\n        [self.dismissButton setNeedsLayout];\n        self.titleLabel.hidden = NO;\n'''
+if old_buttons in s:
+    s = s.replace(old_buttons, new_buttons, 1)
 
 if '- (void)applyAppearance {' not in s:
     anchor = '- (void)applyModel:(NSDictionary *)model {\n'
@@ -133,7 +140,7 @@ if old in s:
     s = s.replace(old, new, 1)
 
 s = s.replace('Move the size and position sliders while this preview is visible. Tap to expand.', 'Change the style, size, position or dismiss-time controls while this preview is visible. Tap to expand.', 1)
-s = s.replace('Notification Island 4.4.9 loaded; local-only content, locked content protected', 'Notification Island 4.5.0 loaded; app icons + appearance presets + dismiss timing', 1)
+s = s.replace('Notification Island 4.4.9 loaded; local-only content, locked content protected', 'Notification Island 4.5.1 loaded; stable centered action-button titles', 1)
 
 path.write_text(s)
-print('Prepared NextAura Notification Island 4.5.0.')
+print('Prepared NextAura Notification Island 4.5.1.')
