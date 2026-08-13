@@ -33,6 +33,11 @@ jobs:
       - name: Install render dependency
         run: python3 -m pip install --disable-pip-version-check Pillow==11.3.0
 
+      - name: Install media tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+
       - name: Check encrypted OpenAI secret
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
