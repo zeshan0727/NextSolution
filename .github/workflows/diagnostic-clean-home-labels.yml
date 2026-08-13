@@ -18,7 +18,21 @@ jobs:
         with: { fetch-depth: 0 }
       - run: brew install dpkg ldid
       - name: Deterministic runtime and source checks
-        run: python3 DailyTweaks/2026-08-13-CleanHomeLabels/tests/test_runtime.py
+        run: |
+          set +e
+          python3 DailyTweaks/2026-08-13-CleanHomeLabels/tests/test_runtime.py > /tmp/chl-test-output.txt 2>&1
+          rc=$?
+          cat /tmp/chl-test-output.txt
+          if [ "$rc" -ne 0 ]; then
+            cp /tmp/chl-test-output.txt clean-home-labels-diagnostic.txt
+            git config user.name 'Next Solution Diagnostic Bot'
+            git config user.email 'actions@users.noreply.github.com'
+            git pull --rebase origin main
+            git add clean-home-labels-diagnostic.txt
+            git commit -m 'Record Clean Home Labels diagnostic failure'
+            git push origin main
+            exit "$rc"
+          fi
       - name: Build and inspect rootless
         run: |
           set -euo pipefail
@@ -71,6 +85,7 @@ jobs:
           git config user.name 'Next Solution Diagnostic Bot'
           git config user.email 'actions@users.noreply.github.com'
           git pull --rebase origin main
-          git add clean-home-labels-build.txt
+          rm -f clean-home-labels-diagnostic.txt
+          git add -A clean-home-labels-build.txt clean-home-labels-diagnostic.txt
           git commit -m 'Record Clean Home Labels diagnostic build PASS'
           git push origin main
