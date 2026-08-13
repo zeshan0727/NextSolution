@@ -1,0 +1,12 @@
+Package: com.nextsolution.brightnesspeek
+Name: Brightness Peek
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: Shows a small exact brightness percentage toast whenever screen brightness changes.
+Maintainer: Next Solution <support@nextsolution.cc>
+Author: Next Solution - Zeeshan Barvi
+Section: Tweaks
+Priority: optional
+Depends: mobilesubstrate, preferenceloader
+Homepage: https://nextsolution.cc/
+Depiction: https://nextsolution.cc/depictions/brightnesspeek.html
