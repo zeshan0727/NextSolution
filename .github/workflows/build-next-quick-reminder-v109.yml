@@ -1,0 +1,99 @@
+name: Build Next Quick Reminder 1.0.9 Island Dismiss
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Install packaging tools
+        run: brew install dpkg ldid xz
+
+      - name: Apply and validate 1.0.9 changes
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-NextQuickReminder"
+          python3 "$P/fix-panel-v103.py"
+          python3 "$P/prepare-v104.py"
+          python3 "$P/prepare-v105.py"
+          python3 "$P/compile-fix-v105.py"
+          python3 "$P/prepare-v106.py"
+          python3 "$P/prepare-v107.py"
+          python3 "$P/prepare-v108.py"
+          python3 "$P/compile-fix-v108.py"
+          python3 "$P/prepare-v109.py"
+          python3 "$P/prepare-build.py"
+          chmod 755 "$P/layout/DEBIAN/postinst"
+          plutil -lint "$P/Preferences/Resources/Root.plist"
+          plutil -lint "$P/Preferences/Resources/Info.plist"
+          grep -q 'SystemApertureReminderV109.xm' "$P/Makefile"
+          ! grep -q 'DueReminderLiveCard.xm' "$P/Makefile"
+          grep -q 'DismissedReminderOccurrences' "$P/SystemApertureReminderV109.xm"
+          grep -q 'Dismiss' "$P/SystemApertureReminderV109.xm"
+          grep -q 'CGFloat y = 4.0' "$P/SystemApertureReminderV109.xm"
+          grep -q 'setExpanded:NO' "$P/SystemApertureReminderV109.xm"
+          grep -q 'MCMMetadataIdentifier' "$P/SystemApertureReminderV109.xm"
+          grep -q 'database.changed' "$P/SystemApertureReminderV109.xm"
+          grep -q 'nqr106_prepareKeyboardForResponder' "$P/Tweak.xm"
+          test "$(awk '/^Version:/ {print $2}' "$P/control")" = 1.0.9
+
+      - name: Build RootHide tweak
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-04-NextQuickReminder"
+          OUT="$RUNNER_TEMP/quick-reminder-out"
+          mkdir -p "$OUT"
+          git init "$RUNNER_TEMP/theos-rh"
+          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$P" clean package FINALPACKAGE=1 2>&1 | tee v109-tweak-build.log
+          DEB="$(find "$P/packages" -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextQuickReminder_1.0.9_RootHide.deb"
+          ditto -c -k --sequesterRsrc --keepParent "$P" "$OUT/NextQuickReminder_1.0.9_Source.zip"
+
+      - name: Verify final package
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/quick-reminder-out"
+          DEB="$OUT/NextQuickReminder_1.0.9_RootHide.deb"
+          test "$(dpkg-deb -f "$DEB" Package)" = com.nextsolution.nextquickreminder
+          test "$(dpkg-deb -f "$DEB" Version)" = 1.0.9
+          test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64e
+          X="$(mktemp -d)"
+          dpkg-deb -x "$DEB" "$X"
+          DYLIB="$(find "$X" -name NextQuickReminder.dylib -print -quit)"
+          test -n "$DYLIB"
+          STRINGS="$RUNNER_TEMP/nextquickreminder-v109-strings.txt"
+          strings -a "$DYLIB" > "$STRINGS"
+          grep -q 'Keyboard focus request' "$STRINGS"
+          grep -q '1.0.9 island-only System Aperture reminder loaded with persistent dismiss state' "$STRINGS"
+          grep -q 'DismissedReminderOccurrences' "$STRINGS"
+          grep -q 'SBSystemApertureWindow' "$STRINGS"
+          grep -q 'NextReminderDatabase.json' "$STRINGS"
+          shasum -a 256 "$DEB" > "$OUT/NextQuickReminder_1.0.9_RootHide-SHA256.txt"
+
+      - name: Upload final package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextQuickReminder-1.0.9-RootHide
+          if-no-files-found: warn
+          path: |
+            v109-tweak-build.log
+            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.9_RootHide.deb
+            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.9_RootHide-SHA256.txt
+            ${{ runner.temp }}/quick-reminder-out/NextQuickReminder_1.0.9_Source.zip
