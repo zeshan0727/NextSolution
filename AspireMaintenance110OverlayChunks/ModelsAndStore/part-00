@@ -1,0 +1,314 @@
+import Foundation
+import UserNotifications
+
+// MARK: - Core Models
+
+struct CompanyProfile: Codable, Equatable {
+    var fullName: String
+    var tradingName: String
+    var address: String
+    var phone: String
+    var email: String
+    var website: String
+    var taxRegistrationNumber: String
+    var bankName: String
+    var accountHolderName: String
+    var accountNumber: String
+    var iban: String
+    var swiftCode: String
+    var currencyCode: String
+    var invoicePrefix: String
+    var paymentTermsDays: Int
+    var invoiceTerms: String
+    var longOverdueDays: Int
+
+    static let aspireDefault = CompanyProfile(
+        fullName: "Aspire Green Garden Designing and Works LLC",
+        tradingName: "Aspire Garden",
+        address: "United Arab Emirates",
+        phone: "+971 58 608 0000",
+        email: "sales@aspiregroupae.com",
+        website: "aspiregroupae.com",
+        taxRegistrationNumber: "",
+        bankName: "",
+        accountHolderName: "",
+        accountNumber: "",
+        iban: "",
+        swiftCode: "",
+        currencyCode: "AED",
+        invoicePrefix: "ASP",
+        paymentTermsDays: 7,
+        invoiceTerms: "Kindly transfer the invoice amount to the company bank account. Thank you.",
+        longOverdueDays: 30
+    )
+}
+
+struct Customer: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var name: String
+    var address: String
+    var email: String
+    var phone: String
+    var monthlyRate: Double
+    var plannedVisitsPerMonth: Int
+    var notes: String
+    var isActive: Bool
+    var createdAt: Date = Date()
+}
+
+struct MaintenanceVisit: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var customerID: UUID
+    var date: Date
+    var staffName: String
+    var workDone: String
+    var notes: String
+    var employeeID: UUID? = nil
+    /// Planned monthly visit slot (1st, 2nd, 3rd...). Optional keeps older backups compatible.
+    var visitNumber: Int? = nil
+}
+
+struct InvoiceLineItem: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var description: String
+    var quantity: Double
+    var unitPrice: Double
+
+    var amount: Double { quantity * unitPrice }
+}
+
+enum InvoiceStatus: String, CaseIterable, Codable, Identifiable {
+    case draft
+    case sent
+    case partial
+    case paid
+    case void
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .draft: return "Draft"
+        case .sent: return "Sent"
+        case .partial: return "Part Paid"
+        case .paid: return "Paid"
+        case .void: return "Void"
+        }
+    }
+}
+
+struct Invoice: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var number: String
+    var customerID: UUID
+    var issueDate: Date
+    var dueDate: Date
+    var serviceMonth: Date
+    var lineItems: [InvoiceLineItem]
+    var status: InvoiceStatus
+    var amountPaid: Double
+    var notes: String
+    var sentAt: Date?
+    var paidAt: Date?
+    var employeeID: UUID? = nil
+    var createdAt: Date = Date()
+
+    var total: Double { lineItems.reduce(0) { $0 + $1.amount } }
+    var outstanding: Double { max(0, total - amountPaid) }
+
+    func isOverdue(asOf date: Date = Date()) -> Bool {
+        status != .paid && status != .void && outstanding > 0 && dueDate < Calendar.current.startOfDay(for: date)
+    }
+
+    func overdueDays(asOf date: Date = Date()) -> Int {
+        guard isOverdue(asOf: date) else { return 0 }
+        return max(0, Calendar.current.dateComponents([.day], from: dueDate, to: date).day ?? 0)
+    }
+}
+
+enum ExpenseCategory: String, CaseIterable, Codable, Identifiable {
+    case fuel = "Fuel"
+    case salaries = "Salaries & Labour"
+    case plants = "Plants & Materials"
+    case equipment = "Tools & Equipment"
+    case vehicle = "Vehicle & Transport"
+    case subcontractor = "Subcontractor"
+    case utilities = "Utilities"
+    case office = "Office & Administration"
+    case other = "Other"
+
+    var id: String { rawValue }
+}
+
+struct Expense: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var date: Date
+    var category: ExpenseCategory
+    var vendor: String
+    var amount: Double
+    var paymentAccount: String
+    var notes: String
+}
+
+enum EmailDeliveryMode: String, CaseIterable, Codable, Identifiable {
+    case gmailDirect
+    case appleMail
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .gmailDirect: return "Gmail Direct"
+        case .appleMail: return "Apple Mail Assisted"
+        }
+    }
+}
+
+struct EmailConfiguration: Codable, Equatable {
+    var schedulerEndpoint: String
+    var connectorID: String
+    var connectedEmail: String
+    var signature: String
+    var preferredMode: EmailDeliveryMode
+
+    static let aspireDefault = EmailConfiguration(
+        schedulerEndpoint: "",
+        connectorID: "",
+        connectedEmail: "",
+        signature: "Thank you,\nAspire Green Garden Designing and Works LLC",
+        preferredMode: .gmailDirect
+    )
+}
+
+struct AspireData: Codable {
+    var company: CompanyProfile
+    var customers: [Customer]
+    var visits: [MaintenanceVisit]
+    var invoices: [Invoice]
+    var expenses: [Expense]
+    var emailConfiguration: EmailConfiguration
+
+    // Optional for backward-compatible decoding of 1.0.x backups.
+    var employees: [Employee]?
+    var bankAccounts: [BankAccount]?
+    var advancePayments: [AdvancePayment]?
+    var expenseRefunds: [ExpenseRefund]?
+    var invoicePDFSettings: InvoicePDFSettings?
+    var appLogoData: Data?
+
+    static let empty = AspireData(
+        company: .aspireDefault,
+        customers: [],
+        visits: [],
+        invoices: [],
+        expenses: [],
+        emailConfiguration: .aspireDefault,
+        employees: [],
+        bankAccounts: [],
+        advancePayments: [],
+        expenseRefunds: [],
+        invoicePDFSettings: .aspireDefault,
+        appLogoData: nil
+    )
+}
+
+struct AgingSummary {
+    var current: Double = 0
+    var days1To30: Double = 0
+    var days31To60: Double = 0
+    var days61To90: Double = 0
+    var over90: Double = 0
+
+    var total: Double { current + days1To30 + days31To60 + days61To90 + over90 }
+}
+
+// MARK: - Store
+
+@MainActor
+final class AspireStore: ObservableObject {
+    @Published private(set) var data: AspireData
+    @Published var lastErrorMessage: String?
+
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
+    private let dataURL: URL
+
+    init() {
+        encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+
+        decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let directory = support.appendingPathComponent("AspireMaintenance", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        dataURL = directory.appendingPathComponent("aspire-maintenance-data.json")
+
+        if let stored = try? Data(contentsOf: dataURL),
+           let decoded = try? decoder.decode(AspireData.self, from: stored) {
+            data = decoded
+        } else {
+            data = .empty
+        }
+    }
+
+    var company: CompanyProfile { data.company }
+    var customers: [Customer] { data.customers.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending } }
+    var activeCustomers: [Customer] { customers.filter(\.isActive) }
+    var invoices: [Invoice] { data.invoices.sorted { $0.issueDate > $1.issueDate } }
+    var expenses: [Expense] { data.expenses.sorted { $0.date > $1.date } }
+    var visits: [MaintenanceVisit] { data.visits.sorted { $0.date > $1.date } }
+    var emailConfiguration: EmailConfiguration { data.emailConfiguration }
+    var employees: [Employee] { (data.employees ?? []).sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending } }
+    var activeEmployees: [Employee] { employees.filter(\.isActive) }
+    var bankAccounts: [BankAccount] {
+        let stored = data.bankAccounts ?? []
+        if !stored.isEmpty { return stored }
+        let company = data.company
+        guard !company.bankName.isEmpty || !company.iban.isEmpty || !company.accountNumber.isEmpty else { return [] }
+        return [BankAccount(
+            label: "Default Account",
+            bankName: company.bankName,
+            accountHolderName: company.accountHolderName,
+            accountNumber: company.accountNumber,
+            iban: company.iban,
+            swiftCode: company.swiftCode,
+            currencyCode: company.currencyCode,
+            isDefault: true
+        )]
+    }
+    var defaultBankAccount: BankAccount? { bankAccounts.first(where: \.isDefault) ?? bankAccounts.first }
+    var advancePayments: [AdvancePayment] { (data.advancePayments ?? []).sorted { $0.date > $1.date } }
+    var expenseRefunds: [ExpenseRefund] { (data.expenseRefunds ?? []).sorted { $0.date > $1.date } }
+    var invoicePDFSettings: InvoicePDFSettings { data.invoicePDFSettings ?? .aspireDefault }
+    var appLogoData: Data? { data.appLogoData }
+
+    func customer(id: UUID) -> Customer? {
+        data.customers.first { $0.id == id }
+    }
+
+    func visits(for customerID: UUID, in month: Date? = nil) -> [MaintenanceVisit] {
+        data.visits.filter { visit in
+            guard visit.customerID == customerID else { return false }
+            guard let month else { return true }
+            return Calendar.current.isDate(visit.date, equalTo: month, toGranularity: .month)
+        }.sorted { $0.date > $1.date }
+    }
+
+    func invoices(for customerID: UUID) -> [Invoice] {
+        invoices.filter { $0.customerID == customerID }
+    }
+
+    func invoice(id: UUID) -> Invoice? {
+        data.invoices.first { $0.id == id }
+    }
+
+    func expense(id: UUID) -> Expense? {
+        data.expenses.first { $0.id == id }
+    }
+
+    func employee(id: UUID?) -> Employee? {
+        guard let id else { return nil }
+        re
