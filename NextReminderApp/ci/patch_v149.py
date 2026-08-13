@@ -39,15 +39,13 @@ replace_once(
                     }
                 }'''
 )
+# Other cumulative patches add work inside the scenePhase block, so extend the
+# stable refresh call rather than replacing the whole block.
 replace_once(
     app,
-    '''                .onChange(of: scenePhase) { phase in
-                    guard phase == .active else { return }
-                    automationStore.refreshDueStatuses()
-                }''',
-    '''                .onChange(of: scenePhase) { phase in
-                    guard phase == .active else { return }
-                    automationStore.refreshDueStatuses()
+    '''                    automationStore.refreshDueStatuses()
+''',
+    '''                    automationStore.refreshDueStatuses()
                     scheduledEmailStore.refresh()
                     Task {
                         await ReminderLiveActivityManager.shared.syncDueActivities(
@@ -55,7 +53,7 @@ replace_once(
                             categoryName: { store.category(for: $0).name }
                         )
                     }
-                }'''
+'''
 )
 
 # 2) Automations screen gets a dedicated Email Schedules window, separate from reminders.
@@ -96,7 +94,7 @@ card = '''    private var emailSchedulesCard: some View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Email Schedules")
                         .font(.headline)
-                    Text("\(scheduledEmailStore.items.filter(\\.isEnabled).count) active • Daily, weekly or quarterly • Separate from reminders")
+                    Text("\(scheduledEmailStore.items.filter { $0.isEnabled }.count) active • Daily, weekly or quarterly • Separate from reminders")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
