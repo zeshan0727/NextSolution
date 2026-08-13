@@ -1,3 +1,4 @@
+# Diagnostic gate rerun after legacy-domain regression-test correction
 name: Diagnostic Clean Home Labels
 on:
   workflow_dispatch:
