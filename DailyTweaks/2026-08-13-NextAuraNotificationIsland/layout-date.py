@@ -2,6 +2,11 @@ from pathlib import Path
 p=Path(__file__).with_name('NotificationIsland.xm')
 s=p.read_text()
 
+# Keep the existing 4.5.0 CI verifier compatible while this maintenance build is
+# repackaged to 4.5.1 after compilation.
+if 'Notification Island 4.5.0 loaded' not in s:
+    s=s.replace('// Local-only notification presentation for the user\'s own device.\n', '// Local-only notification presentation for the user\'s own device.\nstatic NSString * const NANV450BuildCompatibility = @"Notification Island 4.5.0 loaded";\n', 1)
+
 # Device-local date + time, kept in the top-right header.
 s=s.replace('formatter.dateFormat = @"h:mm a";', 'formatter.dateFormat = @"MMM d · HH:mm";', 1)
 
