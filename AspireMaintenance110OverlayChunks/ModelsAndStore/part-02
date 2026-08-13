@@ -1,0 +1,259 @@
+dex].status = data.invoices[index].sentAt == nil ? .draft : .sent
+        } else {
+            data.invoices[index].amountPaid = data.invoices[index].total
+            data.invoices[index].paidAt = paymentDate
+            data.invoices[index].status = .paid
+        }
+        persist()
+    }
+
+    func deleteInvoice(_ id: UUID) {
+        data.invoices.removeAll { $0.id == id }
+        persist()
+    }
+
+    @discardableResult
+    func addAdvancePayment(_ payment: AdvancePayment) -> Bool {
+        guard payment.amount.isFinite, payment.amount > 0 else {
+            lastErrorMessage = "Enter a valid advance amount greater than zero."
+            return false
+        }
+        var payments = data.advancePayments ?? []
+        payments.append(payment)
+        data.advancePayments = payments
+        return persist()
+    }
+
+    func deleteAdvancePayment(_ id: UUID) {
+        var payments = data.advancePayments ?? []
+        payments.removeAll { $0.id == id }
+        data.advancePayments = payments
+        persist()
+    }
+
+    func advances(for customerID: UUID) -> [AdvancePayment] {
+        advancePayments.filter { $0.customerID == customerID }
+    }
+
+    func advanceTotal(in month: Date? = nil) -> Double {
+        advancePayments.filter { payment in
+            guard let month else { return true }
+            return Calendar.current.isDate(payment.date, equalTo: month, toGranularity: .month)
+        }.reduce(0) { $0 + $1.amount }
+    }
+
+    @discardableResult
+    func addExpense(_ expense: Expense) -> Bool {
+        guard expense.amount.isFinite, expense.amount > 0 else {
+            lastErrorMessage = "Enter a valid expense amount greater than zero."
+            return false
+        }
+        var updated = data
+        updated.expenses.append(expense)
+        data = updated
+        return persist()
+    }
+
+    func updateExpense(_ expense: Expense) {
+        guard let index = data.expenses.firstIndex(where: { $0.id == expense.id }) else { return }
+        data.expenses[index] = expense
+        persist()
+    }
+
+    func deleteExpense(_ id: UUID) {
+        data.expenses.removeAll { $0.id == id }
+        var refunds = data.expenseRefunds ?? []
+        refunds.removeAll { $0.expenseID == id }
+        data.expenseRefunds = refunds
+        persist()
+    }
+
+    @discardableResult
+    func addExpenseRefund(_ refund: ExpenseRefund) -> Bool {
+        guard let expense = expense(id: refund.expenseID) else {
+            lastErrorMessage = "The original expense no longer exists."
+            return false
+        }
+        let alreadyRefunded = refunds(for: expense.id).reduce(0) { $0 + $1.amount }
+        let remaining = max(0, expense.amount - alreadyRefunded)
+        guard refund.amount.isFinite, refund.amount > 0, refund.amount <= remaining + 0.005 else {
+            lastErrorMessage = "Refund must be greater than zero and cannot exceed the remaining expense amount."
+            return false
+        }
+        var refunds = data.expenseRefunds ?? []
+        refunds.append(refund)
+        data.expenseRefunds = refunds
+        return persist()
+    }
+
+    func deleteExpenseRefund(_ id: UUID) {
+        var refunds = data.expenseRefunds ?? []
+        refunds.removeAll { $0.id == id }
+        data.expenseRefunds = refunds
+        persist()
+    }
+
+    func generateMonthlyInvoices(for month: Date) -> [Invoice] {
+        var generated: [Invoice] = []
+        for customer in activeCustomers {
+            let exists = data.invoices.contains {
+                $0.customerID == customer.id &&
+                Calendar.current.isDate($0.serviceMonth, equalTo: month, toGranularity: .month) &&
+                $0.status != .void
+            }
+            if !exists {
+                generated.append(createMonthlyInvoice(for: customer, serviceMonth: month))
+            }
+        }
+        return generated
+    }
+
+    /// Revenue belongs to the maintenance service month, regardless of when the invoice
+    /// was created or when its payment was received.
+    func invoicedIncome(in month: Date) -> Double {
+        invoicesForServiceMonth(month).reduce(0) { $0 + $1.total }
+    }
+
+    func invoicesForServiceMonth(_ month: Date) -> [Invoice] {
+        invoices.filter {
+            $0.status != .void && Calendar.current.isDate($0.serviceMonth, equalTo: month, toGranularity: .month)
+        }
+    }
+
+    func collectedIncome(in month: Date) -> Double {
+        paymentsReceived(in: month).reduce(0) { $0 + $1.amountPaid }
+    }
+
+    func paymentsReceived(in month: Date) -> [Invoice] {
+        invoices.filter {
+            guard $0.status != .void, let paidAt = $0.paidAt else { return false }
+            return Calendar.current.isDate(paidAt, equalTo: month, toGranularity: .month)
+        }
+    }
+
+    func expensesForMonth(_ month: Date) -> [Expense] {
+        expenses.filter { Calendar.current.isDate($0.date, equalTo: month, toGranularity: .month) }
+    }
+
+    func refundsForMonth(_ month: Date) -> [ExpenseRefund] {
+        expenseRefunds.filter { Calendar.current.isDate($0.date, equalTo: month, toGranularity: .month) }
+    }
+
+    func grossExpensesTotal(in month: Date) -> Double {
+        expensesForMonth(month).reduce(0) { $0 + $1.amount }
+    }
+
+    func refundsTotal(in month: Date) -> Double {
+        refundsForMonth(month).reduce(0) { $0 + $1.amount }
+    }
+
+    func expensesTotal(in month: Date) -> Double {
+        grossExpensesTotal(in: month) - refundsTotal(in: month)
+    }
+
+    func outstandingTotal() -> Double {
+        data.invoices.filter { $0.status != .void }.reduce(0) { $0 + $1.outstanding }
+    }
+
+    func overdueInvoices(asOf date: Date = Date()) -> [Invoice] {
+        invoices.filter { $0.isOverdue(asOf: date) }
+    }
+
+    func longOverdueInvoices(asOf date: Date = Date()) -> [Invoice] {
+        overdueInvoices(asOf: date).filter { $0.overdueDays(asOf: date) >= company.longOverdueDays }
+    }
+
+    func agingSummary(asOf date: Date = Date()) -> AgingSummary {
+        var summary = AgingSummary()
+        for invoice in data.invoices where invoice.status != .void && invoice.outstanding > 0 {
+            let days = invoice.overdueDays(asOf: date)
+            if !invoice.isOverdue(asOf: date) {
+                summary.current += invoice.outstanding
+            } else if days <= 30 {
+                summary.days1To30 += invoice.outstanding
+            } else if days <= 60 {
+                summary.days31To60 += invoice.outstanding
+            } else if days <= 90 {
+                summary.days61To90 += invoice.outstanding
+            } else {
+                summary.over90 += invoice.outstanding
+            }
+        }
+        return summary
+    }
+
+    func exportData() throws -> Data {
+        try encoder.encode(data)
+    }
+
+    func importData(_ importedData: Data) throws {
+        data = try decoder.decode(AspireData.self, from: importedData)
+        persist()
+    }
+
+    func addDemoData() {
+        guard data.customers.isEmpty && data.invoices.isEmpty && data.expenses.isEmpty else { return }
+        let customer = Customer(
+            name: "Sample Garden Customer",
+            address: "Abu Dhabi, UAE",
+            email: "customer@example.com",
+            phone: "+971 50 000 0000",
+            monthlyRate: 600,
+            plannedVisitsPerMonth: 3,
+            notes: "Demo record for first testing. Delete it when finished.",
+            isActive: true
+        )
+        data.customers.append(customer)
+        let invoice = createMonthlyInvoice(for: customer, serviceMonth: Date())
+        data.invoices = data.invoices.map { current in
+            var updated = current
+            if current.id == invoice.id {
+                updated.issueDate = Calendar.current.date(byAdding: .day, value: -45, to: Date()) ?? Date()
+                updated.dueDate = Calendar.current.date(byAdding: .day, value: -38, to: Date()) ?? Date()
+                updated.status = .sent
+            }
+            return updated
+        }
+        data.expenses.append(Expense(date: Date(), category: .fuel, vendor: "Sample Fuel", amount: 120, paymentAccount: "Cash", notes: "Demo expense"))
+        persist()
+    }
+
+    func requestNotificationsAndRefresh() async {
+        do {
+            let center = UNUserNotificationCenter.current()
+            let granted = try await center.requestAuthorization(options: [.alert, .badge, .sound])
+            if granted { await refreshOverdueNotifications() }
+        } catch {
+            lastErrorMessage = error.localizedDescription
+        }
+    }
+
+    func refreshOverdueNotifications() async {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["aspire.long-overdue"])
+        let overdue = longOverdueInvoices()
+        guard !overdue.isEmpty else { return }
+
+        let total = overdue.reduce(0) { $0 + $1.outstanding }
+        let content = UNMutableNotificationContent()
+        content.title = "Long-overdue invoices"
+        content.body = "\(overdue.count) invoice(s) are overdue by at least \(company.longOverdueDays) days. Outstanding: \(currency(total))."
+        content.sound = .default
+        content.badge = NSNumber(value: overdue.count)
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: "aspire.long-overdue", content: content, trigger: trigger)
+        try? await center.add(request)
+    }
+
+    func currency(_ amount: Double) -> String {
+        CurrencyFormatter.string(amount, code: company.currencyCode)
+    }
+
+    private func nextInvoiceNumber(for date: Date) -> String {
+        let month = DateFormatter.invoiceMonth.string(from: date)
+        let prefix = company.invoicePrefix.trimmingCharacters(in: .whitespacesAndNewlines).uppercased().isEmpty
+            ? "ASP"
+            : company.invoicePrefix.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let sameMonthCount = data.invoices.filter {
+            DateFormatter.invoiceMonth.string(from: $0.
