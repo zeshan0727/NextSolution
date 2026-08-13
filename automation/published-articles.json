@@ -1,6 +1,27 @@
 {
   "entries": [
     {
+      "article_sha256": "93079501e2cd65e07dac3598ef3a71f07dc43c8d09165eb2f8b40a46c36fa06c",
+      "candidate_fingerprint": "f787902b4dd36eef554d9229cd9b6bf193c0f9f11b4b9726fd5dd2b394348e7b",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "SwipeExtenderX 1.6.1 is a system utility tweak described as a modern remake of SwipeExpander. Review its listed requirements and installation considerations.",
+      "href": "swipeextenderx-tweak.html",
+      "image": "assets/articles/swipeextenderx-tweak-hero.svg",
+      "modified_at": "2026-08-13T17:33:41+00:00",
+      "name": "SwipeExtenderX",
+      "package": "com.qiop1379.swipeextenderx",
+      "published_at": "2026-08-13T17:33:41+00:00",
+      "selection_pool": "pending",
+      "source_name": "Miro92",
+      "source_page_url": "https://repo.miro92.com/",
+      "source_url": "https://repo.miro92.com/",
+      "title": "SwipeExtenderX 1.6.1: A Keyboard Tweak for iPhoneOS-ARM Devices",
+      "version": "1.6.1"
+    },
+    {
       "article_sha256": "237e032a717ae8807eaebb1ac0595e2087ad96c799f02ae40f3bc306965e3997",
       "candidate_fingerprint": "14eb1e26e2a63ce00658465c0168553063600c2798e7682ec1e12c19af43124c",
       "category": {
@@ -120,8 +141,17 @@
       "published_at": "2026-08-13T14:10:20+00:00",
       "run_id": "31708649012",
       "version": "4.0.1"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "f787902b4dd36eef554d9229cd9b6bf193c0f9f11b4b9726fd5dd2b394348e7b",
+      "href": "swipeextenderx-tweak.html",
+      "package": "com.qiop1379.swipeextenderx",
+      "published_at": "2026-08-13T17:33:41+00:00",
+      "run_id": "31726241340",
+      "version": "1.6.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-13T14:10:20+00:00"
+  "updated_at": "2026-08-13T17:33:41+00:00"
 }
