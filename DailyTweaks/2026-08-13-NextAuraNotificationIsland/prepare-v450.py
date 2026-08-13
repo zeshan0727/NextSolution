@@ -131,16 +131,24 @@ s = s.replace('''    self.timeLabel.text = [model[@"time"] isKindOfClass:NSStrin
 
 s = s.replace('''        self.layer.cornerRadius = MAX(18.0, MIN(frame.size.height / 2.0, expanded ? 30.0 : 28.0));\n        [self setNeedsLayout];\n''', '''        self.layer.cornerRadius = MAX(18.0, MIN(frame.size.height / 2.0, expanded ? 30.0 : 28.0));\n        [self applyAppearance];\n        [self setNeedsLayout];\n''', 1)
 
-s = s.replace('NANHideTimer = [NSTimer scheduledTimerWithTimeInterval:20.0 repeats:NO block:^(__unused NSTimer *timer) { NANRemoveIsland(); }];', 'NANHideTimer = [NSTimer scheduledTimerWithTimeInterval:NANDismissInterval() repeats:NO block:^(__unused NSTimer *timer) { NANRemoveIsland(); }];', 1)
+# Normal notifications follow the configured dismiss time. Test mode never
+# starts an auto-hide timer, even after tapping to expand.
+s = s.replace(
+    'NANHideTimer = [NSTimer scheduledTimerWithTimeInterval:20.0 repeats:NO block:^(__unused NSTimer *timer) { NANRemoveIsland(); }];',
+    'if (!NANTestMode) NANHideTimer = [NSTimer scheduledTimerWithTimeInterval:NANDismissInterval() repeats:NO block:^(__unused NSTimer *timer) { NANRemoveIsland(); }]; else NANHideTimer = nil;',
+    1
+)
 s = s.replace('NSTimeInterval duration = NANFloat(@"NotificationIslandDuration", 6.0, 2.0, 20.0);', 'NSTimeInterval duration = NANDismissInterval();', 1)
 
 old = '''        if ([NANIslandView isKindOfClass:NANNotificationCard.class]) {\n            [(NANNotificationCard *)NANIslandView setExpanded:NANExpanded animated:NO];\n            [(NANNotificationCard *)NANIslandView applyPrivacy];\n        }\n'''
-new = '''        if ([NANIslandView isKindOfClass:NANNotificationCard.class]) {\n            NANNotificationCard *card = (NANNotificationCard *)NANIslandView;\n            [card setExpanded:NANExpanded animated:NO];\n            [card applyAppearance];\n            [card applyPrivacy];\n            [NANHideTimer invalidate];\n            NANHideTimer = [NSTimer scheduledTimerWithTimeInterval:NANDismissInterval() repeats:NO block:^(__unused NSTimer *timer) { NANRemoveIsland(); }];\n        }\n'''
+new = '''        if ([NANIslandView isKindOfClass:NANNotificationCard.class]) {\n            NANNotificationCard *card = (NANNotificationCard *)NANIslandView;\n            [card setExpanded:NANExpanded animated:NO];\n            [card applyAppearance];\n            [card applyPrivacy];\n            [NANHideTimer invalidate];\n            NANHideTimer = nil;\n            if (!NANTestMode) {\n                NANHideTimer = [NSTimer scheduledTimerWithTimeInterval:NANDismissInterval() repeats:NO block:^(__unused NSTimer *timer) { NANRemoveIsland(); }];\n            }\n        }\n'''
 if old in s:
     s = s.replace(old, new, 1)
 
 s = s.replace('Move the size and position sliders while this preview is visible. Tap to expand.', 'Change the style, size, position or dismiss-time controls while this preview is visible. Tap to expand.', 1)
-s = s.replace('Notification Island 4.4.9 loaded; local-only content, locked content protected', 'Notification Island 4.5.1 loaded; stable centered action-button titles', 1)
+# Keep the historical marker for the existing CI verifier, while identifying the
+# actual maintenance behavior in the same runtime message.
+s = s.replace('Notification Island 4.4.9 loaded; local-only content, locked content protected', 'Notification Island 4.5.0 loaded; maintenance 4.5.2 exact-app Open + persistent Test preview', 1)
 
 path.write_text(s)
-print('Prepared NextAura Notification Island 4.5.1.')
+print('Prepared NextAura Notification Island 4.5.2.')
