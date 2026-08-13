@@ -17,77 +17,231 @@
     "IconOrder",
     "Next Solution"
   ],
+  "thumbnail_visual": {
+    "assets": [
+      "assets/atria-live-editor.jpg",
+      "assets/five-icon-dock-modern.jpg"
+    ],
+    "credit": "Real tweak screenshots"
+  },
+  "visual_sources": [
+    {
+      "id": "atria",
+      "tweak": "Atria",
+      "credit": "Official screenshots · Chariz / ren7995",
+      "source_url": "https://chariz.com/get/atria",
+      "image_urls": [
+        "https://cdn.chariz.cloud/screenshot/atria/atria-2.jpg",
+        "https://cdn.chariz.cloud/screenshot/atria/atria-3.jpg"
+      ]
+    },
+    {
+      "id": "bolders-reborn",
+      "tweak": "Bolders Reborn",
+      "credit": "Official screenshots · Chariz / Nightwind",
+      "source_url": "https://chariz.com/get/boldersreborn",
+      "image_urls": [
+        "https://cdn.chariz.cloud/asset/boldersreborn/EQNMNNWquljCnKG3ADIai7v6p56CRh-1/assets/YDv2yeEL01cZGwckahyO1rvTvqfqZ2-APoMXCrFn40mYrezgZMZCf_chZsJsRUMNOOlB_rul6M7XcmJqXEiIOg.jpg",
+        "https://cdn.chariz.cloud/asset/boldersreborn/EQNMNNWquljCnKG3ADIai7v6p56CRh-1/assets/woay9jWvQmGY36FAQtbktkropTQUCTGLjQsVLZmKgcykeGH7s0mN0gbKxK_2uxBH4UOz_9LSKq3y8D9P1T6Yiw.jpg"
+      ]
+    },
+    {
+      "id": "five-icon-dock",
+      "tweak": "FiveIconDock",
+      "credit": "Developer screenshots · ichitaso",
+      "source_url": "https://ichitaso.com/jailbreak/com-ichitaso-fiveicondock13/",
+      "image_urls": [
+        "https://ichitaso.com/wp-content/uploads/2019/12/FiveIconDock13-01.jpg",
+        "https://ichitaso.com/wp-content/uploads/2019/12/FiveIconDock13-03.jpg"
+      ]
+    },
+    {
+      "id": "iconorder",
+      "tweak": "IconOrder",
+      "credit": "Official screenshots · Havoc / ichitaso",
+      "source_url": "https://havoc.app/package/iconorder",
+      "image_urls": [
+        "https://media.havoc.app/667979487a89d6440c9b3730",
+        "https://media.havoc.app/6679794e7a89d6440c9b37f6"
+      ]
+    },
+    {
+      "id": "remove-widget-background",
+      "tweak": "Remove Widget Background",
+      "credit": "Official screenshots · Havoc / 82flex",
+      "source_url": "https://havoc.app/package/removewidgetbg",
+      "image_urls": [
+        "https://media.havoc.app/66e1e242f7944810d97025a4",
+        "https://media.havoc.app/66e1e303618a4cad6059c9b5"
+      ]
+    },
+    {
+      "id": "addtofolder",
+      "tweak": "AddToFolder Rootless",
+      "credit": "Developer screenshots · AnthoPak",
+      "source_url": "https://repo.anthopak.dev/depiction/web/com.anthopak.addtofolder-rootless.php",
+      "image_urls": [
+        "https://repo.anthopak.dev/assets/com.anthopak.addtofolder-rootless/screenshot/addToFolder1.PNG",
+        "https://repo.anthopak.dev/assets/com.anthopak.addtofolder-rootless/screenshot/addToFolder2.PNG"
+      ]
+    },
+    {
+      "id": "springcuts",
+      "tweak": "SpringCuts Rootless",
+      "credit": "Developer screenshots · AnthoPak",
+      "source_url": "https://repo.anthopak.dev/depiction/web/com.anthopak.springcuts-rootless.php",
+      "image_urls": [
+        "https://repo.anthopak.dev/assets/com.anthopak.springcuts-rootless/screenshot/SpringCuts1.PNG",
+        "https://repo.anthopak.dev/assets/com.anthopak.springcuts-rootless/screenshot/SpringCuts2.PNG"
+      ]
+    },
+    {
+      "id": "primalfolder-2",
+      "tweak": "PrimalFolder 2",
+      "credit": "Developer screenshots · ichitaso",
+      "source_url": "https://cydia.ichitaso.com/depiction/primalfolder2.html",
+      "image_urls": [
+        "https://ichitaso.com/wp-content/uploads/2019/12/primalfolder2-01.jpg",
+        "https://ichitaso.com/wp-content/uploads/2019/12/primalfolder2-02.jpg"
+      ]
+    }
+  ],
   "scenes": [
     {
       "kicker": "NEXT SOLUTION · 2026 GUIDE",
       "title": "8 Home Screen tweaks worth comparing",
       "subtitle": "Layouts, folders, widgets and shortcuts",
-      "facts": ["Source-checked overview", "No one-size-fits-all compatibility", "Original comparison and graphics"],
+      "facts": ["Source-checked overview", "No one-size-fits-all compatibility", "Original comparison and editing"],
       "accent": "#5b5ce2",
+      "visual": {
+        "assets": [
+          "assets/atria-live-editor.jpg",
+          "assets/bolders-expanded.jpg",
+          "assets/remove-widget-home.jpg",
+          "assets/primalfolder-first-app.jpg"
+        ],
+        "credit": "Authentic package screenshots · sources credited below"
+      },
       "narration": "Your iPhone Home Screen can be changed in dozens of ways after a jailbreak, but the useful question is not which tweak has the flashiest screenshot. It is which package matches the job you actually want to do, and whether its current listing matches your setup. In this guide, we will compare eight different approaches: complete grid control, larger folders, a five-icon dock, layout recovery, cleaner widgets, faster folder organization, Shortcuts actions, and smarter folder launching. This is an editorial comparison based on current package information, not a hands-on compatibility test. Always verify the source page before installing. Narration in this video uses an AI-generated voice, while the research, script, visual design and final editorial choices are original Next Solution work."
     },
     {
+      "slug": "atria",
+      "short_title": "Atria: Full Home Screen Layout Control #Shorts",
       "kicker": "01 · FULL LAYOUT CONTROL",
       "title": "Atria 1.4.1",
       "subtitle": "A broad editor for the entire Home Screen",
       "facts": ["Rows, columns and icon scale", "Per-page layouts and insets", "Listed: iOS 13.0–16.5 · arm, arm64"],
       "accent": "#6d5dfc",
+      "visual": {
+        "assets": ["assets/atria-live-editor.jpg", "assets/atria-widgets.jpg"],
+        "credit": "Official screenshots · Chariz / ren7995",
+        "source_ids": ["atria"]
+      },
       "narration": "First is Atria, version 1.4.1. This is the broadest layout tool in the group. Its listing covers rows, columns, icon scale, page insets, widget positioning and per-page layouts while retaining the native widget system. In practical terms, Atria is the package to investigate when you want the whole Home Screen to feel different, rather than changing one isolated detail. The source lists iOS 13.0 through 16.5 and arm plus arm64 architectures. That range is useful information, but it is not a promise for every device or bootstrap inside that range. Check the current Chariz page, package dependencies and recent release notes before deciding. If your goal is a redesigned grid with precise spacing, Atria is the strongest first comparison in this list."
     },
     {
+      "slug": "bolders-reborn",
+      "short_title": "Bolders Reborn: Bigger, Better iPhone Folders #Shorts",
       "kicker": "02 · FOLDER LAYOUTS",
       "title": "Bolders Reborn 1.2.0",
       "subtitle": "Make folders larger and more configurable",
       "facts": ["Rows, columns and spacing", "Titles, counts and background blur", "Listed: iOS 14.0–17.3 · arm, arm64"],
       "accent": "#8b5cf6",
+      "visual": {
+        "assets": ["assets/bolders-expanded.jpg", "assets/bolders-dock.jpg"],
+        "credit": "Official screenshots · Chariz / Nightwind",
+        "source_ids": ["bolders-reborn"]
+      },
       "narration": "Bolders Reborn, version 1.2.0, is focused on folders instead of the entire icon grid. Its current listing describes control over folder rows and columns, icon scale, title placement, count text, spacing, insets and background blur. The listing also mentions landscape and iPad support. That makes it a more focused choice for people who keep many apps grouped and want each folder to show more information at once. Listed support runs from iOS 14.0 through 17.3, with arm and arm64 architectures. As always, a listed range is only the beginning of the compatibility check. Confirm the exact package build and your environment. Compare Bolders Reborn with Atria by asking one simple question: do you want to redesign the full Home Screen, or mainly improve the way folders look and behave?"
     },
     {
+      "slug": "five-icon-dock",
+      "short_title": "FiveIconDock: Add a Fifth App to Your Dock #Shorts",
       "kicker": "03 · DOCK CAPACITY",
       "title": "FiveIconDock 0.0.6",
       "subtitle": "One focused change: a fifth dock position",
       "facts": ["Adds one more dock slot", "Small, easy-to-understand scope", "Listed: iOS 13–26 · arm, arm64, arm64e"],
       "accent": "#2578f5",
+      "visual": {
+        "assets": ["assets/five-icon-dock-portrait.jpg", "assets/five-icon-dock-modern.jpg"],
+        "credit": "Developer screenshots · ichitaso",
+        "source_ids": ["five-icon-dock"]
+      },
       "narration": "FiveIconDock, version 0.0.6, has the narrowest job in this roundup: it adds a fifth icon position to the dock. That simplicity is its advantage. If you do not need per-page grids, custom insets or folder redesigns, a focused tweak can be easier to evaluate than a large settings panel. The repository record lists iOS 13 through 26 and arm, arm64 and arm64e variants. A very wide listed range deserves an especially careful check against the package’s latest notes and your exact jailbreak. Do not assume that the number in a package title guarantees your setup. For someone who opens the same five apps every day, though, this is a clear idea: one more always-visible dock shortcut, without turning the rest of the Home Screen into a design project."
     },
     {
+      "slug": "iconorder",
+      "short_title": "IconOrder: Save Your Jailbreak Home Screen Layout #Shorts",
       "kicker": "04 · LAYOUT RECOVERY",
       "title": "IconOrder 1.0.4",
       "subtitle": "Protect a carefully arranged icon layout",
       "facts": ["Preserves custom icon positions", "Useful beside layout tweaks", "Listed: iOS 12.0–18.2 · arm, arm64, arm64e"],
       "accent": "#0f9f9a",
+      "visual": {
+        "assets": ["assets/iconorder-before.jpg", "assets/iconorder-after.jpg"],
+        "credit": "Official screenshots · Havoc / ichitaso",
+        "source_ids": ["iconorder"]
+      },
       "narration": "IconOrder, version 1.0.4, is different from the visual tools. It is designed to preserve custom icon layouts through SpringBoard crashes or reboots. That makes it a supporting tweak: the more time you spend arranging icons with another layout editor, the more valuable a recovery layer can become. Its listing covers iOS 12.0 through 18.2 and arm, arm64 and arm64e architectures. Again, verify the exact current build rather than treating that range as universal approval. IconOrder is not here because it makes an instant before-and-after image. It is here because a customized Home Screen is only useful if you can keep the arrangement you made. If your main frustration is rebuilding pages after an unexpected reset, investigate this before adding another visual effect."
     },
     {
+      "slug": "remove-widget-background",
+      "short_title": "Remove Widget Background: Cleaner iPhone Widgets #Shorts",
       "kicker": "05 · WIDGET STYLE",
       "title": "Remove Widget Background 2.0",
       "subtitle": "Let wallpaper and icons take visual priority",
       "facts": ["Removes the stock widget background", "A cleaner, lighter visual treatment", "Listed: iOS 15–17 · arm, arm64"],
       "accent": "#e0568a",
+      "visual": {
+        "assets": ["assets/remove-widget-home.jpg", "assets/remove-widget-settings.jpg"],
+        "credit": "Official screenshots · Havoc / 82flex",
+        "source_ids": ["remove-widget-background"]
+      },
       "narration": "Remove Widget Background, version 2.0, is another focused visual change. The package removes the stock background from Home Screen widgets, allowing the wallpaper and surrounding icons to carry more of the design. This can suit a minimal theme where solid widget panels feel too heavy. The Havoc listing identifies support across iOS 15, 16 and 17 and names modern jailbreak environments, with arm and arm64 architectures shown in the package information. You should still confirm the exact version displayed for your device and bootstrap. Also remember the tradeoff: backgrounds can help text and controls remain readable. A cleaner look is not automatically a clearer interface, so check contrast against your own wallpaper. This is the package to compare when widgets are already useful but their stock containers do not fit your visual direction."
     },
     {
+      "slug": "addtofolder-rootless",
+      "short_title": "AddToFolder Rootless: Organize Apps Faster #Shorts",
       "kicker": "06 · FOLDER ORGANIZATION",
       "title": "AddToFolder Rootless 1.4",
       "subtitle": "Make moving apps into folders less tedious",
       "facts": ["Dedicated rootless package", "Focused organization utility", "Firmware record: 13.0 minimum · arm64"],
       "accent": "#f08c3b",
+      "visual": {
+        "assets": ["assets/addtofolder-menu.jpg", "assets/addtofolder-picker.jpg"],
+        "credit": "Developer screenshots · AnthoPak",
+        "source_ids": ["addtofolder"]
+      },
       "narration": "AddToFolder Rootless, version 1.4, is about organization rather than appearance. It makes moving apps into folders easier, which can matter on a crowded device with many pages. The source provides a dedicated rootless package, records a minimum firmware value of 13.0, and lists arm64 architecture. A bare firmware record is not enough to translate into a guarantee for every iOS and jailbreak combination, so use the linked package details to confirm what the developer currently states. The appeal here is the limited scope: you can quickly understand the problem it tries to solve. If your Home Screen is visually acceptable but reorganizing apps takes too many steps, AddToFolder is a more relevant comparison than a full grid editor. Start with the workflow problem, then decide whether you need deeper layout customization afterward."
     },
     {
+      "slug": "springcuts-rootless",
+      "short_title": "SpringCuts Rootless: Run Shortcuts from SpringBoard #Shorts",
       "kicker": "07 · SPRINGBOARD ACTIONS",
       "title": "SpringCuts Rootless 1.4",
       "subtitle": "Bring Shortcuts actions closer to the Home Screen",
       "facts": ["Shortcuts actions from SpringBoard", "Additional integrations are listed", "Firmware record: 14.0 minimum · arm64"],
       "accent": "#28a46f",
+      "visual": {
+        "assets": ["assets/springcuts-actions.jpg", "assets/springcuts-list.jpg"],
+        "credit": "Developer screenshots · AnthoPak",
+        "source_ids": ["springcuts"]
+      },
       "narration": "SpringCuts Rootless, version 1.4, changes what the Home Screen can launch, not simply how it looks. Its listing describes Shortcuts actions from SpringBoard and also names support-library, Activator and command-line integrations. Which integration methods are actually available depends on your environment, so confirm the package details and required dependencies before installing. The record shows a minimum firmware value of 14.0 and arm64 architecture, but that alone should not be rewritten as a universal iOS support claim. SpringCuts is the most automation-oriented entry in this comparison. Consider it when your priority is reaching a routine or action quickly from SpringBoard. If you only want a visual theme, it is probably outside your goal. If you want the Home Screen to become a launch surface for useful actions, it deserves a closer look."
     },
     {
+      "slug": "primalfolder-2",
+      "short_title": "PrimalFolder 2: Launch an App Without Opening the Folder #Shorts",
       "kicker": "08 · SMARTER FOLDERS",
       "title": "PrimalFolder 2 0.1.2",
       "subtitle": "Launch a frequent app while keeping the group",
       "facts": ["Shows a folder as its first app icon", "Adds a direct launch action", "Listed: iOS 13–16 · arm, arm64, arm64e"],
       "accent": "#d44765",
+      "visual": {
+        "assets": ["assets/primalfolder-first-app.jpg", "assets/primalfolder-folder.jpg"],
+        "credit": "Developer screenshots · ichitaso",
+        "source_ids": ["primalfolder-2"]
+      },
       "narration": "PrimalFolder 2, version 0.1.2, offers a different answer to folder efficiency. It can present a folder as its first app icon and add a direct launch action. The idea is to reach one frequent app with fewer taps while keeping the rest of the group inside the folder. Repository metadata lists iOS 13 through 16 and variants for arm, arm64 and arm64e architectures. Verify the newest package record and any dependencies for your device. This is not the same job as Bolders Reborn. Bolders Reborn concentrates on the layout and presentation of a folder, while PrimalFolder changes the launch behavior around that folder. If you like keeping apps grouped but repeatedly open the same first app, PrimalFolder is the more specific comparison."
     },
     {
@@ -96,6 +250,15 @@
       "subtitle": "A smaller shortlist is easier to verify",
       "facts": ["Full grid: Atria", "Folders: Bolders Reborn or PrimalFolder", "Utility: IconOrder, AddToFolder or SpringCuts"],
       "accent": "#5b5ce2",
+      "visual": {
+        "assets": [
+          "assets/atria-widgets.jpg",
+          "assets/bolders-dock.jpg",
+          "assets/iconorder-after.jpg",
+          "assets/primalfolder-folder.jpg"
+        ],
+        "credit": "Package-source screenshots · full credits in description"
+      },
       "narration": "Here is the short version. For full grid control, begin with Atria. For larger and more configurable folders, compare Bolders Reborn. For one extra dock position, look at FiveIconDock. To preserve an arrangement after a crash or reboot, investigate IconOrder. For a lighter widget appearance, compare Remove Widget Background. For faster organization into folders, look at AddToFolder Rootless. For Shortcuts actions from SpringBoard, investigate SpringCuts Rootless. And for direct access to a frequent app while keeping a folder, compare PrimalFolder 2. You do not need all eight. Installing overlapping packages can make troubleshooting harder, so start with the smallest tool that solves your actual problem. Read its current source, note the architecture, inspect dependencies and keep a way to disable the package if SpringBoard becomes unstable."
     },
     {
@@ -104,6 +267,15 @@
       "subtitle": "Check the exact package record for your setup",
       "facts": ["Match iOS, jailbreak and bootstrap", "Confirm architecture and dependencies", "Keep a recovery option available"],
       "accent": "#0f9f9a",
+      "visual": {
+        "assets": [
+          "assets/remove-widget-settings.jpg",
+          "assets/addtofolder-menu.jpg",
+          "assets/springcuts-actions.jpg",
+          "assets/primalfolder-first-app.jpg"
+        ],
+        "credit": "Real package visuals · verify current source before installing"
+      },
       "narration": "Before installing any tweak, match more than the iOS number. Confirm your jailbreak, rootful or rootless bootstrap, device architecture, package dependencies and the exact version currently offered by the source. A screenshot, a familiar package name or a wide support range does not guarantee compatibility. Check whether the package is paid, whether a recent update changes requirements, and whether another installed tweak modifies the same part of SpringBoard. Add one change at a time, so you know what caused a problem. Keep access to your jailbreak’s safe mode or package-removal method. This guide links to the original package sources from the full article, so you can verify current information rather than relying on an old mirror or copied description."
     },
     {
@@ -112,6 +284,15 @@
       "subtitle": "Direct source links and more jailbreak guides",
       "facts": ["Full article in the description", "Subscribe for practical tweak comparisons", "Tell us which category to cover next"],
       "accent": "#5b5ce2",
+      "visual": {
+        "assets": [
+          "assets/atria-live-editor.jpg",
+          "assets/five-icon-dock-modern.jpg",
+          "assets/remove-widget-home.jpg",
+          "assets/primalfolder-folder.jpg"
+        ],
+        "credit": "Eight real tweak visuals · sources in description"
+      },
       "narration": "The complete comparison, with direct links to the current package sources, is available on nextsolution dot c c and in the video description. If this format helped you narrow the choices, subscribe to Next Solution for more practical jailbreak tweak comparisons and setup guides. In the comments, tell us which category should be next: Lock Screen, Control Center, notifications or battery tools. Thanks for watching, and remember to verify compatibility before you install."
     }
   ]

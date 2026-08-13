@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -60,6 +60,13 @@ jobs:
           test -s video-output/top-home-screen-tweaks/top-8-home-screen-tweaks-2026.mp4
           test -s video-output/top-home-screen-tweaks/thumbnail.png
           test -s video-output/top-home-screen-tweaks/captions.srt
+          test -s video-output/top-home-screen-tweaks/shorts/youtube-shorts-metadata.json
+          test "$(find video-output/top-home-screen-tweaks/shorts -maxdepth 1 -name '*.mp4' -type f | wc -l)" -eq 8
+          test "$(find video-output/top-home-screen-tweaks/shorts/covers -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 8
+          for short in video-output/top-home-screen-tweaks/shorts/*.mp4; do
+            dimensions="$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${short}")"
+            test "${dimensions}" = "1080x1920"
+          done
           ffprobe -v error \
             -show_entries stream=codec_name,width,height \
             -show_entries format=duration,size \
