@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/runner/work/NextSolution/NextSolution/DailyTweaks/2026-08-13-CleanHomeLabels/tests/test_runtime.py", line 36, in <module>
+    assert 'zeshan0727.github.io' not in '\n'.join(p.read_text(errors='ignore') for p in ROOT.rglob('*') if p.is_file())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
