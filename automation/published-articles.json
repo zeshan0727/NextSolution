@@ -1,6 +1,27 @@
 {
   "entries": [
     {
+      "article_sha256": "1e9e5977fb961a79c12ccd990476dbbd70336a417bdc88bca0f32286f13fbaed",
+      "candidate_fingerprint": "feb5e594963ced6775d38df25e96f543ee8abe6e7ff8b5c7c608a6827b9ba3e9",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Review HelloKeyboardAI 6.3.0-6, including its stated function, architectures, dependencies, and checks to complete before installation.",
+      "href": "hellokeyboardai-tweak.html",
+      "image": "assets/articles/hellokeyboardai-tweak-hero.svg",
+      "modified_at": "2026-08-14T13:35:10+00:00",
+      "name": "HelloKeyboardAI",
+      "package": "com.zqbb.hello.keyboard.ai",
+      "published_at": "2026-08-14T13:35:10+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/hellokeyboardai",
+      "source_url": "https://havoc.app/",
+      "title": "HelloKeyboardAI 6.3.0-6: Listed AI Mode Activation and Compatibility Checks",
+      "version": "6.3.0-6"
+    },
+    {
       "article_sha256": "3573cae07a2030d1e6553c9cbed1884ffcbd399964a964920b4cb0688a234fd6",
       "candidate_fingerprint": "06c74db51fb1a9e6a6aea4afbd1a12a5de35f62ecc85944f7d0525bc9687b0f5",
       "category": {
@@ -240,8 +261,17 @@
       "published_at": "2026-08-14T09:13:32+00:00",
       "run_id": "31787122418",
       "version": "1.0.2"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "feb5e594963ced6775d38df25e96f543ee8abe6e7ff8b5c7c608a6827b9ba3e9",
+      "href": "hellokeyboardai-tweak.html",
+      "package": "com.zqbb.hello.keyboard.ai",
+      "published_at": "2026-08-14T13:35:10+00:00",
+      "run_id": "31805289605",
+      "version": "6.3.0-6"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-14T09:13:32+00:00"
+  "updated_at": "2026-08-14T13:35:10+00:00"
 }
