@@ -369,9 +369,12 @@ def render_thumbnail(content: dict[str, Any], logo_path: Path, assets_root: Path
     image = gradient((THUMB_WIDTH, THUMB_HEIGHT), accent)
     draw = ImageDraw.Draw(image)
     draw_brand(image, logo_path, small=True)
-    draw.rounded_rectangle((58, 150, 325, 204), radius=27, fill=(*hex_rgb(accent), 255))
-    draw.text((86, 160), str(content["thumbnail_badge"]), font=font(25, bold=True), fill="white")
-    lines = ["TOP 8", "HOME SCREEN", "TWEAKS"]
+    badge = str(content["thumbnail_badge"])
+    badge_face = font(25, bold=True)
+    badge_width = math.ceil(draw.textlength(badge, font=badge_face)) + 56
+    draw.rounded_rectangle((58, 150, 58 + badge_width, 204), radius=27, fill=(*hex_rgb(accent), 255))
+    draw.text((86, 160), badge, font=badge_face, fill="white")
+    lines = [str(line) for line in content["thumbnail_lines"]]
     y = 244
     for position, line in enumerate(lines):
         face = font(92 if position == 0 else 70, bold=True)
@@ -379,7 +382,7 @@ def render_thumbnail(content: dict[str, Any], logo_path: Path, assets_root: Path
         draw.text((58, y), line, font=face, fill=colour, stroke_width=1)
         y += 102 if position == 0 else 86
     draw.rounded_rectangle((59, 598, 803, 662), radius=25, fill=(255, 255, 255, 220), outline=(205, 213, 232, 255), width=2)
-    draw.text((87, 612), "LAYOUTS  •  FOLDERS  •  WIDGETS", font=font(27, bold=True), fill=(58, 68, 96, 255))
+    draw.text((87, 612), str(content["thumbnail_footer"]), font=font(27, bold=True), fill=(58, 68, 96, 255))
     draw_media_gallery(
         image,
         dict(content["thumbnail_visual"]),
@@ -885,6 +888,8 @@ def validate_content(content: dict[str, Any]) -> None:
         "video_filename",
         "thumbnail_title",
         "thumbnail_badge",
+        "thumbnail_lines",
+        "thumbnail_footer",
         "thumbnail_visual",
         "article_url",
         "channel_url",

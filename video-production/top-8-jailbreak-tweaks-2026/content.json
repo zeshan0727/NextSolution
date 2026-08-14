@@ -2,7 +2,7 @@
   "video_title": "8 Fresh Jailbreak Tweaks You Should See in 2026",
   "video_filename": "top-8-jailbreak-tweaks-2026.mp4",
   "thumbnail_title": "8 FRESH JAILBREAK TWEAKS",
-  "thumbnail_badge": "REAL SCREENSHOTS · 2026",
+  "thumbnail_badge": "2026 GUIDE",
   "article_url": "https://nextsolution.cc/tutorials.html#verified-articles",
   "channel_url": "https://youtube.com/@zeshan0727",
   "voice_disclosure": "Narration in this video uses an AI-generated voice.",
@@ -123,7 +123,7 @@
   ],
   "scenes": [
     {
-      "kicker": "NEXT SOLUTION · SOURCE-CHECKED 2026",
+      "kicker": "NEXT SOLUTION · 2026 GUIDE",
       "title": "8 fresh jailbreak tweaks with real screenshots",
       "subtitle": "AI, Home Screen, music, AirPods, lyrics and calls",
       "facts": [
@@ -375,8 +375,13 @@
         ],
         "credit": "Real settings screenshots · sources credited in description"
       },
-      "narration": "Before installing any package from this video, complete five checks. First, open the original source and verify the current version. The feed and public page sometimes display different builds, as we saw with HelloKeyboardAI and IconTweak2. Second, confirm the iOS range instead of guessing from an architecture label. Third, match the package to your bootstrap: rootful, rootless, RootHide or another environment are not interchangeable words. Fourth, identify conflicts. Keyboard tweaks, Lock Screen players and icon gestures often modify the same process as another package. Test one change at a time. Fifth, keep a recovery path so you can disable or remove a package if SpringBoard or an application behaves unexpectedly. The full written guides and every source link are available at NextSolution dot c c. Review the video and thumbnail before publishing, and only upload after the final editorial approval. Narration in this video uses an AI-generated voice. Thanks for watching Next Solution."
+      "narration": "Before installing any package from this video, complete five checks. First, open the original source and verify the current version. The feed and public page sometimes display different builds, as we saw with HelloKeyboardAI and IconTweak2. Second, confirm the iOS range instead of guessing from an architecture label. Third, match the package to your bootstrap: rootful, rootless, RootHide or another environment are not interchangeable words. Fourth, identify conflicts. Keyboard tweaks, Lock Screen players and icon gestures often modify the same process as another package. Test one change at a time. Fifth, keep a recovery path so you can disable or remove a package if SpringBoard or an application behaves unexpectedly. The full written guides and every source link are available at NextSolution dot c c. Tell us which tweak you want to see in a full hands-on guide. Narration in this video uses an AI-generated voice. Thanks for watching Next Solution."
     }
-  ]
+  ],
+  "thumbnail_lines": [
+    "8 FRESH",
+    "JAILBREAK",
+    "TWEAKS"
+  ],
+  "thumbnail_footer": "REAL FEATURES  •  REAL SOURCES"
 }
-
