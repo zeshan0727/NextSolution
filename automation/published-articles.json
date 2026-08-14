@@ -1,6 +1,27 @@
 {
   "entries": [
     {
+      "article_sha256": "4f831b5635c0b7a312a90393cafeaeddbb8d45e4eecb5da3a4996b2e994d9ac7",
+      "candidate_fingerprint": "f03ac7bb6186b27007cee2672e6748b6d0fa3f9aedd89a1a2c933e6497cc5a3a",
+      "category": {
+        "id": "media",
+        "label": "Media"
+      },
+      "description": "NextUp 3 v1.1 for jailbroken devices shows and skips the upcoming track from the now-playing interface across several media apps and iOS surfaces.",
+      "href": "nextup-3-tweak.html",
+      "image": "assets/articles/nextup-3-tweak-hero.svg",
+      "modified_at": "2026-08-14T04:26:01+00:00",
+      "name": "NextUp 3",
+      "package": "com.yves.nextup3",
+      "published_at": "2026-08-14T04:26:01+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/nextup3",
+      "source_url": "https://havoc.app/",
+      "title": "NextUp 3 v1.1 Adds Upcoming-Track Controls to the iOS Now-Playing UI",
+      "version": "1.1"
+    },
+    {
       "article_sha256": "84cfe12a9fb7c21411ec58a31221fcbeb953ba7fa8cd9098b30732b859f99294",
       "candidate_fingerprint": "2b128f4cef100c4351183a80b5cd9bd6553d6b9725c653c6fe867dc7bbde2cb8",
       "category": {
@@ -180,8 +201,17 @@
       "published_at": "2026-08-13T20:52:48+00:00",
       "run_id": "31742932222",
       "version": "0.5.4"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "f03ac7bb6186b27007cee2672e6748b6d0fa3f9aedd89a1a2c933e6497cc5a3a",
+      "href": "nextup-3-tweak.html",
+      "package": "com.yves.nextup3",
+      "published_at": "2026-08-14T04:26:01+00:00",
+      "run_id": "31769808831",
+      "version": "1.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-13T20:52:48+00:00"
+  "updated_at": "2026-08-14T04:26:01+00:00"
 }

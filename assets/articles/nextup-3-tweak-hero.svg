@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">NextUp 3 1.1</title>
+  <desc id="desc">Concept artwork for NextUp 3, a media package</desc>
+  <defs>
+    <linearGradient id="background" x1="80" y1="55" x2="1510" y2="845" gradientUnits="userSpaceOnUse"><stop stop-color="#3B0764"/><stop offset="1" stop-color="#C026D3"/></linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(1280 130) rotate(132) scale(680 560)" gradientUnits="userSpaceOnUse"><stop stop-color="#F5D0FE" stop-opacity=".7"/><stop offset="1" stop-color="#F5D0FE" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="28" stdDeviation="28" flood-color="#000000" flood-opacity=".28"/></filter>
+  </defs>
+  <rect width="1600" height="900" rx="56" fill="url(#background)"/>
+  <rect width="1600" height="900" rx="56" fill="url(#glow)"/>
+  <circle cx="1440" cy="760" r="215" fill="#FFFFFF" fill-opacity=".05"/>
+  <g>
+    <rect x="112" y="104" width="276" height="46" rx="23" fill="#FFFFFF" fill-opacity=".12" stroke="#FFFFFF" stroke-opacity=".18"/>
+    <text x="250" y="135" text-anchor="middle" fill="#F5D0FE" font-family="Arial, sans-serif" font-size="19" font-weight="800" letter-spacing="2">MEDIA</text>
+    <text x="112" y="226" fill="#FFFFFF" fill-opacity=".68" font-family="Arial, sans-serif" font-size="25" font-weight="700">VERSION 1.1</text>
+    <text x="112" y="335" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="68" font-weight="800">NextUp 3</text>
+    <text x="116" y="650" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="23">Shows the upcoming track from the now-playing interface.</text>
+    <g transform="translate(112 760)">
+      <rect width="50" height="50" rx="14" fill="#FFFFFF"/>
+      <path d="M13 37V13l19 24V13" fill="none" stroke="#C026D3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="m32 13 9 12-9 12" fill="none" stroke="#3B0764" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="70" y="34" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="800">NEXT SOLUTION</text>
+    </g>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="798" y="118" width="380" height="664" rx="70" fill="#070A10"/>
+    <rect x="817" y="137" width="342" height="626" rx="54" fill="#0F172A"/>
+    <rect x="923" y="152" width="130" height="28" rx="14" fill="#04060A"/>
+    <rect x="862" y="264" width="240" height="240" rx="46" fill="#FFFFFF" fill-opacity=".15"/>
+          <circle cx="982" cy="384" r="78" fill="#FFFFFF" fill-opacity=".18"/>
+          <path d="M962 346v92c0 23-42 26-42 2 0-19 28-25 42-16V365l72-17v70c0 23-42 26-42 2 0-19 28-25 42-16v-84z" fill="#FFFFFF"/>
+          <path d="M886 558h192" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity=".7"/>
+    <rect x="920" y="727" width="136" height="7" rx="4" fill="#FFFFFF" fill-opacity=".65"/>
+  </g>
+  <g filter="url(#shadow)" transform="rotate(6 1310 580)">
+    <rect x="1180" y="475" width="276" height="204" rx="36" fill="#FFFFFF"/>
+    <text x="1212" y="527" fill="#C026D3" font-family="Arial, sans-serif" font-size="18" font-weight="800">SOURCE GUIDE</text>
+    <text x="1212" y="574" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Features</text>
+    <text x="1212" y="609" fill="#475569" font-family="Arial, sans-serif" font-size="21">Compatibility</text>
+    <text x="1212" y="644" fill="#475569" font-family="Arial, sans-serif" font-size="21">Install checks</text>
+  </g>
+</svg>
