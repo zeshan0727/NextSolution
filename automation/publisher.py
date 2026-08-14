@@ -19,7 +19,11 @@ from xml.etree import ElementTree
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from automation.draft_pipeline import article_source_url, render_article, validate_article
-from automation.visuals import render_article_visual, visual_relative_path
+from automation.source_media import (
+    SourceMediaError,
+    is_safe_media_reference,
+    resolve_source_media,
+)
 
 
 AUDIT_SCHEMA_VERSION = 1
@@ -29,7 +33,6 @@ TUTORIALS_START = "<!-- AUTO_ARTICLES_TUTORIALS_START -->"
 TUTORIALS_END = "<!-- AUTO_ARTICLES_TUTORIALS_END -->"
 SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
 SAFE_TARGET = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,118}[a-z0-9])?\.html$")
-SAFE_VISUAL = re.compile(r"^assets/articles/[a-z0-9](?:[a-z0-9-]{0,118}[a-z0-9])?-hero\.svg$")
 
 
 class PublishingError(RuntimeError):
@@ -253,7 +256,7 @@ def _render_card(entry: dict[str, Any], *, indent: str) -> str:
     category = entry.get("category", {})
     label = category.get("label", "Tweak information") if isinstance(category, dict) else "Tweak information"
     image = entry.get("image")
-    if isinstance(image, str) and SAFE_VISUAL.fullmatch(image):
+    if is_safe_media_reference(image):
         visual = f'{indent}  <a class="card-media" href="{esc(entry["href"])}" aria-label="Open {esc(entry["title"])}"><img src="{esc(image)}" alt="" width="1600" height="900" loading="lazy"></a>'
         card_class = "content-card has-visual"
     else:
@@ -400,8 +403,6 @@ def publish(
 
     target_path = str(manifest["target_path"])
     target = repository_root / target_path
-    visual_path = visual_relative_path(candidate)
-    visual_target = repository_root / visual_path
     matching_entry = next(
         (
             entry
@@ -427,8 +428,18 @@ def publish(
     if matching_entry and matching_entry.get("version") == candidate["version"]:
         raise PublishingError("same package version has a different candidate fingerprint")
 
+    source_page_url = article_source_url(candidate)
+    try:
+        media = resolve_source_media(
+            candidate,
+            catalog_path=repository_root / "automation/source-media.json",
+            source_page_url=source_page_url,
+        )
+    except SourceMediaError as exc:
+        raise PublishingError(f"authentic source media is required: {exc}") from exc
+
     published_at = now.replace(microsecond=0).isoformat()
-    rendered_article = render_article(article, candidate, site)
+    rendered_article = render_article(article, candidate, site, media)
     article_hash = hashlib.sha256(rendered_article.encode("utf-8")).hexdigest()
     category = candidate["category"]
     entry = {
@@ -441,11 +452,13 @@ def publish(
         "category": category,
         "source_name": candidate["source_name"],
         "source_url": candidate["source_url"],
-        "source_page_url": article_source_url(candidate),
+        "source_page_url": source_page_url,
         "selection_pool": candidate["selection_pool"],
         "candidate_fingerprint": fingerprint,
         "article_sha256": article_hash,
-        "image": visual_path,
+        "image": media["hero"]["url"],
+        "media_credit": media["credit_label"],
+        "media_source_url": media["source_page_url"],
         "published_at": (
             matching_entry.get("published_at") if matching_entry else published_at
         ),
@@ -502,8 +515,6 @@ def publish(
     )
 
     target.write_text(rendered_article, encoding="utf-8")
-    visual_target.parent.mkdir(parents=True, exist_ok=True)
-    visual_target.write_text(render_article_visual(candidate, article), encoding="utf-8")
     index_path.write_text(next_index, encoding="utf-8")
     tutorials_path.write_text(next_tutorials, encoding="utf-8")
     (repository_root / "feed.xml").write_text(next_feed, encoding="utf-8")
@@ -521,7 +532,6 @@ def publish(
         "action": action,
         "article_sha256": article_hash,
         "local_day": status.local_day,
-        "visual_path": visual_path,
         "publication_number": status.published_today + 1,
         "max_today": status.max_today,
         "boost_active": status.boost_active,

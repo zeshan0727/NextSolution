@@ -80,6 +80,26 @@ class PublisherTests(unittest.TestCase):
         )
         audit_path = root / "automation" / "published-articles.json"
         audit_path.parent.mkdir(parents=True)
+        (root / "automation" / "source-media.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "packages": {
+                        self.candidate["package"]: {
+                            "credit_label": "Example Developer official listing",
+                            "source_page_url": "https://example.com/focuscards",
+                            "official_source": True,
+                            "hero": {
+                                "url": "assets/articles/focus-cards-real.jpg",
+                                "alt": "Focus Cards real feature screenshot",
+                            },
+                            "screenshots": [],
+                        }
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
         return audit_path
 
     def test_preflight_obeys_kill_switch_and_three_hour_boost(self) -> None:
@@ -136,9 +156,10 @@ class PublisherTests(unittest.TestCase):
             target = root / f"{self.candidate['slug']}.html"
             self.assertTrue(target.exists())
             self.assertIn("/assets/site.css", target.read_text())
-            visual = root / "assets" / "articles" / f"{self.candidate['slug']}-hero.svg"
-            self.assertTrue(visual.exists())
-            self.assertIn("<svg", visual.read_text())
+            self.assertIn(
+                "assets/articles/focus-cards-real.jpg", target.read_text()
+            )
+            self.assertNotIn("concept artwork", target.read_text().lower())
             self.assertIn(self.article["title"], (root / "index.html").read_text())
             self.assertIn(self.article["title"], (root / "tutorials.html").read_text())
             feed = ElementTree.fromstring((root / "feed.xml").read_text())
@@ -148,6 +169,10 @@ class PublisherTests(unittest.TestCase):
             audit = json.loads(audit_path.read_text())
             self.assertEqual(len(audit["entries"]), 1)
             self.assertEqual(len(audit["events"]), 1)
+            self.assertEqual(
+                audit["entries"][0]["image"],
+                "assets/articles/focus-cards-real.jpg",
+            )
             self.assertEqual(audit["events"][0]["run_id"], "123")
             self.assertEqual(
                 preflight(self.site, audit, now=NOW).reason,

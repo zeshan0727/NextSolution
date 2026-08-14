@@ -25,7 +25,6 @@ from automation.editorial import (
 )
 from automation.openai_api import OpenAIAPIError, structured_response
 from automation.schemas import ARTICLE_SCHEMA, VERDICT_SCHEMA
-from automation.visuals import render_article_visual, visual_alt, visual_relative_path
 
 
 WRITER_INSTRUCTIONS = """You are the Next Solution technical editor. Write an original, useful draft about one iOS jailbreak tweak using only the supplied facts.
@@ -217,16 +216,57 @@ def display_author(value: Any) -> str:
     return re.sub(r"\s*<[^<>]+>\s*$", "", text).strip() or text
 
 
-def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dict[str, Any]) -> str:
+def _media_src(value: str) -> str:
+    return value if value.startswith("https://") else "/" + value.lstrip("/")
+
+
+def render_article(
+    article: dict[str, Any],
+    candidate: dict[str, Any],
+    site: dict[str, Any],
+    media: dict[str, Any] | None = None,
+) -> str:
     esc = lambda value: html.escape(str(value), quote=True)
     base_url = str(site["base_url"]).rstrip("/")
     canonical = f"{base_url}/{candidate['slug']}.html"
-    image_path = visual_relative_path(candidate)
-    image_url = f"{base_url}/{image_path}"
     source_url = _safe_url(article_source_url(candidate))
     author = display_author(candidate["author"])
     published = datetime.now(timezone.utc).date().isoformat()
     category = candidate["category"]
+    if media:
+        hero = media["hero"]
+        hero_src = _media_src(str(hero["url"]))
+        image_url = hero_src if hero_src.startswith("https://") else f"{base_url}{hero_src}"
+        image_alt = str(hero["alt"])
+        credit_url = _safe_url(str(media["source_page_url"]))
+        credit_label = esc(media["credit_label"])
+        hero_markup = (
+            '<figure class="article-visual authentic-media">'
+            f'<img src="{esc(hero_src)}" alt="{esc(image_alt)}" loading="eager" fetchpriority="high" referrerpolicy="no-referrer">'
+            f'<figcaption>Real feature screenshot from <a href="{credit_url}" rel="nofollow noopener noreferrer">{credit_label}</a>. '
+            "Next Solution adjusted only the crop and presentation.</figcaption></figure>"
+        )
+        shots = "".join(
+            '<figure class="tweak-shot">'
+            f'<img src="{esc(_media_src(str(item["url"])))}" alt="{esc(item["alt"])}" loading="lazy" referrerpolicy="no-referrer">'
+            f'<figcaption>{esc(item["alt"])}</figcaption></figure>'
+            for item in media.get("screenshots", [])
+        )
+        gallery_markup = (
+            f'<h2>See {esc(candidate["name"])} in action</h2>'
+            '<p>These are real feature images from the credited package or developer listing, not generated phone mockups.</p>'
+            f'<div class="tweak-gallery">{shots}</div>'
+            if shots
+            else ""
+        )
+    else:
+        image_url = f"{base_url}/assets/brand/next-solution-mark.svg"
+        image_alt = f"{candidate['name']} authentic screenshots required before publication"
+        hero_markup = (
+            '<div class="source-media-required"><strong>Authentic screenshots required</strong>'
+            "<p>This draft cannot be published until a real, attributable feature image is available.</p></div>"
+        )
+        gallery_markup = ""
     json_ld = {
         "@context": "https://schema.org",
         "@type": "TechArticle",
@@ -280,7 +320,7 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
   <meta property="og:title" content="{esc(article['title'])}">
   <meta property="og:description" content="{esc(article['meta_description'])}">
   <meta property="og:image" content="{esc(image_url)}">
-  <meta property="og:image:alt" content="{esc(visual_alt(candidate))}">
+  <meta property="og:image:alt" content="{esc(image_alt)}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(article['title'])}">
   <meta name="twitter:description" content="{esc(article['meta_description'])}">
@@ -302,7 +342,7 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/tutorials.html">Guides</a><span aria-hidden="true">/</span><span>{esc(candidate['name'])}</span></nav>
     <article>
       <header class="article-hero">
-        <span class="article-kicker">{esc(category['label'])} · Verified-source package information</span>
+        <span class="article-kicker">{esc(category['label'])} · Source-verified tweak guide</span>
         <h1 class="gradient-text">{esc(article['title'])}</h1>
         <p class="article-summary">{esc(article['summary'])}</p>
         <div class="fact-grid">
@@ -312,25 +352,23 @@ def render_article(article: dict[str, Any], candidate: dict[str, Any], site: dic
           <div class="fact-box"><span>Source</span><strong>{esc(candidate['source_name'])}</strong></div>
         </div>
       </header>
-      <figure class="article-visual">
-        <img src="/{esc(image_path)}" alt="{esc(visual_alt(candidate))}" width="1600" height="900">
-        <figcaption>Original Next Solution concept artwork based on the package's listed feature category; it is not a developer screenshot.</figcaption>
-      </figure>
+      {hero_markup}
       <div class="article-layout">
         <div class="article-content">
-          <h2>What the package metadata says it does</h2><ul>{feature_items}</ul>
-          <h2>Compatibility information</h2><p>{esc(article['compatibility_note'])}</p>
-          <h2>How to install carefully</h2><ol>{install_items}</ol>
-          <h2>Before you install</h2><ul>{safety_items}</ul>
+          <h2>What {esc(candidate['name'])} changes</h2><ul>{feature_items}</ul>
+          {gallery_markup}
+          <h2>Compatibility and requirements</h2><p>{esc(article['compatibility_note'])}</p>
+          <h2>Installation checklist</h2><ol>{install_items}</ol>
+          <h2>What to know before installing</h2><ul>{safety_items}</ul>
           <h2>Frequently asked questions</h2><div class="faq-list">{faq_items}</div>
           <div class="article-disclaimer"><strong>Important:</strong> Package metadata is not a complete compatibility or safety guarantee. Back up important data and verify current details for your exact device and environment before installing.</div>
           <p class="article-footnote">Package identifier: <code>{esc(candidate['package'])}</code> · Published {published} · Source details checked against the linked package listing.</p>
         </div>
         <aside class="article-sidebar" aria-label="Source information">
-          <h2>Verify current details</h2>
-          <p>Check price, licensing, compatibility, dependencies, and release notes on the linked source page.</p>
-          <a class="button button-primary" href="{source_url}" rel="nofollow noopener noreferrer">Open source page</a>
-          <p class="source-note">Direct source link. No third-party package file is mirrored by this article.</p>
+          <h2>Official package details</h2>
+          <p>Confirm the current price, compatibility, dependencies and release notes before installing.</p>
+          <a class="button button-primary" href="{source_url}" rel="nofollow noopener noreferrer">Open package source</a>
+          <p class="source-note">The article links to the original source. No package file is mirrored here.</p>
         </aside>
       </div>
     </article>
@@ -459,9 +497,6 @@ def write_artifacts(
     (output_dir / "article.html").write_text(
         render_article(article, candidate, site), encoding="utf-8"
     )
-    (output_dir / "article-visual.svg").write_text(
-        render_article_visual(candidate, article), encoding="utf-8"
-    )
     (output_dir / "youtube-script.md").write_text(
         render_youtube_script(article, candidate, site), encoding="utf-8"
     )
@@ -483,6 +518,7 @@ def write_artifacts(
         "api": api_metadata,
         "publication_authorized": False,
         "shortener_enabled": bool(site.get("shortener", {}).get("enabled", False)),
+        "authentic_source_media_required": True,
     }
     (output_dir / "manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n",

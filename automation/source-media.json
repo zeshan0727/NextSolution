@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "packages": {
+    "com.zqbb.hello.keyboard.ai": {
+      "credit_label": "HelloKeyboardAI official Havoc listing",
+      "source_page_url": "https://havoc.app/package/hellokeyboardai",
+      "official_source": true,
+      "hero": {
+        "url": "https://media.havoc.app/670de6309d2f1af2966fc7e0",
+        "alt": "HelloKeyboardAI shown on an iPhone keyboard in the official package screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://media.havoc.app/6721992232685ae83f4ccbb1",
+          "alt": "HelloKeyboardAI interface in an official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/670de6a5d426d0757af1c200",
+          "alt": "HelloKeyboardAI settings in an official package screenshot"
+        }
+      ]
+    },
+    "com.ichitaso.icontweak2": {
+      "credit_label": "IconTweak2 official Havoc listing",
+      "source_page_url": "https://havoc.app/package/icontweak2",
+      "official_source": true,
+      "hero": {
+        "url": "https://media.havoc.app/691e9346174b1c77f3400337",
+        "alt": "IconTweak2 control menu opened from a Home Screen icon in the official package screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://media.havoc.app/6919e8be2eba311408934f7e",
+          "alt": "IconTweak2 options in an official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/6919e8c42eba311408934fa0",
+          "alt": "IconTweak2 preferences in an official package screenshot"
+        }
+      ]
+    },
+    "com.yves.nextup3": {
+      "credit_label": "NextUp 3 official Havoc listing",
+      "source_page_url": "https://havoc.app/package/nextup3",
+      "official_source": true,
+      "hero": {
+        "url": "https://media.havoc.app/6a76e7680cb765625f224503",
+        "alt": "NextUp 3 upcoming-track controls in the official package screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://media.havoc.app/6a76e7950cb765625f2245bb",
+          "alt": "NextUp 3 Lock Screen presentation in the official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/6a76e7760cb765625f22452c",
+          "alt": "NextUp 3 media controls in the official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/6a76e7e20cb765625f224819",
+          "alt": "NextUp 3 preferences in the official package screenshot"
+        }
+      ]
+    },
+    "com.lns.pogr": {
+      "credit_label": "PodsGrant screenshots published by Tools 4 Hack",
+      "source_page_url": "https://tools4hack.santalab.me/jbapp-com-lns-pogr.html",
+      "official_source": false,
+      "hero": {
+        "url": "https://tools4hack.santalab.me/media/uploads/2023/07/jbapp-podsgrant-1.jpg",
+        "alt": "PodsGrant preferences shown in a real tweak screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://tools4hack.santalab.me/media/uploads/2023/07/jbapp-podsgrant-2.jpg",
+          "alt": "PodsGrant device options shown in a real tweak screenshot"
+        }
+      ]
+    },
+    "com.qiop1379.swipeextenderx": {
+      "credit_label": "SwipeExtenderX official Chariz listing",
+      "source_page_url": "https://chariz.com/get/swipeextenderx",
+      "official_source": true,
+      "hero": {
+        "url": "https://cdn.chariz.cloud/screenshot/swipeextenderx/swipeextenderx-1.jpg",
+        "alt": "SwipeExtenderX keyboard gestures shown in the official package screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://cdn.chariz.cloud/screenshot/swipeextenderx/swipeextenderx-2.jpg",
+          "alt": "SwipeExtenderX key action configuration in the official package screenshot"
+        },
+        {
+          "url": "https://cdn.chariz.cloud/screenshot/swipeextenderx/swipeextenderx-3.jpg",
+          "alt": "SwipeExtenderX gesture settings in the official package screenshot"
+        },
+        {
+          "url": "https://cdn.chariz.cloud/screenshot/swipeextenderx/swipeextenderx-4.jpg",
+          "alt": "SwipeExtenderX appearance settings in the official package screenshot"
+        },
+        {
+          "url": "https://cdn.chariz.cloud/screenshot/swipeextenderx/swipeextenderx-5.jpg",
+          "alt": "SwipeExtenderX keyboard customization in the official package screenshot"
+        }
+      ]
+    },
+    "com.reo.mystery": {
+      "credit_label": "Reo official Havoc listing",
+      "source_page_url": "https://havoc.app/package/reo",
+      "official_source": true,
+      "hero": {
+        "url": "https://media.havoc.app/6a7ce4670dc6f01051a74211",
+        "alt": "Reo Lock Screen music player in the official package screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://media.havoc.app/66839a57b31c69deb54b6c24",
+          "alt": "Reo player layout in the official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/6684baf9b31c69deb576fbd7",
+          "alt": "Reo preferences in the official package screenshot"
+        }
+      ]
+    },
+    "com.mystery.lslyrics": {
+      "credit_label": "LSLyrics official Havoc listing",
+      "source_page_url": "https://havoc.app/package/lslyrics",
+      "official_source": true,
+      "hero": {
+        "url": "https://media.havoc.app/68712955577138420bff0e9e",
+        "alt": "LSLyrics time-synced lyrics on the Lock Screen in the official package screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://media.havoc.app/6894e332883fc026adf8b658",
+          "alt": "LSLyrics lyric presentation in the official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/68a40c4a88e3b697ec6e8bf4",
+          "alt": "LSLyrics full-screen lyrics in the official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/6894e099883fc026adf8a801",
+          "alt": "LSLyrics preferences in the official package screenshot"
+        }
+      ]
+    },
+    "eg.anubistweaks.phonehub": {
+      "credit_label": "Phonehub official Havoc listing",
+      "source_page_url": "https://havoc.app/package/phonehub",
+      "official_source": true,
+      "hero": {
+        "url": "https://media.havoc.app/6a03ce2ce8e7f6cb1bc1d188",
+        "alt": "Phonehub Phone app interface in the official package screenshot"
+      },
+      "screenshots": [
+        {
+          "url": "https://media.havoc.app/6a03ce4be8e7f6cb1bc1d26c",
+          "alt": "Phonehub caller identification interface in the official package screenshot"
+        },
+        {
+          "url": "https://media.havoc.app/6a03ce5fe8e7f6cb1bc1d303",
+          "alt": "Phonehub preferences in the official package screenshot"
+        }
+      ]
+    }
+  }
+}
+
