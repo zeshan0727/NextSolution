@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "54755e6ead07d9df7f8f5a320e9b2df218457a160055502c7ab51362c72b0a37",
+      "candidate_fingerprint": "d8cd4198da8995dad81d90784ab27e40d1f353beb375ab7b9530528a5062df85",
+      "category": {
+        "id": "lock-screen",
+        "label": "Lock Screen"
+      },
+      "description": "Crescendo 1.0 by yves is listed as a Lock Screen tweak that adds a volume slider to the Lock Screen and Dynamic Island. Review its package requirements.",
+      "href": "crescendo-tweak.html",
+      "image": "https://media.havoc.app/6a7d5d200dc6f01051aa8687",
+      "media_credit": "Crescendo official package listing",
+      "media_source_url": "https://havoc.app/package/crescendo",
+      "modified_at": "2026-08-14T19:17:45+00:00",
+      "name": "Crescendo",
+      "package": "com.yves.crescendo",
+      "published_at": "2026-08-14T19:17:45+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/crescendo",
+      "source_url": "https://havoc.app/",
+      "title": "Crescendo 1.0 Adds a Volume Slider to the Lock Screen and Dynamic Island",
+      "version": "1.0"
+    },
+    {
       "article_sha256": "e648963a9d240a1f6ef7d25a185297c668db468f232737e6c18f8c58554b04b8",
       "candidate_fingerprint": "feb5e594963ced6775d38df25e96f543ee8abe6e7ff8b5c7c608a6827b9ba3e9",
       "category": {
@@ -288,8 +311,17 @@
       "published_at": "2026-08-14T13:35:10+00:00",
       "run_id": "31805289605",
       "version": "6.3.0-6"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "d8cd4198da8995dad81d90784ab27e40d1f353beb375ab7b9530528a5062df85",
+      "href": "crescendo-tweak.html",
+      "package": "com.yves.crescendo",
+      "published_at": "2026-08-14T19:17:45+00:00",
+      "run_id": "31832497628",
+      "version": "1.0"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-14T14:59:33+00:00"
+  "updated_at": "2026-08-14T19:17:45+00:00"
 }
