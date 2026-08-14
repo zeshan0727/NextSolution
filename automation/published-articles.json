@@ -1,6 +1,27 @@
 {
   "entries": [
     {
+      "article_sha256": "3573cae07a2030d1e6553c9cbed1884ffcbd399964a964920b4cb0688a234fd6",
+      "candidate_fingerprint": "06c74db51fb1a9e6a6aea4afbd1a12a5de35f62ecc85944f7d0525bc9687b0f5",
+      "category": {
+        "id": "home-screen",
+        "label": "Home Screen"
+      },
+      "description": "IconTweak2 1.0.2 is a Home Screen jailbreak tweak that lets users swipe icons to show a control menu and more. Review its listed requirements and architectures.",
+      "href": "icontweak2-tweak.html",
+      "image": "assets/articles/icontweak2-tweak-hero.svg",
+      "modified_at": "2026-08-14T09:13:32+00:00",
+      "name": "IconTweak2",
+      "package": "com.ichitaso.icontweak2",
+      "published_at": "2026-08-14T09:13:32+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/icontweak2",
+      "source_url": "https://havoc.app/",
+      "title": "IconTweak2 1.0.2: Swipe Home Screen Icons for a Control Menu",
+      "version": "1.0.2"
+    },
+    {
       "article_sha256": "4f831b5635c0b7a312a90393cafeaeddbb8d45e4eecb5da3a4996b2e994d9ac7",
       "candidate_fingerprint": "f03ac7bb6186b27007cee2672e6748b6d0fa3f9aedd89a1a2c933e6497cc5a3a",
       "category": {
@@ -210,8 +231,17 @@
       "published_at": "2026-08-14T04:26:01+00:00",
       "run_id": "31769808831",
       "version": "1.1"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "06c74db51fb1a9e6a6aea4afbd1a12a5de35f62ecc85944f7d0525bc9687b0f5",
+      "href": "icontweak2-tweak.html",
+      "package": "com.ichitaso.icontweak2",
+      "published_at": "2026-08-14T09:13:32+00:00",
+      "run_id": "31787122418",
+      "version": "1.0.2"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-14T04:26:01+00:00"
+  "updated_at": "2026-08-14T09:13:32+00:00"
 }
