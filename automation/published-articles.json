@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "0865e8441d2b92b298aff7468818097cd9934c57230021b2937ba586f581e6b9",
+      "candidate_fingerprint": "243121d90e8118cc5f02288f3e2247e3b82135f7058abd0bfe96500dcaca490c",
+      "category": {
+        "id": "productivity",
+        "label": "Productivity"
+      },
+      "description": "Review Kayoko 4.3.1, including its clipboard-focused description, listed architectures, dependencies, and installation checks based on the supplied package metadata.",
+      "href": "kayoko-tweak.html",
+      "image": "https://media.havoc.app/6a4b790cfe3a1a36714a5ade",
+      "media_credit": "Kayoko official package listing",
+      "media_source_url": "https://havoc.app/package/kayoko",
+      "modified_at": "2026-08-15T19:38:07+00:00",
+      "name": "Kayoko",
+      "package": "com.82flex.kayoko",
+      "published_at": "2026-08-15T19:38:07+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/kayoko",
+      "source_url": "https://havoc.app/",
+      "title": "Kayoko 4.3.1: Clipboard Experience and Compatibility Details",
+      "version": "4.3.1"
+    },
+    {
       "article_sha256": "8f6f61f476a376c78f0dad2e7e9ee6ea4a6f228ff0777c1a501f7c29e10ed670",
       "candidate_fingerprint": "9133e1063e71d7908341b0e440e99d956dcc474930811ffd286184e6b9371498",
       "category": {
@@ -434,8 +457,17 @@
       "published_at": "2026-08-15T15:37:52+00:00",
       "run_id": "31893202399",
       "version": "1.3.18"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "243121d90e8118cc5f02288f3e2247e3b82135f7058abd0bfe96500dcaca490c",
+      "href": "kayoko-tweak.html",
+      "package": "com.82flex.kayoko",
+      "published_at": "2026-08-15T19:38:07+00:00",
+      "run_id": "31904412459",
+      "version": "4.3.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-15T15:37:52+00:00"
+  "updated_at": "2026-08-15T19:38:07+00:00"
 }
