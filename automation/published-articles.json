@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "34c08151e1a81a7254615ac97c05d969a9800a99d1c2c81aac3bebb3fda0325f",
+      "candidate_fingerprint": "211bb58479e7fef8649f5e4428f6a299e9155d01debb8c9e7948aaf3919c3003",
+      "category": {
+        "id": "control-center",
+        "label": "Control Center"
+      },
+      "description": "CustomizeCC 1.4.3 lists Control Center options for glyph, module, toggle, launcher, background, border, overlay, and glow customization on iOS 15.",
+      "href": "customizecc-tweak.html",
+      "image": "https://media.havoc.app/64a3894391aa59c69a12b6d9",
+      "media_credit": "CustomizeCC official package listing",
+      "media_source_url": "https://havoc.app/package/customizecc",
+      "modified_at": "2026-08-15T00:02:56+00:00",
+      "name": "CustomizeCC",
+      "package": "com.miguelaka95.customizecc",
+      "published_at": "2026-08-15T00:02:56+00:00",
+      "selection_pool": "evergreen",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/customizecc",
+      "source_url": "https://havoc.app/",
+      "title": "CustomizeCC 1.4.3: Control Center Colors, Borders, and Glow Effects",
+      "version": "1.4.3"
+    },
+    {
       "article_sha256": "54755e6ead07d9df7f8f5a320e9b2df218457a160055502c7ab51362c72b0a37",
       "candidate_fingerprint": "d8cd4198da8995dad81d90784ab27e40d1f353beb375ab7b9530528a5062df85",
       "category": {
@@ -320,8 +343,17 @@
       "published_at": "2026-08-14T19:17:45+00:00",
       "run_id": "31832497628",
       "version": "1.0"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "211bb58479e7fef8649f5e4428f6a299e9155d01debb8c9e7948aaf3919c3003",
+      "href": "customizecc-tweak.html",
+      "package": "com.miguelaka95.customizecc",
+      "published_at": "2026-08-15T00:02:56+00:00",
+      "run_id": "31852330181",
+      "version": "1.4.3"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-14T19:17:45+00:00"
+  "updated_at": "2026-08-15T00:02:56+00:00"
 }
