@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "794bc6edd4dad1f64a1e445992806ce605058e4a6a6800e1832532f259e261fe",
+      "candidate_fingerprint": "8c88e28d14ad0507c5bb93e1aeca2be41a7c80d2c6b827b912e1e3e47d061dc5",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Learn what Unseen 0.0.3 is listed to do, its architectures and dependencies, and what to verify before installation.",
+      "href": "unseen-tweak.html",
+      "image": "https://media.havoc.app/6a3e8affb8295500285326e2",
+      "media_credit": "Unseen official package listing",
+      "media_source_url": "https://havoc.app/package/unseen",
+      "modified_at": "2026-08-15T23:01:20+00:00",
+      "name": "Unseen",
+      "package": "com.82flex.unseen",
+      "published_at": "2026-08-15T23:01:20+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/unseen",
+      "source_url": "https://havoc.app/",
+      "title": "Unseen 0.0.3: CALayer Render Server Utility",
+      "version": "0.0.3"
+    },
+    {
       "article_sha256": "0865e8441d2b92b298aff7468818097cd9934c57230021b2937ba586f581e6b9",
       "candidate_fingerprint": "243121d90e8118cc5f02288f3e2247e3b82135f7058abd0bfe96500dcaca490c",
       "category": {
@@ -466,8 +489,17 @@
       "published_at": "2026-08-15T19:38:07+00:00",
       "run_id": "31904412459",
       "version": "4.3.1"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "8c88e28d14ad0507c5bb93e1aeca2be41a7c80d2c6b827b912e1e3e47d061dc5",
+      "href": "unseen-tweak.html",
+      "package": "com.82flex.unseen",
+      "published_at": "2026-08-15T23:01:20+00:00",
+      "run_id": "31913585402",
+      "version": "0.0.3"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-15T19:38:07+00:00"
+  "updated_at": "2026-08-15T23:01:20+00:00"
 }
