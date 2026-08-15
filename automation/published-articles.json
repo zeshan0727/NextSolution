@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "d29b01b09bf3cdbeda762c239945a81a6067bf17aa3110962c214c11d9ad4959",
+      "candidate_fingerprint": "fa7bd78a1d8179e9ffeade3ffe65760ea6617686e79973089a1e841689fc2b65",
+      "category": {
+        "id": "media",
+        "label": "Media"
+      },
+      "description": "Learn what NextUp 3 version 1.1.1 adds to the now-playing UI, including upcoming-track controls for Apple Music, Podcasts, YouTube, YouTube Music, and Spotify.",
+      "href": "nextup-3-tweak.html",
+      "image": "https://media.havoc.app/6a76e7680cb765625f224503",
+      "media_credit": "NextUp 3 official Havoc listing",
+      "media_source_url": "https://havoc.app/package/nextup3",
+      "modified_at": "2026-08-15T07:39:08+00:00",
+      "name": "NextUp 3",
+      "package": "com.yves.nextup3",
+      "published_at": "2026-08-14T04:26:01+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/nextup3",
+      "source_url": "https://havoc.app/",
+      "title": "NextUp 3 1.1.1 Adds Upcoming-Track Controls to the Now-Playing Interface",
+      "version": "1.1.1"
+    },
+    {
       "article_sha256": "613c6fce0bd38b2d4222e61a142dbc3e191246b59e21892af21c979ad8d25ab5",
       "candidate_fingerprint": "cc90c111a91a5ee17fd4b173b4029f832496dd14d19083177916b24c37dfcb92",
       "category": {
@@ -114,29 +137,6 @@
       "source_url": "https://havoc.app/package/icontweak2",
       "title": "IconTweak2: Open a Control Menu by Swiping Home Screen Icons",
       "version": "1.0.2"
-    },
-    {
-      "article_sha256": "4192b1846dd6a15432d616bfecbfc531de6951e7d884bad266e48ff66c8dcfa5",
-      "candidate_fingerprint": "f03ac7bb6186b27007cee2672e6748b6d0fa3f9aedd89a1a2c933e6497cc5a3a",
-      "category": {
-        "id": "media",
-        "label": "Media"
-      },
-      "description": "NextUp 3 shows the upcoming track and lets you skip it early from iOS media controls. See real screenshots, supported music apps, and compatibility.",
-      "href": "nextup-3-tweak.html",
-      "image": "https://media.havoc.app/6a76e7680cb765625f224503",
-      "media_credit": "NextUp 3 official Havoc listing",
-      "media_source_url": "https://havoc.app/package/nextup3",
-      "modified_at": "2026-08-14T14:59:33+00:00",
-      "name": "NextUp 3",
-      "package": "com.yves.nextup3",
-      "published_at": "2026-08-14T04:26:01+00:00",
-      "selection_pool": "pending",
-      "source_name": "Havoc",
-      "source_page_url": "https://havoc.app/package/nextup3",
-      "source_url": "https://havoc.app/package/nextup3",
-      "title": "NextUp 3 Shows and Skips the Upcoming Song from Now Playing",
-      "version": "1.1"
     },
     {
       "article_sha256": "e55de59269c2500c6d2cd2583b26913d12664816697c23e1f6abc1aeb720b5a7",
@@ -384,8 +384,17 @@
       "published_at": "2026-08-15T03:49:07+00:00",
       "run_id": "31862762214",
       "version": "1.3.18"
+    },
+    {
+      "action": "update",
+      "candidate_fingerprint": "fa7bd78a1d8179e9ffeade3ffe65760ea6617686e79973089a1e841689fc2b65",
+      "href": "nextup-3-tweak.html",
+      "package": "com.yves.nextup3",
+      "published_at": "2026-08-15T07:39:08+00:00",
+      "run_id": "31872464347",
+      "version": "1.1.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-15T03:49:07+00:00"
+  "updated_at": "2026-08-15T07:39:08+00:00"
 }
