@@ -1,4 +1,4 @@
-name: Build Next Log 1.0.0 TIPA
+name: Build Next Log 1.1.0 TIPA
 
 on:
   pull_request:
@@ -78,23 +78,26 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextLog-1.0.0.tipa
-          shasum -a 256 NextLog-1.0.0.tipa > NextLog-1.0.0.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLog-1.1.0.tipa
+          shasum -a 256 NextLog-1.1.0.tipa > NextLog-1.1.0.sha256
 
-      - name: Verify diagnostic protocol strings
+      - name: Verify repo-wide diagnostic protocol strings
         run: |
           APP_PATH="$(find build-nextlog/Build/Products/Release-iphoneos -maxdepth 1 -name 'NextLog.app' -print -quit)"
           strings -a "$APP_PATH/NextLog" | grep -q 'com.nextsolution.nextlog/control.changed'
           strings -a "$APP_PATH/NextLog" | grep -q '/var/mobile/Library/Logs/NextSolution'
-          strings -a "$APP_PATH/NextLog" | grep -q 'module-glass.log'
+          strings -a "$APP_PATH/NextLog" | grep -q 'com.nextsolution.nextdiagnostics.manifest.plist'
+          strings -a "$APP_PATH/NextLog" | grep -q 'Reload Repo Tweak List'
+          strings -a "$APP_PATH/NextLog" | grep -q 'Next Diagnostics Runtime'
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Info.plist" | grep -qx '1.1.0'
 
       - name: Upload Next Log
         uses: actions/upload-artifact@v4
         with:
-          name: NextLog-1.0.0-TrollStore
+          name: NextLog-1.1.0-TrollStore
           path: |
-            NextLog-1.0.0.tipa
-            NextLog-1.0.0.sha256
+            NextLog-1.1.0.tipa
+            NextLog-1.1.0.sha256
             NextLog-entitlements.plist
             nextlog-build.log
           if-no-files-found: error
