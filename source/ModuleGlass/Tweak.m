@@ -22,6 +22,13 @@ static char MGVolumeOriginalAlphaKey;
 static char MGVolumeOriginalIconAlphaKey;
 static char MGVolumeIconOverlayKey;
 static char MGVolumeOriginalPercentageAlphaKey;
+static char MGVolumePercentageColorKey;
+static char MGVolumeOriginalPercentageTextColorKey;
+static char MGVolumeOriginalPercentageAttributedKey;
+
+static void (*MGOrigLabelSetText)(UILabel *, SEL, NSString *);
+static void (*MGOrigLabelSetAttributedText)(UILabel *, SEL, NSAttributedString *);
+static void (*MGOrigLabelSetTextColor)(UILabel *, SEL, UIColor *);
 
 static void (*MGOrigModuleViewDidLoad)(id, SEL);
 static void (*MGOrigModuleLayout)(id, SEL);
@@ -206,7 +213,7 @@ static UIView *MGFindSliderView(UIView *root) {
     return nil;
 }
 
-// Volume-only experiment. No other module calls these helpers.
+// Image-first helpers validated on Volume and now shared by all mapped compact modules.
 static BOOL MGVolumeForegroundView(UIView *view) {
     if (!view) return NO;
     if ([view isKindOfClass:UILabel.class] || [view isKindOfClass:UIImageView.class] || [view isKindOfClass:UIButton.class]) return YES;
@@ -314,10 +321,28 @@ static void MGRestoreVolumeColorPresentation(UIView *root) {
         }
     }
     if ([root isKindOfClass:UILabel.class]) {
-        NSNumber *savedAlpha = objc_getAssociatedObject(root, &MGVolumeOriginalPercentageAlphaKey);
+        UILabel *label=(UILabel *)root;
+        UIColor *custom=objc_getAssociatedObject(label, &MGVolumePercentageColorKey);
+        if (custom) {
+            objc_setAssociatedObject(label, &MGVolumePercentageColorKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            id originalColor=objc_getAssociatedObject(label, &MGVolumeOriginalPercentageTextColorKey);
+            NSAttributedString *originalAttributed=objc_getAssociatedObject(label, &MGVolumeOriginalPercentageAttributedKey);
+            if (MGOrigLabelSetTextColor) {
+                MGOrigLabelSetTextColor(label, @selector(setTextColor:), [originalColor isKindOfClass:UIColor.class] ? originalColor : nil);
+            } else {
+                label.textColor=[originalColor isKindOfClass:UIColor.class] ? originalColor : nil;
+            }
+            if (originalAttributed) {
+                if (MGOrigLabelSetAttributedText) MGOrigLabelSetAttributedText(label, @selector(setAttributedText:), originalAttributed);
+                else label.attributedText=originalAttributed;
+            }
+            objc_setAssociatedObject(label, &MGVolumeOriginalPercentageTextColorKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            objc_setAssociatedObject(label, &MGVolumeOriginalPercentageAttributedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+        NSNumber *savedAlpha=objc_getAssociatedObject(label, &MGVolumeOriginalPercentageAlphaKey);
         if (savedAlpha) {
-            root.alpha = savedAlpha.doubleValue;
-            objc_setAssociatedObject(root, &MGVolumeOriginalPercentageAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            label.alpha=savedAlpha.doubleValue;
+            objc_setAssociatedObject(label, &MGVolumeOriginalPercentageAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
     }
 }
@@ -453,52 +478,64 @@ static UILabel *MGFindVolumePercentageLabel(UIView *slider) {
     return bestScore >= 2000 ? best : nil;
 }
 
+static NSAttributedString *MGAttributedStringWithColor(NSAttributedString *input, UIColor *color) {
+    if (!input || !color || input.length == 0) return input;
+    NSMutableAttributedString *result=[input mutableCopy];
+    [result addAttribute:NSForegroundColorAttributeName value:color range:NSMakeRange(0, result.length)];
+    return result;
+}
+
+static void MGLabelSetText(UILabel *label, SEL _cmd, NSString *text) {
+    if (MGOrigLabelSetText) MGOrigLabelSetText(label, _cmd, text);
+    UIColor *custom=objc_getAssociatedObject(label, &MGVolumePercentageColorKey);
+    if (custom && MGOrigLabelSetTextColor) MGOrigLabelSetTextColor(label, @selector(setTextColor:), custom);
+}
+
+static void MGLabelSetAttributedText(UILabel *label, SEL _cmd, NSAttributedString *text) {
+    UIColor *custom=objc_getAssociatedObject(label, &MGVolumePercentageColorKey);
+    if (!custom) {
+        if (MGOrigLabelSetAttributedText) MGOrigLabelSetAttributedText(label, _cmd, text);
+        return;
+    }
+    if (text) objc_setAssociatedObject(label, &MGVolumeOriginalPercentageAttributedKey, [text copy], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    NSAttributedString *colored=MGAttributedStringWithColor(text, custom);
+    if (MGOrigLabelSetAttributedText) MGOrigLabelSetAttributedText(label, _cmd, colored);
+}
+
+static void MGLabelSetTextColor(UILabel *label, SEL _cmd, UIColor *color) {
+    UIColor *custom=objc_getAssociatedObject(label, &MGVolumePercentageColorKey);
+    if (!custom) {
+        if (MGOrigLabelSetTextColor) MGOrigLabelSetTextColor(label, _cmd, color);
+        return;
+    }
+    objc_setAssociatedObject(label, &MGVolumeOriginalPercentageTextColorKey, color ?: (id)NSNull.null, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (MGOrigLabelSetTextColor) MGOrigLabelSetTextColor(label, _cmd, custom);
+}
+
 static BOOL MGApplyVolumePercentageTint(UIView *slider, UIColor *color, NSString **outClass, CGRect *outFrame, NSString **outText) {
     if (!slider || !color) return NO;
     UILabel *label=MGFindVolumePercentageLabel(slider);
-    if (!label || !label.superview) return NO;
+    if (!label) return NO;
 
-    NSNumber *storedAlpha=objc_getAssociatedObject(label, &MGVolumeOriginalPercentageAlphaKey);
-    CGFloat sourceAlpha=storedAlpha ? storedAlpha.doubleValue : label.alpha;
-    if (!storedAlpha) {
-        objc_setAssociatedObject(label, &MGVolumeOriginalPercentageAlphaKey, @(label.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (!objc_getAssociatedObject(label, &MGVolumeOriginalPercentageTextColorKey)) {
+        objc_setAssociatedObject(label, &MGVolumeOriginalPercentageTextColorKey, label.textColor ?: (id)NSNull.null, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-
-    UILabel *overlay=[[UILabel alloc] initWithFrame:CGRectZero];
-    overlay.tag=MGVolumePercentageOverlayTag;
-    overlay.userInteractionEnabled=NO;
-    overlay.backgroundColor=UIColor.clearColor;
-    overlay.bounds=label.bounds;
-    overlay.center=label.center;
-    overlay.transform=label.transform;
-    overlay.alpha=sourceAlpha;
-    overlay.hidden=label.hidden;
-    overlay.font=label.font;
-    overlay.textAlignment=label.textAlignment;
-    overlay.numberOfLines=label.numberOfLines;
-    overlay.lineBreakMode=label.lineBreakMode;
-    overlay.baselineAdjustment=label.baselineAdjustment;
-    overlay.adjustsFontSizeToFitWidth=label.adjustsFontSizeToFitWidth;
-    overlay.minimumScaleFactor=label.minimumScaleFactor;
-    overlay.contentMode=label.contentMode;
-    overlay.layer.cornerRadius=label.layer.cornerRadius;
-    overlay.layer.masksToBounds=label.layer.masksToBounds;
+    if (label.attributedText.length && !objc_getAssociatedObject(label, &MGVolumeOriginalPercentageAttributedKey)) {
+        objc_setAssociatedObject(label, &MGVolumeOriginalPercentageAttributedKey, [label.attributedText copy], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    objc_setAssociatedObject(label, &MGVolumePercentageColorKey, color, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     if (label.attributedText.length) {
-        NSMutableAttributedString *a=[label.attributedText mutableCopy];
-        [a addAttribute:NSForegroundColorAttributeName value:color range:NSMakeRange(0, a.length)];
-        overlay.attributedText=a;
-    } else {
-        overlay.text=label.text;
-        overlay.textColor=color;
+        NSAttributedString *colored=MGAttributedStringWithColor(label.attributedText, color);
+        if (MGOrigLabelSetAttributedText) MGOrigLabelSetAttributedText(label, @selector(setAttributedText:), colored);
+        else label.attributedText=colored;
     }
+    if (MGOrigLabelSetTextColor) MGOrigLabelSetTextColor(label, @selector(setTextColor:), color);
+    else label.textColor=color;
 
-    [label.superview insertSubview:overlay aboveSubview:label];
-    label.alpha=0.0;
-
-    if (outClass) *outClass=[NSString stringWithFormat:@"%@+overlay", NSStringFromClass(label.class) ?: @"UILabel"];
-    if (outFrame) *outFrame=[overlay convertRect:overlay.bounds toView:slider];
-    if (outText) *outText=overlay.text ?: overlay.attributedText.string ?: @"";
+    if (outClass) *outClass=[NSString stringWithFormat:@"%@+live-native", NSStringFromClass(label.class) ?: @"UILabel"];
+    if (outFrame) *outFrame=[label convertRect:label.bounds toView:slider];
+    if (outText) *outText=label.text ?: label.attributedText.string ?: @"";
     return YES;
 }
 
@@ -660,17 +697,19 @@ static void MGApplyController(id controller, NSString *source) {
     imageView.userInteractionEnabled = NO;
     MGCopyCornerGeometry(imageView, cornerSource, root);
 
-    NSUInteger volumeSuppressed = 0;
-    NSArray<NSString *> *volumeSuppressedClasses = @[];
-    if ([slot isEqualToString:@"volume"]) {
-        UIView *volumeSlider = MGFindSliderView(root);
-        if (volumeSlider) {
-            NSMutableArray<NSString *> *classes = [NSMutableArray array];
-            volumeSuppressed = MGApplyVolumeImageMode(volumeSlider, imageView, classes);
-            volumeSuppressedClasses = classes.copy;
-            strategy = @"volume-image-first-test";
+    NSUInteger imageFirstSuppressed = 0;
+    NSArray<NSString *> *imageFirstSuppressedClasses = @[];
+    if (imageView.image) {
+        BOOL sliderModule=[slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"];
+        UIView *imageScope=sliderModule ? MGFindSliderView(root) : root;
+        if (!imageScope) imageScope=root;
+        if (imageScope) {
+            NSMutableArray<NSString *> *classes=[NSMutableArray array];
+            imageFirstSuppressed=MGApplyVolumeImageMode(imageScope, imageView, classes);
+            imageFirstSuppressedClasses=classes.copy;
+            strategy=[NSString stringWithFormat:@"%@-image-first", slot];
         } else {
-            strategy = @"volume-no-slider-found";
+            strategy=[NSString stringWithFormat:@"%@-no-host", slot];
         }
     }
 
@@ -682,8 +721,8 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSString *sig = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|%.0fx%.0f|%@", slot, strategy, enabled, exists, opacity, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), path];
     MGDiagnosticOnce(controller, sig,
-                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ volumeSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
-                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)volumeSuppressed, volumeSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
+                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ imageFirstSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
+                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)imageFirstSuppressed, imageFirstSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
 }
 
 static void MGTrackAndApply(id controller, NSString *source) {
@@ -747,14 +786,18 @@ __attribute__((constructor)) static void MGInit(void) {
         MGHookController(moduleClass, (IMP)MGModuleViewDidLoad, (IMP)MGModuleLayout, (IMP *)&MGOrigModuleViewDidLoad, (IMP *)&MGOrigModuleLayout);
         MGHookController(contentClass, (IMP)MGContentViewDidLoad, (IMP)MGContentLayout, (IMP *)&MGOrigContentViewDidLoad, (IMP *)&MGOrigContentLayout);
 
+        MSHookMessageEx(UILabel.class, @selector(setText:), (IMP)MGLabelSetText, (IMP *)&MGOrigLabelSetText);
+        MSHookMessageEx(UILabel.class, @selector(setAttributedText:), (IMP)MGLabelSetAttributedText, (IMP *)&MGOrigLabelSetAttributedText);
+        MSHookMessageEx(UILabel.class, @selector(setTextColor:), (IMP)MGLabelSetTextColor, (IMP *)&MGOrigLabelSetTextColor);
+
         CFNotificationCenterRef darwin = CFNotificationCenterGetDarwinNotifyCenter();
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.unlockvibrate/preferences.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("preferences.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.0.10 Volume Icon+Percentage Color loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
-        MGLog(@"Volume-isolated image-first runtime with persistent icon color overlay process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
+        MGLog(@"ModuleGlassRuntime 1.0.11 All Modules Image First loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"All-module image-first runtime with live native Volume icon and percentage color process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
 }

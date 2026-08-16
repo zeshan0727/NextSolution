@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Name: Module Glass Runtime
-Version: 1.0.10
+Version: 1.0.11
 Architecture: iphoneos-arm64e
-Description: Working isolated Module Glass Volume runtime with persistent speaker icon and percentage color overlays and unchanged image-first background behavior.
+Description: All-module Module Glass image-first runtime using the validated Volume background method, with live native Volume percentage tint and preserved compact/expanded behavior.
 Maintainer: Next Solution
 Author: Next Solution - zeshan0727
 Section: System
