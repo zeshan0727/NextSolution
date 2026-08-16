@@ -1,0 +1,2 @@
+53a7eea48a36b06fa0b529e53fc6ec3fde2e73a96d47350ee684f5d33fe2aa48  NextLock_1.0.1_Rootless.deb
+8ef667eb560c134d074652c499d351363bed30c2a8815c3dccffd60271264e60  NextLock_1.0.1_RootHide.deb

@@ -1,28 +1,28 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-16T12:10:48Z",
+  "updatedAt": "2026-08-16T13:08:09Z",
   "files": [
     {
-      "id": "nextlock-1.0.0-rootless",
-      "name": "NextLock 1.0.0 Rootless",
-      "fileName": "NextLock_1.0.0_Rootless.deb",
+      "id": "nextlock-1.0.1-rootless",
+      "name": "NextLock 1.0.1 Rootless",
+      "fileName": "NextLock_1.0.1_Rootless.deb",
       "type": "deb",
       "platform": "Dopamine / Rootless",
-      "version": "1.0.0",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.0/NextLock_1.0.0_Rootless.deb",
-      "sha256": "29605c714355477c6fdacfbe90bac06f9b91d241a66f1c2ab1474e930c1ad22b",
-      "notes": "Next Solution lock-screen customization with clean sectioned settings, transparent sticker photos and rounded normal photos."
+      "version": "1.0.1",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_Rootless.deb",
+      "sha256": "53a7eea48a36b06fa0b529e53fc6ec3fde2e73a96d47350ee684f5d33fe2aa48",
+      "notes": "NextLock with corrected PreferenceLoader Settings icon assets (29pt, @2x, @3x), clean Next Solution branding, time/date styling and transparent sticker-photo support."
     },
     {
-      "id": "nextlock-1.0.0-roothide",
-      "name": "NextLock 1.0.0 RootHide",
-      "fileName": "NextLock_1.0.0_RootHide.deb",
+      "id": "nextlock-1.0.1-roothide",
+      "name": "NextLock 1.0.1 RootHide",
+      "fileName": "NextLock_1.0.1_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.0.0",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.0/NextLock_1.0.0_RootHide.deb",
-      "sha256": "1fbb75b99c25962de10c5982b62e55b85b0f88839ab603e60dd297c0eefd71dd",
-      "notes": "Next Solution lock-screen customization with clean sectioned settings, transparent sticker photos and rounded normal photos."
+      "version": "1.0.1",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_RootHide.deb",
+      "sha256": "8ef667eb560c134d074652c499d351363bed30c2a8815c3dccffd60271264e60",
+      "notes": "NextLock with corrected PreferenceLoader Settings icon assets (29pt, @2x, @3x), clean Next Solution branding, time/date styling and transparent sticker-photo support."
     },
     {
       "id": "nextsolution-transfer-1.1.4",
