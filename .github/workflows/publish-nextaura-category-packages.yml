@@ -67,7 +67,7 @@ jobs:
             --dynamic-plist "$RUNNER_TEMP/island/DynamicIsland.plist" \
             --output "$OUT"
 
-      - name: Verify modular packages
+      - name: Verify modular packages and Settings resources
         shell: bash
         run: |
           set -euo pipefail
@@ -78,30 +78,31 @@ jobs:
           test "$(find "$OUT/icons/nextaura" -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')" = 17
 
           python3 - "$OUT" <<'PY'
-          import subprocess, sys
+          import plistlib, subprocess, sys, tempfile
           from pathlib import Path
           out = Path(sys.argv[1])
           expected_names = {
-              'com.nextsolution.nextaura.feedback': 'Aura Haptics',
-              'com.nextsolution.nextaura.thermal-sweat': 'Aura Thermal',
-              'com.nextsolution.nextaura.home-screen': 'Aura Home',
-              'com.nextsolution.nextaura.dock-folders': 'Aura Dock',
-              'com.nextsolution.nextaura.lock-screen': 'Aura Lock',
-              'com.nextsolution.nextaura.status-bar': 'Aura Status',
-              'com.nextsolution.nextaura.control-center': 'Aura Control',
-              'com.nextsolution.nextaura.cc-second-page': 'Aura Panel',
-              'com.nextsolution.nextaura.cc-module-backgrounds': 'Aura Modules',
-              'com.nextsolution.nextaura.notification-island': 'Aura Island',
-              'com.nextsolution.nextaura.notification-glow': 'Aura Glow',
-              'com.nextsolution.nextaura.now-playing': 'Aura Player',
-              'com.nextsolution.nextaura.notifications': 'Aura Alerts',
-              'com.nextsolution.nextaura.app-switcher': 'Aura Switcher',
-              'com.nextsolution.nextaura.system-overlays': 'Aura HUD',
-              'com.nextsolution.nextaura.animations': 'Aura Motion',
-              'com.nextsolution.nextaura.safety-recovery': 'Aura Safe',
+              'com.nextsolution.nextaura.feedback': ('Aura Haptics', 'Feedback'),
+              'com.nextsolution.nextaura.thermal-sweat': ('Aura Thermal', 'ThermalSweat'),
+              'com.nextsolution.nextaura.home-screen': ('Aura Home', 'HomeScreen'),
+              'com.nextsolution.nextaura.dock-folders': ('Aura Dock', 'DockFolders'),
+              'com.nextsolution.nextaura.lock-screen': ('Aura Lock', 'LockScreen'),
+              'com.nextsolution.nextaura.status-bar': ('Aura Status', 'StatusBar'),
+              'com.nextsolution.nextaura.control-center': ('Aura Control', 'ControlCenter'),
+              'com.nextsolution.nextaura.cc-second-page': ('Aura Panel', 'CCSecondPage'),
+              'com.nextsolution.nextaura.cc-module-backgrounds': ('Aura Modules', 'CCModuleBackgrounds'),
+              'com.nextsolution.nextaura.notification-island': ('Aura Island', 'DynamicIsland'),
+              'com.nextsolution.nextaura.notification-glow': ('Aura Glow', 'NotificationGlow'),
+              'com.nextsolution.nextaura.now-playing': ('Aura Player', 'NowPlaying'),
+              'com.nextsolution.nextaura.notifications': ('Aura Alerts', 'Notifications'),
+              'com.nextsolution.nextaura.app-switcher': ('Aura Switcher', 'AppSwitcher'),
+              'com.nextsolution.nextaura.system-overlays': ('Aura HUD', 'SystemOverlays'),
+              'com.nextsolution.nextaura.animations': ('Aura Motion', 'Animations'),
+              'com.nextsolution.nextaura.safety-recovery': ('Aura Safe', 'SafetyRecovery'),
           }
           visible = set()
           runtimes = set()
+          prefs_deb = None
           for deb in out.glob('*.deb'):
               pkg = subprocess.check_output(['dpkg-deb','-f',str(deb),'Package'], text=True).strip()
               ver = subprocess.check_output(['dpkg-deb','-f',str(deb),'Version'], text=True).strip()
@@ -109,9 +110,12 @@ jobs:
               if arch != 'iphoneos-arm64e':
                   raise SystemExit(f'bad architecture: {deb.name}: {arch}')
               if '.runtime.' in pkg:
-                  if ver != '1.0.0':
-                      raise SystemExit(f'bad runtime version: {deb.name}: {ver}')
+                  expected_ver = '1.0.1' if pkg.endswith('.runtime.preferences') else '1.0.0'
+                  if ver != expected_ver:
+                      raise SystemExit(f'bad runtime version: {deb.name}: {ver}, expected {expected_ver}')
                   runtimes.add(pkg)
+                  if pkg.endswith('.runtime.preferences'):
+                      prefs_deb = deb
                   tag = subprocess.check_output(['dpkg-deb','-f',str(deb),'Tag'], text=True).strip()
                   if 'role::cydia' not in tag:
                       raise SystemExit(f'Runtime is not hidden/support-tagged: {pkg}')
@@ -119,27 +123,64 @@ jobs:
                   if ver != '1.0.1':
                       raise SystemExit(f'bad category version: {deb.name}: {ver}')
                   visible.add(pkg)
+                  expected_name, expected_plist = expected_names[pkg]
                   name = subprocess.check_output(['dpkg-deb','-f',str(deb),'Name'], text=True).strip()
-                  if name != expected_names[pkg]:
+                  if name != expected_name:
                       raise SystemExit(f'Unexpected name for {pkg}: {name}')
                   icon = subprocess.check_output(['dpkg-deb','-f',str(deb),'Icon'], text=True).strip()
-                  if icon != f"https://nextsolution.cc/icons/nextaura/{pkg.split('.')[-1]}.png":
+                  slug = pkg.removeprefix('com.nextsolution.nextaura.')
+                  if icon != f"https://nextsolution.cc/icons/nextaura/{slug}.png":
                       raise SystemExit(f'Unexpected icon for {pkg}: {icon}')
                   depends = subprocess.check_output(['dpkg-deb','-f',str(deb),'Depends'], text=True).strip()
-                  if 'com.nextsolution.nextaura.runtime.preferences' not in depends:
-                      raise SystemExit(f'Missing shared preferences runtime dependency: {pkg}')
+                  if 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.1)' not in depends:
+                      raise SystemExit(f'Missing fixed preferences runtime dependency: {pkg}')
                   conflict = subprocess.check_output(['dpkg-deb','-f',str(deb),'Conflicts'], text=True).strip()
                   if 'com.nextsolution.unlockvibrate' not in conflict:
                       raise SystemExit(f'Missing legacy NextAura conflict: {pkg}')
+
+                  # Visible DEBs should only register their PreferenceLoader entry;
+                  # category pages themselves must live in the shared bundle runtime.
+                  extract = Path(tempfile.mkdtemp())
+                  subprocess.run(['dpkg-deb','-x',str(deb),str(extract)], check=True)
+                  loader = extract / 'Library/PreferenceLoader/Preferences' / f'NextAura-{slug}.plist'
+                  if not loader.exists():
+                      raise SystemExit(f'Missing PreferenceLoader entry: {pkg}')
+                  with loader.open('rb') as fh:
+                      entry = plistlib.load(fh)['entry']
+                  if entry.get('bundle') != 'UnlockVibratePrefs' or entry.get('detail') != 'UVSubListController' or entry.get('plist') != expected_plist:
+                      raise SystemExit(f'Invalid Preferences route for {pkg}: {entry}')
+                  stray = extract / 'Library/PreferenceBundles/UnlockVibratePrefs.bundle'
+                  if stray.exists():
+                      raise SystemExit(f'Category DEB still overlays shared preference bundle: {pkg}')
+
           if visible != set(expected_names):
               raise SystemExit(f'Visible category mismatch. missing={set(expected_names)-visible} extra={visible-set(expected_names)}')
-          if len(runtimes) != 10:
-              raise SystemExit(f'Expected 10 runtimes, found {len(runtimes)}')
-          print('Verified 17 short-name category packages, 17 unique icons, and 10 shared runtimes.')
+          if len(runtimes) != 10 or prefs_deb is None:
+              raise SystemExit(f'Expected 10 runtimes including preferences, found {len(runtimes)}')
+
+          # Critical blank-page regression check: the Preferences runtime itself must
+          # contain controller binary + every referenced page + every category icon.
+          pref_root = Path(tempfile.mkdtemp())
+          subprocess.run(['dpkg-deb','-x',str(prefs_deb),str(pref_root)], check=True)
+          bundle = pref_root / 'Library/PreferenceBundles/UnlockVibratePrefs.bundle'
+          if not (bundle / 'UnlockVibratePrefs').exists():
+              raise SystemExit('Preferences controller binary missing')
+          for pkg, (_name, plist_name) in expected_names.items():
+              slug = pkg.removeprefix('com.nextsolution.nextaura.')
+              page = bundle / f'{plist_name}.plist'
+              icon = bundle / f'NextAura-{slug}.png'
+              if not page.exists() or not icon.exists():
+                  raise SystemExit(f'Preferences runtime missing page/icon for {pkg}')
+              with page.open('rb') as fh:
+                  data = plistlib.load(fh)
+              if not data.get('items'):
+                  raise SystemExit(f'Blank/invalid Settings page packaged for {pkg}')
+          print('Verified 17 non-empty Settings pages in the shared Preferences runtime, 17 short names/icons, and 10 runtimes.')
           PY
 
           ISLAND_DEB="$OUT/NextAura_notification_island_1.0.1_RootHide.deb"
           dpkg-deb -f "$ISLAND_DEB" Depends | grep -q 'com.nextsolution.nextaura.runtime.island'
+          test -f "$OUT/NextAura_Runtime_preferences_1.0.1_RootHide.deb"
           test -f "$OUT/NextAura_Category_Packages.txt"
 
       - name: Save build artifact
@@ -169,6 +210,7 @@ jobs:
           git reset --hard origin/main
           mkdir -p debfiles icons/nextaura
           find debfiles -maxdepth 1 -type f -name 'NextAura_*_1.0.0_RootHide.deb' ! -name 'NextAura_Runtime_*' -delete || true
+          rm -f debfiles/NextAura_Runtime_preferences_1.0.0_RootHide.deb
           cp "$SAVED"/*.deb debfiles/
           cp "$SAVED/NextAura_Category_Packages.txt" debfiles/
           cp "$SAVED/icons/nextaura"/*.png icons/nextaura/
@@ -222,8 +264,8 @@ jobs:
 
           git add debfiles icons/nextaura Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           if git diff --cached --quiet; then
-            echo "NextAura category names/icons are already published."
+            echo "NextAura category names/icons/settings fix is already published."
             exit 0
           fi
-          git commit -m "Refresh NextAura category names and icons"
+          git commit -m "Fix NextAura modular Settings and refresh category branding"
           git push origin HEAD:main
