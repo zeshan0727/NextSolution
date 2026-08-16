@@ -13,13 +13,16 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: Sources
+    resources:
+      - path: GeneratedAssets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.transfer
         PRODUCT_NAME: NextSolutionTransfer
-        MARKETING_VERSION: 1.1.2
-        CURRENT_PROJECT_VERSION: 112
+        MARKETING_VERSION: 1.1.3
+        CURRENT_PROJECT_VERSION: 113
         TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: "NextSolution Transfer"
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
