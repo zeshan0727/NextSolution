@@ -1,4 +1,4 @@
-name: Build and Publish Module Glass 1.0.17 Volume Pattern
+name: Build and Publish Module Glass 1.0.18 Rounded Volume Pattern
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: nextsolution-module-glass-1.0.17
+  group: nextsolution-module-glass-1.0.18
   cancel-in-progress: false
 
 jobs:
@@ -37,20 +37,21 @@ jobs:
           git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
           git -C "$T" submodule update --init --recursive --depth 1
 
-      - name: Apply Volume-pattern renderer patch
+      - name: Apply rounded Volume-pattern patch
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/module_glass_native_host_patch_1_0_16.py
-          grep -q '^Version: 1.0.13$' source/ModuleGlass/control
-          grep -q 'volume-pattern-native-sibling' source/ModuleGlass/Tweak.m
-          grep -q 'brightness-volume-pattern-fill-aware' source/ModuleGlass/Tweak.m
-          grep -q 'MGApplyBrightnessLayerMode' source/ModuleGlass/Tweak.m
-          grep -q 'ModuleGlassRuntime 1.0.13 Volume Pattern All Modules loaded' source/ModuleGlass/Tweak.m
+          python3 scripts/module_glass_shape_fix_1_0_18.py
+          grep -q '^Version: 1.0.14$' source/ModuleGlass/control
+          grep -q 'MGFindMatchingAppleShape' source/ModuleGlass/Tweak.m
+          grep -q 'MGApplyModuleShapeFallback' source/ModuleGlass/Tweak.m
+          grep -q 'volume-pattern-native-sibling-apple-shape' source/ModuleGlass/Tweak.m
+          grep -q 'brightness-volume-pattern-root-fill-aware' source/ModuleGlass/Tweak.m
+          grep -q 'ModuleGlassRuntime 1.0.14 Rounded Volume Pattern loaded' source/ModuleGlass/Tweak.m
           grep -q 'slider-native' source/ModuleGlass/Tweak.m
           grep -q 'live-native' source/ModuleGlass/Tweak.m
 
-      - name: Build runtime 1.0.13
+      - name: Build runtime 1.0.14
         shell: bash
         run: |
           set -euo pipefail
@@ -72,46 +73,46 @@ jobs:
           exit 0
           SH
           chmod 0755 "$STAGE/DEBIAN/postinst"
-          dpkg-deb -b "$STAGE" "$OUT/NextAura_Runtime_ccbackgrounds_1.0.13_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUT/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb"
 
-      - name: Build wrapper 1.0.17
+      - name: Build wrapper 1.0.18
         shell: bash
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/release"
           STAGE="$RUNNER_TEMP/wrapper-stage"
           rm -rf "$STAGE"
-          dpkg-deb -R debfiles/NextAura_cc_module_backgrounds_1.0.16_RootHide.deb "$STAGE"
+          dpkg-deb -R debfiles/NextAura_cc_module_backgrounds_1.0.17_RootHide.deb "$STAGE"
           python3 - "$STAGE/DEBIAN/control" <<'PY'
           from pathlib import Path
           import re,sys
           p=Path(sys.argv[1]); t=p.read_text()
-          t=re.sub(r'^Version: .*$', 'Version: 1.0.17', t, flags=re.M)
-          t=re.sub(r'com\.nextsolution\.nextaura\.runtime\.ccbackgrounds \(>= [^)]+\)', 'com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.13)', t)
-          t=re.sub(r'^Description: .*$', 'Description: Volume-pattern Control Center backgrounds: all compact modules now place artwork exactly like the validated Volume renderer, with Apple clipping geometry and dedicated Brightness fill suppression.', t, flags=re.M)
+          t=re.sub(r'^Version: .*$', 'Version: 1.0.18', t, flags=re.M)
+          t=re.sub(r'com\.nextsolution\.nextaura\.runtime\.ccbackgrounds \(>= [^)]+\)', 'com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.14)', t)
+          t=re.sub(r'^Description: .*$', 'Description: Rounded Volume-pattern Control Center backgrounds: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses its full fill hierarchy, and the validated Volume renderer remains unchanged.', t, flags=re.M)
           p.write_text(t)
           PY
-          dpkg-deb -b "$STAGE" "$OUT/NextAura_cc_module_backgrounds_1.0.17_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUT/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb"
 
       - name: Validate packages
         shell: bash
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/release"
-          R="$OUT/NextAura_Runtime_ccbackgrounds_1.0.13_RootHide.deb"
-          M="$OUT/NextAura_cc_module_backgrounds_1.0.17_RootHide.deb"
-          test "$(dpkg-deb -f "$R" Version)" = 1.0.13
-          test "$(dpkg-deb -f "$M" Version)" = 1.0.17
+          R="$OUT/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb"
+          M="$OUT/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb"
+          test "$(dpkg-deb -f "$R" Version)" = 1.0.14
+          test "$(dpkg-deb -f "$M" Version)" = 1.0.18
           test "$(dpkg-deb -f "$R" Architecture)" = iphoneos-arm64e
-          dpkg-deb -f "$M" Depends | grep -q 'runtime.ccbackgrounds (>= 1.0.13)'
+          dpkg-deb -f "$M" Depends | grep -q 'runtime.ccbackgrounds (>= 1.0.14)'
           X=$(mktemp -d)
           dpkg-deb -x "$R" "$X"
           D="$X/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib"
           lipo -info "$D" | grep -q arm64
           lipo -info "$D" | grep -q arm64e
-          strings -a "$D" | grep -q 'ModuleGlassRuntime 1.0.13 Volume Pattern All Modules loaded'
-          strings -a "$D" | grep -q 'volume-pattern-native-sibling'
-          strings -a "$D" | grep -q 'brightness-volume-pattern-fill-aware'
+          strings -a "$D" | grep -q 'ModuleGlassRuntime 1.0.14 Rounded Volume Pattern loaded'
+          strings -a "$D" | grep -q 'volume-pattern-native-sibling-apple-shape'
+          strings -a "$D" | grep -q 'brightness-volume-pattern-root-fill-aware'
           strings -a "$D" | grep -q 'slider-native'
           strings -a "$D" | grep -q 'live-native'
           strings -a "$D" | grep -q 'CCModuleVolumeIconColor'
@@ -125,14 +126,14 @@ jobs:
           git config user.name 'Next Solution Build Bot'
           git config user.email 'actions@users.noreply.github.com'
           git pull --rebase --autostash origin main
-          grep -q '^Version: 1.0.13$' source/ModuleGlass/control
-          grep -q 'volume-pattern-native-sibling' source/ModuleGlass/Tweak.m
+          grep -q '^Version: 1.0.14$' source/ModuleGlass/control
+          grep -q 'MGApplyModuleShapeFallback' source/ModuleGlass/Tweak.m
 
           OUT="$RUNNER_TEMP/release"
           SCAN="$RUNNER_TEMP/scan"
           mkdir -p debfiles "$SCAN"
-          cp "$OUT/NextAura_Runtime_ccbackgrounds_1.0.13_RootHide.deb" debfiles/
-          cp "$OUT/NextAura_cc_module_backgrounds_1.0.17_RootHide.deb" debfiles/
+          cp "$OUT/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb" debfiles/
+          cp "$OUT/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb" debfiles/
           cp "$OUT"/*.deb "$SCAN/"
           dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/stanzas"
 
@@ -157,9 +158,9 @@ jobs:
 
           test "$(grep -c '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages)" -eq 1
           test "$(grep -c '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages)" -eq 1
-          grep -A20 '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages | grep -q '^Version: 1.0.17$'
-          grep -A20 '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages | grep -q '^Version: 1.0.13$'
-          grep -A20 '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages | grep -q 'runtime.ccbackgrounds (>= 1.0.13)'
+          grep -A20 '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages | grep -q '^Version: 1.0.18$'
+          grep -A20 '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages | grep -q '^Version: 1.0.14$'
+          grep -A20 '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages | grep -q 'runtime.ccbackgrounds (>= 1.0.14)'
 
           gzip -9 -c Packages > Packages.gz
           bzip2 -9 -c Packages > Packages.bz2
@@ -177,10 +178,10 @@ jobs:
           p.write_text(t)
           PY
 
-          git add source/ModuleGlass/Tweak.m source/ModuleGlass/control scripts/module_glass_native_host_patch_1_0_16.py \
-            debfiles/NextAura_Runtime_ccbackgrounds_1.0.13_RootHide.deb \
-            debfiles/NextAura_cc_module_backgrounds_1.0.17_RootHide.deb \
+          git add source/ModuleGlass/Tweak.m source/ModuleGlass/control scripts/module_glass_shape_fix_1_0_18.py \
+            debfiles/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb \
+            debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb \
             Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           git diff --cached --check
-          git commit -m 'Publish Module Glass 1.0.17 Volume-pattern renderer'
+          git commit -m 'Publish Module Glass 1.0.18 rounded Volume-pattern fix'
           git push origin HEAD:main
