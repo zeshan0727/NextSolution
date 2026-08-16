@@ -1,7 +1,9 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import Security
 
 private let feedURLString = "https://nextsolution.app/transfer/index.json"
+private let githubRepo = "zeshan0727/NextSolution"
 
 struct TransferFeed: Codable {
     let version: Int
@@ -19,6 +21,48 @@ struct TransferItem: Identifiable, Codable, Hashable {
     let url: String
     let sha256: String?
     let notes: String?
+}
+
+enum SecureTokenStore {
+    private static let service = "com.nextsolution.transfer"
+    private static let account = "github-upload-token"
+
+    static func save(_ token: String) {
+        delete()
+        guard !token.isEmpty, let data = token.data(using: .utf8) else { return }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        SecItemAdd(query as CFDictionary, nil)
+    }
+
+    static func load() -> String {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let data = result as? Data,
+              let token = String(data: data, encoding: .utf8) else { return "" }
+        return token
+    }
+
+    static func delete() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
 }
 
 @MainActor
@@ -197,8 +241,6 @@ struct TransferRow: View {
 }
 
 struct UploadView: View {
-    @AppStorage("uploadEndpoint") private var endpoint = ""
-    @AppStorage("uploadToken") private var token = ""
     @State private var importing = false
     @State private var selectedURL: URL?
     @State private var isUploading = false
@@ -207,17 +249,27 @@ struct UploadView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Phone → Server"), footer: Text(uploadFooter)) {
-                    Button { importing = true } label: { Label(selectedURL?.lastPathComponent ?? "Choose File", systemImage: "doc.badge.plus") }
+                Section(header: Text("Phone → NextSolution Server"), footer: Text("Files are uploaded to transfer/uploads/ in your NextSolution GitHub repo. The token is read from iOS Keychain and never bundled into the TIPA.")) {
+                    Button { importing = true } label: {
+                        Label(selectedURL?.lastPathComponent ?? "Choose File", systemImage: "doc.badge.plus")
+                    }
                     if let selectedURL {
-                        Button { Task { await upload(selectedURL) } } label: {
-                            if isUploading { ProgressView() } else { Label("Upload to Server", systemImage: "icloud.and.arrow.up") }
+                        Button { Task { await uploadToGitHub(selectedURL) } } label: {
+                            if isUploading { ProgressView() } else { Label("Upload", systemImage: "icloud.and.arrow.up") }
                         }
-                        .disabled(endpoint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isUploading)
+                        .disabled(isUploading)
                     }
                 }
+                Section(header: Text("Connection")) {
+                    HStack {
+                        Label(SecureTokenStore.load().isEmpty ? "GitHub token not configured" : "GitHub token configured", systemImage: SecureTokenStore.load().isEmpty ? "exclamationmark.triangle" : "checkmark.shield.fill")
+                        Spacer()
+                    }
+                    Text("Configure the token once in Settings. Use a fine-grained token limited to the NextSolution repository with Contents: Read and write.")
+                        .font(.footnote).foregroundColor(.secondary)
+                }
                 if !resultText.isEmpty {
-                    Section(header: Text("Last Result")) { Text(resultText).font(.footnote) }
+                    Section(header: Text("Last Result")) { Text(resultText).font(.footnote).textSelection(.enabled) }
                 }
             }
             .navigationTitle("Upload")
@@ -230,49 +282,71 @@ struct UploadView: View {
         }
     }
 
-    private var uploadFooter: String {
-        endpoint.isEmpty
-            ? "Downloads work immediately. Your current GitHub Pages website is read-only, so phone uploads need a writable HTTPS endpoint configured in Settings. No secret is embedded in this TIPA."
-            : "Uploads the selected file as multipart/form-data to your configured HTTPS endpoint."
-    }
-
-    private func upload(_ url: URL) async {
-        guard let endpointURL = URL(string: endpoint), endpointURL.scheme == "https" else {
-            resultText = "Enter a valid HTTPS upload endpoint in Settings."
+    private func uploadToGitHub(_ url: URL) async {
+        let token = SecureTokenStore.load()
+        guard !token.isEmpty else {
+            resultText = "GitHub upload token is not configured. Open Settings in this app first."
             return
         }
         isUploading = true
         defer { isUploading = false }
+
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+
         do {
-            let fileData = try Data(contentsOf: url)
-            let boundary = "NextSolution-\(UUID().uuidString)"
-            var body = Data()
-            body.append(Data("--\(boundary)\r\n".utf8))
-            body.append(Data("Content-Disposition: form-data; name=\"file\"; filename=\"\(url.lastPathComponent)\"\r\n".utf8))
-            body.append(Data("Content-Type: application/octet-stream\r\n\r\n".utf8))
-            body.append(fileData)
-            body.append(Data("\r\n--\(boundary)--\r\n".utf8))
-            var request = URLRequest(url: endpointURL)
-            request.httpMethod = "POST"
-            request.httpBody = body
-            request.timeoutInterval = 120
-            request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-            if !token.isEmpty { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let data = try Data(contentsOf: url)
+            guard data.count <= 40 * 1024 * 1024 else {
+                resultText = "This upload method is intended for files up to 40 MB."
+                return
+            }
+            let safeName = sanitize(url.lastPathComponent)
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0)
+            formatter.dateFormat = "yyyyMMdd-HHmmss"
+            let path = "transfer/uploads/\(formatter.string(from: Date()))-\(safeName)"
+            let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
+            guard let apiURL = URL(string: "https://api.github.com/repos/\(githubRepo)/contents/\(encodedPath)") else { throw URLError(.badURL) }
+
+            let json: [String: Any] = [
+                "message": "Upload \(safeName) from NextSolution Transfer",
+                "content": data.base64EncodedString(),
+                "branch": "main"
+            ]
+            var request = URLRequest(url: apiURL)
+            request.httpMethod = "PUT"
+            request.httpBody = try JSONSerialization.data(withJSONObject: json)
+            request.timeoutInterval = 180
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+            request.setValue("NextSolution-Transfer", forHTTPHeaderField: "User-Agent")
+
+            let (responseData, response) = try await URLSession.shared.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-            let text = String(data: data, encoding: .utf8) ?? ""
-            resultText = (200...299).contains(status) ? "Uploaded successfully. \(text)" : "Server returned HTTP \(status). \(text)"
+            if (200...299).contains(status) {
+                resultText = "Uploaded successfully.\n\nPath: \(path)\n\nTell ChatGPT this path and it can fetch the file from your repo."
+                selectedURL = nil
+            } else {
+                let message = (try? JSONSerialization.jsonObject(with: responseData) as? [String: Any])?["message"] as? String
+                resultText = "GitHub returned HTTP \(status): \(message ?? "Unknown error")"
+            }
         } catch {
             resultText = "Upload failed: \(error.localizedDescription)"
         }
     }
+
+    private func sanitize(_ name: String) -> String {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "._-"))
+        return name.unicodeScalars.map { allowed.contains($0) ? Character(String($0)) : "_" }.reduce("") { $0 + String($1) }
+    }
 }
 
 struct SettingsView: View {
-    @AppStorage("uploadEndpoint") private var endpoint = ""
-    @AppStorage("uploadToken") private var token = ""
+    @State private var token = SecureTokenStore.load()
+    @State private var savedMessage = ""
 
     var body: some View {
         NavigationStack {
@@ -281,14 +355,24 @@ struct SettingsView: View {
                     HStack { Text("Server"); Spacer(); Text("nextsolution.app").foregroundColor(.secondary) }
                     Text(feedURLString).font(.caption.monospaced()).textSelection(.enabled)
                 }
-                Section(header: Text("Optional Upload Backend"), footer: Text("Download needs no token. Upload credentials stay on this device and are only sent to the HTTPS endpoint you configure.")) {
-                    TextField("https://your-upload-endpoint", text: $endpoint)
+                Section(header: Text("GitHub Upload Token"), footer: Text("Use a fine-grained GitHub personal access token restricted to zeshan0727/NextSolution with Repository permissions → Contents: Read and write. It is stored in iOS Keychain on this device.")) {
+                    SecureField("Fine-grained token", text: $token)
                         .textInputAutocapitalization(.never)
-                        .keyboardType(.URL)
-                    SecureField("Bearer token (optional)", text: $token)
+                        .autocorrectionDisabled(true)
+                    Button("Save Token") {
+                        SecureTokenStore.save(token.trimmingCharacters(in: .whitespacesAndNewlines))
+                        token = SecureTokenStore.load()
+                        savedMessage = token.isEmpty ? "Token cleared" : "Token saved in Keychain"
+                    }
+                    if !SecureTokenStore.load().isEmpty {
+                        Button("Clear Token", role: .destructive) {
+                            SecureTokenStore.delete(); token = ""; savedMessage = "Token cleared"
+                        }
+                    }
+                    if !savedMessage.isEmpty { Text(savedMessage).font(.caption).foregroundColor(.secondary) }
                 }
                 Section(header: Text("Workflow")) {
-                    Text("New DEBs or TIPAs published by the NextSolution GitHub build pipeline appear in Files after Refresh. Downloaded files are saved under this app's Documents/Downloads folder and can be shared to Sileo, Zebra, TrollStore, Filza or Files when those apps support the file type.")
+                    Text("Downloads: validated DEBs/TIPAs published by the NextSolution build pipeline appear here automatically after Refresh.\n\nUploads: choose a file in the Upload tab and it is committed to transfer/uploads/ on the website repository. Then tell ChatGPT the displayed path so it can retrieve it directly.")
                         .font(.footnote)
                 }
             }
