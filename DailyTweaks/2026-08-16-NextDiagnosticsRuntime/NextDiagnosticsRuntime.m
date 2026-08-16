@@ -5,9 +5,10 @@
 #import <mach-o/loader.h>
 #import <dlfcn.h>
 #import <unistd.h>
+#import <stdlib.h>
 
 static NSString * const NDControlPath = @"/var/mobile/Library/Preferences/com.nextsolution.nextlog.plist";
-static NSString * const NDManifestPath = @"/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.manifest.plist";
+static NSString * const NDPreferredManifestPath = @"/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.manifest.plist";
 static NSString * const NDLogDirectory = @"/var/mobile/Library/Logs/NextSolution";
 static NSString * const NDControlNotification = @"com.nextsolution.nextlog/control.changed";
 
@@ -23,13 +24,36 @@ static NSString *NDNormalize(NSString *value) {
     return out;
 }
 
+static NSString *NDResolvedManifestPath(void) {
+    NSFileManager *fm = NSFileManager.defaultManager;
+    if ([fm fileExistsAtPath:NDPreferredManifestPath]) return NDPreferredManifestPath;
+
+    NSArray<NSString *> *fallbacks = @[
+        @"/var/jb/Library/Application Support/NextDiagnostics/manifest.plist",
+        @"/Library/Application Support/NextDiagnostics/manifest.plist"
+    ];
+    for (NSString *path in fallbacks) if ([fm fileExistsAtPath:path]) return path;
+
+    Dl_info info = {0};
+    if (dladdr((const void *)&NDResolvedManifestPath, &info) && info.dli_fname) {
+        NSString *imagePath = [NSString stringWithUTF8String:info.dli_fname];
+        NSRange r = [imagePath rangeOfString:@"/Library/MobileSubstrate/DynamicLibraries/" options:NSBackwardsSearch];
+        if (r.location != NSNotFound) {
+            NSString *prefix = [imagePath substringToIndex:r.location];
+            NSString *derived = [prefix stringByAppendingPathComponent:@"Library/Application Support/NextDiagnostics/manifest.plist"];
+            if ([fm fileExistsAtPath:derived]) return derived;
+        }
+    }
+    return NDPreferredManifestPath;
+}
+
 static NSDictionary *NDControl(void) {
     NSDictionary *value = [NSDictionary dictionaryWithContentsOfFile:NDControlPath];
     return [value isKindOfClass:NSDictionary.class] ? value : nil;
 }
 
 static NSDictionary *NDManifest(void) {
-    NSDictionary *value = [NSDictionary dictionaryWithContentsOfFile:NDManifestPath];
+    NSDictionary *value = [NSDictionary dictionaryWithContentsOfFile:NDResolvedManifestPath()];
     return [value isKindOfClass:NSDictionary.class] ? value : nil;
 }
 
@@ -165,9 +189,10 @@ static void NDEmitSnapshot(NSString *reason) {
     NSString *process = NSProcessInfo.processInfo.processName ?: @"<nil>";
     NSArray *expected = [entry[@"dylibs"] isKindOfClass:NSArray.class] ? entry[@"dylibs"] : @[];
     NDWrite(entry,
-            @"snapshot reason=%@ runtime=1.0.0 process=%@ bundle=%@ pid=%d package=%@ version=%@ expectedDylibs=%@ loadedMatches=%@ bundles=%@ executables=%@",
+            @"snapshot reason=%@ runtime=1.0.0 process=%@ bundle=%@ pid=%d package=%@ version=%@ manifest=%@ expectedDylibs=%@ loadedMatches=%@ bundles=%@ executables=%@",
             reason ?: @"unknown", process, bundle, getpid(), entry[@"packageID"] ?: @"<nil>",
-            entry[@"version"] ?: @"<nil>", expected, hits ?: @[], entry[@"bundles"] ?: @[], entry[@"executables"] ?: @[]);
+            entry[@"version"] ?: @"<nil>", NDResolvedManifestPath(), expected, hits ?: @[],
+            entry[@"bundles"] ?: @[], entry[@"executables"] ?: @[]);
 }
 
 static void NDControlChanged(__unused CFNotificationCenterRef center,
@@ -203,6 +228,11 @@ static void NDImageAdded(const struct mach_header *mh, intptr_t slide) {
 
 __attribute__((constructor)) static void NextDiagnosticsRuntimeInit(void) {
     @autoreleasepool {
+        // The package may contain separate Bundle and Executable loader copies of
+        // this same binary. Only one instance should register in any process.
+        if (getenv("NEXTSOLUTION_NEXTDIAG_ACTIVE")) return;
+        setenv("NEXTSOLUTION_NEXTDIAG_ACTIVE", "1", 0);
+
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, NDControlChanged,
                                         (__bridge CFStringRef)NDControlNotification, NULL,
                                         CFNotificationSuspensionBehaviorDeliverImmediately);
