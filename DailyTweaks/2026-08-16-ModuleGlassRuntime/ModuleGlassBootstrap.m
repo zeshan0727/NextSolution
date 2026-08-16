@@ -3,6 +3,7 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
+#import <unistd.h>
 
 static NSString * const MGBootLogDirectory = @"/var/mobile/Library/Logs/NextSolution";
 static NSString * const MGBootLogPath = @"/var/mobile/Library/Logs/NextSolution/module-glass.log";
