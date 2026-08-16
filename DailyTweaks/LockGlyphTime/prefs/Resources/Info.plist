@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>English</string>
-    <key>CFBundleDisplayName</key><string>NextStyle</string>
+    <key>CFBundleDisplayName</key><string>NextLock</string>
     <key>CFBundleExecutable</key><string>LockGlyphTimePrefs</string>
     <key>CFBundleIdentifier</key><string>com.nextsolution.lockglyphtimeprefs</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>NextStylePrefs</string>
+    <key>CFBundleName</key><string>NextLockPrefs</string>
     <key>CFBundlePackageType</key><string>BNDL</string>
     <key>CFBundleShortVersionString</key><string>1.0.0</string>
     <key>CFBundleVersion</key><string>100</string>
