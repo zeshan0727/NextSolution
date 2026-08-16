@@ -1,0 +1,64 @@
+name: Publish Validated NextLock 1.0.1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths: [".github/workflows/publish-nextlock-1.0.1-validated.yml"]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download validated diagnostic artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock-101"
+          mkdir -p "$OUT"
+          gh run download 31948833956 --repo "$GITHUB_REPOSITORY" --name NextLock-1.0.1-Diagnostic-DEBs --dir "$OUT"
+          test -f "$OUT/NextLock_1.0.1_Rootless.deb"
+          test -f "$OUT/NextLock_1.0.1_RootHide.deb"
+          echo '53a7eea48a36b06fa0b529e53fc6ec3fde2e73a96d47350ee684f5d33fe2aa48  '"$OUT/NextLock_1.0.1_Rootless.deb" | sha256sum -c -
+          echo '8ef667eb560c134d074652c499d351363bed30c2a8815c3dccffd60271264e60  '"$OUT/NextLock_1.0.1_RootHide.deb" | sha256sum -c -
+      - name: Publish to NextSolution Transfer feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock-101"
+          SITE="$RUNNER_TEMP/site"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          DEST="$SITE/transfer/files/NextLock/1.0.1"
+          mkdir -p "$DEST"
+          cp "$OUT/NextLock_1.0.1_Rootless.deb" "$DEST/"
+          cp "$OUT/NextLock_1.0.1_RootHide.deb" "$DEST/"
+          printf '%s  %s\n%s  %s\n' \
+            '53a7eea48a36b06fa0b529e53fc6ec3fde2e73a96d47350ee684f5d33fe2aa48' 'NextLock_1.0.1_Rootless.deb' \
+            '8ef667eb560c134d074652c499d351363bed30c2a8815c3dccffd60271264e60' 'NextLock_1.0.1_RootHide.deb' > "$DEST/SHA256SUMS.txt"
+          python3 - "$SITE/transfer/index.json" <<'PY'
+          import json, pathlib, datetime, sys
+          p=pathlib.Path(sys.argv[1])
+          try: data=json.loads(p.read_text())
+          except Exception: data={"version":1,"files":[]}
+          files=[x for x in data.get("files",[]) if not str(x.get("id","")).startswith(("nextlock-","lockglyphtime-"))]
+          entries=[
+            {"id":"nextlock-1.0.1-rootless","name":"NextLock 1.0.1 Rootless","fileName":"NextLock_1.0.1_Rootless.deb","type":"deb","platform":"Dopamine / Rootless","version":"1.0.1","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_Rootless.deb","sha256":"53a7eea48a36b06fa0b529e53fc6ec3fde2e73a96d47350ee684f5d33fe2aa48","notes":"NextLock with corrected PreferenceLoader Settings icon assets (29pt, @2x, @3x), clean Next Solution branding, time/date styling and transparent sticker-photo support."},
+            {"id":"nextlock-1.0.1-roothide","name":"NextLock 1.0.1 RootHide","fileName":"NextLock_1.0.1_RootHide.deb","type":"deb","platform":"RootHide","version":"1.0.1","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_RootHide.deb","sha256":"8ef667eb560c134d074652c499d351363bed30c2a8815c3dccffd60271264e60","notes":"NextLock with corrected PreferenceLoader Settings icon assets (29pt, @2x, @3x), clean Next Solution branding, time/date styling and transparent sticker-photo support."}
+          ]
+          p.write_text(json.dumps({"version":1,"updatedAt":datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),"files":entries+files},indent=2)+"\n")
+          PY
+          git -C "$SITE" config user.name 'Next Solution Build Bot'
+          git -C "$SITE" config user.email actions@users.noreply.github.com
+          git -C "$SITE" add transfer
+          git -C "$SITE" commit -m 'Publish validated NextLock 1.0.1 to Transfer' || exit 0
+          git -C "$SITE" pull --rebase origin main
+          git -C "$SITE" push origin main
