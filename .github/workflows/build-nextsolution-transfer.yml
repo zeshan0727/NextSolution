@@ -9,7 +9,7 @@ on:
       - '.github/workflows/build-nextsolution-transfer.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: nextsolution-transfer
@@ -47,24 +47,75 @@ jobs:
           set -euo pipefail
           mkdir -p Payload output
           cp -R build/Build/Products/Release-iphoneos/NextSolutionTransfer.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload output/NextSolution-Transfer-1.0.0.tipa
-          shasum -a 256 output/NextSolution-Transfer-1.0.0.tipa > output/NextSolution-Transfer-1.0.0.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload output/NextSolution-Transfer-1.1.0.tipa
+          shasum -a 256 output/NextSolution-Transfer-1.1.0.tipa > output/NextSolution-Transfer-1.1.0.sha256
       - name: Validate package
         working-directory: TransferApp
         run: |
           set -euo pipefail
           rm -rf verify
           mkdir verify
-          ditto -x -k output/NextSolution-Transfer-1.0.0.tipa verify
+          ditto -x -k output/NextSolution-Transfer-1.1.0.tipa verify
           test -d verify/Payload/NextSolutionTransfer.app
           test -f verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer
-          strings verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer | grep -q 'nextsolution.app/transfer/index.json'
-          strings verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer | grep -q 'Upload to Server'
+          BIN=verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer
+          strings "$BIN" | grep -q 'nextsolution.app/transfer/index.json'
+          strings "$BIN" | grep -q 'api.github.com/repos/'
+          strings "$BIN" | grep -q 'transfer/uploads/'
+          strings "$BIN" | grep -q 'GitHub upload token'
       - name: Upload TIPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextSolution-Transfer-1.0.0
+          name: NextSolution-Transfer-1.1.0
           path: |
-            TransferApp/output/NextSolution-Transfer-1.0.0.tipa
-            TransferApp/output/NextSolution-Transfer-1.0.0.sha256
+            TransferApp/output/NextSolution-Transfer-1.1.0.tipa
+            TransferApp/output/NextSolution-Transfer-1.1.0.sha256
           if-no-files-found: error
+      - name: Publish app to NextSolution Transfer feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/TransferApp/output"
+          SITE="$RUNNER_TEMP/nextsolution-site"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          DEST="$SITE/transfer/files/NextSolutionTransfer/1.1.0"
+          mkdir -p "$DEST"
+          cp "$OUT/NextSolution-Transfer-1.1.0.tipa" "$DEST/"
+          cp "$OUT/NextSolution-Transfer-1.1.0.sha256" "$DEST/"
+          python3 - "$SITE/transfer/index.json" "$OUT/NextSolution-Transfer-1.1.0.tipa" <<'PY'
+          import json, pathlib, hashlib, datetime, sys
+          manifest = pathlib.Path(sys.argv[1])
+          tipa = pathlib.Path(sys.argv[2])
+          try:
+              data = json.loads(manifest.read_text()) if manifest.exists() else {"version": 1, "files": []}
+          except Exception:
+              data = {"version": 1, "files": []}
+          item_id = "nextsolution-transfer-1.1.0"
+          files = [x for x in data.get("files", []) if x.get("id") != item_id]
+          files.insert(0, {
+              "id": item_id,
+              "name": "NextSolution Transfer 1.1.0",
+              "fileName": "NextSolution-Transfer-1.1.0.tipa",
+              "type": "tipa",
+              "platform": "TrollStore / iOS 16+",
+              "version": "1.1.0",
+              "url": "https://nextsolution.app/transfer/files/NextSolutionTransfer/1.1.0/NextSolution-Transfer-1.1.0.tipa",
+              "sha256": hashlib.sha256(tipa.read_bytes()).hexdigest(),
+              "notes": "Transfer app with direct website downloads and secure GitHub-repo uploads."
+          })
+          payload = {
+              "version": 1,
+              "updatedAt": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              "files": files
+          }
+          manifest.parent.mkdir(parents=True, exist_ok=True)
+          manifest.write_text(json.dumps(payload, indent=2) + "\n")
+          PY
+          git -C "$SITE" config user.name "github-actions[bot]"
+          git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$SITE" add transfer
+          git -C "$SITE" commit -m "Publish NextSolution Transfer 1.1.0" || exit 0
+          git -C "$SITE" pull --rebase origin main
+          git -C "$SITE" push origin main
