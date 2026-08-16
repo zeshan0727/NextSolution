@@ -59,8 +59,9 @@ final class DiagnosticModel: ObservableObject {
 
     init() {
         let loaded = Self.loadManifestTargets()
-        targets = loaded.targets.isEmpty ? TweakTarget.fallback : loaded.targets
-        selected = targets.first(where: { $0.name == "Module Glass" }) ?? targets[0]
+        let resolvedTargets = loaded.targets.isEmpty ? TweakTarget.fallback : loaded.targets
+        targets = resolvedTargets
+        selected = resolvedTargets.first(where: { $0.name == "Module Glass" }) ?? resolvedTargets[0]
         manifestStatus = loaded.targets.isEmpty ? "Built-in profiles · install Next Diagnostics Runtime" : "Repo manifest · \(loaded.targets.count) tweaks"
     }
 
