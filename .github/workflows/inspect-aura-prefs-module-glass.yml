@@ -1,0 +1,80 @@
+name: Inspect AuraPrefs Module Glass Settings
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-aura-prefs-module-glass.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install dpkg
+        run: brew install dpkg
+      - name: Inspect shared preferences runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > /tmp/prefs-info.txt
+          from pathlib import Path
+          import re
+          text=Path('Packages').read_text()
+          for stanza in re.split(r'\n\s*\n', text):
+              if re.search(r'^Package: com\.nextsolution\.nextaura\.runtime\.preferences$', stanza, re.M):
+                  print(stanza.strip())
+                  break
+          else:
+              raise SystemExit('preferences package stanza not found')
+          PY
+          PREF_DEB=$(python3 - <<'PY'
+          from pathlib import Path
+          import re
+          text=Path('Packages').read_text()
+          for stanza in re.split(r'\n\s*\n', text):
+              if re.search(r'^Package: com\.nextsolution\.nextaura\.runtime\.preferences$', stanza, re.M):
+                  m=re.search(r'^Filename: (.+)$', stanza, re.M)
+                  print(m.group(1).strip().removeprefix('./'))
+                  break
+          PY
+          )
+          echo "PREF_DEB=$PREF_DEB" >> /tmp/prefs-info.txt
+          rm -rf /tmp/aura-prefs
+          dpkg-deb -R "$PREF_DEB" /tmp/aura-prefs
+          echo '===== FILE TREE =====' >> /tmp/prefs-info.txt
+          find /tmp/aura-prefs -type f -print | sed 's#^/tmp/aura-prefs/##' | sort >> /tmp/prefs-info.txt
+          echo '===== CONTROL =====' >> /tmp/prefs-info.txt
+          cat /tmp/aura-prefs/DEBIAN/control >> /tmp/prefs-info.txt
+          echo '===== CCModuleBackgrounds plist =====' >> /tmp/prefs-info.txt
+          PLIST=$(find /tmp/aura-prefs -type f -iname 'CCModuleBackgrounds.plist' -print -quit)
+          test -n "$PLIST"
+          plutil -convert xml1 -o - "$PLIST" >> /tmp/prefs-info.txt
+          echo '===== OTHER COLOR/PICKER PLISTS =====' >> /tmp/prefs-info.txt
+          find /tmp/aura-prefs -type f -name '*.plist' ! -path '*/DEBIAN/*' -print0 | while IFS= read -r -d '' f; do
+            if plutil -convert xml1 -o - "$f" 2>/dev/null | grep -Eiq 'color|picker|tint|hex'; then
+              echo "--- ${f#/tmp/aura-prefs/} ---" >> /tmp/prefs-info.txt
+              plutil -convert xml1 -o - "$f" 2>/dev/null | grep -Ei -C 5 'color|picker|tint|hex' >> /tmp/prefs-info.txt || true
+            fi
+          done
+          BIN=$(find /tmp/aura-prefs/Library/PreferenceBundles/AuraPrefs.bundle -maxdepth 1 -type f -perm +111 -print -quit 2>/dev/null || true)
+          if [ -z "$BIN" ]; then BIN=$(find /tmp/aura-prefs/Library/PreferenceBundles/AuraPrefs.bundle -maxdepth 1 -type f ! -name '*.plist' ! -name '*.png' ! -name '*.strings' -print -quit 2>/dev/null || true); fi
+          echo "===== BINARY=$BIN =====" >> /tmp/prefs-info.txt
+          if [ -n "$BIN" ]; then
+            echo '===== DYLIBS =====' >> /tmp/prefs-info.txt
+            otool -L "$BIN" >> /tmp/prefs-info.txt || true
+            echo '===== COLOR/PICKER STRINGS =====' >> /tmp/prefs-info.txt
+            strings -a "$BIN" | grep -Ei 'color|picker|tint|spark|libcolor|hex|preferences.changed|CCModuleBackgrounds' | head -n 500 >> /tmp/prefs-info.txt || true
+          fi
+          mkdir -p transfer/diagnostics
+          cp /tmp/prefs-info.txt transfer/diagnostics/aura-prefs-module-glass-inspect.txt
+          git config user.name 'Next Solution Inspect Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add transfer/diagnostics/aura-prefs-module-glass-inspect.txt
+          git commit -m 'Record AuraPrefs Module Glass settings inspection'
+          git push origin HEAD:main
