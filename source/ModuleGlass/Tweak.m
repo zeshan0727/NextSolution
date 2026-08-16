@@ -13,12 +13,13 @@ static NSString * const MGLogPath = @"/var/mobile/Library/Logs/NextSolution/modu
 static NSString * const MGPreviousLogPath = @"/var/mobile/Library/Logs/NextSolution/module-glass.previous.log";
 static CFStringRef const MGPrefsDomain = CFSTR("com.nextsolution.unlockvibrate");
 static NSInteger const MGImageTag = 0x4D470106;
+static NSInteger const MGVolumeIconOverlayTag = 0x4D475649;
 
 static NSHashTable *MGControllers;
 static char MGLastDiagnosticKey;
 static char MGVolumeOriginalAlphaKey;
-static char MGVolumeOriginalIconImageKey;
-static char MGVolumeOriginalIconTintKey;
+static char MGVolumeOriginalIconAlphaKey;
+static char MGVolumeIconOverlayKey;
 
 static void (*MGOrigModuleViewDidLoad)(id, SEL);
 static void (*MGOrigModuleLayout)(id, SEL);
@@ -293,47 +294,50 @@ static UIColor *MGVolumeColorFromHex(NSString *input) {
     return [UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
-static void MGRestoreVolumeIconTint(UIView *root) {
+static void MGRestoreVolumeIconPresentation(UIView *root) {
     if (!root) return;
+    for (UIView *child in [root.subviews copy]) {
+        if (child.tag == MGVolumeIconOverlayTag) {
+            [child removeFromSuperview];
+            continue;
+        }
+        MGRestoreVolumeIconPresentation(child);
+    }
     if ([root isKindOfClass:UIImageView.class]) {
-        UIImageView *imageView = (UIImageView *)root;
-        UIImage *originalImage = objc_getAssociatedObject(imageView, &MGVolumeOriginalIconImageKey);
-        if (originalImage) {
-            imageView.image = originalImage;
-            id originalTint = objc_getAssociatedObject(imageView, &MGVolumeOriginalIconTintKey);
-            imageView.tintColor = [originalTint isKindOfClass:UIColor.class] ? originalTint : nil;
-            objc_setAssociatedObject(imageView, &MGVolumeOriginalIconImageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            objc_setAssociatedObject(imageView, &MGVolumeOriginalIconTintKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        NSNumber *savedAlpha = objc_getAssociatedObject(root, &MGVolumeOriginalIconAlphaKey);
+        if (savedAlpha) {
+            root.alpha = savedAlpha.doubleValue;
+            objc_setAssociatedObject(root, &MGVolumeOriginalIconAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            objc_setAssociatedObject(root, &MGVolumeIconOverlayKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
     }
-    for (UIView *child in root.subviews) MGRestoreVolumeIconTint(child);
 }
 
 static NSInteger MGVolumeIconScore(UIImageView *imageView, UIView *slider) {
-    if (!imageView || !slider || imageView.tag == MGImageTag || !imageView.image || imageView.hidden || imageView.alpha < 0.01) return -1;
+    if (!imageView || !slider || imageView.tag == MGImageTag || imageView.tag == MGVolumeIconOverlayTag || !imageView.image || imageView.hidden) return -1;
     CGRect rect = [imageView convertRect:imageView.bounds toView:slider];
     CGFloat w = CGRectGetWidth(rect), h = CGRectGetHeight(rect);
     if (w < 8.0 || h < 8.0 || w > 64.0 || h > 64.0) return -1;
     CGFloat area = w * h;
-    NSInteger score = 1000 - (NSInteger)fabs(area - 576.0);
-    score += 800;
+    NSInteger score = 1200 - (NSInteger)fabs(area - 576.0);
     CGFloat cy = CGRectGetMidY(rect);
-    if (cy > CGRectGetHeight(slider.bounds) * 0.45) score += 600;
+    if (cy > CGRectGetHeight(slider.bounds) * 0.55) score += 1800;
+    if (fabs(CGRectGetMidX(rect) - CGRectGetMidX(slider.bounds)) < CGRectGetWidth(slider.bounds) * 0.35) score += 900;
     NSString *names = @"";
     UIView *cursor = imageView;
-    for (NSInteger i = 0; i < 4 && cursor; i++, cursor = cursor.superview) {
+    for (NSInteger i = 0; i < 5 && cursor; i++, cursor = cursor.superview) {
         names = [names stringByAppendingFormat:@" %@", NSStringFromClass(cursor.class).lowercaseString ?: @""];
     }
     for (NSString *needle in @[@"glyph", @"speaker", @"volume", @"audio", @"icon"]) {
-        if ([names containsString:needle]) score += 3000;
+        if ([names containsString:needle]) score += 3500;
     }
     return score;
 }
 
 static void MGCollectVolumeIconCandidates(UIView *root, UIView *slider, NSMutableArray<UIImageView *> *out) {
     if (!root) return;
-    if ([root isKindOfClass:UIImageView.class] && root.tag != MGImageTag) {
-        UIImageView *iv = (UIImageView *)root;
+    if ([root isKindOfClass:UIImageView.class] && root.tag != MGImageTag && root.tag != MGVolumeIconOverlayTag) {
+        UIImageView *iv=(UIImageView *)root;
         if (MGVolumeIconScore(iv, slider) >= 0) [out addObject:iv];
     }
     for (UIView *child in root.subviews) MGCollectVolumeIconCandidates(child, slider, out);
@@ -341,29 +345,51 @@ static void MGCollectVolumeIconCandidates(UIView *root, UIView *slider, NSMutabl
 
 static UIImageView *MGFindVolumeIcon(UIView *slider) {
     if (!slider) return nil;
-    NSMutableArray<UIImageView *> *candidates = [NSMutableArray array];
+    NSMutableArray<UIImageView *> *candidates=[NSMutableArray array];
     MGCollectVolumeIconCandidates(slider, slider, candidates);
-    UIImageView *best = nil;
-    NSInteger bestScore = -1;
+    UIImageView *best=nil;
+    NSInteger bestScore=-1;
     for (UIImageView *candidate in candidates) {
-        NSInteger score = MGVolumeIconScore(candidate, slider);
-        if (score > bestScore) { best = candidate; bestScore = score; }
+        NSInteger score=MGVolumeIconScore(candidate, slider);
+        if (score > bestScore) { best=candidate; bestScore=score; }
     }
     return best;
 }
 
 static BOOL MGApplyVolumeIconTint(UIView *slider, UIColor *color, NSString **outClass, CGRect *outFrame) {
     if (!slider || !color) return NO;
-    UIImageView *icon = MGFindVolumeIcon(slider);
-    if (!icon || !icon.image) return NO;
-    if (!objc_getAssociatedObject(icon, &MGVolumeOriginalIconImageKey)) {
-        objc_setAssociatedObject(icon, &MGVolumeOriginalIconImageKey, icon.image, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        objc_setAssociatedObject(icon, &MGVolumeOriginalIconTintKey, icon.tintColor ?: (id)NSNull.null, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    UIImageView *icon=MGFindVolumeIcon(slider);
+    if (!icon || !icon.image || !icon.superview) return NO;
+
+    NSNumber *storedAlpha=objc_getAssociatedObject(icon, &MGVolumeOriginalIconAlphaKey);
+    CGFloat sourceAlpha=storedAlpha ? storedAlpha.doubleValue : icon.alpha;
+    if (!storedAlpha) {
+        objc_setAssociatedObject(icon, &MGVolumeOriginalIconAlphaKey, @(icon.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    icon.image = [icon.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    icon.tintColor = color;
-    if (outClass) *outClass = NSStringFromClass(icon.class) ?: @"UIImageView";
-    if (outFrame) *outFrame = [icon convertRect:icon.bounds toView:slider];
+
+    UIImageView *overlay=[[UIImageView alloc] initWithFrame:CGRectZero];
+    overlay.tag=MGVolumeIconOverlayTag;
+    overlay.userInteractionEnabled=NO;
+    overlay.backgroundColor=UIColor.clearColor;
+    overlay.image=[icon.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    overlay.tintColor=color;
+    overlay.contentMode=icon.contentMode;
+    overlay.clipsToBounds=icon.clipsToBounds;
+    overlay.bounds=icon.bounds;
+    overlay.center=icon.center;
+    overlay.transform=icon.transform;
+    overlay.alpha=sourceAlpha;
+    overlay.hidden=icon.hidden;
+    overlay.layer.cornerRadius=icon.layer.cornerRadius;
+    overlay.layer.masksToBounds=icon.layer.masksToBounds;
+    [icon.superview insertSubview:overlay aboveSubview:icon];
+    objc_setAssociatedObject(icon, &MGVolumeIconOverlayKey, overlay, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    // Keep Apple's image/state alive but make only the native pixels transparent.
+    icon.alpha=0.0;
+
+    if (outClass) *outClass=[NSString stringWithFormat:@"%@+overlay", NSStringFromClass(icon.class) ?: @"UIImageView"];
+    if (outFrame) *outFrame=[overlay convertRect:overlay.bounds toView:slider];
     return YES;
 }
 
@@ -457,7 +483,7 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSArray<NSString *> *candidates = nil;
     NSString *slot = MGSlotForController(controller, &candidates);
-    MGRestoreVolumeIconTint(root);
+    MGRestoreVolumeIconPresentation(root);
     MGRestoreVolumeVisuals(root);
     BOOL expanded = MGIsExpanded(root);
     BOOL enabled = MGBoolPreference(@"CCModuleBackgroundsEnabled", YES);
@@ -613,8 +639,8 @@ __attribute__((constructor)) static void MGInit(void) {
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.0.8 Volume Color loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
-        MGLog(@"Volume-isolated image-first runtime with native icon color process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
+        MGLog(@"ModuleGlassRuntime 1.0.9 Volume Color Overlay loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"Volume-isolated image-first runtime with persistent icon color overlay process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
 }
