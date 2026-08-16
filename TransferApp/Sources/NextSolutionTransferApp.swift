@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-private let defaultFeedURL = "https://nextsolution.app/transfer/index.json"
+private let feedURLString = "https://nextsolution.app/transfer/index.json"
 
 struct TransferFeed: Codable {
     let version: Int
@@ -24,42 +24,39 @@ struct TransferItem: Identifiable, Codable, Hashable {
 @MainActor
 final class TransferStore: ObservableObject {
     @Published var items: [TransferItem] = []
+    @Published var updatedAt = ""
     @Published var isRefreshing = false
     @Published var downloadingIDs: Set<String> = []
-    @Published var downloadedURLs: [String: URL] = [:]
+    @Published var downloaded: [String: URL] = [:]
     @Published var errorMessage: String?
-    @Published var updatedAt: String = ""
+
+    var downloadsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Downloads", isDirectory: true)
+    }
 
     func refresh() async {
         isRefreshing = true
         defer { isRefreshing = false }
         do {
-            guard var components = URLComponents(string: defaultFeedURL) else { throw URLError(.badURL) }
+            guard var components = URLComponents(string: feedURLString) else { throw URLError(.badURL) }
             components.queryItems = [URLQueryItem(name: "t", value: String(Int(Date().timeIntervalSince1970)))]
             guard let url = components.url else { throw URLError(.badURL) }
             var request = URLRequest(url: url)
             request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
             request.timeoutInterval = 20
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                throw URLError(.badServerResponse)
-            }
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw URLError(.badServerResponse) }
             let feed = try JSONDecoder().decode(TransferFeed.self, from: data)
             items = feed.files
             updatedAt = feed.updatedAt
-            errorMessage = nil
-            refreshLocalFiles()
-        } catch {
-            errorMessage = "Could not load transfer feed: \(error.localizedDescription)"
-        }
-    }
-
-    func refreshLocalFiles() {
-        for item in items {
-            let candidate = downloadsDirectory.appendingPathComponent(item.fileName)
-            if FileManager.default.fileExists(atPath: candidate.path) {
-                downloadedURLs[item.id] = candidate
+            for item in items {
+                let file = downloadsDirectory.appendingPathComponent(item.fileName)
+                if FileManager.default.fileExists(atPath: file.path) { downloaded[item.id] = file }
             }
+            errorMessage = nil
+        } catch {
+            errorMessage = "Could not load server feed: \(error.localizedDescription)"
         }
     }
 
@@ -68,87 +65,70 @@ final class TransferStore: ObservableObject {
         downloadingIDs.insert(item.id)
         defer { downloadingIDs.remove(item.id) }
         do {
-            guard let remoteURL = URL(string: item.url) else { throw URLError(.badURL) }
-            let (data, response) = try await URLSession.shared.data(from: remoteURL)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                throw URLError(.badServerResponse)
-            }
+            guard let remote = URL(string: item.url) else { throw URLError(.badURL) }
+            let (data, response) = try await URLSession.shared.data(from: remote)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw URLError(.badServerResponse) }
             try FileManager.default.createDirectory(at: downloadsDirectory, withIntermediateDirectories: true)
-            let destination = downloadsDirectory.appendingPathComponent(item.fileName)
-            try? FileManager.default.removeItem(at: destination)
-            try data.write(to: destination, options: .atomic)
-            downloadedURLs[item.id] = destination
+            let local = downloadsDirectory.appendingPathComponent(item.fileName)
+            try? FileManager.default.removeItem(at: local)
+            try data.write(to: local, options: .atomic)
+            downloaded[item.id] = local
             errorMessage = nil
         } catch {
             errorMessage = "Download failed: \(error.localizedDescription)"
         }
     }
 
-    func deleteLocal(_ item: TransferItem) {
-        guard let url = downloadedURLs[item.id] else { return }
-        try? FileManager.default.removeItem(at: url)
-        downloadedURLs.removeValue(forKey: item.id)
-    }
-
-    var downloadsDirectory: URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return docs.appendingPathComponent("Downloads", isDirectory: true)
+    func remove(_ item: TransferItem) {
+        if let url = downloaded[item.id] { try? FileManager.default.removeItem(at: url) }
+        downloaded.removeValue(forKey: item.id)
     }
 }
 
 @main
 struct NextSolutionTransferApp: App {
     @StateObject private var store = TransferStore()
-
     var body: some Scene {
-        WindowGroup {
-            RootView()
-                .environmentObject(store)
-        }
+        WindowGroup { RootView().environmentObject(store) }
     }
 }
 
 struct RootView: View {
     var body: some View {
         TabView {
-            TransferListView()
-                .tabItem { Label("Files", systemImage: "tray.and.arrow.down.fill") }
-            UploadView()
-                .tabItem { Label("Upload", systemImage: "arrow.up.doc.fill") }
-            SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
+            FilesView().tabItem { Label("Files", systemImage: "tray.and.arrow.down.fill") }
+            UploadView().tabItem { Label("Upload", systemImage: "arrow.up.doc.fill") }
+            SettingsView().tabItem { Label("Settings", systemImage: "gearshape.fill") }
         }
-        .tint(.accentColor)
     }
 }
 
-struct TransferListView: View {
+struct FilesView: View {
     @EnvironmentObject private var store: TransferStore
 
     var body: some View {
         NavigationStack {
             Group {
-                if store.items.isEmpty && store.isRefreshing {
-                    ProgressView("Checking NextSolution server…")
-                } else if store.items.isEmpty {
-                    ContentUnavailableView {
-                        Label("No Files", systemImage: "tray")
-                    } description: {
-                        Text("Pull to refresh the NextSolution transfer feed.")
+                if store.items.isEmpty {
+                    VStack(spacing: 14) {
+                        if store.isRefreshing { ProgressView() }
+                        Image(systemName: "tray").font(.system(size: 44)).foregroundColor(.secondary)
+                        Text("No Files Yet").font(.headline)
+                        Text("Tap Refresh to check your NextSolution transfer feed.")
+                            .font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
+                        Button("Refresh") { Task { await store.refresh() } }.buttonStyle(.borderedProminent)
                     }
+                    .padding(30)
                 } else {
                     List {
                         if !store.updatedAt.isEmpty {
                             Section {
                                 Label("Server updated: \(store.updatedAt)", systemImage: "checkmark.icloud")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.caption).foregroundColor(.secondary)
                             }
                         }
-                        Section("Available from NextSolution") {
-                            ForEach(store.items) { item in
-                                TransferRow(item: item)
-                            }
+                        Section(header: Text("Available from NextSolution")) {
+                            ForEach(store.items) { item in TransferRow(item: item) }
                         }
                     }
                     .refreshable { await store.refresh() }
@@ -156,21 +136,17 @@ struct TransferListView: View {
             }
             .navigationTitle("NextSolution Transfer")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await store.refresh() }
-                    } label: {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { Task { await store.refresh() } } label: {
                         if store.isRefreshing { ProgressView() } else { Image(systemName: "arrow.clockwise") }
                     }
                     .disabled(store.isRefreshing)
                 }
             }
+            .task { await store.refresh() }
             .alert("Transfer", isPresented: Binding(get: { store.errorMessage != nil }, set: { if !$0 { store.errorMessage = nil } })) {
                 Button("OK", role: .cancel) { store.errorMessage = nil }
-            } message: {
-                Text(store.errorMessage ?? "")
-            }
-            .task { await store.refresh() }
+            } message: { Text(store.errorMessage ?? "") }
         }
     }
 }
@@ -179,55 +155,31 @@ struct TransferRow: View {
     @EnvironmentObject private var store: TransferStore
     let item: TransferItem
 
-    var localURL: URL? { store.downloadedURLs[item.id] }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: iconName)
-                    .font(.title2)
-                    .frame(width: 34, height: 34)
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .top, spacing: 11) {
+                Image(systemName: iconName).font(.title2).frame(width: 30)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(item.name).font(.headline)
-                    Text("\(item.platform) • v\(item.version)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    if let notes = item.notes, !notes.isEmpty {
-                        Text(notes).font(.caption).foregroundStyle(.secondary)
-                    }
+                    Text("\(item.platform) • v\(item.version)").font(.subheadline).foregroundColor(.secondary)
+                    if let notes = item.notes, !notes.isEmpty { Text(notes).font(.caption).foregroundColor(.secondary) }
                 }
-                Spacer()
             }
-
             HStack {
                 if store.downloadingIDs.contains(item.id) {
-                    ProgressView()
-                    Text("Downloading…").font(.caption)
-                } else if let localURL {
-                    ShareLink(item: localURL) {
-                        Label("Open / Share", systemImage: "square.and.arrow.up")
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    Button(role: .destructive) { store.deleteLocal(item) } label: {
-                        Image(systemName: "trash")
-                    }
-                    .buttonStyle(.bordered)
+                    ProgressView(); Text("Downloading…").font(.caption)
+                } else if let local = store.downloaded[item.id] {
+                    ShareLink(item: local) { Label("Open / Share", systemImage: "square.and.arrow.up") }
+                        .buttonStyle(.borderedProminent)
+                    Button(role: .destructive) { store.remove(item) } label: { Image(systemName: "trash") }
+                        .buttonStyle(.bordered)
                 } else {
-                    Button {
-                        Task { await store.download(item) }
-                    } label: {
-                        Label("Download", systemImage: "arrow.down.circle.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
+                    Button { Task { await store.download(item) } } label: { Label("Download", systemImage: "arrow.down.circle.fill") }
+                        .buttonStyle(.borderedProminent)
                 }
-
                 Spacer()
-
                 if let hash = item.sha256, !hash.isEmpty {
-                    Text(String(hash.prefix(10)) + "…")
-                        .font(.caption2.monospaced())
-                        .foregroundStyle(.tertiary)
+                    Text(String(hash.prefix(10)) + "…").font(.caption2.monospaced()).foregroundColor(.secondary)
                 }
             }
         }
@@ -247,85 +199,73 @@ struct TransferRow: View {
 struct UploadView: View {
     @AppStorage("uploadEndpoint") private var endpoint = ""
     @AppStorage("uploadToken") private var token = ""
-    @State private var showImporter = false
+    @State private var importing = false
     @State private var selectedURL: URL?
     @State private var isUploading = false
-    @State private var result = ""
+    @State private var resultText = ""
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Button {
-                        showImporter = true
-                    } label: {
-                        Label(selectedURL?.lastPathComponent ?? "Choose File", systemImage: "doc.badge.plus")
-                    }
-
+                Section(header: Text("Phone → Server"), footer: Text(uploadFooter)) {
+                    Button { importing = true } label: { Label(selectedURL?.lastPathComponent ?? "Choose File", systemImage: "doc.badge.plus") }
                     if let selectedURL {
-                        Button {
-                            Task { await upload(selectedURL) }
-                        } label: {
+                        Button { Task { await upload(selectedURL) } } label: {
                             if isUploading { ProgressView() } else { Label("Upload to Server", systemImage: "icloud.and.arrow.up") }
                         }
                         .disabled(endpoint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isUploading)
                     }
-                } header: {
-                    Text("Phone → Server")
-                } footer: {
-                    Text(endpoint.isEmpty
-                         ? "Your website is currently static GitHub Pages, so uploads need a writable HTTPS endpoint. Configure it in Settings when available. No secret is embedded in this app."
-                         : "The app sends the selected file as multipart/form-data to your configured HTTPS endpoint.")
                 }
-
-                if !result.isEmpty {
-                    Section("Last Result") { Text(result).font(.footnote) }
+                if !resultText.isEmpty {
+                    Section(header: Text("Last Result")) { Text(resultText).font(.footnote) }
                 }
             }
             .navigationTitle("Upload")
-            .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data, .archive, .item], allowsMultipleSelection: false) { result in
+            .fileImporter(isPresented: $importing, allowedContentTypes: [.data, .archive, .item], allowsMultipleSelection: false) { result in
                 switch result {
                 case .success(let urls): selectedURL = urls.first
-                case .failure(let error): self.result = error.localizedDescription
+                case .failure(let error): resultText = error.localizedDescription
                 }
             }
         }
     }
 
+    private var uploadFooter: String {
+        endpoint.isEmpty
+            ? "Downloads work immediately. Your current GitHub Pages website is read-only, so phone uploads need a writable HTTPS endpoint configured in Settings. No secret is embedded in this TIPA."
+            : "Uploads the selected file as multipart/form-data to your configured HTTPS endpoint."
+    }
+
     private func upload(_ url: URL) async {
         guard let endpointURL = URL(string: endpoint), endpointURL.scheme == "https" else {
-            result = "Enter a valid HTTPS upload endpoint in Settings."
+            resultText = "Enter a valid HTTPS upload endpoint in Settings."
             return
         }
         isUploading = true
         defer { isUploading = false }
-
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-
         do {
-            let data = try Data(contentsOf: url)
+            let fileData = try Data(contentsOf: url)
             let boundary = "NextSolution-\(UUID().uuidString)"
             var body = Data()
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(url.lastPathComponent)\"\r\n".data(using: .utf8)!)
-            body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
-            body.append(data)
-            body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
-
+            body.append(Data("--\(boundary)\r\n".utf8))
+            body.append(Data("Content-Disposition: form-data; name=\"file\"; filename=\"\(url.lastPathComponent)\"\r\n".utf8))
+            body.append(Data("Content-Type: application/octet-stream\r\n\r\n".utf8))
+            body.append(fileData)
+            body.append(Data("\r\n--\(boundary)--\r\n".utf8))
             var request = URLRequest(url: endpointURL)
             request.httpMethod = "POST"
             request.httpBody = body
+            request.timeoutInterval = 120
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
             if !token.isEmpty { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-            request.timeoutInterval = 120
-
-            let (responseData, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-            let text = String(data: responseData, encoding: .utf8) ?? ""
-            result = (200...299).contains(status) ? "Uploaded successfully. \(text)" : "Server returned HTTP \(status). \(text)"
+            let text = String(data: data, encoding: .utf8) ?? ""
+            resultText = (200...299).contains(status) ? "Uploaded successfully. \(text)" : "Server returned HTTP \(status). \(text)"
         } catch {
-            result = "Upload failed: \(error.localizedDescription)"
+            resultText = "Upload failed: \(error.localizedDescription)"
         }
     }
 }
@@ -337,20 +277,18 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Download Feed") {
-                    LabeledContent("Server", value: "nextsolution.app")
-                    Text(defaultFeedURL).font(.caption.monospaced()).textSelection(.enabled)
+                Section(header: Text("Download Feed")) {
+                    HStack { Text("Server"); Spacer(); Text("nextsolution.app").foregroundColor(.secondary) }
+                    Text(feedURLString).font(.caption.monospaced()).textSelection(.enabled)
                 }
-                Section("Optional Upload Backend") {
+                Section(header: Text("Optional Upload Backend"), footer: Text("Download needs no token. Upload credentials stay on this device and are only sent to the HTTPS endpoint you configure.")) {
                     TextField("https://your-upload-endpoint", text: $endpoint)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
                     SecureField("Bearer token (optional)", text: $token)
-                } footer: {
-                    Text("Download does not need a token. Upload credentials stay on this device and are only sent to the endpoint you configure.")
                 }
-                Section("Workflow") {
-                    Text("New DEBs/TIPAs published by the NextSolution GitHub build pipeline appear in the Files tab after Refresh. Downloaded files are stored in this app's Documents/Downloads folder and can be shared directly to Sileo, Zebra, TrollStore, Filza or Files when those apps support the file type.")
+                Section(header: Text("Workflow")) {
+                    Text("New DEBs or TIPAs published by the NextSolution GitHub build pipeline appear in Files after Refresh. Downloaded files are saved under this app's Documents/Downloads folder and can be shared to Sileo, Zebra, TrollStore, Filza or Files when those apps support the file type.")
                         .font(.footnote)
                 }
             }
