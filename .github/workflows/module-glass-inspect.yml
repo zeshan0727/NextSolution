@@ -23,8 +23,14 @@ jobs:
           dpkg-deb -R debfiles/NextAura_cc_module_backgrounds_1.0.9_RootHide.deb /tmp/mg-main
           echo '===== RUNTIME CONTROL ====='
           cat /tmp/mg-runtime/DEBIAN/control
+          echo '===== RUNTIME POSTINST ====='
+          cat /tmp/mg-runtime/DEBIAN/postinst || true
           echo '===== MAIN CONTROL ====='
           cat /tmp/mg-main/DEBIAN/control
+          echo '===== MAIN POSTINST ====='
+          cat /tmp/mg-main/DEBIAN/postinst || true
+          echo '===== MAIN PREFERENCELOADER PLIST ====='
+          cat /tmp/mg-main/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist || true
           echo '===== RUNTIME FILE TREE ====='
           find /tmp/mg-runtime -type f -printf '%P\n' | sort
           echo '===== MAIN FILE TREE ====='
@@ -34,10 +40,13 @@ jobs:
           echo "===== DYLIB: ${DYLIB:-none} ====="
           if [ -n "${DYLIB:-}" ]; then
             file "$DYLIB"
-            echo '===== RELEVANT STRINGS ====='
-            strings -a "$DYLIB" | grep -Ei 'ccbackground|moduleglass|nextaura|preferences|pref|plist|volume|brightness|media|record|image|png|jpg|jpeg|library|root|expanded|compact|container|slider|diagnostic|nextlog' | head -n 300 || true
+            echo '===== ALL PRINTABLE STRINGS ====='
+            strings -a "$DYLIB" | head -n 1200 || true
+            echo '===== SYMBOLS/LOAD COMMANDS IF AVAILABLE ====='
+            command -v llvm-objdump >/dev/null && llvm-objdump --macho --dylibs-used "$DYLIB" || true
+            command -v llvm-nm >/dev/null && llvm-nm "$DYLIB" | head -n 500 || true
           fi
           if [ -n "${PLIST:-}" ]; then
-            echo "===== FIRST PLIST: $PLIST ====="
+            echo "===== FILTER PLIST: $PLIST ====="
             cat "$PLIST" || true
           fi
