@@ -1,0 +1,71 @@
+name: Sync Sileo Repo to Website
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sync-sileo-repo-to-site.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-sileo-repo-to-site
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Copy Sileo repository files into website root
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="$RUNNER_TEMP/sileo"
+          git clone --depth 1 https://github.com/zeshan0727/zeshan0727.github.io.git "$SRC"
+          cp "$SRC/Packages" ./Packages
+          for f in Packages.gz Packages.bz2 Packages.xz Packages.zst Release RepoIcon.png NextLockIcon.png; do
+            [ -f "$SRC/$f" ] && cp "$SRC/$f" "./$f"
+          done
+          rm -rf ./debfiles ./depictions
+          cp -R "$SRC/debfiles" ./debfiles
+          cp -R "$SRC/depictions" ./depictions
+
+          grep -q '^Package: com.nextsolution.lockglyphtime$' Packages
+          grep -q '^Version: 1.0.1$' Packages
+          grep -q '^Name: NextLock$' Packages
+          test -f debfiles/NextLock_1.0.1_Rootless.deb
+          test -f debfiles/NextLock_1.0.1_RootHide.deb
+          test -f depictions/nextlock.html
+          test -f NextLockIcon.png
+          test "$(cat CNAME)" = "nextsolution.cc"
+
+      - name: Check NextLock article image resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          for p in [Path('assets/articles/nextlock/nextlock-hero.jpg'), Path('assets/articles/nextlock/nextlock-features.jpg')]:
+              im=Image.open(p)
+              print(f'{p}: {im.width}x{im.height}, mode={im.mode}, bytes={p.stat().st_size}')
+          PY
+
+      - name: Commit Sileo metadata to website
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release RepoIcon.png NextLockIcon.png debfiles depictions
+          git diff --cached --check
+          git commit -m "Serve Sileo repo from nextsolution.cc" || exit 0
+          git pull --rebase origin main
+          git push origin main
