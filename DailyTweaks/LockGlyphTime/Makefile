@@ -10,6 +10,9 @@ INSTALL_TARGET_PROCESSES = SpringBoard
 
 include $(THEOS)/makefiles/common.mk
 
+before-all::
+	python3 prefs/generate_root.py
+
 TWEAK_NAME = LockGlyphTime
 LockGlyphTime_FILES = Tweak.xm
 LockGlyphTime_CFLAGS = -fobjc-arc
