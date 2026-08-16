@@ -8,9 +8,10 @@ include $(THEOS)/makefiles/common.mk
 
 before-all::
 	python3 prefs/generate_root.py
+	python3 patch_v023.py
 
 TWEAK_NAME = LockGlyphTime
-LockGlyphTime_FILES = RuntimeV022.xm
+LockGlyphTime_FILES = RuntimeV023.xm
 LockGlyphTime_CFLAGS = -fobjc-arc
 LockGlyphTime_FRAMEWORKS = UIKit Foundation QuartzCore
 
