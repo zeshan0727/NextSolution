@@ -87,7 +87,21 @@ static NSString *AuraPlistForLabel(NSString *label) {
 }
 
 - (NSString *)ccBackgroundDirectory {
-    return @"/var/mobile/Library/NextSolutionTweaks/CCBackgrounds";
+    NSArray<NSString *> *libraries = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+    NSString *library = libraries.firstObject ?: @"/var/mobile/Library";
+    NSString *preferences = [library stringByAppendingPathComponent:@"Preferences"];
+    return [preferences stringByAppendingPathComponent:@"NextSolutionTweaks/CCBackgrounds"];
+}
+
+- (void)removeCCModuleFilesForSlot:(NSString *)slot {
+    if (!slot.length) return;
+    NSString *dir = [self ccBackgroundDirectory];
+    NSFileManager *fm = NSFileManager.defaultManager;
+    for (NSString *name in [fm contentsOfDirectoryAtPath:dir error:nil]) {
+        if ([name isEqualToString:slot] || [name hasPrefix:[slot stringByAppendingString:@"."]]) {
+            [fm removeItemAtPath:[dir stringByAppendingPathComponent:name] error:nil];
+        }
+    }
 }
 
 - (void)configureCCModuleBackground:(PSSpecifier *)specifier {
@@ -107,12 +121,7 @@ static NSString *AuraPlistForLabel(NSString *label) {
         [weakSelf presentViewController:picker animated:YES completion:nil];
     }]];
     [sheet addAction:[UIAlertAction actionWithTitle:@"Remove" style:UIAlertActionStyleDestructive handler:^(__unused UIAlertAction *a) {
-        NSString *dir = [weakSelf ccBackgroundDirectory];
-        NSFileManager *fm = NSFileManager.defaultManager;
-        for (NSString *name in [fm contentsOfDirectoryAtPath:dir error:nil]) {
-            if ([name hasPrefix:[slot stringByAppendingString:@"."]] || [name isEqualToString:slot])
-                [fm removeItemAtPath:[dir stringByAppendingPathComponent:name] error:nil];
-        }
+        [weakSelf removeCCModuleFilesForSlot:slot];
         AuraPost(AuraChangedNotification);
     }]];
     [sheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
@@ -128,11 +137,18 @@ static NSString *AuraPlistForLabel(NSString *label) {
     NSString *slot = self.pendingModuleSlot;
     [picker dismissViewControllerAnimated:YES completion:nil];
     if (!image || !slot.length) return;
+
     NSString *dir = [self ccBackgroundDirectory];
-    [NSFileManager.defaultManager createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
-    NSData *data = UIImagePNGRepresentation(image);
-    [data writeToFile:[dir stringByAppendingPathComponent:[slot stringByAppendingString:@".png"]] atomically:YES];
-    AuraPost(AuraChangedNotification);
+    NSFileManager *fm = NSFileManager.defaultManager;
+    [fm createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+    [self removeCCModuleFilesForSlot:slot];
+
+    // The existing CCModuleBackgrounds runtime reads <slot>.jpg specifically.
+    NSData *data = UIImageJPEGRepresentation(image, 0.92);
+    NSString *path = [dir stringByAppendingPathComponent:[slot stringByAppendingString:@".jpg"]];
+    if ([data writeToFile:path atomically:YES]) {
+        AuraPost(AuraChangedNotification);
+    }
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
@@ -142,8 +158,9 @@ static NSString *AuraPlistForLabel(NSString *label) {
 - (void)resetAllCCModuleBackgrounds:(id)sender {
     NSString *dir = [self ccBackgroundDirectory];
     NSFileManager *fm = NSFileManager.defaultManager;
-    for (NSString *name in [fm contentsOfDirectoryAtPath:dir error:nil])
+    for (NSString *name in [fm contentsOfDirectoryAtPath:dir error:nil]) {
         [fm removeItemAtPath:[dir stringByAppendingPathComponent:name] error:nil];
+    }
     AuraPost(AuraChangedNotification);
 }
 
