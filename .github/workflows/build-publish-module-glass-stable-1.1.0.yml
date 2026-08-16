@@ -43,11 +43,13 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/module_glass_stable_1_1_0.py
+          python3 scripts/module_glass_stable_linkage_fix.py
           test -f source/ModuleGlass/Tweak.mm
           test ! -f source/ModuleGlass/Tweak.m
           grep -q '^Version: 1.1.0$' source/ModuleGlass/control
           grep -q 'CCModuleBackgrounds_FILES = Tweak.mm' source/ModuleGlass/Makefile
           grep -q 'CCModuleBackgrounds_CXXFLAGS = -std=c++17' source/ModuleGlass/Makefile
+          grep -q 'extern "C" void MSHookMessageEx' source/ModuleGlass/Tweak.mm
 
       - name: Audit renderer invariants
         shell: bash
@@ -64,6 +66,7 @@ jobs:
           grep -q 'expanded-bypass' "$S"
           grep -q 'live-native' "$S"
           grep -q 'CCModuleVolumeIconColor' "$S"
+          grep -q 'extern "C" void MSHookMessageEx' "$S"
 
           # Regression blockers from the two broken releases.
           ! grep -q 'MGVolumeValueSizedFrame' "$S"
@@ -72,7 +75,7 @@ jobs:
           ! grep -q 'imageFrame = MGVolume' "$S"
           ! grep -Eq 'root\.(frame|bounds)[[:space:]]*=' "$S"
 
-          # Standard modules must not enter the recursive Volume alpha suppressor.
+          # Standard modules must not enter the recursive Volume/Brightness suppressors.
           python3 - <<'PY'
           from pathlib import Path
           s=Path('source/ModuleGlass/Tweak.mm').read_text()
@@ -171,6 +174,7 @@ jobs:
           test ! -f source/ModuleGlass/Tweak.m
           grep -q '^Version: 1.1.0$' source/ModuleGlass/control
           grep -q 'stable-standard-passive-foreground-safe' source/ModuleGlass/Tweak.mm
+          grep -q 'extern "C" void MSHookMessageEx' source/ModuleGlass/Tweak.mm
           ! grep -q 'MGRepairCoveredForegroundImages' source/ModuleGlass/Tweak.mm
 
           OUT="$RUNNER_TEMP/release"
@@ -227,7 +231,7 @@ jobs:
           p.write_text(t)
           PY
 
-          git add -A source/ModuleGlass scripts/module_glass_stable_1_1_0.py \
+          git add -A source/ModuleGlass scripts/module_glass_stable_1_1_0.py scripts/module_glass_stable_linkage_fix.py \
             .github/workflows/build-publish-module-glass-stable-1.1.0.yml \
             debfiles/NextAura_Runtime_ccbackgrounds_1.1.0_RootHide.deb \
             debfiles/NextAura_cc_module_backgrounds_1.1.0_RootHide.deb \
