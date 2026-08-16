@@ -152,7 +152,7 @@ jobs:
           }
           manifest.parent.mkdir(parents=True, exist_ok=True)
           manifest.write_text(json.dumps(payload, indent=2) + "\n")
-          assert "nextsolution.app" not in manifest.read_text()
+          assert all((not str(x.get("url", "")).startswith("http")) or ("nextsolution.cc" in str(x.get("url", ""))) for x in files)
           PY
           git -C "$SITE" config user.name "github-actions[bot]"
           git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
