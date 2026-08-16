@@ -9,8 +9,8 @@
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>LockGlyphTimePrefs</string>
     <key>CFBundlePackageType</key><string>BNDL</string>
-    <key>CFBundleShortVersionString</key><string>0.2.1</string>
-    <key>CFBundleVersion</key><string>3</string>
+    <key>CFBundleShortVersionString</key><string>0.2.2</string>
+    <key>CFBundleVersion</key><string>4</string>
     <key>NSPrincipalClass</key><string>LGTListController</string>
 </dict>
 </plist>
