@@ -26,7 +26,7 @@ jobs:
       - name: Install tools
         run: |
           brew install dpkg ldid xz zstd
-          python3 -m pip install --user pillow
+          python3 -m pip install --break-system-packages pillow
 
       - name: Build current Notification Island runtime
         shell: bash
@@ -138,8 +138,6 @@ jobs:
                   if 'com.nextsolution.unlockvibrate' not in conflict:
                       raise SystemExit(f'Missing legacy NextAura conflict: {pkg}')
 
-                  # Visible DEBs should only register their PreferenceLoader entry;
-                  # category pages themselves must live in the shared bundle runtime.
                   extract = Path(tempfile.mkdtemp())
                   subprocess.run(['dpkg-deb','-x',str(deb),str(extract)], check=True)
                   loader = extract / 'Library/PreferenceLoader/Preferences' / f'NextAura-{slug}.plist'
@@ -158,8 +156,6 @@ jobs:
           if len(runtimes) != 10 or prefs_deb is None:
               raise SystemExit(f'Expected 10 runtimes including preferences, found {len(runtimes)}')
 
-          # Critical blank-page regression check: the Preferences runtime itself must
-          # contain controller binary + every referenced page + every category icon.
           pref_root = Path(tempfile.mkdtemp())
           subprocess.run(['dpkg-deb','-x',str(prefs_deb),str(pref_root)], check=True)
           bundle = pref_root / 'Library/PreferenceBundles/UnlockVibratePrefs.bundle'
