@@ -22,12 +22,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force correct NextSolution domain
+      - name: Validate source configuration
         run: |
           set -euo pipefail
-          sed -i '' 's/nextsolution\.app/nextsolution.cc/g' TransferApp/Sources/NextSolutionTransferApp.swift
           grep -q 'https://nextsolution.cc/transfer/index.json' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'UIDocumentPickerViewController' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'UIViewControllerRepresentable' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'forOpeningContentTypes' TransferApp/Sources/NextSolutionTransferApp.swift
           ! grep -R 'nextsolution\.app' TransferApp --include='*.swift' --include='*.yml' --include='*.yaml'
+          grep -q 'MARKETING_VERSION: 1.1.2' TransferApp/project.yml
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -58,8 +61,8 @@ jobs:
           set -euo pipefail
           mkdir -p Payload output
           cp -R build/Build/Products/Release-iphoneos/NextSolutionTransfer.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload output/NextSolution-Transfer-1.1.1.tipa
-          shasum -a 256 output/NextSolution-Transfer-1.1.1.tipa > output/NextSolution-Transfer-1.1.1.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload output/NextSolution-Transfer-1.1.2.tipa
+          shasum -a 256 output/NextSolution-Transfer-1.1.2.tipa > output/NextSolution-Transfer-1.1.2.sha256
 
       - name: Validate package
         working-directory: TransferApp
@@ -67,12 +70,15 @@ jobs:
           set -euo pipefail
           rm -rf verify
           mkdir verify
-          ditto -x -k output/NextSolution-Transfer-1.1.1.tipa verify
-          test -d verify/Payload/NextSolutionTransfer.app
-          test -f verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer
-          BIN=verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer
+          ditto -x -k output/NextSolution-Transfer-1.1.2.tipa verify
+          APP=verify/Payload/NextSolutionTransfer.app
+          BIN="$APP/NextSolutionTransfer"
+          test -d "$APP"
+          test -f "$BIN"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.2"
           strings "$BIN" | grep -q 'nextsolution.cc/transfer/index.json'
           ! strings "$BIN" | grep -q 'nextsolution.app'
+          strings "$BIN" | grep -q 'UIDocumentPickerViewController'
           strings "$BIN" | grep -q 'api.github.com/repos/'
           strings "$BIN" | grep -q 'transfer/uploads/'
           strings "$BIN" | grep -q 'GitHub upload token'
@@ -80,10 +86,10 @@ jobs:
       - name: Upload TIPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextSolution-Transfer-1.1.1
+          name: NextSolution-Transfer-1.1.2
           path: |
-            TransferApp/output/NextSolution-Transfer-1.1.1.tipa
-            TransferApp/output/NextSolution-Transfer-1.1.1.sha256
+            TransferApp/output/NextSolution-Transfer-1.1.2.tipa
+            TransferApp/output/NextSolution-Transfer-1.1.2.sha256
           if-no-files-found: error
 
       - name: Publish app to NextSolution Transfer feed
@@ -95,11 +101,11 @@ jobs:
           OUT="$GITHUB_WORKSPACE/TransferApp/output"
           SITE="$RUNNER_TEMP/nextsolution-site"
           git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
-          DEST="$SITE/transfer/files/NextSolutionTransfer/1.1.1"
+          DEST="$SITE/transfer/files/NextSolutionTransfer/1.1.2"
           mkdir -p "$DEST"
-          cp "$OUT/NextSolution-Transfer-1.1.1.tipa" "$DEST/"
-          cp "$OUT/NextSolution-Transfer-1.1.1.sha256" "$DEST/"
-          python3 - "$SITE/transfer/index.json" "$OUT/NextSolution-Transfer-1.1.1.tipa" <<'PY'
+          cp "$OUT/NextSolution-Transfer-1.1.2.tipa" "$DEST/"
+          cp "$OUT/NextSolution-Transfer-1.1.2.sha256" "$DEST/"
+          python3 - "$SITE/transfer/index.json" "$OUT/NextSolution-Transfer-1.1.2.tipa" <<'PY'
           import json, pathlib, hashlib, datetime, sys
           manifest = pathlib.Path(sys.argv[1])
           tipa = pathlib.Path(sys.argv[2])
@@ -117,15 +123,15 @@ jobs:
               files.append(item)
 
           files.insert(0, {
-              "id": "nextsolution-transfer-1.1.1",
-              "name": "NextSolution Transfer 1.1.1",
-              "fileName": "NextSolution-Transfer-1.1.1.tipa",
+              "id": "nextsolution-transfer-1.1.2",
+              "name": "NextSolution Transfer 1.1.2",
+              "fileName": "NextSolution-Transfer-1.1.2.tipa",
               "type": "tipa",
               "platform": "TrollStore / iOS 16+",
-              "version": "1.1.1",
-              "url": "https://nextsolution.cc/transfer/files/NextSolutionTransfer/1.1.1/NextSolution-Transfer-1.1.1.tipa",
+              "version": "1.1.2",
+              "url": "https://nextsolution.cc/transfer/files/NextSolutionTransfer/1.1.2/NextSolution-Transfer-1.1.2.tipa",
               "sha256": hashlib.sha256(tipa.read_bytes()).hexdigest(),
-              "notes": "Transfer app using nextsolution.cc with direct downloads and secure GitHub-repo uploads."
+              "notes": "Transfer app using nextsolution.cc with native iOS file picker and secure GitHub-repo uploads."
           })
           payload = {
               "version": 1,
@@ -139,6 +145,6 @@ jobs:
           git -C "$SITE" config user.name "github-actions[bot]"
           git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C "$SITE" add transfer
-          git -C "$SITE" commit -m "Publish NextSolution Transfer 1.1.1 for nextsolution.cc" || exit 0
+          git -C "$SITE" commit -m "Publish NextSolution Transfer 1.1.2" || exit 0
           git -C "$SITE" pull --rebase origin main
           git -C "$SITE" push origin main
