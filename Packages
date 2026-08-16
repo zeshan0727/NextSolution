@@ -1092,10 +1092,10 @@ Architecture: iphoneos-arm64e
 Maintainer: Next Solution
 Depends: firmware (>= 15.0), mobilesubstrate
 Filename: ./debfiles/NextDiagnosticsRuntime_1.0.0_RootHide.deb
-Size: 11940
-MD5sum: 32ca7e90019a9da5c5f89f51275bef1f
-SHA1: 93e442567670e32161f13de30132a4a55221d4a2
-SHA256: e5629e44726bda1b0440350415700f47c59f9144aac8511a5c207cd188ef5e1e
+Size: 11952
+MD5sum: a55af2c4c0b3340fbdec377914349959
+SHA1: a15dd8524c3d1804826a1b537a38563532be9037
+SHA256: e682fac6c961689a155cd1ec29306c1cd2a07da9577c8053c500a92b6d9726e9
 Section: System
 Priority: optional
 Homepage: https://nextsolution.cc/
