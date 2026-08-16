@@ -1,0 +1,457 @@
+name: Build and Publish Module Glass 1.0.16 Native Hosts
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-publish-module-glass-1.0.16-native-hosts.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextsolution-module-glass-1.0.16
+  cancel-in-progress: false
+
+jobs:
+  build-validate-publish:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install packaging tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Install pinned RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          T="$RUNNER_TEMP/theos-roothide"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+
+      - name: Patch native host selection and Brightness fill handling
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('source/ModuleGlass/Tweak.m')
+          t=p.read_text()
+
+          old='''static void MGCopyCornerGeometry(UIImageView *imageView, UIView *source, UIView *fallback) {
+              CALayer *layer = source.layer ?: fallback.layer;
+              CGFloat radius = layer.cornerRadius;
+              if (radius <= 0.0) radius = fallback.layer.cornerRadius;
+              imageView.layer.cornerRadius = MAX(0.0, radius);
+              if (@available(iOS 13.0, *)) imageView.layer.cornerCurve = layer.cornerCurve ?: kCACornerCurveContinuous;
+              imageView.layer.maskedCorners = layer.maskedCorners ?: kCALayerAllCorners;
+          }
+
+          static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent, UIView **outAnchor, CGRect *outFrame, UIView **outCornerSource, NSString **outStrategy) {
+              BOOL sliderSlot = [slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"];
+              UIView *scope = root;
+              NSString *strategy = @"generic-native";
+
+              if (sliderSlot) {
+                  UIView *slider = MGFindSliderView(root);
+                  if (slider) {
+                      scope = slider;
+                      strategy = @"slider-native";
+                  } else {
+                      strategy = @"slider-fallback-root";
+                  }
+              }
+
+              UIView *native = MGFindNativeBackground(scope);
+              if (native.superview) {
+                  if (outParent) *outParent = native.superview;
+                  if (outAnchor) *outAnchor = native;
+                  if (outFrame) *outFrame = native.frame;
+                  if (outCornerSource) *outCornerSource = native;
+                  if (outStrategy) *outStrategy = strategy;
+                  return YES;
+              }
+
+              if (sliderSlot && scope != root) {
+                  if (outParent) *outParent = scope;
+                  if (outAnchor) *outAnchor = nil;
+                  if (outFrame) *outFrame = scope.bounds;
+                  if (outCornerSource) *outCornerSource = scope;
+                  if (outStrategy) *outStrategy = @"slider-index0";
+                  return YES;
+              }
+
+              if (outParent) *outParent = root;
+              if (outAnchor) *outAnchor = nil;
+              if (outFrame) *outFrame = root.bounds;
+              if (outCornerSource) *outCornerSource = root;
+              if (outStrategy) *outStrategy = @"root-index0";
+              return YES;
+          }'''
+
+          new='''static void MGCopyCornerGeometry(UIImageView *imageView, UIView *source, UIView *fallback) {
+              UIView *geometrySource = source ?: fallback;
+              CALayer *layer = geometrySource.layer ?: fallback.layer;
+              CGFloat radius = layer.cornerRadius;
+              if (radius <= 0.0) radius = fallback.layer.cornerRadius;
+              imageView.layer.cornerRadius = MAX(0.0, radius);
+              if (@available(iOS 13.0, *)) imageView.layer.cornerCurve = layer.cornerCurve ?: kCACornerCurveContinuous;
+              imageView.layer.maskedCorners = layer.maskedCorners ?: kCALayerAllCorners;
+              imageView.clipsToBounds = YES;
+              imageView.layer.masksToBounds = YES;
+              if (layer.mask) {
+                  CALayer *maskCopy = [layer.mask copy];
+                  maskCopy.frame = imageView.bounds;
+                  imageView.layer.mask = maskCopy;
+              } else {
+                  imageView.layer.mask = nil;
+              }
+          }
+
+          static CGFloat MGViewArea(UIView *view) {
+              if (!view) return 0.0;
+              return MAX(0.0, CGRectGetWidth(view.bounds) * CGRectGetHeight(view.bounds));
+          }
+
+          static NSInteger MGCompactHostScore(UIView *view, UIView *root, UIView *native) {
+              if (!view || !root) return NSIntegerMin;
+              CGFloat rootArea = MAX(1.0, MGViewArea(root));
+              CGFloat area = MGViewArea(view);
+              if (area < 16.0) return NSIntegerMin;
+              CGFloat ratio = area / rootArea;
+              NSInteger score = 0;
+              if (view.layer.mask) score += 7000;
+              if (view.clipsToBounds || view.layer.masksToBounds) score += 3000;
+              if (view.layer.cornerRadius > 1.0) score += 2400;
+              if (ratio >= 0.72 && ratio <= 1.28) score += 2200;
+              else if (ratio >= 0.45 && ratio <= 1.45) score += 900;
+              else score -= 1200;
+              NSString *name = NSStringFromClass(view.class).lowercaseString ?: @"";
+              if ([name containsString:@"module"] || [name containsString:@"container"]) score += 500;
+              if ([name containsString:@"background"] || [name containsString:@"material"]) score += 650;
+              if (view == native) score += 350;
+              if (view == root) score -= 250;
+              return score;
+          }
+
+          static UIView *MGFindCompactClipHost(UIView *native, UIView *root) {
+              if (!native || !root) return native ?: root;
+              UIView *best = native;
+              NSInteger bestScore = MGCompactHostScore(native, root, native);
+              UIView *cursor = native.superview;
+              NSInteger depth = 0;
+              while (cursor && depth++ < 8) {
+                  NSInteger score = MGCompactHostScore(cursor, root, native);
+                  if (score > bestScore) { best = cursor; bestScore = score; }
+                  if (cursor == root) break;
+                  cursor = cursor.superview;
+              }
+              return best ?: native;
+          }
+
+          static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent, UIView **outAnchor, CGRect *outFrame, UIView **outCornerSource, NSString **outStrategy) {
+              // Freeze the already-validated Volume path exactly as it was in 1.0.15.
+              if ([slot isEqualToString:@"volume"]) {
+                  UIView *scope = MGFindSliderView(root) ?: root;
+                  UIView *native = MGFindNativeBackground(scope);
+                  if (native.superview) {
+                      if (outParent) *outParent = native.superview;
+                      if (outAnchor) *outAnchor = native;
+                      if (outFrame) *outFrame = native.frame;
+                      if (outCornerSource) *outCornerSource = native;
+                      if (outStrategy) *outStrategy = @"slider-native";
+                      return YES;
+                  }
+                  if (scope != root) {
+                      if (outParent) *outParent = scope;
+                      if (outAnchor) *outAnchor = nil;
+                      if (outFrame) *outFrame = scope.bounds;
+                      if (outCornerSource) *outCornerSource = scope;
+                      if (outStrategy) *outStrategy = @"slider-index0";
+                      return YES;
+                  }
+              }
+
+              // Brightness remains a slider, but uses its own fill-aware visual pass below.
+              if ([slot isEqualToString:@"brightness"]) {
+                  UIView *scope = MGFindSliderView(root) ?: root;
+                  UIView *native = MGFindNativeBackground(scope);
+                  if (native.superview) {
+                      if (outParent) *outParent = native.superview;
+                      if (outAnchor) *outAnchor = native;
+                      if (outFrame) *outFrame = native.frame;
+                      if (outCornerSource) *outCornerSource = native;
+                      if (outStrategy) *outStrategy = @"brightness-slider-native";
+                      return YES;
+                  }
+                  if (scope != root) {
+                      if (outParent) *outParent = scope;
+                      if (outAnchor) *outAnchor = nil;
+                      if (outFrame) *outFrame = scope.bounds;
+                      if (outCornerSource) *outCornerSource = scope;
+                      if (outStrategy) *outStrategy = @"brightness-slider-index0";
+                      return YES;
+                  }
+              }
+
+              // Standard compact modules: place the image inside Apple's own clipping/mask host.
+              UIView *native = MGFindNativeBackground(root);
+              if (native) {
+                  UIView *host = MGFindCompactClipHost(native, root);
+                  if (outParent) *outParent = host;
+                  if (outAnchor) *outAnchor = nil;
+                  if (outFrame) *outFrame = host.bounds;
+                  if (outCornerSource) *outCornerSource = host;
+                  if (outStrategy) *outStrategy = @"compact-native-host";
+                  return YES;
+              }
+
+              if (outParent) *outParent = root;
+              if (outAnchor) *outAnchor = nil;
+              if (outFrame) *outFrame = root.bounds;
+              if (outCornerSource) *outCornerSource = root;
+              if (outStrategy) *outStrategy = @"root-index0";
+              return YES;
+          }'''
+          if old not in t:
+              raise SystemExit('native insertion block anchor missing')
+          t=t.replace(old,new,1)
+
+          anchor='''static UIColor *MGVolumeColorFromHex(NSString *input) {'''
+          brightness='''static BOOL MGBrightnessObscuringVisual(UIView *view, UIView *slider, UIImageView *imageView) {
+              if (!view || !slider || view == imageView || view.tag == MGImageTag) return NO;
+              if ([imageView isDescendantOfView:view]) return NO;
+              if ([view isKindOfClass:UIControl.class] || [view isKindOfClass:UILabel.class] || [view isKindOfClass:UIButton.class]) return NO;
+
+              CGRect converted = [view convertRect:view.bounds toView:slider];
+              CGFloat sliderArea = MAX(1.0, CGRectGetWidth(slider.bounds) * CGRectGetHeight(slider.bounds));
+              CGFloat area = MAX(0.0, CGRectGetWidth(converted) * CGRectGetHeight(converted));
+              CGFloat ratio = area / sliderArea;
+              if (ratio < 0.08) return NO;
+
+              NSString *name = NSStringFromClass(view.class).lowercaseString ?: @"";
+              BOOL namedForeground = [name containsString:@"label"] || [name containsString:@"glyph"] ||
+                                     [name containsString:@"icon"] || [name containsString:@"button"] ||
+                                     [name containsString:@"text"] || [name containsString:@"percentage"] ||
+                                     [name containsString:@"sun"];
+              if (namedForeground) return NO;
+
+              if ([view isKindOfClass:UIImageView.class] && ratio < 0.16) return NO;
+
+              BOOL namedVisual = [name containsString:@"material"] || [name containsString:@"effect"] ||
+                                 [name containsString:@"blur"] || [name containsString:@"fill"] ||
+                                 [name containsString:@"progress"] || [name containsString:@"background"] ||
+                                 [name containsString:@"tint"] || [name containsString:@"valueindicator"];
+              BOOL largeImageVisual = [view isKindOfClass:UIImageView.class] && ratio >= 0.16;
+              BOOL plainLargeVisual = ([name isEqualToString:@"uiview"] || [name containsString:@"visualeffectsubview"]) && ratio >= 0.18 && !MGVolumeSubtreeHasForeground(view);
+              return namedVisual || largeImageVisual || plainLargeVisual;
+          }
+
+          static NSUInteger MGApplyBrightnessImageMode(UIView *slider, UIImageView *imageView, NSMutableArray<NSString *> *suppressedClasses) {
+              if (!slider || !imageView) return 0;
+              NSUInteger count = 0;
+              for (UIView *child in slider.subviews) {
+                  if (child.tag == MGImageTag) continue;
+                  if (MGBrightnessObscuringVisual(child, slider, imageView)) {
+                      if (!objc_getAssociatedObject(child, &MGVolumeOriginalAlphaKey)) {
+                          objc_setAssociatedObject(child, &MGVolumeOriginalAlphaKey, @(child.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                      }
+                      child.alpha = 0.0;
+                      [suppressedClasses addObject:NSStringFromClass(child.class) ?: @"UIView"];
+                      count++;
+                      continue;
+                  }
+                  count += MGApplyBrightnessImageMode(child, imageView, suppressedClasses);
+              }
+              return count;
+          }
+
+          static UIColor *MGVolumeColorFromHex(NSString *input) {'''
+          if anchor not in t:
+              raise SystemExit('brightness helper anchor missing')
+          t=t.replace(anchor,brightness,1)
+
+          old_apply='''                    imageFirstSuppressed=MGApplyVolumeImageMode(imageScope, imageView, classes);
+                      imageFirstSuppressedClasses=classes.copy;
+                      strategy=[NSString stringWithFormat:@"%@-image-first", slot];'''
+          new_apply='''                    if ([slot isEqualToString:@"brightness"]) {
+                          imageFirstSuppressed=MGApplyBrightnessImageMode(imageScope, imageView, classes);
+                          strategy=@"brightness-fill-aware";
+                      } else {
+                          imageFirstSuppressed=MGApplyVolumeImageMode(imageScope, imageView, classes);
+                          strategy=[NSString stringWithFormat:@"%@-image-first", slot];
+                      }
+                      imageFirstSuppressedClasses=classes.copy;'''
+          if old_apply not in t:
+              raise SystemExit('image-first apply anchor missing')
+          t=t.replace(old_apply,new_apply,1)
+
+          t=t.replace('ModuleGlassRuntime 1.0.11 All Modules Image First loaded', 'ModuleGlassRuntime 1.0.12 Native Host Fix loaded')
+          p.write_text(t)
+
+          c=Path('source/ModuleGlass/control')
+          ct=c.read_text()
+          ct=re.sub(r'^Version: .*$', 'Version: 1.0.12', ct, flags=re.M)
+          ct=re.sub(r'^Description: .*$', 'Description: Native-host Module Glass runtime that preserves the validated Volume renderer, adds Brightness fill-aware rendering, and clips standard module images through Apple compact hosts and masks.', ct, flags=re.M)
+          c.write_text(ct)
+          PY
+
+          grep -q '^Version: 1.0.12$' source/ModuleGlass/control
+          grep -q 'compact-native-host' source/ModuleGlass/Tweak.m
+          grep -q 'brightness-fill-aware' source/ModuleGlass/Tweak.m
+          grep -q 'MGFindCompactClipHost' source/ModuleGlass/Tweak.m
+          grep -q 'MGBrightnessObscuringVisual' source/ModuleGlass/Tweak.m
+          grep -q 'ModuleGlassRuntime 1.0.12 Native Host Fix loaded' source/ModuleGlass/Tweak.m
+          grep -q 'if \(\[slot isEqualToString:@"volume"\]\)' source/ModuleGlass/Tweak.m
+
+      - name: Build Module Glass Runtime 1.0.12
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/source/ModuleGlass"
+          OUT="$RUNNER_TEMP/release"
+          STAGE="$RUNNER_TEMP/runtime-stage"
+          export THEOS="$RUNNER_TEMP/theos-roothide"
+          export THEOS_PACKAGE_SCHEME=roothide
+          mkdir -p "$OUT"
+          rm -rf "$P/.theos" "$P/packages" "$STAGE"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$DEB"
+          dpkg-deb -R "$DEB" "$STAGE"
+          test -f "$STAGE/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib"
+          cat > "$STAGE/DEBIAN/postinst" <<'SH'
+          #!/bin/sh
+          killall -9 SpringBoard 2>/dev/null || true
+          exit 0
+          SH
+          chmod 0755 "$STAGE/DEBIAN/postinst"
+          dpkg-deb -b "$STAGE" "$OUT/NextAura_Runtime_ccbackgrounds_1.0.12_RootHide.deb"
+
+      - name: Build Module Glass 1.0.16 wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/release"
+          STAGE="$RUNNER_TEMP/wrapper-stage"
+          rm -rf "$STAGE"
+          dpkg-deb -R debfiles/NextAura_cc_module_backgrounds_1.0.15_RootHide.deb "$STAGE"
+          python3 - "$STAGE/DEBIAN/control" <<'PY'
+          from pathlib import Path
+          import re,sys
+          p=Path(sys.argv[1]); t=p.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.0.16', t, flags=re.M)
+          t=re.sub(r'com\.nextsolution\.nextaura\.runtime\.ccbackgrounds \(>= [^)]+\)', 'com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.12)', t)
+          t=re.sub(r'^Description: .*$', 'Description: Native-host Control Center backgrounds: validated Volume preserved, Brightness fill handling corrected, and standard modules clipped through Apple compact module hosts.', t, flags=re.M)
+          p.write_text(t)
+          PY
+          grep -q '^Version: 1.0.16$' "$STAGE/DEBIAN/control"
+          grep -q 'runtime.ccbackgrounds (>= 1.0.12)' "$STAGE/DEBIAN/control"
+          dpkg-deb -b "$STAGE" "$OUT/NextAura_cc_module_backgrounds_1.0.16_RootHide.deb"
+
+      - name: Validate packages and runtime markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/release"
+          R="$OUT/NextAura_Runtime_ccbackgrounds_1.0.12_RootHide.deb"
+          M="$OUT/NextAura_cc_module_backgrounds_1.0.16_RootHide.deb"
+          test "$(dpkg-deb -f "$R" Version)" = 1.0.12
+          test "$(dpkg-deb -f "$M" Version)" = 1.0.16
+          test "$(dpkg-deb -f "$R" Architecture)" = iphoneos-arm64e
+          dpkg-deb -f "$M" Depends | grep -q 'runtime.ccbackgrounds (>= 1.0.12)'
+          X=$(mktemp -d)
+          dpkg-deb -x "$R" "$X"
+          D="$X/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib"
+          lipo -info "$D" | grep -q arm64
+          lipo -info "$D" | grep -q arm64e
+          strings -a "$D" | grep -q 'ModuleGlassRuntime 1.0.12 Native Host Fix loaded'
+          strings -a "$D" | grep -q 'compact-native-host'
+          strings -a "$D" | grep -q 'brightness-fill-aware'
+          strings -a "$D" | grep -q 'slider-native'
+          strings -a "$D" | grep -q 'live-native'
+          strings -a "$D" | grep -q 'CCModuleVolumeIconColor'
+          rm -rf "$X"
+          shasum -a 256 "$R" "$M"
+
+      - name: Sync latest main preserving tested source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git pull --rebase --autostash origin main
+          grep -q '^Version: 1.0.12$' source/ModuleGlass/control
+          grep -q 'compact-native-host' source/ModuleGlass/Tweak.m
+          grep -q 'brightness-fill-aware' source/ModuleGlass/Tweak.m
+
+      - name: Publish packages and refresh repo indexes
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/release"
+          SCAN="$RUNNER_TEMP/scan"
+          mkdir -p debfiles "$SCAN"
+          cp "$OUT/NextAura_Runtime_ccbackgrounds_1.0.12_RootHide.deb" debfiles/
+          cp "$OUT/NextAura_cc_module_backgrounds_1.0.16_RootHide.deb" debfiles/
+          cp "$OUT"/*.deb "$SCAN/"
+
+          dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/stanzas"
+          python3 - "$RUNNER_TEMP/stanzas" <<'PY'
+          from pathlib import Path
+          import os,re,sys
+          s=Path(sys.argv[1])
+          lines=[]
+          for line in s.read_text().splitlines():
+              if line.startswith('Filename: '): line='Filename: ./debfiles/'+os.path.basename(line.split(': ',1)[1])
+              lines.append(line)
+          s.write_text('\n'.join(lines)+'\n')
+          ids={'com.nextsolution.nextaura.runtime.ccbackgrounds','com.nextsolution.nextaura.cc-module-backgrounds'}
+          pkg=Path('Packages')
+          rows=[x.strip() for x in re.split(r'\n\s*\n',pkg.read_text()) if x.strip()]
+          def pid(row):
+              m=re.search(r'^Package: (.+)$',row,re.M); return m.group(1).strip() if m else ''
+          rows=[r for r in rows if pid(r) not in ids]
+          new=[x.strip() for x in re.split(r'\n\s*\n',s.read_text()) if x.strip()]
+          pkg.write_text('\n\n'.join(rows+new)+'\n')
+          PY
+
+          test "$(grep -c '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages)" -eq 1
+          test "$(grep -c '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages)" -eq 1
+          grep -A20 '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages | grep -q '^Version: 1.0.16$'
+          grep -A20 '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages | grep -q '^Version: 1.0.12$'
+          grep -A20 '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages | grep -q 'runtime.ccbackgrounds (>= 1.0.12)'
+
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          python3 - <<'PY'
+          from pathlib import Path
+          from datetime import datetime,timezone
+          import re
+          p=Path('Release'); t=p.read_text()
+          m=re.search(r'^Version:\s*(\d+)\.(\d+)\.(\d+)\s*$',t,re.M)
+          if m:
+              a,b,c=map(int,m.groups()); t=re.sub(r'^Version: .*$',f'Version: {a}.{b}.{c+1}',t,flags=re.M)
+          t=re.sub(r'^Date: .*$', 'Date: '+datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'), t, flags=re.M)
+          p.write_text(t)
+          PY
+
+          git add source/ModuleGlass/Tweak.m source/ModuleGlass/control \
+            debfiles/NextAura_Runtime_ccbackgrounds_1.0.12_RootHide.deb \
+            debfiles/NextAura_cc_module_backgrounds_1.0.16_RootHide.deb \
+            Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
+          git diff --cached --check
+          git commit -m 'Publish Module Glass 1.0.16 native host fix'
+          git push origin HEAD:main
