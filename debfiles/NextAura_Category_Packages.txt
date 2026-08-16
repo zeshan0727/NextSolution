@@ -1,82 +1,82 @@
-NextAura modular category packages
-Category version: 1.0.1
+Aura modular category packages
+Category version: 1.0.2
 Code runtime version: 1.0.0
-Preferences runtime version: 1.0.1
+Preferences runtime version: 1.0.2
 
 USER-FACING CATEGORIES
 Aura Haptics
   Package: com.nextsolution.nextaura.feedback
-  File: NextAura_feedback_1.0.1_RootHide.deb
+  File: NextAura_feedback_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/feedback.png
 Aura Thermal
   Package: com.nextsolution.nextaura.thermal-sweat
-  File: NextAura_thermal_sweat_1.0.1_RootHide.deb
+  File: NextAura_thermal_sweat_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
 Aura Home
   Package: com.nextsolution.nextaura.home-screen
-  File: NextAura_home_screen_1.0.1_RootHide.deb
+  File: NextAura_home_screen_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/home-screen.png
 Aura Dock
   Package: com.nextsolution.nextaura.dock-folders
-  File: NextAura_dock_folders_1.0.1_RootHide.deb
+  File: NextAura_dock_folders_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/dock-folders.png
 Aura Lock
   Package: com.nextsolution.nextaura.lock-screen
-  File: NextAura_lock_screen_1.0.1_RootHide.deb
+  File: NextAura_lock_screen_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/lock-screen.png
 Aura Status
   Package: com.nextsolution.nextaura.status-bar
-  File: NextAura_status_bar_1.0.1_RootHide.deb
+  File: NextAura_status_bar_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/status-bar.png
 Aura Control
   Package: com.nextsolution.nextaura.control-center
-  File: NextAura_control_center_1.0.1_RootHide.deb
+  File: NextAura_control_center_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/control-center.png
 Aura Panel
   Package: com.nextsolution.nextaura.cc-second-page
-  File: NextAura_cc_second_page_1.0.1_RootHide.deb
+  File: NextAura_cc_second_page_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/cc-second-page.png
 Aura Modules
   Package: com.nextsolution.nextaura.cc-module-backgrounds
-  File: NextAura_cc_module_backgrounds_1.0.1_RootHide.deb
+  File: NextAura_cc_module_backgrounds_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Aura Island
   Package: com.nextsolution.nextaura.notification-island
-  File: NextAura_notification_island_1.0.1_RootHide.deb
+  File: NextAura_notification_island_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/notification-island.png
 Aura Glow
   Package: com.nextsolution.nextaura.notification-glow
-  File: NextAura_notification_glow_1.0.1_RootHide.deb
+  File: NextAura_notification_glow_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/notification-glow.png
 Aura Player
   Package: com.nextsolution.nextaura.now-playing
-  File: NextAura_now_playing_1.0.1_RootHide.deb
+  File: NextAura_now_playing_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/now-playing.png
 Aura Alerts
   Package: com.nextsolution.nextaura.notifications
-  File: NextAura_notifications_1.0.1_RootHide.deb
+  File: NextAura_notifications_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/notifications.png
 Aura Switcher
   Package: com.nextsolution.nextaura.app-switcher
-  File: NextAura_app_switcher_1.0.1_RootHide.deb
+  File: NextAura_app_switcher_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/app-switcher.png
 Aura HUD
   Package: com.nextsolution.nextaura.system-overlays
-  File: NextAura_system_overlays_1.0.1_RootHide.deb
+  File: NextAura_system_overlays_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/system-overlays.png
 Aura Motion
   Package: com.nextsolution.nextaura.animations
-  File: NextAura_animations_1.0.1_RootHide.deb
+  File: NextAura_animations_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/animations.png
 Aura Safe
   Package: com.nextsolution.nextaura.safety-recovery
-  File: NextAura_safety_recovery_1.0.1_RootHide.deb
+  File: NextAura_safety_recovery_1.0.2_RootHide.deb
   Icon: https://nextsolution.cc/icons/nextaura/safety-recovery.png
 
 INTERNAL SHARED RUNTIMES
 Preferences
   Package: com.nextsolution.nextaura.runtime.preferences
-  File: NextAura_Runtime_preferences_1.0.1_RootHide.deb
+  File: NextAura_Runtime_preferences_1.0.2_RootHide.deb
 feedback
   Package: com.nextsolution.nextaura.runtime.feedback
   File: NextAura_Runtime_feedback_1.0.0_RootHide.deb
