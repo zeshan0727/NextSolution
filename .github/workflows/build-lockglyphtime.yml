@@ -9,7 +9,7 @@ on:
       - ".github/workflows/build-lockglyphtime.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: lockglyphtime-test
@@ -87,3 +87,66 @@ jobs:
             ${{ runner.temp }}/lockglyphtime-release/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
+      - name: Publish to NextSolution Transfer feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/lockglyphtime-release"
+          SITE="$RUNNER_TEMP/nextsolution-site"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          DEST="$SITE/transfer/files/LockGlyphTime/0.2.2"
+          mkdir -p "$DEST"
+          cp "$OUT/LockGlyphTime_0.2.2_Rootless.deb" "$DEST/"
+          cp "$OUT/LockGlyphTime_0.2.2_RootHide.deb" "$DEST/"
+          cp "$OUT/SHA256SUMS.txt" "$DEST/"
+          python3 - "$SITE/transfer/index.json" "$OUT" <<'PY'
+          import json, pathlib, hashlib, datetime, sys
+          manifest = pathlib.Path(sys.argv[1])
+          out = pathlib.Path(sys.argv[2])
+          try:
+              data = json.loads(manifest.read_text()) if manifest.exists() else {"version": 1, "files": []}
+          except Exception:
+              data = {"version": 1, "files": []}
+          def sha(name):
+              return hashlib.sha256((out/name).read_bytes()).hexdigest()
+          ids = {"lockglyphtime-0.2.2-rootless", "lockglyphtime-0.2.2-roothide"}
+          files = [x for x in data.get("files", []) if x.get("id") not in ids]
+          files = [
+              {
+                  "id":"lockglyphtime-0.2.2-rootless",
+                  "name":"LockGlyphTime 0.2.2 Rootless",
+                  "fileName":"LockGlyphTime_0.2.2_Rootless.deb",
+                  "type":"deb",
+                  "platform":"Dopamine / Rootless",
+                  "version":"0.2.2",
+                  "url":"https://nextsolution.app/transfer/files/LockGlyphTime/0.2.2/LockGlyphTime_0.2.2_Rootless.deb",
+                  "sha256":sha("LockGlyphTime_0.2.2_Rootless.deb"),
+                  "notes":"Standard rootless build."
+              },
+              {
+                  "id":"lockglyphtime-0.2.2-roothide",
+                  "name":"LockGlyphTime 0.2.2 RootHide",
+                  "fileName":"LockGlyphTime_0.2.2_RootHide.deb",
+                  "type":"deb",
+                  "platform":"RootHide",
+                  "version":"0.2.2",
+                  "url":"https://nextsolution.app/transfer/files/LockGlyphTime/0.2.2/LockGlyphTime_0.2.2_RootHide.deb",
+                  "sha256":sha("LockGlyphTime_0.2.2_RootHide.deb"),
+                  "notes":"RootHide package build."
+              }
+          ] + files
+          payload = {
+              "version": 1,
+              "updatedAt": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              "files": files
+          }
+          manifest.parent.mkdir(parents=True, exist_ok=True)
+          manifest.write_text(json.dumps(payload, indent=2) + "\n")
+          PY
+          git -C "$SITE" config user.name "github-actions[bot]"
+          git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$SITE" add transfer
+          git -C "$SITE" commit -m "Publish LockGlyphTime 0.2.2 to Transfer" || exit 0
+          git -C "$SITE" push origin main
