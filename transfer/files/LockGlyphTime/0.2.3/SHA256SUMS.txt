@@ -1,0 +1,2 @@
+436b7835343d5d1e6b1204a94b9c266f5d0873cf9261e26a479aa9e635e33386  /Users/runner/work/_temp/lockglyphtime-release/LockGlyphTime_0.2.3_RootHide.deb
+63538108efc56de1d9c450d6573bb4bdfbeed9b981b6d7be08cdbe97d6317f99  /Users/runner/work/_temp/lockglyphtime-release/LockGlyphTime_0.2.3_Rootless.deb
