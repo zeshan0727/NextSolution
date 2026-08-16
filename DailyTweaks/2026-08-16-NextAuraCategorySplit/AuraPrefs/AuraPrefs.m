@@ -15,23 +15,23 @@ static void AuraPost(NSString *name) {
 
 static NSString *AuraPlistForLabel(NSString *label) {
     NSDictionary *map = @{
-        @"Aura Haptics": @"Feedback",
-        @"Aura Thermal": @"ThermalSweat",
-        @"Aura Home": @"HomeScreen",
-        @"Aura Dock": @"DockFolders",
-        @"Aura Lock": @"LockScreen",
-        @"Aura Status": @"StatusBar",
-        @"Aura Control": @"ControlCenter",
-        @"Aura Panel": @"CCSecondPage",
-        @"Aura Modules": @"CCModuleBackgrounds",
-        @"Aura Island": @"DynamicIsland",
-        @"Aura Glow": @"NotificationGlow",
-        @"Aura Player": @"NowPlaying",
-        @"Aura Alerts": @"Notifications",
-        @"Aura Switcher": @"AppSwitcher",
-        @"Aura HUD": @"SystemOverlays",
-        @"Aura Motion": @"Animations",
-        @"Aura Safe": @"SafetyRecovery"
+        @"Pulse": @"Feedback",
+        @"Therma": @"ThermalSweat",
+        @"HomeFlow": @"HomeScreen",
+        @"DockCraft": @"DockFolders",
+        @"LockCraft": @"LockScreen",
+        @"StatusKit": @"StatusBar",
+        @"ControlKit": @"ControlCenter",
+        @"Control Deck": @"CCSecondPage",
+        @"Module Glass": @"CCModuleBackgrounds",
+        @"Notify Island": @"DynamicIsland",
+        @"Notify Glow": @"NotificationGlow",
+        @"NowPlay": @"NowPlaying",
+        @"NotifyKit": @"Notifications",
+        @"SwitchDeck": @"AppSwitcher",
+        @"HUDKit": @"SystemOverlays",
+        @"Motion": @"Animations",
+        @"Rescue": @"SafetyRecovery"
     };
     return map[label ?: @""];
 }
@@ -49,7 +49,7 @@ static NSString *AuraPlistForLabel(NSString *label) {
         if (!plistName.length) plistName = AuraPlistForLabel(label);
         if (!plistName.length) plistName = @"Feedback";
         _specifiers = [self loadSpecifiersFromPlistName:plistName target:self];
-        self.title = label.length ? label : @"Aura";
+        self.title = label.length ? label : @"Settings";
     }
     return _specifiers;
 }
