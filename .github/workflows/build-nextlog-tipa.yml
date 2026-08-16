@@ -36,7 +36,7 @@ jobs:
               d=ImageDraw.Draw(img)
               pad=size*0.16
               d.rounded_rectangle((pad,pad,size-pad,size-pad),radius=size*0.18,fill=(58,76,255))
-              left=size*0.27; right=size*0.73
+              left=size*0.27
               ys=[0.36,0.50,0.64]
               widths=[0.34,0.46,0.28]
               for y,w in zip(ys,widths):
@@ -47,12 +47,14 @@ jobs:
           PY
 
       - name: Generate Xcode project
-        run: xcodegen generate --spec NextLog/project.yml --project NextLog.xcodeproj
+        run: |
+          cd NextLog
+          xcodegen generate --spec project.yml
 
       - name: Build unsigned iPhone app
         run: |
           xcodebuild \
-            -project NextLog.xcodeproj \
+            -project NextLog/NextLog.xcodeproj \
             -scheme NextLog \
             -configuration Release \
             -sdk iphoneos \
