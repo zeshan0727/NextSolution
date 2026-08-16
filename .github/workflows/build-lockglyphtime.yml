@@ -7,6 +7,11 @@ on:
     paths:
       - "DailyTweaks/LockGlyphTime/**"
       - ".github/workflows/build-lockglyphtime.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "DailyTweaks/LockGlyphTime/**"
+      - ".github/workflows/build-lockglyphtime.yml"
 
 permissions:
   contents: read
