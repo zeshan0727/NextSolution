@@ -17,6 +17,8 @@ static NSInteger const MGImageTag = 0x4D470106;
 static NSHashTable *MGControllers;
 static char MGLastDiagnosticKey;
 static char MGVolumeOriginalAlphaKey;
+static char MGVolumeOriginalIconImageKey;
+static char MGVolumeOriginalIconTintKey;
 
 static void (*MGOrigModuleViewDidLoad)(id, SEL);
 static void (*MGOrigModuleLayout)(id, SEL);
@@ -270,6 +272,101 @@ static NSUInteger MGApplyVolumeImageMode(UIView *slider, UIImageView *imageView,
     return count;
 }
 
+static UIColor *MGVolumeColorFromHex(NSString *input) {
+    if (![input isKindOfClass:NSString.class]) return nil;
+    NSString *hex = [[input stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] uppercaseString];
+    if ([hex hasPrefix:@"#"]) hex = [hex substringFromIndex:1];
+    if (hex.length != 6 && hex.length != 8) return nil;
+    unsigned int value = 0;
+    if (![[NSScanner scannerWithString:hex] scanHexInt:&value]) return nil;
+    CGFloat r, g, b, a = 1.0;
+    if (hex.length == 8) {
+        r = ((value >> 24) & 0xFF) / 255.0;
+        g = ((value >> 16) & 0xFF) / 255.0;
+        b = ((value >> 8) & 0xFF) / 255.0;
+        a = (value & 0xFF) / 255.0;
+    } else {
+        r = ((value >> 16) & 0xFF) / 255.0;
+        g = ((value >> 8) & 0xFF) / 255.0;
+        b = (value & 0xFF) / 255.0;
+    }
+    return [UIColor colorWithRed:r green:g blue:b alpha:a];
+}
+
+static void MGRestoreVolumeIconTint(UIView *root) {
+    if (!root) return;
+    if ([root isKindOfClass:UIImageView.class]) {
+        UIImageView *imageView = (UIImageView *)root;
+        UIImage *originalImage = objc_getAssociatedObject(imageView, &MGVolumeOriginalIconImageKey);
+        if (originalImage) {
+            imageView.image = originalImage;
+            id originalTint = objc_getAssociatedObject(imageView, &MGVolumeOriginalIconTintKey);
+            imageView.tintColor = [originalTint isKindOfClass:UIColor.class] ? originalTint : nil;
+            objc_setAssociatedObject(imageView, &MGVolumeOriginalIconImageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            objc_setAssociatedObject(imageView, &MGVolumeOriginalIconTintKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+    }
+    for (UIView *child in root.subviews) MGRestoreVolumeIconTint(child);
+}
+
+static NSInteger MGVolumeIconScore(UIImageView *imageView, UIView *slider) {
+    if (!imageView || !slider || imageView.tag == MGImageTag || !imageView.image || imageView.hidden || imageView.alpha < 0.01) return -1;
+    CGRect rect = [imageView convertRect:imageView.bounds toView:slider];
+    CGFloat w = CGRectGetWidth(rect), h = CGRectGetHeight(rect);
+    if (w < 8.0 || h < 8.0 || w > 64.0 || h > 64.0) return -1;
+    CGFloat area = w * h;
+    NSInteger score = 1000 - (NSInteger)fabs(area - 576.0);
+    score += 800;
+    CGFloat cy = CGRectGetMidY(rect);
+    if (cy > CGRectGetHeight(slider.bounds) * 0.45) score += 600;
+    NSString *names = @"";
+    UIView *cursor = imageView;
+    for (NSInteger i = 0; i < 4 && cursor; i++, cursor = cursor.superview) {
+        names = [names stringByAppendingFormat:@" %@", NSStringFromClass(cursor.class).lowercaseString ?: @""];
+    }
+    for (NSString *needle in @[@"glyph", @"speaker", @"volume", @"audio", @"icon"]) {
+        if ([names containsString:needle]) score += 3000;
+    }
+    return score;
+}
+
+static void MGCollectVolumeIconCandidates(UIView *root, UIView *slider, NSMutableArray<UIImageView *> *out) {
+    if (!root) return;
+    if ([root isKindOfClass:UIImageView.class] && root.tag != MGImageTag) {
+        UIImageView *iv = (UIImageView *)root;
+        if (MGVolumeIconScore(iv, slider) >= 0) [out addObject:iv];
+    }
+    for (UIView *child in root.subviews) MGCollectVolumeIconCandidates(child, slider, out);
+}
+
+static UIImageView *MGFindVolumeIcon(UIView *slider) {
+    if (!slider) return nil;
+    NSMutableArray<UIImageView *> *candidates = [NSMutableArray array];
+    MGCollectVolumeIconCandidates(slider, slider, candidates);
+    UIImageView *best = nil;
+    NSInteger bestScore = -1;
+    for (UIImageView *candidate in candidates) {
+        NSInteger score = MGVolumeIconScore(candidate, slider);
+        if (score > bestScore) { best = candidate; bestScore = score; }
+    }
+    return best;
+}
+
+static BOOL MGApplyVolumeIconTint(UIView *slider, UIColor *color, NSString **outClass, CGRect *outFrame) {
+    if (!slider || !color) return NO;
+    UIImageView *icon = MGFindVolumeIcon(slider);
+    if (!icon || !icon.image) return NO;
+    if (!objc_getAssociatedObject(icon, &MGVolumeOriginalIconImageKey)) {
+        objc_setAssociatedObject(icon, &MGVolumeOriginalIconImageKey, icon.image, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(icon, &MGVolumeOriginalIconTintKey, icon.tintColor ?: (id)NSNull.null, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    icon.image = [icon.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    icon.tintColor = color;
+    if (outClass) *outClass = NSStringFromClass(icon.class) ?: @"UIImageView";
+    if (outFrame) *outFrame = [icon convertRect:icon.bounds toView:slider];
+    return YES;
+}
+
 static void MGRemoveTaggedImages(UIView *root, UIView *except) {
     if (!root) return;
     for (UIView *view in [root.subviews copy]) {
@@ -360,6 +457,7 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSArray<NSString *> *candidates = nil;
     NSString *slot = MGSlotForController(controller, &candidates);
+    MGRestoreVolumeIconTint(root);
     MGRestoreVolumeVisuals(root);
     BOOL expanded = MGIsExpanded(root);
     BOOL enabled = MGBoolPreference(@"CCModuleBackgroundsEnabled", YES);
@@ -375,10 +473,23 @@ static void MGApplyController(id controller, NSString *source) {
         return;
     }
 
+    BOOL volumeIconApplied = NO;
+    NSString *volumeIconClass = @"<none>";
+    CGRect volumeIconFrame = CGRectZero;
+    BOOL volumeIconColorEnabled = [slot isEqualToString:@"volume"] && MGBoolPreference(@"CCModuleVolumeIconColorEnabled", NO);
+    NSString *volumeIconColorHex = [[MGPreference(@"CCModuleVolumeIconColor") description] copy] ?: @"";
+    if (volumeIconColorEnabled) {
+        UIView *volumeSlider = MGFindSliderView(root);
+        UIColor *volumeColor = MGVolumeColorFromHex(volumeIconColorHex);
+        if (volumeSlider && volumeColor) {
+            volumeIconApplied = MGApplyVolumeIconTint(volumeSlider, volumeColor, &volumeIconClass, &volumeIconFrame);
+        }
+    }
+
     if (!enabled || !exists) {
         MGRemoveTaggedImages(root, nil);
-        NSString *sig = [NSString stringWithFormat:@"inactive|%@|%d|%d", slot, enabled, exists];
-        MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"apply source=%@ controller=%@ slot=%@ enabled=%d exists=%d expanded=0 result=removed", source, NSStringFromClass([controller class]), slot, enabled, exists]);
+        NSString *sig = [NSString stringWithFormat:@"inactive|%@|%d|%d|icon=%d|%@", slot, enabled, exists, volumeIconApplied, volumeIconColorHex];
+        MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"apply source=%@ controller=%@ slot=%@ enabled=%d exists=%d expanded=0 result=removed volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@", source, NSStringFromClass([controller class]), slot, enabled, exists, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame)]);
         return;
     }
 
@@ -431,8 +542,8 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSString *sig = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|%.0fx%.0f|%@", slot, strategy, enabled, exists, opacity, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), path];
     MGDiagnosticOnce(controller, sig,
-                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ volumeSuppressed=%lu suppressedClasses=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
-                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)volumeSuppressed, volumeSuppressedClasses, glow, glowIntensity, glowWidth]);
+                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ volumeSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
+                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)volumeSuppressed, volumeSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), glow, glowIntensity, glowWidth]);
 }
 
 static void MGTrackAndApply(id controller, NSString *source) {
@@ -502,8 +613,8 @@ __attribute__((constructor)) static void MGInit(void) {
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.0.7 Volume Test loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
-        MGLog(@"Volume-isolated image-first test runtime process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
+        MGLog(@"ModuleGlassRuntime 1.0.8 Volume Color loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"Volume-isolated image-first runtime with native icon color process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
 }

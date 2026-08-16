@@ -904,27 +904,6 @@ Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: NextAura Runtime (island)
 
-Package: com.nextsolution.nextaura.runtime.preferences
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_preferences_1.0.4_RootHide.deb
-Size: 48612
-MD5sum: 29c3880fcffbb6d1ab051c2aa8b17c81
-SHA1: 17272545f25eedac7f0c28c38b9d8c57e46271e6
-SHA256: 20e5842163974ac2c75db979f77743daa990bbf8ecdaa86f37c76e27fd38629c
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal native category Preferences controller shared by modular tweaks.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: Aura Preferences Runtime
-
 Package: com.nextsolution.nextaura.runtime.safe
 Version: 1.0.0
 Architecture: iphoneos-arm64e
@@ -1065,26 +1044,26 @@ Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
 Name: Therma
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
-Version: 1.0.11
+Version: 1.0.12
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.7)
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.8)
 Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.11_RootHide.deb
-Size: 1412
-MD5sum: 9b873a884de83a241cb2ae48f9ff04cf
-SHA1: 26b46ef3d87f28df60f191cf3a358f864937b92c
-SHA256: f8207922095c1c3135a0098748a930362ca86e8edfc62de424f881e71c210431
+Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.12_RootHide.deb
+Size: 1444
+MD5sum: c0d61aa51ed3b490bbc10938bba048c0
+SHA1: 1accca0030af843508de6c1c162d3965ed3c06c4
+SHA256: f967cd84e3fee8d5f264e004fa5c95194632d2337000810fb56e42b943faa177
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Volume-only validation build. All non-Volume Module Glass rendering remains unchanged from 1.0.10.
+Description: Working Volume image-first validation build with native speaker icon color picker; non-Volume rendering remains unchanged.
 Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
-Version: 1.0.7
+Version: 1.0.8
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution
 Installed-Size: 204
@@ -1092,15 +1071,36 @@ Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
 Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.7_RootHide.deb
-Size: 16516
-MD5sum: ab5d1b1be43e0505d51bcf58dff05d9b
-SHA1: 8f4005403e00d15e3200c7af93e6f4eb29b15f61
-SHA256: e8793081aec3b04f54bb3d4a4119712b5a2b54fb1431f870948c5fc6b7d4cac8
+Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.8_RootHide.deb
+Size: 18772
+MD5sum: 97497bca4d2d3643b3cdb25bff8b7cd3
+SHA1: 1fe6f8ca960933996a3dca68a130cc3bc1f8261d
+SHA256: 800146617f6d0b97fa4ce223ced1a6da55c65bbaef20fc633e10dfcf0b706da1
 Section: System
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Isolated Volume validation runtime for Module Glass. Other module rendering paths are unchanged.
+Description: Working isolated Module Glass Volume runtime with native speaker icon color customization and unchanged image-first background behavior.
 Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: Module Glass Runtime
+
+Package: com.nextsolution.nextaura.runtime.preferences
+Version: 1.0.5
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_preferences_1.0.5_RootHide.deb
+Size: 54268
+MD5sum: 60aafd9396bd3fb09de3194b5b574c5e
+SHA1: 61dae96ee7160bd7b40440e5d3c144d04c52ef9e
+SHA256: fadadf7be5672fc492d6ca45f2c6acdaf342f09fd2509be05251eb128ee67ac6
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal native category Preferences controller shared by modular tweaks, with native Module Glass Volume icon color picker.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: Aura Preferences Runtime
