@@ -1,0 +1,32 @@
+name: Validate Clean Home Labels Tutorial
+on:
+  push:
+    branches: ['tutorial/clean-home-labels-1.0.0']
+    paths: ['.github/workflows/validate-clean-home-labels-tutorial.yml']
+  pull_request:
+    branches: [main]
+    paths: ['clean-home-labels-tweak-ios16.html','assets/clean-home-labels/**','scripts/publish_clean_home_labels_tutorial.py','index.html','tutorials.html','sitemap.xml']
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Generate pinned cards and sitemap then validate
+        run: python3 scripts/publish_clean_home_labels_tutorial.py
+      - name: Additional release-link and AdSense checks
+        run: |
+          set -euo pipefail
+          grep -q 'https://nextsolution.cc/debfiles/CleanHomeLabels_1.0.0_RootHide.deb' clean-home-labels-tweak-ios16.html
+          grep -q 'https://nextsolution.cc/debfiles/CleanHomeLabels_1.0.0_Rootless.deb' clean-home-labels-tweak-ios16.html
+          test "$(grep -o 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214' clean-home-labels-tweak-ios16.html | wc -l | tr -d ' ')" = 1
+          ! grep -R 'zeshan0727.github.io' clean-home-labels-tweak-ios16.html assets/clean-home-labels scripts/publish_clean_home_labels_tutorial.py
+      - name: Commit generated cards and sitemap on preparation branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name 'Next Solution Tutorial Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html tutorials.html sitemap.xml
+          if ! git diff --cached --quiet; then git commit -m 'Prepare Clean Home Labels tutorial cards and sitemap'; git push origin HEAD; fi
