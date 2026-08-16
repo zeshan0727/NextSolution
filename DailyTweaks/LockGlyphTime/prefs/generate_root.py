@@ -78,7 +78,7 @@ advanced=[
 save("Advanced","Advanced",advanced)
 
 about=[
- group("NEXTLOCK","Lock Screen, your way.\nVersion 1.0.0 • by Next Solution"),
+ group("NEXTLOCK","Lock Screen, your way.\nVersion 1.0.1 • by Next Solution"),
  button("Website — nextsolution.cc","openWebsite"),button("YouTube — Next Solution","openYouTube"),
  group("FEATURES","Independent time/date styling • 27 fonts • colors • alignment • position • shadows • date formats • 30+ symbols • transparent sticker photos • rounded photo icons."),
  group("","© 2026 Next Solution")
