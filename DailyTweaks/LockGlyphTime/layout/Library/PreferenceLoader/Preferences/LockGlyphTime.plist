@@ -2,6 +2,7 @@
     entry = {
         bundle = LockGlyphTimePrefs;
         cell = PSLinkCell;
+        detail = LGTListController;
         isController = 1;
         label = NextLock;
         icon = NextLockIcon.png;
