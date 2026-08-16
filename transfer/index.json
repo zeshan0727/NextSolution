@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-16T09:26:19Z",
+  "updatedAt": "2026-08-16T09:37:39Z",
   "files": [
     {
-      "id": "nextsolution-transfer-1.1.3",
-      "name": "NextSolution Transfer 1.1.3",
-      "fileName": "NextSolution-Transfer-1.1.3.tipa",
+      "id": "nextsolution-transfer-1.1.4",
+      "name": "NextSolution Transfer 1.1.4",
+      "fileName": "NextSolution-Transfer-1.1.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
-      "version": "1.1.3",
-      "url": "https://nextsolution.cc/transfer/files/NextSolutionTransfer/1.1.3/NextSolution-Transfer-1.1.3.tipa",
-      "sha256": "a5b7974859819cd22d04b8af95253020159940abf4964220850205e1064e3e3c",
-      "notes": "Transfer app using nextsolution.cc with native iOS file picker, secure uploads, and custom NextSolution app icon."
+      "version": "1.1.4",
+      "url": "https://nextsolution.cc/transfer/files/NextSolutionTransfer/1.1.4/NextSolution-Transfer-1.1.4.tipa",
+      "sha256": "9c3616a2cad78211a0c44edf708c3601765c370eaed33f6de6068a9905f7271b",
+      "notes": "Transfer app with Files, Photos, and Videos upload pickers, secure GitHub uploads, and verified custom AppIcon."
     },
     {
       "id": "lockglyphtime-0.2.2-rootless",
