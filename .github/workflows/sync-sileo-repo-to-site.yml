@@ -50,13 +50,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from PIL import Image
-          from pathlib import Path
-          for p in [Path('assets/articles/nextlock/nextlock-hero.jpg'), Path('assets/articles/nextlock/nextlock-features.jpg')]:
-              im=Image.open(p)
-              print(f'{p}: {im.width}x{im.height}, mode={im.mode}, bytes={p.stat().st_size}')
-          PY
+          file assets/articles/nextlock/nextlock-hero.jpg
+          file assets/articles/nextlock/nextlock-features.jpg
 
       - name: Commit Sileo metadata to website
         shell: bash
