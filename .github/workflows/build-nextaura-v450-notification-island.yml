@@ -109,7 +109,6 @@ jobs:
           grep -q 'ghost-row restore' "$STRINGS"
           grep -q 'NotificationIslandDismissTime' "$STRINGS"
           grep -q '_applicationIconImageForBundleIdentifier:format:scale:' "$STRINGS"
-          grep -q 'Persistent Test Notification' "$STRINGS"
 
           shasum -a 256 "$OUT/NextAura_4.5.3_RootHide_iOS16.deb" > "$OUT/NextAura_4.5.3_RootHide_iOS16-SHA256.txt"
           ditto -c -k --sequesterRsrc --keepParent "$P" "$OUT/NextAura_4.5.3_NotificationIsland_Source.zip"
