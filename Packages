@@ -593,24 +593,6 @@ Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: Module Glass Runtime
 
-Package: com.nextsolution.nextdiagnostics.runtime
-Version: 1.0.1
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 15.0), mobilesubstrate
-Filename: ./debfiles/NextDiagnosticsRuntime_1.0.1_RootHide.deb
-Size: 12304
-MD5sum: 07189307798b39726e99c4277ec092d3
-SHA1: fcc77a8c59b62df2e2c61e2a21b2ba6e5c37329f
-SHA256: e8f4fb18c4d720867dba10f7545a556f64795412644e88a5ecc98208b1837df3
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Shared RootHide diagnostic runtime for Next Solution tweaks. Idle until Next Log starts a focused capture, then reports target-process injection and loaded tweak dylibs.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: Next Diagnostics Runtime
-
 Package: com.nextsolution.nextaura.animations
 Version: 1.0.4
 Architecture: iphoneos-arm64e
@@ -1103,3 +1085,21 @@ Description: Temperature-aware battery visuals, Sweat My Phone effects and batte
 Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
 Name: Therma
+
+Package: com.nextsolution.nextdiagnostics.runtime
+Version: 1.0.1
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 15.0), mobilesubstrate
+Filename: ./debfiles/NextDiagnosticsRuntime_1.0.1_RootHide.deb
+Size: 12280
+MD5sum: db25adcf7f74f91b141178cd682e22c2
+SHA1: a9f28de7e9db401165ce691b87bb13869e03a1cd
+SHA256: a0716cd4b6d6ff0dc58146064c75a4d4cfa7fb591c66d421cc13fbdd5b767abb
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Shared RootHide diagnostic runtime for Next Solution tweaks. Idle until Next Log starts a focused capture, then reports target-process injection and loaded tweak dylibs.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: Next Diagnostics Runtime
