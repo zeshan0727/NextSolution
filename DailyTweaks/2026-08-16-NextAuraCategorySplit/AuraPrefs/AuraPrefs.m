@@ -2,6 +2,10 @@
 #import <Preferences/PSListController.h>
 #import <Preferences/PSSpecifier.h>
 #import <CoreFoundation/CoreFoundation.h>
+#import <spawn.h>
+#import <unistd.h>
+
+extern char **environ;
 
 static NSString * const AuraDefaultsDomain = @"com.nextsolution.unlockvibrate";
 static NSString * const AuraChangedNotification = @"com.nextsolution.unlockvibrate/preferences.changed";
@@ -87,10 +91,15 @@ static NSString *AuraPlistForLabel(NSString *label) {
 }
 
 - (NSString *)ccBackgroundDirectory {
-    NSArray<NSString *> *libraries = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-    NSString *library = libraries.firstObject ?: @"/var/mobile/Library";
-    NSString *preferences = [library stringByAppendingPathComponent:@"Preferences"];
-    return [preferences stringByAppendingPathComponent:@"NextSolutionTweaks/CCBackgrounds"];
+    // Must match CCModuleBackgrounds.dylib exactly. Do not derive this from the
+    // Settings process sandbox, otherwise SpringBoard cannot see the selected image.
+    return @"/var/mobile/Library/Preferences/NextSolutionTweaks/CCBackgrounds";
+}
+
+- (void)setModuleGlassEnabled:(BOOL)enabled {
+    NSUserDefaults *d = [[NSUserDefaults alloc] initWithSuiteName:AuraDefaultsDomain];
+    [d setBool:enabled forKey:@"CCModuleBackgroundsEnabled"];
+    [d synchronize];
 }
 
 - (void)removeCCModuleFilesForSlot:(NSString *)slot {
@@ -111,7 +120,7 @@ static NSString *AuraPlistForLabel(NSString *label) {
     self.pendingModuleSlot = slot;
 
     UIAlertController *sheet = [UIAlertController alertControllerWithTitle:title
-                                                                   message:@"Choose a background image or remove the current one."
+                                                                   message:@"Choose a background image or remove the current one. Changes can be applied immediately or with Respring."
                                                             preferredStyle:UIAlertControllerStyleActionSheet];
     __weak typeof(self) weakSelf = self;
     [sheet addAction:[UIAlertAction actionWithTitle:@"Choose Photo" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *a) {
@@ -140,14 +149,22 @@ static NSString *AuraPlistForLabel(NSString *label) {
 
     NSString *dir = [self ccBackgroundDirectory];
     NSFileManager *fm = NSFileManager.defaultManager;
-    [fm createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+    NSError *directoryError = nil;
+    [fm createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:&directoryError];
     [self removeCCModuleFilesForSlot:slot];
 
-    // The existing CCModuleBackgrounds runtime reads <slot>.jpg specifically.
     NSData *data = UIImageJPEGRepresentation(image, 0.92);
     NSString *path = [dir stringByAppendingPathComponent:[slot stringByAppendingString:@".jpg"]];
-    if ([data writeToFile:path atomically:YES]) {
+    BOOL saved = data && [data writeToFile:path atomically:YES];
+    if (saved) {
+        [self setModuleGlassEnabled:YES];
         AuraPost(AuraChangedNotification);
+    } else {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Module Glass"
+                                                                       message:@"The image could not be saved to the shared SpringBoard background folder."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
     }
 }
 
@@ -162,6 +179,36 @@ static NSString *AuraPlistForLabel(NSString *label) {
         [fm removeItemAtPath:[dir stringByAppendingPathComponent:name] error:nil];
     }
     AuraPost(AuraChangedNotification);
+}
+
+- (void)applyCCModuleBackgrounds:(id)sender {
+    AuraPost(AuraChangedNotification);
+}
+
+- (void)respringDevice:(id)sender {
+    UIAlertController *confirm = [UIAlertController alertControllerWithTitle:@"Respring"
+                                                                     message:@"Restart SpringBoard now to fully reload Module Glass?"
+                                                              preferredStyle:UIAlertControllerStyleAlert];
+    [confirm addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    [confirm addAction:[UIAlertAction actionWithTitle:@"Respring" style:UIAlertActionStyleDestructive handler:^(__unused UIAlertAction *a) {
+        const char *sbreloadPaths[] = {"/var/jb/usr/bin/sbreload", "/usr/bin/sbreload", NULL};
+        for (int i = 0; sbreloadPaths[i]; i++) {
+            if (access(sbreloadPaths[i], X_OK) == 0) {
+                pid_t pid = 0;
+                char *const argv[] = {(char *)sbreloadPaths[i], NULL};
+                if (posix_spawn(&pid, sbreloadPaths[i], NULL, NULL, argv, environ) == 0) return;
+            }
+        }
+        const char *killallPaths[] = {"/var/jb/usr/bin/killall", "/usr/bin/killall", NULL};
+        for (int i = 0; killallPaths[i]; i++) {
+            if (access(killallPaths[i], X_OK) == 0) {
+                pid_t pid = 0;
+                char *const argv[] = {(char *)killallPaths[i], (char *)"-9", (char *)"SpringBoard", NULL};
+                if (posix_spawn(&pid, killallPaths[i], NULL, NULL, argv, environ) == 0) return;
+            }
+        }
+    }]];
+    [self presentViewController:confirm animated:YES completion:nil];
 }
 
 @end
