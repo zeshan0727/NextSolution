@@ -9,5 +9,6 @@ AuraPrefs_FRAMEWORKS = UIKit Foundation CoreFoundation
 AuraPrefs_INSTALL_PATH = /Library/PreferenceBundles
 AuraPrefs_CFLAGS = -fobjc-arc
 AuraPrefs_LDFLAGS = -undefined dynamic_lookup
+AuraPrefs_RESOURCE_FILES = Info.plist
 
 include $(THEOS_MAKE_PATH)/bundle.mk
