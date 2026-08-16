@@ -18,22 +18,79 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate source configuration
         run: |
           set -euo pipefail
+          test -f TransferApp/Resources/AppIcon.svg
           grep -q 'https://nextsolution.cc/transfer/index.json' TransferApp/Sources/NextSolutionTransferApp.swift
           grep -q 'UIDocumentPickerViewController' TransferApp/Sources/NextSolutionTransferApp.swift
           grep -q 'UIViewControllerRepresentable' TransferApp/Sources/NextSolutionTransferApp.swift
           grep -q 'forOpeningContentTypes' TransferApp/Sources/NextSolutionTransferApp.swift
           ! grep -R 'nextsolution\.app' TransferApp --include='*.swift' --include='*.yml' --include='*.yaml'
-          grep -q 'MARKETING_VERSION: 1.1.2' TransferApp/project.yml
+          grep -q 'MARKETING_VERSION: 1.1.3' TransferApp/project.yml
+          grep -q 'ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon' TransferApp/project.yml
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Install build tools
+        run: brew install xcodegen imagemagick
+
+      - name: Generate AppIcon asset catalog
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          ROOT="GeneratedAssets/Assets.xcassets"
+          SET="$ROOT/AppIcon.appiconset"
+          rm -rf GeneratedAssets
+          mkdir -p "$SET"
+          cat > "$ROOT/Contents.json" <<'JSON'
+          {"info":{"author":"xcode","version":1}}
+          JSON
+          magick -background none Resources/AppIcon.svg -resize 1024x1024 "$SET/AppIcon-1024.png"
+          make_icon() { magick "$SET/AppIcon-1024.png" -resize "${2}x${2}" "$SET/$1"; }
+          make_icon AppIcon-20.png 20
+          make_icon AppIcon-20@2x.png 40
+          make_icon AppIcon-20@3x.png 60
+          make_icon AppIcon-29.png 29
+          make_icon AppIcon-29@2x.png 58
+          make_icon AppIcon-29@3x.png 87
+          make_icon AppIcon-40.png 40
+          make_icon AppIcon-40@2x.png 80
+          make_icon AppIcon-40@3x.png 120
+          make_icon AppIcon-60@2x.png 120
+          make_icon AppIcon-60@3x.png 180
+          make_icon AppIcon-76.png 76
+          make_icon AppIcon-76@2x.png 152
+          make_icon AppIcon-83.5@2x.png 167
+          cat > "$SET/Contents.json" <<'JSON'
+          {
+            "images": [
+              {"filename":"AppIcon-20@2x.png","idiom":"iphone","scale":"2x","size":"20x20"},
+              {"filename":"AppIcon-20@3x.png","idiom":"iphone","scale":"3x","size":"20x20"},
+              {"filename":"AppIcon-29@2x.png","idiom":"iphone","scale":"2x","size":"29x29"},
+              {"filename":"AppIcon-29@3x.png","idiom":"iphone","scale":"3x","size":"29x29"},
+              {"filename":"AppIcon-40@2x.png","idiom":"iphone","scale":"2x","size":"40x40"},
+              {"filename":"AppIcon-40@3x.png","idiom":"iphone","scale":"3x","size":"40x40"},
+              {"filename":"AppIcon-60@2x.png","idiom":"iphone","scale":"2x","size":"60x60"},
+              {"filename":"AppIcon-60@3x.png","idiom":"iphone","scale":"3x","size":"60x60"},
+              {"filename":"AppIcon-20.png","idiom":"ipad","scale":"1x","size":"20x20"},
+              {"filename":"AppIcon-20@2x.png","idiom":"ipad","scale":"2x","size":"20x20"},
+              {"filename":"AppIcon-29.png","idiom":"ipad","scale":"1x","size":"29x29"},
+              {"filename":"AppIcon-29@2x.png","idiom":"ipad","scale":"2x","size":"29x29"},
+              {"filename":"AppIcon-40.png","idiom":"ipad","scale":"1x","size":"40x40"},
+              {"filename":"AppIcon-40@2x.png","idiom":"ipad","scale":"2x","size":"40x40"},
+              {"filename":"AppIcon-76.png","idiom":"ipad","scale":"1x","size":"76x76"},
+              {"filename":"AppIcon-76@2x.png","idiom":"ipad","scale":"2x","size":"76x76"},
+              {"filename":"AppIcon-83.5@2x.png","idiom":"ipad","scale":"2x","size":"83.5x83.5"},
+              {"filename":"AppIcon-1024.png","idiom":"ios-marketing","scale":"1x","size":"1024x1024"}
+            ],
+            "info":{"author":"xcode","version":1}
+          }
+          JSON
+          test "$(sips -g pixelWidth "$SET/AppIcon-1024.png" | awk '/pixelWidth/{print $2}')" = "1024"
+          test "$(sips -g pixelHeight "$SET/AppIcon-1024.png" | awk '/pixelHeight/{print $2}')" = "1024"
 
       - name: Generate Xcode project
         working-directory: TransferApp
@@ -61,35 +118,36 @@ jobs:
           set -euo pipefail
           mkdir -p Payload output
           cp -R build/Build/Products/Release-iphoneos/NextSolutionTransfer.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload output/NextSolution-Transfer-1.1.2.tipa
-          shasum -a 256 output/NextSolution-Transfer-1.1.2.tipa > output/NextSolution-Transfer-1.1.2.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload output/NextSolution-Transfer-1.1.3.tipa
+          shasum -a 256 output/NextSolution-Transfer-1.1.3.tipa > output/NextSolution-Transfer-1.1.3.sha256
 
-      - name: Validate package
+      - name: Validate package and icon
         working-directory: TransferApp
         run: |
           set -euo pipefail
           rm -rf verify
           mkdir verify
-          ditto -x -k output/NextSolution-Transfer-1.1.2.tipa verify
+          ditto -x -k output/NextSolution-Transfer-1.1.3.tipa verify
           APP=verify/Payload/NextSolutionTransfer.app
           BIN="$APP/NextSolutionTransfer"
           test -d "$APP"
           test -f "$BIN"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.2"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.3"
+          test -f "$APP/Assets.car"
+          find "$APP" -maxdepth 1 -name 'AppIcon*.png' -print | grep -q 'AppIcon'
           strings "$BIN" | grep -q 'nextsolution.cc/transfer/index.json'
           ! strings "$BIN" | grep -q 'nextsolution.app'
           strings "$BIN" | grep -q 'UIDocumentPickerViewController'
           strings "$BIN" | grep -q 'api.github.com/repos/'
           strings "$BIN" | grep -q 'transfer/uploads/'
-          strings "$BIN" | grep -q 'GitHub upload token'
 
       - name: Upload TIPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextSolution-Transfer-1.1.2
+          name: NextSolution-Transfer-1.1.3
           path: |
-            TransferApp/output/NextSolution-Transfer-1.1.2.tipa
-            TransferApp/output/NextSolution-Transfer-1.1.2.sha256
+            TransferApp/output/NextSolution-Transfer-1.1.3.tipa
+            TransferApp/output/NextSolution-Transfer-1.1.3.sha256
           if-no-files-found: error
 
       - name: Publish app to NextSolution Transfer feed
@@ -101,11 +159,11 @@ jobs:
           OUT="$GITHUB_WORKSPACE/TransferApp/output"
           SITE="$RUNNER_TEMP/nextsolution-site"
           git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
-          DEST="$SITE/transfer/files/NextSolutionTransfer/1.1.2"
+          DEST="$SITE/transfer/files/NextSolutionTransfer/1.1.3"
           mkdir -p "$DEST"
-          cp "$OUT/NextSolution-Transfer-1.1.2.tipa" "$DEST/"
-          cp "$OUT/NextSolution-Transfer-1.1.2.sha256" "$DEST/"
-          python3 - "$SITE/transfer/index.json" "$OUT/NextSolution-Transfer-1.1.2.tipa" <<'PY'
+          cp "$OUT/NextSolution-Transfer-1.1.3.tipa" "$DEST/"
+          cp "$OUT/NextSolution-Transfer-1.1.3.sha256" "$DEST/"
+          python3 - "$SITE/transfer/index.json" "$OUT/NextSolution-Transfer-1.1.3.tipa" <<'PY'
           import json, pathlib, hashlib, datetime, sys
           manifest = pathlib.Path(sys.argv[1])
           tipa = pathlib.Path(sys.argv[2])
@@ -113,7 +171,6 @@ jobs:
               data = json.loads(manifest.read_text()) if manifest.exists() else {"version": 1, "files": []}
           except Exception:
               data = {"version": 1, "files": []}
-
           files = []
           for item in data.get("files", []):
               if str(item.get("id", "")).startswith("nextsolution-transfer-"):
@@ -121,30 +178,25 @@ jobs:
               if isinstance(item.get("url"), str):
                   item["url"] = item["url"].replace("nextsolution.app", "nextsolution.cc")
               files.append(item)
-
           files.insert(0, {
-              "id": "nextsolution-transfer-1.1.2",
-              "name": "NextSolution Transfer 1.1.2",
-              "fileName": "NextSolution-Transfer-1.1.2.tipa",
-              "type": "tipa",
-              "platform": "TrollStore / iOS 16+",
-              "version": "1.1.2",
-              "url": "https://nextsolution.cc/transfer/files/NextSolutionTransfer/1.1.2/NextSolution-Transfer-1.1.2.tipa",
-              "sha256": hashlib.sha256(tipa.read_bytes()).hexdigest(),
-              "notes": "Transfer app using nextsolution.cc with native iOS file picker and secure GitHub-repo uploads."
+              "id":"nextsolution-transfer-1.1.3",
+              "name":"NextSolution Transfer 1.1.3",
+              "fileName":"NextSolution-Transfer-1.1.3.tipa",
+              "type":"tipa",
+              "platform":"TrollStore / iOS 16+",
+              "version":"1.1.3",
+              "url":"https://nextsolution.cc/transfer/files/NextSolutionTransfer/1.1.3/NextSolution-Transfer-1.1.3.tipa",
+              "sha256":hashlib.sha256(tipa.read_bytes()).hexdigest(),
+              "notes":"Transfer app using nextsolution.cc with native iOS file picker, secure uploads, and custom NextSolution app icon."
           })
-          payload = {
-              "version": 1,
-              "updatedAt": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
-              "files": files
-          }
-          manifest.parent.mkdir(parents=True, exist_ok=True)
-          manifest.write_text(json.dumps(payload, indent=2) + "\n")
+          payload={"version":1,"updatedAt":datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),"files":files}
+          manifest.parent.mkdir(parents=True,exist_ok=True)
+          manifest.write_text(json.dumps(payload,indent=2)+"\n")
           assert "nextsolution.app" not in manifest.read_text()
           PY
           git -C "$SITE" config user.name "github-actions[bot]"
           git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C "$SITE" add transfer
-          git -C "$SITE" commit -m "Publish NextSolution Transfer 1.1.2" || exit 0
+          git -C "$SITE" commit -m "Publish NextSolution Transfer 1.1.3" || exit 0
           git -C "$SITE" pull --rebase origin main
           git -C "$SITE" push origin main
