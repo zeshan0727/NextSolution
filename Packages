@@ -593,499 +593,6 @@ Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: Module Glass Runtime
 
-Package: com.nextsolution.nextaura.animations
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_animations_1.0.4_RootHide.deb
-Size: 1316
-MD5sum: 9fd27ac72f7b2b43274db5af5c90c199
-SHA1: 6ddfcf2763ea96087c8ea025d5946d7d49425e29
-SHA256: 29bd780131f1682ceac72b930aa60d5bd3eab9462547c966afa77eb1ae4f67e5
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: System animation-speed control.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/animations.png
-Name: Motion
-
-Package: com.nextsolution.nextaura.app-switcher
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_app_switcher_1.0.4_RootHide.deb
-Size: 1364
-MD5sum: 4555569bd8386fb5626a93c698cfb782
-SHA1: e5f0f385ef5608105110ba2bed02862e2e1ca903
-SHA256: 9894dba005d12bf47723c4dfc1ba87fd0065cd1491341daba1ee78f9686942b0
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: App Switcher card scale, opacity, spacing, labels, icons and background controls.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/app-switcher.png
-Name: SwitchDeck
-
-Package: com.nextsolution.nextaura.cc-second-page
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.advanced (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_cc_second_page_1.0.4_RootHide.deb
-Size: 1372
-MD5sum: 70327fa8c78674609dbdd2019ebb7208
-SHA1: e6d30f967a165a6adceb34712828a9087ce48a92
-SHA256: 12cf822c8d7b7f7182bf7cd0c75c3f585895999eef96a1ca8d9b6d79d1d93834
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Second Control Center page with configurable tiles, spacing, information and haptics.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/cc-second-page.png
-Name: Control Deck
-
-Package: com.nextsolution.nextaura.control-center
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_control_center_1.0.4_RootHide.deb
-Size: 1372
-MD5sum: c147a4d7fcd66e944f008e3341407780
-SHA1: 439d713e9f88af2361b61e3936832ad9c0c7792a
-SHA256: 20c8dfd815af88cc602d4256fdc1daba67ae26fb2e6993f9690f1fd9d758d5b4
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Control Center labels, module sizing, background appearance and advanced stock-layout controls.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/control-center.png
-Name: ControlKit
-
-Package: com.nextsolution.nextaura.dock-folders
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_dock_folders_1.0.4_RootHide.deb
-Size: 1372
-MD5sum: beabaa8b45880387602cd42b2f65c642
-SHA1: 415043fedac087ffa923c18dd88d3d5f37088bd2
-SHA256: 5dc8ed778fdb3611278f553f4a4acae3c1c3fa5a745733a54a8dc7913a0754c0
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Dock and folder backgrounds, labels, sizing, opacity and advanced layout controls.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/dock-folders.png
-Name: DockCraft
-
-Package: com.nextsolution.nextaura.feedback
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.feedback (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_feedback_1.0.4_RootHide.deb
-Size: 1316
-MD5sum: 0f8e19f6c99f0ac159634b53e4553bb1
-SHA1: 656641b8a655cdf2a63cd12c96427c960f359e54
-SHA256: 336b519d4877c6e2296057c347a560751ec88abf1352b6c8a74bf882a9042ea4
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Unlock and call-connect vibration feedback.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/feedback.png
-Name: Pulse
-
-Package: com.nextsolution.nextaura.home-screen
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_home_screen_1.0.4_RootHide.deb
-Size: 1372
-MD5sum: a7f8b838c49b616a8f29ecd6b2a9fb7f
-SHA1: 250cf3263351ac8e7b57d2adf56dcb214f549a5d
-SHA256: c57c5614ec299f659906f2454b1a7715413755d132671ac6f630733958f02a26
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Home Screen labels, badges, icon sizing, opacity and advanced visual controls.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/home-screen.png
-Name: HomeFlow
-
-Package: com.nextsolution.nextaura.lock-screen
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_lock_screen_1.0.4_RootHide.deb
-Size: 1388
-MD5sum: a5f3bb9fb6f6c3fbdc576de8c2dd1981
-SHA1: 330462463351272ae378e89a8167c518596d0923
-SHA256: 0f8fff68663e35e1fe2c8955d3c2c9c2867d74fafb22cd9804662b1b26bcee68
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Lock Screen clock, quick actions, status elements, charging text and notification-list visuals.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/lock-screen.png
-Name: LockCraft
-
-Package: com.nextsolution.nextaura.notification-glow
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.glow (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_notification_glow_1.0.4_RootHide.deb
-Size: 1360
-MD5sum: d8b05c81fc9c83e6f7e2754653a62419
-SHA1: d187856df57e81479215d0f1a8def40bcb13917e
-SHA256: e521de039a7d03a647a22b23582812307084e7e777a85702ad7d65f0853bea5b
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Edge glow, pulse, ripple and lock-screen notification lighting effects.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/notification-glow.png
-Name: Notify Glow
-
-Package: com.nextsolution.nextaura.notification-island
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.island (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_notification_island_1.0.4_RootHide.deb
-Size: 1384
-MD5sum: 5d103fe94dd923b7b3240fa18405ad4e
-SHA1: f7401f28ad11019cba898d16ccd70612c222c65b
-SHA256: 96a9aaae39e74f5729e46ea929acdcb24d5e26dcf9f78e2b663ac662d9cd63c5
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Notification Island with app icons, privacy, exact-app Open, Dismiss, live preview and layout controls.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/notification-island.png
-Name: Notify Island
-
-Package: com.nextsolution.nextaura.notifications
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_notifications_1.0.4_RootHide.deb
-Size: 1372
-MD5sum: 9cec5e5a2c6cd255c00fecf204fd295b
-SHA1: 59c7fa09990c9c24bb5613bc9029bda410c11f51
-SHA256: 5873eedaf91424b18642a96570f399fcbd6ae6091a814eb4d388ae3c6a4ea1aa
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Stock notification icon, app name, time, buttons, scale, opacity and advanced card appearance.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/notifications.png
-Name: NotifyKit
-
-Package: com.nextsolution.nextaura.now-playing
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_now_playing_1.0.4_RootHide.deb
-Size: 1368
-MD5sum: a39a5e25a27135e2d849a86e83fef7c1
-SHA1: 53f083b828ddf3a06bc6a6fb1e7578f38388201c
-SHA256: fe79da85d6822d0626acfb6f81a63d0b5c142eafc1a9c2a7488d9152ff79abd0
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Now Playing artwork, title, artist, controls, opacity, scaling and background appearance.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/now-playing.png
-Name: NowPlay
-
-Package: com.nextsolution.nextaura.runtime.advanced
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_advanced_1.0.0_RootHide.deb
-Size: 27656
-MD5sum: 2f5da1f5dc0fa9d897641dfaba90f071
-SHA1: 7f8b047d940c2b92d7686a91547eabb9f9f3263c
-SHA256: 5a0dc24cebd4942d3d048a244f969f9adbd4530285ab6c1c1d1b30c002fe3ff5
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal advanced runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (advanced)
-
-Package: com.nextsolution.nextaura.runtime.extended
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_extended_1.0.0_RootHide.deb
-Size: 13392
-MD5sum: 474bf0ab6a92f214a852ef6cf705701d
-SHA1: 65a9f3558cd0fad8fbc48925e6a1f4fe04e8c5f7
-SHA256: 68ee2ea55f36e7eb8843482b1b90e68b482cc2bf66c754382ad71c1eca68b5d5
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal extended runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (extended)
-
-Package: com.nextsolution.nextaura.runtime.feedback
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_feedback_1.0.0_RootHide.deb
-Size: 5588
-MD5sum: 79f1d04de0713db4c58381113f70593b
-SHA1: 323985e5035b4b067fc59da3f123e3797485492b
-SHA256: 65ae20fec466c752d48109d234682e6f3e83d1a44d2b700c2f09244cb1b7f342
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal feedback runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (feedback)
-
-Package: com.nextsolution.nextaura.runtime.glow
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_glow_1.0.0_RootHide.deb
-Size: 18292
-MD5sum: c282e1e4f9c13bc53df55f8f3bbeacf0
-SHA1: c560ea286f67e7f0c18871b6c7fd8987ffad56da
-SHA256: e4bde4a0b5f8e69c94bd0904fb9d45cf1a221b1c1a3e9d172f13b607c60cb2ec
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal glow runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (glow)
-
-Package: com.nextsolution.nextaura.runtime.island
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_island_1.0.0_RootHide.deb
-Size: 25252
-MD5sum: 8d4cf7f0e62e3a1d5dda051d7b90a9fa
-SHA1: 8a8ec9e662ad82943e8041ccfbd4e200d9f55955
-SHA256: ed80d6aff219f78dbd65e8fe55df3ba3529327546a88315cb470f561da5ee744
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal island runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (island)
-
-Package: com.nextsolution.nextaura.runtime.preferences
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_preferences_1.0.4_RootHide.deb
-Size: 48656
-MD5sum: 58d1eb55e27ed745fcf2f5335e5c1ee7
-SHA1: 41df3ca7d48ec927ed94fc2c44b040526db7a085
-SHA256: 56999ef378e4912699a89295448716d6fe63a9f90d62089628bea580a22e5b1c
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal native category Preferences controller shared by modular tweaks.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: Aura Preferences Runtime
-
-Package: com.nextsolution.nextaura.runtime.safe
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_safe_1.0.0_RootHide.deb
-Size: 21460
-MD5sum: f8a70b3633cadf365d1f7285d748e316
-SHA1: b686a2922a904fef0f8cea720ead7762982544da
-SHA256: ba6f6e464149cad102b5122aa06980f2cdca102fc2f763237f21e7ae19fdfc14
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal safe runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (safe)
-
-Package: com.nextsolution.nextaura.runtime.springboard
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_springboard_1.0.0_RootHide.deb
-Size: 9660
-MD5sum: 1d0cad0e8d5ea4d238ef0a3b792432f9
-SHA1: 10d57e74aaea6a3217b27471f9f506477e964ca1
-SHA256: 22476c50eb4a88ffccb4ce3b8ce7f47730a54f2bc74891869dcabf5b03332376
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal springboard runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (springboard)
-
-Package: com.nextsolution.nextaura.runtime.thermal
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_thermal_1.0.0_RootHide.deb
-Size: 90756
-MD5sum: 5ad2364264f3eee258abbc02cb062253
-SHA1: 777b24fc3a37bb6251ad835ae8cbdba2a4fbf3dc
-SHA256: 01c5957ff76fa67f45d2919ab8fbdff71586b126284f97602eec5367f576beed
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal thermal runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (thermal)
-
-Package: com.nextsolution.nextaura.safety-recovery
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_safety_recovery_1.0.4_RootHide.deb
-Size: 1352
-MD5sum: ae40b7b2942e36be8700ca48cdbe2453
-SHA1: 6846b25fc67d6bc41734c7face454e9cc6a9e8c9
-SHA256: f099f4dd20aa5964639b574f6073331042f155c7c8d8acc851ed57541714b3ac
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Crash-guard recovery and reset tools for advanced visual controls.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/safety-recovery.png
-Name: Rescue
-
-Package: com.nextsolution.nextaura.status-bar
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_status_bar_1.0.4_RootHide.deb
-Size: 1364
-MD5sum: 410c917fa55ecd23abab8cb8e8e44d8e
-SHA1: 26f34a6cff5c6d8f3bb551a3f7207b7235407e79
-SHA256: 487fd644b946204ff32cad560f41d88b6071746581f9e760bd2b789bbed34b31
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Status Bar visibility, opacity, scale, positioning and individual indicator controls.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/status-bar.png
-Name: StatusKit
-
-Package: com.nextsolution.nextaura.system-overlays
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_system_overlays_1.0.4_RootHide.deb
-Size: 1368
-MD5sum: b314102bcf6ea55b522ab4fe0e43ea73
-SHA1: acd9911bb6da90c8d02d3e0f2394c27d143d8625
-SHA256: db4ef56925e64b7b50e30b699a682b1302fe241e7e0c8266edcd63ed854f5ec9
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Screenshot flash/preview controls plus Volume and Ringer HUD visibility options.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/system-overlays.png
-Name: HUDKit
-
-Package: com.nextsolution.nextaura.thermal-sweat
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.thermal (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_thermal_sweat_1.0.4_RootHide.deb
-Size: 1356
-MD5sum: d0bd75188f763ff5c780799878264dce
-SHA1: 2512c2ce2b7fac00eb40b9fa2a7fb0b2ba677374
-SHA256: a83682526a40d4d291bda0aabcd9a1cbfa98a53d868b2652ede9e434ee51011a
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Temperature-aware battery visuals, Sweat My Phone effects and battery percentage tools.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
-Name: Therma
-
 Package: com.nextsolution.nextdiagnostics.runtime
 Version: 1.0.1
 Architecture: iphoneos-arm64e
@@ -1103,3 +610,496 @@ Description: Shared RootHide diagnostic runtime for Next Solution tweaks. Idle u
 Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: Next Diagnostics Runtime
+
+Package: com.nextsolution.nextaura.animations
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_animations_1.0.4_RootHide.deb
+Size: 1316
+MD5sum: 358ceaab6570f6d773f8828384c33418
+SHA1: f374437b0aa27e7999aba20f52583e97dc688f3f
+SHA256: 25761c0c52cca5baddab3f7a3f97523b685b81e407d82647ce7fdacca905aadc
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: System animation-speed control.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/animations.png
+Name: Motion
+
+Package: com.nextsolution.nextaura.app-switcher
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_app_switcher_1.0.4_RootHide.deb
+Size: 1364
+MD5sum: 1edcb37e6cac913a3215cb80593f343f
+SHA1: 2e956962a71c85749e46245b6d22147d8a709f09
+SHA256: b9db86660f5f38500b3fb7a2d6a543c05f8b7e8cbb2de2a5c7a8d89a0073ad6f
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: App Switcher card scale, opacity, spacing, labels, icons and background controls.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/app-switcher.png
+Name: SwitchDeck
+
+Package: com.nextsolution.nextaura.cc-second-page
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.advanced (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_cc_second_page_1.0.4_RootHide.deb
+Size: 1376
+MD5sum: 57d36569cb9339a72de6425b989e8240
+SHA1: 35eddc69a1eb3de70da2de682f97abdcb65b722e
+SHA256: f0ab84b8ca6ea8ea9cea8f6e71c1b481502ac3bacf23ddf6311440601872b33f
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Second Control Center page with configurable tiles, spacing, information and haptics.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/cc-second-page.png
+Name: Control Deck
+
+Package: com.nextsolution.nextaura.control-center
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_control_center_1.0.4_RootHide.deb
+Size: 1372
+MD5sum: 8e8e7a39eff04e3de7328b537a39ecb2
+SHA1: 80faa107314ac9c52c85b170030fa7f6bcb10ffe
+SHA256: 46dd442cf071471c09c15df5836f190e3bdbbdb8da6560fa783d26b7ec58357b
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Control Center labels, module sizing, background appearance and advanced stock-layout controls.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/control-center.png
+Name: ControlKit
+
+Package: com.nextsolution.nextaura.dock-folders
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_dock_folders_1.0.4_RootHide.deb
+Size: 1372
+MD5sum: a9c21522472c16926523fceaede60e07
+SHA1: d6d982791f7b18462907d0187de12a9756b890a5
+SHA256: 4e8ad23c06af3c5f500f6843942e7aaaf701d4374431ba734c9c31c291246987
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Dock and folder backgrounds, labels, sizing, opacity and advanced layout controls.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/dock-folders.png
+Name: DockCraft
+
+Package: com.nextsolution.nextaura.feedback
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.feedback (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_feedback_1.0.4_RootHide.deb
+Size: 1316
+MD5sum: e5c2da40d89028ae2b70c0932ef5b988
+SHA1: cc7574ff2fabb5fac968a77321e2deaeb45c388b
+SHA256: fc26b5426b7b2d6a96b6eefb473a2dc9ecb2528db6d8a5ddf2d5eac9dd76ef2d
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Unlock and call-connect vibration feedback.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/feedback.png
+Name: Pulse
+
+Package: com.nextsolution.nextaura.home-screen
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_home_screen_1.0.4_RootHide.deb
+Size: 1372
+MD5sum: 4ed3e9bd77ebaece1d0a79ad72e7a9f3
+SHA1: 51d2034eeeb58477f6ebf320ae5712e6f3895deb
+SHA256: 59f9a2916d58d65d7d42f4679c139b52aa0a5e8cbba0468355a6d8db65e3c22f
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Home Screen labels, badges, icon sizing, opacity and advanced visual controls.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/home-screen.png
+Name: HomeFlow
+
+Package: com.nextsolution.nextaura.lock-screen
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_lock_screen_1.0.4_RootHide.deb
+Size: 1388
+MD5sum: ab261b6a27c806de47d3099b661c7649
+SHA1: 5befe730bdcb997bf6eb0e9c9cd6ad41cab0b6e1
+SHA256: 8dfc43d53c2360a528c5c6106196bbf89d9c7d6ada38cc634b724603f5f1f033
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Lock Screen clock, quick actions, status elements, charging text and notification-list visuals.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/lock-screen.png
+Name: LockCraft
+
+Package: com.nextsolution.nextaura.notification-glow
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.glow (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_notification_glow_1.0.4_RootHide.deb
+Size: 1360
+MD5sum: 9548d48e9fa06f311277e709baf9c0cc
+SHA1: 1e628d1cf778a4a75c74b348c3fed7e2a9d36e3e
+SHA256: 04ccd7768240424120b39e6989c6a274df46a9cdaf139c34540d73426cc35385
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Edge glow, pulse, ripple and lock-screen notification lighting effects.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/notification-glow.png
+Name: Notify Glow
+
+Package: com.nextsolution.nextaura.notification-island
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.island (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_notification_island_1.0.4_RootHide.deb
+Size: 1384
+MD5sum: 3dbef87e4ce418348399b81868e0912c
+SHA1: 462cc7f85b7c5dd63a3b9fcd8c75135d3417cd88
+SHA256: 2b49290be3cdbef90779551cce5db58caa63addfde5ec330633a0e17ef56564c
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Notification Island with app icons, privacy, exact-app Open, Dismiss, live preview and layout controls.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/notification-island.png
+Name: Notify Island
+
+Package: com.nextsolution.nextaura.notifications
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_notifications_1.0.4_RootHide.deb
+Size: 1376
+MD5sum: 764006f553f31e40b86e47bc95a5b9e7
+SHA1: 7dc7c36d7bc158c29cddcc3dbf7dcd4fff17d32c
+SHA256: 86a402388fd27683cfa7a344d0d18fe144189b50b8f3bf140c6fcc3981be193d
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Stock notification icon, app name, time, buttons, scale, opacity and advanced card appearance.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/notifications.png
+Name: NotifyKit
+
+Package: com.nextsolution.nextaura.now-playing
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_now_playing_1.0.4_RootHide.deb
+Size: 1368
+MD5sum: 0c0f80c63679dd224327d6deda21ccdf
+SHA1: 69ba680ce1eba00c17ca3687042da5374eb3c6d5
+SHA256: 5daee26f0c1f012dd550f23d7186bc25a323a85af2d3527be8480404da08ab03
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Now Playing artwork, title, artist, controls, opacity, scaling and background appearance.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/now-playing.png
+Name: NowPlay
+
+Package: com.nextsolution.nextaura.runtime.advanced
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_advanced_1.0.0_RootHide.deb
+Size: 27688
+MD5sum: 42cf343cf149cdd9da45a501a14566b8
+SHA1: f68e72f598a703492ac3919be3d3ddfeabd5df3e
+SHA256: 11ef79e9c319421b26954750bdbeace09c90718d87a7376ab8c9be7cc88b0ecf
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal advanced runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (advanced)
+
+Package: com.nextsolution.nextaura.runtime.extended
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_extended_1.0.0_RootHide.deb
+Size: 13944
+MD5sum: 904a573fa5f0ca701bfa2fd1e6fef1bb
+SHA1: 5093c344ec2f21d07064b41b28d1e0e7cf055c6d
+SHA256: 3ca13ee60b77717152bf7ec6b8fb17028f156e2c7f672936b92f1b64af8c7684
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal extended runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (extended)
+
+Package: com.nextsolution.nextaura.runtime.feedback
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_feedback_1.0.0_RootHide.deb
+Size: 5600
+MD5sum: 245175d73322c38b125074a6cfdf9a68
+SHA1: 7819eafc91e8e6838174e7150ac07ce6d5c55936
+SHA256: 088b87d9f69ab8e19d9a0ee69745f0f12204c6d08b4f1dce030006e68fa4a8a8
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal feedback runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (feedback)
+
+Package: com.nextsolution.nextaura.runtime.glow
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_glow_1.0.0_RootHide.deb
+Size: 18264
+MD5sum: 3f51c7270b4b842f61ef78a38206df33
+SHA1: c0c481983a984403b1e847368f7e7c1f17545917
+SHA256: 7e04f772cd2b2848e1402b2fd014efe95374e3dc6733bd0aa4a8404ec9c61cfd
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal glow runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (glow)
+
+Package: com.nextsolution.nextaura.runtime.island
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_island_1.0.0_RootHide.deb
+Size: 25192
+MD5sum: 760941975af128344eb00916b2c3a86c
+SHA1: 14a033fbf49b4022c9adc37b4e16d2bc5049ec2d
+SHA256: c76a2f8346b08c1d7b66db795957d42fb2b684fee75e55da32c0546e8e3a2044
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal island runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (island)
+
+Package: com.nextsolution.nextaura.runtime.preferences
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_preferences_1.0.4_RootHide.deb
+Size: 48648
+MD5sum: 42f6b341c380b367cbe1839fbd4156ef
+SHA1: 2a7c6157eb1779f5b395d708326eef8570b25ddb
+SHA256: c7e5adc7e9b040f5e0da579fdfe73b223e6bb8bc5d703fd39a564418ade54285
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal native category Preferences controller shared by modular tweaks.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: Aura Preferences Runtime
+
+Package: com.nextsolution.nextaura.runtime.safe
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_safe_1.0.0_RootHide.deb
+Size: 21652
+MD5sum: 714025545d7ff08a534250dca4e9ba8a
+SHA1: b283d62198eaaa93e5619bcfb455920f6ff7a421
+SHA256: f1b3cf490c627c91d75df2376fb237a422942284471f989c6237ec37e9c9d029
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal safe runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (safe)
+
+Package: com.nextsolution.nextaura.runtime.springboard
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_springboard_1.0.0_RootHide.deb
+Size: 9680
+MD5sum: 76eb0bcdc9eab2aabfe54ce3201df6e2
+SHA1: 23fc3518bfcc1a730a1a015cd6ba09e04d0c14de
+SHA256: 3092a7c79b8d8528d6dadeaa2b98faf9d934fd27d8faf4de40b32ed26808614f
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal springboard runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (springboard)
+
+Package: com.nextsolution.nextaura.runtime.thermal
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_thermal_1.0.0_RootHide.deb
+Size: 90744
+MD5sum: c5b83fe4eb5d90b8bc2a24f39b83b9a0
+SHA1: 76ade33d14232153e1a646684052781b96fa9441
+SHA256: ecc7fa31da349ab4652c966522f3962f440b5ed512a191ce45116398a78c138a
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Internal thermal runtime shared by modular NextAura categories.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: NextAura Runtime (thermal)
+
+Package: com.nextsolution.nextaura.safety-recovery
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_safety_recovery_1.0.4_RootHide.deb
+Size: 1352
+MD5sum: c16beb765d7633d94d572c466e8c6977
+SHA1: 5ac865bb1a5206d891cceb1f9c695e30fc7c81fb
+SHA256: 605c29019ef7336182be1bcb085fea0534aa9bdb6db1a754f550b51ca6cb4fb2
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Crash-guard recovery and reset tools for advanced visual controls.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/safety-recovery.png
+Name: Rescue
+
+Package: com.nextsolution.nextaura.status-bar
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_status_bar_1.0.4_RootHide.deb
+Size: 1368
+MD5sum: bf9c2c8c91032ac3a1a306aa14b8acf4
+SHA1: 14b2d73bbb16cfb6c179cc4e91223e00fd9aa450
+SHA256: d605c3380a9ca1b298b5697a3332943c6f6c837fd346b5c833fca8c0e224ffca
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Status Bar visibility, opacity, scale, positioning and individual indicator controls.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/status-bar.png
+Name: StatusKit
+
+Package: com.nextsolution.nextaura.system-overlays
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_system_overlays_1.0.4_RootHide.deb
+Size: 1368
+MD5sum: da09f2182571df41f5119b5c6f627e9d
+SHA1: 25f8563563509ce2ab5301e77b6aecadf254731e
+SHA256: 96b3281b1f326be5ed233ab7c179917103b2b5c844522f5b1a035f8c1e7c938f
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Screenshot flash/preview controls plus Volume and Ringer HUD visibility options.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/system-overlays.png
+Name: HUDKit
+
+Package: com.nextsolution.nextaura.thermal-sweat
+Version: 1.0.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.thermal (>= 1.0.0)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_thermal_sweat_1.0.4_RootHide.deb
+Size: 1356
+MD5sum: 73e5215527a4b90c19657d18a8fa6326
+SHA1: 719dc5ecdbe3b124652ff1d4f97f39677696a8f7
+SHA256: bd342792a7f70fc692e7a054c9d59524e386624c0a3fca950e24492a6d730992
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Temperature-aware battery visuals, Sweat My Phone effects and battery percentage tools.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
+Name: Therma
