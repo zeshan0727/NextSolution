@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#070912"/><stop offset=".55" stop-color="#0f1730"/><stop offset="1" stop-color="#070912"/></linearGradient>
+  <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#c45cff"/><stop offset=".55" stop-color="#6b58ff"/><stop offset="1" stop-color="#40b9ff"/></linearGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#bg)"/>
+<text x="90" y="105" fill="url(#accent)" font-family="Arial" font-size="66" font-weight="900">NextLock Features</text>
+<text x="90" y="154" fill="#aab6d0" font-family="Arial" font-size="24">A clean Lock Screen customization suite by Next Solution</text>
+
+<g transform="translate(90 220)">
+  <g>
+    <rect width="680" height="240" rx="28" fill="#10182a" stroke="#2c3858" stroke-width="2"/>
+    <circle cx="64" cy="65" r="28" fill="#7d4cff" opacity=".25"/><text x="64" y="75" text-anchor="middle" fill="#d5c2ff" font-family="Arial" font-size="28" font-weight="700">T</text>
+    <text x="112" y="70" fill="#ffffff" font-family="Arial" font-size="31" font-weight="800">Time</text>
+    <text x="44" y="122" fill="#b7c1d8" font-family="Arial" font-size="22">27 fonts • font weight • style • color • size</text>
+    <text x="44" y="158" fill="#b7c1d8" font-family="Arial" font-size="22">Alignment • X/Y positioning • independent shadow</text>
+    <text x="44" y="208" fill="#f7f3ff" font-family="Georgia, serif" font-size="44" font-style="italic">9:41</text>
+    <text x="173" y="205" fill="#f7f3ff" font-family="Arial Rounded MT Bold, Arial" font-size="38" font-weight="700">9:41</text>
+    <text x="296" y="205" fill="#f7f3ff" font-family="Arial" font-size="36" font-weight="300">9:41</text>
+  </g>
+  <g transform="translate(740 0)">
+    <rect width="680" height="240" rx="28" fill="#10182a" stroke="#2c3858" stroke-width="2"/>
+    <circle cx="64" cy="65" r="28" fill="#3b93ff" opacity=".24"/><text x="64" y="75" text-anchor="middle" fill="#c7e3ff" font-family="Arial" font-size="28" font-weight="700">D</text>
+    <text x="112" y="70" fill="#ffffff" font-family="Arial" font-size="31" font-weight="800">Date</text>
+    <text x="44" y="122" fill="#b7c1d8" font-family="Arial" font-size="22">Independent font • style • size • color • alignment</text>
+    <text x="44" y="158" fill="#b7c1d8" font-family="Arial" font-size="22">Custom NSDateFormatter patterns • X/Y position • shadow</text>
+    <text x="44" y="208" fill="#edf3ff" font-family="Arial" font-size="28" font-weight="600">Sunday, August 16</text>
+  </g>
+
+  <g transform="translate(0 280)">
+    <rect width="680" height="240" rx="28" fill="#10182a" stroke="#2c3858" stroke-width="2"/>
+    <circle cx="64" cy="65" r="28" fill="#ff4fc3" opacity=".22"/><text x="64" y="75" text-anchor="middle" fill="#ffc7eb" font-family="Arial" font-size="28" font-weight="700">✦</text>
+    <text x="112" y="70" fill="#ffffff" font-family="Arial" font-size="31" font-weight="800">Icon</text>
+    <text x="44" y="122" fill="#b7c1d8" font-family="Arial" font-size="22">30+ SF Symbols • size • color • anchor • placement</text>
+    <text x="44" y="158" fill="#b7c1d8" font-family="Arial" font-size="22">Horizontal / vertical offsets • independent shadow</text>
+    <g transform="translate(45 184)"><circle cx="18" cy="18" r="18" fill="#8253ff"/><text x="18" y="25" text-anchor="middle" fill="#fff" font-family="Arial" font-size="20">★</text></g>
+    <g transform="translate(100 184)"><circle cx="18" cy="18" r="18" fill="#3e9dff"/><text x="18" y="25" text-anchor="middle" fill="#fff" font-family="Arial" font-size="20">♥</text></g>
+    <g transform="translate(155 184)"><circle cx="18" cy="18" r="18" fill="#ff5fbf"/><text x="18" y="25" text-anchor="middle" fill="#fff" font-family="Arial" font-size="20">⚡</text></g>
+  </g>
+
+  <g transform="translate(740 280)">
+    <rect width="680" height="240" rx="28" fill="#10182a" stroke="#2c3858" stroke-width="2"/>
+    <circle cx="64" cy="65" r="28" fill="#45d0b0" opacity=".22"/><text x="64" y="74" text-anchor="middle" fill="#c5fff1" font-family="Arial" font-size="25" font-weight="700">◫</text>
+    <text x="112" y="70" fill="#ffffff" font-family="Arial" font-size="31" font-weight="800">Custom Photo</text>
+    <text x="44" y="122" fill="#b7c1d8" font-family="Arial" font-size="22">Normal photos → elegant rounded square</text>
+    <text x="44" y="158" fill="#b7c1d8" font-family="Arial" font-size="22">Transparent PNG → sticker-style with no box</text>
+    <rect x="45" y="182" width="52" height="52" rx="13" fill="url(#accent)" opacity=".9"/>
+    <path d="M135 206c0-18 14-32 32-32s32 14 32 32-14 32-32 32c-8 0-15-3-20-7l-17 5 5-16c-3-4-5-9-5-14z" fill="#8a5cff"/>
+    <circle cx="157" cy="197" r="7" fill="#fff"/><circle cx="177" cy="197" r="7" fill="#fff"/>
+  </g>
+</g>
+
+<g transform="translate(90 785)">
+  <rect width="1420" height="70" rx="35" fill="#0d1426" stroke="#34456b"/>
+  <text x="34" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">iOS 15+</text>
+  <text x="150" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
+  <text x="188" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">Rootless</text>
+  <text x="307" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
+  <text x="345" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">RootHide</text>
+  <text x="470" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
+  <text x="508" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">Live reload</text>
+  <text x="650" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
+  <text x="688" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">Next Solution</text>
+  <text x="870" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
+  <text x="908" y="45" fill="#9aabca" font-family="Arial" font-size="22">nextsolution.cc</text>
+</g>
+</svg>
