@@ -1,0 +1,186 @@
+name: Publish Module Glass 1.1.3 Stable Recovery
+on:
+  push:
+    paths:
+      - '.github/workflows/publish-module-glass-stable-recovery-1.1.3.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Repackage exact known-good payload with upgrade-safe versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          OLD_WRAP='debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb'
+          OLD_RUN='debfiles/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb'
+          NEW_WRAP='debfiles/NextAura_cc_module_backgrounds_1.1.3_StableRecovery_RootHide.deb'
+          NEW_RUN='debfiles/NextAura_Runtime_ccbackgrounds_1.1.3_StableRecovery_RootHide.deb'
+          test -f "$OLD_WRAP"; test -f "$OLD_RUN"
+          rm -rf /tmp/mg-wrap /tmp/mg-run /tmp/old-wrap-data /tmp/new-wrap-data /tmp/old-run-data /tmp/new-run-data
+          dpkg-deb -R "$OLD_WRAP" /tmp/mg-wrap
+          dpkg-deb -R "$OLD_RUN" /tmp/mg-run
+          python3 - <<'PY'
+          from pathlib import Path
+          def patch(path, version, runtime_dep=False):
+              p=Path(path); s=p.read_text()
+              lines=[]
+              for line in s.splitlines():
+                  if line.startswith('Version:'):
+                      line=f'Version: {version}'
+                  if runtime_dep and line.startswith('Depends:'):
+                      line=line.replace('com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.14)', 'com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.1.3)')
+                  lines.append(line)
+              p.write_text('\n'.join(lines)+'\n')
+          patch('/tmp/mg-wrap/DEBIAN/control','1.1.3',True)
+          patch('/tmp/mg-run/DEBIAN/control','1.1.3',False)
+          PY
+          dpkg-deb --build --root-owner-group /tmp/mg-wrap "$NEW_WRAP"
+          dpkg-deb --build --root-owner-group /tmp/mg-run "$NEW_RUN"
+          mkdir -p /tmp/old-wrap-data /tmp/new-wrap-data /tmp/old-run-data /tmp/new-run-data
+          dpkg-deb -x "$OLD_WRAP" /tmp/old-wrap-data
+          dpkg-deb -x "$NEW_WRAP" /tmp/new-wrap-data
+          dpkg-deb -x "$OLD_RUN" /tmp/old-run-data
+          dpkg-deb -x "$NEW_RUN" /tmp/new-run-data
+          diff -ru /tmp/old-wrap-data /tmp/new-wrap-data
+          diff -ru /tmp/old-run-data /tmp/new-run-data
+          old_dylib=$(sha256sum /tmp/old-run-data/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib | awk '{print $1}')
+          new_dylib=$(sha256sum /tmp/new-run-data/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib | awk '{print $1}')
+          echo "known_good_dylib_sha256=$old_dylib"
+          echo "recovery_dylib_sha256=$new_dylib"
+          test "$old_dylib" = "$new_dylib"
+          test "$(dpkg-deb -f "$NEW_WRAP" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          test "$(dpkg-deb -f "$NEW_WRAP" Version)" = '1.1.3'
+          test "$(dpkg-deb -f "$NEW_RUN" Package)" = 'com.nextsolution.nextaura.runtime.ccbackgrounds'
+          test "$(dpkg-deb -f "$NEW_RUN" Version)" = '1.1.3'
+          dpkg-deb -f "$NEW_WRAP"
+          dpkg-deb -f "$NEW_RUN"
+      - name: Update only Module Glass stanzas and rebuild indexes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, subprocess
+          P=Path('Packages')
+          text=P.read_text()
+          targets={
+            'com.nextsolution.nextaura.cc-module-backgrounds': Path('debfiles/NextAura_cc_module_backgrounds_1.1.3_StableRecovery_RootHide.deb'),
+            'com.nextsolution.nextaura.runtime.ccbackgrounds': Path('debfiles/NextAura_Runtime_ccbackgrounds_1.1.3_StableRecovery_RootHide.deb'),
+          }
+          stanzas=[]
+          seen=set()
+          for stanza in text.strip().split('\n\n'):
+              lines=stanza.splitlines()
+              fields={}
+              for line in lines:
+                  if ': ' in line:
+                      k,v=line.split(': ',1); fields[k]=v
+              pkg=fields.get('Package')
+              if pkg not in targets:
+                  stanzas.append(stanza)
+                  continue
+              if pkg in seen:
+                  continue
+              seen.add(pkg)
+              path=targets[pkg]
+              data=path.read_bytes()
+              control=subprocess.check_output(['dpkg-deb','-f',str(path)], text=True)
+              ctrl={}
+              for line in control.splitlines():
+                  if ': ' in line:
+                      k,v=line.split(': ',1); ctrl[k]=v
+              updates={
+                'Version':ctrl['Version'],
+                'Architecture':ctrl['Architecture'],
+                'Depends':ctrl.get('Depends',fields.get('Depends','')),
+                'Conflicts':ctrl.get('Conflicts',fields.get('Conflicts','')),
+                'Breaks':ctrl.get('Breaks',fields.get('Breaks','')),
+                'Replaces':ctrl.get('Replaces',fields.get('Replaces','')),
+                'Filename':'./'+str(path),
+                'Size':str(len(data)),
+                'MD5sum':hashlib.md5(data).hexdigest(),
+                'SHA1':hashlib.sha1(data).hexdigest(),
+                'SHA256':hashlib.sha256(data).hexdigest(),
+              }
+              out=[]; used=set()
+              for line in lines:
+                  if ': ' in line:
+                      k,_=line.split(': ',1)
+                      if k in updates and updates[k] != '':
+                          out.append(f'{k}: {updates[k]}'); used.add(k); continue
+                  out.append(line)
+              for k in ('Breaks','Replaces'):
+                  if updates.get(k) and k not in used:
+                      idx=next((i for i,x in enumerate(out) if x.startswith('Conflicts: ')), len(out)-1)+1
+                      out.insert(idx, f'{k}: {updates[k]}')
+              if pkg=='com.nextsolution.nextaura.cc-module-backgrounds':
+                  out=[('Description: Stable recovery build using the exact known-good Module Glass 1.0.18 renderer payload, republished with an upgrade-safe version so Sileo/APT can replace newer broken builds.' if x.startswith('Description:') else x) for x in out]
+              else:
+                  out=[('Description: Stable recovery runtime using the exact known-good Module Glass Runtime 1.0.14 binary payload, republished as 1.1.3 for upgrade-safe installation.' if x.startswith('Description:') else x) for x in out]
+              stanzas.append('\n'.join(out))
+          assert seen==set(targets), f'missing target stanzas: {set(targets)-seen}'
+          P.write_text('\n\n'.join(stanzas)+'\n')
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9 -c Packages > Packages.xz
+          zstd -19 -q -f Packages -o Packages.zst
+          python3 - <<'PY'
+          from pathlib import Path
+          from email.utils import formatdate
+          import time
+          p=Path('Release')
+          lines=[]
+          for line in p.read_text().splitlines():
+              if line.startswith('Version:'):
+                  line='Version: 1.1.3'
+              elif line.startswith('Date:'):
+                  line='Date: '+formatdate(time.time(), usegmt=True)
+              lines.append(line)
+          p.write_text('\n'.join(lines)+'\n')
+          PY
+      - name: Validate full catalog and recovery install chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test $(grep -c '^Package:' Packages) -gt 20
+          grep -A20 -F 'Package: com.nextsolution.nextaura.cc-module-backgrounds' Packages | head -n 22
+          grep -A22 -F 'Package: com.nextsolution.nextaura.runtime.ccbackgrounds' Packages | head -n 24
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          text=Path('Packages').read_text()
+          want={'com.nextsolution.nextaura.cc-module-backgrounds':'1.1.3','com.nextsolution.nextaura.runtime.ccbackgrounds':'1.1.3'}
+          found={}
+          for s in text.strip().split('\n\n'):
+              f=dict(line.split(': ',1) for line in s.splitlines() if ': ' in line)
+              if f.get('Package') in want:
+                  found[f['Package']]=f
+          assert set(found)==set(want)
+          for pkg,ver in want.items():
+              f=found[pkg]; assert f['Version']==ver
+              path=Path(f['Filename'].removeprefix('./')); data=path.read_bytes()
+              assert f['Size']==str(len(data))
+              assert f['SHA256']==hashlib.sha256(data).hexdigest()
+          assert 'com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.1.3)' in found['com.nextsolution.nextaura.cc-module-backgrounds']['Depends']
+          print('STABLE_RECOVERY_CHAIN_OK')
+          PY
+      - name: Publish stable recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release \
+            debfiles/NextAura_cc_module_backgrounds_1.1.3_StableRecovery_RootHide.deb \
+            debfiles/NextAura_Runtime_ccbackgrounds_1.1.3_StableRecovery_RootHide.deb
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Publish Module Glass 1.1.3 stable recovery'
+          git push origin HEAD:main
