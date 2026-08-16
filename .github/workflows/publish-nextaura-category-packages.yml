@@ -24,7 +24,9 @@ jobs:
           fetch-depth: 0
 
       - name: Install tools
-        run: brew install dpkg ldid xz zstd
+        run: |
+          brew install dpkg ldid xz zstd
+          python3 -m pip install --user pillow
 
       - name: Build current Notification Island runtime
         shell: bash
@@ -72,30 +74,31 @@ jobs:
           OUT="$RUNNER_TEMP/nextaura-categories"
           test "$(find "$OUT" -maxdepth 1 -name '*.deb' | wc -l | tr -d ' ')" = 27
           test "$(find "$OUT" -maxdepth 1 -name 'NextAura_Runtime_*_RootHide.deb' | wc -l | tr -d ' ')" = 10
-          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_*_1.0.0_RootHide.deb' ! -name 'NextAura_Runtime_*' | wc -l | tr -d ' ')" = 17
+          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_*_1.0.1_RootHide.deb' ! -name 'NextAura_Runtime_*' | wc -l | tr -d ' ')" = 17
+          test "$(find "$OUT/icons/nextaura" -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')" = 17
 
           python3 - "$OUT" <<'PY'
           import subprocess, sys
           from pathlib import Path
           out = Path(sys.argv[1])
-          expected = {
-              'com.nextsolution.nextaura.feedback',
-              'com.nextsolution.nextaura.thermal-sweat',
-              'com.nextsolution.nextaura.home-screen',
-              'com.nextsolution.nextaura.dock-folders',
-              'com.nextsolution.nextaura.lock-screen',
-              'com.nextsolution.nextaura.status-bar',
-              'com.nextsolution.nextaura.control-center',
-              'com.nextsolution.nextaura.cc-second-page',
-              'com.nextsolution.nextaura.cc-module-backgrounds',
-              'com.nextsolution.nextaura.notification-island',
-              'com.nextsolution.nextaura.notification-glow',
-              'com.nextsolution.nextaura.now-playing',
-              'com.nextsolution.nextaura.notifications',
-              'com.nextsolution.nextaura.app-switcher',
-              'com.nextsolution.nextaura.system-overlays',
-              'com.nextsolution.nextaura.animations',
-              'com.nextsolution.nextaura.safety-recovery',
+          expected_names = {
+              'com.nextsolution.nextaura.feedback': 'Aura Haptics',
+              'com.nextsolution.nextaura.thermal-sweat': 'Aura Thermal',
+              'com.nextsolution.nextaura.home-screen': 'Aura Home',
+              'com.nextsolution.nextaura.dock-folders': 'Aura Dock',
+              'com.nextsolution.nextaura.lock-screen': 'Aura Lock',
+              'com.nextsolution.nextaura.status-bar': 'Aura Status',
+              'com.nextsolution.nextaura.control-center': 'Aura Control',
+              'com.nextsolution.nextaura.cc-second-page': 'Aura Panel',
+              'com.nextsolution.nextaura.cc-module-backgrounds': 'Aura Modules',
+              'com.nextsolution.nextaura.notification-island': 'Aura Island',
+              'com.nextsolution.nextaura.notification-glow': 'Aura Glow',
+              'com.nextsolution.nextaura.now-playing': 'Aura Player',
+              'com.nextsolution.nextaura.notifications': 'Aura Alerts',
+              'com.nextsolution.nextaura.app-switcher': 'Aura Switcher',
+              'com.nextsolution.nextaura.system-overlays': 'Aura HUD',
+              'com.nextsolution.nextaura.animations': 'Aura Motion',
+              'com.nextsolution.nextaura.safety-recovery': 'Aura Safe',
           }
           visible = set()
           runtimes = set()
@@ -103,39 +106,49 @@ jobs:
               pkg = subprocess.check_output(['dpkg-deb','-f',str(deb),'Package'], text=True).strip()
               ver = subprocess.check_output(['dpkg-deb','-f',str(deb),'Version'], text=True).strip()
               arch = subprocess.check_output(['dpkg-deb','-f',str(deb),'Architecture'], text=True).strip()
-              if ver != '1.0.0' or arch != 'iphoneos-arm64e':
-                  raise SystemExit(f'bad metadata: {deb.name}: {pkg} {ver} {arch}')
+              if arch != 'iphoneos-arm64e':
+                  raise SystemExit(f'bad architecture: {deb.name}: {arch}')
               if '.runtime.' in pkg:
+                  if ver != '1.0.0':
+                      raise SystemExit(f'bad runtime version: {deb.name}: {ver}')
                   runtimes.add(pkg)
                   tag = subprocess.check_output(['dpkg-deb','-f',str(deb),'Tag'], text=True).strip()
                   if 'role::cydia' not in tag:
                       raise SystemExit(f'Runtime is not hidden/support-tagged: {pkg}')
               else:
+                  if ver != '1.0.1':
+                      raise SystemExit(f'bad category version: {deb.name}: {ver}')
                   visible.add(pkg)
+                  name = subprocess.check_output(['dpkg-deb','-f',str(deb),'Name'], text=True).strip()
+                  if name != expected_names[pkg]:
+                      raise SystemExit(f'Unexpected name for {pkg}: {name}')
+                  icon = subprocess.check_output(['dpkg-deb','-f',str(deb),'Icon'], text=True).strip()
+                  if icon != f"https://nextsolution.cc/icons/nextaura/{pkg.split('.')[-1]}.png":
+                      raise SystemExit(f'Unexpected icon for {pkg}: {icon}')
                   depends = subprocess.check_output(['dpkg-deb','-f',str(deb),'Depends'], text=True).strip()
                   if 'com.nextsolution.nextaura.runtime.preferences' not in depends:
                       raise SystemExit(f'Missing shared preferences runtime dependency: {pkg}')
                   conflict = subprocess.check_output(['dpkg-deb','-f',str(deb),'Conflicts'], text=True).strip()
                   if 'com.nextsolution.unlockvibrate' not in conflict:
                       raise SystemExit(f'Missing legacy NextAura conflict: {pkg}')
-          if visible != expected:
-              raise SystemExit(f'Visible category mismatch. missing={expected-visible} extra={visible-expected}')
+          if visible != set(expected_names):
+              raise SystemExit(f'Visible category mismatch. missing={set(expected_names)-visible} extra={visible-set(expected_names)}')
           if len(runtimes) != 10:
               raise SystemExit(f'Expected 10 runtimes, found {len(runtimes)}')
-          print('Verified 17 user-facing categories and 10 shared runtimes.')
+          print('Verified 17 short-name category packages, 17 unique icons, and 10 shared runtimes.')
           PY
 
-          # Ensure the notification category contains the 4.5.3 fixed Island runtime dependency.
-          ISLAND_DEB="$OUT/NextAura_notification_island_1.0.0_RootHide.deb"
+          ISLAND_DEB="$OUT/NextAura_notification_island_1.0.1_RootHide.deb"
           dpkg-deb -f "$ISLAND_DEB" Depends | grep -q 'com.nextsolution.nextaura.runtime.island'
           test -f "$OUT/NextAura_Category_Packages.txt"
 
       - name: Save build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextAura-Modular-Categories-1.0.0
+          name: NextAura-Modular-Categories-1.0.1
           path: |
             ${{ runner.temp }}/nextaura-categories/*.deb
+            ${{ runner.temp }}/nextaura-categories/icons/nextaura/*.png
             ${{ runner.temp }}/nextaura-categories/NextAura_Category_Packages.txt
             nextaura-category-island-build.log
 
@@ -145,17 +158,20 @@ jobs:
           set -euo pipefail
           OUT="$RUNNER_TEMP/nextaura-categories"
           SAVED="$RUNNER_TEMP/nextaura-publish"
-          mkdir -p "$SAVED"
+          mkdir -p "$SAVED/icons/nextaura"
           cp "$OUT"/*.deb "$SAVED/"
           cp "$OUT/NextAura_Category_Packages.txt" "$SAVED/"
+          cp "$OUT/icons/nextaura"/*.png "$SAVED/icons/nextaura/"
 
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
           git fetch origin main
           git reset --hard origin/main
-          mkdir -p debfiles
+          mkdir -p debfiles icons/nextaura
+          find debfiles -maxdepth 1 -type f -name 'NextAura_*_1.0.0_RootHide.deb' ! -name 'NextAura_Runtime_*' -delete || true
           cp "$SAVED"/*.deb debfiles/
           cp "$SAVED/NextAura_Category_Packages.txt" debfiles/
+          cp "$SAVED/icons/nextaura"/*.png icons/nextaura/
 
           SCAN="$RUNNER_TEMP/nextaura-scan"
           mkdir -p "$SCAN"
@@ -204,10 +220,10 @@ jobs:
               p.write_text(t)
           PY
 
-          git add debfiles Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
+          git add debfiles icons/nextaura Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           if git diff --cached --quiet; then
-            echo "NextAura category packages are already published."
+            echo "NextAura category names/icons are already published."
             exit 0
           fi
-          git commit -m "Publish NextAura modular category packages"
+          git commit -m "Refresh NextAura category names and icons"
           git push origin HEAD:main
