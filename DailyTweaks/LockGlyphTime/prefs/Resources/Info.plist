@@ -3,14 +3,14 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>English</string>
-    <key>CFBundleDisplayName</key><string>LockGlyphTime</string>
+    <key>CFBundleDisplayName</key><string>NextStyle</string>
     <key>CFBundleExecutable</key><string>LockGlyphTimePrefs</string>
     <key>CFBundleIdentifier</key><string>com.nextsolution.lockglyphtimeprefs</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>LockGlyphTimePrefs</string>
+    <key>CFBundleName</key><string>NextStylePrefs</string>
     <key>CFBundlePackageType</key><string>BNDL</string>
-    <key>CFBundleShortVersionString</key><string>0.2.2</string>
-    <key>CFBundleVersion</key><string>4</string>
+    <key>CFBundleShortVersionString</key><string>1.0.0</string>
+    <key>CFBundleVersion</key><string>100</string>
     <key>NSPrincipalClass</key><string>LGTListController</string>
 </dict>
 </plist>
