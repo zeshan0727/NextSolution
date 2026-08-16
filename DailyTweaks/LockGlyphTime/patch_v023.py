@@ -36,7 +36,7 @@ static BOOL LGTImageHasVisibleTransparency(UIImage *image) {
     size_t width=MIN((size_t)32,MAX((size_t)1,CGImageGetWidth(cg)));
     size_t height=MIN((size_t)32,MAX((size_t)1,CGImageGetHeight(cg)));
     size_t bytesPerRow=width*4;
-    unsigned char *pixels=calloc(height,bytesPerRow);
+    unsigned char *pixels=(unsigned char *)calloc(height,bytesPerRow);
     if(!pixels)return NO;
     CGColorSpaceRef colorSpace=CGColorSpaceCreateDeviceRGB();
     CGContextRef context=CGBitmapContextCreate(pixels,width,height,8,bytesPerRow,colorSpace,kCGImageAlphaPremultipliedLast|kCGBitmapByteOrder32Big);
