@@ -2,6 +2,7 @@
 #import <UIKit/UIKit.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <objc/runtime.h>
+#import <math.h>
 
 static CFStringRef const MGPrefsDomain = CFSTR("com.nextsolution.unlockvibrate");
 static CFStringRef const MGVolumeIconColorKey = CFSTR("CCModuleVolumeIconColor");
