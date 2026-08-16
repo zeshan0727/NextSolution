@@ -553,46 +553,6 @@ Description: RootHide quick reminder with multi-trigger access, keyboard input, 
 Author: Next Solution - Zeeshan Barvi
 Name: Next Quick Reminder
 
-Package: com.nextsolution.nextaura.cc-module-backgrounds
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.4_RootHide.deb
-Size: 1380
-MD5sum: d81897a2da563f602d573741ec0280b8
-SHA1: a8ada2680837e6106a4c5ca5278c9598c62a754a
-SHA256: 9c3169b446441775c6668bc0f6768e52ac65b31eeab4aa159cfc3f63061b0f81
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Control Center module backgrounds, blur removal, opacity and control glow effects.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
-Name: Module Glass
-
-Package: com.nextsolution.nextaura.runtime.ccbackgrounds
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.0_RootHide.deb
-Size: 15652
-MD5sum: 7e0aaed9ba10546041dbae06a3a47ca4
-SHA1: 31bc81f856a2e48ba9e85fb4e0de379c001fa693
-SHA256: dd837af96dcfdafb34e62c1d994c9233513ad462f102c4f5a4e8a305c575797a
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal ccbackgrounds runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (ccbackgrounds)
-
 Package: com.nextsolution.nextaura.animations
 Version: 1.0.4
 Architecture: iphoneos-arm64e
@@ -1085,3 +1045,43 @@ Description: Temperature-aware battery visuals, Sweat My Phone effects and batte
 Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
 Name: Therma
+
+Package: com.nextsolution.nextaura.cc-module-backgrounds
+Version: 1.0.5
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.1)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.5_RootHide.deb
+Size: 1432
+MD5sum: a30b2459d2e3b8e32f1f1c41a79a2eba
+SHA1: d38e07e89cc555650071827a78aba86eca51f85a
+SHA256: 1f9d129f5083c8a787f7aeb14f6e9d0de63dbf99eda0f83e9710dde2dbc01483
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Custom Control Center module images, blur removal, opacity and glow controls with a rebuilt runtime and Next Log diagnostics.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
+Name: Module Glass
+
+Package: com.nextsolution.nextaura.runtime.ccbackgrounds
+Version: 1.0.1
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.1_RootHide.deb
+Size: 15148
+MD5sum: 67d2193fbca4d959fd721604c07c6504
+SHA1: d4a52d756e2cfc92ee790d67a847888539609eb0
+SHA256: a5483830312af5b8ff40b5e5baa19555970807b0d210b183873be64eb38c27ae
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Source-controlled Module Glass runtime with reliable Control Center module image application and Next Log diagnostics.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: Module Glass Runtime
