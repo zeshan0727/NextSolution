@@ -1,0 +1,121 @@
+name: Build LockGlyphTime Test DEBs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - "DailyTweaks/LockGlyphTime/**"
+      - ".github/workflows/build-lockglyphtime.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lockglyphtime-test
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          for f in Tweak.xm LockGlyphTime.plist control Makefile prefs/Makefile prefs/LGTListController.m prefs/Resources/Root.plist prefs/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist; do
+            test -f "$P/$f"
+          done
+          grep -q '^Version: 0.1.0$' "$P/control"
+          grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
+          grep -q 'SBFLockScreenDateView' "$P/Tweak.xm"
+          grep -q 'timeScale' "$P/Tweak.xm"
+          grep -q 'dateScale' "$P/Tweak.xm"
+          grep -q 'shadowOpacity' "$P/Tweak.xm"
+          grep -q 'Icon Color' "$P/prefs/Resources/Root.plist"
+          test "$(grep -c '<string>PSMultiValueCell</string>' "$P/prefs/Resources/Root.plist")" -ge 3
+          plutil -lint "$P/prefs/Resources/Root.plist"
+          plutil -lint "$P/prefs/Resources/Info.plist"
+          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist"
+
+      - name: Build rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/lockglyphtime-release"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless"
+          export THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/LockGlyphTime_0.1.0_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/lockglyphtime-release"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/LockGlyphTime_0.1.0_RootHide.deb"
+
+      - name: Validate packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          validate() {
+            deb="$1"; arch="$2"; x="$(mktemp -d)"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
+            test "$(dpkg-deb -f "$deb" Version)" = 0.1.0
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            dpkg-deb -f "$deb" Depends | grep -q preferenceloader
+            dpkg-deb -x "$deb" "$x"
+            dylib="$(find "$x" -type f -name LockGlyphTime.dylib -print -quit)"
+            root="$(find "$x" -type f -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
+            entry="$(find "$x" -type f -path '*PreferenceLoader/Preferences/LockGlyphTime.plist' -print -quit)"
+            test -n "$dylib"; test -n "$root"; test -n "$entry"
+            grep -q 'Time Scale' "$root"
+            grep -q 'Date Scale' "$root"
+            grep -q 'Icon Shadow' "$root"
+            strings -a "$dylib" | grep -q SBFLockScreenDateView
+            strings -a "$dylib" | grep -q sparkles
+            rm -rf "$x"
+          }
+          OUT="$RUNNER_TEMP/lockglyphtime-release"
+          validate "$OUT/LockGlyphTime_0.1.0_Rootless.deb" iphoneos-arm64
+          validate "$OUT/LockGlyphTime_0.1.0_RootHide.deb" iphoneos-arm64e
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
+
+      - name: Upload test packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: LockGlyphTime-0.1.0-Test-DEBs
+          path: |
+            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.1.0_Rootless.deb
+            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.1.0_RootHide.deb
+            ${{ runner.temp }}/lockglyphtime-release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
