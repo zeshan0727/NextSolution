@@ -33,6 +33,7 @@ jobs:
           ! grep -R 'nextsolution\.app' TransferApp --include='*.swift' --include='*.yml' --include='*.yaml'
           grep -q 'MARKETING_VERSION: 1.1.3' TransferApp/project.yml
           grep -q 'ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon' TransferApp/project.yml
+          grep -q 'buildPhase: resources' TransferApp/project.yml
 
       - name: Install build tools
         run: brew install xcodegen imagemagick
@@ -134,7 +135,7 @@ jobs:
           test -f "$BIN"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.3"
           test -f "$APP/Assets.car"
-          find "$APP" -maxdepth 1 -name 'AppIcon*.png' -print | grep -q 'AppIcon'
+          plutil -p "$APP/Info.plist" | grep -q 'AppIcon'
           strings "$BIN" | grep -q 'nextsolution.cc/transfer/index.json'
           ! strings "$BIN" | grep -q 'nextsolution.app'
           strings "$BIN" | grep -q 'UIDocumentPickerViewController'
