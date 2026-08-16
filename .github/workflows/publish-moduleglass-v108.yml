@@ -1,4 +1,4 @@
-name: Build and Publish Module Glass 1.0.8
+name: Build and Publish Module Glass 1.0.9
 
 on:
   pull_request:
@@ -40,10 +40,12 @@ jobs:
           git -C "$RUNNER_TEMP/theos-rh" checkout --detach "$THEOS_COMMIT"
           git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
 
-      - name: Prepare native-shape source
-        run: python3 DailyTweaks/2026-08-16-ModuleGlassRuntime/prepare-v108.py
+      - name: Prepare passive native-surface source
+        run: |
+          python3 DailyTweaks/2026-08-16-ModuleGlassRuntime/prepare-v108.py
+          python3 DailyTweaks/2026-08-16-ModuleGlassRuntime/prepare-v109.py
 
-      - name: Build Module Glass runtime 1.0.4
+      - name: Build Module Glass runtime 1.0.5
         shell: bash
         run: |
           set -euo pipefail
@@ -57,7 +59,7 @@ jobs:
           cp "$DYLIB" "$RUNNER_TEMP/moduleglass-built/CCModuleBackgrounds.dylib"
           cp "$P/ModuleGlassRuntime.plist" "$RUNNER_TEMP/moduleglass-built/CCModuleBackgrounds.plist"
 
-      - name: Package runtime 1.0.4
+      - name: Package runtime 1.0.5
         shell: bash
         run: |
           set -euo pipefail
@@ -69,9 +71,9 @@ jobs:
           cat > "$S/DEBIAN/control" <<'EOF'
           Package: com.nextsolution.nextaura.runtime.ccbackgrounds
           Name: Module Glass Runtime
-          Version: 1.0.4
+          Version: 1.0.5
           Architecture: iphoneos-arm64e
-          Description: Module Glass runtime that changes only the visual background while preserving each native Control Center module frame, rounded corners, mask and expansion behavior.
+          Description: Passive Module Glass runtime that paints above Apple's compact module background without changing module layout, native material hierarchy, or expanded Control Center behavior.
           Maintainer: Next Solution
           Author: Next Solution - zeshan0727
           Section: System
@@ -89,9 +91,9 @@ jobs:
           exit 0
           EOF
           chmod 0755 "$S/DEBIAN/postinst"
-          dpkg-deb --root-owner-group -Zxz -b "$S" "$O/NextAura_Runtime_ccbackgrounds_1.0.4_RootHide.deb"
+          dpkg-deb --root-owner-group -Zxz -b "$S" "$O/NextAura_Runtime_ccbackgrounds_1.0.5_RootHide.deb"
 
-      - name: Package Module Glass 1.0.8
+      - name: Package Module Glass 1.0.9
         shell: bash
         run: |
           set -euo pipefail
@@ -104,44 +106,45 @@ jobs:
           from pathlib import Path
           import re, sys
           p=Path(sys.argv[1]); t=p.read_text()
-          t=re.sub(r'^Version: .*$', 'Version: 1.0.8', t, flags=re.M)
-          t=re.sub(r'^Depends: .*$', 'Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.4)', t, flags=re.M)
-          t=re.sub(r'^Description: .*$', 'Description: Custom Control Center module backgrounds that preserve the native module size, rounded shape, mask and layout while changing only the background image.', t, flags=re.M)
+          t=re.sub(r'^Version: .*$', 'Version: 1.0.9', t, flags=re.M)
+          t=re.sub(r'^Depends: .*$', 'Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.5)', t, flags=re.M)
+          t=re.sub(r'^Description: .*$', "Description: Passive custom Control Center backgrounds that preserve Apple's exact module size, rounded shape, material hierarchy, gestures and expanded-module behavior.", t, flags=re.M)
           p.write_text(t)
           PY
-          dpkg-deb --root-owner-group -Zxz -b "$S" "$O/NextAura_cc_module_backgrounds_1.0.8_RootHide.deb"
+          dpkg-deb --root-owner-group -Zxz -b "$S" "$O/NextAura_cc_module_backgrounds_1.0.9_RootHide.deb"
 
-      - name: Verify native shape preservation
+      - name: Verify passive overlay safety
         shell: bash
         run: |
           set -euo pipefail
           O="$RUNNER_TEMP/output"
-          test "$(dpkg-deb -f "$O/NextAura_Runtime_ccbackgrounds_1.0.4_RootHide.deb" Version)" = "1.0.4"
-          test "$(dpkg-deb -f "$O/NextAura_cc_module_backgrounds_1.0.8_RootHide.deb" Version)" = "1.0.8"
-          dpkg-deb -f "$O/NextAura_cc_module_backgrounds_1.0.8_RootHide.deb" Depends | grep -q 'runtime.ccbackgrounds (>= 1.0.4)'
+          test "$(dpkg-deb -f "$O/NextAura_Runtime_ccbackgrounds_1.0.5_RootHide.deb" Version)" = "1.0.5"
+          test "$(dpkg-deb -f "$O/NextAura_cc_module_backgrounds_1.0.9_RootHide.deb" Version)" = "1.0.9"
+          dpkg-deb -f "$O/NextAura_cc_module_backgrounds_1.0.9_RootHide.deb" Depends | grep -q 'runtime.ccbackgrounds (>= 1.0.5)'
           V="$RUNNER_TEMP/runtime-check"
           mkdir -p "$V"
-          dpkg-deb -x "$O/NextAura_Runtime_ccbackgrounds_1.0.4_RootHide.deb" "$V"
+          dpkg-deb -x "$O/NextAura_Runtime_ccbackgrounds_1.0.5_RootHide.deb" "$V"
           B="$V/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib"
           test -f "$B"
-          strings -a "$B" | grep -q 'ModuleGlassRuntime 1.0.4 loaded'
-          strings -a "$B" | grep -q 'nativeBackground='
+          strings -a "$B" | grep -q 'ModuleGlassRuntime 1.0.5 loaded'
+          strings -a "$B" | grep -q 'materialMutation=0'
+          strings -a "$B" | grep -q 'Passive sibling overlay'
           strings -a "$B" | grep -q 'expanded-bypass'
-          strings -a "$B" | grep -q 'module/root frame or layout'
+          strings -a "$B" | grep -q 'nativeBackground='
           strings -a "$B" | grep -q '/var/mobile/Library/Logs/NextSolution/module-glass.log'
           shasum -a 256 "$O"/*.deb > "$O/SHA256.txt"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ModuleGlass-1.0.8-RootHide-NativeShape
+          name: ModuleGlass-1.0.9-RootHide-PassiveOverlay
           path: |
             ${{ runner.temp }}/output/*.deb
             ${{ runner.temp }}/output/SHA256.txt
             moduleglass-runtime-build.log
           if-no-files-found: error
 
-      - name: Publish 1.0.8 to nextsolution.cc
+      - name: Publish 1.0.9 to nextsolution.cc
         shell: bash
         run: |
           set -euo pipefail
@@ -197,5 +200,5 @@ jobs:
           PY
           git add debfiles Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Publish Module Glass 1.0.8 native shape fix"
+          git commit -m "Publish Module Glass 1.0.9 passive overlay fix"
           git push origin HEAD:main
