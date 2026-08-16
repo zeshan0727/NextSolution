@@ -6,8 +6,9 @@ INSTALL_TARGET_PROCESSES = SpringBoard
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = CCModuleBackgrounds
-CCModuleBackgrounds_FILES = Tweak.m
+CCModuleBackgrounds_FILES = Tweak.mm
 CCModuleBackgrounds_CFLAGS = -fobjc-arc -include $(THEOS_PROJECT_DIR)/Compat.h
+CCModuleBackgrounds_CXXFLAGS = -std=c++17
 CCModuleBackgrounds_FRAMEWORKS = Foundation UIKit CoreFoundation CoreGraphics QuartzCore
 CCModuleBackgrounds_LIBRARIES = substrate
 

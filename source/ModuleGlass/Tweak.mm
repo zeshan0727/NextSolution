@@ -5,7 +5,7 @@
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
-extern void MSHookMessageEx(Class _class, SEL message, IMP hook, IMP *old);
+extern "C" void MSHookMessageEx(Class _class, SEL message, IMP hook, IMP *old);
 
 static NSString * const MGBackgroundDirectory = @"/var/mobile/Library/Preferences/NextSolutionTweaks/CCBackgrounds";
 static NSString * const MGLogDirectory = @"/var/mobile/Library/Logs/NextSolution";
@@ -15,7 +15,6 @@ static CFStringRef const MGPrefsDomain = CFSTR("com.nextsolution.unlockvibrate")
 static NSInteger const MGImageTag = 0x4D470106;
 static NSInteger const MGVolumeIconOverlayTag = 0x4D475649;
 static NSInteger const MGVolumePercentageOverlayTag = 0x4D475650;
-static NSInteger const MGForegroundRepairOverlayTag = 0x4D474652;
 
 static NSHashTable *MGControllers;
 static char MGLastDiagnosticKey;
@@ -877,15 +876,19 @@ static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent,
 }
 
 
-static void MGRemoveForegroundRepairOverlays(UIView *root) {
-    if (!root) return;
-    for (UIView *child in [root.subviews copy]) {
-        if (child.tag == MGForegroundRepairOverlayTag) {
-            [child removeFromSuperview];
-            continue;
-        }
-        MGRemoveForegroundRepairOverlays(child);
-    }
+
+// Stable renderer selection.  Objective-C++ is used here deliberately so renderer
+// families are explicit and cannot accidentally share destructive behavior.
+enum class MGRendererKind : unsigned char {
+    StandardTile,
+    VolumeSlider,
+    BrightnessSlider,
+};
+
+static MGRendererKind MGRendererKindForSlot(NSString *slot) {
+    if ([slot isEqualToString:@"volume"]) return MGRendererKind::VolumeSlider;
+    if ([slot isEqualToString:@"brightness"]) return MGRendererKind::BrightnessSlider;
+    return MGRendererKind::StandardTile;
 }
 
 static CGFloat MGClamp01(CGFloat value) {
@@ -893,21 +896,10 @@ static CGFloat MGClamp01(CGFloat value) {
     return MIN(1.0, MAX(0.0, value));
 }
 
-static CGFloat MGVolumeValueFraction(UIView *slider) {
+static CGFloat MGStableSliderValueFraction(UIView *slider) {
     if (!slider) return -1.0;
 
-    // The live percentage label is the most reliable source on iOS 16 because it is
-    // the same value Apple is presenting to the user.
-    UILabel *percentage = MGFindVolumePercentageLabel(slider);
-    NSString *text = percentage.text ?: percentage.attributedText.string ?: @"";
-    NSScanner *scanner = [NSScanner scannerWithString:text];
-    double percent = 0.0;
-    if ([scanner scanDouble:&percent] && [text containsString:@"%"] && percent >= 0.0 && percent <= 100.0) {
-        return MGClamp01((CGFloat)(percent / 100.0));
-    }
-
-    // Fallback to common slider value keys. Values in 0...1 are used directly;
-    // 0...100 is treated as a percentage.
+    // Prefer Apple's live value when exposed by the continuous slider.
     for (NSString *key in @[@"value", @"_value", @"normalizedValue", @"valueFraction", @"percentage"]) {
         @try {
             id obj = [slider valueForKey:key];
@@ -920,94 +912,46 @@ static CGFloat MGVolumeValueFraction(UIView *slider) {
             }
         } @catch (__unused NSException *e) {}
     }
+
+    // Volume always exposes the percentage text on this iOS generation; use it as a
+    // safe fallback without ever changing the label's frame or value.
+    UILabel *percentage = MGFindVolumePercentageLabel(slider);
+    NSString *text = percentage.text ?: percentage.attributedText.string ?: @"";
+    NSScanner *scanner = [NSScanner scannerWithString:text];
+    double percent = 0.0;
+    if ([scanner scanDouble:&percent] && [text containsString:@"%"] && percent >= 0.0 && percent <= 100.0) {
+        return MGClamp01((CGFloat)(percent / 100.0));
+    }
     return -1.0;
 }
 
-static CGRect MGVolumeValueSizedFrame(CGRect fullFrame, UIView *slider, CGFloat *outFraction) {
-    CGFloat fraction = MGVolumeValueFraction(slider);
+static void MGApplyStableVolumeValueMask(UIImageView *imageView, UIView *slider, CGFloat *outFraction) {
+    if (!imageView) return;
+    CGFloat fraction = MGStableSliderValueFraction(slider);
     if (outFraction) *outFraction = fraction;
-    if (fraction < 0.0) return fullFrame;
+    if (fraction < 0.0) return; // preserve Apple's copied mask if value is unavailable
 
-    CGFloat fullHeight = CGRectGetHeight(fullFrame);
-    CGFloat width = CGRectGetWidth(fullFrame);
-    if (fullHeight <= 1.0 || width <= 1.0) return fullFrame;
+    CGRect bounds = imageView.bounds;
+    CGFloat width = CGRectGetWidth(bounds);
+    CGFloat fullHeight = CGRectGetHeight(bounds);
+    if (width <= 1.0 || fullHeight <= 1.0) return;
 
-    // Match the visual behavior the user approved on Brightness: the visible pill
-    // shrinks upward/downward with the value but never becomes thinner than one
-    // circular cap, which is how Apple's continuous slider fill behaves at low values.
+    // IMPORTANT: never resize the UIImageView.  The module remains Apple's full
+    // 77x158 pill.  Only the visible artwork is masked from the bottom, which gives
+    // the same shrinking-fill visual without moving the speaker or percentage.
     CGFloat minCap = MIN(width, fullHeight);
     CGFloat visibleHeight = MAX(minCap, fullHeight * fraction);
     visibleHeight = MIN(fullHeight, visibleHeight);
+    CGRect visible = CGRectMake(0.0, fullHeight - visibleHeight, width, visibleHeight);
+    CGFloat radius = MIN(width * 0.5, visibleHeight * 0.5);
 
-    CGRect frame = fullFrame;
-    frame.origin.y = CGRectGetMaxY(fullFrame) - visibleHeight;
-    frame.size.height = visibleHeight;
-    return frame;
-}
-
-static UIView *MGTopChildUnderParent(UIView *view, UIView *parent) {
-    if (!view || !parent) return nil;
-    UIView *cursor = view;
-    UIView *previous = view;
-    while (cursor && cursor != parent) {
-        previous = cursor;
-        cursor = cursor.superview;
-    }
-    return cursor == parent ? previous : nil;
-}
-
-static BOOL MGImageViewLooksLikeSmallGlyph(UIImageView *iv, UIView *parent) {
-    if (!iv || !iv.image || iv.hidden || iv.tag == MGImageTag ||
-        iv.tag == MGVolumeIconOverlayTag || iv.tag == MGForegroundRepairOverlayTag) return NO;
-    CGRect rect = [iv convertRect:iv.bounds toView:parent];
-    CGFloat w = CGRectGetWidth(rect), h = CGRectGetHeight(rect);
-    if (w < 6.0 || h < 6.0 || w > 68.0 || h > 68.0) return NO;
-    return YES;
-}
-
-static NSUInteger MGRepairCoveredForegroundImagesRecursive(UIView *node, UIView *parent, UIImageView *backgroundImage) {
-    if (!node || !parent || !backgroundImage) return 0;
-    NSUInteger count = 0;
-
-    if ([node isKindOfClass:UIImageView.class]) {
-        UIImageView *source = (UIImageView *)node;
-        if (MGImageViewLooksLikeSmallGlyph(source, parent)) {
-            UIView *top = MGTopChildUnderParent(source, parent);
-            NSInteger imageIndex = [parent.subviews indexOfObject:backgroundImage];
-            NSInteger topIndex = top ? [parent.subviews indexOfObject:top] : NSNotFound;
-            BOOL covered = top && imageIndex != NSNotFound && topIndex != NSNotFound && topIndex < imageIndex;
-            if (covered) {
-                CGRect frame = [source convertRect:source.bounds toView:parent];
-                UIImageView *overlay = [[UIImageView alloc] initWithFrame:frame];
-                overlay.tag = MGForegroundRepairOverlayTag;
-                overlay.userInteractionEnabled = NO;
-                overlay.backgroundColor = UIColor.clearColor;
-                overlay.image = source.image;
-                overlay.tintColor = source.tintColor;
-                overlay.contentMode = source.contentMode;
-                overlay.clipsToBounds = source.clipsToBounds;
-                overlay.alpha = source.alpha;
-                overlay.layer.cornerRadius = source.layer.cornerRadius;
-                overlay.layer.masksToBounds = source.layer.masksToBounds;
-                [parent addSubview:overlay];
-                count++;
-            }
-        }
-    }
-
-    for (UIView *child in node.subviews) {
-        if (child.tag == MGImageTag || child.tag == MGForegroundRepairOverlayTag) continue;
-        count += MGRepairCoveredForegroundImagesRecursive(child, parent, backgroundImage);
-    }
-    return count;
-}
-
-static NSUInteger MGRepairCoveredForegroundImages(UIView *root, UIView *parent, UIImageView *backgroundImage, NSString *slot) {
-    if (!root || !parent || !backgroundImage) return 0;
-    // Slider foreground is already handled by its native controls and the dedicated
-    // Volume icon/percentage logic. This repair is only for standard compact modules.
-    if ([slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"]) return 0;
-    return MGRepairCoveredForegroundImagesRecursive(root, parent, backgroundImage);
+    UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:visible cornerRadius:radius];
+    CAShapeLayer *mask = [CAShapeLayer layer];
+    mask.frame = bounds;
+    mask.path = path.CGPath;
+    imageView.layer.mask = mask;
+    imageView.clipsToBounds = YES;
+    imageView.layer.masksToBounds = YES;
 }
 
 #pragma mark - Apply
@@ -1027,7 +971,6 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSArray<NSString *> *candidates = nil;
     NSString *slot = MGSlotForController(controller, &candidates);
-    MGRemoveForegroundRepairOverlays(root);
     MGRestoreVolumeColorPresentation(root);
     MGRestoreVolumeVisuals(root);
     MGRestoreBrightnessLayers(root.layer);
@@ -1092,49 +1035,42 @@ static void MGApplyController(id controller, NSString *source) {
         objc_setAssociatedObject(imageView, @selector(setImage:), path, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
     CGFloat volumeValueFraction = -1.0;
-    if ([slot isEqualToString:@"volume"]) {
-        UIView *volumeSlider = MGFindSliderView(root);
-        imageFrame = MGVolumeValueSizedFrame(imageFrame, volumeSlider, &volumeValueFraction);
-    }
     imageView.frame = imageFrame;
     imageView.alpha = opacity;
     imageView.hidden = imageView.image == nil;
     imageView.userInteractionEnabled = NO;
     MGCopyCornerGeometry(imageView, cornerSource, root);
     MGApplyModuleShapeFallback(imageView, slot);
-    if ([slot isEqualToString:@"volume"] && volumeValueFraction >= 0.0) {
-        CGFloat cap = MIN(CGRectGetWidth(imageView.bounds), CGRectGetHeight(imageView.bounds));
-        imageView.layer.cornerRadius = cap * 0.5;
-        if (@available(iOS 13.0, *)) imageView.layer.cornerCurve = kCACornerCurveContinuous;
-        imageView.layer.mask = nil;
-        imageView.clipsToBounds = YES;
-        imageView.layer.masksToBounds = YES;
+    if ([slot isEqualToString:@"volume"]) {
+        UIView *volumeSlider = MGFindSliderView(root);
+        MGApplyStableVolumeValueMask(imageView, volumeSlider, &volumeValueFraction);
     }
 
     NSUInteger imageFirstSuppressed = 0;
     NSArray<NSString *> *imageFirstSuppressedClasses = @[];
     if (imageView.image) {
-        UIView *imageScope = [slot isEqualToString:@"volume"] ? MGFindSliderView(root) : root;
-        if (!imageScope) imageScope=root;
-        if (imageScope) {
-            NSMutableArray<NSString *> *classes=[NSMutableArray array];
-            if ([slot isEqualToString:@"brightness"]) {
-                imageFirstSuppressed = MGApplyBrightnessImageMode(imageScope, imageView, classes);
-                imageFirstSuppressed += MGApplyBrightnessLayerMode(root.layer, root.layer, imageView.layer, classes);
-                strategy = @"brightness-volume-pattern-root-fill-aware";
-            } else {
-                imageFirstSuppressed = MGApplyVolumeImageMode(imageScope, imageView, classes);
-                strategy = [NSString stringWithFormat:@"%@-image-first", slot];
-            }
-            imageFirstSuppressedClasses = classes.copy;
+        MGRendererKind renderer = MGRendererKindForSlot(slot);
+        NSMutableArray<NSString *> *classes=[NSMutableArray array];
+        if (renderer == MGRendererKind::BrightnessSlider) {
+            // Keep the already-approved Brightness renderer unchanged.
+            UIView *brightnessScope = MGFindSliderView(root) ?: root;
+            imageFirstSuppressed = MGApplyBrightnessImageMode(brightnessScope, imageView, classes);
+            imageFirstSuppressed += MGApplyBrightnessLayerMode(root.layer, root.layer, imageView.layer, classes);
+            strategy = @"stable-brightness-fill-aware";
+        } else if (renderer == MGRendererKind::VolumeSlider) {
+            UIView *volumeScope = MGFindSliderView(root) ?: root;
+            imageFirstSuppressed = MGApplyVolumeImageMode(volumeScope, imageView, classes);
+            strategy = volumeValueFraction >= 0.0
+                ? [NSString stringWithFormat:@"stable-volume-mask-%.0f", volumeValueFraction * 100.0]
+                : @"stable-volume-mask-value-unavailable";
         } else {
-            strategy=[NSString stringWithFormat:@"%@-no-host", slot];
+            // Critical stability rule: large/small tiles are passive backgrounds only.
+            // Never recurse through their Apple content tree and never change alpha on
+            // connectivity switches, glyphs, labels, buttons, or other foreground.
+            imageFirstSuppressed = 0;
+            strategy = @"stable-standard-passive-foreground-safe";
         }
-    }
-
-    NSUInteger repairedForegroundGlyphs = MGRepairCoveredForegroundImages(root, parent, imageView, slot);
-    if ([slot isEqualToString:@"volume"] && volumeValueFraction >= 0.0) {
-        strategy = [NSString stringWithFormat:@"volume-value-sized-%.0f", volumeValueFraction * 100.0];
+        imageFirstSuppressedClasses = classes.copy;
     }
 
     // Safety rule: these preferences are intentionally never implemented by mutating,
@@ -1145,8 +1081,8 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSString *sig = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|%.0fx%.0f|%@", slot, strategy, enabled, exists, opacity, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), path];
     MGDiagnosticOnce(controller, sig,
-                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ imageFirstSuppressed=%lu suppressedClasses=%@ volumeValueFraction=%.3f repairedForegroundGlyphs=%lu volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
-                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)imageFirstSuppressed, imageFirstSuppressedClasses, volumeValueFraction, (unsigned long)repairedForegroundGlyphs, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
+                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ imageFirstSuppressed=%lu suppressedClasses=%@ volumeValueFraction=%.3f volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
+                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)imageFirstSuppressed, imageFirstSuppressedClasses, volumeValueFraction, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
 }
 
 static void MGTrackAndApply(id controller, NSString *source) {
@@ -1220,8 +1156,8 @@ __attribute__((constructor)) static void MGInit(void) {
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.0.15 Volume Value + Foreground Fix loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
-        MGLog(@"Volume value-sized runtime with repaired covered compact foreground glyphs process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
+        MGLog(@"ModuleGlassRuntime 1.1.0 Stable Objective-C++ Renderer loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"Stable Objective-C++ renderer: passive tiles, isolated sliders, full-frame Volume value mask process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
 }
