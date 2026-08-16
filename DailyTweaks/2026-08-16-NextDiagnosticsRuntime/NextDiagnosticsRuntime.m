@@ -4,6 +4,7 @@
 #import <mach-o/dyld.h>
 #import <mach-o/loader.h>
 #import <dlfcn.h>
+#import <unistd.h>
 
 static NSString * const NDControlPath = @"/var/mobile/Library/Preferences/com.nextsolution.nextlog.plist";
 static NSString * const NDManifestPath = @"/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.manifest.plist";
