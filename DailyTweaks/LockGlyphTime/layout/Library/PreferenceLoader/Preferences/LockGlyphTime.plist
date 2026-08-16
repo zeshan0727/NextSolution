@@ -1,0 +1,8 @@
+{
+    entry = {
+        bundle = LockGlyphTimePrefs;
+        cell = PSLinkCell;
+        isController = 1;
+        label = LockGlyphTime;
+    };
+}
