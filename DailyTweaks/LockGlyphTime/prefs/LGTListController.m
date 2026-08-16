@@ -43,8 +43,9 @@ static CFStringRef const LGTReloadNotification = CFSTR("com.nextsolution.lockgly
 - (NSString *)lgt_hexFromColor:(UIColor *)color {
     CGFloat r=0,g=0,b=0,a=1;
     if (![color getRed:&r green:&g blue:&b alpha:&a]) {
-        CIColor *ci = [[CIColor alloc] initWithColor:color];
-        r = ci.red; g = ci.green; b = ci.blue; a = ci.alpha;
+        CGFloat white = 1.0;
+        if ([color getWhite:&white alpha:&a]) r = g = b = white;
+        else { r = g = b = 1.0; a = 1.0; }
     }
     return [NSString stringWithFormat:@"#%02X%02X%02X%02X",
             (int)lrint(r*255.0),(int)lrint(g*255.0),(int)lrint(b*255.0),(int)lrint(a*255.0)];
