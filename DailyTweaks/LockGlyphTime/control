@@ -8,3 +8,6 @@ Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
 Depends: firmware (>= 15.0), preferenceloader
 Homepage: https://nextsolution.cc
+Depiction: https://nextsolution.cc/depictions/nextlock.html
+SileoDepiction: https://nextsolution.cc/depictions/nextlock.html
+Icon: https://nextsolution.cc/NextLockIcon.png
