@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050714"/><stop offset=".5" stop-color="#101a3a"/><stop offset="1" stop-color="#070914"/></linearGradient>
+  <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#c35cff"/><stop offset=".55" stop-color="#6a55ff"/><stop offset="1" stop-color="#38b8ff"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#8c4cff" stop-opacity=".65"/><stop offset="1" stop-color="#8c4cff" stop-opacity="0"/></radialGradient>
+  <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="26"/></filter>
+</defs>
+<rect width="1600" height="900" fill="url(#bg)"/>
+<circle cx="1190" cy="230" r="330" fill="url(#glow)" opacity=".48"/>
+<circle cx="380" cy="810" r="360" fill="url(#glow)" opacity=".22"/>
+<text x="90" y="120" fill="#9fb1d8" font-family="Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="3">NEXT SOLUTION ORIGINAL</text>
+<text x="90" y="205" fill="url(#accent)" font-family="Arial, sans-serif" font-size="82" font-weight="900">NextLock</text>
+<text x="90" y="260" fill="#eef2ff" font-family="Arial, sans-serif" font-size="34" font-weight="650">Lock Screen, your way.</text>
+<text x="90" y="320" fill="#9eabc7" font-family="Arial, sans-serif" font-size="25">Fonts • colors • position • shadows • icons • custom photos</text>
+
+<g transform="translate(165 385)">
+  <rect width="520" height="330" rx="34" fill="#0d1324" stroke="#28365d" stroke-width="2"/>
+  <text x="40" y="58" fill="#8fa0c4" font-family="Arial" font-size="20" font-weight="700">TIME FONT STYLES</text>
+  <text x="42" y="132" fill="#ffffff" font-family="Georgia, serif" font-size="72" font-style="italic">9:41</text>
+  <text x="280" y="130" fill="#d9c6ff" font-family="Arial" font-size="20">Serif / elegant</text>
+  <text x="42" y="212" fill="#ffffff" font-family="Arial Rounded MT Bold, Arial" font-size="64" font-weight="700">9:41</text>
+  <text x="280" y="210" fill="#b9dfff" font-family="Arial" font-size="20">Rounded / bold</text>
+  <text x="42" y="286" fill="#ffffff" font-family="Arial" font-size="58" font-weight="300">9:41</text>
+  <text x="280" y="283" fill="#a8b4cf" font-family="Arial" font-size="20">Thin / minimal</text>
+</g>
+
+<g transform="translate(885 85)">
+  <rect x="10" y="22" width="460" height="740" rx="78" fill="#000" opacity=".55" filter="url(#shadow)"/>
+  <rect width="480" height="760" rx="82" fill="#11141d" stroke="#55607e" stroke-width="4"/>
+  <rect x="18" y="18" width="444" height="724" rx="68" fill="#0a0e1b"/>
+  <ellipse cx="240" cy="360" rx="185" ry="230" fill="#1b2a52" opacity=".58"/>
+  <circle cx="320" cy="250" r="150" fill="url(#glow)" opacity=".45"/>
+  <rect x="180" y="37" width="120" height="34" rx="17" fill="#030409"/>
+  <text x="240" y="200" text-anchor="middle" fill="#f7f1ff" font-family="Georgia, serif" font-size="102" font-style="italic" font-weight="700">9:41</text>
+  <text x="240" y="248" text-anchor="middle" fill="#c8d3ef" font-family="Arial" font-size="24">Sunday, August 16</text>
+  <g transform="translate(319 281)">
+    <rect width="76" height="76" rx="22" fill="#a74cff" opacity=".16" stroke="#b86aff"/>
+    <path d="M38 16l7 14 15 2-11 11 3 16-14-8-14 8 3-16-11-11 15-2z" fill="url(#accent)"/>
+  </g>
+  <text x="240" y="635" text-anchor="middle" fill="#9faaca" font-family="Arial" font-size="19">Custom time • date • icon</text>
+  <text x="240" y="672" text-anchor="middle" fill="#6f7b99" font-family="Arial" font-size="16">Live styling on the Lock Screen</text>
+</g>
+
+<g transform="translate(90 770)">
+  <rect width="610" height="72" rx="36" fill="#0f1730" stroke="#34456f"/>
+  <text x="36" y="46" fill="#f3f6ff" font-family="Arial" font-size="24" font-weight="700">27 fonts</text>
+  <text x="170" y="46" fill="#8896b6" font-family="Arial" font-size="22">•</text>
+  <text x="205" y="46" fill="#f3f6ff" font-family="Arial" font-size="24" font-weight="700">30+ icons</text>
+  <text x="360" y="46" fill="#8896b6" font-family="Arial" font-size="22">•</text>
+  <text x="395" y="46" fill="#f3f6ff" font-family="Arial" font-size="24" font-weight="700">Rootless + RootHide</text>
+</g>
+</svg>
