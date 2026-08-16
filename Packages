@@ -571,46 +571,6 @@ Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: Next Diagnostics Runtime
 
-Package: com.nextsolution.nextaura.cc-module-backgrounds
-Version: 1.0.9
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.5)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.9_RootHide.deb
-Size: 1444
-MD5sum: 3fa80ae52e30098328a960853183fa16
-SHA1: 3f0126de02f03e438168689c79a9dd5d4a640f9b
-SHA256: 10cf978d1f5e2e0ec6935e0cd151e8026a80934cb5a6116942345b7cd9d6cabc
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Passive custom Control Center backgrounds that preserve Apple's exact module size, rounded shape, material hierarchy, gestures and expanded-module behavior.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
-Name: Module Glass
-
-Package: com.nextsolution.nextaura.runtime.ccbackgrounds
-Version: 1.0.5
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.5_RootHide.deb
-Size: 19528
-MD5sum: a271a46ebd79767b85b7e01754e8bcfd
-SHA1: 3231dc87e9b12c351b2e1c331d20bbeaba024df4
-SHA256: ff67134810fb4d9c061ed734fb050b8632d7c0d1b3cac35a998b17890a48ddca
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Passive Module Glass runtime that paints above Apple's compact module background without changing module layout, native material hierarchy, or expanded Control Center behavior.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: Module Glass Runtime
-
 Package: com.nextsolution.nextaura.animations
 Version: 1.0.4
 Architecture: iphoneos-arm64e
@@ -1103,3 +1063,44 @@ Description: Temperature-aware battery visuals, Sweat My Phone effects and batte
 Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
 Name: Therma
+
+Package: com.nextsolution.nextaura.cc-module-backgrounds
+Version: 1.0.10
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.6)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.10_RootHide.deb
+Size: 1452
+MD5sum: e68eb6b39df0142dd7e099edc2fad175
+SHA1: 3ef4949938427e14b270f158e8e8912530e5a352
+SHA256: dd48c131250c0eccec50599d23c89936ff003140ccd63acae0077702d144c0d8
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Passive custom Control Center backgrounds with slider-aware Volume and Brightness support while preserving Apple's native expanded-module behavior.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
+Name: Module Glass
+
+Package: com.nextsolution.nextaura.runtime.ccbackgrounds
+Version: 1.0.6
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Installed-Size: 204
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.6_RootHide.deb
+Size: 14788
+MD5sum: f9be37f8ac6e901f04e389ca4ef44cfa
+SHA1: 969dbcd17396972aa233a781ad02ac586d0cae09
+SHA256: 56aa4f8f81068735b4415aa7d580d2d16de8db8ba6a07f6f7691f49327903117
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Passive Module Glass runtime with slider-aware compact backgrounds for Volume and Brightness while preserving Apple's expanded Control Center behavior.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: Module Glass Runtime

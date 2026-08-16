@@ -1,0 +1,36 @@
+---
+triple:          'arm64e-apple-darwin'
+binary-path:     '/Users/runner/work/NextSolution/NextSolution/source/ModuleGlass/.theos/obj/arm64e/CCModuleBackgrounds.dylib'
+relocations:
+  - { offset: 0x1E, size: 0x8, addend: 0x0, symName: _MGInit, symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x278 }
+  - { offset: 0xC3, size: 0x8, addend: 0x0, symName: _MGControllers, symObjAddr: 0xFAD8, symBinAddr: 0x102D0, symSize: 0x0 }
+  - { offset: 0x2AC, size: 0x8, addend: 0x0, symName: _MGOrigModuleViewDidLoad, symObjAddr: 0xFAE0, symBinAddr: 0x102D8, symSize: 0x0 }
+  - { offset: 0x2E5, size: 0x8, addend: 0x0, symName: _MGOrigModuleLayout, symObjAddr: 0xFAE8, symBinAddr: 0x102E0, symSize: 0x0 }
+  - { offset: 0x2FA, size: 0x8, addend: 0x0, symName: _MGOrigContentViewDidLoad, symObjAddr: 0xFAF0, symBinAddr: 0x102E8, symSize: 0x0 }
+  - { offset: 0x30F, size: 0x8, addend: 0x0, symName: _MGOrigContentLayout, symObjAddr: 0xFAF8, symBinAddr: 0x102F0, symSize: 0x0 }
+  - { offset: 0x34B, size: 0x8, addend: 0x0, symName: _MGLastDiagnosticKey, symObjAddr: 0xFB00, symBinAddr: 0x102F8, symSize: 0x0 }
+  - { offset: 0x735, size: 0x8, addend: 0x0, symName: _MGInit, symObjAddr: 0x0, symBinAddr: 0x4000, symSize: 0x278 }
+  - { offset: 0x8F8, size: 0x8, addend: 0x0, symName: _MGHookController, symObjAddr: 0x278, symBinAddr: 0x4278, symSize: 0xC4 }
+  - { offset: 0xA81, size: 0x8, addend: 0x0, symName: _MGBoolPreference, symObjAddr: 0x770, symBinAddr: 0x4770, symSize: 0x50 }
+  - { offset: 0xADD, size: 0x8, addend: 0x0, symName: _MGLog, symObjAddr: 0x598, symBinAddr: 0x4598, symSize: 0x1D8 }
+  - { offset: 0xBBE, size: 0x8, addend: 0x0, symName: _MGVerboseDiagnosticsEnabled, symObjAddr: 0x7C0, symBinAddr: 0x47C0, symSize: 0x100 }
+  - { offset: 0xC3E, size: 0x8, addend: 0x0, symName: _MGModuleViewDidLoad, symObjAddr: 0x33C, symBinAddr: 0x433C, symSize: 0x6C }
+  - { offset: 0xC9C, size: 0x8, addend: 0x0, symName: _MGTrackAndApply, symObjAddr: 0x8C0, symBinAddr: 0x48C0, symSize: 0xAC }
+  - { offset: 0xCEF, size: 0x8, addend: 0x0, symName: _MGModuleLayout, symObjAddr: 0x3A8, symBinAddr: 0x43A8, symSize: 0x6C }
+  - { offset: 0xD4D, size: 0x8, addend: 0x0, symName: _MGContentViewDidLoad, symObjAddr: 0x414, symBinAddr: 0x4414, symSize: 0x6C }
+  - { offset: 0xDAB, size: 0x8, addend: 0x0, symName: _MGContentLayout, symObjAddr: 0x480, symBinAddr: 0x4480, symSize: 0x6C }
+  - { offset: 0xE2B, size: 0x8, addend: 0x0, symName: _MGPrefsChanged, symObjAddr: 0x4EC, symBinAddr: 0x44EC, symSize: 0xAC }
+  - { offset: 0xFD5, size: 0x8, addend: 0x0, symName: _MGPreference, symObjAddr: 0x1F4C, symBinAddr: 0x5F4C, symSize: 0x70 }
+  - { offset: 0x103B, size: 0x8, addend: 0x0, symName: _MGApplyController, symObjAddr: 0x96C, symBinAddr: 0x496C, symSize: 0x1084 }
+  - { offset: 0x30DB, size: 0x8, addend: 0x0, symName: _MGAddIdentifierValue, symObjAddr: 0x1D78, symBinAddr: 0x5D78, symSize: 0x1D4 }
+  - { offset: 0x3196, size: 0x8, addend: 0x0, symName: _MGContainsAny, symObjAddr: 0x1C64, symBinAddr: 0x5C64, symSize: 0x114 }
+  - { offset: 0x320D, size: 0x8, addend: 0x0, symName: _MGFloatPreference, symObjAddr: 0x19F0, symBinAddr: 0x59F0, symSize: 0x68 }
+  - { offset: 0x3295, size: 0x8, addend: 0x0, symName: _MGRemoveTaggedImages, symObjAddr: 0x1A58, symBinAddr: 0x5A58, symSize: 0x14C }
+  - { offset: 0x3309, size: 0x8, addend: 0x0, symName: _MGDiagnosticOnce, symObjAddr: 0x1BA4, symBinAddr: 0x5BA4, symSize: 0xC0 }
+  - { offset: 0x33B1, size: 0x8, addend: 0x0, symName: _MGFindSliderView, symObjAddr: 0x1FBC, symBinAddr: 0x5FBC, symSize: 0x170 }
+  - { offset: 0x3434, size: 0x8, addend: 0x0, symName: _MGFindNativeBackground, symObjAddr: 0x212C, symBinAddr: 0x612C, symSize: 0x21C }
+  - { offset: 0x3575, size: 0x8, addend: 0x0, symName: _MGClassNameContains, symObjAddr: 0x2348, symBinAddr: 0x6348, symSize: 0x134 }
+  - { offset: 0x35E6, size: 0x8, addend: 0x0, symName: ___MGRefreshAll_block_invoke, symObjAddr: 0x247C, symBinAddr: 0x647C, symSize: 0x214 }
+  - { offset: 0x36B0, size: 0x8, addend: 0x0, symName: ___copy_helper_block_e8_32s, symObjAddr: 0x2690, symBinAddr: 0x6690, symSize: 0x8 }
+  - { offset: 0x36D4, size: 0x8, addend: 0x0, symName: ___destroy_helper_block_e8_32s, symObjAddr: 0x2698, symBinAddr: 0x6698, symSize: 0x8 }
+...
