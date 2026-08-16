@@ -141,16 +141,17 @@ jobs:
             prefsbin="$(find "$x" -type f -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
             entry="$(find "$x" -type f -path '*PreferenceLoader/Preferences/LockGlyphTime.plist' -print -quit)"
             test -n "$dylib"; test -n "$root"; test -n "$prefsbin"; test -n "$entry"
+            grep -q 'PSLinkListCell' "$root"
             grep -q 'Time Style' "$root"
             grep -q 'Time Horizontal Position' "$root"
             grep -q 'Date Horizontal Position' "$root"
             grep -q 'Icon Shadow' "$root"
-            strings -a "$dylib" | grep -q LGTApplyPosition
             strings -a "$dylib" | grep -q customTimeEnabled
             strings -a "$dylib" | grep -q customDateEnabled
+            strings -a "$dylib" | grep -q timeOffsetX
             strings -a "$dylib" | grep -q sparkles
-            strings -a "$prefsbin" | grep -q UIColorPickerViewController
             strings -a "$prefsbin" | grep -q openTimeColorPicker
+            strings -a "$prefsbin" | grep -q openIconShadowColorPicker
             rm -rf "$x"
           }
           OUT="$RUNNER_TEMP/lockglyphtime-release"
