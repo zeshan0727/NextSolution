@@ -1,0 +1,213 @@
+name: Publish NextAura Category Packages
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextaura-category-packages
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    if: github.head_ref == 'agent/nextaura-4.4.9-notification-island'
+    runs-on: macos-15
+    timeout-minutes: 70
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Build current Notification Island runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-13-NextAuraNotificationIsland"
+          python3 "$P/compile-fix.py"
+          python3 "$P/layout-date.py"
+          python3 "$P/prepare-v450.py"
+          python3 "$P/prepare-v453.py"
+          cp "$P/DynamicIslandV450.plist" "$P/DynamicIsland.plist"
+
+          git init "$RUNNER_TEMP/theos-rh"
+          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$P" clean all FINALPACKAGE=1 2>&1 | tee nextaura-category-island-build.log
+          ISLAND_DYLIB="$(find "$P/.theos" -type f -name 'NextAuraNotificationIsland.dylib' -print | sort | tail -1)"
+          test -n "$ISLAND_DYLIB"
+          ldid -S "$ISLAND_DYLIB"
+          mkdir -p "$RUNNER_TEMP/island"
+          cp "$ISLAND_DYLIB" "$RUNNER_TEMP/island/NextAuraNotificationIsland.dylib"
+          cp "$P/NextAuraNotificationIsland.plist" "$RUNNER_TEMP/island/NextAuraNotificationIsland.plist"
+          cp "$P/DynamicIsland.plist" "$RUNNER_TEMP/island/DynamicIsland.plist"
+
+      - name: Build 17 category packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextaura-categories"
+          mkdir -p "$OUT"
+          python3 DailyTweaks/2026-08-16-NextAuraCategorySplit/build_categories_v2.py \
+            --base-deb debfiles/NextAura_4.4.8_RootHide_iOS16.deb \
+            --island-dylib "$RUNNER_TEMP/island/NextAuraNotificationIsland.dylib" \
+            --island-plist "$RUNNER_TEMP/island/NextAuraNotificationIsland.plist" \
+            --dynamic-plist "$RUNNER_TEMP/island/DynamicIsland.plist" \
+            --output "$OUT"
+
+      - name: Verify modular packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextaura-categories"
+          test "$(find "$OUT" -maxdepth 1 -name '*.deb' | wc -l | tr -d ' ')" = 27
+          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_Runtime_*_RootHide.deb' | wc -l | tr -d ' ')" = 10
+          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_*_1.0.0_RootHide.deb' ! -name 'NextAura_Runtime_*' | wc -l | tr -d ' ')" = 17
+
+          python3 - "$OUT" <<'PY'
+          import subprocess, sys
+          from pathlib import Path
+          out = Path(sys.argv[1])
+          expected = {
+              'com.nextsolution.nextaura.feedback',
+              'com.nextsolution.nextaura.thermal-sweat',
+              'com.nextsolution.nextaura.home-screen',
+              'com.nextsolution.nextaura.dock-folders',
+              'com.nextsolution.nextaura.lock-screen',
+              'com.nextsolution.nextaura.status-bar',
+              'com.nextsolution.nextaura.control-center',
+              'com.nextsolution.nextaura.cc-second-page',
+              'com.nextsolution.nextaura.cc-module-backgrounds',
+              'com.nextsolution.nextaura.notification-island',
+              'com.nextsolution.nextaura.notification-glow',
+              'com.nextsolution.nextaura.now-playing',
+              'com.nextsolution.nextaura.notifications',
+              'com.nextsolution.nextaura.app-switcher',
+              'com.nextsolution.nextaura.system-overlays',
+              'com.nextsolution.nextaura.animations',
+              'com.nextsolution.nextaura.safety-recovery',
+          }
+          visible = set()
+          runtimes = set()
+          for deb in out.glob('*.deb'):
+              pkg = subprocess.check_output(['dpkg-deb','-f',str(deb),'Package'], text=True).strip()
+              ver = subprocess.check_output(['dpkg-deb','-f',str(deb),'Version'], text=True).strip()
+              arch = subprocess.check_output(['dpkg-deb','-f',str(deb),'Architecture'], text=True).strip()
+              if ver != '1.0.0' or arch != 'iphoneos-arm64e':
+                  raise SystemExit(f'bad metadata: {deb.name}: {pkg} {ver} {arch}')
+              if '.runtime.' in pkg:
+                  runtimes.add(pkg)
+                  tag = subprocess.check_output(['dpkg-deb','-f',str(deb),'Tag'], text=True).strip()
+                  if 'role::cydia' not in tag:
+                      raise SystemExit(f'Runtime is not hidden/support-tagged: {pkg}')
+              else:
+                  visible.add(pkg)
+                  depends = subprocess.check_output(['dpkg-deb','-f',str(deb),'Depends'], text=True).strip()
+                  if 'com.nextsolution.nextaura.runtime.preferences' not in depends:
+                      raise SystemExit(f'Missing shared preferences runtime dependency: {pkg}')
+                  conflict = subprocess.check_output(['dpkg-deb','-f',str(deb),'Conflicts'], text=True).strip()
+                  if 'com.nextsolution.unlockvibrate' not in conflict:
+                      raise SystemExit(f'Missing legacy NextAura conflict: {pkg}')
+          if visible != expected:
+              raise SystemExit(f'Visible category mismatch. missing={expected-visible} extra={visible-expected}')
+          if len(runtimes) != 10:
+              raise SystemExit(f'Expected 10 runtimes, found {len(runtimes)}')
+          print('Verified 17 user-facing categories and 10 shared runtimes.')
+          PY
+
+          # Ensure the notification category contains the 4.5.3 fixed Island runtime dependency.
+          ISLAND_DEB="$OUT/NextAura_notification_island_1.0.0_RootHide.deb"
+          dpkg-deb -f "$ISLAND_DEB" Depends | grep -q 'com.nextsolution.nextaura.runtime.island'
+          test -f "$OUT/NextAura_Category_Packages.txt"
+
+      - name: Save build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextAura-Modular-Categories-1.0.0
+          path: |
+            ${{ runner.temp }}/nextaura-categories/*.deb
+            ${{ runner.temp }}/nextaura-categories/NextAura_Category_Packages.txt
+            nextaura-category-island-build.log
+
+      - name: Publish category packages to nextsolution.cc repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextaura-categories"
+          SAVED="$RUNNER_TEMP/nextaura-publish"
+          mkdir -p "$SAVED"
+          cp "$OUT"/*.deb "$SAVED/"
+          cp "$OUT/NextAura_Category_Packages.txt" "$SAVED/"
+
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p debfiles
+          cp "$SAVED"/*.deb debfiles/
+          cp "$SAVED/NextAura_Category_Packages.txt" debfiles/
+
+          SCAN="$RUNNER_TEMP/nextaura-scan"
+          mkdir -p "$SCAN"
+          cp "$SAVED"/*.deb "$SCAN/"
+          dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/nextaura-new-stanzas"
+          sed -i '' 's|^Filename: .*/nextaura-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/nextaura-new-stanzas"
+
+          python3 - "$RUNNER_TEMP/nextaura-new-stanzas" <<'PY'
+          from pathlib import Path
+          import re, sys
+          packages = Path('Packages')
+          existing = packages.read_text() if packages.exists() else ''
+          new_text = Path(sys.argv[1]).read_text()
+          new_stanzas = [s.strip() for s in re.split(r'\n\s*\n', new_text) if s.strip()]
+          new_ids = set()
+          for stanza in new_stanzas:
+              m = re.search(r'^Package: (.+)$', stanza, re.M)
+              if m: new_ids.add(m.group(1).strip())
+          old_stanzas = [s.strip() for s in re.split(r'\n\s*\n', existing) if s.strip()]
+          kept = []
+          for stanza in old_stanzas:
+              m = re.search(r'^Package: (.+)$', stanza, re.M)
+              if m and m.group(1).strip() in new_ids:
+                  continue
+              kept.append(stanza)
+          packages.write_text('\n\n'.join(kept + new_stanzas) + '\n')
+          print(f'Replaced/added {len(new_ids)} NextAura modular package stanzas.')
+          PY
+
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+
+          python3 - <<'PY'
+          from pathlib import Path
+          from datetime import datetime, timezone
+          import re
+          p = Path('Release')
+          if p.exists():
+              t = p.read_text()
+              m = re.search(r'^Version: (\d+)\.(\d+)\.(\d+)$', t, re.M)
+              if m:
+                  t = re.sub(r'^Version: .*$', f'Version: {m.group(1)}.{m.group(2)}.{int(m.group(3))+1}', t, flags=re.M)
+              t = re.sub(r'^Date: .*$', 'Date: ' + datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'), t, flags=re.M)
+              p.write_text(t)
+          PY
+
+          git add debfiles Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
+          if git diff --cached --quiet; then
+            echo "NextAura category packages are already published."
+            exit 0
+          fi
+          git commit -m "Publish NextAura modular category packages"
+          git push origin HEAD:main
