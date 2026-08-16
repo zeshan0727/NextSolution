@@ -1,0 +1,71 @@
+name: Diagnose NextLock 1.0.1 Icons
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths: [".github/workflows/diagnose-nextlock-1.0.1.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install dpkg ldid xz zstd
+      - name: Build both packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          python3 "$P/prefs/generate_root.py"; python3 "$P/patch_v023.py"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; cp "$D" "$OUT/NextLock_1.0.1_Rootless.deb"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
+          D="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; cp "$D" "$OUT/NextLock_1.0.1_RootHide.deb"
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
+      - name: Inspect packaged PreferenceLoader resources
+        shell: bash
+        run: |
+          set -u
+          OUT="$RUNNER_TEMP/out"
+          for deb in "$OUT"/*.deb; do
+            echo "===== $deb ====="
+            echo "Version=$(dpkg-deb -f "$deb" Version) Architecture=$(dpkg-deb -f "$deb" Architecture) Name=$(dpkg-deb -f "$deb" Name)"
+            x="$(mktemp -d)"; dpkg-deb -x "$deb" "$x"
+            echo "-- related files --"
+            find "$x" \( -iname '*NextLock*' -o -iname '*NextStyle*' -o -name 'LockGlyphTime.plist' \) -print | sort
+            echo "-- loader entry --"
+            entry="$(find "$x" -path '*PreferenceLoader/Preferences/LockGlyphTime.plist' -print -quit)"; echo "entry=$entry"; [ -f "$entry" ] && cat "$entry"
+            echo "-- image dimensions --"
+            for i in $(find "$x" -path '*PreferenceLoader/Preferences/NextLockIcon*.png' -print | sort); do echo "ICON=$i"; sips -g pixelWidth -g pixelHeight "$i" || true; done
+            echo "-- bundle icon --"
+            hi="$(find "$x" -path '*LockGlyphTimePrefs.bundle/NextLockIcon.png' -print -quit)"; echo "header=$hi"; [ -f "$hi" ] && sips -g pixelWidth -g pixelHeight "$hi" || true
+            echo "-- key strings --"
+            prefs="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
+            [ -f "$prefs" ] && { strings -a "$prefs" | grep -E 'NextLock|Transparent PNG|NextStyle' || true; }
+            rm -rf "$x"
+          done
+      - name: Upload diagnostic DEBs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.0.1-Diagnostic-DEBs
+          path: |
+            ${{ runner.temp }}/out/NextLock_1.0.1_Rootless.deb
+            ${{ runner.temp }}/out/NextLock_1.0.1_RootHide.deb
+            ${{ runner.temp }}/out/SHA256SUMS.txt
+          if-no-files-found: warn
+          retention-days: 7
