@@ -13,7 +13,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = LockGlyphTime
 LockGlyphTime_FILES = Tweak.xm
 LockGlyphTime_CFLAGS = -fobjc-arc
-LockGlyphTime_FRAMEWORKS = UIKit Foundation
+LockGlyphTime_FRAMEWORKS = UIKit Foundation QuartzCore
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
