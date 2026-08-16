@@ -3,8 +3,9 @@ include $(THEOS)/makefiles/common.mk
 BUNDLE_NAME = LockGlyphTimePrefs
 LockGlyphTimePrefs_FILES = LGTListController.m
 LockGlyphTimePrefs_FRAMEWORKS = UIKit
-LockGlyphTimePrefs_PRIVATE_FRAMEWORKS = Preferences
 LockGlyphTimePrefs_INSTALL_PATH = /Library/PreferenceBundles
-LockGlyphTimePrefs_CFLAGS = -fobjc-arc
+LockGlyphTimePrefs_RESOURCE_DIRS = Resources
+LockGlyphTimePrefs_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
+LockGlyphTimePrefs_LDFLAGS = -Wl,-undefined,dynamic_lookup -Wl,-segalign,4000
 
 include $(THEOS_MAKE_PATH)/bundle.mk
