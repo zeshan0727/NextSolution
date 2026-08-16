@@ -1,4 +1,4 @@
-name: Build and Publish Next Diagnostics Runtime 1.0.0
+name: Build and Publish Next Diagnostics Runtime 1.0.1
 
 on:
   pull_request:
@@ -40,7 +40,7 @@ jobs:
           git -C "$RUNNER_TEMP/theos-rh" checkout --detach "$THEOS_COMMIT"
           git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
 
-      - name: Build shared diagnostics dylib
+      - name: Build optimized diagnostics dylib
         shell: bash
         run: |
           set -euo pipefail
@@ -53,307 +53,81 @@ jobs:
           mkdir -p "$RUNNER_TEMP/nextdiag-built"
           cp "$DYLIB" "$RUNNER_TEMP/nextdiag-built/NextDiagnosticsRuntime.dylib"
 
-      - name: Scan current repo tweaks and generate manifest
+      - name: Scan live repo and package 1.0.1
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin main
           MAIN="$RUNNER_TEMP/nextdiag-main"
           git worktree add --detach "$MAIN" origin/main
-          GEN="$RUNNER_TEMP/nextdiag-generated"
-          mkdir -p "$GEN"
-          python3 - "$MAIN" "$GEN" <<'PY'
-          from pathlib import Path
-          import datetime, os, plistlib, re, shutil, subprocess, sys, tempfile
-
-          main = Path(sys.argv[1])
-          out = Path(sys.argv[2])
-          debs = sorted((main / 'debfiles').glob('*.deb'))
-
-          def control(path):
-              try:
-                  text = subprocess.check_output(['dpkg-deb','-f',str(path)], text=True, stderr=subprocess.DEVNULL)
-              except Exception:
-                  return {}
-              fields = {}
-              current = None
-              for line in text.splitlines():
-                  if line[:1].isspace() and current:
-                      fields[current] += ' ' + line.strip()
-                      continue
-                  if ':' not in line:
-                      continue
-                  k,v = line.split(':',1)
-                  current = k.strip()
-                  fields[current] = v.strip()
-              return fields
-
-          def newer(a,b):
-              if not b: return True
-              return subprocess.run(['dpkg','--compare-versions',a,'gt',b]).returncode == 0
-
-          latest = {}
-          for deb in debs:
-              c = control(deb)
-              pkg = c.get('Package','')
-              arch = c.get('Architecture','')
-              if not pkg or arch not in ('iphoneos-arm64e','all'):
-                  continue
-              old = latest.get(pkg)
-              if old is None or newer(c.get('Version','0'), old[0].get('Version','0')):
-                  latest[pkg] = (c, deb)
-
-          def ours(c):
-              joined = ' '.join([c.get('Package',''),c.get('Maintainer',''),c.get('Author','')]).lower()
-              return c.get('Package','').startswith(('com.nextsolution.','com.zeshan.')) or 'next solution' in joined or 'nextsolution' in joined or 'zeshan' in joined
-
-          cache = {}
-          def inspect(pkg):
-              if pkg in cache: return cache[pkg]
-              item = latest.get(pkg)
-              result = {'dylibs':set(), 'bundles':set(), 'executables':set(), 'classes':set()}
-              if not item:
-                  cache[pkg] = result
-                  return result
-              c, deb = item
-              root = Path(tempfile.mkdtemp(prefix='nextdiag-deb-'))
-              try:
-                  subprocess.check_call(['dpkg-deb','-x',str(deb),str(root)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                  for p in root.rglob('*'):
-                      s = str(p).replace('\\','/')
-                      if '/MobileSubstrate/DynamicLibraries/' not in s:
-                          continue
-                      if p.is_file() and p.suffix == '.dylib':
-                          result['dylibs'].add(p.name)
-                      elif p.is_file() and p.suffix == '.plist':
-                          try:
-                              data = plistlib.load(open(p,'rb'))
-                          except Exception:
-                              continue
-                          f = data.get('Filter',{}) if isinstance(data,dict) else {}
-                          if not isinstance(f,dict): continue
-                          for key,dest in [('Bundles','bundles'),('Executables','executables'),('Classes','classes')]:
-                              values=f.get(key,[])
-                              if isinstance(values,str): values=[values]
-                              if isinstance(values,list):
-                                  for v in values:
-                                      if isinstance(v,str) and v: result[dest].add(v)
-              finally:
-                  shutil.rmtree(root, ignore_errors=True)
-              cache[pkg] = result
-              return result
-
-          dep_re = re.compile(r'^\s*([A-Za-z0-9.+_-]+)')
-          def deps(c):
-              result=[]
-              for group in c.get('Depends','').split(','):
-                  first=group.split('|',1)[0]
-                  m=dep_re.match(first)
-                  if m: result.append(m.group(1))
-              return result
-
-          def collect(pkg, depth=0, seen=None):
-              seen=set() if seen is None else seen
-              result={'dylibs':set(),'bundles':set(),'executables':set(),'classes':set()}
-              if pkg in seen or depth > 3: return result
-              seen.add(pkg)
-              own=inspect(pkg)
-              for k in result: result[k].update(own[k])
-              c=latest.get(pkg,({},None))[0]
-              for dep in deps(c):
-                  if dep not in latest: continue
-                  dc=latest[dep][0]
-                  if not ours(dc): continue
-                  # Internal runtime/library dependencies carry the real hook for
-                  # modular packages such as Aura categories.
-                  if dc.get('Section','').lower() in ('system','libraries','library') or '.runtime.' in dep:
-                      sub=collect(dep,depth+1,seen)
-                      for k in result: result[k].update(sub[k])
-              return result
-
-          def slugify(name,pkg):
-              s=re.sub(r'[^a-z0-9]+','-',name.lower()).strip('-')
-              if not s:
-                  s=re.sub(r'[^a-z0-9]+','-',pkg.lower()).strip('-')
-              return s
-
-          visible=[]
-          used={}
-          all_bundles=set()
-          all_exec=set()
-          for pkg,(c,deb) in sorted(latest.items(), key=lambda kv:(kv[1][0].get('Name','').lower(),kv[0])):
-              if c.get('Section','').lower() != 'tweaks' or not ours(c):
-                  continue
-              name=c.get('Name') or pkg
-              gathered=collect(pkg)
-              # Class-only substrate filters in this repo are overwhelmingly
-              # SpringBoard tweaks. Include SpringBoard so they still get a
-              # diagnostic heartbeat rather than silently producing no report.
-              if gathered['classes'] and not gathered['bundles'] and not gathered['executables']:
-                  gathered['bundles'].add('com.apple.springboard')
-              if not gathered['bundles'] and not gathered['executables'] and gathered['dylibs']:
-                  gathered['bundles'].add('com.apple.springboard')
-
-              slug=slugify(name,pkg)
-              if slug in used and used[slug] != pkg:
-                  suffix=re.sub(r'[^a-z0-9]+','-',pkg.split('.')[-1].lower()).strip('-')
-                  slug=f'{slug}-{suffix}'
-              used[slug]=pkg
-              log_file=f'{slug}.log'
-              # Preserve the detailed Module Glass logger's established filename.
-              if name.strip().lower() == 'module glass':
-                  slug='module-glass'; log_file='module-glass.log'
-
-              aliases=sorted(set([name,pkg,pkg.split('.')[-1],slug]))
-              entry={
-                  'slug':slug,
-                  'name':name,
-                  'packageID':pkg,
-                  'version':c.get('Version',''),
-                  'logFile':log_file,
-                  'aliases':aliases,
-                  'dylibs':sorted(gathered['dylibs']),
-                  'bundles':sorted(gathered['bundles']),
-                  'executables':sorted(gathered['executables']),
-              }
-              visible.append(entry)
-              all_bundles.update(gathered['bundles'])
-              all_exec.update(gathered['executables'])
-
-          all_bundles.add('com.apple.springboard')
-          manifest={
-              'schemaVersion':1,
-              'runtimeVersion':'1.0.0',
-              'generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),
-              'tweakCount':len(visible),
-              'tweaks':visible,
-          }
-          with open(out/'manifest.plist','wb') as f: plistlib.dump(manifest,f,sort_keys=False)
-          with open(out/'bundles.plist','wb') as f: plistlib.dump({'Filter':{'Bundles':sorted(all_bundles)}},f,sort_keys=False)
-          if all_exec:
-              with open(out/'executables.plist','wb') as f: plistlib.dump({'Filter':{'Executables':sorted(all_exec)}},f,sort_keys=False)
-          with open(out/'manifest.txt','w') as f:
-              f.write(f"Next Diagnostics Runtime 1.0.0\nTweaks discovered: {len(visible)}\n\n")
-              for e in visible:
-                  f.write(f"{e['name']} {e['version']}\n  {e['packageID']}\n  slug={e['slug']} log={e['logFile']}\n  dylibs={', '.join(e['dylibs']) or '<none>'}\n  bundles={', '.join(e['bundles']) or '<none>'}\n  executables={', '.join(e['executables']) or '<none>'}\n\n")
-          print(f'Discovered {len(visible)} Next Solution tweak packages.')
-          print(f'Bundle targets: {len(all_bundles)}; executable targets: {len(all_exec)}')
-          if len(visible) < 5:
-              raise SystemExit('Too few tweak packages discovered; refusing to publish incomplete manifest.')
-          PY
-
-      - name: Package Next Diagnostics Runtime 1.0.0
-        shell: bash
-        run: |
-          set -euo pipefail
-          S="$RUNNER_TEMP/nextdiag-stage"
           O="$RUNNER_TEMP/nextdiag-output"
-          GEN="$RUNNER_TEMP/nextdiag-generated"
-          mkdir -p "$S/DEBIAN" "$S/Library/MobileSubstrate/DynamicLibraries" "$S/Library/Application Support/NextDiagnostics" "$O"
+          python3 DailyTweaks/2026-08-16-NextDiagnosticsRuntime/build_package.py \
+            --repo-main "$MAIN" \
+            --dylib "$RUNNER_TEMP/nextdiag-built/NextDiagnosticsRuntime.dylib" \
+            --version 1.0.1 \
+            --output "$O"
 
-          cp "$RUNNER_TEMP/nextdiag-built/NextDiagnosticsRuntime.dylib" "$S/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsBundles.dylib"
-          cp "$GEN/bundles.plist" "$S/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsBundles.plist"
-          if [ -f "$GEN/executables.plist" ]; then
-            cp "$RUNNER_TEMP/nextdiag-built/NextDiagnosticsRuntime.dylib" "$S/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsExecutables.dylib"
-            cp "$GEN/executables.plist" "$S/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsExecutables.plist"
-          fi
-          cp "$GEN/manifest.plist" "$S/Library/Application Support/NextDiagnostics/manifest.plist"
-
-          cat > "$S/DEBIAN/control" <<'EOF'
-          Package: com.nextsolution.nextdiagnostics.runtime
-          Name: Next Diagnostics Runtime
-          Version: 1.0.0
-          Architecture: iphoneos-arm64e
-          Description: Shared RootHide diagnostic runtime for Next Solution tweaks. It remains idle until Next Log starts a focused capture, then reports process injection and loaded tweak dylibs.
-          Maintainer: Next Solution
-          Author: Next Solution - zeshan0727
-          Section: System
-          Depends: firmware (>= 15.0), mobilesubstrate
-          Priority: optional
-          Homepage: https://nextsolution.cc/
-          Tag: role::cydia
-          EOF
-          cat > "$S/DEBIAN/postinst" <<'EOF'
-          #!/bin/sh
-          set +e
-          DST="/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.manifest.plist"
-          mkdir -p "/var/mobile/Library/Preferences"
-          SRC=""
-          for P in "/Library/Application Support/NextDiagnostics/manifest.plist" "/var/jb/Library/Application Support/NextDiagnostics/manifest.plist"; do
-            if [ -f "$P" ]; then SRC="$P"; break; fi
-          done
-          if [ -z "$SRC" ] && [ -d /var/containers/Bundle/tweaksupport ]; then
-            SRC="$(find /var/containers/Bundle/tweaksupport -path '*/Library/Application Support/NextDiagnostics/manifest.plist' -type f 2>/dev/null | head -1)"
-          fi
-          if [ -n "$SRC" ] && [ -f "$SRC" ]; then
-            cp "$SRC" "$DST"
-            chmod 0644 "$DST"
-            chown mobile:mobile "$DST" 2>/dev/null || true
-          fi
-          killall -9 SpringBoard 2>/dev/null || true
-          exit 0
-          EOF
-          chmod 0755 "$S/DEBIAN/postinst"
-          dpkg-deb --root-owner-group -Zxz -b "$S" "$O/NextDiagnosticsRuntime_1.0.0_RootHide.deb"
-          cp "$GEN/manifest.plist" "$O/NextDiagnostics-manifest.plist"
-          cp "$GEN/manifest.txt" "$O/NextDiagnostics-manifest.txt"
-          shasum -a 256 "$O/NextDiagnosticsRuntime_1.0.0_RootHide.deb" > "$O/SHA256.txt"
-
-      - name: Verify diagnostics package
+      - name: Verify all-repo diagnostic coverage
         shell: bash
         run: |
           set -euo pipefail
           O="$RUNNER_TEMP/nextdiag-output"
+          DEB="$O/NextDiagnosticsRuntime_1.0.1_RootHide.deb"
+          test "$(dpkg-deb -f "$DEB" Package)" = "com.nextsolution.nextdiagnostics.runtime"
+          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.1"
           V="$RUNNER_TEMP/nextdiag-verify"
           mkdir -p "$V"
-          test "$(dpkg-deb -f "$O/NextDiagnosticsRuntime_1.0.0_RootHide.deb" Package)" = "com.nextsolution.nextdiagnostics.runtime"
-          test "$(dpkg-deb -f "$O/NextDiagnosticsRuntime_1.0.0_RootHide.deb" Version)" = "1.0.0"
-          dpkg-deb -x "$O/NextDiagnosticsRuntime_1.0.0_RootHide.deb" "$V"
+          dpkg-deb -x "$DEB" "$V"
           B="$V/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsBundles.dylib"
           test -f "$B"
+          strings -a "$B" | grep -q 'runtime=1.0.1'
           strings -a "$B" | grep -q 'NEXTDIAG'
           strings -a "$B" | grep -q 'com.nextsolution.nextlog/control.changed'
           strings -a "$B" | grep -q 'loadedMatches='
-          test -f "$V/Library/Application Support/NextDiagnostics/manifest.plist"
-          python3 - "$V/Library/Application Support/NextDiagnostics/manifest.plist" <<'PY'
+          python3 - "$O/NextDiagnostics-manifest.plist" <<'PY'
           import plistlib,sys
           p=plistlib.load(open(sys.argv[1],'rb'))
-          assert p['schemaVersion']==1
+          assert p['runtimeVersion']=='1.0.1'
           assert p['tweakCount']==len(p['tweaks'])
-          assert p['tweakCount']>=5
-          names={x['name'] for x in p['tweaks']}
-          print('Verified tweak manifest count:',p['tweakCount'])
-          print('Sample names:', sorted(names)[:15])
+          assert p['tweakCount'] >= 30, p['tweakCount']
+          rows={x['packageID']:x for x in p['tweaks']}
+          mg=rows['com.nextsolution.nextaura.cc-module-backgrounds']
+          assert mg['version']=='1.0.7', mg
+          assert mg['logFile']=='module-glass.log'
+          assert 'com.nextsolution.nextmessage' in rows
+          assert 'com.zeshan.phoneaura' in rows
+          print('Verified repo diagnostic profiles:',p['tweakCount'])
+          print('Module Glass profile:',mg)
           PY
 
       - name: Upload runtime and repo manifest
         uses: actions/upload-artifact@v4
         with:
-          name: NextDiagnosticsRuntime-1.0.0-RootHide
+          name: NextDiagnosticsRuntime-1.0.1-RootHide
           path: |
             ${{ runner.temp }}/nextdiag-output/*
             nextdiagnostics-build.log
           if-no-files-found: error
 
-      - name: Publish Next Diagnostics Runtime to nextsolution.cc
+      - name: Publish Next Diagnostics Runtime 1.0.1 to nextsolution.cc
         shell: bash
         run: |
           set -euo pipefail
           O="$RUNNER_TEMP/nextdiag-output"
           SAVED="$RUNNER_TEMP/nextdiag-publish"
           mkdir -p "$SAVED"
-          cp "$O/NextDiagnosticsRuntime_1.0.0_RootHide.deb" "$SAVED/"
+          cp "$O/NextDiagnosticsRuntime_1.0.1_RootHide.deb" "$SAVED/"
 
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
           git fetch origin main
           git reset --hard origin/main
           mkdir -p debfiles
-          cp "$SAVED/NextDiagnosticsRuntime_1.0.0_RootHide.deb" debfiles/
+          cp "$SAVED/NextDiagnosticsRuntime_1.0.1_RootHide.deb" debfiles/
 
           SCAN="$RUNNER_TEMP/nextdiag-scan"
           mkdir -p "$SCAN"
-          cp "$SAVED/NextDiagnosticsRuntime_1.0.0_RootHide.deb" "$SCAN/"
+          cp "$SAVED/NextDiagnosticsRuntime_1.0.1_RootHide.deb" "$SCAN/"
           dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/nextdiag-stanza"
           sed -i '' 's|^Filename: .*/nextdiag-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/nextdiag-stanza"
           python3 - "$RUNNER_TEMP/nextdiag-stanza" <<'PY'
@@ -376,5 +150,5 @@ jobs:
           zstd -19 -q -c Packages > Packages.zst
           git add debfiles Packages Packages.gz Packages.bz2 Packages.xz Packages.zst
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Publish Next Diagnostics Runtime 1.0.0"
+          git commit -m "Publish Next Diagnostics Runtime 1.0.1"
           git push origin HEAD:main
