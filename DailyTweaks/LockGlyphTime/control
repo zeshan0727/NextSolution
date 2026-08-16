@@ -1,8 +1,8 @@
 Package: com.nextsolution.lockglyphtime
 Name: LockGlyphTime
-Version: 0.1.0
+Version: 0.2.0
 Architecture: iphoneos-arm64
-Description: Customize lock screen time/date scale and add a configurable SF Symbol icon.
+Description: Advanced lock screen time/date customization with independent size, color, position, font, style, formatting, shadows, and configurable icons.
 Maintainer: Next Solution
 Author: Next Solution
 Section: Tweaks
