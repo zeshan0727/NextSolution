@@ -1,28 +1,28 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-16T09:57:11Z",
+  "updatedAt": "2026-08-16T12:10:48Z",
   "files": [
     {
-      "id": "lockglyphtime-0.2.3-rootless",
-      "name": "LockGlyphTime 0.2.3 Rootless",
-      "fileName": "LockGlyphTime_0.2.3_Rootless.deb",
+      "id": "nextlock-1.0.0-rootless",
+      "name": "NextLock 1.0.0 Rootless",
+      "fileName": "NextLock_1.0.0_Rootless.deb",
       "type": "deb",
       "platform": "Dopamine / Rootless",
-      "version": "0.2.3",
-      "url": "https://nextsolution.cc/transfer/files/LockGlyphTime/0.2.3/LockGlyphTime_0.2.3_Rootless.deb",
-      "sha256": "63538108efc56de1d9c450d6573bb4bdfbeed9b981b6d7be08cdbe97d6317f99",
-      "notes": "Transparent PNG/sticker photos preserve alpha; opaque photos render as rounded squares."
+      "version": "1.0.0",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.0/NextLock_1.0.0_Rootless.deb",
+      "sha256": "29605c714355477c6fdacfbe90bac06f9b91d241a66f1c2ab1474e930c1ad22b",
+      "notes": "Next Solution lock-screen customization with clean sectioned settings, transparent sticker photos and rounded normal photos."
     },
     {
-      "id": "lockglyphtime-0.2.3-roothide",
-      "name": "LockGlyphTime 0.2.3 RootHide",
-      "fileName": "LockGlyphTime_0.2.3_RootHide.deb",
+      "id": "nextlock-1.0.0-roothide",
+      "name": "NextLock 1.0.0 RootHide",
+      "fileName": "NextLock_1.0.0_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "0.2.3",
-      "url": "https://nextsolution.cc/transfer/files/LockGlyphTime/0.2.3/LockGlyphTime_0.2.3_RootHide.deb",
-      "sha256": "436b7835343d5d1e6b1204a94b9c266f5d0873cf9261e26a479aa9e635e33386",
-      "notes": "Transparent PNG/sticker photos preserve alpha; opaque photos render as rounded squares."
+      "version": "1.0.0",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.0/NextLock_1.0.0_RootHide.deb",
+      "sha256": "1fbb75b99c25962de10c5982b62e55b85b0f88839ab603e60dd297c0eefd71dd",
+      "notes": "Next Solution lock-screen customization with clean sectioned settings, transparent sticker photos and rounded normal photos."
     },
     {
       "id": "nextsolution-transfer-1.1.4",
