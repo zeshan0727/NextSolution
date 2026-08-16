@@ -1,0 +1,201 @@
+name: Build and Publish Module Glass 1.0.8
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - "DailyTweaks/2026-08-16-ModuleGlassRuntime/**"
+      - ".github/workflows/publish-moduleglass-v108.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-moduleglass-v108
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    if: github.head_ref == 'agent/nextaura-4.4.9-notification-island'
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Prepare RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          THEOS_COMMIT="88506b2c22e9e07dd4ed055f23c9e398a117a2c7"
+          git init "$RUNNER_TEMP/theos-rh"
+          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos-rh" checkout --detach "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
+
+      - name: Prepare native-shape source
+        run: python3 DailyTweaks/2026-08-16-ModuleGlassRuntime/prepare-v108.py
+
+      - name: Build Module Glass runtime 1.0.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-16-ModuleGlassRuntime"
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$P" clean all FINALPACKAGE=1 2>&1 | tee moduleglass-runtime-build.log
+          DYLIB="$(find "$P/.theos" -type f -name 'ModuleGlassRuntime.dylib' -print | sort | tail -1)"
+          test -n "$DYLIB"
+          ldid -S "$DYLIB"
+          mkdir -p "$RUNNER_TEMP/moduleglass-built"
+          cp "$DYLIB" "$RUNNER_TEMP/moduleglass-built/CCModuleBackgrounds.dylib"
+          cp "$P/ModuleGlassRuntime.plist" "$RUNNER_TEMP/moduleglass-built/CCModuleBackgrounds.plist"
+
+      - name: Package runtime 1.0.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          S="$RUNNER_TEMP/runtime-stage"
+          O="$RUNNER_TEMP/output"
+          mkdir -p "$S/DEBIAN" "$S/Library/MobileSubstrate/DynamicLibraries" "$O"
+          cp "$RUNNER_TEMP/moduleglass-built/CCModuleBackgrounds.dylib" "$S/Library/MobileSubstrate/DynamicLibraries/"
+          cp "$RUNNER_TEMP/moduleglass-built/CCModuleBackgrounds.plist" "$S/Library/MobileSubstrate/DynamicLibraries/"
+          cat > "$S/DEBIAN/control" <<'EOF'
+          Package: com.nextsolution.nextaura.runtime.ccbackgrounds
+          Name: Module Glass Runtime
+          Version: 1.0.4
+          Architecture: iphoneos-arm64e
+          Description: Module Glass runtime that changes only the visual background while preserving each native Control Center module frame, rounded corners, mask and expansion behavior.
+          Maintainer: Next Solution
+          Author: Next Solution - zeshan0727
+          Section: System
+          Depends: firmware (>= 16.0), mobilesubstrate
+          Conflicts: com.nextsolution.unlockvibrate
+          Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+          Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+          Priority: optional
+          Homepage: https://nextsolution.cc/
+          Tag: role::cydia
+          EOF
+          cat > "$S/DEBIAN/postinst" <<'EOF'
+          #!/bin/sh
+          killall -9 SpringBoard 2>/dev/null || true
+          exit 0
+          EOF
+          chmod 0755 "$S/DEBIAN/postinst"
+          dpkg-deb --root-owner-group -Zxz -b "$S" "$O/NextAura_Runtime_ccbackgrounds_1.0.4_RootHide.deb"
+
+      - name: Package Module Glass 1.0.8
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="debfiles/NextAura_cc_module_backgrounds_1.0.4_RootHide.deb"
+          test -f "$BASE"
+          S="$RUNNER_TEMP/moduleglass-category-stage"
+          O="$RUNNER_TEMP/output"
+          dpkg-deb -R "$BASE" "$S"
+          python3 - "$S/DEBIAN/control" <<'PY'
+          from pathlib import Path
+          import re, sys
+          p=Path(sys.argv[1]); t=p.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.0.8', t, flags=re.M)
+          t=re.sub(r'^Depends: .*$', 'Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.4)', t, flags=re.M)
+          t=re.sub(r'^Description: .*$', 'Description: Custom Control Center module backgrounds that preserve the native module size, rounded shape, mask and layout while changing only the background image.', t, flags=re.M)
+          p.write_text(t)
+          PY
+          dpkg-deb --root-owner-group -Zxz -b "$S" "$O/NextAura_cc_module_backgrounds_1.0.8_RootHide.deb"
+
+      - name: Verify native shape preservation
+        shell: bash
+        run: |
+          set -euo pipefail
+          O="$RUNNER_TEMP/output"
+          test "$(dpkg-deb -f "$O/NextAura_Runtime_ccbackgrounds_1.0.4_RootHide.deb" Version)" = "1.0.4"
+          test "$(dpkg-deb -f "$O/NextAura_cc_module_backgrounds_1.0.8_RootHide.deb" Version)" = "1.0.8"
+          dpkg-deb -f "$O/NextAura_cc_module_backgrounds_1.0.8_RootHide.deb" Depends | grep -q 'runtime.ccbackgrounds (>= 1.0.4)'
+          V="$RUNNER_TEMP/runtime-check"
+          mkdir -p "$V"
+          dpkg-deb -x "$O/NextAura_Runtime_ccbackgrounds_1.0.4_RootHide.deb" "$V"
+          B="$V/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib"
+          test -f "$B"
+          strings -a "$B" | grep -q 'ModuleGlassRuntime 1.0.4 loaded'
+          strings -a "$B" | grep -q 'nativeBackground='
+          strings -a "$B" | grep -q 'expanded-bypass'
+          strings -a "$B" | grep -q 'module/root frame or layout'
+          strings -a "$B" | grep -q '/var/mobile/Library/Logs/NextSolution/module-glass.log'
+          shasum -a 256 "$O"/*.deb > "$O/SHA256.txt"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.0.8-RootHide-NativeShape
+          path: |
+            ${{ runner.temp }}/output/*.deb
+            ${{ runner.temp }}/output/SHA256.txt
+            moduleglass-runtime-build.log
+          if-no-files-found: error
+
+      - name: Publish 1.0.8 to nextsolution.cc
+        shell: bash
+        run: |
+          set -euo pipefail
+          O="$RUNNER_TEMP/output"
+          SAVED="$RUNNER_TEMP/moduleglass-publish"
+          mkdir -p "$SAVED"
+          cp "$O"/*.deb "$SAVED/"
+
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p debfiles
+          cp "$SAVED"/*.deb debfiles/
+
+          SCAN="$RUNNER_TEMP/moduleglass-scan"
+          mkdir -p "$SCAN"
+          cp "$SAVED"/*.deb "$SCAN/"
+          dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/moduleglass-stanzas"
+          sed -i '' 's|^Filename: .*/moduleglass-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/moduleglass-stanzas"
+
+          python3 - "$RUNNER_TEMP/moduleglass-stanzas" <<'PY'
+          from pathlib import Path
+          import re, sys
+          packages=Path('Packages')
+          existing=packages.read_text() if packages.exists() else ''
+          new=Path(sys.argv[1]).read_text()
+          new_stanzas=[s.strip() for s in re.split(r'\n\s*\n',new) if s.strip()]
+          ids={re.search(r'^Package: (.+)$',s,re.M).group(1).strip() for s in new_stanzas}
+          kept=[]
+          for s in [x.strip() for x in re.split(r'\n\s*\n',existing) if x.strip()]:
+              m=re.search(r'^Package: (.+)$',s,re.M)
+              if m and m.group(1).strip() in ids: continue
+              kept.append(s)
+          packages.write_text('\n\n'.join(kept+new_stanzas)+'\n')
+          PY
+
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          python3 - <<'PY'
+          from pathlib import Path
+          from datetime import datetime, timezone
+          import re
+          p=Path('Release')
+          if p.exists():
+              t=p.read_text()
+              m=re.search(r'^Version: (\d+)\.(\d+)\.(\d+)$',t,re.M)
+              if m: t=re.sub(r'^Version: .*$',f'Version: {m.group(1)}.{m.group(2)}.{int(m.group(3))+1}',t,flags=re.M)
+              t=re.sub(r'^Date: .*$', 'Date: '+datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'), t, flags=re.M)
+              p.write_text(t)
+          PY
+          git add debfiles Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Publish Module Glass 1.0.8 native shape fix"
+          git push origin HEAD:main
