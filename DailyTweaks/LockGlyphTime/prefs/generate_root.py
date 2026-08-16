@@ -21,14 +21,21 @@ def slider(label, key, default, minimum, maximum):
                   "default":default,"min":minimum,"max":maximum,"showValue":True,
                   "PostNotification":NOTIFY})
 
+def described_slider(section, description, label, key, default, minimum, maximum):
+    group(section, description)
+    slider(label, key, default, minimum, maximum)
+
 def edit(label, key, default, placeholder):
     items.append({"cell":"PSEditTextCell","label":label,"defaults":DOMAIN,"key":key,
                   "default":default,"placeholder":placeholder,"PostNotification":NOTIFY})
 
-def multi(label, key, default, titles, values):
-    items.append({"cell":"PSMultiValueCell","label":label,"defaults":DOMAIN,"key":key,
-                  "default":default,"validTitles":titles,"validValues":values,
-                  "PostNotification":NOTIFY})
+def choice(label, key, default, titles, values):
+    items.append({"cell":"PSLinkListCell","detail":"PSListItemsController","label":label,
+                  "defaults":DOMAIN,"key":key,"default":default,
+                  "validTitles":titles,"validValues":values,"PostNotification":NOTIFY})
+
+def color_button(label, action):
+    items.append({"cell":"PSButtonCell","label":label,"action":action})
 
 font_titles = [
     "Original / Apple","System","System Rounded","System Serif / New York","System Monospaced",
@@ -50,60 +57,99 @@ weight_values = list(range(9))
 alignment_titles = ["Automatic","Left","Center","Right"]
 alignment_values = [0,1,2,3]
 
-group("Lock Screen",
-      "LockGlyphTime 0.2 adds independent time/date appearance while keeping all existing icon settings. "
-      "Changes reload live when the lock-screen date view is active.")
+group("LockGlyphTime 0.2.1",
+      "Time/date appearance is independent from the icon system. Selection rows now open dedicated lists, "
+      "colors use the native iOS color picker, and position sliders use non-cumulative native label movement.")
 switch("Enable LockGlyphTime", "enabled", True)
 
-group("Time",
-      "Customize the clock independently from the date. Original / Apple preserves the native lock-screen font family.")
+# TIME
+group("Time Appearance",
+      "Customize only the lock-screen clock. Tap Font, Weight, Style or Alignment to open a selection list. "
+      "Tap Time Color to open Apple's native color picker.")
 switch("Enable Time Customization", "customTimeEnabled", True)
-slider("Time Size", "timeScale", 1.0, 0.5, 2.5)
-edit("Time Color", "timeColor", "#FFFFFF", "#FFFFFF or #RRGGBBAA")
-multi("Time Font", "timeFont", "Original", font_titles, font_values)
-multi("Time Font Weight", "timeFontWeight", 3, weight_titles, weight_values)
-multi("Time Style", "timeStyle", 0,
-      ["Default","Normal","Bold","Italic","Bold Italic","Outline","Shadow","Glow"], list(range(8)))
-multi("Time Alignment", "timeAlignment", 0, alignment_titles, alignment_values)
-slider("Time Horizontal Position", "timeOffsetX", 0.0, -150.0, 150.0)
-slider("Time Vertical Position", "timeOffsetY", 0.0, -150.0, 150.0)
+color_button("Time Color", "openTimeColorPicker")
+choice("Time Font", "timeFont", "Original", font_titles, font_values)
+choice("Time Font Weight", "timeFontWeight", 3, weight_titles, weight_values)
+choice("Time Style", "timeStyle", 0,
+       ["Default","Normal","Bold","Italic","Bold Italic","Outline","Shadow","Glow"], list(range(8)))
+choice("Time Alignment", "timeAlignment", 0, alignment_titles, alignment_values)
+
+described_slider("Time Size",
+                 "Changes only the clock size. 1.00 is the native size; values below 1.00 make it smaller and values above 1.00 make it larger.",
+                 "Size", "timeScale", 1.0, 0.5, 2.5)
+described_slider("Time Horizontal Position",
+                 "Moves the clock left or right without moving the date. Negative values move LEFT; positive values move RIGHT; 0 keeps Apple's original horizontal position.",
+                 "Left / Right", "timeOffsetX", 0.0, -150.0, 150.0)
+described_slider("Time Vertical Position",
+                 "Moves the clock up or down without moving the date. Negative values move UP; positive values move DOWN; 0 keeps Apple's original vertical position.",
+                 "Up / Down", "timeOffsetY", 0.0, -150.0, 150.0)
 
 group("Time Shadow",
-      "Independent from the icon shadow. Shadow/Glow styles can provide a preset effect when this switch is off.")
+      "Time shadow is independent from date and icon shadows. Tap Shadow Color to open the native color picker.")
 switch("Enable Time Shadow", "timeShadowEnabled", False)
-edit("Time Shadow Color", "timeShadowColor", "#000000", "#000000")
-slider("Time Shadow Opacity", "timeShadowOpacity", 0.45, 0.0, 1.0)
-slider("Time Shadow Radius", "timeShadowRadius", 2.0, 0.0, 20.0)
-slider("Time Shadow X Offset", "timeShadowOffsetX", 0.0, -20.0, 20.0)
-slider("Time Shadow Y Offset", "timeShadowOffsetY", 1.0, -20.0, 20.0)
+color_button("Time Shadow Color", "openTimeShadowColorPicker")
+described_slider("Time Shadow Opacity",
+                 "Controls shadow visibility. 0 is invisible and 1 is fully opaque.",
+                 "Opacity", "timeShadowOpacity", 0.45, 0.0, 1.0)
+described_slider("Time Shadow Blur",
+                 "Controls the shadow blur/softness. Higher values create a wider, softer shadow.",
+                 "Radius", "timeShadowRadius", 2.0, 0.0, 20.0)
+described_slider("Time Shadow Horizontal Offset",
+                 "Moves only the clock shadow left/right. Negative is left; positive is right.",
+                 "Shadow Left / Right", "timeShadowOffsetX", 0.0, -20.0, 20.0)
+described_slider("Time Shadow Vertical Offset",
+                 "Moves only the clock shadow up/down. Negative is up; positive is down.",
+                 "Shadow Up / Down", "timeShadowOffsetY", 1.0, -20.0, 20.0)
 
-group("Date", "The date has its own size, position, color, font, style and formatting controls.")
+# DATE
+group("Date Appearance",
+      "The date has its own appearance and position. Tap selection rows to open their option lists, and tap Date Color for the native iOS color picker.")
 switch("Enable Date Customization", "customDateEnabled", True)
-slider("Date Size", "dateScale", 1.0, 0.5, 2.5)
-edit("Date Color", "dateColor", "#FFFFFF", "#FFFFFF or #RRGGBBAA")
-multi("Date Font", "dateFont", "Original", font_titles, font_values)
-multi("Date Font Weight", "dateFontWeight", 3, weight_titles, weight_values)
-multi("Date Style", "dateStyle", 0,
-      ["Default","Normal","Bold","Italic","Bold Italic","Uppercase","Lowercase","Outline","Shadow","Glow"],
-      list(range(10)))
-multi("Date Alignment", "dateAlignment", 0, alignment_titles, alignment_values)
-slider("Date Horizontal Position", "dateOffsetX", 0.0, -150.0, 150.0)
-slider("Date Vertical Position", "dateOffsetY", 0.0, -150.0, 150.0)
-multi("Date Format", "dateFormat", "system",
-      ["System Default","EEE, MMM d","EEEE, MMMM d","dd MMMM","MMM d",
-       "dd/MM/yyyy","MM/dd/yyyy","yyyy-MM-dd","Custom"],
-      ["system","EEE, MMM d","EEEE, MMMM d","dd MMMM","MMM d",
-       "dd/MM/yyyy","MM/dd/yyyy","yyyy-MM-dd","custom"])
+color_button("Date Color", "openDateColorPicker")
+choice("Date Font", "dateFont", "Original", font_titles, font_values)
+choice("Date Font Weight", "dateFontWeight", 3, weight_titles, weight_values)
+choice("Date Style", "dateStyle", 0,
+       ["Default","Normal","Bold","Italic","Bold Italic","Uppercase","Lowercase","Outline","Shadow","Glow"],
+       list(range(10)))
+choice("Date Alignment", "dateAlignment", 0, alignment_titles, alignment_values)
+
+described_slider("Date Size",
+                 "Changes only the date size. 1.00 is Apple's native size; lower values reduce it and higher values enlarge it.",
+                 "Size", "dateScale", 1.0, 0.5, 2.5)
+described_slider("Date Horizontal Position",
+                 "Moves only the date left/right. Negative values move LEFT; positive values move RIGHT.",
+                 "Left / Right", "dateOffsetX", 0.0, -150.0, 150.0)
+described_slider("Date Vertical Position",
+                 "Moves only the date up/down. Negative values move UP; positive values move DOWN.",
+                 "Up / Down", "dateOffsetY", 0.0, -150.0, 150.0)
+
+group("Date Format",
+      "Choose a ready-made date format or select Custom and enter an NSDateFormatter pattern below. This changes only the displayed lock-screen date.")
+choice("Date Format", "dateFormat", "system",
+       ["System Default","EEE, MMM d","EEEE, MMMM d","dd MMMM","MMM d",
+        "dd/MM/yyyy","MM/dd/yyyy","yyyy-MM-dd","Custom"],
+       ["system","EEE, MMM d","EEEE, MMMM d","dd MMMM","MMM d",
+        "dd/MM/yyyy","MM/dd/yyyy","yyyy-MM-dd","custom"])
 edit("Custom Date Format", "customDateFormat", "EEEE, MMMM d", "NSDateFormatter pattern")
 
-group("Date Shadow", "Independent from time and icon shadows.")
+group("Date Shadow",
+      "Date shadow is fully independent from time and icon shadows. Tap Shadow Color for the native picker.")
 switch("Enable Date Shadow", "dateShadowEnabled", False)
-edit("Date Shadow Color", "dateShadowColor", "#000000", "#000000")
-slider("Date Shadow Opacity", "dateShadowOpacity", 0.45, 0.0, 1.0)
-slider("Date Shadow Radius", "dateShadowRadius", 2.0, 0.0, 20.0)
-slider("Date Shadow X Offset", "dateShadowOffsetX", 0.0, -20.0, 20.0)
-slider("Date Shadow Y Offset", "dateShadowOffsetY", 1.0, -20.0, 20.0)
+color_button("Date Shadow Color", "openDateShadowColorPicker")
+described_slider("Date Shadow Opacity",
+                 "Controls date-shadow visibility from invisible (0) to fully opaque (1).",
+                 "Opacity", "dateShadowOpacity", 0.45, 0.0, 1.0)
+described_slider("Date Shadow Blur",
+                 "Controls date-shadow softness. Higher values make the shadow wider and softer.",
+                 "Radius", "dateShadowRadius", 2.0, 0.0, 20.0)
+described_slider("Date Shadow Horizontal Offset",
+                 "Moves only the date shadow left/right. Negative is left; positive is right.",
+                 "Shadow Left / Right", "dateShadowOffsetX", 0.0, -20.0, 20.0)
+described_slider("Date Shadow Vertical Offset",
+                 "Moves only the date shadow up/down. Negative is up; positive is down.",
+                 "Shadow Up / Down", "dateShadowOffsetY", 1.0, -20.0, 20.0)
 
+# ICON - preserved
 icon_titles = [
     "Sparkles","Star","Heart","Bolt","Moon","Sun","Cloud","Flame","Drop","Leaf","Bell","Lock","Key","Shield",
     "Person","House","Location","Paper Plane","Envelope","Phone","Camera","Photo","Music","Headphones",
@@ -117,30 +163,43 @@ icon_values = [
 ]
 
 group("Icon",
-      "Existing icon controls are preserved. Icon placement is calculated after time/date customization "
-      "so anchors follow the final clock/date geometry.")
+      "All previous icon features are retained. Selection rows open real option lists. The icon is positioned after the final time/date position so its anchor follows the customized clock/date.")
 switch("Show Icon", "iconEnabled", True)
-multi("Icon", "iconName", "sparkles", icon_titles, icon_values)
-slider("Icon Size", "iconSize", 22.0, 10.0, 80.0)
-edit("Icon Color", "iconColor", "#FFFFFF", "#FFFFFF")
-multi("Anchor To", "anchorTarget", 0, ["Time","Date"], [0,1])
-multi("Position", "iconPosition", 1, ["Left","Right","Above","Below"], [0,1,2,3])
-slider("Icon Horizontal Offset", "iconOffsetX", 0.0, -120.0, 120.0)
-slider("Icon Vertical Offset", "iconOffsetY", 0.0, -120.0, 120.0)
+choice("Icon", "iconName", "sparkles", icon_titles, icon_values)
+color_button("Icon Color", "openIconColorPicker")
+choice("Anchor To", "anchorTarget", 0, ["Time","Date"], [0,1])
+choice("Position", "iconPosition", 1, ["Left","Right","Above","Below"], [0,1,2,3])
+described_slider("Icon Size",
+                 "Changes only the icon size in points. It does not change the clock or date size.",
+                 "Size", "iconSize", 22.0, 10.0, 80.0)
+described_slider("Icon Horizontal Offset",
+                 "Fine-tunes the icon left/right after its selected anchor and position are calculated. Negative is left; positive is right.",
+                 "Left / Right", "iconOffsetX", 0.0, -120.0, 120.0)
+described_slider("Icon Vertical Offset",
+                 "Fine-tunes the icon up/down after its selected anchor and position are calculated. Negative is up; positive is down.",
+                 "Up / Down", "iconOffsetY", 0.0, -120.0, 120.0)
 
-group("Icon Shadow")
+group("Icon Shadow",
+      "Existing icon-shadow controls are preserved and remain independent from time/date shadows. Tap Shadow Color to use the native color picker.")
 switch("Enable Icon Shadow", "shadowEnabled", True)
-edit("Icon Shadow Color", "shadowColor", "#000000", "#000000")
-slider("Icon Shadow Opacity", "shadowOpacity", 0.45, 0.0, 1.0)
-slider("Icon Shadow Radius", "shadowRadius", 2.0, 0.0, 20.0)
-slider("Icon Shadow X Offset", "shadowOffsetX", 0.0, -20.0, 20.0)
-slider("Icon Shadow Y Offset", "shadowOffsetY", 1.0, -20.0, 20.0)
+color_button("Icon Shadow Color", "openIconShadowColorPicker")
+described_slider("Icon Shadow Opacity",
+                 "Controls icon-shadow visibility from invisible (0) to fully opaque (1).",
+                 "Opacity", "shadowOpacity", 0.45, 0.0, 1.0)
+described_slider("Icon Shadow Blur",
+                 "Controls icon-shadow softness. Higher values make the shadow wider and softer.",
+                 "Radius", "shadowRadius", 2.0, 0.0, 20.0)
+described_slider("Icon Shadow Horizontal Offset",
+                 "Moves only the icon shadow left/right. Negative is left; positive is right.",
+                 "Shadow Left / Right", "shadowOffsetX", 0.0, -20.0, 20.0)
+described_slider("Icon Shadow Vertical Offset",
+                 "Moves only the icon shadow up/down. Negative is up; positive is down.",
+                 "Shadow Up / Down", "shadowOffsetY", 1.0, -20.0, 20.0)
 
 group("Compatibility",
-      "Built separately for standard rootless and RootHide. Runtime class/label detection fails safely if "
-      "the supported lock-screen date hierarchy is not found. Missing fonts fall back to the native font.")
+      "Built separately for standard rootless and RootHide. Missing private lock-screen classes or fonts fail safely. "
+      "Version 0.2.1 moves time/date through their native centers instead of transform translation to improve iOS 16 lock-screen compatibility.")
 
 output = Path(__file__).resolve().parent / "Resources" / "Root.plist"
-output.write_bytes(plistlib.dumps({"title":"LockGlyphTime","items":items},
-                                  fmt=plistlib.FMT_XML, sort_keys=False))
+output.write_bytes(plistlib.dumps({"title":"LockGlyphTime","items":items}, fmt=plistlib.FMT_XML, sort_keys=False))
 print(f"Generated {output} with {len(items)} preference specifiers")
