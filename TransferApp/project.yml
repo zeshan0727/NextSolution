@@ -13,8 +13,8 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: Sources
-    resources:
       - path: GeneratedAssets
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.transfer
