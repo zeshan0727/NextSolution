@@ -50,7 +50,7 @@ __attribute__((constructor(101))) static void ModuleGlassEarlyBootstrap(void) {
         MGBootWrite([NSString stringWithFormat:@"ModuleGlass runtime process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@",
                      NSBundle.mainBundle.bundleIdentifier ?: @"<nil>", getpid(), handle,
                      moduleClass ? NSStringFromClass(moduleClass) : @"<missing>",
-                     contentClass ? NSStringFromClass(contentClass) : @"<missing>"]]);
+                     contentClass ? NSStringFromClass(contentClass) : @"<missing>"]);
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, MGBootControlChanged,
                                         (__bridge CFStringRef)MGBootControlNotification, NULL,
                                         CFNotificationSuspensionBehaviorDeliverImmediately);
