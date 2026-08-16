@@ -1,4 +1,4 @@
-name: Build LockGlyphTime Test DEBs
+name: Build NextLock Release DEBs
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: lockglyphtime-test
+  group: nextlock-release
   cancel-in-progress: true
 
 jobs:
@@ -21,8 +21,10 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+
       - name: Install tools
         run: brew install dpkg ldid xz zstd
+
       - name: Generate and validate source
         shell: bash
         run: |
@@ -30,43 +32,45 @@ jobs:
           P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
           python3 "$P/prefs/generate_root.py"
           python3 "$P/patch_v023.py"
-          for f in RuntimeV022.xm RuntimeV023.xm LockGlyphTime.plist control Makefile patch_v023.py prefs/Makefile prefs/LGTListController.m prefs/LGTListControllerV023.m prefs/generate_root.py prefs/Resources/Root.plist prefs/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist; do test -f "$P/$f"; done
-          grep -q '^Version: 0.2.3$' "$P/control"
+          for f in RuntimeV022.xm RuntimeV023.xm LockGlyphTime.plist control Makefile patch_v023.py prefs/Makefile prefs/LGTListController.m prefs/LGTListControllerV023.m prefs/generate_root.py prefs/Resources/Root.plist prefs/Resources/Time.plist prefs/Resources/Date.plist prefs/Resources/Icon.plist prefs/Resources/Photo.plist prefs/Resources/Advanced.plist prefs/Resources/About.plist prefs/Resources/Info.plist prefs/Resources/NextLockIcon.png layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist layout/Library/PreferenceLoader/Preferences/NextLockIcon.png; do test -f "$P/$f"; done
+          grep -q '^Name: NextLock$' "$P/control"
+          grep -q '^Version: 1.0.0$' "$P/control"
           grep -q 'LockGlyphTime_FILES = RuntimeV023.xm' "$P/Makefile"
           grep -q 'LGTListControllerV023.m' "$P/prefs/Makefile"
           grep -q 'LGTImageHasVisibleTransparency' "$P/RuntimeV023.xm"
           grep -q 'LGTIconHostView' "$P/RuntimeV023.xm"
-          grep -q 'UIViewContentModeScaleAspectFill' "$P/RuntimeV023.xm"
-          grep -q 'UIViewContentModeScaleAspectFit' "$P/RuntimeV023.xm"
-          grep -q 'icon.layer.cornerRadius' "$P/RuntimeV023.xm"
           grep -q 'UIImagePNGRepresentation' "$P/prefs/LGTListControllerV023.m"
-          grep -q 'UIGraphicsBeginImageContextWithOptions(target,NO' "$P/prefs/LGTListControllerV023.m"
+          grep -q 'NextLockIcon' "$P/prefs/LGTListControllerV023.m"
+          grep -q 'title.text=@"NextLock"' "$P/prefs/LGTListControllerV023.m"
           grep -q 'Transparent PNG/sticker backgrounds are preserved' "$P/prefs/LGTListControllerV023.m"
-          grep -q 'dispatch_async(dispatch_get_main_queue' "$P/RuntimeV023.xm"
-          grep -q 'state.nativeCenter.x+x' "$P/RuntimeV023.xm"
-          grep -q 'PHPickerViewController' "$P/prefs/LGTListControllerV023.m"
-          grep -q 'Choose / Edit Photo' "$P/prefs/Resources/Root.plist"
-          grep -q 'Time Vertical Position' "$P/prefs/Resources/Root.plist"
-          grep -q 'Date Vertical Position' "$P/prefs/Resources/Root.plist"
-          grep -q 'Photo (Custom)' "$P/prefs/Resources/Root.plist"
-          ! grep -R 'nextsolution\.app' "$P" .github/workflows/build-lockglyphtime.yml --include='*.yml' --include='*.yaml' --include='*.xm' --include='*.m' --include='*.py' --include='control' || exit 1
-          plutil -lint "$P/prefs/Resources/Root.plist"
-          plutil -lint "$P/prefs/Resources/Info.plist"
-      - name: Build rootless
+          grep -q 'About NextLock' "$P/prefs/Resources/Root.plist"
+          grep -q 'NEXTLOCK' "$P/prefs/Resources/About.plist"
+          grep -q 'label = NextLock;' "$P/layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist"
+          ! grep -R 'NextStyle' "$P" --include='*.yml' --include='*.yaml' --include='*.xm' --include='*.m' --include='*.py' --include='*.plist' --include='control' || exit 1
+          ! grep -R 'nextsolution\.app' "$P" .github/workflows/build-lockglyphtime.yml --include='*.yml' --include='*.yaml' --include='*.xm' --include='*.m' --include='*.py' --include='*.plist' --include='control' || exit 1
+          for f in Root Time Date Icon Photo Advanced About Info; do plutil -lint "$P/prefs/Resources/$f.plist"; done
+
+      - name: Build Rootless
         shell: bash
         run: |
           set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/lockglyphtime-release"; mkdir -p "$OUT"
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-release"
+          mkdir -p "$OUT"
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
           export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
-          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
-          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$DEB"
-          cp "$DEB" "$OUT/LockGlyphTime_0.2.3_Rootless.deb"
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.0_Rootless.deb"
+
       - name: Build RootHide
         shell: bash
         run: |
           set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/lockglyphtime-release"
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-release"
           git init "$RUNNER_TEMP/theos-roothide"
           git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
           git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
@@ -74,89 +78,87 @@ jobs:
           git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
           sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
           export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
-          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
-          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$DEB"
-          cp "$DEB" "$OUT/LockGlyphTime_0.2.3_RootHide.deb"
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.0_RootHide.deb"
+
       - name: Validate packages
         shell: bash
         run: |
           set -euo pipefail
-          validate(){ deb="$1"; arch="$2"; x="$(mktemp -d)"; test "$(dpkg-deb -f "$deb" Version)" = 0.2.3; test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"; dpkg-deb -x "$deb" "$x"; dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"; root="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"; prefsbin="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"; test -n "$dylib"; test -n "$root"; test -n "$prefsbin"; grep -q 'Choose / Edit Photo' "$root"; grep -q 'Photo (Custom)' "$root"; strings -a "$dylib" | grep -q LGTIconHostView; strings -a "$dylib" | grep -q custom.photo; strings -a "$prefsbin" | grep -q 'Transparent PNG/sticker backgrounds are preserved'; strings -a "$prefsbin" | grep -q openCustomPhotoPicker; rm -rf "$x"; }
-          OUT="$RUNNER_TEMP/lockglyphtime-release"
-          validate "$OUT/LockGlyphTime_0.2.3_Rootless.deb" iphoneos-arm64
-          validate "$OUT/LockGlyphTime_0.2.3_RootHide.deb" iphoneos-arm64e
+          validate(){
+            deb="$1"; arch="$2"; x="$(mktemp -d)"
+            test "$(dpkg-deb -f "$deb" Version)" = 1.0.0
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            test "$(dpkg-deb -f "$deb" Name)" = NextLock
+            dpkg-deb -x "$deb" "$x"
+            dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            root="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
+            about="$(find "$x" -path '*LockGlyphTimePrefs.bundle/About.plist' -print -quit)"
+            prefsbin="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
+            icon="$(find "$x" -path '*LockGlyphTimePrefs.bundle/NextLockIcon.png' -print -quit)"
+            loadericon="$(find "$x" -path '*PreferenceLoader/Preferences/NextLockIcon.png' -print -quit)"
+            test -n "$dylib"; test -n "$root"; test -n "$about"; test -n "$prefsbin"; test -n "$icon"; test -n "$loadericon"
+            grep -q 'About NextLock' "$root"
+            grep -q 'NEXTLOCK' "$about"
+            strings -a "$dylib" | grep -q LGTIconHostView
+            strings -a "$dylib" | grep -q custom.photo
+            strings -a "$prefsbin" | grep -q NextLock
+            strings -a "$prefsbin" | grep -q 'Transparent PNG/sticker backgrounds are preserved'
+            ! strings -a "$prefsbin" | grep -q NextStyle
+            rm -rf "$x"
+          }
+          OUT="$RUNNER_TEMP/nextlock-release"
+          validate "$OUT/NextLock_1.0.0_Rootless.deb" iphoneos-arm64
+          validate "$OUT/NextLock_1.0.0_RootHide.deb" iphoneos-arm64e
           shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
-      - name: Upload test packages
+
+      - name: Upload release packages
         uses: actions/upload-artifact@v4
         with:
-          name: LockGlyphTime-0.2.3-Test-DEBs
+          name: NextLock-1.0.0-DEBs
           path: |
-            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.3_Rootless.deb
-            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.3_RootHide.deb
-            ${{ runner.temp }}/lockglyphtime-release/SHA256SUMS.txt
+            ${{ runner.temp }}/nextlock-release/NextLock_1.0.0_Rootless.deb
+            ${{ runner.temp }}/nextlock-release/NextLock_1.0.0_RootHide.deb
+            ${{ runner.temp }}/nextlock-release/SHA256SUMS.txt
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
+
       - name: Publish to NextSolution Transfer feed
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          OUT="$RUNNER_TEMP/lockglyphtime-release"
+          OUT="$RUNNER_TEMP/nextlock-release"
           SITE="$RUNNER_TEMP/nextsolution-site"
           git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
-          DEST="$SITE/transfer/files/LockGlyphTime/0.2.3"
+          DEST="$SITE/transfer/files/NextLock/1.0.0"
           mkdir -p "$DEST"
-          cp "$OUT/LockGlyphTime_0.2.3_Rootless.deb" "$DEST/"
-          cp "$OUT/LockGlyphTime_0.2.3_RootHide.deb" "$DEST/"
+          cp "$OUT/NextLock_1.0.0_Rootless.deb" "$DEST/"
+          cp "$OUT/NextLock_1.0.0_RootHide.deb" "$DEST/"
           cp "$OUT/SHA256SUMS.txt" "$DEST/"
           python3 - "$SITE/transfer/index.json" "$OUT" <<'PY'
           import json, pathlib, hashlib, datetime, sys
-          manifest = pathlib.Path(sys.argv[1])
-          out = pathlib.Path(sys.argv[2])
-          try:
-              data = json.loads(manifest.read_text()) if manifest.exists() else {"version": 1, "files": []}
-          except Exception:
-              data = {"version": 1, "files": []}
-          def sha(name):
-              return hashlib.sha256((out/name).read_bytes()).hexdigest()
-          files = [x for x in data.get("files", []) if not str(x.get("id", "")).startswith("lockglyphtime-")]
-          files = [
-              {
-                  "id":"lockglyphtime-0.2.3-rootless",
-                  "name":"LockGlyphTime 0.2.3 Rootless",
-                  "fileName":"LockGlyphTime_0.2.3_Rootless.deb",
-                  "type":"deb",
-                  "platform":"Dopamine / Rootless",
-                  "version":"0.2.3",
-                  "url":"https://nextsolution.cc/transfer/files/LockGlyphTime/0.2.3/LockGlyphTime_0.2.3_Rootless.deb",
-                  "sha256":sha("LockGlyphTime_0.2.3_Rootless.deb"),
-                  "notes":"Transparent PNG/sticker photos preserve alpha; opaque photos render as rounded squares."
-              },
-              {
-                  "id":"lockglyphtime-0.2.3-roothide",
-                  "name":"LockGlyphTime 0.2.3 RootHide",
-                  "fileName":"LockGlyphTime_0.2.3_RootHide.deb",
-                  "type":"deb",
-                  "platform":"RootHide",
-                  "version":"0.2.3",
-                  "url":"https://nextsolution.cc/transfer/files/LockGlyphTime/0.2.3/LockGlyphTime_0.2.3_RootHide.deb",
-                  "sha256":sha("LockGlyphTime_0.2.3_RootHide.deb"),
-                  "notes":"Transparent PNG/sticker photos preserve alpha; opaque photos render as rounded squares."
-              }
-          ] + files
-          payload = {
-              "version": 1,
-              "updatedAt": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
-              "files": files
-          }
-          manifest.parent.mkdir(parents=True, exist_ok=True)
-          manifest.write_text(json.dumps(payload, indent=2) + "\n")
-          assert all((not str(x.get("url", "")).startswith("http")) or ("nextsolution.cc" in str(x.get("url", ""))) for x in files)
+          manifest=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2])
+          try: data=json.loads(manifest.read_text()) if manifest.exists() else {"version":1,"files":[]}
+          except Exception: data={"version":1,"files":[]}
+          def sha(name): return hashlib.sha256((out/name).read_bytes()).hexdigest()
+          files=[x for x in data.get("files",[]) if not str(x.get("id","")).startswith(("lockglyphtime-","nextlock-"))]
+          files=[
+            {"id":"nextlock-1.0.0-rootless","name":"NextLock 1.0.0 Rootless","fileName":"NextLock_1.0.0_Rootless.deb","type":"deb","platform":"Dopamine / Rootless","version":"1.0.0","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.0/NextLock_1.0.0_Rootless.deb","sha256":sha("NextLock_1.0.0_Rootless.deb"),"notes":"Next Solution lock-screen customization with clean sectioned settings, transparent sticker photos and rounded normal photos."},
+            {"id":"nextlock-1.0.0-roothide","name":"NextLock 1.0.0 RootHide","fileName":"NextLock_1.0.0_RootHide.deb","type":"deb","platform":"RootHide","version":"1.0.0","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.0/NextLock_1.0.0_RootHide.deb","sha256":sha("NextLock_1.0.0_RootHide.deb"),"notes":"Next Solution lock-screen customization with clean sectioned settings, transparent sticker photos and rounded normal photos."}
+          ]+files
+          payload={"version":1,"updatedAt":datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),"files":files}
+          manifest.parent.mkdir(parents=True,exist_ok=True)
+          manifest.write_text(json.dumps(payload,indent=2)+"\n")
+          assert all((not str(x.get("url","")).startswith("http")) or ("nextsolution.cc" in str(x.get("url",""))) for x in files)
           PY
           git -C "$SITE" config user.name "github-actions[bot]"
           git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C "$SITE" add transfer
-          git -C "$SITE" commit -m "Publish LockGlyphTime 0.2.3 to Transfer" || exit 0
+          git -C "$SITE" commit -m "Publish NextLock 1.0.0 to Transfer" || exit 0
           git -C "$SITE" pull --rebase origin main
           git -C "$SITE" push origin main
