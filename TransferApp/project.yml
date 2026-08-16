@@ -17,6 +17,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.transfer
         PRODUCT_NAME: NextSolutionTransfer
+        MARKETING_VERSION: 1.1.2
+        CURRENT_PROJECT_VERSION: 112
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: "NextSolution Transfer"
