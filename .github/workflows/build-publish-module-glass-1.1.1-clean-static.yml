@@ -72,7 +72,10 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           s=Path('source/ModuleGlass/Tweak.mm').read_text()
-          apply=s[s.index('static void MGApplyController'):s.index('static void MGTrackAndApply')]
+          begin=s.index('#pragma mark - Apply')
+          start=s.index('static void MGApplyController', begin)
+          end=s.index('static void MGTrackAndApply', start)
+          apply=s[start:end]
           phase=apply.index('if (phase != MGPresentationPhase::Compact)')
           prep=apply.index('MGPrepareInsertion')
           assert phase < prep
