@@ -143,18 +143,62 @@ static NSArray<NSString *> *MGCandidateStrings(id controller) {
     return values;
 }
 
+static BOOL MGContainsNormalized(NSString *value, NSString *needle) {
+    if (!value.length || !needle.length) return NO;
+    return [MGNormalized(value) containsString:needle];
+}
+
 static NSString *MGSlotForCandidates(NSArray<NSString *> *values) {
+    if (!values.count) return nil;
+
+    // Prefer exact iOS 16 identifiers/classes observed by Next Log. These checks
+    // intentionally run before broad fallback matching so Volume never becomes
+    // Now Playing and Display never falls into "other".
+    for (NSString *raw in values) {
+        NSString *n = MGNormalized(raw);
+        if (!n.length) continue;
+
+        if ([n containsString:@"comapplemediaremotecontrolcenteraudio"] ||
+            [n containsString:@"mediacontrolsaudiomodule"]) return @"volume";
+        if ([n containsString:@"comapplemediaremotecontrolcenternowplaying"] ||
+            [n isEqualToString:@"mediacontrolsmodule"]) return @"media";
+        if ([n containsString:@"comapplecontrolcenterdisplaymodule"] ||
+            [n containsString:@"ccuidisplaymodule"]) return @"brightness";
+        if ([n containsString:@"comapplereplaykitcontrolcenterscreencapture"] ||
+            [n containsString:@"rpcontrolcentermodule"]) return @"screenrecording";
+        if ([n containsString:@"comapplemediaremotecontrolcenterairplaymirroring"] ||
+            [n containsString:@"mpavairplaymirroringmodule"]) return @"screenmirroring";
+        if ([n containsString:@"comapplecontrolcenterconnectivitymodule"] ||
+            [n containsString:@"ccuiconnectivitymodule"]) return @"connectivity";
+        if ([n containsString:@"comapplecontrolcenterorientationlockmodule"] ||
+            [n containsString:@"ccuiorientationlockmodule"]) return @"orientation";
+        if ([n containsString:@"comapplecontrolcenterlowpowermodule"] ||
+            [n containsString:@"ccuilowpowermodule"]) return @"lowpower";
+        if ([n containsString:@"comapplefocusuimodule"] ||
+            [n containsString:@"fccccontrolcentermodule"]) return @"focus";
+        if ([n containsString:@"comapplecontrolcenterflashlightmodule"] ||
+            [n containsString:@"ccuiflashlightmodule"]) return @"flashlight";
+        if ([n containsString:@"comapplemobiletimercontrolcentertimer"] ||
+            [n containsString:@"mtcctimermodule"]) return @"timer";
+        if ([n containsString:@"comapplecontrolcentercalculatormodule"] ||
+            [n containsString:@"calculator"]) return @"calculator";
+        if ([n containsString:@"comapplecontrolcentercameramodule"] ||
+            [n containsString:@"ccuicameramodule"]) return @"camera";
+        if ([n containsString:@"comappleaccessibilitycontrolcenterhearingdevices"] ||
+            [n containsString:@"hacccontentmodule"]) return @"hearing";
+    }
+
     NSString *joined = MGNormalized([values componentsJoinedByString:@" "]);
     if (!joined.length) return nil;
-    if ([joined containsString:@"screenrecord"] || [joined containsString:@"recordingmodule"]) return @"screenrecording";
+    if ([joined containsString:@"screencapture"] || [joined containsString:@"screenrecord"] || [joined containsString:@"recordingmodule"]) return @"screenrecording";
     if ([joined containsString:@"screenmirror"] || [joined containsString:@"airplaymirror"]) return @"screenmirroring";
     if ([joined containsString:@"orientation"] || [joined containsString:@"rotationlock"]) return @"orientation";
     if ([joined containsString:@"lowpower"] || [joined containsString:@"batterysaver"]) return @"lowpower";
     if ([joined containsString:@"darkmode"] || [joined containsString:@"appearance"]) return @"darkmode";
     if ([joined containsString:@"connectivity"] || [joined containsString:@"airplane"]) return @"connectivity";
-    if ([joined containsString:@"nowplaying"] || [joined containsString:@"mediacontrol"] || [joined containsString:@"mrui"] || [joined containsString:@"media"]) return @"media";
-    if ([joined containsString:@"brightness"]) return @"brightness";
-    if ([joined containsString:@"volume"]) return @"volume";
+    if ([joined containsString:@"displaymodule"] || [joined containsString:@"brightness"]) return @"brightness";
+    if ([joined containsString:@"audiomodule"] || [joined containsString:@"volume"]) return @"volume";
+    if ([joined containsString:@"nowplaying"] || [joined containsString:@"mediacontrolsmodule"] || [joined containsString:@"mrui"]) return @"media";
     if ([joined containsString:@"focus"] || [joined containsString:@"donotdisturb"]) return @"focus";
     if ([joined containsString:@"flashlight"] || [joined containsString:@"torch"]) return @"flashlight";
     if ([joined containsString:@"timer"] || [joined containsString:@"clockmodule"]) return @"timer";
@@ -171,10 +215,25 @@ static NSString *MGImagePathForSlot(NSString *slot) {
     return [MGBackgroundDirectory stringByAppendingPathComponent:[slot stringByAppendingString:@".jpg"]];
 }
 
+static BOOL MGIsExpandedPresentation(UIView *root) {
+    if (!root) return NO;
+    CGSize rootSize = root.bounds.size;
+    CGSize screenSize = UIScreen.mainScreen.bounds.size;
+    CGFloat rootArea = fabs(rootSize.width * rootSize.height);
+    CGFloat screenArea = fabs(screenSize.width * screenSize.height);
+    if (rootArea <= 0.0 || screenArea <= 0.0) return NO;
+
+    // iOS 16 expanded CC modules become essentially screen-sized. The compact
+    // connectivity tile can be ~320x158, so an area ratio is safer than width.
+    return rootArea >= (screenArea * 0.55);
+}
+
 static BOOL MGIsBackgroundMaterialView(UIView *view) {
     if (!view || view.tag == MGImageTag) return NO;
     NSString *name = NSStringFromClass(view.class);
-    NSArray<NSString *> *needles = @[@"MTMaterialView", @"CCUIModuleBackground", @"ContentModuleBackground", @"BackdropView", @"VisualEffectBackdrop", @"UIVisualEffectView"];
+    // Only touch module-specific material classes. Hiding every UIVisualEffectView
+    // can break expanded-module presentation/dismissal and system interactions.
+    NSArray<NSString *> *needles = @[@"MTMaterialView", @"CCUIModuleBackground", @"ContentModuleBackground"];
     for (NSString *needle in needles) if ([name containsString:needle]) return YES;
     return NO;
 }
@@ -219,6 +278,13 @@ static void MGApplyGlowRecursively(UIView *view, BOOL enabled, CGFloat intensity
     for (UIView *child in view.subviews) MGApplyGlowRecursively(child, enabled, intensity, width);
 }
 
+static void MGRestoreCompactBackgroundChanges(UIView *root) {
+    if (!root) return;
+    UIView *background = [root viewWithTag:MGImageTag];
+    [background removeFromSuperview];
+    MGSetMaterialHiddenRecursively(root, NO);
+}
+
 static void MGApplyToController(id controller, NSString *source) {
     if (!controller) return;
     UIView *root = nil;
@@ -235,13 +301,26 @@ static void MGApplyToController(id controller, NSString *source) {
     BOOL glowEnabled = MGPreferenceBool(@"CCModuleControlGlowEnabled", YES);
     CGFloat glowIntensity = MGPreferenceFloat(@"CCModuleControlGlowIntensity", 0.8);
     CGFloat glowWidth = MGPreferenceFloat(@"CCModuleControlGlowWidth", 1.5);
+    BOOL expanded = MGIsExpandedPresentation(root);
 
-    NSString *signature = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|%.0fx%.0f|%@",
+    NSString *signature = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|expanded=%d|%.0fx%.0f|%@",
                            slot ?: @"nil", fileExists ? @"file" : @"nofile", enabled, removeBlur,
-                           opacity, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), source ?: @""];
+                           opacity, expanded, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), source ?: @""];
     NSString *previous = objc_getAssociatedObject(controller, MGLastSignatureKey);
     BOOL shouldLog = MGDiagnosticEnabled() && ![signature isEqualToString:previous];
     if (shouldLog) objc_setAssociatedObject(controller, MGLastSignatureKey, signature, OBJC_ASSOCIATION_COPY_NONATOMIC);
+
+    // Critical safety rule: never place our image or hide material while a Control
+    // Center module is expanded. iOS reuses this controller as a screen-sized view;
+    // modifying that root can interfere with the system's tap-outside dismissal.
+    if (expanded) {
+        MGRestoreCompactBackgroundChanges(root);
+        if (shouldLog) {
+            MGLog(NO, @"expanded-bypass source=%@ controller=%@ slot=%@ frame=%@ candidates=%@",
+                  source, NSStringFromClass([controller class]), slot, NSStringFromCGRect(root.frame), candidates);
+        }
+        return;
+    }
 
     UIImageView *background = (UIImageView *)[root viewWithTag:MGImageTag];
     UIImage *image = nil;
@@ -265,16 +344,15 @@ static void MGApplyToController(id controller, NSString *source) {
         background.hidden = NO;
         MGSetMaterialHiddenRecursively(root, removeBlur);
     } else {
-        [background removeFromSuperview];
-        MGSetMaterialHiddenRecursively(root, NO);
+        MGRestoreCompactBackgroundChanges(root);
     }
 
     MGApplyGlowRecursively(root, glowEnabled, glowIntensity, glowWidth);
 
     if (shouldLog) {
-        MGLog(NO, @"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlur=%d opacity=%.2f root=%@ frame=%@ subviews=%lu imageView=%@",
+        MGLog(NO, @"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlur=%d opacity=%.2f expanded=%d root=%@ frame=%@ subviews=%lu imageView=%@",
               source, NSStringFromClass([controller class]), candidates, slot, path, fileExists, enabled,
-              image != nil, removeBlur, opacity, NSStringFromClass(root.class), NSStringFromCGRect(root.frame),
+              image != nil, removeBlur, opacity, expanded, NSStringFromClass(root.class), NSStringFromCGRect(root.frame),
               (unsigned long)root.subviews.count, shouldShow ? @"visible" : @"absent");
     }
 }
@@ -341,7 +419,7 @@ static void MGNextLogControlChanged(__unused CFNotificationCenterRef center, __u
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, MGNextLogControlChanged,
                                         (__bridge CFStringRef)MGNextLogChanged, NULL,
                                         CFNotificationSuspensionBehaviorDeliverImmediately);
-        MGLog(NO, @"ModuleGlassRuntime 1.0.1 loaded SpringBoard=%@ prefsEnabled=%d",
+        MGLog(NO, @"ModuleGlassRuntime 1.0.3 loaded SpringBoard=%@ prefsEnabled=%d",
               NSBundle.mainBundle.bundleIdentifier, MGPreferenceBool(@"CCModuleBackgroundsEnabled", NO));
     }
 }
