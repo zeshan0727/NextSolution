@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-16T08:45:23Z",
+  "files": [
+    {
+      "id": "lockglyphtime-0.2.2-rootless",
+      "name": "LockGlyphTime 0.2.2 Rootless",
+      "fileName": "LockGlyphTime_0.2.2_Rootless.deb",
+      "type": "deb",
+      "platform": "Dopamine / Rootless",
+      "version": "0.2.2",
+      "url": "https://nextsolution.app/transfer/files/LockGlyphTime/0.2.2/LockGlyphTime_0.2.2_Rootless.deb",
+      "sha256": "16e1dfd66c27904fd879a6645a950ea188b32bfb8dc53bcbd722c19aac717022",
+      "notes": "Standard rootless build."
+    },
+    {
+      "id": "lockglyphtime-0.2.2-roothide",
+      "name": "LockGlyphTime 0.2.2 RootHide",
+      "fileName": "LockGlyphTime_0.2.2_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "0.2.2",
+      "url": "https://nextsolution.app/transfer/files/LockGlyphTime/0.2.2/LockGlyphTime_0.2.2_RootHide.deb",
+      "sha256": "6ddac7bc153cade3aeae67075b9dea72fc141bf3e917669ab14864e88f5f99dc",
+      "notes": "RootHide package build."
+    }
+  ]
+}
