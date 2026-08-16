@@ -6,7 +6,7 @@ INSTALL_TARGET_PROCESSES = SpringBoard
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = ModuleGlassRuntime
-ModuleGlassRuntime_FILES = ModuleGlass.xm
+ModuleGlassRuntime_FILES = ModuleGlassBootstrap.m ModuleGlass.xm
 ModuleGlassRuntime_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function
 ModuleGlassRuntime_FRAMEWORKS = UIKit Foundation
 ModuleGlassRuntime_LDFLAGS = -Wl,-segalign,4000
