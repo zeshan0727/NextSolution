@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Name: Module Glass Runtime
-Version: 1.1.0
+Version: 1.1.1
 Architecture: iphoneos-arm64e
-Description: Stable Objective-C++ Module Glass runtime with isolated slider renderers, full-frame Volume value masking, passive foreground-safe standard tiles, and preserved Brightness behavior.
+Description: Clean static Module Glass renderer with undimmed photo placement, full-shell Volume and Brightness backgrounds, untouched Apple foreground controls, and transition-safe expanded modules.
 Maintainer: Next Solution
 Author: Next Solution - zeshan0727
 Section: System

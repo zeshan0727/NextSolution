@@ -1065,42 +1065,42 @@ Author: Next Solution - zeshan0727
 Name: Aura Preferences Runtime
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
-Version: 1.1.0
+Version: 1.1.1
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.1.0)
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.1.1)
 Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_cc_module_backgrounds_1.1.0_RootHide.deb
-Size: 1468
-MD5sum: c3c31d572f6f2d7585ae1c6598850be4
-SHA1: aa99c9ebdfe29ddd4d799afd2c2e6ce0cb0887f2
-SHA256: 948b9767a77b78bfbe2432ef17b03a1da55b484f3a709a9206d4820417b9d84d
+Filename: ./debfiles/NextAura_cc_module_backgrounds_1.1.1_RootHide.deb
+Size: 1456
+MD5sum: 189a65693efa98e467c05c86814d2902
+SHA1: 4c5c22ad77f673b090ed5704ade81b56f13a8079
+SHA256: 8345b0beebfc612903f86018155b390435793c5a9899fa1ea537597a905c2c5b
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Stable Module Glass release with Objective-C++ renderer isolation, foreground-safe standard tiles, preserved Brightness behavior, and full-frame value-masked Volume artwork.
+Description: Clean Module Glass renderer with undimmed photo backgrounds, full static Volume/Brightness shells, untouched native foreground controls, and transition-safe expanded modules.
 Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
-Version: 1.1.0
+Version: 1.1.1
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution
-Installed-Size: 272
+Installed-Size: 240
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
 Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.1.0_RootHide.deb
-Size: 35664
-MD5sum: 8353dce0f07ad6ce1baf2ba2ec92f74c
-SHA1: e7c370218baefcc085a1a540d88dd7f86e2d1550
-SHA256: ea609b5e676076c033f61a918fe4fe5bbcaed43371971dd4fa051d1a945d4123
+Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.1.1_RootHide.deb
+Size: 31004
+MD5sum: bcb1533e860e6a94a14581d68dcee8db
+SHA1: f533c752794a59d8947b81c2a7f64fe59fbd3583
+SHA256: ec2e57c603ce1d5a7c9228d26289ff7bbb12843ebb13f15cc9e0b0d9ba53e289
 Section: System
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Stable Objective-C++ Module Glass runtime with isolated slider renderers, full-frame Volume value masking, passive foreground-safe standard tiles, and preserved Brightness behavior.
+Description: Clean static Module Glass renderer with undimmed photo placement, full-shell Volume and Brightness backgrounds, untouched Apple foreground controls, and transition-safe expanded modules.
 Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: Module Glass Runtime
