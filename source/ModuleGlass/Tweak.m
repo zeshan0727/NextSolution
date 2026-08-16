@@ -699,6 +699,73 @@ static void MGCopyCornerGeometry(UIImageView *imageView, UIView *source, UIView 
     }
 }
 
+static NSInteger MGShapeCandidateScore(UIView *candidate, UIView *root, CGRect targetRect) {
+    if (!candidate || !root || candidate.tag == MGImageTag || candidate.hidden) return NSIntegerMin;
+    CALayer *layer = candidate.layer;
+    BOOL hasMask = layer.mask != nil || candidate.maskView != nil;
+    BOOL hasRadius = layer.cornerRadius > 1.0;
+    if (!hasMask && !hasRadius) return NSIntegerMin;
+
+    CGRect rect = [candidate convertRect:candidate.bounds toView:root];
+    CGFloat tw = CGRectGetWidth(targetRect), th = CGRectGetHeight(targetRect);
+    CGFloat rw = CGRectGetWidth(rect), rh = CGRectGetHeight(rect);
+    if (tw <= 1.0 || th <= 1.0 || rw <= 1.0 || rh <= 1.0) return NSIntegerMin;
+
+    CGFloat widthDiff = fabs(rw - tw);
+    CGFloat heightDiff = fabs(rh - th);
+    CGFloat centerDiff = hypot(CGRectGetMidX(rect) - CGRectGetMidX(targetRect), CGRectGetMidY(rect) - CGRectGetMidY(targetRect));
+    if (widthDiff > 10.0 || heightDiff > 10.0 || centerDiff > 10.0) return NSIntegerMin;
+
+    NSInteger score = 10000;
+    score -= (NSInteger)(widthDiff * 100.0 + heightDiff * 100.0 + centerDiff * 80.0);
+    if (hasMask) score += 5000;
+    if (hasRadius) score += 3000;
+    NSString *name = NSStringFromClass(candidate.class).lowercaseString ?: @"";
+    if ([name containsString:@"background"] || [name containsString:@"material"] || [name containsString:@"module"] || [name containsString:@"container"]) score += 800;
+    return score;
+}
+
+static void MGFindMatchingShapeRecursive(UIView *node, UIView *root, CGRect targetRect, UIView **best, NSInteger *bestScore) {
+    if (!node || !root) return;
+    NSInteger score = MGShapeCandidateScore(node, root, targetRect);
+    if (score > *bestScore) {
+        *best = node;
+        *bestScore = score;
+    }
+    for (UIView *child in node.subviews) {
+        if (child.tag == MGImageTag) continue;
+        MGFindMatchingShapeRecursive(child, root, targetRect, best, bestScore);
+    }
+}
+
+static UIView *MGFindMatchingAppleShape(UIView *native, UIView *root) {
+    if (!native || !root) return nil;
+    CGRect targetRect = [native convertRect:native.bounds toView:root];
+    UIView *best = nil;
+    NSInteger bestScore = NSIntegerMin;
+    MGFindMatchingShapeRecursive(root, root, targetRect, &best, &bestScore);
+    return best;
+}
+
+static void MGApplyModuleShapeFallback(UIImageView *imageView, NSString *slot) {
+    if (!imageView || [slot isEqualToString:@"volume"]) return; // validated Volume path stays untouched
+    if (imageView.layer.mask || imageView.layer.cornerRadius > 1.0) return;
+
+    CGFloat w = CGRectGetWidth(imageView.bounds);
+    CGFloat h = CGRectGetHeight(imageView.bounds);
+    CGFloat d = MIN(w, h);
+    if (d <= 1.0) return;
+
+    // Sliders are pills. Standard iOS 16 Control Center modules use roughly 22pt corners
+    // at 77pt and ~30-32pt at larger compact sizes. This is only a fallback when Apple
+    // exposes no usable mask/radius in the live hierarchy.
+    CGFloat radius = [slot isEqualToString:@"brightness"] ? (d * 0.5) : MIN(32.0, d * 0.285);
+    imageView.layer.cornerRadius = radius;
+    if (@available(iOS 13.0, *)) imageView.layer.cornerCurve = kCACornerCurveContinuous;
+    imageView.clipsToBounds = YES;
+    imageView.layer.masksToBounds = YES;
+}
+
 static CGFloat MGViewArea(UIView *view) {
     if (!view) return 0.0;
     return MAX(0.0, CGRectGetWidth(view.bounds) * CGRectGetHeight(view.bounds));
@@ -768,11 +835,12 @@ static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent,
         UIView *scope = MGFindSliderView(root) ?: root;
         UIView *native = MGFindNativeBackground(scope);
         if (native.superview) {
+            UIView *matchingShape = MGFindMatchingAppleShape(native, root);
             if (outParent) *outParent = native.superview;
             if (outAnchor) *outAnchor = native;
             if (outFrame) *outFrame = native.frame;
-            if (outCornerSource) *outCornerSource = native;
-            if (outStrategy) *outStrategy = @"brightness-slider-native";
+            if (outCornerSource) *outCornerSource = matchingShape ?: native;
+            if (outStrategy) *outStrategy = @"brightness-volume-pattern-native-sibling";
             return YES;
         }
         if (scope != root) {
@@ -789,12 +857,13 @@ static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent,
     // image is a sibling immediately above Apple's native background.
     UIView *native = MGFindNativeBackground(root);
     if (native && native.superview) {
-        UIView *geometryHost = MGFindCompactClipHost(native, root);
+        UIView *matchingShape = MGFindMatchingAppleShape(native, root);
+        UIView *geometryHost = matchingShape ?: MGFindCompactClipHost(native, root);
         if (outParent) *outParent = native.superview;
         if (outAnchor) *outAnchor = native;
         if (outFrame) *outFrame = native.frame;
         if (outCornerSource) *outCornerSource = geometryHost ?: native;
-        if (outStrategy) *outStrategy = @"volume-pattern-native-sibling";
+        if (outStrategy) *outStrategy = matchingShape ? @"volume-pattern-native-sibling-apple-shape" : @"volume-pattern-native-sibling-fallback-shape";
         return YES;
     }
 
@@ -891,19 +960,19 @@ static void MGApplyController(id controller, NSString *source) {
     imageView.hidden = imageView.image == nil;
     imageView.userInteractionEnabled = NO;
     MGCopyCornerGeometry(imageView, cornerSource, root);
+    MGApplyModuleShapeFallback(imageView, slot);
 
     NSUInteger imageFirstSuppressed = 0;
     NSArray<NSString *> *imageFirstSuppressedClasses = @[];
     if (imageView.image) {
-        BOOL sliderModule=[slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"];
-        UIView *imageScope=sliderModule ? MGFindSliderView(root) : root;
+        UIView *imageScope = [slot isEqualToString:@"volume"] ? MGFindSliderView(root) : root;
         if (!imageScope) imageScope=root;
         if (imageScope) {
             NSMutableArray<NSString *> *classes=[NSMutableArray array];
             if ([slot isEqualToString:@"brightness"]) {
                 imageFirstSuppressed = MGApplyBrightnessImageMode(imageScope, imageView, classes);
-                imageFirstSuppressed += MGApplyBrightnessLayerMode(imageScope.layer, imageScope.layer, imageView.layer, classes);
-                strategy = @"brightness-volume-pattern-fill-aware";
+                imageFirstSuppressed += MGApplyBrightnessLayerMode(root.layer, root.layer, imageView.layer, classes);
+                strategy = @"brightness-volume-pattern-root-fill-aware";
             } else {
                 imageFirstSuppressed = MGApplyVolumeImageMode(imageScope, imageView, classes);
                 strategy = [NSString stringWithFormat:@"%@-image-first", slot];
@@ -997,8 +1066,8 @@ __attribute__((constructor)) static void MGInit(void) {
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.0.13 Volume Pattern All Modules loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
-        MGLog(@"All-module image-first runtime with live native Volume icon and percentage color process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
+        MGLog(@"ModuleGlassRuntime 1.0.14 Rounded Volume Pattern loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"Rounded Volume-pattern runtime with live native Volume icon and percentage color process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
 }

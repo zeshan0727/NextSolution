@@ -1,9 +1,9 @@
 Origin: Next Solution
 Label: Next Solution Repo
 Suite: stable
-Version: 1.0.107
+Version: 1.0.108
 Codename: nextsolution
-Date: Sun, 16 Aug 2026 12:17:13 UTC
+Date: Sun, 16 Aug 2026 12:24:35 UTC
 Architectures: iphoneos-arm64 iphoneos-arm64e
 Components: main
 Description: Next Solution applications and tweaks for RootHide and rootless jailbreaks
