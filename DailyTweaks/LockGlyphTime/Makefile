@@ -1,11 +1,7 @@
 ARCHS = arm64 arm64e
 TARGET = iphone:clang:latest:15.0
 
-# Build with either:
-#   THEOS_PACKAGE_SCHEME=rootless make clean package FINALPACKAGE=1
-#   THEOS_PACKAGE_SCHEME=roothide  make clean package FINALPACKAGE=1
 THEOS_PACKAGE_SCHEME ?= rootless
-
 INSTALL_TARGET_PROCESSES = SpringBoard
 
 include $(THEOS)/makefiles/common.mk
@@ -14,7 +10,7 @@ before-all::
 	python3 prefs/generate_root.py
 
 TWEAK_NAME = LockGlyphTime
-LockGlyphTime_FILES = RuntimeV021.xm
+LockGlyphTime_FILES = RuntimeV022.xm
 LockGlyphTime_CFLAGS = -fobjc-arc
 LockGlyphTime_FRAMEWORKS = UIKit Foundation QuartzCore
 
