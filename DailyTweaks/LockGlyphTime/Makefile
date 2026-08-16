@@ -14,7 +14,7 @@ before-all::
 	python3 prefs/generate_root.py
 
 TWEAK_NAME = LockGlyphTime
-LockGlyphTime_FILES = Tweak.xm
+LockGlyphTime_FILES = RuntimeV021.xm
 LockGlyphTime_CFLAGS = -fobjc-arc
 LockGlyphTime_FRAMEWORKS = UIKit Foundation QuartzCore
 
