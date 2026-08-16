@@ -5,65 +5,95 @@ import CoreFoundation
 struct TweakTarget: Identifiable, Hashable {
     let slug: String
     let name: String
+    let packageID: String
+    let version: String
     let logFile: String
     let aliases: [String]
-    var id: String { slug }
+    var id: String { packageID.isEmpty ? slug : packageID }
 }
 
 extension TweakTarget {
-    static let known: [TweakTarget] = [
-        .init(slug: "module-glass", name: "Module Glass", logFile: "module-glass.log", aliases: ["module glass", "cc module backgrounds", "module backgrounds", "cc backgrounds"]),
-        .init(slug: "notify-island", name: "Notify Island", logFile: "notify-island.log", aliases: ["notify island", "notification island", "island"]),
-        .init(slug: "notify-glow", name: "Notify Glow", logFile: "notify-glow.log", aliases: ["notify glow", "notification glow"]),
-        .init(slug: "notifykit", name: "NotifyKit", logFile: "notifykit.log", aliases: ["notifykit", "notifications"]),
-        .init(slug: "pulse", name: "Pulse", logFile: "pulse.log", aliases: ["pulse", "haptics"]),
-        .init(slug: "therma", name: "Therma", logFile: "therma.log", aliases: ["therma", "thermal"]),
-        .init(slug: "homeflow", name: "HomeFlow", logFile: "homeflow.log", aliases: ["homeflow", "home screen"]),
-        .init(slug: "dockcraft", name: "DockCraft", logFile: "dockcraft.log", aliases: ["dockcraft", "dock folders"]),
-        .init(slug: "lockcraft", name: "LockCraft", logFile: "lockcraft.log", aliases: ["lockcraft", "lock screen"]),
-        .init(slug: "statuskit", name: "StatusKit", logFile: "statuskit.log", aliases: ["statuskit", "status bar"]),
-        .init(slug: "controlkit", name: "ControlKit", logFile: "controlkit.log", aliases: ["controlkit", "control center"]),
-        .init(slug: "control-deck", name: "Control Deck", logFile: "control-deck.log", aliases: ["control deck", "cc second page"]),
-        .init(slug: "nowplay", name: "NowPlay", logFile: "nowplay.log", aliases: ["nowplay", "now playing"]),
-        .init(slug: "switchdeck", name: "SwitchDeck", logFile: "switchdeck.log", aliases: ["switchdeck", "app switcher"]),
-        .init(slug: "hudkit", name: "HUDKit", logFile: "hudkit.log", aliases: ["hudkit", "hud", "overlays"]),
-        .init(slug: "motion", name: "Motion", logFile: "motion.log", aliases: ["motion", "animations"]),
-        .init(slug: "rescue", name: "Rescue", logFile: "rescue.log", aliases: ["rescue", "safety recovery"]),
-        .init(slug: "next-quick-reminder", name: "Next Quick Reminder", logFile: "next-quick-reminder.log", aliases: ["next quick reminder", "quick reminder"])
+    static let fallback: [TweakTarget] = [
+        .init(slug: "module-glass", name: "Module Glass", packageID: "com.nextsolution.nextaura.cc-module-backgrounds", version: "", logFile: "module-glass.log", aliases: ["module glass", "cc module backgrounds", "module backgrounds", "cc backgrounds"]),
+        .init(slug: "notify-island", name: "Notify Island", packageID: "com.nextsolution.nextaura.notification-island", version: "", logFile: "notify-island.log", aliases: ["notify island", "notification island", "island"]),
+        .init(slug: "notify-glow", name: "Notify Glow", packageID: "com.nextsolution.nextaura.notification-glow", version: "", logFile: "notify-glow.log", aliases: ["notify glow", "notification glow"]),
+        .init(slug: "notifykit", name: "NotifyKit", packageID: "com.nextsolution.nextaura.notifications", version: "", logFile: "notifykit.log", aliases: ["notifykit", "notifications"]),
+        .init(slug: "pulse", name: "Pulse", packageID: "com.nextsolution.nextaura.feedback", version: "", logFile: "pulse.log", aliases: ["pulse", "haptics"]),
+        .init(slug: "therma", name: "Therma", packageID: "com.nextsolution.nextaura.thermal-sweat", version: "", logFile: "therma.log", aliases: ["therma", "thermal"]),
+        .init(slug: "homeflow", name: "HomeFlow", packageID: "com.nextsolution.nextaura.home-screen", version: "", logFile: "homeflow.log", aliases: ["homeflow", "home screen"]),
+        .init(slug: "dockcraft", name: "DockCraft", packageID: "com.nextsolution.nextaura.dock-folders", version: "", logFile: "dockcraft.log", aliases: ["dockcraft", "dock folders"]),
+        .init(slug: "lockcraft", name: "LockCraft", packageID: "com.nextsolution.nextaura.lock-screen", version: "", logFile: "lockcraft.log", aliases: ["lockcraft", "lock screen"]),
+        .init(slug: "statuskit", name: "StatusKit", packageID: "com.nextsolution.nextaura.status-bar", version: "", logFile: "statuskit.log", aliases: ["statuskit", "status bar"]),
+        .init(slug: "controlkit", name: "ControlKit", packageID: "com.nextsolution.nextaura.control-center", version: "", logFile: "controlkit.log", aliases: ["controlkit", "control center"]),
+        .init(slug: "control-deck", name: "Control Deck", packageID: "com.nextsolution.nextaura.cc-second-page", version: "", logFile: "control-deck.log", aliases: ["control deck", "cc second page"]),
+        .init(slug: "nowplay", name: "NowPlay", packageID: "com.nextsolution.nextaura.now-playing", version: "", logFile: "nowplay.log", aliases: ["nowplay", "now playing"]),
+        .init(slug: "switchdeck", name: "SwitchDeck", packageID: "com.nextsolution.nextaura.app-switcher", version: "", logFile: "switchdeck.log", aliases: ["switchdeck", "app switcher"]),
+        .init(slug: "hudkit", name: "HUDKit", packageID: "com.nextsolution.nextaura.system-overlays", version: "", logFile: "hudkit.log", aliases: ["hudkit", "hud", "overlays"]),
+        .init(slug: "motion", name: "Motion", packageID: "com.nextsolution.nextaura.animations", version: "", logFile: "motion.log", aliases: ["motion", "animations"]),
+        .init(slug: "rescue", name: "Rescue", packageID: "com.nextsolution.nextaura.safety-recovery", version: "", logFile: "rescue.log", aliases: ["rescue", "safety recovery"]),
+        .init(slug: "next-quick-reminder", name: "Next Quick Reminder", packageID: "com.nextsolution.nextquickreminder", version: "", logFile: "next-quick-reminder.log", aliases: ["next quick reminder", "quick reminder"])
     ]
 }
 
 @MainActor
 final class DiagnosticModel: ObservableObject {
     @Published var command = "module glass"
-    @Published var selected: TweakTarget = .known[0]
+    @Published var targets: [TweakTarget]
+    @Published var selected: TweakTarget
     @Published var isRunning = false
     @Published var status = "Ready"
     @Published var liveLog = "No diagnostic session running."
     @Published var reportURL: URL?
     @Published var lastError: String?
+    @Published var manifestStatus = "Built-in profiles"
 
     private let sharedDirectory = "/var/mobile/Library/Logs/NextSolution"
     private let reportsDirectory = "/var/mobile/Library/Logs/NextSolution/Reports"
     private let controlPath = "/var/mobile/Library/Preferences/com.nextsolution.nextlog.plist"
+    private let preferredManifestPath = "/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.manifest.plist"
     private let controlNotification = "com.nextsolution.nextlog/control.changed"
     private var sessionID = UUID().uuidString
     private var startedAt = Date()
     private var timer: Timer?
+    private var emptyPolls = 0
+
+    init() {
+        let loaded = Self.loadManifestTargets()
+        targets = loaded.targets.isEmpty ? TweakTarget.fallback : loaded.targets
+        selected = targets.first(where: { $0.name == "Module Glass" }) ?? targets[0]
+        manifestStatus = loaded.targets.isEmpty ? "Built-in profiles · install Next Diagnostics Runtime" : "Repo manifest · \(loaded.targets.count) tweaks"
+    }
+
+    func reloadTargets() {
+        let oldID = selected.id
+        let loaded = Self.loadManifestTargets()
+        if loaded.targets.isEmpty {
+            targets = TweakTarget.fallback
+            manifestStatus = "Built-in profiles · install Next Diagnostics Runtime"
+        } else {
+            targets = loaded.targets
+            manifestStatus = "Repo manifest · \(targets.count) tweaks"
+        }
+        selected = targets.first(where: { $0.id == oldID }) ?? targets.first(where: { normalize($0.name) == normalize(command) }) ?? targets[0]
+    }
 
     func resolveCommand() -> TweakTarget? {
         let normalized = normalize(command)
         guard !normalized.isEmpty else { return nil }
-        return TweakTarget.known.first { target in
-            if normalize(target.name) == normalized || normalize(target.slug) == normalized { return true }
+        return targets.first { target in
+            if normalize(target.name) == normalized || normalize(target.slug) == normalized || normalize(target.packageID) == normalized { return true }
             if target.aliases.contains(where: { normalize($0) == normalized }) { return true }
-            return target.aliases.contains(where: { normalized.contains(normalize($0)) })
+            return target.aliases.contains(where: {
+                let alias = normalize($0)
+                return !alias.isEmpty && (normalized.contains(alias) || alias.contains(normalized))
+            })
         }
     }
 
     func startFromCommand() {
+        reloadTargets()
         guard let target = resolveCommand() else {
-            lastError = "I couldn't match that tweak. Choose a tweak below or type its name, for example ‘module glass’."
+            lastError = "I couldn't match that tweak. Tap Choose Tweak or type its tweak name, for example ‘module glass’."
             return
         }
         selected = target
@@ -77,6 +107,7 @@ final class DiagnosticModel: ObservableObject {
         selected = target
         sessionID = UUID().uuidString
         startedAt = Date()
+        emptyPolls = 0
 
         do {
             try FileManager.default.createDirectory(atPath: sharedDirectory, withIntermediateDirectories: true)
@@ -92,7 +123,7 @@ final class DiagnosticModel: ObservableObject {
             postControlChanged()
             isRunning = true
             status = "Capturing \(target.name)"
-            liveLog = "Waiting for \(target.name) events…\n\nReproduce the problem now."
+            liveLog = "Waiting for \(target.name) heartbeat…\n\nNext Diagnostics Runtime should report the target process and loaded tweak dylib immediately. Then reproduce the actual problem."
             refreshLog()
             timer = Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refreshLog() }
@@ -122,6 +153,7 @@ final class DiagnosticModel: ObservableObject {
     func clearCurrentLog() {
         let logPath = path(for: selected)
         try? "".write(toFile: logPath, atomically: true, encoding: .utf8)
+        emptyPolls = 0
         refreshLog()
     }
 
@@ -130,6 +162,8 @@ final class DiagnosticModel: ObservableObject {
             "enabled": enabled,
             "activeTweak": target.slug,
             "displayName": target.name,
+            "packageID": target.packageID,
+            "version": target.version,
             "logFile": target.logFile,
             "sessionID": sessionID,
             "startedAt": ISO8601DateFormatter().string(from: startedAt)
@@ -154,12 +188,18 @@ final class DiagnosticModel: ObservableObject {
         let logPath = path(for: selected)
         guard let data = FileManager.default.contents(atPath: logPath), !data.isEmpty else {
             if isRunning {
-                liveLog = "Capture is active, but no log lines have arrived yet.\n\nOpen or use the feature that is failing, then return here."
+                emptyPolls += 1
+                if emptyPolls >= 4 {
+                    liveLog = "No diagnostic heartbeat has arrived yet.\n\n1. Make sure Next Diagnostics Runtime is installed from nextsolution.cc.\n2. Respring after installing/updating it.\n3. If this tweak runs inside an app, open that app while capture is active.\n\nIf it still stays empty, the report itself proves the diagnostics runtime did not inject into the target process."
+                } else {
+                    liveLog = "Capture is active. Waiting for the diagnostic runtime…"
+                }
             }
             return
         }
+        emptyPolls = 0
         let text = String(decoding: data, as: UTF8.self)
-        liveLog = String(text.suffix(24_000))
+        liveLog = String(text.suffix(28_000))
     }
 
     private func buildReport() {
@@ -171,13 +211,16 @@ final class DiagnosticModel: ObservableObject {
         NEXT LOG DIAGNOSTIC REPORT
         ==========================
         Tweak: \(selected.name)
+        Package: \(selected.packageID.isEmpty ? "<unknown>" : selected.packageID)
+        Package Version: \(selected.version.isEmpty ? "<unknown>" : selected.version)
         Tweak ID: \(selected.slug)
         Session: \(sessionID)
         Started: \(ISO8601DateFormatter().string(from: startedAt))
         Ended: \(ISO8601DateFormatter().string(from: ended))
         Device: \(device.model)
         System: \(device.systemName) \(device.systemVersion)
-        App: Next Log 1.0.0
+        App: Next Log 1.1.0
+        Profile Source: \(manifestStatus)
         Source log: \(logPath)
 
         LOG OUTPUT
@@ -202,6 +245,42 @@ final class DiagnosticModel: ObservableObject {
 
     private func normalize(_ value: String) -> String {
         value.lowercased().filter { $0.isLetter || $0.isNumber }
+    }
+
+    private static func loadManifestTargets() -> (targets: [TweakTarget], path: String?) {
+        let fm = FileManager.default
+        var candidates = [
+            "/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.manifest.plist",
+            "/var/jb/Library/Application Support/NextDiagnostics/manifest.plist",
+            "/Library/Application Support/NextDiagnostics/manifest.plist"
+        ]
+
+        let rootHide = "/var/containers/Bundle/tweaksupport"
+        if let roots = try? fm.contentsOfDirectory(atPath: rootHide) {
+            for item in roots {
+                candidates.append(rootHide + "/" + item + "/Library/Application Support/NextDiagnostics/manifest.plist")
+            }
+        }
+
+        for path in candidates where fm.fileExists(atPath: path) {
+            guard let manifest = NSDictionary(contentsOfFile: path) as? [String: Any],
+                  let rows = manifest["tweaks"] as? [[String: Any]] else { continue }
+            let values: [TweakTarget] = rows.compactMap { row in
+                guard let slug = row["slug"] as? String,
+                      let name = row["name"] as? String,
+                      let logFile = row["logFile"] as? String else { return nil }
+                return TweakTarget(
+                    slug: slug,
+                    name: name,
+                    packageID: row["packageID"] as? String ?? "",
+                    version: row["version"] as? String ?? "",
+                    logFile: logFile,
+                    aliases: row["aliases"] as? [String] ?? []
+                )
+            }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            if !values.isEmpty { return (values, path) }
+        }
+        return ([], nil)
     }
 }
 
@@ -251,7 +330,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Tweak Diagnostics")
                     .font(.headline)
-                Text("Start one focused capture, reproduce the problem, then share the report.")
+                Text("\(model.manifestStatus). Start one focused capture, reproduce the problem, then share the report.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -281,8 +360,8 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
 
             Menu {
-                ForEach(TweakTarget.known) { target in
-                    Button(target.name) {
+                ForEach(model.targets) { target in
+                    Button(target.version.isEmpty ? target.name : "\(target.name)  \(target.version)") {
                         model.command = target.name
                         model.selected = target
                     }
@@ -292,6 +371,14 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
+
+            Button {
+                model.reloadTargets()
+            } label: {
+                Label("Reload Repo Tweak List", systemImage: "arrow.clockwise")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderless)
         }
         .padding(16)
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -306,6 +393,11 @@ struct ContentView: View {
                     Text(model.status)
                         .font(.caption)
                         .foregroundStyle(model.isRunning ? Color.green : Color.secondary)
+                    if !model.selected.packageID.isEmpty {
+                        Text(model.selected.packageID + (model.selected.version.isEmpty ? "" : " · " + model.selected.version))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
                 Circle()
@@ -314,7 +406,7 @@ struct ContentView: View {
             }
 
             if model.isRunning {
-                Text("Keep capture running, reproduce the issue once, then stop. Only the selected tweak should write detailed diagnostic lines.")
+                Text("Keep capture running, reproduce the issue once, then stop. The shared runtime provides injection/dylib status; instrumented tweaks can add deeper event lines to the same report.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Button(role: .destructive) {
