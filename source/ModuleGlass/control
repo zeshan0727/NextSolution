@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Name: Module Glass Runtime
-Version: 1.0.12
+Version: 1.0.13
 Architecture: iphoneos-arm64e
-Description: Native-host Module Glass runtime that preserves the validated Volume renderer, adds Brightness fill-aware rendering, and clips standard module images through Apple compact hosts and masks.
+Description: Volume-pattern Module Glass runtime: all compact modules place images like the validated Volume renderer, with Apple mask geometry and Brightness UIView/CALayer fill suppression.
 Maintainer: Next Solution
 Author: Next Solution - zeshan0727
 Section: System

@@ -25,6 +25,7 @@ static char MGVolumeOriginalPercentageAlphaKey;
 static char MGVolumePercentageColorKey;
 static char MGVolumeOriginalPercentageTextColorKey;
 static char MGVolumeOriginalPercentageAttributedKey;
+static char MGBrightnessOriginalLayerOpacityKey;
 
 static void (*MGOrigLabelSetText)(UILabel *, SEL, NSString *);
 static void (*MGOrigLabelSetAttributedText)(UILabel *, SEL, NSAttributedString *);
@@ -330,6 +331,59 @@ static NSUInteger MGApplyBrightnessImageMode(UIView *slider, UIImageView *imageV
     return count;
 }
 
+static void MGRestoreBrightnessLayers(CALayer *layer) {
+    if (!layer) return;
+    NSNumber *saved = objc_getAssociatedObject(layer, &MGBrightnessOriginalLayerOpacityKey);
+    if (saved) {
+        layer.opacity = saved.floatValue;
+        objc_setAssociatedObject(layer, &MGBrightnessOriginalLayerOpacityKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    for (CALayer *child in layer.sublayers.copy) MGRestoreBrightnessLayers(child);
+}
+
+static BOOL MGLayerContainsLayer(CALayer *ancestor, CALayer *candidate) {
+    CALayer *cursor = candidate;
+    while (cursor) {
+        if (cursor == ancestor) return YES;
+        cursor = cursor.superlayer;
+    }
+    return NO;
+}
+
+static BOOL MGBrightnessObscuringLayer(CALayer *layer, CALayer *sliderLayer, CALayer *imageLayer) {
+    if (!layer || !sliderLayer || layer == imageLayer || MGLayerContainsLayer(layer, imageLayer)) return NO;
+    CGRect converted = [layer convertRect:layer.bounds toLayer:sliderLayer];
+    CGFloat sliderArea = MAX(1.0, CGRectGetWidth(sliderLayer.bounds) * CGRectGetHeight(sliderLayer.bounds));
+    CGFloat area = MAX(0.0, CGRectGetWidth(converted) * CGRectGetHeight(converted));
+    CGFloat ratio = area / sliderArea;
+    if (ratio < 0.10) return NO;
+    NSString *name = NSStringFromClass(layer.class).lowercaseString ?: @"";
+    BOOL namedVisual = [name containsString:@"fill"] || [name containsString:@"progress"] ||
+                       [name containsString:@"background"] || [name containsString:@"material"] ||
+                       [name containsString:@"tint"] || [name containsString:@"backdrop"];
+    BOOL leafSolid = layer.sublayers.count == 0 && layer.backgroundColor != NULL && ratio >= 0.16;
+    BOOL leafImage = layer.sublayers.count == 0 && layer.contents != nil && ratio >= 0.18;
+    return namedVisual || leafSolid || leafImage;
+}
+
+static NSUInteger MGApplyBrightnessLayerMode(CALayer *layer, CALayer *sliderLayer, CALayer *imageLayer, NSMutableArray<NSString *> *classes) {
+    if (!layer || !sliderLayer || !imageLayer) return 0;
+    NSUInteger count = 0;
+    for (CALayer *child in layer.sublayers.copy) {
+        if (child == imageLayer) continue;
+        if (MGBrightnessObscuringLayer(child, sliderLayer, imageLayer)) {
+            if (!objc_getAssociatedObject(child, &MGBrightnessOriginalLayerOpacityKey))
+                objc_setAssociatedObject(child, &MGBrightnessOriginalLayerOpacityKey, @(child.opacity), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            child.opacity = 0.0f;
+            [classes addObject:[NSString stringWithFormat:@"layer:%@", NSStringFromClass(child.class) ?: @"CALayer"]];
+            count++;
+            continue;
+        }
+        count += MGApplyBrightnessLayerMode(child, sliderLayer, imageLayer, classes);
+    }
+    return count;
+}
+
 static UIColor *MGVolumeColorFromHex(NSString *input) {
     if (![input isKindOfClass:NSString.class]) return nil;
     NSString *hex = [[input stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] uppercaseString];
@@ -619,12 +673,29 @@ static void MGCopyCornerGeometry(UIImageView *imageView, UIView *source, UIView 
     imageView.layer.maskedCorners = layer.maskedCorners ?: kCALayerAllCorners;
     imageView.clipsToBounds = YES;
     imageView.layer.masksToBounds = YES;
-    if (layer.mask) {
-        CALayer *maskCopy = [layer.mask copy];
+    imageView.layer.mask = nil;
+    if ([layer.mask isKindOfClass:CAShapeLayer.class] && ((CAShapeLayer *)layer.mask).path) {
+        CAShapeLayer *sourceMask = (CAShapeLayer *)layer.mask;
+        CGRect srcBounds = geometrySource.bounds;
+        CGRect dstBounds = imageView.bounds;
+        CGFloat sx = CGRectGetWidth(srcBounds) > 0.0 ? CGRectGetWidth(dstBounds) / CGRectGetWidth(srcBounds) : 1.0;
+        CGFloat sy = CGRectGetHeight(srcBounds) > 0.0 ? CGRectGetHeight(dstBounds) / CGRectGetHeight(srcBounds) : 1.0;
+        CGAffineTransform transform = CGAffineTransformMakeScale(sx, sy);
+        CGPathRef scaledPath = CGPathCreateCopyByTransformingPath(sourceMask.path, &transform);
+        CAShapeLayer *maskCopy = [CAShapeLayer layer];
         maskCopy.frame = imageView.bounds;
+        maskCopy.path = scaledPath;
+        maskCopy.fillRule = sourceMask.fillRule;
         imageView.layer.mask = maskCopy;
-    } else {
-        imageView.layer.mask = nil;
+        if (scaledPath) CGPathRelease(scaledPath);
+    } else if (layer.mask) {
+        CGSize src = geometrySource.bounds.size;
+        CGSize dst = imageView.bounds.size;
+        if (fabs(src.width - dst.width) <= 2.0 && fabs(src.height - dst.height) <= 2.0) {
+            CALayer *maskCopy = [layer.mask copy];
+            maskCopy.frame = imageView.bounds;
+            imageView.layer.mask = maskCopy;
+        }
     }
 }
 
@@ -714,15 +785,16 @@ static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent,
         }
     }
 
-    // Standard compact modules: image belongs inside Apple's clipping/mask host.
+    // Standard compact modules use the exact successful Volume placement:
+    // image is a sibling immediately above Apple's native background.
     UIView *native = MGFindNativeBackground(root);
-    if (native) {
-        UIView *host = MGFindCompactClipHost(native, root);
-        if (outParent) *outParent = host;
-        if (outAnchor) *outAnchor = nil;
-        if (outFrame) *outFrame = host.bounds;
-        if (outCornerSource) *outCornerSource = host;
-        if (outStrategy) *outStrategy = @"compact-native-host";
+    if (native && native.superview) {
+        UIView *geometryHost = MGFindCompactClipHost(native, root);
+        if (outParent) *outParent = native.superview;
+        if (outAnchor) *outAnchor = native;
+        if (outFrame) *outFrame = native.frame;
+        if (outCornerSource) *outCornerSource = geometryHost ?: native;
+        if (outStrategy) *outStrategy = @"volume-pattern-native-sibling";
         return YES;
     }
 
@@ -753,6 +825,7 @@ static void MGApplyController(id controller, NSString *source) {
     NSString *slot = MGSlotForController(controller, &candidates);
     MGRestoreVolumeColorPresentation(root);
     MGRestoreVolumeVisuals(root);
+    MGRestoreBrightnessLayers(root.layer);
     BOOL expanded = MGIsExpanded(root);
     BOOL enabled = MGBoolPreference(@"CCModuleBackgroundsEnabled", YES);
     CGFloat opacity = MIN(1.0, MAX(0.0, MGFloatPreference(@"CCModuleBackgroundOpacity", 1.0)));
@@ -829,7 +902,8 @@ static void MGApplyController(id controller, NSString *source) {
             NSMutableArray<NSString *> *classes=[NSMutableArray array];
             if ([slot isEqualToString:@"brightness"]) {
                 imageFirstSuppressed = MGApplyBrightnessImageMode(imageScope, imageView, classes);
-                strategy = @"brightness-fill-aware";
+                imageFirstSuppressed += MGApplyBrightnessLayerMode(imageScope.layer, imageScope.layer, imageView.layer, classes);
+                strategy = @"brightness-volume-pattern-fill-aware";
             } else {
                 imageFirstSuppressed = MGApplyVolumeImageMode(imageScope, imageView, classes);
                 strategy = [NSString stringWithFormat:@"%@-image-first", slot];
@@ -923,7 +997,7 @@ __attribute__((constructor)) static void MGInit(void) {
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.0.12 Native Host Fix loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"ModuleGlassRuntime 1.0.13 Volume Pattern All Modules loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
         MGLog(@"All-module image-first runtime with live native Volume icon and percentage color process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
