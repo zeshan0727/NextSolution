@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Name: Module Glass Runtime
-Version: 1.0.6
+Version: 1.0.7
 Architecture: iphoneos-arm64e
-Description: Passive Module Glass runtime with slider-aware compact backgrounds for Volume and Brightness while preserving Apple's expanded Control Center behavior.
+Description: Isolated Volume validation runtime for Module Glass. Other module rendering paths are unchanged.
 Maintainer: Next Solution
 Author: Next Solution - zeshan0727
 Section: System
