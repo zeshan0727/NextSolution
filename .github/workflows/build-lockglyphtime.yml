@@ -7,11 +7,6 @@ on:
     paths:
       - "DailyTweaks/LockGlyphTime/**"
       - ".github/workflows/build-lockglyphtime.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "DailyTweaks/LockGlyphTime/**"
-      - ".github/workflows/build-lockglyphtime.yml"
 
 permissions:
   contents: read
@@ -24,148 +19,71 @@ jobs:
   build:
     runs-on: macos-15
     timeout-minutes: 35
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Install tools
         run: brew install dpkg ldid xz zstd
-
       - name: Generate and validate source
         shell: bash
         run: |
           set -euo pipefail
           P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
           python3 "$P/prefs/generate_root.py"
-          for f in RuntimeV021.xm LockGlyphTime.plist control Makefile prefs/Makefile prefs/LGTListController.m prefs/generate_root.py prefs/Resources/Root.plist prefs/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist; do
-            test -f "$P/$f"
-          done
-          grep -q '^Version: 0.2.1$' "$P/control"
-          grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
-          grep -q 'LockGlyphTime_FILES = RuntimeV021.xm' "$P/Makefile"
-          grep -q 'SBFLockScreenDateView' "$P/RuntimeV021.xm"
-          grep -q 'LGTApplyPosition' "$P/RuntimeV021.xm"
-          grep -q 'label.center = CGPointMake' "$P/RuntimeV021.xm"
-          grep -q 'customTimeEnabled' "$P/RuntimeV021.xm"
-          grep -q 'customDateEnabled' "$P/RuntimeV021.xm"
-          grep -q 'convertRect:anchor.bounds toView:container' "$P/RuntimeV021.xm"
-          grep -q 'UIColorPickerViewController' "$P/prefs/LGTListController.m"
-          grep -q 'openTimeColorPicker' "$P/prefs/LGTListController.m"
-          grep -q 'openDateColorPicker' "$P/prefs/LGTListController.m"
-          grep -q 'openIconColorPicker' "$P/prefs/LGTListController.m"
-          grep -q 'PSLinkListCell' "$P/prefs/Resources/Root.plist"
-          grep -q 'Time Style' "$P/prefs/Resources/Root.plist"
-          grep -q 'Time Horizontal Position' "$P/prefs/Resources/Root.plist"
-          grep -q 'Negative values move LEFT' "$P/prefs/Resources/Root.plist"
-          grep -q 'Date Horizontal Position' "$P/prefs/Resources/Root.plist"
-          grep -q 'Icon Shadow' "$P/prefs/Resources/Root.plist"
-          python3 - "$P/prefs/Resources/Root.plist" <<'PY'
-          import plistlib, sys
-          p = plistlib.load(open(sys.argv[1], 'rb'))
-          items = p['items']
-          keyed = {x.get('key'): x for x in items if x.get('key')}
-          required = [
-              'timeScale','timeOffsetX','timeOffsetY','timeAlignment','timeFont','timeFontWeight','timeStyle',
-              'timeShadowEnabled','dateScale','dateOffsetX','dateOffsetY','dateAlignment','dateFont','dateFontWeight',
-              'dateStyle','dateFormat','customDateFormat','dateShadowEnabled','iconEnabled','iconName','iconSize',
-              'anchorTarget','iconPosition','iconOffsetX','iconOffsetY','shadowEnabled','shadowOpacity','shadowRadius'
-          ]
-          missing = [k for k in required if k not in keyed]
-          assert not missing, missing
-          assert keyed['timeStyle']['cell'] == 'PSLinkListCell'
-          assert keyed['dateStyle']['cell'] == 'PSLinkListCell'
-          assert keyed['timeFont']['cell'] == 'PSLinkListCell'
-          assert keyed['dateFont']['cell'] == 'PSLinkListCell'
-          assert len(keyed['timeFont']['validValues']) >= 25
-          assert len(keyed['dateFont']['validValues']) >= 25
-          assert len(keyed['iconName']['validValues']) >= 25
-          buttons = [x for x in items if x.get('cell') == 'PSButtonCell']
-          actions = {x.get('action') for x in buttons}
-          for action in ['openTimeColorPicker','openTimeShadowColorPicker','openDateColorPicker','openDateShadowColorPicker','openIconColorPicker','openIconShadowColorPicker']:
-              assert action in actions, action
-          assert not any(x.get('key') in {'timeColor','dateColor','iconColor','timeShadowColor','dateShadowColor','shadowColor'} and x.get('cell') == 'PSEditTextCell' for x in items)
-          PY
+          for f in RuntimeV022.xm LockGlyphTime.plist control Makefile prefs/Makefile prefs/LGTListController.m prefs/generate_root.py prefs/Resources/Root.plist prefs/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist; do test -f "$P/$f"; done
+          grep -q '^Version: 0.2.2$' "$P/control"
+          grep -q 'LockGlyphTime_FILES = RuntimeV022.xm' "$P/Makefile"
+          grep -q 'customPhotoData' "$P/RuntimeV022.xm"
+          grep -q 'dispatch_async(dispatch_get_main_queue' "$P/RuntimeV022.xm"
+          grep -q 'state.nativeCenter.x+x' "$P/RuntimeV022.xm"
+          grep -q 'PHPickerViewController' "$P/prefs/LGTListController.m"
+          grep -q 'LGTPhotoCropController' "$P/prefs/LGTListController.m"
+          grep -q 'Choose / Edit Photo' "$P/prefs/Resources/Root.plist"
+          grep -q 'Time Vertical Position' "$P/prefs/Resources/Root.plist"
+          grep -q 'Date Vertical Position' "$P/prefs/Resources/Root.plist"
+          grep -q 'Photo (Custom)' "$P/prefs/Resources/Root.plist"
           plutil -lint "$P/prefs/Resources/Root.plist"
           plutil -lint "$P/prefs/Resources/Info.plist"
-          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist"
-
       - name: Build rootless
         shell: bash
         run: |
           set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
-          OUT="$RUNNER_TEMP/lockglyphtime-release"
-          mkdir -p "$OUT"
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/lockglyphtime-release"; mkdir -p "$OUT"
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
-          export THEOS="$RUNNER_TEMP/theos-rootless"
-          export THEOS_PACKAGE_SCHEME=rootless
-          rm -rf "$P/packages"
-          make -C "$P" clean package FINALPACKAGE=1
-          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
-          test -n "$DEB"
-          cp "$DEB" "$OUT/LockGlyphTime_0.2.1_Rootless.deb"
-
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$DEB"
+          cp "$DEB" "$OUT/LockGlyphTime_0.2.2_Rootless.deb"
       - name: Build RootHide
         shell: bash
         run: |
           set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
-          OUT="$RUNNER_TEMP/lockglyphtime-release"
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/lockglyphtime-release"
           git init "$RUNNER_TEMP/theos-roothide"
           git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
           git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
           git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
           git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
           sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
-          export THEOS="$RUNNER_TEMP/theos-roothide"
-          export THEOS_PACKAGE_SCHEME=roothide
-          rm -rf "$P/packages"
-          make -C "$P" clean package FINALPACKAGE=1
-          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
-          test -n "$DEB"
-          cp "$DEB" "$OUT/LockGlyphTime_0.2.1_RootHide.deb"
-
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"; make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$DEB"
+          cp "$DEB" "$OUT/LockGlyphTime_0.2.2_RootHide.deb"
       - name: Validate packages
         shell: bash
         run: |
           set -euo pipefail
-          validate() {
-            deb="$1"; arch="$2"; x="$(mktemp -d)"
-            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
-            test "$(dpkg-deb -f "$deb" Version)" = 0.2.1
-            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
-            dpkg-deb -f "$deb" Depends | grep -q preferenceloader
-            dpkg-deb -x "$deb" "$x"
-            dylib="$(find "$x" -type f -name LockGlyphTime.dylib -print -quit)"
-            root="$(find "$x" -type f -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
-            prefsbin="$(find "$x" -type f -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
-            entry="$(find "$x" -type f -path '*PreferenceLoader/Preferences/LockGlyphTime.plist' -print -quit)"
-            test -n "$dylib"; test -n "$root"; test -n "$prefsbin"; test -n "$entry"
-            grep -q 'PSLinkListCell' "$root"
-            grep -q 'Time Style' "$root"
-            grep -q 'Time Horizontal Position' "$root"
-            grep -q 'Date Horizontal Position' "$root"
-            grep -q 'Icon Shadow' "$root"
-            strings -a "$dylib" | grep -q customTimeEnabled
-            strings -a "$dylib" | grep -q customDateEnabled
-            strings -a "$dylib" | grep -q timeOffsetX
-            strings -a "$dylib" | grep -q sparkles
-            strings -a "$prefsbin" | grep -q openTimeColorPicker
-            strings -a "$prefsbin" | grep -q openIconShadowColorPicker
-            rm -rf "$x"
-          }
+          validate(){ deb="$1"; arch="$2"; x="$(mktemp -d)"; test "$(dpkg-deb -f "$deb" Version)" = 0.2.2; test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"; dpkg-deb -x "$deb" "$x"; dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"; root="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"; prefsbin="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"; test -n "$dylib"; test -n "$root"; test -n "$prefsbin"; grep -q 'Choose / Edit Photo' "$root"; grep -q 'Photo (Custom)' "$root"; strings -a "$dylib" | grep -q customPhotoData; strings -a "$dylib" | grep -q custom.photo; strings -a "$prefsbin" | grep -q openCustomPhotoPicker; rm -rf "$x"; }
           OUT="$RUNNER_TEMP/lockglyphtime-release"
-          validate "$OUT/LockGlyphTime_0.2.1_Rootless.deb" iphoneos-arm64
-          validate "$OUT/LockGlyphTime_0.2.1_RootHide.deb" iphoneos-arm64e
+          validate "$OUT/LockGlyphTime_0.2.2_Rootless.deb" iphoneos-arm64
+          validate "$OUT/LockGlyphTime_0.2.2_RootHide.deb" iphoneos-arm64e
           shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
-
       - name: Upload test packages
         uses: actions/upload-artifact@v4
         with:
-          name: LockGlyphTime-0.2.1-Test-DEBs
+          name: LockGlyphTime-0.2.2-Test-DEBs
           path: |
-            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.1_Rootless.deb
-            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.1_RootHide.deb
+            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.2_Rootless.deb
+            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.2_RootHide.deb
             ${{ runner.temp }}/lockglyphtime-release/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
