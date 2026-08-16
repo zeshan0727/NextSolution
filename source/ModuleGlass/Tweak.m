@@ -5,7 +5,7 @@
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
-extern "C" void MSHookMessageEx(Class _class, SEL message, IMP hook, IMP *old);
+extern void MSHookMessageEx(Class _class, SEL message, IMP hook, IMP *old);
 
 static NSString * const MGBackgroundDirectory = @"/var/mobile/Library/Preferences/NextSolutionTweaks/CCBackgrounds";
 static NSString * const MGLogDirectory = @"/var/mobile/Library/Logs/NextSolution";
@@ -18,14 +18,13 @@ static NSInteger const MGVolumePercentageOverlayTag = 0x4D475650;
 
 static NSHashTable *MGControllers;
 static char MGLastDiagnosticKey;
+static char MGVolumeOriginalAlphaKey;
 static char MGVolumeOriginalIconAlphaKey;
 static char MGVolumeIconOverlayKey;
 static char MGVolumeOriginalPercentageAlphaKey;
 static char MGVolumePercentageColorKey;
 static char MGVolumeOriginalPercentageTextColorKey;
 static char MGVolumeOriginalPercentageAttributedKey;
-static char MGPresentationStateKey;
-static char MGSliderOriginalAlphaKey;
 static char MGBrightnessOriginalLayerOpacityKey;
 
 static void (*MGOrigLabelSetText)(UILabel *, SEL, NSString *);
@@ -215,43 +214,40 @@ static UIView *MGFindSliderView(UIView *root) {
     return nil;
 }
 
-
-#pragma mark - Compact slider photo shell
-
-static BOOL MGSliderForegroundView(UIView *view) {
+// Image-first helpers validated on Volume and now shared by all mapped compact modules.
+static BOOL MGVolumeForegroundView(UIView *view) {
     if (!view) return NO;
-    if ([view isKindOfClass:UIControl.class] || [view isKindOfClass:UILabel.class] || [view isKindOfClass:UIButton.class]) return YES;
-    NSString *name = NSStringFromClass(view.class).lowercaseString ?: @"";
+    if ([view isKindOfClass:UILabel.class] || [view isKindOfClass:UIImageView.class] || [view isKindOfClass:UIButton.class]) return YES;
+    NSString *name = NSStringFromClass(view.class).lowercaseString;
     return [name containsString:@"label"] || [name containsString:@"glyph"] ||
            [name containsString:@"icon"] || [name containsString:@"button"] ||
-           [name containsString:@"text"] || [name containsString:@"percentage"] ||
-           [name containsString:@"speaker"] || [name containsString:@"sun"];
+           [name containsString:@"text"] || [name containsString:@"percentage"];
 }
 
-static BOOL MGSliderSubtreeHasForeground(UIView *view) {
+static BOOL MGVolumeSubtreeHasForeground(UIView *view) {
     if (!view) return NO;
-    if (MGSliderForegroundView(view)) return YES;
+    if (MGVolumeForegroundView(view)) return YES;
     for (UIView *child in view.subviews) {
         if (child.tag == MGImageTag) continue;
-        if (MGSliderSubtreeHasForeground(child)) return YES;
+        if (MGVolumeSubtreeHasForeground(child)) return YES;
     }
     return NO;
 }
 
-static void MGRestoreCompactSliderVisuals(UIView *root) {
+static void MGRestoreVolumeVisuals(UIView *root) {
     if (!root) return;
-    NSNumber *savedAlpha = objc_getAssociatedObject(root, &MGSliderOriginalAlphaKey);
+    NSNumber *savedAlpha = objc_getAssociatedObject(root, &MGVolumeOriginalAlphaKey);
     if (savedAlpha) {
         root.alpha = savedAlpha.doubleValue;
-        objc_setAssociatedObject(root, &MGSliderOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(root, &MGVolumeOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    for (UIView *child in root.subviews.copy) MGRestoreCompactSliderVisuals(child);
+    for (UIView *child in root.subviews) MGRestoreVolumeVisuals(child);
 }
 
-static BOOL MGVolumeCompactObscuringVisual(UIView *view, UIView *slider, UIImageView *imageView) {
+static BOOL MGVolumeObscuringVisual(UIView *view, UIView *slider, UIImageView *imageView) {
     if (!view || !slider || view == imageView || view.tag == MGImageTag) return NO;
     if ([imageView isDescendantOfView:view]) return NO;
-    if ([view isKindOfClass:UIControl.class] || MGSliderSubtreeHasForeground(view)) return NO;
+    if ([view isKindOfClass:UIControl.class] || MGVolumeSubtreeHasForeground(view)) return NO;
 
     CGRect converted = [view convertRect:view.bounds toView:slider];
     CGFloat sliderArea = MAX(1.0, CGRectGetWidth(slider.bounds) * CGRectGetHeight(slider.bounds));
@@ -259,36 +255,35 @@ static BOOL MGVolumeCompactObscuringVisual(UIView *view, UIView *slider, UIImage
     CGFloat ratio = area / sliderArea;
     if (ratio < 0.10) return NO;
 
-    NSString *name = NSStringFromClass(view.class).lowercaseString ?: @"";
+    NSString *name = NSStringFromClass(view.class).lowercaseString;
     BOOL namedVisual = [name containsString:@"material"] || [name containsString:@"effect"] ||
                        [name containsString:@"blur"] || [name containsString:@"fill"] ||
                        [name containsString:@"progress"] || [name containsString:@"background"] ||
-                       [name containsString:@"tint"] || [name containsString:@"valueindicator"] ||
-                       [name containsString:@"backdrop"];
+                       [name containsString:@"tint"] || [name containsString:@"valueindicator"];
     BOOL plainLargeVisual = ([name isEqualToString:@"uiview"] || [name containsString:@"visualeffectsubview"]) && ratio >= 0.18;
     return namedVisual || plainLargeVisual;
 }
 
-static NSUInteger MGApplyVolumeCompactPhotoMode(UIView *slider, UIImageView *imageView, NSMutableArray<NSString *> *suppressedClasses) {
+static NSUInteger MGApplyVolumeImageMode(UIView *slider, UIImageView *imageView, NSMutableArray<NSString *> *suppressedClasses) {
     if (!slider || !imageView) return 0;
     NSUInteger count = 0;
-    for (UIView *child in slider.subviews.copy) {
+    for (UIView *child in slider.subviews) {
         if (child.tag == MGImageTag) continue;
-        if (MGVolumeCompactObscuringVisual(child, slider, imageView)) {
-            if (!objc_getAssociatedObject(child, &MGSliderOriginalAlphaKey)) {
-                objc_setAssociatedObject(child, &MGSliderOriginalAlphaKey, @(child.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (MGVolumeObscuringVisual(child, slider, imageView)) {
+            if (!objc_getAssociatedObject(child, &MGVolumeOriginalAlphaKey)) {
+                objc_setAssociatedObject(child, &MGVolumeOriginalAlphaKey, @(child.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             }
             child.alpha = 0.0;
             [suppressedClasses addObject:NSStringFromClass(child.class) ?: @"UIView"];
             count++;
             continue;
         }
-        count += MGApplyVolumeCompactPhotoMode(child, imageView, suppressedClasses);
+        count += MGApplyVolumeImageMode(child, imageView, suppressedClasses);
     }
     return count;
 }
 
-static BOOL MGBrightnessCompactObscuringVisual(UIView *view, UIView *slider, UIImageView *imageView) {
+static BOOL MGBrightnessObscuringVisual(UIView *view, UIView *slider, UIImageView *imageView) {
     if (!view || !slider || view == imageView || view.tag == MGImageTag) return NO;
     if ([imageView isDescendantOfView:view]) return NO;
     if ([view isKindOfClass:UIControl.class] || [view isKindOfClass:UILabel.class] || [view isKindOfClass:UIButton.class]) return NO;
@@ -305,48 +300,48 @@ static BOOL MGBrightnessCompactObscuringVisual(UIView *view, UIView *slider, UII
                            [name containsString:@"text"] || [name containsString:@"percentage"] ||
                            [name containsString:@"sun"];
     if (namedForeground) return NO;
+
     if ([view isKindOfClass:UIImageView.class] && ratio < 0.16) return NO;
 
     BOOL namedVisual = [name containsString:@"material"] || [name containsString:@"effect"] ||
                        [name containsString:@"blur"] || [name containsString:@"fill"] ||
                        [name containsString:@"progress"] || [name containsString:@"background"] ||
-                       [name containsString:@"tint"] || [name containsString:@"valueindicator"] ||
-                       [name containsString:@"backdrop"];
+                       [name containsString:@"tint"] || [name containsString:@"valueindicator"];
     BOOL largeImageVisual = [view isKindOfClass:UIImageView.class] && ratio >= 0.16;
-    BOOL plainLargeVisual = ([name isEqualToString:@"uiview"] || [name containsString:@"visualeffectsubview"]) && ratio >= 0.18 && !MGSliderSubtreeHasForeground(view);
+    BOOL plainLargeVisual = ([name isEqualToString:@"uiview"] || [name containsString:@"visualeffectsubview"]) && ratio >= 0.18 && !MGVolumeSubtreeHasForeground(view);
     return namedVisual || largeImageVisual || plainLargeVisual;
 }
 
-static NSUInteger MGApplyBrightnessCompactPhotoMode(UIView *slider, UIImageView *imageView, NSMutableArray<NSString *> *suppressedClasses) {
+static NSUInteger MGApplyBrightnessImageMode(UIView *slider, UIImageView *imageView, NSMutableArray<NSString *> *suppressedClasses) {
     if (!slider || !imageView) return 0;
     NSUInteger count = 0;
-    for (UIView *child in slider.subviews.copy) {
+    for (UIView *child in slider.subviews) {
         if (child.tag == MGImageTag) continue;
-        if (MGBrightnessCompactObscuringVisual(child, slider, imageView)) {
-            if (!objc_getAssociatedObject(child, &MGSliderOriginalAlphaKey)) {
-                objc_setAssociatedObject(child, &MGSliderOriginalAlphaKey, @(child.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (MGBrightnessObscuringVisual(child, slider, imageView)) {
+            if (!objc_getAssociatedObject(child, &MGVolumeOriginalAlphaKey)) {
+                objc_setAssociatedObject(child, &MGVolumeOriginalAlphaKey, @(child.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             }
             child.alpha = 0.0;
             [suppressedClasses addObject:NSStringFromClass(child.class) ?: @"UIView"];
             count++;
             continue;
         }
-        count += MGApplyBrightnessCompactPhotoMode(child, imageView, suppressedClasses);
+        count += MGApplyBrightnessImageMode(child, imageView, suppressedClasses);
     }
     return count;
 }
 
-static void MGRestoreCompactBrightnessLayers(CALayer *layer) {
+static void MGRestoreBrightnessLayers(CALayer *layer) {
     if (!layer) return;
     NSNumber *saved = objc_getAssociatedObject(layer, &MGBrightnessOriginalLayerOpacityKey);
     if (saved) {
         layer.opacity = saved.floatValue;
         objc_setAssociatedObject(layer, &MGBrightnessOriginalLayerOpacityKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    for (CALayer *child in layer.sublayers.copy) MGRestoreCompactBrightnessLayers(child);
+    for (CALayer *child in layer.sublayers.copy) MGRestoreBrightnessLayers(child);
 }
 
-static BOOL MGLayerContainsLayerVisualMatch(CALayer *ancestor, CALayer *candidate) {
+static BOOL MGLayerContainsLayer(CALayer *ancestor, CALayer *candidate) {
     CALayer *cursor = candidate;
     while (cursor) {
         if (cursor == ancestor) return YES;
@@ -355,8 +350,8 @@ static BOOL MGLayerContainsLayerVisualMatch(CALayer *ancestor, CALayer *candidat
     return NO;
 }
 
-static BOOL MGBrightnessCompactObscuringLayer(CALayer *layer, CALayer *sliderLayer, CALayer *imageLayer) {
-    if (!layer || !sliderLayer || layer == imageLayer || MGLayerContainsLayerVisualMatch(layer, imageLayer)) return NO;
+static BOOL MGBrightnessObscuringLayer(CALayer *layer, CALayer *sliderLayer, CALayer *imageLayer) {
+    if (!layer || !sliderLayer || layer == imageLayer || MGLayerContainsLayer(layer, imageLayer)) return NO;
     CGRect converted = [layer convertRect:layer.bounds toLayer:sliderLayer];
     CGFloat sliderArea = MAX(1.0, CGRectGetWidth(sliderLayer.bounds) * CGRectGetHeight(sliderLayer.bounds));
     CGFloat area = MAX(0.0, CGRectGetWidth(converted) * CGRectGetHeight(converted));
@@ -371,21 +366,20 @@ static BOOL MGBrightnessCompactObscuringLayer(CALayer *layer, CALayer *sliderLay
     return namedVisual || leafSolid || leafImage;
 }
 
-static NSUInteger MGApplyBrightnessCompactLayerMode(CALayer *layer, CALayer *sliderLayer, CALayer *imageLayer, NSMutableArray<NSString *> *classes) {
+static NSUInteger MGApplyBrightnessLayerMode(CALayer *layer, CALayer *sliderLayer, CALayer *imageLayer, NSMutableArray<NSString *> *classes) {
     if (!layer || !sliderLayer || !imageLayer) return 0;
     NSUInteger count = 0;
     for (CALayer *child in layer.sublayers.copy) {
         if (child == imageLayer) continue;
-        if (MGBrightnessCompactObscuringLayer(child, sliderLayer, imageLayer)) {
-            if (!objc_getAssociatedObject(child, &MGBrightnessOriginalLayerOpacityKey)) {
+        if (MGBrightnessObscuringLayer(child, sliderLayer, imageLayer)) {
+            if (!objc_getAssociatedObject(child, &MGBrightnessOriginalLayerOpacityKey))
                 objc_setAssociatedObject(child, &MGBrightnessOriginalLayerOpacityKey, @(child.opacity), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            }
             child.opacity = 0.0f;
             [classes addObject:[NSString stringWithFormat:@"layer:%@", NSStringFromClass(child.class) ?: @"CALayer"]];
             count++;
             continue;
         }
-        count += MGApplyBrightnessCompactLayerMode(child, sliderLayer, imageLayer, classes);
+        count += MGApplyBrightnessLayerMode(child, sliderLayer, imageLayer, classes);
     }
     return count;
 }
@@ -814,26 +808,49 @@ static UIView *MGFindCompactClipHost(UIView *native, UIView *root) {
 }
 
 static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent, UIView **outAnchor, CGRect *outFrame, UIView **outCornerSource, NSString **outStrategy) {
-    // Volume is a full, static photo background. Never bind artwork geometry to Apple's value/fill view.
+    // Freeze the already-validated Volume path exactly as it was in 1.0.15.
     if ([slot isEqualToString:@"volume"]) {
         UIView *scope = MGFindSliderView(root) ?: root;
-        if (outParent) *outParent = scope;
-        if (outAnchor) *outAnchor = nil;
-        if (outFrame) *outFrame = scope.bounds;
-        if (outCornerSource) *outCornerSource = scope;
-        if (outStrategy) *outStrategy = @"static-volume-slider-shell";
-        return YES;
+        UIView *native = MGFindNativeBackground(scope);
+        if (native.superview) {
+            if (outParent) *outParent = native.superview;
+            if (outAnchor) *outAnchor = native;
+            if (outFrame) *outFrame = native.frame;
+            if (outCornerSource) *outCornerSource = native;
+            if (outStrategy) *outStrategy = @"slider-native";
+            return YES;
+        }
+        if (scope != root) {
+            if (outParent) *outParent = scope;
+            if (outAnchor) *outAnchor = nil;
+            if (outFrame) *outFrame = scope.bounds;
+            if (outCornerSource) *outCornerSource = scope;
+            if (outStrategy) *outStrategy = @"slider-index0";
+            return YES;
+        }
     }
 
-    // Brightness uses the same stable shell rule: full static photo, native control above it.
+    // Brightness remains a slider, but uses its own fill-aware visual pass below.
     if ([slot isEqualToString:@"brightness"]) {
         UIView *scope = MGFindSliderView(root) ?: root;
-        if (outParent) *outParent = scope;
-        if (outAnchor) *outAnchor = nil;
-        if (outFrame) *outFrame = scope.bounds;
-        if (outCornerSource) *outCornerSource = scope;
-        if (outStrategy) *outStrategy = @"static-brightness-slider-shell";
-        return YES;
+        UIView *native = MGFindNativeBackground(scope);
+        if (native.superview) {
+            UIView *matchingShape = MGFindMatchingAppleShape(native, root);
+            if (outParent) *outParent = native.superview;
+            if (outAnchor) *outAnchor = native;
+            if (outFrame) *outFrame = native.frame;
+            if (outCornerSource) *outCornerSource = matchingShape ?: native;
+            if (outStrategy) *outStrategy = @"brightness-volume-pattern-native-sibling";
+            return YES;
+        }
+        if (scope != root) {
+            if (outParent) *outParent = scope;
+            if (outAnchor) *outAnchor = nil;
+            if (outFrame) *outFrame = scope.bounds;
+            if (outCornerSource) *outCornerSource = scope;
+            if (outStrategy) *outStrategy = @"brightness-slider-index0";
+            return YES;
+        }
     }
 
     // Standard compact modules use the exact successful Volume placement:
@@ -858,119 +875,6 @@ static BOOL MGPrepareInsertion(UIView *root, NSString *slot, UIView **outParent,
     return YES;
 }
 
-
-
-// Stable renderer selection.  Objective-C++ is used here deliberately so renderer
-// families are explicit and cannot accidentally share destructive behavior.
-enum class MGRendererKind : unsigned char {
-    StandardTile,
-    VolumeSlider,
-    BrightnessSlider,
-};
-
-static MGRendererKind MGRendererKindForSlot(NSString *slot) {
-    if ([slot isEqualToString:@"volume"]) return MGRendererKind::VolumeSlider;
-    if ([slot isEqualToString:@"brightness"]) return MGRendererKind::BrightnessSlider;
-    return MGRendererKind::StandardTile;
-}
-
-static BOOL MGViewTreeContainsForeground(UIView *node, UIView *host) {
-    if (!node || !host || node.tag == MGImageTag) return NO;
-
-    if ([node isKindOfClass:UIControl.class] || [node isKindOfClass:UILabel.class] || [node isKindOfClass:UIButton.class]) return YES;
-
-    NSString *name = NSStringFromClass(node.class).lowercaseString ?: @"";
-    if ([name containsString:@"label"] || [name containsString:@"glyph"] ||
-        [name containsString:@"icon"] || [name containsString:@"button"] ||
-        [name containsString:@"percentage"] || [name containsString:@"symbol"] ||
-        [name containsString:@"text"]) return YES;
-
-    if ([node isKindOfClass:UIImageView.class] && ((UIImageView *)node).image) {
-        CGRect rect = [node convertRect:node.bounds toView:host];
-        CGFloat hostArea = MAX(1.0, CGRectGetWidth(host.bounds) * CGRectGetHeight(host.bounds));
-        CGFloat area = MAX(0.0, CGRectGetWidth(rect) * CGRectGetHeight(rect));
-        if (area / hostArea <= 0.16) return YES; // glyph/icon, not a full background image
-    }
-
-    for (UIView *child in node.subviews) {
-        if (MGViewTreeContainsForeground(child, host)) return YES;
-    }
-    return NO;
-}
-
-static UIView *MGFirstForegroundSibling(UIView *parent, UIView *backgroundAnchor) {
-    if (!parent) return nil;
-    NSInteger startIndex = 0;
-    if (backgroundAnchor && backgroundAnchor.superview == parent) {
-        NSInteger i = [parent.subviews indexOfObject:backgroundAnchor];
-        if (i != NSNotFound) startIndex = i + 1;
-    }
-    NSArray<UIView *> *siblings = parent.subviews.copy;
-    for (NSInteger i = startIndex; i < (NSInteger)siblings.count; i++) {
-        UIView *candidate = siblings[(NSUInteger)i];
-        if (candidate.tag == MGImageTag || candidate == backgroundAnchor) continue;
-        if (MGViewTreeContainsForeground(candidate, parent)) return candidate;
-    }
-    return nil;
-}
-
-static void MGPlaceImageWithoutDimming(UIView *parent, UIImageView *imageView, UIView *backgroundAnchor, BOOL removeBlur) {
-    (void)removeBlur;
-    if (!parent || !imageView) return;
-    if (imageView.superview != parent) [imageView removeFromSuperview];
-
-    UIView *foreground = MGFirstForegroundSibling(parent, backgroundAnchor);
-    if (foreground && foreground.superview == parent) {
-        [parent insertSubview:imageView belowSubview:foreground];
-    } else if (backgroundAnchor && backgroundAnchor.superview == parent) {
-        [parent insertSubview:imageView aboveSubview:backgroundAnchor];
-    } else if (!imageView.superview) {
-        [parent insertSubview:imageView atIndex:0];
-    }
-}
-
-static void MGApplyStaticSliderGeometry(UIImageView *imageView) {
-    if (!imageView) return;
-    CGFloat width = CGRectGetWidth(imageView.bounds);
-    CGFloat height = CGRectGetHeight(imageView.bounds);
-    if (width <= 1.0 || height <= 1.0) return;
-    imageView.layer.mask = nil;
-    imageView.layer.maskedCorners = kCALayerAllCorners;
-    imageView.layer.cornerRadius = MIN(width, height) * 0.5;
-    if (@available(iOS 13.0, *)) imageView.layer.cornerCurve = kCACornerCurveContinuous;
-    imageView.clipsToBounds = YES;
-    imageView.layer.masksToBounds = YES;
-}
-
-enum class MGPresentationPhase : unsigned char {
-    Compact = 1,
-    Transition = 2,
-    Expanded = 3,
-};
-
-static MGPresentationPhase MGPresentationPhaseForRoot(UIView *root, NSString *slot) {
-    if (!root) return MGPresentationPhase::Expanded;
-    if (MGIsExpanded(root)) return MGPresentationPhase::Expanded;
-    CGFloat w = CGRectGetWidth(root.bounds), h = CGRectGetHeight(root.bounds);
-
-    if ([slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"]) {
-        BOOL stableVerticalPill = w >= 55.0 && w <= 115.0 && h >= 115.0 && h <= 220.0;
-        return stableVerticalPill ? MGPresentationPhase::Compact : MGPresentationPhase::Transition;
-    }
-
-    if (w > 1.0 && h > 1.0 && w <= 360.0 && h <= 360.0) return MGPresentationPhase::Compact;
-    return MGPresentationPhase::Transition;
-}
-
-static NSString *MGPresentationPhaseName(MGPresentationPhase phase) {
-    switch (phase) {
-        case MGPresentationPhase::Compact: return @"compact";
-        case MGPresentationPhase::Transition: return @"transition";
-        case MGPresentationPhase::Expanded: return @"expanded";
-    }
-    return @"unknown";
-}
-
 #pragma mark - Apply
 
 static void MGDiagnosticOnce(id controller, NSString *signature, NSString *line) {
@@ -988,37 +892,22 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSArray<NSString *> *candidates = nil;
     NSString *slot = MGSlotForController(controller, &candidates);
-    MGPresentationPhase phase = MGPresentationPhaseForRoot(root, slot);
-    NSNumber *previousPhaseNumber = objc_getAssociatedObject(controller, &MGPresentationStateKey);
-    MGPresentationPhase previousPhase = previousPhaseNumber ? (MGPresentationPhase)previousPhaseNumber.unsignedCharValue : MGPresentationPhase::Compact;
-
-    if (phase != MGPresentationPhase::Compact) {
-        if ([slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"]) {
-            MGRestoreCompactSliderVisuals(root);
-            MGRestoreCompactBrightnessLayers(root.layer);
-        }
-        if (!previousPhaseNumber || previousPhase != phase) {
-            MGRemoveTaggedImages(root, nil);
-            if ([slot isEqualToString:@"volume"]) MGRestoreVolumeColorPresentation(root);
-            objc_setAssociatedObject(controller, &MGPresentationStateKey, @((unsigned char)phase), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            NSString *sig = [NSString stringWithFormat:@"phase-bypass|%@|%@|%.0fx%.0f", slot, MGPresentationPhaseName(phase), CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds)];
-            MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"phase-bypass source=%@ controller=%@ slot=%@ phase=%@ frame=%@ candidates=%@", source, NSStringFromClass([controller class]), slot, MGPresentationPhaseName(phase), NSStringFromCGRect(root.frame), candidates]);
-        }
-        return;
-    }
-
-    objc_setAssociatedObject(controller, &MGPresentationStateKey, @((unsigned char)MGPresentationPhase::Compact), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     MGRestoreVolumeColorPresentation(root);
-    if ([slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"]) {
-        MGRestoreCompactSliderVisuals(root);
-        MGRestoreCompactBrightnessLayers(root.layer);
-    }
+    MGRestoreVolumeVisuals(root);
+    MGRestoreBrightnessLayers(root.layer);
+    BOOL expanded = MGIsExpanded(root);
     BOOL enabled = MGBoolPreference(@"CCModuleBackgroundsEnabled", YES);
     CGFloat opacity = MIN(1.0, MAX(0.0, MGFloatPreference(@"CCModuleBackgroundOpacity", 1.0)));
     BOOL removeBlur = MGBoolPreference(@"CCModuleRemoveBlur", NO);
     NSString *path = [MGBackgroundDirectory stringByAppendingPathComponent:[slot stringByAppendingString:@".jpg"]];
     BOOL exists = [NSFileManager.defaultManager fileExistsAtPath:path];
 
+    if (expanded) {
+        MGRemoveTaggedImages(root, nil);
+        NSString *sig = [NSString stringWithFormat:@"expanded|%@|%.0fx%.0f", slot, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds)];
+        MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"expanded-bypass source=%@ controller=%@ slot=%@ frame=%@ candidates=%@", source, NSStringFromClass([controller class]), slot, NSStringFromCGRect(root.frame), candidates]);
+        return;
+    }
 
     BOOL volumeIconApplied = NO;
     NSString *volumeIconClass = @"<none>";
@@ -1053,45 +942,45 @@ static void MGApplyController(id controller, NSString *source) {
     UIImageView *imageView = MGImageViewInParent(parent);
     MGRemoveTaggedImages(root, imageView);
 
-    MGPlaceImageWithoutDimming(parent, imageView, anchor, YES);
+    if (imageView.superview != parent) [imageView removeFromSuperview];
+    if (!imageView.superview) {
+        if (anchor && anchor.superview == parent) [parent insertSubview:imageView aboveSubview:anchor];
+        else [parent insertSubview:imageView atIndex:0];
+    } else if (anchor && anchor.superview == parent) {
+        [parent insertSubview:imageView aboveSubview:anchor];
+    }
 
     NSString *loadedPath = objc_getAssociatedObject(imageView, @selector(setImage:));
     if (![loadedPath isEqualToString:path] || !imageView.image) {
         imageView.image = [UIImage imageWithContentsOfFile:path];
         objc_setAssociatedObject(imageView, @selector(setImage:), path, OBJC_ASSOCIATION_COPY_NONATOMIC);
     }
-    CGFloat volumeValueFraction = -1.0;
     imageView.frame = imageFrame;
     imageView.alpha = opacity;
     imageView.hidden = imageView.image == nil;
     imageView.userInteractionEnabled = NO;
-    if ([slot isEqualToString:@"volume"] || [slot isEqualToString:@"brightness"]) {
-        MGApplyStaticSliderGeometry(imageView);
-    } else {
-        MGCopyCornerGeometry(imageView, cornerSource, root);
-        MGApplyModuleShapeFallback(imageView, slot);
-    }
+    MGCopyCornerGeometry(imageView, cornerSource, root);
+    MGApplyModuleShapeFallback(imageView, slot);
 
     NSUInteger imageFirstSuppressed = 0;
     NSArray<NSString *> *imageFirstSuppressedClasses = @[];
     if (imageView.image) {
-        MGRendererKind renderer = MGRendererKindForSlot(slot);
-        NSMutableArray<NSString *> *classes = [NSMutableArray array];
-        if (renderer == MGRendererKind::VolumeSlider) {
-            UIView *volumeScope = MGFindSliderView(root) ?: root;
-            imageFirstSuppressed = MGApplyVolumeCompactPhotoMode(volumeScope, imageView, classes);
-            strategy = @"visualmatch-volume-full-photo";
-        } else if (renderer == MGRendererKind::BrightnessSlider) {
-            UIView *brightnessScope = MGFindSliderView(root) ?: root;
-            imageFirstSuppressed = MGApplyBrightnessCompactPhotoMode(brightnessScope, imageView, classes);
-            imageFirstSuppressed += MGApplyBrightnessCompactLayerMode(brightnessScope.layer, brightnessScope.layer, imageView.layer, classes);
-            strategy = @"visualmatch-brightness-full-photo";
+        UIView *imageScope = [slot isEqualToString:@"volume"] ? MGFindSliderView(root) : root;
+        if (!imageScope) imageScope=root;
+        if (imageScope) {
+            NSMutableArray<NSString *> *classes=[NSMutableArray array];
+            if ([slot isEqualToString:@"brightness"]) {
+                imageFirstSuppressed = MGApplyBrightnessImageMode(imageScope, imageView, classes);
+                imageFirstSuppressed += MGApplyBrightnessLayerMode(root.layer, root.layer, imageView.layer, classes);
+                strategy = @"brightness-volume-pattern-root-fill-aware";
+            } else {
+                imageFirstSuppressed = MGApplyVolumeImageMode(imageScope, imageView, classes);
+                strategy = [NSString stringWithFormat:@"%@-image-first", slot];
+            }
+            imageFirstSuppressedClasses = classes.copy;
         } else {
-            // Connectivity, Now Playing and 1x1 modules stay foreground-safe. We do
-            // not recurse through their content tree or touch button/glyph alpha.
-            strategy = @"visualmatch-standard-undimmed-foreground-safe";
+            strategy=[NSString stringWithFormat:@"%@-no-host", slot];
         }
-        imageFirstSuppressedClasses = classes.copy;
     }
 
     // Safety rule: these preferences are intentionally never implemented by mutating,
@@ -1102,8 +991,8 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSString *sig = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|%.0fx%.0f|%@", slot, strategy, enabled, exists, opacity, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), path];
     MGDiagnosticOnce(controller, sig,
-                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f phase=compact strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ imageFirstSuppressed=%lu suppressedClasses=%@ volumeValueFraction=%.3f volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
-                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)imageFirstSuppressed, imageFirstSuppressedClasses, volumeValueFraction, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
+                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ imageFirstSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
+                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)imageFirstSuppressed, imageFirstSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
 }
 
 static void MGTrackAndApply(id controller, NSString *source) {
@@ -1177,8 +1066,8 @@ __attribute__((constructor)) static void MGInit(void) {
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.1.2 Visual Match Renderer loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
-        MGLog(@"Clean static renderer: undimmed photos, full slider shells, transition-safe expanded bypass process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
+        MGLog(@"ModuleGlassRuntime 1.0.14 Rounded Volume Pattern loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"Rounded Volume-pattern runtime with live native Volume icon and percentage color process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
 }
