@@ -1,0 +1,70 @@
+name: Build NextSolution Transfer TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/nextsolution-transfer]
+    paths:
+      - 'TransferApp/**'
+      - '.github/workflows/build-nextsolution-transfer.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextsolution-transfer
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: TransferApp
+        run: xcodegen generate
+      - name: Build unsigned app
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          rm -rf build Payload output
+          xcodebuild \
+            -project NextSolutionTransfer.xcodeproj \
+            -scheme NextSolutionTransfer \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+      - name: Package TIPA
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          mkdir -p Payload output
+          cp -R build/Build/Products/Release-iphoneos/NextSolutionTransfer.app Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload output/NextSolution-Transfer-1.0.0.tipa
+          shasum -a 256 output/NextSolution-Transfer-1.0.0.tipa > output/NextSolution-Transfer-1.0.0.sha256
+      - name: Validate package
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          rm -rf verify
+          mkdir verify
+          ditto -x -k output/NextSolution-Transfer-1.0.0.tipa verify
+          test -d verify/Payload/NextSolutionTransfer.app
+          test -f verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer
+          strings verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer | grep -q 'nextsolution.app/transfer/index.json'
+          strings verify/Payload/NextSolutionTransfer.app/NextSolutionTransfer | grep -q 'Upload to Server'
+      - name: Upload TIPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextSolution-Transfer-1.0.0
+          path: |
+            TransferApp/output/NextSolution-Transfer-1.0.0.tipa
+            TransferApp/output/NextSolution-Transfer-1.0.0.sha256
+          if-no-files-found: error
