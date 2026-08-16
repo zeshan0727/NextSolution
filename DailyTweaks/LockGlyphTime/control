@@ -1,9 +1,10 @@
 Package: com.nextsolution.lockglyphtime
-Name: LockGlyphTime
-Version: 0.2.3
+Name: NextStyle
+Version: 1.0.0
 Architecture: iphoneos-arm64
-Description: Advanced lock screen time/date customization with transparent sticker photo icons, rounded-square opaque photos, crop editor, fonts, styles, formatting, positioning, and shadows.
-Maintainer: Next Solution
-Author: Next Solution
+Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
+Maintainer: Next Solution - Zeeshan Barvi
+Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
 Depends: firmware (>= 15.0), preferenceloader
+Homepage: https://nextsolution.cc
