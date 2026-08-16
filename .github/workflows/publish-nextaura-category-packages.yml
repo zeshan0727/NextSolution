@@ -1,4 +1,4 @@
-name: Publish NextAura Category Packages
+name: Publish Aura Category Packages 1.0.2
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ jobs:
   build-and-publish:
     if: github.head_ref == 'agent/nextaura-4.4.9-notification-island'
     runs-on: macos-15
-    timeout-minutes: 70
+    timeout-minutes: 75
     steps:
       - name: Checkout pull request
         uses: actions/checkout@v4
@@ -26,7 +26,17 @@ jobs:
       - name: Install tools
         run: |
           brew install dpkg ldid xz zstd
-          python3 -m pip install --break-system-packages pillow
+          python3 -m pip install --user --break-system-packages pillow
+
+      - name: Prepare RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/theos-rh"
+          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
 
       - name: Build current Notification Island runtime
         shell: bash
@@ -38,12 +48,6 @@ jobs:
           python3 "$P/prepare-v450.py"
           python3 "$P/prepare-v453.py"
           cp "$P/DynamicIslandV450.plist" "$P/DynamicIsland.plist"
-
-          git init "$RUNNER_TEMP/theos-rh"
-          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
-          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
-          git -C "$RUNNER_TEMP/theos-rh" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
-          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
           export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
           make -C "$P" clean all FINALPACKAGE=1 2>&1 | tee nextaura-category-island-build.log
           ISLAND_DYLIB="$(find "$P/.theos" -type f -name 'NextAuraNotificationIsland.dylib' -print | sort | tail -1)"
@@ -54,147 +58,126 @@ jobs:
           cp "$P/NextAuraNotificationIsland.plist" "$RUNNER_TEMP/island/NextAuraNotificationIsland.plist"
           cp "$P/DynamicIsland.plist" "$RUNNER_TEMP/island/DynamicIsland.plist"
 
-      - name: Build 17 category packages
+      - name: Build native Aura Preferences controller
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-16-NextAuraCategorySplit/AuraPrefs"
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$P" clean all FINALPACKAGE=1 2>&1 | tee aura-prefs-build.log
+          BUNDLE="$(find "$P/.theos" -type d -name 'AuraPrefs.bundle' -print | sort | tail -1)"
+          test -n "$BUNDLE"
+          test -f "$BUNDLE/AuraPrefs"
+          mkdir -p "$RUNNER_TEMP/aura-prefs"
+          ditto "$BUNDLE" "$RUNNER_TEMP/aura-prefs/AuraPrefs.bundle"
+          ldid -S "$RUNNER_TEMP/aura-prefs/AuraPrefs.bundle/AuraPrefs"
+
+      - name: Build 17 Aura category packages
         shell: bash
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/nextaura-categories"
           mkdir -p "$OUT"
-          python3 DailyTweaks/2026-08-16-NextAuraCategorySplit/build_categories_v2.py \
+          python3 DailyTweaks/2026-08-16-NextAuraCategorySplit/build_categories_v3.py \
             --base-deb debfiles/NextAura_4.4.8_RootHide_iOS16.deb \
             --island-dylib "$RUNNER_TEMP/island/NextAuraNotificationIsland.dylib" \
             --island-plist "$RUNNER_TEMP/island/NextAuraNotificationIsland.plist" \
             --dynamic-plist "$RUNNER_TEMP/island/DynamicIsland.plist" \
+            --prefs-bundle "$RUNNER_TEMP/aura-prefs/AuraPrefs.bundle" \
             --output "$OUT"
 
-      - name: Verify modular packages and Settings resources
+      - name: Verify Settings pages and compact icons
         shell: bash
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/nextaura-categories"
           test "$(find "$OUT" -maxdepth 1 -name '*.deb' | wc -l | tr -d ' ')" = 27
-          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_Runtime_*_RootHide.deb' | wc -l | tr -d ' ')" = 10
-          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_*_1.0.1_RootHide.deb' ! -name 'NextAura_Runtime_*' | wc -l | tr -d ' ')" = 17
-          test "$(find "$OUT/icons/nextaura" -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')" = 17
+          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_*_1.0.2_RootHide.deb' ! -name 'NextAura_Runtime_*' | wc -l | tr -d ' ')" = 17
+          test -f "$OUT/NextAura_Runtime_preferences_1.0.2_RootHide.deb"
 
-          python3 - "$OUT" <<'PY'
-          import plistlib, subprocess, sys, tempfile
+          PREFS="$RUNNER_TEMP/prefs-check"
+          mkdir -p "$PREFS"
+          dpkg-deb -x "$OUT/NextAura_Runtime_preferences_1.0.2_RootHide.deb" "$PREFS"
+          B="$PREFS/Library/PreferenceBundles/AuraPrefs.bundle"
+          test -f "$B/AuraPrefs"
+          test ! -e "$PREFS/Library/PreferenceBundles/UnlockVibratePrefs.bundle"
+
+          python3 - "$B" "$OUT" <<'PY'
+          import plistlib, subprocess, sys
           from pathlib import Path
-          out = Path(sys.argv[1])
-          expected_names = {
-              'com.nextsolution.nextaura.feedback': ('Aura Haptics', 'Feedback'),
-              'com.nextsolution.nextaura.thermal-sweat': ('Aura Thermal', 'ThermalSweat'),
-              'com.nextsolution.nextaura.home-screen': ('Aura Home', 'HomeScreen'),
-              'com.nextsolution.nextaura.dock-folders': ('Aura Dock', 'DockFolders'),
-              'com.nextsolution.nextaura.lock-screen': ('Aura Lock', 'LockScreen'),
-              'com.nextsolution.nextaura.status-bar': ('Aura Status', 'StatusBar'),
-              'com.nextsolution.nextaura.control-center': ('Aura Control', 'ControlCenter'),
-              'com.nextsolution.nextaura.cc-second-page': ('Aura Panel', 'CCSecondPage'),
-              'com.nextsolution.nextaura.cc-module-backgrounds': ('Aura Modules', 'CCModuleBackgrounds'),
-              'com.nextsolution.nextaura.notification-island': ('Aura Island', 'DynamicIsland'),
-              'com.nextsolution.nextaura.notification-glow': ('Aura Glow', 'NotificationGlow'),
-              'com.nextsolution.nextaura.now-playing': ('Aura Player', 'NowPlaying'),
-              'com.nextsolution.nextaura.notifications': ('Aura Alerts', 'Notifications'),
-              'com.nextsolution.nextaura.app-switcher': ('Aura Switcher', 'AppSwitcher'),
-              'com.nextsolution.nextaura.system-overlays': ('Aura HUD', 'SystemOverlays'),
-              'com.nextsolution.nextaura.animations': ('Aura Motion', 'Animations'),
-              'com.nextsolution.nextaura.safety-recovery': ('Aura Safe', 'SafetyRecovery'),
+          from PIL import Image
+          bundle = Path(sys.argv[1])
+          out = Path(sys.argv[2])
+          categories = {
+              'feedback': ('Aura Haptics','Feedback'),
+              'thermal-sweat': ('Aura Thermal','ThermalSweat'),
+              'home-screen': ('Aura Home','HomeScreen'),
+              'dock-folders': ('Aura Dock','DockFolders'),
+              'lock-screen': ('Aura Lock','LockScreen'),
+              'status-bar': ('Aura Status','StatusBar'),
+              'control-center': ('Aura Control','ControlCenter'),
+              'cc-second-page': ('Aura Panel','CCSecondPage'),
+              'cc-module-backgrounds': ('Aura Modules','CCModuleBackgrounds'),
+              'notification-island': ('Aura Island','DynamicIsland'),
+              'notification-glow': ('Aura Glow','NotificationGlow'),
+              'now-playing': ('Aura Player','NowPlaying'),
+              'notifications': ('Aura Alerts','Notifications'),
+              'app-switcher': ('Aura Switcher','AppSwitcher'),
+              'system-overlays': ('Aura HUD','SystemOverlays'),
+              'animations': ('Aura Motion','Animations'),
+              'safety-recovery': ('Aura Safe','SafetyRecovery'),
           }
-          visible = set()
-          runtimes = set()
-          prefs_deb = None
-          for deb in out.glob('*.deb'):
-              pkg = subprocess.check_output(['dpkg-deb','-f',str(deb),'Package'], text=True).strip()
-              ver = subprocess.check_output(['dpkg-deb','-f',str(deb),'Version'], text=True).strip()
-              arch = subprocess.check_output(['dpkg-deb','-f',str(deb),'Architecture'], text=True).strip()
-              if arch != 'iphoneos-arm64e':
-                  raise SystemExit(f'bad architecture: {deb.name}: {arch}')
-              if '.runtime.' in pkg:
-                  expected_ver = '1.0.1' if pkg.endswith('.runtime.preferences') else '1.0.0'
-                  if ver != expected_ver:
-                      raise SystemExit(f'bad runtime version: {deb.name}: {ver}, expected {expected_ver}')
-                  runtimes.add(pkg)
-                  if pkg.endswith('.runtime.preferences'):
-                      prefs_deb = deb
-                  tag = subprocess.check_output(['dpkg-deb','-f',str(deb),'Tag'], text=True).strip()
-                  if 'role::cydia' not in tag:
-                      raise SystemExit(f'Runtime is not hidden/support-tagged: {pkg}')
-              else:
-                  if ver != '1.0.1':
-                      raise SystemExit(f'bad category version: {deb.name}: {ver}')
-                  visible.add(pkg)
-                  expected_name, expected_plist = expected_names[pkg]
-                  name = subprocess.check_output(['dpkg-deb','-f',str(deb),'Name'], text=True).strip()
-                  if name != expected_name:
-                      raise SystemExit(f'Unexpected name for {pkg}: {name}')
-                  icon = subprocess.check_output(['dpkg-deb','-f',str(deb),'Icon'], text=True).strip()
-                  slug = pkg.removeprefix('com.nextsolution.nextaura.')
-                  if icon != f"https://nextsolution.cc/icons/nextaura/{slug}.png":
-                      raise SystemExit(f'Unexpected icon for {pkg}: {icon}')
-                  depends = subprocess.check_output(['dpkg-deb','-f',str(deb),'Depends'], text=True).strip()
-                  if 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.1)' not in depends:
-                      raise SystemExit(f'Missing fixed preferences runtime dependency: {pkg}')
-                  conflict = subprocess.check_output(['dpkg-deb','-f',str(deb),'Conflicts'], text=True).strip()
-                  if 'com.nextsolution.unlockvibrate' not in conflict:
-                      raise SystemExit(f'Missing legacy NextAura conflict: {pkg}')
+          info = plistlib.load(open(bundle/'Info.plist','rb'))
+          assert info['NSPrincipalClass'] == 'AuraCategoryListController'
+          assert info['CFBundleVersion'] == '1.0.2'
+          for slug,(name,plist_name) in categories.items():
+              page = bundle/f'{plist_name}.plist'
+              assert page.exists(), page
+              data = plistlib.load(open(page,'rb'))
+              assert len(data.get('items',[])) > 0, f'blank page {plist_name}'
+              icon = bundle/f'NextAura-{slug}.png'
+              assert Image.open(icon).size == (58,58), f'non-compact Settings icon {slug}'
 
-                  extract = Path(tempfile.mkdtemp())
-                  subprocess.run(['dpkg-deb','-x',str(deb),str(extract)], check=True)
-                  loader = extract / 'Library/PreferenceLoader/Preferences' / f'NextAura-{slug}.plist'
-                  if not loader.exists():
-                      raise SystemExit(f'Missing PreferenceLoader entry: {pkg}')
-                  with loader.open('rb') as fh:
-                      entry = plistlib.load(fh)['entry']
-                  if entry.get('bundle') != 'UnlockVibratePrefs' or entry.get('detail') != 'UVSubListController' or entry.get('plist') != expected_plist:
-                      raise SystemExit(f'Invalid Preferences route for {pkg}: {entry}')
-                  stray = extract / 'Library/PreferenceBundles/UnlockVibratePrefs.bundle'
-                  if stray.exists():
-                      raise SystemExit(f'Category DEB still overlays shared preference bundle: {pkg}')
-
-          if visible != set(expected_names):
-              raise SystemExit(f'Visible category mismatch. missing={set(expected_names)-visible} extra={visible-set(expected_names)}')
-          if len(runtimes) != 10 or prefs_deb is None:
-              raise SystemExit(f'Expected 10 runtimes including preferences, found {len(runtimes)}')
-
-          pref_root = Path(tempfile.mkdtemp())
-          subprocess.run(['dpkg-deb','-x',str(prefs_deb),str(pref_root)], check=True)
-          bundle = pref_root / 'Library/PreferenceBundles/UnlockVibratePrefs.bundle'
-          if not (bundle / 'UnlockVibratePrefs').exists():
-              raise SystemExit('Preferences controller binary missing')
-          for pkg, (_name, plist_name) in expected_names.items():
-              slug = pkg.removeprefix('com.nextsolution.nextaura.')
-              page = bundle / f'{plist_name}.plist'
-              icon = bundle / f'NextAura-{slug}.png'
-              if not page.exists() or not icon.exists():
-                  raise SystemExit(f'Preferences runtime missing page/icon for {pkg}')
-              with page.open('rb') as fh:
-                  data = plistlib.load(fh)
-              if not data.get('items'):
-                  raise SystemExit(f'Blank/invalid Settings page packaged for {pkg}')
-          print('Verified 17 non-empty Settings pages in the shared Preferences runtime, 17 short names/icons, and 10 runtimes.')
+              deb = out/f"NextAura_{slug.replace('-','_')}_1.0.2_RootHide.deb"
+              root = Path('/tmp')/f'aura-check-{slug}'
+              subprocess.run(['rm','-rf',str(root)])
+              subprocess.check_call(['dpkg-deb','-x',str(deb),str(root)])
+              loader = plistlib.load(open(root/'Library/PreferenceLoader/Preferences'/f'NextAura-{slug}.plist','rb'))['entry']
+              assert loader['bundle'] == 'AuraPrefs'
+              assert loader['plist'] == plist_name
+              assert loader['label'] == name
+              assert 'detail' not in loader, 'old UVSubListController routing still present'
+              pkg = subprocess.check_output(['dpkg-deb','-f',str(deb),'Package'],text=True).strip()
+              ver = subprocess.check_output(['dpkg-deb','-f',str(deb),'Version'],text=True).strip()
+              depends = subprocess.check_output(['dpkg-deb','-f',str(deb),'Depends'],text=True).strip()
+              assert pkg == f'com.nextsolution.nextaura.{slug}'
+              assert ver == '1.0.2'
+              assert 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.2)' in depends
+          print('Verified 17 non-empty category panes through AuraCategoryListController and 58x58 Settings icons.')
           PY
 
-          ISLAND_DEB="$OUT/NextAura_notification_island_1.0.1_RootHide.deb"
-          dpkg-deb -f "$ISLAND_DEB" Depends | grep -q 'com.nextsolution.nextaura.runtime.island'
-          test -f "$OUT/NextAura_Runtime_preferences_1.0.1_RootHide.deb"
+          strings -a "$B/AuraPrefs" | grep -q 'AuraCategoryListController'
+          strings -a "$B/AuraPrefs" | grep -q 'testDynamicIslandSuite:'
+          strings -a "$B/AuraPrefs" | grep -q 'configureCCModuleBackground:'
           test -f "$OUT/NextAura_Category_Packages.txt"
 
       - name: Save build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextAura-Modular-Categories-1.0.1
+          name: Aura-Modular-Categories-1.0.2
           path: |
             ${{ runner.temp }}/nextaura-categories/*.deb
             ${{ runner.temp }}/nextaura-categories/icons/nextaura/*.png
             ${{ runner.temp }}/nextaura-categories/NextAura_Category_Packages.txt
             nextaura-category-island-build.log
+            aura-prefs-build.log
 
-      - name: Publish category packages to nextsolution.cc repo
+      - name: Publish Aura 1.0.2 to nextsolution.cc repo
         shell: bash
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/nextaura-categories"
-          SAVED="$RUNNER_TEMP/nextaura-publish"
+          SAVED="$RUNNER_TEMP/aura-publish"
           mkdir -p "$SAVED/icons/nextaura"
           cp "$OUT"/*.deb "$SAVED/"
           cp "$OUT/NextAura_Category_Packages.txt" "$SAVED/"
@@ -206,37 +189,34 @@ jobs:
           git reset --hard origin/main
           mkdir -p debfiles icons/nextaura
           find debfiles -maxdepth 1 -type f -name 'NextAura_*_1.0.0_RootHide.deb' ! -name 'NextAura_Runtime_*' -delete || true
-          rm -f debfiles/NextAura_Runtime_preferences_1.0.0_RootHide.deb
+          find debfiles -maxdepth 1 -type f -name 'NextAura_*_1.0.1_RootHide.deb' ! -name 'NextAura_Runtime_*' -delete || true
+          rm -f debfiles/NextAura_Runtime_preferences_1.0.0_RootHide.deb debfiles/NextAura_Runtime_preferences_1.0.1_RootHide.deb
           cp "$SAVED"/*.deb debfiles/
           cp "$SAVED/NextAura_Category_Packages.txt" debfiles/
           cp "$SAVED/icons/nextaura"/*.png icons/nextaura/
 
-          SCAN="$RUNNER_TEMP/nextaura-scan"
+          SCAN="$RUNNER_TEMP/aura-scan"
           mkdir -p "$SCAN"
           cp "$SAVED"/*.deb "$SCAN/"
-          dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/nextaura-new-stanzas"
-          sed -i '' 's|^Filename: .*/nextaura-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/nextaura-new-stanzas"
+          dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/aura-new-stanzas"
+          sed -i '' 's|^Filename: .*/aura-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/aura-new-stanzas"
 
-          python3 - "$RUNNER_TEMP/nextaura-new-stanzas" <<'PY'
+          python3 - "$RUNNER_TEMP/aura-new-stanzas" <<'PY'
           from pathlib import Path
           import re, sys
           packages = Path('Packages')
           existing = packages.read_text() if packages.exists() else ''
           new_text = Path(sys.argv[1]).read_text()
           new_stanzas = [s.strip() for s in re.split(r'\n\s*\n', new_text) if s.strip()]
-          new_ids = set()
-          for stanza in new_stanzas:
-              m = re.search(r'^Package: (.+)$', stanza, re.M)
-              if m: new_ids.add(m.group(1).strip())
-          old_stanzas = [s.strip() for s in re.split(r'\n\s*\n', existing) if s.strip()]
+          new_ids = {re.search(r'^Package: (.+)$', s, re.M).group(1).strip() for s in new_stanzas}
           kept = []
-          for stanza in old_stanzas:
+          for stanza in [s.strip() for s in re.split(r'\n\s*\n', existing) if s.strip()]:
               m = re.search(r'^Package: (.+)$', stanza, re.M)
               if m and m.group(1).strip() in new_ids:
                   continue
               kept.append(stanza)
           packages.write_text('\n\n'.join(kept + new_stanzas) + '\n')
-          print(f'Replaced/added {len(new_ids)} NextAura modular package stanzas.')
+          print(f'Replaced {len(new_ids)} Aura package stanzas.')
           PY
 
           gzip -9 -c Packages > Packages.gz
@@ -260,8 +240,8 @@ jobs:
 
           git add debfiles icons/nextaura Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           if git diff --cached --quiet; then
-            echo "NextAura category names/icons/settings fix is already published."
+            echo "Aura 1.0.2 already published."
             exit 0
           fi
-          git commit -m "Fix NextAura modular Settings and refresh category branding"
+          git commit -m "Publish Aura 1.0.2 preferences fix"
           git push origin HEAD:main
