@@ -1,0 +1,43 @@
+name: Module Glass Package Inspect
+
+on:
+  push:
+    paths:
+      - '.github/workflows/module-glass-inspect.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect current Module Glass packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/mg-runtime /tmp/mg-main
+          mkdir -p /tmp/mg-runtime /tmp/mg-main
+          dpkg-deb -R debfiles/NextAura_Runtime_ccbackgrounds_1.0.5_RootHide.deb /tmp/mg-runtime
+          dpkg-deb -R debfiles/NextAura_cc_module_backgrounds_1.0.9_RootHide.deb /tmp/mg-main
+          echo '===== RUNTIME CONTROL ====='
+          cat /tmp/mg-runtime/DEBIAN/control
+          echo '===== MAIN CONTROL ====='
+          cat /tmp/mg-main/DEBIAN/control
+          echo '===== RUNTIME FILE TREE ====='
+          find /tmp/mg-runtime -type f -printf '%P\n' | sort
+          echo '===== MAIN FILE TREE ====='
+          find /tmp/mg-main -type f -printf '%P\n' | sort
+          DYLIB="$(find /tmp/mg-runtime -type f -name '*.dylib' | head -n1)"
+          PLIST="$(find /tmp/mg-runtime -type f -name '*.plist' | head -n1 || true)"
+          echo "===== DYLIB: ${DYLIB:-none} ====="
+          if [ -n "${DYLIB:-}" ]; then
+            file "$DYLIB"
+            echo '===== RELEVANT STRINGS ====='
+            strings -a "$DYLIB" | grep -Ei 'ccbackground|moduleglass|nextaura|preferences|pref|plist|volume|brightness|media|record|image|png|jpg|jpeg|library|root|expanded|compact|container|slider|diagnostic|nextlog' | head -n 300 || true
+          fi
+          if [ -n "${PLIST:-}" ]; then
+            echo "===== FIRST PLIST: $PLIST ====="
+            cat "$PLIST" || true
+          fi
