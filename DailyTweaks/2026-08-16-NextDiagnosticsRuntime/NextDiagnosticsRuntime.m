@@ -11,6 +11,7 @@ static NSString * const NDControlPath = @"/var/mobile/Library/Preferences/com.ne
 static NSString * const NDPreferredManifestPath = @"/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.manifest.plist";
 static NSString * const NDLogDirectory = @"/var/mobile/Library/Logs/NextSolution";
 static NSString * const NDControlNotification = @"com.nextsolution.nextlog/control.changed";
+static NSDictionary *NDCachedEntry = nil;
 
 static NSString *NDNormalize(NSString *value) {
     if (![value isKindOfClass:NSString.class] || !value.length) return @"";
@@ -52,20 +53,16 @@ static NSDictionary *NDControl(void) {
     return [value isKindOfClass:NSDictionary.class] ? value : nil;
 }
 
-static NSDictionary *NDManifest(void) {
-    NSDictionary *value = [NSDictionary dictionaryWithContentsOfFile:NDResolvedManifestPath()];
-    return [value isKindOfClass:NSDictionary.class] ? value : nil;
-}
-
-static NSArray<NSDictionary *> *NDTweakEntries(void) {
-    NSArray *items = NDManifest()[@"tweaks"];
+static NSArray<NSDictionary *> *NDTweakEntriesFromDisk(void) {
+    NSDictionary *manifest = [NSDictionary dictionaryWithContentsOfFile:NDResolvedManifestPath()];
+    NSArray *items = [manifest isKindOfClass:NSDictionary.class] ? manifest[@"tweaks"] : nil;
     if (![items isKindOfClass:NSArray.class]) return @[];
     NSMutableArray *valid = [NSMutableArray array];
     for (id item in items) if ([item isKindOfClass:NSDictionary.class]) [valid addObject:item];
     return valid;
 }
 
-static NSDictionary *NDActiveEntry(void) {
+static NSDictionary *NDResolveActiveEntryFromDisk(void) {
     NSDictionary *control = NDControl();
     if (![control[@"enabled"] boolValue]) return nil;
     NSString *needle = NDNormalize(control[@"activeTweak"]);
@@ -73,7 +70,7 @@ static NSDictionary *NDActiveEntry(void) {
     if (!needle.length) needle = NDNormalize(control[@"packageID"]);
     if (!needle.length) return nil;
 
-    for (NSDictionary *entry in NDTweakEntries()) {
+    for (NSDictionary *entry in NDTweakEntriesFromDisk()) {
         NSMutableArray<NSString *> *values = [NSMutableArray array];
         for (NSString *key in @[@"slug", @"name", @"packageID"]) {
             NSString *value = entry[key];
@@ -89,6 +86,19 @@ static NSDictionary *NDActiveEntry(void) {
         }
     }
     return nil;
+}
+
+static void NDRefreshActiveEntry(void) {
+    NSDictionary *entry = NDResolveActiveEntryFromDisk();
+    @synchronized (NSProcessInfo.class) {
+        NDCachedEntry = [entry copy];
+    }
+}
+
+static NSDictionary *NDActiveEntry(void) {
+    @synchronized (NSProcessInfo.class) {
+        return NDCachedEntry;
+    }
 }
 
 static NSString *NDLogPathForEntry(NSDictionary *entry) {
@@ -142,8 +152,7 @@ static BOOL NDArrayContainsNormalized(NSArray *array, NSString *needle) {
     if (![array isKindOfClass:NSArray.class] || !needle.length) return NO;
     for (id item in array) {
         if (![item isKindOfClass:NSString.class]) continue;
-        NSString *n = NDNormalize(item);
-        if ([n isEqualToString:needle]) return YES;
+        if ([NDNormalize(item) isEqualToString:needle]) return YES;
     }
     return NO;
 }
@@ -166,11 +175,8 @@ static NSArray<NSString *> *NDExpectedLoadedDylibs(NSDictionary *entry, NSArray<
 }
 
 static BOOL NDProcessMatchesEntry(NSDictionary *entry, NSArray<NSString *> *loaded, NSArray<NSString *> **hitsOut) {
-    NSString *bundle = NSBundle.mainBundle.bundleIdentifier ?: @"";
-    NSString *process = NSProcessInfo.processInfo.processName ?: @"";
-    NSString *bundleN = NDNormalize(bundle);
-    NSString *processN = NDNormalize(process);
-
+    NSString *bundleN = NDNormalize(NSBundle.mainBundle.bundleIdentifier ?: @"");
+    NSString *processN = NDNormalize(NSProcessInfo.processInfo.processName ?: @"");
     BOOL bundleMatch = NDArrayContainsNormalized(entry[@"bundles"], bundleN);
     BOOL executableMatch = NDArrayContainsNormalized(entry[@"executables"], processN);
     NSArray<NSString *> *hits = NDExpectedLoadedDylibs(entry, loaded);
@@ -189,7 +195,7 @@ static void NDEmitSnapshot(NSString *reason) {
     NSString *process = NSProcessInfo.processInfo.processName ?: @"<nil>";
     NSArray *expected = [entry[@"dylibs"] isKindOfClass:NSArray.class] ? entry[@"dylibs"] : @[];
     NDWrite(entry,
-            @"snapshot reason=%@ runtime=1.0.0 process=%@ bundle=%@ pid=%d package=%@ version=%@ manifest=%@ expectedDylibs=%@ loadedMatches=%@ bundles=%@ executables=%@",
+            @"snapshot reason=%@ runtime=1.0.1 process=%@ bundle=%@ pid=%d package=%@ version=%@ manifest=%@ expectedDylibs=%@ loadedMatches=%@ bundles=%@ executables=%@",
             reason ?: @"unknown", process, bundle, getpid(), entry[@"packageID"] ?: @"<nil>",
             entry[@"version"] ?: @"<nil>", NDResolvedManifestPath(), expected, hits ?: @[],
             entry[@"bundles"] ?: @[], entry[@"executables"] ?: @[]);
@@ -200,12 +206,16 @@ static void NDControlChanged(__unused CFNotificationCenterRef center,
                              __unused CFStringRef name,
                              __unused const void *object,
                              __unused CFDictionaryRef userInfo) {
-    @autoreleasepool { NDEmitSnapshot(@"nextlog.control"); }
+    @autoreleasepool {
+        NDRefreshActiveEntry();
+        NDEmitSnapshot(@"nextlog.control");
+    }
 }
 
 static void NDImageAdded(const struct mach_header *mh, intptr_t slide) {
     (void)slide;
     @autoreleasepool {
+        // Fast idle path: no filesystem or manifest work until Next Log enables a capture.
         NSDictionary *entry = NDActiveEntry();
         if (!entry || !mh) return;
         Dl_info info = {0};
@@ -228,11 +238,10 @@ static void NDImageAdded(const struct mach_header *mh, intptr_t slide) {
 
 __attribute__((constructor)) static void NextDiagnosticsRuntimeInit(void) {
     @autoreleasepool {
-        // The package may contain separate Bundle and Executable loader copies of
-        // this same binary. Only one instance should register in any process.
         if (getenv("NEXTSOLUTION_NEXTDIAG_ACTIVE")) return;
         setenv("NEXTSOLUTION_NEXTDIAG_ACTIVE", "1", 0);
 
+        NDRefreshActiveEntry();
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, NDControlChanged,
                                         (__bridge CFStringRef)NDControlNotification, NULL,
                                         CFNotificationSuspensionBehaviorDeliverImmediately);
