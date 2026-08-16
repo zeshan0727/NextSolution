@@ -1,0 +1,33 @@
+name: Export latest uploaded image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/nextsolution-transfer]
+    paths:
+      - '.github/workflows/export-latest-upload-image.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Verify image
+        run: |
+          set -euo pipefail
+          FILE='transfer/uploads/20260816-093909-2190AA2F-5661-458A-BDDD-C3B1BB4E9243-IMG_3636.png'
+          test -f "$FILE"
+          file "$FILE"
+          cp "$FILE" latest-upload.png
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-upload-image
+          path: latest-upload.png
+          if-no-files-found: error
