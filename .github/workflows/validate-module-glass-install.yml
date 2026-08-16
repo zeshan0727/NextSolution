@@ -1,0 +1,101 @@
+name: Validate Module Glass Install
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/validate-module-glass-install.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Inspect Module Glass package chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            "debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb"
+            "debfiles/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb"
+            "debfiles/NextAura_Runtime_preferences_1.0.5_RootHide.deb"
+          )
+          for f in "${files[@]}"; do
+            echo "===== $f ====="
+            test -f "$f"
+            stat -c 'size=%s' "$f"
+            md5sum "$f"
+            sha1sum "$f"
+            sha256sum "$f"
+            echo "--- control ---"
+            dpkg-deb -f "$f"
+            echo
+          done
+
+      - name: Show Packages stanzas
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          wanted={
+            'com.nextsolution.nextaura.cc-module-backgrounds',
+            'com.nextsolution.nextaura.runtime.ccbackgrounds',
+            'com.nextsolution.nextaura.runtime.preferences',
+          }
+          text=Path('Packages').read_text()
+          for stanza in text.strip().split('\n\n'):
+              fields={}
+              for line in stanza.splitlines():
+                  if ': ' in line:
+                      k,v=line.split(': ',1); fields[k]=v
+              if fields.get('Package') in wanted:
+                  print('===== PACKAGES STANZA =====')
+                  print(stanza)
+                  print()
+          PY
+
+      - name: Verify indexed file metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, pathlib
+          text=pathlib.Path('Packages').read_text()
+          targets={
+            'com.nextsolution.nextaura.cc-module-backgrounds':'1.0.18',
+            'com.nextsolution.nextaura.runtime.ccbackgrounds':'1.0.14',
+            'com.nextsolution.nextaura.runtime.preferences':'1.0.5',
+          }
+          found={}
+          for stanza in text.strip().split('\n\n'):
+              f={}
+              for line in stanza.splitlines():
+                  if ': ' in line:
+                      k,v=line.split(': ',1); f[k]=v
+              p=f.get('Package')
+              if p in targets and f.get('Version')==targets[p]:
+                  found[p]=f
+          assert set(found)==set(targets), f'missing package stanzas: {set(targets)-set(found)}'
+          for p,f in found.items():
+              path=pathlib.Path(f['Filename'].removeprefix('./'))
+              data=path.read_bytes()
+              actual={
+                'Size':str(len(data)),
+                'MD5sum':hashlib.md5(data).hexdigest(),
+                'SHA1':hashlib.sha1(data).hexdigest(),
+                'SHA256':hashlib.sha256(data).hexdigest(),
+              }
+              for k,v in actual.items():
+                  print(p,k,'index=',f.get(k),'actual=',v)
+                  assert f.get(k)==v, f'{p}: {k} mismatch'
+          print('MODULE_GLASS_CHAIN_INDEX_OK')
+          PY
