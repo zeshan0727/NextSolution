@@ -1,5 +1,5 @@
 Package: com.nextsolution.lockglyphtime
-Name: NextStyle
+Name: NextLock
 Version: 1.0.0
 Architecture: iphoneos-arm64
 Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
