@@ -37,48 +37,53 @@ jobs:
           set -euo pipefail
           P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
           python3 "$P/prefs/generate_root.py"
-          for f in Tweak.xm LockGlyphTime.plist control Makefile prefs/Makefile prefs/LGTListController.m prefs/generate_root.py prefs/Resources/Root.plist prefs/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist; do
+          for f in RuntimeV021.xm LockGlyphTime.plist control Makefile prefs/Makefile prefs/LGTListController.m prefs/generate_root.py prefs/Resources/Root.plist prefs/Resources/Info.plist layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist; do
             test -f "$P/$f"
           done
-          grep -q '^Version: 0.2.0$' "$P/control"
+          grep -q '^Version: 0.2.1$' "$P/control"
           grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
-          grep -q 'QuartzCore' "$P/Makefile"
-          grep -q 'SBFLockScreenDateView' "$P/Tweak.xm"
-          grep -q 'customTimeEnabled' "$P/Tweak.xm"
-          grep -q 'timeColor' "$P/Tweak.xm"
-          grep -q 'timeOffsetX' "$P/Tweak.xm"
-          grep -q 'timeFont' "$P/Tweak.xm"
-          grep -q 'timeStyle' "$P/Tweak.xm"
-          grep -q 'customDateEnabled' "$P/Tweak.xm"
-          grep -q 'dateColor' "$P/Tweak.xm"
-          grep -q 'dateOffsetX' "$P/Tweak.xm"
-          grep -q 'dateFont' "$P/Tweak.xm"
-          grep -q 'dateStyle' "$P/Tweak.xm"
-          grep -q 'dateFormat' "$P/Tweak.xm"
-          grep -q 'convertRect:anchorLabel.bounds toView:container' "$P/Tweak.xm"
-          grep -q 'Enable Time Customization' "$P/prefs/Resources/Root.plist"
-          grep -q 'Time Font' "$P/prefs/Resources/Root.plist"
+          grep -q 'LockGlyphTime_FILES = RuntimeV021.xm' "$P/Makefile"
+          grep -q 'SBFLockScreenDateView' "$P/RuntimeV021.xm"
+          grep -q 'LGTApplyPosition' "$P/RuntimeV021.xm"
+          grep -q 'label.center = CGPointMake' "$P/RuntimeV021.xm"
+          grep -q 'customTimeEnabled' "$P/RuntimeV021.xm"
+          grep -q 'customDateEnabled' "$P/RuntimeV021.xm"
+          grep -q 'convertRect:anchor.bounds toView:container' "$P/RuntimeV021.xm"
+          grep -q 'UIColorPickerViewController' "$P/prefs/LGTListController.m"
+          grep -q 'openTimeColorPicker' "$P/prefs/LGTListController.m"
+          grep -q 'openDateColorPicker' "$P/prefs/LGTListController.m"
+          grep -q 'openIconColorPicker' "$P/prefs/LGTListController.m"
+          grep -q 'PSLinkListCell' "$P/prefs/Resources/Root.plist"
           grep -q 'Time Style' "$P/prefs/Resources/Root.plist"
-          grep -q 'Enable Date Customization' "$P/prefs/Resources/Root.plist"
-          grep -q 'Date Font' "$P/prefs/Resources/Root.plist"
-          grep -q 'Date Format' "$P/prefs/Resources/Root.plist"
-          grep -q 'Enable Icon Shadow' "$P/prefs/Resources/Root.plist"
+          grep -q 'Time Horizontal Position' "$P/prefs/Resources/Root.plist"
+          grep -q 'Negative values move LEFT' "$P/prefs/Resources/Root.plist"
+          grep -q 'Date Horizontal Position' "$P/prefs/Resources/Root.plist"
+          grep -q 'Icon Shadow' "$P/prefs/Resources/Root.plist"
           python3 - "$P/prefs/Resources/Root.plist" <<'PY'
           import plistlib, sys
           p = plistlib.load(open(sys.argv[1], 'rb'))
           items = p['items']
           keyed = {x.get('key'): x for x in items if x.get('key')}
           required = [
-              'timeScale','timeColor','timeOffsetX','timeOffsetY','timeAlignment','timeFont','timeFontWeight','timeStyle',
-              'timeShadowEnabled','dateScale','dateColor','dateOffsetX','dateOffsetY','dateAlignment','dateFont','dateFontWeight',
-              'dateStyle','dateFormat','customDateFormat','dateShadowEnabled','iconEnabled','iconName','iconSize','iconColor',
-              'anchorTarget','iconPosition','iconOffsetX','iconOffsetY','shadowEnabled','shadowColor','shadowOpacity','shadowRadius'
+              'timeScale','timeOffsetX','timeOffsetY','timeAlignment','timeFont','timeFontWeight','timeStyle',
+              'timeShadowEnabled','dateScale','dateOffsetX','dateOffsetY','dateAlignment','dateFont','dateFontWeight',
+              'dateStyle','dateFormat','customDateFormat','dateShadowEnabled','iconEnabled','iconName','iconSize',
+              'anchorTarget','iconPosition','iconOffsetX','iconOffsetY','shadowEnabled','shadowOpacity','shadowRadius'
           ]
           missing = [k for k in required if k not in keyed]
           assert not missing, missing
+          assert keyed['timeStyle']['cell'] == 'PSLinkListCell'
+          assert keyed['dateStyle']['cell'] == 'PSLinkListCell'
+          assert keyed['timeFont']['cell'] == 'PSLinkListCell'
+          assert keyed['dateFont']['cell'] == 'PSLinkListCell'
           assert len(keyed['timeFont']['validValues']) >= 25
           assert len(keyed['dateFont']['validValues']) >= 25
           assert len(keyed['iconName']['validValues']) >= 25
+          buttons = [x for x in items if x.get('cell') == 'PSButtonCell']
+          actions = {x.get('action') for x in buttons}
+          for action in ['openTimeColorPicker','openTimeShadowColorPicker','openDateColorPicker','openDateShadowColorPicker','openIconColorPicker','openIconShadowColorPicker']:
+              assert action in actions, action
+          assert not any(x.get('key') in {'timeColor','dateColor','iconColor','timeShadowColor','dateShadowColor','shadowColor'} and x.get('cell') == 'PSEditTextCell' for x in items)
           PY
           plutil -lint "$P/prefs/Resources/Root.plist"
           plutil -lint "$P/prefs/Resources/Info.plist"
@@ -98,7 +103,7 @@ jobs:
           make -C "$P" clean package FINALPACKAGE=1
           DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
           test -n "$DEB"
-          cp "$DEB" "$OUT/LockGlyphTime_0.2.0_Rootless.deb"
+          cp "$DEB" "$OUT/LockGlyphTime_0.2.1_Rootless.deb"
 
       - name: Build RootHide
         shell: bash
@@ -118,7 +123,7 @@ jobs:
           make -C "$P" clean package FINALPACKAGE=1
           DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
           test -n "$DEB"
-          cp "$DEB" "$OUT/LockGlyphTime_0.2.0_RootHide.deb"
+          cp "$DEB" "$OUT/LockGlyphTime_0.2.1_RootHide.deb"
 
       - name: Validate packages
         shell: bash
@@ -127,39 +132,39 @@ jobs:
           validate() {
             deb="$1"; arch="$2"; x="$(mktemp -d)"
             test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
-            test "$(dpkg-deb -f "$deb" Version)" = 0.2.0
+            test "$(dpkg-deb -f "$deb" Version)" = 0.2.1
             test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
             dpkg-deb -f "$deb" Depends | grep -q preferenceloader
             dpkg-deb -x "$deb" "$x"
             dylib="$(find "$x" -type f -name LockGlyphTime.dylib -print -quit)"
             root="$(find "$x" -type f -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
+            prefsbin="$(find "$x" -type f -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
             entry="$(find "$x" -type f -path '*PreferenceLoader/Preferences/LockGlyphTime.plist' -print -quit)"
-            test -n "$dylib"; test -n "$root"; test -n "$entry"
-            grep -q 'Time Color' "$root"
-            grep -q 'Time Font' "$root"
+            test -n "$dylib"; test -n "$root"; test -n "$prefsbin"; test -n "$entry"
+            grep -q 'Time Style' "$root"
             grep -q 'Time Horizontal Position' "$root"
-            grep -q 'Date Color' "$root"
-            grep -q 'Date Font' "$root"
-            grep -q 'Date Format' "$root"
+            grep -q 'Date Horizontal Position' "$root"
             grep -q 'Icon Shadow' "$root"
-            strings -a "$dylib" | grep -q SBFLockScreenDateView
+            strings -a "$dylib" | grep -q LGTApplyPosition
             strings -a "$dylib" | grep -q customTimeEnabled
             strings -a "$dylib" | grep -q customDateEnabled
             strings -a "$dylib" | grep -q sparkles
+            strings -a "$prefsbin" | grep -q UIColorPickerViewController
+            strings -a "$prefsbin" | grep -q openTimeColorPicker
             rm -rf "$x"
           }
           OUT="$RUNNER_TEMP/lockglyphtime-release"
-          validate "$OUT/LockGlyphTime_0.2.0_Rootless.deb" iphoneos-arm64
-          validate "$OUT/LockGlyphTime_0.2.0_RootHide.deb" iphoneos-arm64e
+          validate "$OUT/LockGlyphTime_0.2.1_Rootless.deb" iphoneos-arm64
+          validate "$OUT/LockGlyphTime_0.2.1_RootHide.deb" iphoneos-arm64e
           shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
 
       - name: Upload test packages
         uses: actions/upload-artifact@v4
         with:
-          name: LockGlyphTime-0.2.0-Test-DEBs
+          name: LockGlyphTime-0.2.1-Test-DEBs
           path: |
-            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.0_Rootless.deb
-            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.0_RootHide.deb
+            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.1_Rootless.deb
+            ${{ runner.temp }}/lockglyphtime-release/LockGlyphTime_0.2.1_RootHide.deb
             ${{ runner.temp }}/lockglyphtime-release/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
