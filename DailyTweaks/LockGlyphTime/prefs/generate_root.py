@@ -12,7 +12,6 @@ font_values=["Original","System","System Rounded","System Serif / New York","Sys
 weights=["Ultra Light","Thin","Light","Regular","Medium","Semibold","Bold","Heavy","Black"]
 aligns=["Automatic","Left","Center","Right"]
 
-
 def group(label,footer=None):
  d={"cell":"PSGroupCell","label":label}
  if footer:d["footerText"]=footer
@@ -28,15 +27,15 @@ def save(name,title,items):
  (OUT/f"{name}.plist").write_bytes(plistlib.dumps({"title":title,"items":items},fmt=plistlib.FMT_XML,sort_keys=False))
 
 root=[
- group("GENERAL","NextStyle gives you precise control over your Lock Screen while keeping Apple's native layout as the safe baseline."),
- switch("Enable NextStyle","enabled",True),
+ group("GENERAL","NextLock gives you precise control over your Lock Screen while keeping Apple's native layout as the safe baseline."),
+ switch("Enable NextLock","enabled",True),
  button("Apply Changes","applyNow"),
  group("CUSTOMIZE"),
  link("Time","LGTTimeController"),link("Date","LGTDateController"),link("Icon","LGTIconController"),link("Custom Photo","LGTPhotoController"),
- group("MORE"),link("Advanced","LGTAdvancedController"),link("About NextStyle","LGTAboutController"),
+ group("MORE"),link("Advanced","LGTAdvancedController"),link("About NextLock","LGTAboutController"),
  group("","Crafted with care by Next Solution • nextsolution.cc")
 ]
-save("Root","NextStyle",root)
+save("Root","NextLock",root)
 
 time=[
  group("APPEARANCE","Style the Lock Screen clock independently."),switch("Enable Time Customization","customTimeEnabled",True),button("Color","openTimeColorPicker"),choice("Font","timeFont","Original",font_titles,font_values),choice("Font Weight","timeFontWeight",3,weights,list(range(9))),choice("Style","timeStyle",0,["Default","Normal","Bold","Italic","Bold Italic","Outline","Shadow","Glow"],list(range(8))),choice("Alignment","timeAlignment",0,aligns,[0,1,2,3]),slider("Size","timeScale",1.0,0.5,2.5),
@@ -67,7 +66,7 @@ save("Icon","Icon",icon)
 
 photo=[
  group("CUSTOM PHOTO","Choose an image from Photos and crop/zoom it. Transparent PNG or sticker-style images preserve transparency; normal photos appear as rounded squares."),button("Choose / Edit Photo","openCustomPhotoPicker"),button("Remove Custom Photo","removeCustomPhoto"),
- group("TIP","For a sticker look, select a PNG with transparent pixels. NextStyle automatically detects transparency and removes the square crop at runtime.")
+ group("TIP","For a sticker look, select a PNG with transparent pixels. NextLock automatically detects transparency and removes the square crop at runtime.")
 ]
 save("Photo","Custom Photo",photo)
 
@@ -79,10 +78,10 @@ advanced=[
 save("Advanced","Advanced",advanced)
 
 about=[
- group("NEXTSTYLE","Lock Screen, your way.\nVersion 1.0.0 • by Next Solution"),
+ group("NEXTLOCK","Lock Screen, your way.\nVersion 1.0.0 • by Next Solution"),
  button("Website — nextsolution.cc","openWebsite"),button("YouTube — Next Solution","openYouTube"),
  group("FEATURES","Independent time/date styling • 27 fonts • colors • alignment • position • shadows • date formats • 30+ symbols • transparent sticker photos • rounded photo icons."),
  group("","© 2026 Next Solution")
 ]
 save("About","About",about)
-print("Generated NextStyle preference pages")
+print("Generated NextLock preference pages")
