@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Name: Module Glass Runtime
-Version: 1.0.14
+Version: 1.0.15
 Architecture: iphoneos-arm64e
-Description: Rounded Volume-pattern Module Glass runtime: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses fill from the full module hierarchy, and the validated Volume renderer remains unchanged.
+Description: Rounded Module Glass runtime with value-sized Volume artwork matching Brightness behavior and protected compact-module foreground switch/glyph visibility.
 Maintainer: Next Solution
 Author: Next Solution - zeshan0727
 Section: System
