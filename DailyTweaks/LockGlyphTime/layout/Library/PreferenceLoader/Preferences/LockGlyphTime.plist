@@ -3,7 +3,7 @@
         bundle = LockGlyphTimePrefs;
         cell = PSLinkCell;
         isController = 1;
-        label = NextStyle;
-        icon = NextStyleIcon.png;
+        label = NextLock;
+        icon = NextLockIcon.png;
     };
 }
