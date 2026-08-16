@@ -1,4 +1,4 @@
-name: Publish Aura Category Packages 1.0.2
+name: Publish Modular Tweak Categories 1.0.3
 
 on:
   pull_request:
@@ -58,7 +58,7 @@ jobs:
           cp "$P/NextAuraNotificationIsland.plist" "$RUNNER_TEMP/island/NextAuraNotificationIsland.plist"
           cp "$P/DynamicIsland.plist" "$RUNNER_TEMP/island/DynamicIsland.plist"
 
-      - name: Build native Aura Preferences controller
+      - name: Build category Preferences controller
         shell: bash
         run: |
           set -euo pipefail
@@ -72,7 +72,7 @@ jobs:
           ditto "$BUNDLE" "$RUNNER_TEMP/aura-prefs/AuraPrefs.bundle"
           ldid -S "$RUNNER_TEMP/aura-prefs/AuraPrefs.bundle/AuraPrefs"
 
-      - name: Build 17 Aura category packages
+      - name: Build 17 standalone category packages
         shell: bash
         run: |
           set -euo pipefail
@@ -86,18 +86,18 @@ jobs:
             --prefs-bundle "$RUNNER_TEMP/aura-prefs/AuraPrefs.bundle" \
             --output "$OUT"
 
-      - name: Verify Settings pages and compact icons
+      - name: Verify names panes and 29px Settings icons
         shell: bash
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/nextaura-categories"
           test "$(find "$OUT" -maxdepth 1 -name '*.deb' | wc -l | tr -d ' ')" = 27
-          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_*_1.0.2_RootHide.deb' ! -name 'NextAura_Runtime_*' | wc -l | tr -d ' ')" = 17
-          test -f "$OUT/NextAura_Runtime_preferences_1.0.2_RootHide.deb"
+          test "$(find "$OUT" -maxdepth 1 -name 'NextAura_*_1.0.3_RootHide.deb' ! -name 'NextAura_Runtime_*' | wc -l | tr -d ' ')" = 17
+          test -f "$OUT/NextAura_Runtime_preferences_1.0.3_RootHide.deb"
 
           PREFS="$RUNNER_TEMP/prefs-check"
           mkdir -p "$PREFS"
-          dpkg-deb -x "$OUT/NextAura_Runtime_preferences_1.0.2_RootHide.deb" "$PREFS"
+          dpkg-deb -x "$OUT/NextAura_Runtime_preferences_1.0.3_RootHide.deb" "$PREFS"
           B="$PREFS/Library/PreferenceBundles/AuraPrefs.bundle"
           test -f "$B/AuraPrefs"
           test ! -e "$PREFS/Library/PreferenceBundles/UnlockVibratePrefs.bundle"
@@ -109,36 +109,36 @@ jobs:
           bundle = Path(sys.argv[1])
           out = Path(sys.argv[2])
           categories = {
-              'feedback': ('Aura Haptics','Feedback'),
-              'thermal-sweat': ('Aura Thermal','ThermalSweat'),
-              'home-screen': ('Aura Home','HomeScreen'),
-              'dock-folders': ('Aura Dock','DockFolders'),
-              'lock-screen': ('Aura Lock','LockScreen'),
-              'status-bar': ('Aura Status','StatusBar'),
-              'control-center': ('Aura Control','ControlCenter'),
-              'cc-second-page': ('Aura Panel','CCSecondPage'),
-              'cc-module-backgrounds': ('Aura Modules','CCModuleBackgrounds'),
-              'notification-island': ('Aura Island','DynamicIsland'),
-              'notification-glow': ('Aura Glow','NotificationGlow'),
-              'now-playing': ('Aura Player','NowPlaying'),
-              'notifications': ('Aura Alerts','Notifications'),
-              'app-switcher': ('Aura Switcher','AppSwitcher'),
-              'system-overlays': ('Aura HUD','SystemOverlays'),
-              'animations': ('Aura Motion','Animations'),
-              'safety-recovery': ('Aura Safe','SafetyRecovery'),
+              'feedback': ('Pulse','Feedback'),
+              'thermal-sweat': ('Therma','ThermalSweat'),
+              'home-screen': ('HomeFlow','HomeScreen'),
+              'dock-folders': ('DockCraft','DockFolders'),
+              'lock-screen': ('LockCraft','LockScreen'),
+              'status-bar': ('StatusKit','StatusBar'),
+              'control-center': ('ControlKit','ControlCenter'),
+              'cc-second-page': ('Control Deck','CCSecondPage'),
+              'cc-module-backgrounds': ('Module Glass','CCModuleBackgrounds'),
+              'notification-island': ('Notify Island','DynamicIsland'),
+              'notification-glow': ('Notify Glow','NotificationGlow'),
+              'now-playing': ('NowPlay','NowPlaying'),
+              'notifications': ('NotifyKit','Notifications'),
+              'app-switcher': ('SwitchDeck','AppSwitcher'),
+              'system-overlays': ('HUDKit','SystemOverlays'),
+              'animations': ('Motion','Animations'),
+              'safety-recovery': ('Rescue','SafetyRecovery'),
           }
           info = plistlib.load(open(bundle/'Info.plist','rb'))
           assert info['NSPrincipalClass'] == 'AuraCategoryListController'
-          assert info['CFBundleVersion'] == '1.0.2'
+          assert info['CFBundleVersion'] == '1.0.3'
           for slug,(name,plist_name) in categories.items():
               page = bundle/f'{plist_name}.plist'
               assert page.exists(), page
               data = plistlib.load(open(page,'rb'))
               assert len(data.get('items',[])) > 0, f'blank page {plist_name}'
               icon = bundle/f'NextAura-{slug}.png'
-              assert Image.open(icon).size == (58,58), f'non-compact Settings icon {slug}'
+              assert Image.open(icon).size == (29,29), f'wrong Settings icon size {slug}'
 
-              deb = out/f"NextAura_{slug.replace('-','_')}_1.0.2_RootHide.deb"
+              deb = out/f"NextAura_{slug.replace('-','_')}_1.0.3_RootHide.deb"
               root = Path('/tmp')/f'aura-check-{slug}'
               subprocess.run(['rm','-rf',str(root)])
               subprocess.check_call(['dpkg-deb','-x',str(deb),str(root)])
@@ -146,17 +146,21 @@ jobs:
               assert loader['bundle'] == 'AuraPrefs'
               assert loader['plist'] == plist_name
               assert loader['label'] == name
-              assert 'detail' not in loader, 'old UVSubListController routing still present'
+              assert 'detail' not in loader
               pkg = subprocess.check_output(['dpkg-deb','-f',str(deb),'Package'],text=True).strip()
+              pkgname = subprocess.check_output(['dpkg-deb','-f',str(deb),'Name'],text=True).strip()
               ver = subprocess.check_output(['dpkg-deb','-f',str(deb),'Version'],text=True).strip()
               depends = subprocess.check_output(['dpkg-deb','-f',str(deb),'Depends'],text=True).strip()
               assert pkg == f'com.nextsolution.nextaura.{slug}'
-              assert ver == '1.0.2'
-              assert 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.2)' in depends
-          print('Verified 17 non-empty category panes through AuraCategoryListController and 58x58 Settings icons.')
+              assert pkgname == name
+              assert ver == '1.0.3'
+              assert 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.3)' in depends
+          print('Verified 17 standalone names, non-empty panes and true 29x29 Settings icons.')
           PY
 
           strings -a "$B/AuraPrefs" | grep -q 'AuraCategoryListController'
+          strings -a "$B/AuraPrefs" | grep -q 'Notify Island'
+          strings -a "$B/AuraPrefs" | grep -q 'Control Deck'
           strings -a "$B/AuraPrefs" | grep -q 'testDynamicIslandSuite:'
           strings -a "$B/AuraPrefs" | grep -q 'configureCCModuleBackground:'
           test -f "$OUT/NextAura_Category_Packages.txt"
@@ -164,7 +168,7 @@ jobs:
       - name: Save build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Aura-Modular-Categories-1.0.2
+          name: Modular-Tweak-Categories-1.0.3
           path: |
             ${{ runner.temp }}/nextaura-categories/*.deb
             ${{ runner.temp }}/nextaura-categories/icons/nextaura/*.png
@@ -172,7 +176,7 @@ jobs:
             nextaura-category-island-build.log
             aura-prefs-build.log
 
-      - name: Publish Aura 1.0.2 to nextsolution.cc repo
+      - name: Publish 1.0.3 to nextsolution.cc repo
         shell: bash
         run: |
           set -euo pipefail
@@ -188,9 +192,10 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           mkdir -p debfiles icons/nextaura
-          find debfiles -maxdepth 1 -type f -name 'NextAura_*_1.0.0_RootHide.deb' ! -name 'NextAura_Runtime_*' -delete || true
-          find debfiles -maxdepth 1 -type f -name 'NextAura_*_1.0.1_RootHide.deb' ! -name 'NextAura_Runtime_*' -delete || true
-          rm -f debfiles/NextAura_Runtime_preferences_1.0.0_RootHide.deb debfiles/NextAura_Runtime_preferences_1.0.1_RootHide.deb
+          find debfiles -maxdepth 1 -type f \( -name 'NextAura_*_1.0.0_RootHide.deb' -o -name 'NextAura_*_1.0.1_RootHide.deb' -o -name 'NextAura_*_1.0.2_RootHide.deb' \) ! -name 'NextAura_Runtime_*' -delete || true
+          rm -f debfiles/NextAura_Runtime_preferences_1.0.0_RootHide.deb \
+                debfiles/NextAura_Runtime_preferences_1.0.1_RootHide.deb \
+                debfiles/NextAura_Runtime_preferences_1.0.2_RootHide.deb
           cp "$SAVED"/*.deb debfiles/
           cp "$SAVED/NextAura_Category_Packages.txt" debfiles/
           cp "$SAVED/icons/nextaura"/*.png icons/nextaura/
@@ -216,7 +221,7 @@ jobs:
                   continue
               kept.append(stanza)
           packages.write_text('\n\n'.join(kept + new_stanzas) + '\n')
-          print(f'Replaced {len(new_ids)} Aura package stanzas.')
+          print(f'Replaced {len(new_ids)} modular package stanzas.')
           PY
 
           gzip -9 -c Packages > Packages.gz
@@ -240,8 +245,8 @@ jobs:
 
           git add debfiles icons/nextaura Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           if git diff --cached --quiet; then
-            echo "Aura 1.0.2 already published."
+            echo "1.0.3 already published."
             exit 0
           fi
-          git commit -m "Publish Aura 1.0.2 preferences fix"
+          git commit -m "Publish standalone tweak names 1.0.3"
           git push origin HEAD:main
