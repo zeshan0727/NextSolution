@@ -6,7 +6,7 @@ Description: Next Solution lock-screen customization suite for time, date, fonts
 Maintainer: Next Solution - Zeeshan Barvi
 Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
-Depends: firmware (>= 15.0), preferenceloader
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Homepage: https://nextsolution.cc
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 SileoDepiction: https://nextsolution.cc/depictions/nextlock.html
