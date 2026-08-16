@@ -47,7 +47,7 @@ __attribute__((constructor(101))) static void ModuleGlassEarlyBootstrap(void) {
         void *handle = dlopen("/System/Library/PrivateFrameworks/ControlCenterUI.framework/ControlCenterUI", RTLD_LAZY | RTLD_LOCAL);
         Class moduleClass = NSClassFromString(@"CCUIModuleContainerViewController");
         Class contentClass = NSClassFromString(@"CCUIContentModuleContainerViewController");
-        MGBootWrite([NSString stringWithFormat:@"ModuleGlass runtime process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@",
+        MGBootWrite([NSString stringWithFormat:@"Passive sibling overlay runtime process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@",
                      NSBundle.mainBundle.bundleIdentifier ?: @"<nil>", getpid(), handle,
                      moduleClass ? NSStringFromClass(moduleClass) : @"<missing>",
                      contentClass ? NSStringFromClass(contentClass) : @"<missing>"]);
