@@ -14,12 +14,14 @@ static NSString * const MGPreviousLogPath = @"/var/mobile/Library/Logs/NextSolut
 static CFStringRef const MGPrefsDomain = CFSTR("com.nextsolution.unlockvibrate");
 static NSInteger const MGImageTag = 0x4D470106;
 static NSInteger const MGVolumeIconOverlayTag = 0x4D475649;
+static NSInteger const MGVolumePercentageOverlayTag = 0x4D475650;
 
 static NSHashTable *MGControllers;
 static char MGLastDiagnosticKey;
 static char MGVolumeOriginalAlphaKey;
 static char MGVolumeOriginalIconAlphaKey;
 static char MGVolumeIconOverlayKey;
+static char MGVolumeOriginalPercentageAlphaKey;
 
 static void (*MGOrigModuleViewDidLoad)(id, SEL);
 static void (*MGOrigModuleLayout)(id, SEL);
@@ -294,14 +296,14 @@ static UIColor *MGVolumeColorFromHex(NSString *input) {
     return [UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
-static void MGRestoreVolumeIconPresentation(UIView *root) {
+static void MGRestoreVolumeColorPresentation(UIView *root) {
     if (!root) return;
     for (UIView *child in [root.subviews copy]) {
-        if (child.tag == MGVolumeIconOverlayTag) {
+        if (child.tag == MGVolumeIconOverlayTag || child.tag == MGVolumePercentageOverlayTag) {
             [child removeFromSuperview];
             continue;
         }
-        MGRestoreVolumeIconPresentation(child);
+        MGRestoreVolumeColorPresentation(child);
     }
     if ([root isKindOfClass:UIImageView.class]) {
         NSNumber *savedAlpha = objc_getAssociatedObject(root, &MGVolumeOriginalIconAlphaKey);
@@ -309,6 +311,13 @@ static void MGRestoreVolumeIconPresentation(UIView *root) {
             root.alpha = savedAlpha.doubleValue;
             objc_setAssociatedObject(root, &MGVolumeOriginalIconAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             objc_setAssociatedObject(root, &MGVolumeIconOverlayKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+    }
+    if ([root isKindOfClass:UILabel.class]) {
+        NSNumber *savedAlpha = objc_getAssociatedObject(root, &MGVolumeOriginalPercentageAlphaKey);
+        if (savedAlpha) {
+            root.alpha = savedAlpha.doubleValue;
+            objc_setAssociatedObject(root, &MGVolumeOriginalPercentageAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
     }
 }
@@ -390,6 +399,106 @@ static BOOL MGApplyVolumeIconTint(UIView *slider, UIColor *color, NSString **out
 
     if (outClass) *outClass=[NSString stringWithFormat:@"%@+overlay", NSStringFromClass(icon.class) ?: @"UIImageView"];
     if (outFrame) *outFrame=[overlay convertRect:overlay.bounds toView:slider];
+    return YES;
+}
+
+static NSInteger MGVolumePercentageScore(UILabel *label, UIView *slider) {
+    if (!label || !slider || label.tag == MGVolumePercentageOverlayTag || label.hidden) return -1;
+    NSString *text = label.text ?: @"";
+    NSString *trimmed = [text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    if (!trimmed.length) return -1;
+
+    CGRect rect = [label convertRect:label.bounds toView:slider];
+    CGFloat w = CGRectGetWidth(rect), h = CGRectGetHeight(rect);
+    if (w < 8.0 || h < 8.0 || w > 120.0 || h > 70.0) return -1;
+
+    NSInteger score = 0;
+    if ([trimmed containsString:@"%"] ) score += 10000;
+    NSCharacterSet *allowed = [NSCharacterSet characterSetWithCharactersInString:@"0123456789% ."];
+    if ([[trimmed stringByTrimmingCharactersInSet:allowed] length] == 0) score += 2500;
+
+    NSString *names = @"";
+    UIView *cursor = label;
+    for (NSInteger i = 0; i < 5 && cursor; i++, cursor = cursor.superview) {
+        names = [names stringByAppendingFormat:@" %@", NSStringFromClass(cursor.class).lowercaseString ?: @""];
+    }
+    for (NSString *needle in @[@"percentage", @"percent", @"value", @"volume", @"audio", @"slider"]) {
+        if ([names containsString:needle]) score += 1200;
+    }
+
+    CGFloat midX = CGRectGetMidX(rect);
+    if (fabs(midX - CGRectGetMidX(slider.bounds)) < CGRectGetWidth(slider.bounds) * 0.40) score += 700;
+    return score;
+}
+
+static void MGCollectVolumePercentageCandidates(UIView *root, UIView *slider, NSMutableArray<UILabel *> *out) {
+    if (!root) return;
+    if ([root isKindOfClass:UILabel.class] && root.tag != MGVolumePercentageOverlayTag) {
+        UILabel *label=(UILabel *)root;
+        if (MGVolumePercentageScore(label, slider) >= 0) [out addObject:label];
+    }
+    for (UIView *child in root.subviews) MGCollectVolumePercentageCandidates(child, slider, out);
+}
+
+static UILabel *MGFindVolumePercentageLabel(UIView *slider) {
+    if (!slider) return nil;
+    NSMutableArray<UILabel *> *candidates=[NSMutableArray array];
+    MGCollectVolumePercentageCandidates(slider, slider, candidates);
+    UILabel *best=nil;
+    NSInteger bestScore=-1;
+    for (UILabel *candidate in candidates) {
+        NSInteger score=MGVolumePercentageScore(candidate, slider);
+        if (score > bestScore) { best=candidate; bestScore=score; }
+    }
+    return bestScore >= 2000 ? best : nil;
+}
+
+static BOOL MGApplyVolumePercentageTint(UIView *slider, UIColor *color, NSString **outClass, CGRect *outFrame, NSString **outText) {
+    if (!slider || !color) return NO;
+    UILabel *label=MGFindVolumePercentageLabel(slider);
+    if (!label || !label.superview) return NO;
+
+    NSNumber *storedAlpha=objc_getAssociatedObject(label, &MGVolumeOriginalPercentageAlphaKey);
+    CGFloat sourceAlpha=storedAlpha ? storedAlpha.doubleValue : label.alpha;
+    if (!storedAlpha) {
+        objc_setAssociatedObject(label, &MGVolumeOriginalPercentageAlphaKey, @(label.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+
+    UILabel *overlay=[[UILabel alloc] initWithFrame:CGRectZero];
+    overlay.tag=MGVolumePercentageOverlayTag;
+    overlay.userInteractionEnabled=NO;
+    overlay.backgroundColor=UIColor.clearColor;
+    overlay.bounds=label.bounds;
+    overlay.center=label.center;
+    overlay.transform=label.transform;
+    overlay.alpha=sourceAlpha;
+    overlay.hidden=label.hidden;
+    overlay.font=label.font;
+    overlay.textAlignment=label.textAlignment;
+    overlay.numberOfLines=label.numberOfLines;
+    overlay.lineBreakMode=label.lineBreakMode;
+    overlay.baselineAdjustment=label.baselineAdjustment;
+    overlay.adjustsFontSizeToFitWidth=label.adjustsFontSizeToFitWidth;
+    overlay.minimumScaleFactor=label.minimumScaleFactor;
+    overlay.contentMode=label.contentMode;
+    overlay.layer.cornerRadius=label.layer.cornerRadius;
+    overlay.layer.masksToBounds=label.layer.masksToBounds;
+
+    if (label.attributedText.length) {
+        NSMutableAttributedString *a=[label.attributedText mutableCopy];
+        [a addAttribute:NSForegroundColorAttributeName value:color range:NSMakeRange(0, a.length)];
+        overlay.attributedText=a;
+    } else {
+        overlay.text=label.text;
+        overlay.textColor=color;
+    }
+
+    [label.superview insertSubview:overlay aboveSubview:label];
+    label.alpha=0.0;
+
+    if (outClass) *outClass=[NSString stringWithFormat:@"%@+overlay", NSStringFromClass(label.class) ?: @"UILabel"];
+    if (outFrame) *outFrame=[overlay convertRect:overlay.bounds toView:slider];
+    if (outText) *outText=overlay.text ?: overlay.attributedText.string ?: @"";
     return YES;
 }
 
@@ -483,7 +592,7 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSArray<NSString *> *candidates = nil;
     NSString *slot = MGSlotForController(controller, &candidates);
-    MGRestoreVolumeIconPresentation(root);
+    MGRestoreVolumeColorPresentation(root);
     MGRestoreVolumeVisuals(root);
     BOOL expanded = MGIsExpanded(root);
     BOOL enabled = MGBoolPreference(@"CCModuleBackgroundsEnabled", YES);
@@ -502,6 +611,10 @@ static void MGApplyController(id controller, NSString *source) {
     BOOL volumeIconApplied = NO;
     NSString *volumeIconClass = @"<none>";
     CGRect volumeIconFrame = CGRectZero;
+    BOOL volumePercentageApplied = NO;
+    NSString *volumePercentageClass = @"<none>";
+    CGRect volumePercentageFrame = CGRectZero;
+    NSString *volumePercentageText = @"";
     BOOL volumeIconColorEnabled = [slot isEqualToString:@"volume"] && MGBoolPreference(@"CCModuleVolumeIconColorEnabled", NO);
     NSString *volumeIconColorHex = [[MGPreference(@"CCModuleVolumeIconColor") description] copy] ?: @"";
     if (volumeIconColorEnabled) {
@@ -509,13 +622,14 @@ static void MGApplyController(id controller, NSString *source) {
         UIColor *volumeColor = MGVolumeColorFromHex(volumeIconColorHex);
         if (volumeSlider && volumeColor) {
             volumeIconApplied = MGApplyVolumeIconTint(volumeSlider, volumeColor, &volumeIconClass, &volumeIconFrame);
+            volumePercentageApplied = MGApplyVolumePercentageTint(volumeSlider, volumeColor, &volumePercentageClass, &volumePercentageFrame, &volumePercentageText);
         }
     }
 
     if (!enabled || !exists) {
         MGRemoveTaggedImages(root, nil);
         NSString *sig = [NSString stringWithFormat:@"inactive|%@|%d|%d|icon=%d|%@", slot, enabled, exists, volumeIconApplied, volumeIconColorHex];
-        MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"apply source=%@ controller=%@ slot=%@ enabled=%d exists=%d expanded=0 result=removed volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@", source, NSStringFromClass([controller class]), slot, enabled, exists, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame)]);
+        MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"apply source=%@ controller=%@ slot=%@ enabled=%d exists=%d expanded=0 result=removed volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@", source, NSStringFromClass([controller class]), slot, enabled, exists, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText]);
         return;
     }
 
@@ -568,8 +682,8 @@ static void MGApplyController(id controller, NSString *source) {
 
     NSString *sig = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|%.0fx%.0f|%@", slot, strategy, enabled, exists, opacity, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), path];
     MGDiagnosticOnce(controller, sig,
-                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ volumeSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
-                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)volumeSuppressed, volumeSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), glow, glowIntensity, glowWidth]);
+                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ volumeSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
+                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)volumeSuppressed, volumeSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
 }
 
 static void MGTrackAndApply(id controller, NSString *source) {
@@ -639,7 +753,7 @@ __attribute__((constructor)) static void MGInit(void) {
         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-        MGLog(@"ModuleGlassRuntime 1.0.9 Volume Color Overlay loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+        MGLog(@"ModuleGlassRuntime 1.0.10 Volume Icon+Percentage Color loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
         MGLog(@"Volume-isolated image-first runtime with persistent icon color overlay process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
     }
