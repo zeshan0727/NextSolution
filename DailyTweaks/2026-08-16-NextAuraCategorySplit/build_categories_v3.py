@@ -13,13 +13,13 @@ spec = importlib.util.spec_from_file_location("aura_v2", BASE)
 v2 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(v2)
 
-CATEGORY_VERSION = "1.0.3"
-PREFS_RUNTIME_VERSION = "1.0.3"
+CATEGORY_VERSION = "1.0.4"
+PREFS_RUNTIME_VERSION = "1.0.4"
 RUNTIME_VERSION = v2.RUNTIME_VERSION
 RUNTIMES = v2.RUNTIMES
 
 # Keep package IDs and plist names stable so existing modular installs update in-place,
-# while user-facing names become short standalone tweak names.
+# while user-facing names remain short standalone tweak names.
 CATEGORIES = [
     ("feedback", "Pulse", "Feedback", ["feedback"], "Unlock and call-connect vibration feedback."),
     ("thermal-sweat", "Therma", "ThermalSweat", ["thermal"], "Temperature-aware battery visuals, Sweat My Phone effects and battery percentage tools."),
@@ -40,14 +40,47 @@ CATEGORIES = [
     ("safety-recovery", "Rescue", "SafetyRecovery", ["safe"], "Crash-guard recovery and reset tools for advanced visual controls."),
 ]
 
-# Make imported helpers emit the new metadata.
 v2.CATEGORY_VERSION = CATEGORY_VERSION
 v2.PREFS_RUNTIME_VERSION = PREFS_RUNTIME_VERSION
 v2.CATEGORIES = CATEGORIES
 
 
+def patch_module_glass_page(path: Path):
+    with path.open("rb") as f:
+        page = plistlib.load(f)
+    items = page.setdefault("items", [])
+    # Avoid duplicate buttons when rebuilding locally.
+    items = [
+        item for item in items
+        if item.get("action") not in ("applyCCModuleBackgrounds:", "respringDevice:")
+        and item.get("label") != "Apply & Restart"
+    ]
+    items.extend([
+        {
+            "cell": "PSGroupCell",
+            "label": "Apply & Restart",
+            "footerText": "Apply refreshes Module Glass immediately. If Control Center is already cached, use Respring for a complete SpringBoard reload. Choosing a photo automatically enables module backgrounds.",
+        },
+        {
+            "cell": "PSButtonCell",
+            "label": "Apply Module Glass",
+            "action": "applyCCModuleBackgrounds:",
+            "description": "Reloads Module Glass settings and selected images without changing your other tweaks.",
+        },
+        {
+            "cell": "PSButtonCell",
+            "label": "Respring",
+            "action": "respringDevice:",
+            "description": "Restarts SpringBoard so Control Center recreates all module views and reloads their backgrounds.",
+        },
+    ])
+    page["items"] = items
+    with path.open("wb") as f:
+        plistlib.dump(page, f, sort_keys=False)
+
+
 def build_preferences_runtime(base_root: Path, out: Path, dynamic_plist: Path, icon_dir: Path, compiled_bundle: Path):
-    stage = Path(tempfile.mkdtemp(prefix="aura-prefs-runtime-v103-"))
+    stage = Path(tempfile.mkdtemp(prefix="aura-prefs-runtime-v104-"))
     try:
         if not compiled_bundle.exists():
             raise FileNotFoundError(compiled_bundle)
@@ -59,15 +92,15 @@ def build_preferences_runtime(base_root: Path, out: Path, dynamic_plist: Path, i
         if safe_keys.exists():
             shutil.copy2(safe_keys, target / "SafeLabKeys.plist")
 
-        # Every category page lives beside the principal controller executable.
         for slug, _name, plist_name, _runtimes, _description in CATEGORIES:
             src = dynamic_plist if plist_name == "DynamicIsland" else original / f"{plist_name}.plist"
             if not src.exists():
                 raise FileNotFoundError(f"Missing Settings page {plist_name}: {src}")
-            shutil.copy2(src, target / f"{plist_name}.plist")
+            destination = target / f"{plist_name}.plist"
+            shutil.copy2(src, destination)
+            if plist_name == "CCModuleBackgrounds":
+                patch_module_glass_page(destination)
 
-            # PreferenceLoader treats these pixel dimensions directly on this iOS 16 setup.
-            # Use a true 29x29 PNG so the Settings list icon matches normal tweak panes.
             source_icon = icon_dir / f"{slug}.png"
             with Image.open(source_icon) as image:
                 compact = image.convert("RGBA").resize((29, 29), Image.Resampling.LANCZOS)
@@ -100,7 +133,7 @@ def build_preferences_runtime(base_root: Path, out: Path, dynamic_plist: Path, i
 
 def build_category(out: Path, item):
     slug, name, plist_name, runtimes, description = item
-    stage = Path(tempfile.mkdtemp(prefix=f"aura-category-v103-{slug}-"))
+    stage = Path(tempfile.mkdtemp(prefix=f"aura-category-v104-{slug}-"))
     try:
         loader_dir = stage / "Library" / "PreferenceLoader" / "Preferences"
         loader_dir.mkdir(parents=True, exist_ok=True)
@@ -159,8 +192,8 @@ def main():
 
     out = Path(args.output).resolve()
     out.mkdir(parents=True, exist_ok=True)
-    icon_dir = v2.generate_icons(out)  # 512x512 artwork for Sileo/repo presentation.
-    base_root = Path(tempfile.mkdtemp(prefix="aura-base-v103-"))
+    icon_dir = v2.generate_icons(out)
+    base_root = Path(tempfile.mkdtemp(prefix="aura-base-v104-"))
     try:
         v2.run("dpkg-deb", "-x", Path(args.base_deb).resolve(), base_root)
         dynamic_plist = Path(args.dynamic_plist).resolve()
@@ -186,7 +219,7 @@ def main():
             f.write(f"Preferences\n  Package: {v2.runtime_id('preferences')}\n  File: {pref_runtime.name}\n")
             for key, deb in zip(RUNTIMES.keys(), code_runtimes):
                 f.write(f"{key}\n  Package: {v2.runtime_id(key)}\n  File: {deb.name}\n")
-        print("Built 1.0.3: 17 standalone category packages with 29x29 Settings icons.")
+        print("Built 1.0.4: 17 standalone category packages with Module Glass storage/apply fixes.")
     finally:
         shutil.rmtree(base_root, ignore_errors=True)
 
