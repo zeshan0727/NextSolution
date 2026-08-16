@@ -1,0 +1,23 @@
+name: Export IMG 3647
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/export-img3647.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export exact transferred image
+        uses: actions/upload-artifact@v4
+        with:
+          name: img3647-exact
+          path: transfer/uploads/20260816-105127-971CA95A-E243-481E-B167-C52FDAB97843-IMG_3647.png
+          if-no-files-found: error
+          compression-level: 0
