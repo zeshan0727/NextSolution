@@ -10,12 +10,12 @@ from PIL import Image, ImageDraw
 
 CATEGORY_VERSION = "1.0.1"
 RUNTIME_VERSION = "1.0.0"
+PREFS_RUNTIME_VERSION = "1.0.1"
 HOMEPAGE = "https://nextsolution.cc/"
 OLD_PACKAGE = "com.nextsolution.unlockvibrate"
 ICON_BASE_URL = "https://nextsolution.cc/icons/nextaura"
 
-# Package IDs/slugs remain unchanged so existing modular installs receive a normal
-# update. Only the visible names/icons are refined.
+# Package IDs/slugs stay unchanged so existing modular installations update in-place.
 CATEGORIES = [
     ("feedback", "Aura Haptics", "Feedback", ["feedback"], "Unlock and call-connect vibration feedback from NextAura."),
     ("thermal-sweat", "Aura Thermal", "ThermalSweat", ["thermal"], "Temperature-aware battery visuals, Sweat My Phone effects and battery percentage tools."),
@@ -48,8 +48,6 @@ RUNTIMES = {
     "island": ["NextAuraNotificationIsland.dylib", "NextAuraNotificationIsland.plist"],
 }
 
-# Distinct accents for every user-facing package. Icons are drawn from geometry,
-# not the Next Solution logo, and are intentionally recognizable at Sileo size.
 ACCENTS = {
     "feedback": ((98, 76, 255), (190, 95, 255)),
     "thermal-sweat": ((255, 89, 65), (255, 170, 45)),
@@ -93,7 +91,6 @@ def _gradient(size, a, b):
     for y in range(size):
         t = y / max(1, size - 1)
         for x in range(size):
-            # slight diagonal shift keeps the icons visually richer while staying clean.
             tt = min(1.0, max(0.0, (t * 0.72) + (x / max(1, size - 1)) * 0.28))
             px[x, y] = tuple(int(a[i] * (1 - tt) + b[i] * tt) for i in range(3)) + (255,)
     return img
@@ -198,8 +195,6 @@ def draw_icon(slug: str, path: Path, size=512):
     elif slug == "safety-recovery":
         d.polygon([(256, 76), (408, 132), (390, 306), (256, 432), (122, 306), (104, 132)], fill=white)
         _line(d, [(184, 260), (236, 315), (338, 202)], fill=a + (255,), width=32)
-    else:
-        d.ellipse((128, 128, 384, 384), fill=white)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     img.save(path, "PNG", optimize=True)
@@ -224,9 +219,11 @@ def control(stage: Path, fields: dict):
     (d / "control").write_text("\n".join(lines) + "\n")
 
 
-def postinst(stage: Path, respring=False):
+def postinst(stage: Path, respring=False, kill_settings=False):
     p = stage / "DEBIAN" / "postinst"
     text = "#!/bin/sh\n"
+    if kill_settings:
+        text += "killall -9 Preferences 2>/dev/null || true\n"
     if respring:
         text += "if command -v sbreload >/dev/null 2>&1; then sbreload || true; fi\n"
     text += "exit 0\n"
@@ -242,11 +239,11 @@ def build(stage: Path, output: Path):
         run("dpkg-deb", "-Zxz", "-b", stage, output)
 
 
-def internal_fields(pkg, name, description):
+def internal_fields(pkg, name, description, version=RUNTIME_VERSION):
     return {
         "Package": pkg,
         "Name": name,
-        "Version": RUNTIME_VERSION,
+        "Version": version,
         "Architecture": "iphoneos-arm64e",
         "Description": description,
         "Maintainer": "Next Solution",
@@ -262,7 +259,12 @@ def internal_fields(pkg, name, description):
     }
 
 
-def build_preferences_runtime(base_root: Path, out: Path):
+def build_preferences_runtime(base_root: Path, out: Path, dynamic_plist: Path, icon_dir: Path):
+    """Build one complete Preferences bundle containing every category resource.
+
+    Keeping executable + all .plist pages + all Settings icons in one DEB prevents
+    NSBundle resource-cache misses that produced blank modular pages on-device.
+    """
     source = base_root / "Library" / "PreferenceBundles" / "UnlockVibratePrefs.bundle"
     stage = Path(tempfile.mkdtemp(prefix="nextaura-prefs-runtime-"))
     try:
@@ -272,18 +274,33 @@ def build_preferences_runtime(base_root: Path, out: Path):
             shutil.copy2(source / name, target / name)
         if (source / "SafeLabKeys.plist").exists():
             shutil.copy2(source / "SafeLabKeys.plist", target / "SafeLabKeys.plist")
+
+        # Bundle all 17 category pages alongside the controller binary.
+        for slug, _name, plist_name, _runtimes, _description in CATEGORIES:
+            src = dynamic_plist if plist_name == "DynamicIsland" else source / f"{plist_name}.plist"
+            if not src.exists():
+                raise FileNotFoundError(f"Missing Settings page {plist_name}: {src}")
+            shutil.copy2(src, target / f"{plist_name}.plist")
+            shutil.copy2(icon_dir / f"{slug}.png", target / f"NextAura-{slug}.png")
+
         info_path = target / "Info.plist"
         with info_path.open("rb") as f:
             info = plistlib.load(f)
-        info["CFBundleShortVersionString"] = RUNTIME_VERSION
-        info["CFBundleVersion"] = RUNTIME_VERSION
+        info["CFBundleShortVersionString"] = PREFS_RUNTIME_VERSION
+        info["CFBundleVersion"] = PREFS_RUNTIME_VERSION
         with info_path.open("wb") as f:
             plistlib.dump(info, f, sort_keys=False)
-        fields = internal_fields(runtime_id("preferences"), "NextAura Preferences Runtime", "Internal Preferences controller shared by modular NextAura category packages.")
+
+        fields = internal_fields(
+            runtime_id("preferences"),
+            "NextAura Preferences Runtime",
+            "Internal Preferences controller and category resources shared by modular NextAura packages.",
+            PREFS_RUNTIME_VERSION,
+        )
         fields["Depends"] = "firmware (>= 16.0), preferenceloader"
         control(stage, fields)
-        postinst(stage, False)
-        deb = out / f"NextAura_Runtime_preferences_{RUNTIME_VERSION}_RootHide.deb"
+        postinst(stage, False, True)
+        deb = out / f"NextAura_Runtime_preferences_{PREFS_RUNTIME_VERSION}_RootHide.deb"
         build(stage, deb)
         return deb
     finally:
@@ -322,24 +339,14 @@ def build_code_runtimes(base_root: Path, out: Path, island_dylib: Path, island_p
     return result
 
 
-def build_category(base_root: Path, out: Path, dynamic_plist: Path, icon_dir: Path, item):
+def build_category(out: Path, item):
+    """Visible category DEBs only register a PreferenceLoader entry.
+
+    All actual page resources live in the single shared Preferences runtime bundle.
+    """
     slug, name, plist_name, runtimes, description = item
     stage = Path(tempfile.mkdtemp(prefix=f"nextaura-category-{slug}-"))
     try:
-        source_bundle = base_root / "Library" / "PreferenceBundles" / "UnlockVibratePrefs.bundle"
-        pref_target = stage / "Library" / "PreferenceBundles" / "UnlockVibratePrefs.bundle"
-        pref_target.mkdir(parents=True, exist_ok=True)
-        source_plist = source_bundle / f"{plist_name}.plist"
-        if plist_name == "DynamicIsland":
-            source_plist = dynamic_plist
-        if not source_plist.exists():
-            raise FileNotFoundError(source_plist)
-        shutil.copy2(source_plist, pref_target / f"{plist_name}.plist")
-
-        # Each category owns a distinct Settings icon; no shared Next Solution logo.
-        settings_icon_name = f"NextAura-{slug}.png"
-        shutil.copy2(icon_dir / f"{slug}.png", pref_target / settings_icon_name)
-
         loader_dir = stage / "Library" / "PreferenceLoader" / "Preferences"
         loader_dir.mkdir(parents=True, exist_ok=True)
         loader = {
@@ -348,7 +355,7 @@ def build_category(base_root: Path, out: Path, dynamic_plist: Path, icon_dir: Pa
                 "cell": "PSLinkCell",
                 "detail": "UVSubListController",
                 "isController": True,
-                "icon": settings_icon_name,
+                "icon": f"NextAura-{slug}.png",
                 "label": name,
                 "plist": plist_name,
             }
@@ -356,7 +363,7 @@ def build_category(base_root: Path, out: Path, dynamic_plist: Path, icon_dir: Pa
         with (loader_dir / f"NextAura-{slug}.plist").open("wb") as f:
             plistlib.dump(loader, f, sort_keys=False)
 
-        deps = ["firmware (>= 16.0)", "preferenceloader", f"{runtime_id('preferences')} (>= {RUNTIME_VERSION})"]
+        deps = ["firmware (>= 16.0)", "preferenceloader", f"{runtime_id('preferences')} (>= {PREFS_RUNTIME_VERSION})"]
         deps.extend(f"{runtime_id(r)} (>= {RUNTIME_VERSION})" for r in runtimes)
         fields = {
             "Package": package_id(slug),
@@ -374,7 +381,7 @@ def build_category(base_root: Path, out: Path, dynamic_plist: Path, icon_dir: Pa
             "Icon": icon_url(slug),
         }
         control(stage, fields)
-        postinst(stage, True)
+        postinst(stage, True, True)
         deb = out / f"NextAura_{slug.replace('-', '_')}_{CATEGORY_VERSION}_RootHide.deb"
         build(stage, deb)
         return deb
@@ -397,14 +404,15 @@ def main():
     base_root = Path(tempfile.mkdtemp(prefix="nextaura-base-"))
     try:
         run("dpkg-deb", "-x", Path(args.base_deb).resolve(), base_root)
-        pref_runtime = build_preferences_runtime(base_root, out)
+        dynamic_plist = Path(args.dynamic_plist).resolve()
+        pref_runtime = build_preferences_runtime(base_root, out, dynamic_plist, icon_dir)
         code_runtimes = build_code_runtimes(base_root, out, Path(args.island_dylib).resolve(), Path(args.island_plist).resolve())
-        category_debs = [build_category(base_root, out, Path(args.dynamic_plist).resolve(), icon_dir, item) for item in CATEGORIES]
+        category_debs = [build_category(out, item) for item in CATEGORIES]
 
         manifest = out / "NextAura_Category_Packages.txt"
         with manifest.open("w") as f:
             f.write("NextAura modular category packages\n")
-            f.write(f"Category version: {CATEGORY_VERSION}\nRuntime version: {RUNTIME_VERSION}\n\n")
+            f.write(f"Category version: {CATEGORY_VERSION}\nCode runtime version: {RUNTIME_VERSION}\nPreferences runtime version: {PREFS_RUNTIME_VERSION}\n\n")
             f.write("USER-FACING CATEGORIES\n")
             for item, deb in zip(CATEGORIES, category_debs):
                 slug, name, _, _, _ = item
@@ -413,7 +421,7 @@ def main():
             f.write(f"Preferences\n  Package: {runtime_id('preferences')}\n  File: {pref_runtime.name}\n")
             for key, deb in zip(RUNTIMES.keys(), code_runtimes):
                 f.write(f"{key}\n  Package: {runtime_id(key)}\n  File: {deb.name}\n")
-        print(f"Built {len(category_debs)} visible category DEBs and {1 + len(code_runtimes)} hidden runtime DEBs with unique icons")
+        print(f"Built {len(category_debs)} visible category DEBs and {1 + len(code_runtimes)} hidden runtime DEBs with bundled Settings resources")
     finally:
         shutil.rmtree(base_root, ignore_errors=True)
 
