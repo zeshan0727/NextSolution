@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-16T08:45:23Z",
+  "updatedAt": "2026-08-16T08:47:36Z",
   "files": [
+    {
+      "id": "nextsolution-transfer-1.1.0",
+      "name": "NextSolution Transfer 1.1.0",
+      "fileName": "NextSolution-Transfer-1.1.0.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.1.0",
+      "url": "https://nextsolution.app/transfer/files/NextSolutionTransfer/1.1.0/NextSolution-Transfer-1.1.0.tipa",
+      "sha256": "77960fa3a226e98a76a1e8fc6b690c96f1b47147485ada309472ced1ea2523ac",
+      "notes": "Transfer app with direct website downloads and secure GitHub-repo uploads."
+    },
     {
       "id": "lockglyphtime-0.2.2-rootless",
       "name": "LockGlyphTime 0.2.2 Rootless",
