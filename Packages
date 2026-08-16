@@ -1087,19 +1087,19 @@ Author: Next Solution - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextdiagnostics.runtime
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm64e
 Maintainer: Next Solution
 Depends: firmware (>= 15.0), mobilesubstrate
-Filename: ./debfiles/NextDiagnosticsRuntime_1.0.0_RootHide.deb
-Size: 12300
-MD5sum: 3c95f134a353451eb090057c7c63bf13
-SHA1: be7ad1b73459382abf0ce024eb58e8049680998f
-SHA256: e479b09420fb6eccdf5cb696287db48da29ab488d06255ee070656e628ed8e46
+Filename: ./debfiles/NextDiagnosticsRuntime_1.0.1_RootHide.deb
+Size: 12292
+MD5sum: 9153f65cfb5e33fe763654ed871c53a1
+SHA1: 07038f00a9aa03f46084712ed55e1f8c786313f9
+SHA256: af3f6c89fa93f204f934e12507aeaf3fb4e076b34b586a5f956ebf9c421d06a6
 Section: System
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Shared RootHide diagnostic runtime for Next Solution tweaks. It remains idle until Next Log starts a focused capture, then reports process injection and loaded tweak dylibs.
+Description: Shared RootHide diagnostic runtime for Next Solution tweaks. Idle until Next Log starts a focused capture, then reports target-process injection and loaded tweak dylibs.
 Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: Next Diagnostics Runtime
