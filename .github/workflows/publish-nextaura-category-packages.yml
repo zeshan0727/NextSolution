@@ -187,6 +187,11 @@ jobs:
           cp "$OUT/NextAura_Category_Packages.txt" "$SAVED/"
           cp "$OUT/icons/nextaura"/*.png "$SAVED/icons/nextaura/"
 
+          # Module Glass has its own source-controlled runtime and dedicated publisher.
+          # Never allow this general 1.0.4 publisher to downgrade it or its runtime.
+          rm -f "$SAVED/NextAura_cc_module_backgrounds_1.0.4_RootHide.deb"
+          rm -f "$SAVED/NextAura_Runtime_ccbackgrounds_1.0.0_RootHide.deb"
+
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
           git fetch origin main
@@ -222,7 +227,7 @@ jobs:
                   continue
               kept.append(stanza)
           packages.write_text('\n\n'.join(kept + new_stanzas) + '\n')
-          print(f'Replaced {len(new_ids)} modular package stanzas.')
+          print(f'Replaced {len(new_ids)} modular package stanzas; preserved dedicated Module Glass.')
           PY
 
           gzip -9 -c Packages > Packages.gz
@@ -246,8 +251,8 @@ jobs:
 
           git add debfiles icons/nextaura Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           if git diff --cached --quiet; then
-            echo "1.0.4 already published."
+            echo "1.0.4 already published without touching Module Glass."
             exit 0
           fi
-          git commit -m "Publish modular tweaks 1.0.4 Module Glass fix"
+          git commit -m "Publish modular tweaks 1.0.4 without downgrading Module Glass"
           git push origin HEAD:main
