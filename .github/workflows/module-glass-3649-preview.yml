@@ -6,36 +6,17 @@ on:
       - '.github/workflows/module-glass-3649-preview.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Upload exact IMG_3649 preview
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 0
-      - name: Create compact preview from exact IMG_3649
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m pip install --quiet pillow
-          python3 - <<'PY'
-          from PIL import Image
-          from pathlib import Path
-          import base64
-          src=Path('transfer/uploads/20260816-115529-5826C23A-6AF0-407C-854B-8AB63E6739D1-IMG_3649.png')
-          out=Path('transfer/inspection/IMG_3649_preview.jpg')
-          txt=Path('transfer/inspection/IMG_3649_preview.b64')
-          out.parent.mkdir(parents=True, exist_ok=True)
-          im=Image.open(src).convert('RGB')
-          im.thumbnail((768, 1366), Image.Resampling.LANCZOS)
-          im.save(out, 'JPEG', quality=70, optimize=True)
-          txt.write_text(base64.b64encode(out.read_bytes()).decode('ascii'))
-          print('preview', im.size, out.stat().st_size, txt.stat().st_size)
-          PY
-          git config user.name 'Next Solution Build Bot'
-          git config user.email 'actions@users.noreply.github.com'
-          git add transfer/inspection/IMG_3649_preview.jpg transfer/inspection/IMG_3649_preview.b64
-          git commit -m 'Add temporary IMG_3649 visual preview'
-          git push origin HEAD:main
+          name: IMG_3649_preview
+          path: transfer/inspection/IMG_3649_preview.jpg
+          if-no-files-found: error
+          retention-days: 1
