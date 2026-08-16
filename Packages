@@ -591,25 +591,6 @@ Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/app-switcher.png
 Name: SwitchDeck
 
-Package: com.nextsolution.nextaura.cc-module-backgrounds
-Version: 1.0.4
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.0)
-Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.4_RootHide.deb
-Size: 1380
-MD5sum: a84361a19f722461027429ae9306fe5b
-SHA1: 7e083e6ee45fd09ad635414968f8dfdecce8d12d
-SHA256: c8ed67c16148095aa927f9dcce0852403cd6c86f3bf4e833c2d621dbf414a5cc
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Control Center module backgrounds, blur removal, opacity and control glow effects.
-Author: Next Solution - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
-Name: Module Glass
-
 Package: com.nextsolution.nextaura.cc-second-page
 Version: 1.0.4
 Architecture: iphoneos-arm64e
@@ -820,27 +801,6 @@ Description: Internal advanced runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Solution - zeshan0727
 Name: NextAura Runtime (advanced)
-
-Package: com.nextsolution.nextaura.runtime.ccbackgrounds
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Depends: firmware (>= 16.0), mobilesubstrate
-Conflicts: com.nextsolution.unlockvibrate
-Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
-Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.0_RootHide.deb
-Size: 15608
-MD5sum: 9f2e359252d44f77d13f17fa1c6453d8
-SHA1: a1c905fbf98594f0f70d0dcf74ea74f3f6f9bc63
-SHA256: 695e73096c1a1ff40d248acabfc7255a38378aba03a26117f7ee89cdc8b21cb8
-Section: System
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Internal ccbackgrounds runtime shared by modular NextAura categories.
-Tag: role::cydia
-Author: Next Solution - zeshan0727
-Name: NextAura Runtime (ccbackgrounds)
 
 Package: com.nextsolution.nextaura.runtime.extended
 Version: 1.0.0
@@ -1085,3 +1045,43 @@ Description: Temperature-aware battery visuals, Sweat My Phone effects and batte
 Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
 Name: Therma
+
+Package: com.nextsolution.nextaura.cc-module-backgrounds
+Version: 1.0.5
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.1)
+Conflicts: com.nextsolution.unlockvibrate
+Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.5_RootHide.deb
+Size: 1428
+MD5sum: 5a277bd664fb062a49b7c1407b3237ca
+SHA1: 4c363b3ac22b76c61449503603e79c647f559ca8
+SHA256: 4f82a8cab1a6f315262973caeb3317e8ca3d7f0694c3cbfbcafab1ace7fd7bea
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Custom Control Center module images, blur removal, opacity and glow controls with a rebuilt runtime and Next Log diagnostics.
+Author: Next Solution - zeshan0727
+Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
+Name: Module Glass
+
+Package: com.nextsolution.nextaura.runtime.ccbackgrounds
+Version: 1.0.1
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), mobilesubstrate
+Conflicts: com.nextsolution.unlockvibrate
+Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
+Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
+Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.1_RootHide.deb
+Size: 15168
+MD5sum: 814964ab8389a75df477dc999540b06f
+SHA1: af40cbee39b33e5914fbf4883bf4f4d74eaee3d4
+SHA256: e228e7a2955ded90c1b8093d2eccce750b01229d935e853c2216f49c95068840
+Section: System
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Source-controlled Module Glass runtime with reliable Control Center module image application and Next Log diagnostics.
+Tag: role::cydia
+Author: Next Solution - zeshan0727
+Name: Module Glass Runtime
