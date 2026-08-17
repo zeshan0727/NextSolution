@@ -25,7 +25,23 @@ for output_name, payload_names in FILES.items():
     destination.write_bytes(source)
     print(f"Generated {destination.relative_to(ROOT)} ({len(source)} bytes)")
 
+# Keep the Module Glass companion inside the native app's Downloads section.
+# The compressed payload remains the stable base; this patch is intentionally
+# applied after generation so future native builds continue to expose the tool.
+app_data_path = DESTINATION / "AppData.swift"
+app_data = app_data_path.read_text()
+module_glass_id = 'id: "module-glass-preview"'
+if module_glass_id not in app_data:
+    downloads_marker = "    static let downloads: [DownloadItem] = [\n"
+    module_glass_download = '''        DownloadItem(\n            id: "module-glass-preview",\n            title: "Module Glass Preview",\n            detail: "Live companion for previewing and changing Module Glass Control Center backgrounds on a TrollStore device.",\n            version: "1.0.0",\n            kind: .app,\n            icon: "square.grid.2x2.fill",\n            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa")!,\n            fileName: "ModuleGlass-Preview-1.0.0.tipa",\n            externalOnly: false\n        ),\n'''
+    if downloads_marker not in app_data:
+        raise RuntimeError("Could not find AppData.downloads marker")
+    app_data = app_data.replace(downloads_marker, downloads_marker + module_glass_download, 1)
+    app_data_path.write_text(app_data)
+    print("Added Module Glass Preview to native Downloads.")
+
 all_source = b"\n".join((DESTINATION / name).read_bytes() for name in FILES)
 assert b"WebKit" not in all_source, "The native app must not contain WebKit"
 assert b"WKWebView" not in all_source, "The native app must not contain WKWebView"
+assert b"module-glass-preview" in all_source, "Module Glass Preview must be present in Downloads"
 print("Generated the fully native SwiftUI Next Solution app.")
