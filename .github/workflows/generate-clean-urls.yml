@@ -1,0 +1,44 @@
+name: Generate clean website URLs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - 'feed.xml'
+      - 'sitemap.xml'
+      - 'automation/clean_urls.py'
+      - '.github/workflows/generate-clean-urls.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-clean-website-urls
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate clean routes
+        run: python3 automation/clean_urls.py
+
+      - name: Commit generated routes
+        shell: bash
+        run: |
+          if git diff --quiet && [ -z "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "Clean URLs are already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Generate clean public website URLs"
+          git push origin HEAD:main
