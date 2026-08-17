@@ -1,0 +1,116 @@
+name: Build NextLock 1.1.0 License Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - ".github/workflows/build-nextlock-license-test.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextlock-1-1-0-license-test
+  cancel-in-progress: true
+
+jobs:
+  build_test:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Validate generated licensing source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          python3 "$P/prefs/generate_root.py"
+          python3 "$P/patch_v023.py"
+          python3 "$P/patch_v024.py"
+          python3 "$P/patch_v025.py"
+          python3 "$P/patch_v026.py"
+          python3 "$P/patch_v027.py"
+          python3 "$P/patch_v028.py"
+          grep -q '^Version: 1.1.0$' "$P/control"
+          grep -q 'LGTStartLicensePolling' "$P/RuntimeV023.xm"
+          grep -q 'licenseActive' "$P/RuntimeV023.xm"
+          grep -q 'https://nextsolution.cc/licenses/nextlock.json' "$P/RuntimeV023.xm"
+          grep -q 'Buy / Activate — \$1.00' "$P/prefs/Resources/Root.plist"
+          grep -q 'licenseDeviceID' "$P/prefs/Resources/Root.plist"
+          grep -q 'checkActivation' "$P/prefs/LGTListControllerV023.m"
+          grep -q 'amara@zeshanbarvi.uk' "$GITHUB_WORKSPACE/license/nextlock/index.html" || true
+          plutil -lint "$P/prefs/Resources/Root.plist"
+
+      - name: Build Rootless test
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock110"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.0_LicenseTest_Rootless.deb"
+
+      - name: Build RootHide test
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock110"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.0_LicenseTest_RootHide.deb"
+
+      - name: Validate test packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock110"
+          for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
+            set -- $spec
+            deb="$OUT/NextLock_1.1.0_LicenseTest_$1.deb"; arch="$2"; x="$(mktemp -d)"
+            test -s "$deb"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
+            test "$(dpkg-deb -f "$deb" Version)" = 1.1.0
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            dpkg-deb -x "$deb" "$x"
+            dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            rootplist="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
+            test -s "$dylib"
+            test -s "$rootplist"
+            plutil -extract items xml1 -o - "$rootplist" | grep -q 'Buy / Activate — \$1.00'
+            plutil -extract items xml1 -o - "$rootplist" | grep -q 'licenseStatusDisplay'
+            plutil -extract items xml1 -o - "$rootplist" | grep -q 'licenseDeviceID'
+            rm -rf "$x"
+          done
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/NextLock_1.1.0_LicenseTest_SHA256SUMS.txt"
+
+      - name: Upload license test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.0-LicenseTest-DEBs
+          path: |
+            ${{ runner.temp }}/nextlock110/NextLock_1.1.0_LicenseTest_Rootless.deb
+            ${{ runner.temp }}/nextlock110/NextLock_1.1.0_LicenseTest_RootHide.deb
+            ${{ runner.temp }}/nextlock110/NextLock_1.1.0_LicenseTest_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
