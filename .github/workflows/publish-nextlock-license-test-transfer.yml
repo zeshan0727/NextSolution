@@ -1,0 +1,107 @@
+name: Publish NextLock 1.1.0 License Test to Transfer
+
+on:
+  push:
+    branches:
+      - agent/lockglyphtime
+    paths:
+      - .github/workflows/publish-nextlock-license-test-transfer.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  ARTIFACT_ID: '9288889765'
+
+jobs:
+  publish_transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout live site
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download exact validated license-test artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            -o /tmp/nextlock-license-test.zip
+          rm -rf /tmp/nextlock-license-test
+          mkdir -p /tmp/nextlock-license-test
+          unzip -q /tmp/nextlock-license-test.zip -d /tmp/nextlock-license-test
+          test -f /tmp/nextlock-license-test/NextLock_1.1.0_LicenseTest_RootHide.deb
+          test -f /tmp/nextlock-license-test/NextLock_1.1.0_LicenseTest_Rootless.deb
+
+      - name: Publish files and update Transfer manifest
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          DEST="transfer/files/NextLock/1.1.0-LicenseTest"
+          mkdir -p "$DEST"
+          cp /tmp/nextlock-license-test/NextLock_1.1.0_LicenseTest_RootHide.deb "$DEST/"
+          cp /tmp/nextlock-license-test/NextLock_1.1.0_LicenseTest_Rootless.deb "$DEST/"
+          cp /tmp/nextlock-license-test/NextLock_1.1.0_LicenseTest_SHA256SUMS.txt "$DEST/"
+
+          ROOT_HIDE_SHA=$(sha256sum "$DEST/NextLock_1.1.0_LicenseTest_RootHide.deb" | awk '{print $1}')
+          ROOTLESS_SHA=$(sha256sum "$DEST/NextLock_1.1.0_LicenseTest_Rootless.deb" | awk '{print $1}')
+          test "$ROOT_HIDE_SHA" = "223fe0e4ba45b77d28317f380d9cc1f392714b4bdbf444d0e0465852009a15b9"
+          test "$ROOTLESS_SHA" = "aada365161a20d1a2860a2545473ce49e81f0016a47cd5aee2e5238e10d38c7a"
+
+          python3 - <<'PY'
+          import datetime, json, pathlib
+          path = pathlib.Path('transfer/index.json')
+          data = json.loads(path.read_text())
+          ids = {'nextlock-1.1.0-license-test-roothide','nextlock-1.1.0-license-test-rootless'}
+          old = [x for x in data.get('files', []) if x.get('id') not in ids]
+          new = [
+            {
+              'id':'nextlock-1.1.0-license-test-roothide',
+              'name':'NextLock 1.1.0 License Test RootHide',
+              'fileName':'NextLock_1.1.0_LicenseTest_RootHide.deb',
+              'type':'deb',
+              'platform':'RootHide',
+              'version':'1.1.0 License Test',
+              'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.0-LicenseTest/NextLock_1.1.0_LicenseTest_RootHide.deb',
+              'sha256':'223fe0e4ba45b77d28317f380d9cc1f392714b4bdbf444d0e0465852009a15b9',
+              'notes':'Private licensing test build. Shows Next Solution Device ID, Unactivated/Activated status, $1 PayPal purchase flow, Check Activation, automatic license checks, and runtime activation gate. Public Sileo release remains 1.0.5 during testing.'
+            },
+            {
+              'id':'nextlock-1.1.0-license-test-rootless',
+              'name':'NextLock 1.1.0 License Test Rootless',
+              'fileName':'NextLock_1.1.0_LicenseTest_Rootless.deb',
+              'type':'deb',
+              'platform':'Dopamine / Rootless',
+              'version':'1.1.0 License Test',
+              'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.0-LicenseTest/NextLock_1.1.0_LicenseTest_Rootless.deb',
+              'sha256':'aada365161a20d1a2860a2545473ce49e81f0016a47cd5aee2e5238e10d38c7a',
+              'notes':'Private licensing test build. Shows Next Solution Device ID, Unactivated/Activated status, $1 PayPal purchase flow, Check Activation, automatic license checks, and runtime activation gate. Public Sileo release remains 1.0.5 during testing.'
+            }
+          ]
+          data['files'] = new + old
+          data['updatedAt'] = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+      - name: Commit Transfer publication
+        run: |
+          set -euo pipefail
+          git config user.name "Next Solution Transfer Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add transfer/index.json transfer/files/NextLock/1.1.0-LicenseTest
+          git commit -m "Publish NextLock 1.1.0 license test to Transfer"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+            sleep $((attempt * 2))
+          done
+          echo "Failed to publish Transfer files after retries" >&2
+          exit 1
