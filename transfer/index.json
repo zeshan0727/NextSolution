@@ -1,28 +1,28 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T05:46:35Z",
+  "updatedAt": "2026-08-17T07:11:03Z",
   "files": [
     {
-      "id": "nextlock-1.0.2-rootless",
-      "name": "NextLock 1.0.2 Rootless",
-      "fileName": "NextLock_1.0.2_Rootless.deb",
+      "id": "nextlock-1.0.3-rootless",
+      "name": "NextLock 1.0.3 Rootless",
+      "fileName": "NextLock_1.0.3_Rootless.deb",
       "type": "deb",
       "platform": "Dopamine / Rootless",
-      "version": "1.0.2",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.2/NextLock_1.0.2_Rootless.deb",
-      "sha256": "bd8d6b5555654ad4b579b58168c63d8c39799846490ecfe7c5c5b0329ce9bb2f",
-      "notes": "Fixes customized Lock Screen time getting stuck after respring. Time now refreshes automatically each minute."
+      "version": "1.0.3",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.3/NextLock_1.0.3_Rootless.deb",
+      "sha256": "369c915cf48bae2087ea32714cddf36e69c85676b643a1545ab5c521fcd3495e",
+      "notes": "Directly follows Apple's native Lock Screen clock text updates so customized time advances normally without respring."
     },
     {
-      "id": "nextlock-1.0.2-roothide",
-      "name": "NextLock 1.0.2 RootHide",
-      "fileName": "NextLock_1.0.2_RootHide.deb",
+      "id": "nextlock-1.0.3-roothide",
+      "name": "NextLock 1.0.3 RootHide",
+      "fileName": "NextLock_1.0.3_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.0.2",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.2/NextLock_1.0.2_RootHide.deb",
-      "sha256": "8c3b2a24dfedaa91a2d44a9dacf2f8c112474e2582f7b6b0b1408b4be2e0333b",
-      "notes": "Fixes customized Lock Screen time getting stuck after respring. Time now refreshes automatically each minute."
+      "version": "1.0.3",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.3/NextLock_1.0.3_RootHide.deb",
+      "sha256": "0b31981ae213933561a94de7d8d4e9fd139257d8b6f309734eb6199f1687372e",
+      "notes": "Directly follows Apple's native Lock Screen clock text updates so customized time advances normally without respring."
     },
     {
       "id": "nextsolution-transfer-1.1.4",
