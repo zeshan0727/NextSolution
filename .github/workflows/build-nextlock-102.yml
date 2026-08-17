@@ -1,0 +1,156 @@
+name: Dedicated NextLock 1.0.2 Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - ".github/workflows/build-nextlock-102.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextlock-1-0-2-release
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Generate and validate live-clock source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          python3 "$P/prefs/generate_root.py"
+          python3 "$P/patch_v023.py"
+          python3 "$P/patch_v024.py"
+          grep -q '^Version: 1.0.2$' "$P/control"
+          grep -q 'Version 1.0.2' "$P/prefs/Resources/About.plist"
+          grep -q 'LGTStartLiveClockTimer' "$P/RuntimeV023.xm"
+          grep -q 'LGTRefreshLiveClockNow' "$P/RuntimeV023.xm"
+          grep -q 'AppleICUForce24HourTime' "$P/RuntimeV023.xm"
+          grep -q 'UIApplicationSignificantTimeChangeNotification' "$P/RuntimeV023.xm"
+          grep -q '60 \* NSEC_PER_SEC' "$P/RuntimeV023.xm"
+          plutil -lint "$P/prefs/Resources/Info.plist"
+          plutil -lint "$P/prefs/Resources/About.plist"
+
+      - name: Build Rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-release"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.2_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-release"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.2_RootHide.deb"
+
+      - name: Validate final DEBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock-release"
+          for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
+            set -- $spec
+            deb="$OUT/NextLock_1.0.2_$1.deb"; arch="$2"; x="$(mktemp -d)"
+            test "$(dpkg-deb -f "$deb" Version)" = 1.0.2
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            test "$(dpkg-deb -f "$deb" Name)" = NextLock
+            dpkg-deb -x "$deb" "$x"
+            dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            test -n "$dylib"
+            strings -a "$dylib" | grep -q AppleICUForce24HourTime
+            strings -a "$dylib" | grep -q UIApplicationSignificantTimeChangeNotification
+            rm -rf "$x"
+          done
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.0.2-DEBs
+          path: |
+            ${{ runner.temp }}/nextlock-release/NextLock_1.0.2_Rootless.deb
+            ${{ runner.temp }}/nextlock-release/NextLock_1.0.2_RootHide.deb
+            ${{ runner.temp }}/nextlock-release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish to Transfer and Sileo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock-release"
+          SITE="$RUNNER_TEMP/site"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          mkdir -p "$SITE/transfer/files/NextLock/1.0.2" "$SITE/debfiles"
+          cp "$OUT/NextLock_1.0.2_Rootless.deb" "$SITE/transfer/files/NextLock/1.0.2/"
+          cp "$OUT/NextLock_1.0.2_RootHide.deb" "$SITE/transfer/files/NextLock/1.0.2/"
+          cp "$OUT/SHA256SUMS.txt" "$SITE/transfer/files/NextLock/1.0.2/"
+          cp "$OUT/NextLock_1.0.2_Rootless.deb" "$SITE/debfiles/"
+          cp "$OUT/NextLock_1.0.2_RootHide.deb" "$SITE/debfiles/"
+          python3 - "$SITE/transfer/index.json" "$OUT" <<'PY'
+          import json,pathlib,hashlib,datetime,sys
+          m=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2])
+          try:d=json.loads(m.read_text())
+          except:d={"version":1,"files":[]}
+          def sha(n):return hashlib.sha256((out/n).read_bytes()).hexdigest()
+          files=[x for x in d.get("files",[]) if not str(x.get("id","")).startswith(("nextlock-","lockglyphtime-"))]
+          files=[
+          {"id":"nextlock-1.0.2-rootless","name":"NextLock 1.0.2 Rootless","fileName":"NextLock_1.0.2_Rootless.deb","type":"deb","platform":"Dopamine / Rootless","version":"1.0.2","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.2/NextLock_1.0.2_Rootless.deb","sha256":sha("NextLock_1.0.2_Rootless.deb"),"notes":"Fixes customized Lock Screen time getting stuck after respring. Time now refreshes automatically each minute."},
+          {"id":"nextlock-1.0.2-roothide","name":"NextLock 1.0.2 RootHide","fileName":"NextLock_1.0.2_RootHide.deb","type":"deb","platform":"RootHide","version":"1.0.2","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.2/NextLock_1.0.2_RootHide.deb","sha256":sha("NextLock_1.0.2_RootHide.deb"),"notes":"Fixes customized Lock Screen time getting stuck after respring. Time now refreshes automatically each minute."}
+          ]+files
+          m.write_text(json.dumps({"version":1,"updatedAt":datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),"files":files},indent=2)+"\n")
+          PY
+          cd "$SITE"
+          dpkg-scanpackages -m ./debfiles /dev/null | sed 's|^Filename: debfiles/|Filename: ./debfiles/|' > Packages
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages');p.write_text(p.read_text().rstrip()+"\n")
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          grep -q '^Version: 1.0.2$' Packages
+          grep -q 'NextLock_1.0.2_Rootless.deb' Packages
+          grep -q 'NextLock_1.0.2_RootHide.deb' Packages
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add transfer debfiles/NextLock_1.0.2_Rootless.deb debfiles/NextLock_1.0.2_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst
+          git commit -m "Publish NextLock 1.0.2 live clock fix" || exit 0
+          git pull --rebase origin main
+          git push origin main
