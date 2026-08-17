@@ -71,16 +71,18 @@ jobs:
           unzip -l ModuleGlass-Preview-1.0.0.tipa | grep -q "Payload/ModuleGlassPreview.app/ModuleGlassPreview"
           test -s ModuleGlass-Preview-1.0.0.tipa
 
-      - name: Put TIPA in Next Solution Transfer uploads
+      - name: Publish TIPA to Next Solution app downloads
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          DEST="transfer/uploads/20260817-ModuleGlass-Preview-1.0.0.tipa"
-          mkdir -p transfer/uploads
+          DEST="NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa"
+          OLD="transfer/uploads/20260817-ModuleGlass-Preview-1.0.0.tipa"
+          mkdir -p NextWebsiteApp/downloads
           cp ModuleGlassPreview/ModuleGlass-Preview-1.0.0.tipa "$DEST"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f "$DEST"
-          git commit -m "Upload Module Glass Preview 1.0.0 TIPA" || true
+          if [ -f "$OLD" ]; then git rm -f "$OLD"; fi
+          git commit -m "Publish Module Glass Preview 1.0.0 in app downloads" || true
           git pull --rebase origin main
           git push origin HEAD:main
 
