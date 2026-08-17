@@ -85,7 +85,8 @@ jobs:
           test "$EXECUTABLE" = "NextSolutionLicenseAdmin"
           test -x "$APP/$EXECUTABLE"
           file "$APP/$EXECUTABLE" | grep -q 'Mach-O 64-bit executable arm64'
-          test -s "$APP/Assets.car"
+          test -s "$APP/AppIcon60x60@2x.png"
+          test -s "$APP/AppIcon60x60@3x.png"
           /usr/bin/codesign --force --sign - --entitlements NextSolutionLicenseAdmin.entitlements --generate-entitlement-der "$APP"
           /usr/bin/codesign --verify --verbose=2 "$APP"
 
@@ -107,7 +108,8 @@ jobs:
           PACKAGED_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$PACKAGED_APP/Info.plist")"
           test "$PACKAGED_EXECUTABLE" = "NextSolutionLicenseAdmin"
           test -x "$PACKAGED_APP/$PACKAGED_EXECUTABLE"
-          test -s "$PACKAGED_APP/Assets.car"
+          test -s "$PACKAGED_APP/AppIcon60x60@2x.png"
+          test -s "$PACKAGED_APP/AppIcon60x60@3x.png"
           test -s NS-Admin-1.0.2.tipa
 
       - name: Publish to NextSolution Transfer
