@@ -118,11 +118,28 @@ jobs:
           set -euo pipefail
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
+
+          # CI intentionally patches tracked source and generates icon/build files.
+          # Preserve the validated package and artifact outputs, then return the
+          # checkout to a clean state before rebasing/publishing.
+          cp NextSolutionLicenseAdmin/NS-Admin-1.0.2.tipa /tmp/NS-Admin-1.0.2.tipa
+          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.2.tipa /tmp/NS-Admin-1.0.2-artifact.tipa
+          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.2.sha256 /tmp/NS-Admin-1.0.2.sha256
+          cp NextSolutionLicenseAdmin/build-output/xcodebuild.log /tmp/NS-Admin-xcodebuild.log
+
+          git reset --hard HEAD
+          git clean -fd NextSolutionLicenseAdmin
           git pull --rebase origin main
+
+          # Restore artifact outputs for the upload-artifact step.
+          mkdir -p NextSolutionLicenseAdmin/build-output
+          cp /tmp/NS-Admin-1.0.2-artifact.tipa NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.2.tipa
+          cp /tmp/NS-Admin-1.0.2.sha256 NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.2.sha256
+          cp /tmp/NS-Admin-xcodebuild.log NextSolutionLicenseAdmin/build-output/xcodebuild.log
 
           DEST="transfer/files/NextSolutionLicenseAdmin/1.0.2/NS-Admin-1.0.2.tipa"
           mkdir -p "$(dirname "$DEST")"
-          cp NextSolutionLicenseAdmin/NS-Admin-1.0.2.tipa "$DEST"
+          cp /tmp/NS-Admin-1.0.2.tipa "$DEST"
           SHA=$(shasum -a 256 "$DEST" | awk '{print $1}')
 
           python3 - "$SHA" <<'PY'
@@ -153,7 +170,9 @@ jobs:
           git add -f "$DEST" transfer/index.json
           git commit -m "Publish NS Admin 1.0.2"
           for attempt in 1 2 3; do
-            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              exit 0
+            fi
             echo "Publish race; retry $attempt"
             sleep $((attempt*3))
           done
