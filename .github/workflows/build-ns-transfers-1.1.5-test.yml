@@ -1,4 +1,4 @@
-name: Build NS Transfers 1.1.5 Test TIPA
+name: Build NS Transfers 1.1.6 Test TIPA
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ns-transfers-1.1.5-test
+  group: ns-transfers-1.1.6-test
   cancel-in-progress: true
 
 jobs:
@@ -23,38 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare NS Transfers 1.1.5 source
+      - name: Prepare NS Transfers 1.1.6 source
         run: |
           set -euo pipefail
-          python3 TransferApp/prepare_ns_transfers_115.py
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('TransferApp/Sources/NextSolutionTransferApp.swift')
-          text = p.read_text()
-          if 'ContentUnavailableView(' in text:
-              start = text.index('                                ContentUnavailableView(')
-              end_marker = '                                )\n                            } else {'
-              end = text.index(end_marker, start)
-              replacement = '''                                VStack(spacing: 6) {
-                                    Image(systemName: "magnifyingglass")
-                                        .font(.title2)
-                                        .foregroundColor(.secondary)
-                                    Text("No Matching Files")
-                                        .font(.headline)
-                                    Text("Try another file name, version, type, or platform.")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
-                                }\n'''
-              text = text[:start] + replacement + text[end + len('                                )\n'):]
-          p.write_text(text)
-          PY
+          python3 TransferApp/prepare_ns_transfers_116.py
           grep -q 'navigationTitle("NS Transfers")' TransferApp/Sources/NextSolutionTransferApp.swift
           grep -q 'Search files' TransferApp/Sources/NextSolutionTransferApp.swift
-          grep -q 'Label("Delete", systemImage: "trash")' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'swipeActions(edge: .trailing' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'deleteFromRoot' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'removeDeviceCopy' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'Delete from Root' TransferApp/Sources/NextSolutionTransferApp.swift
           grep -q 'Remove Added File' TransferApp/Sources/EnhancedUploadView.swift
-          grep -q 'MARKETING_VERSION: 1.1.5' TransferApp/project.yml
-          grep -q 'CURRENT_PROJECT_VERSION: 115' TransferApp/project.yml
+          grep -q 'MARKETING_VERSION: 1.1.6' TransferApp/project.yml
+          grep -q 'CURRENT_PROJECT_VERSION: 116' TransferApp/project.yml
           grep -q 'INFOPLIST_KEY_CFBundleDisplayName: "NS Transfers"' TransferApp/project.yml
           ! grep -q 'ContentUnavailableView' TransferApp/Sources/NextSolutionTransferApp.swift
 
@@ -140,8 +121,8 @@ jobs:
           set -euo pipefail
           mkdir -p Payload output
           cp -R build/Build/Products/Release-iphoneos/NextSolutionTransfer.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload output/NS-Transfers-1.1.5.tipa
-          shasum -a 256 output/NS-Transfers-1.1.5.tipa > output/NS-Transfers-1.1.5.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload output/NS-Transfers-1.1.6.tipa
+          shasum -a 256 output/NS-Transfers-1.1.6.tipa > output/NS-Transfers-1.1.6.sha256
 
       - name: Validate TIPA
         working-directory: TransferApp
@@ -149,7 +130,7 @@ jobs:
           set -euo pipefail
           rm -rf verify
           mkdir verify
-          ditto -x -k output/NS-Transfers-1.1.5.tipa verify
+          ditto -x -k output/NS-Transfers-1.1.6.tipa verify
           APP=verify/Payload/NextSolutionTransfer.app
           BIN="$APP/NextSolutionTransfer"
           test -f "$BIN"
@@ -158,19 +139,23 @@ jobs:
           NAME=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist")
           BUNDLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
           echo "Version=$SHORT Build=$BUILD Name=$NAME Bundle=$BUNDLE"
-          test "$SHORT" = "1.1.5"
-          test "$BUILD" = "115"
+          test "$SHORT" = "1.1.6"
+          test "$BUILD" = "116"
           test "$NAME" = "NS Transfers"
           test "$BUNDLE" = "com.nextsolution.transfer"
           test -f "$APP/Assets.car"
           grep -q 'Search files' Sources/NextSolutionTransferApp.swift
+          grep -q 'swipeActions(edge: .trailing' Sources/NextSolutionTransferApp.swift
+          grep -q 'deleteGitHubFile' Sources/NextSolutionTransferApp.swift
+          grep -q 'updateRootFeed' Sources/NextSolutionTransferApp.swift
+          grep -q 'removeDeviceCopy' Sources/NextSolutionTransferApp.swift
           grep -q 'Remove Added File' Sources/EnhancedUploadView.swift
 
       - name: Upload NS Transfers TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NS-Transfers-1.1.5
+          name: NS-Transfers-1.1.6
           path: |
-            TransferApp/output/NS-Transfers-1.1.5.tipa
-            TransferApp/output/NS-Transfers-1.1.5.sha256
+            TransferApp/output/NS-Transfers-1.1.6.tipa
+            TransferApp/output/NS-Transfers-1.1.6.sha256
           if-no-files-found: error
