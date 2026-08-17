@@ -50,7 +50,7 @@ jobs:
           echo 'd37c4a4c8243ca391dafecaa5fe55c6c614222ba881932cfcd3d1a3c0c3cd26c  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
           echo '322d574c689ee83a94f5f1f0f6c4325c25d40779ca98d5d2b737256dcd784ee6  buildsrc/Runtime/control' | shasum -a 256 -c -
           python3 .moduleglass-build/mg114_patch.py
-          echo '62aa5e06a1dc474d89a1fae6d0a21a280b639e489fcbf2ea40602159c1f79e9b  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
+          echo 'e886522b0beafcccf99788f999a271d2e692d6420717fc723ad055c0e4dba349  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
           echo '8177186656dffc8d83d9b1221206138f4a0a9a38cd0f08e0c40c2246858b6737  buildsrc/Runtime/control' | shasum -a 256 -c -
           grep -Fq 'MGGlobalTransitionQuarantine' buildsrc/Runtime/Tweak.m
           grep -Fq 'transition-global-quarantine' buildsrc/Runtime/Tweak.m
