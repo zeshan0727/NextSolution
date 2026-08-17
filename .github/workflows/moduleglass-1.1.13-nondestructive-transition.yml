@@ -143,15 +143,49 @@ jobs:
           fi
 
       - name: Build RootHide arm64 and arm64e package
+        id: compile
+        continue-on-error: true
         shell: bash
         run: |
-          set -euxo pipefail
+          set +e
+          mkdir -p "${{ github.workspace }}/output"
           cd buildsrc/Runtime
-          make clean
-          make package FINALPACKAGE=1
-          DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
-          test -n "$DEB"
-          cp "$DEB" "${{ github.workspace }}/output/ModuleGlass_1.1.13_NonDestructiveTransition_RootHide.deb"
+          status=0
+          make clean > "${{ github.workspace }}/output/build.log" 2>&1 || status=$?
+          if [ "$status" -eq 0 ]; then
+            make package FINALPACKAGE=1 >> "${{ github.workspace }}/output/build.log" 2>&1 || status=$?
+          fi
+          echo "$status" > "${{ github.workspace }}/output/build-status.txt"
+          cat "${{ github.workspace }}/output/build.log"
+          if [ "$status" -eq 0 ]; then
+            DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+            if [ -n "$DEB" ]; then
+              cp "$DEB" "${{ github.workspace }}/output/ModuleGlass_1.1.13_NonDestructiveTransition_RootHide.deb"
+            else
+              echo 'No DEB produced' >> "${{ github.workspace }}/output/build.log"
+              echo 98 > "${{ github.workspace }}/output/build-status.txt"
+              status=98
+            fi
+          fi
+          exit "$status"
+
+      - name: Upload compiler diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.13-Build-Diagnostics
+          path: |
+            output/build.log
+            output/build-status.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Require successful compilation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f output/build-status.txt
+          test "$(cat output/build-status.txt)" = '0'
 
       - name: Verify package
         shell: bash
