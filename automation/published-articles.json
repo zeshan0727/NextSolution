@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "64cce2cc4ed46996d1d03b88dc5566b6916370599a0b66b6208cac914115b288",
+      "candidate_fingerprint": "5a1627756692d58c65be342fb3912be36ef04ead026c2ed59601749b20c66762",
+      "category": {
+        "id": "home-screen",
+        "label": "Home Screen"
+      },
+      "description": "FreeformGrid 1.0.3 is a Home Screen tweak described as placing icons in any open grid position on rootless iOS 17 jailbreaks.",
+      "href": "freeformgrid-tweak.html",
+      "image": "https://media.havoc.app/6a805f337b739490e96f7522",
+      "media_credit": "FreeformGrid official package listing",
+      "media_source_url": "https://havoc.app/package/freeformgrid",
+      "modified_at": "2026-08-17T03:45:45+00:00",
+      "name": "FreeformGrid",
+      "package": "com.emp0ry.freeformgrid",
+      "published_at": "2026-08-17T03:45:45+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/freeformgrid",
+      "source_url": "https://havoc.app/",
+      "title": "FreeformGrid 1.0.3: Home Screen Icon Placement on Rootless iOS 17 Jailbreaks",
+      "version": "1.0.3"
+    },
+    {
       "article_sha256": "2f021aee917683ab308803d844a8eafe82364471c06603b0579c47072e74540b",
       "candidate_fingerprint": "0fe717a4457677d669ec2e6f43d68673fa249944958a948ccced884a5b882b4e",
       "category": {
@@ -507,8 +530,17 @@
       "published_at": "2026-08-16T05:34:31+00:00",
       "run_id": "31929287738",
       "version": "1.3.18-2"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "5a1627756692d58c65be342fb3912be36ef04ead026c2ed59601749b20c66762",
+      "href": "freeformgrid-tweak.html",
+      "package": "com.emp0ry.freeformgrid",
+      "published_at": "2026-08-17T03:45:45+00:00",
+      "run_id": "31992122862",
+      "version": "1.0.3"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-16T05:34:31+00:00"
+  "updated_at": "2026-08-17T03:45:45+00:00"
 }
