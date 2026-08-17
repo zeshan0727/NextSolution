@@ -1,0 +1,111 @@
+name: Publish ModuleGlass 1.1.7 Exact Artifact
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.7-crisp-volume-fill
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download exact validated artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/mg117
+          curl -fL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9288696567/zip" \
+            -o /tmp/mg117/artifact.zip
+          unzip -q /tmp/mg117/artifact.zip -d /tmp/mg117/files
+          test -f /tmp/mg117/files/ModuleGlass_1.1.7_Complete_RootHide.deb
+          test -f /tmp/mg117/files/ModuleGlass_1.1.7_Complete_Source.zip
+          test -f /tmp/mg117/files/SHA256SUMS.txt
+          echo '085ccb4a47660a119da2314f504f4740ccda3076427f70db41739014ba98d67d  /tmp/mg117/files/ModuleGlass_1.1.7_Complete_RootHide.deb' | sha256sum -c -
+          echo '9b9340a340cd90e780d5116553b8578a1914dc2ab69cd6b62dbac243c687a28b  /tmp/mg117/files/ModuleGlass_1.1.7_Complete_Source.zip' | sha256sum -c -
+          grep -q '085ccb4a47660a119da2314f504f4740ccda3076427f70db41739014ba98d67d' /tmp/mg117/files/SHA256SUMS.txt
+          grep -q '9b9340a340cd90e780d5116553b8578a1914dc2ab69cd6b62dbac243c687a28b' /tmp/mg117/files/SHA256SUMS.txt
+
+      - name: Atomically replace Transfer build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git checkout -B moduleglass-117-publish origin/main
+
+            rm -rf transfer/files/ModuleGlass/1.1.4 \
+                   transfer/files/ModuleGlass/1.1.5 \
+                   transfer/files/ModuleGlass/1.1.6 \
+                   transfer/files/ModuleGlass/1.1.7
+            mkdir -p transfer/files/ModuleGlass/1.1.7
+            cp /tmp/mg117/files/ModuleGlass_1.1.7_Complete_RootHide.deb transfer/files/ModuleGlass/1.1.7/
+            cp /tmp/mg117/files/ModuleGlass_1.1.7_Complete_Source.zip transfer/files/ModuleGlass/1.1.7/
+            cp /tmp/mg117/files/SHA256SUMS.txt transfer/files/ModuleGlass/1.1.7/SHA256SUMS.txt
+
+            python3 <<'PY'
+          import datetime, json, pathlib
+          p = pathlib.Path('transfer/index.json')
+          data = json.loads(p.read_text())
+          files = [x for x in data.get('files', []) if not str(x.get('id', '')).startswith('moduleglass-1.1.')]
+          new_items = [
+              {
+                  'id': 'moduleglass-1.1.7-roothide',
+                  'name': 'Module Glass 1.1.7 Complete RootHide',
+                  'fileName': 'ModuleGlass_1.1.7_Complete_RootHide.deb',
+                  'type': 'deb',
+                  'platform': 'RootHide',
+                  'version': '1.1.7',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.7/ModuleGlass_1.1.7_Complete_RootHide.deb',
+                  'sha256': '085ccb4a47660a119da2314f504f4740ccda3076427f70db41739014ba98d67d',
+                  'notes': 'Crisp background test: Remove Blur safely suppresses only module-sized non-interactive material surfaces, while Volume custom image fill follows the live slider from 0% to 100% like Brightness.'
+              },
+              {
+                  'id': 'moduleglass-1.1.7-source',
+                  'name': 'Module Glass 1.1.7 Complete Source',
+                  'fileName': 'ModuleGlass_1.1.7_Complete_Source.zip',
+                  'type': 'zip',
+                  'platform': 'Source / Theos',
+                  'version': '1.1.7',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.7/ModuleGlass_1.1.7_Complete_Source.zip',
+                  'sha256': '9b9340a340cd90e780d5116553b8578a1914dc2ab69cd6b62dbac243c687a28b',
+                  'notes': 'Matching source for the validated Module Glass 1.1.7 RootHide build.'
+              }
+          ]
+          insert_at = next((i + 1 for i, x in enumerate(files) if str(x.get('id', '')).startswith('module-glass-preview')), 0)
+          files[insert_at:insert_at] = new_items
+          data['files'] = files
+          data['updatedAt'] = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          p.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+            test "$(sha256sum transfer/files/ModuleGlass/1.1.7/ModuleGlass_1.1.7_Complete_RootHide.deb | awk '{print $1}')" = '085ccb4a47660a119da2314f504f4740ccda3076427f70db41739014ba98d67d'
+            test "$(sha256sum transfer/files/ModuleGlass/1.1.7/ModuleGlass_1.1.7_Complete_Source.zip | awk '{print $1}')" = '9b9340a340cd90e780d5116553b8578a1914dc2ab69cd6b62dbac243c687a28b'
+
+            git add -A transfer/files/ModuleGlass transfer/index.json
+            if git diff --cached --quiet; then
+              echo 'Exact 1.1.7 build already published.'
+              exit 0
+            fi
+            git commit -m 'Replace Module Glass with 1.1.7 crisp volume test'
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git reset --hard
+          done
+          echo 'Unable to publish after five fast-forward retries.' >&2
+          exit 1
