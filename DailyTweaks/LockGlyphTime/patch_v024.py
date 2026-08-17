@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import plistlib
 
 ROOT = Path(__file__).resolve().parent
 runtime_path = ROOT / "RuntimeV023.xm"
@@ -96,6 +97,21 @@ new_ctor = '''        Class cls=LGTResolveContainerClass();if(cls)MSHookMessageE
 if old_ctor not in src:
     raise SystemExit("Live-clock ctor anchor not found")
 src = src.replace(old_ctor, new_ctor, 1)
-
 runtime_path.write_text(src)
-print("Patched RuntimeV023.xm with minute-aligned live clock/date refresh")
+
+resources = ROOT / "prefs" / "Resources"
+info_path = resources / "Info.plist"
+info = plistlib.loads(info_path.read_bytes())
+info["CFBundleShortVersionString"] = "1.0.2"
+info["CFBundleVersion"] = "102"
+info_path.write_bytes(plistlib.dumps(info, fmt=plistlib.FMT_XML, sort_keys=False))
+
+about_path = resources / "About.plist"
+about = plistlib.loads(about_path.read_bytes())
+for item in about.get("items", []):
+    footer = item.get("footerText")
+    if isinstance(footer, str) and "Version 1.0.1" in footer:
+        item["footerText"] = footer.replace("Version 1.0.1", "Version 1.0.2")
+about_path.write_bytes(plistlib.dumps(about, fmt=plistlib.FMT_XML, sort_keys=False))
+
+print("Patched RuntimeV023.xm with minute-aligned live clock/date refresh and NextLock 1.0.2 metadata")
