@@ -579,6 +579,46 @@ Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
 Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 
+Package: com.nextsolution.lockglyphtime
+Version: 1.1.4
+Architecture: iphoneos-arm64
+Maintainer: Next Solution - Zeeshan Barvi
+Installed-Size: 620
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextLock_1.1.4_Rootless.deb
+Size: 99978
+MD5sum: 1e07c468d6bccbcecd34c55cde93bcde
+SHA1: 163fe5dcc4eea671d3ba8bb4e2cdf54d7353cc4a
+SHA256: ee542d3030e7ff3ae0e642666ea1c250e6012ee7a6c316c3059dafa23c76f90f
+Section: Tweaks
+Homepage: https://nextsolution.cc
+Description: Next Solution lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
+Author: Next Solution - Zeeshan Barvi
+Depiction: https://nextsolution.cc/depictions/nextlock.html
+Icon: https://nextsolution.cc/NextLockIcon.png
+Name: NextLock
+Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+
+Package: com.nextsolution.lockglyphtime
+Version: 1.1.4
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution - Zeeshan Barvi
+Installed-Size: 620
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextLock_1.1.4_RootHide.deb
+Size: 99766
+MD5sum: 6c29e40f27bf6fe65b3f48591e676945
+SHA1: 1040daa54c0e05d6d98e575a4fadd8ab8502edd7
+SHA256: 276ee4cc2ae667f4e8e884341d5efdb6d1632958aea0f15489da69822ca09450
+Section: Tweaks
+Homepage: https://nextsolution.cc
+Description: Next Solution lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
+Author: Next Solution - Zeeshan Barvi
+Depiction: https://nextsolution.cc/depictions/nextlock.html
+Icon: https://nextsolution.cc/NextLockIcon.png
+Name: NextLock
+Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+
 Package: com.nextsolution.lowpowermodehaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e

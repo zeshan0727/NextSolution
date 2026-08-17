@@ -1,28 +1,28 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T18:54:37Z",
+  "updatedAt": "2026-08-17T19:20:35Z",
   "files": [
     {
-      "id": "nextlock-1.1.3-roothide",
-      "name": "NextLock 1.1.3 RootHide",
-      "fileName": "NextLock_1.1.3_RootHide.deb",
+      "id": "nextlock-1.1.4-roothide",
+      "name": "NextLock 1.1.4 RootHide",
+      "fileName": "NextLock_1.1.4_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.3",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.3/NextLock_1.1.3_RootHide.deb",
-      "sha256": "3286fa216bd3b53bb342d9db89d00896fa1a81749c89752984769269b074f131",
-      "notes": "NextLock 1.1.3 live release. Moves the Activation section to the bottom of Settings while retaining fast direct license checks, ~10-second activation/revocation refresh, the polished Settings icon, and device model/iOS metadata in activation requests."
+      "version": "1.1.4",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb",
+      "sha256": "276ee4cc2ae667f4e8e884341d5efdb6d1632958aea0f15489da69822ca09450",
+      "notes": "NextLock 1.1.4 adds four simultaneous custom photo/sticker frames. Each frame has its own photo, enable switch, width, height, Time/Date anchor, placement and X/Y position. Frame 1 migrates the existing photo layout."
     },
     {
-      "id": "nextlock-1.1.3-rootless",
-      "name": "NextLock 1.1.3 Rootless",
-      "fileName": "NextLock_1.1.3_Rootless.deb",
+      "id": "nextlock-1.1.4-rootless",
+      "name": "NextLock 1.1.4 Rootless",
+      "fileName": "NextLock_1.1.4_Rootless.deb",
       "type": "deb",
       "platform": "Dopamine / Rootless",
-      "version": "1.1.3",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.3/NextLock_1.1.3_Rootless.deb",
-      "sha256": "b03b77183f4ba3c135b71dfdcf842e3b3e9e11b351f6b1a40950073296de9d5a",
-      "notes": "NextLock 1.1.3 live release. Moves the Activation section to the bottom of Settings while retaining fast direct license checks, ~10-second activation/revocation refresh, the polished Settings icon, and device model/iOS metadata in activation requests."
+      "version": "1.1.4",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.4/NextLock_1.1.4_Rootless.deb",
+      "sha256": "ee542d3030e7ff3ae0e642666ea1c250e6012ee7a6c316c3059dafa23c76f90f",
+      "notes": "NextLock 1.1.4 adds four simultaneous custom photo/sticker frames. Each frame has its own photo, enable switch, width, height, Time/Date anchor, placement and X/Y position. Frame 1 migrates the existing photo layout."
     },
     {
       "id": "moduleglass-1.1.12-roothide",
