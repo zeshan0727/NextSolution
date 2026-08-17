@@ -75,6 +75,12 @@ rep('''        if ([slot isEqualToString:@"connectivity"]) {
         }
 ''')
 
+# The old helper inserted Module Glass inside Apple's slider hierarchy. This build
+# never calls it, so remove it entirely instead of weakening -Werror.
+start=s.index('static UIView *MGSliderShellInScope(UIView *scope) {')
+end=s.index('static void MGRemoveSliderShells(UIView *root)', start)
+s=s[:start]+s[end:]
+
 rep('ModuleGlassRuntime 1.1.14 Global Transition Quarantine Renderer loaded','ModuleGlassRuntime 1.1.15 External Host Isolation Renderer loaded')
 p.write_text(s)
 
