@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -172,3 +172,82 @@ jobs:
             SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 3
+
+      - name: Replace failed Transfer files with verified complete build
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          PUBLISH=/tmp/moduleglass-1.1.5-publish
+          rm -rf "$PUBLISH"
+          mkdir -p "$PUBLISH"
+          cp ModuleGlass_1.1.5_Complete_RootHide.deb "$PUBLISH/"
+          cp ModuleGlass_1.1.5_Complete_Source.zip "$PUBLISH/"
+          cp SHA256SUMS.txt "$PUBLISH/"
+          DEB_SHA="$(shasum -a 256 "$PUBLISH/ModuleGlass_1.1.5_Complete_RootHide.deb" | awk '{print $1}')"
+          SRC_SHA="$(shasum -a 256 "$PUBLISH/ModuleGlass_1.1.5_Complete_Source.zip" | awk '{print $1}')"
+          test "$DEB_SHA" = 'f3d5d71ad173c8c5aa854d0c722103d2eda5b3fc371b8585d79579721bc2c397'
+          test "$SRC_SHA" = 'f08664ed4596dbf5b3d993664c65dc6e4e5392f42e26eaacc1a010b6f17ed83b'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout -B moduleglass-transfer-publish origin/main
+            rm -rf transfer/files/ModuleGlass/1.1.4
+            mkdir -p transfer/files/ModuleGlass/1.1.5
+            cp "$PUBLISH/ModuleGlass_1.1.5_Complete_RootHide.deb" transfer/files/ModuleGlass/1.1.5/
+            cp "$PUBLISH/ModuleGlass_1.1.5_Complete_Source.zip" transfer/files/ModuleGlass/1.1.5/
+            cp "$PUBLISH/SHA256SUMS.txt" transfer/files/ModuleGlass/1.1.5/SHA256SUMS.txt
+            python3 - "$DEB_SHA" "$SRC_SHA" <<'PY'
+          import datetime, json, pathlib, sys
+          deb_sha, src_sha = sys.argv[1], sys.argv[2]
+          p = pathlib.Path('transfer/index.json')
+          data = json.loads(p.read_text())
+          files = [item for item in data.get('files', []) if item.get('id') not in {
+              'moduleglass-1.1.4-roothide', 'moduleglass-1.1.4-source',
+              'moduleglass-1.1.5-roothide', 'moduleglass-1.1.5-source'
+          }]
+          new_items = [
+              {
+                  'id': 'moduleglass-1.1.5-roothide',
+                  'name': 'Module Glass 1.1.5 Complete RootHide',
+                  'fileName': 'ModuleGlass_1.1.5_Complete_RootHide.deb',
+                  'type': 'deb',
+                  'platform': 'RootHide',
+                  'version': '1.1.5',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_RootHide.deb',
+                  'sha256': deb_sha,
+                  'notes': 'Complete recovery-first Module Glass package. Embeds the validated stable renderer directly, replaces the failed standalone runtime through 1.1.4, and keeps the shared Aura Settings runtime dependency.'
+              },
+              {
+                  'id': 'moduleglass-1.1.5-source',
+                  'name': 'Module Glass 1.1.5 Complete Source',
+                  'fileName': 'ModuleGlass_1.1.5_Complete_Source.zip',
+                  'type': 'zip',
+                  'platform': 'Source / Theos',
+                  'version': '1.1.5',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_Source.zip',
+                  'sha256': src_sha,
+                  'notes': 'Matching source for the complete RootHide package, built from the validated stable Module Glass 1.0.14 renderer source rather than the failed 1.1.4 hardened renderer.'
+              }
+          ]
+          insert_at = next((i + 1 for i, item in enumerate(files) if item.get('id') == 'module-glass-preview-1.0.0'), 0)
+          files[insert_at:insert_at] = new_items
+          data['files'] = files
+          data['updatedAt'] = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          p.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+            git add -A transfer/files/ModuleGlass transfer/index.json
+            if git diff --cached --quiet; then
+              echo 'Transfer already contains the verified 1.1.5 files.'
+              exit 0
+            fi
+            git commit -m 'Replace failed Module Glass 1.1.4 with complete 1.1.5'
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git reset --hard
+          done
+          echo 'Failed to publish Module Glass 1.1.5 after retries.' >&2
+          exit 1
