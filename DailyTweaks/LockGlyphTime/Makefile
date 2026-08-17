@@ -16,6 +16,7 @@ before-all::
 	python3 patch_v028.py
 	python3 patch_v029.py
 	python3 patch_v030.py
+	python3 patch_v031.py
 	python3 generate_nextlock_icon.py
 
 TWEAK_NAME = LockGlyphTime
