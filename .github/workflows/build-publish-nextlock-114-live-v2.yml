@@ -1,0 +1,199 @@
+name: Build and Publish NextLock 1.1.4 Live v2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - '.github/workflows/build-publish-nextlock-114-live-v2.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextlock-1-1-4-live-v2
+  cancel-in-progress: true
+
+jobs:
+  build_publish:
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: agent/lockglyphtime
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Generate and validate 1.1.4 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          python3 "$P/prefs/generate_root.py"
+          for n in 023 024 025 026 027 028 029 030 031 032; do python3 "$P/patch_v${n}.py"; done
+          python3 "$P/generate_nextlock_icon.py"
+          grep -q '^Version: 1.1.4$' "$P/control"
+          grep -q 'LGTApplyPhotoFrames' "$P/RuntimeV023.xm"
+          grep -Fq 'customPhotoData%ld' "$P/RuntimeV023.xm"
+          grep -Fq 'photoFrame%ldOffsetY' "$P/RuntimeV023.xm"
+          grep -q 'openCustomPhotoPickerFrame4' "$P/prefs/LGTListControllerV023.m"
+          grep -q 'LGTPhotoFrame4Controller' "$P/prefs/LGTListControllerV023.m"
+          python3 - "$P/prefs/Resources" <<'PY'
+          import plistlib,sys
+          from pathlib import Path
+          r=Path(sys.argv[1])
+          root=plistlib.load(open(r/'Root.plist','rb'))['items']
+          assert [x.get('label','') for x in root[-6:]] == ['ACTIVATION','Status','Device ID','Copy Device ID','Buy / Activate — $1.00','Check Activation']
+          hub=plistlib.load(open(r/'Photo.plist','rb'))['items']
+          assert [x.get('label') for x in hub if x.get('cell')=='PSLinkCell'] == ['Frame 1','Frame 2','Frame 3','Frame 4']
+          for n in range(1,5):
+              p=plistlib.load(open(r/f'PhotoFrame{n}.plist','rb'))['items']
+              keys={x.get('key') for x in p if x.get('key')}
+              w='photoFrameWidth' if n==1 else f'photoFrame{n}Width'
+              h='photoFrameHeight' if n==1 else f'photoFrame{n}Height'
+              need={f'photoFrame{n}Enabled',w,h,f'photoFrame{n}AnchorTarget',f'photoFrame{n}Position',f'photoFrame{n}OffsetX',f'photoFrame{n}OffsetY'}
+              assert need <= keys,(n,need-keys)
+          PY
+          for f in Root Photo PhotoFrame1 PhotoFrame2 PhotoFrame3 PhotoFrame4 Info; do plutil -lint "$P/prefs/Resources/$f.plist"; done
+
+      - name: Build Rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/nextlock114"; mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.4_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/nextlock114"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.4_RootHide.deb"
+
+      - name: Validate packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock114"
+          for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
+            set -- $spec; deb="$OUT/NextLock_1.1.4_$1.deb"; arch="$2"; x="$(mktemp -d)"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
+            test "$(dpkg-deb -f "$deb" Version)" = 1.1.4
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            dpkg-deb -x "$deb" "$x"
+            test -s "$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            rootplist="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
+            photoplist="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Photo.plist' -print -quit)"
+            test -s "$rootplist"; test -s "$photoplist"
+            for n in 1 2 3 4; do test -s "$(find "$x" -path "*LockGlyphTimePrefs.bundle/PhotoFrame${n}.plist" -print -quit)"; done
+            python3 - "$rootplist" "$photoplist" <<'PY'
+          import plistlib,sys
+          root=plistlib.load(open(sys.argv[1],'rb'))['items']
+          assert [x.get('label','') for x in root[-6:]] == ['ACTIVATION','Status','Device ID','Copy Device ID','Buy / Activate — $1.00','Check Activation']
+          hub=plistlib.load(open(sys.argv[2],'rb'))['items']
+          assert [x.get('label') for x in hub if x.get('cell')=='PSLinkCell'] == ['Frame 1','Frame 2','Frame 3','Frame 4']
+          PY
+            rm -rf "$x"
+          done
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/NextLock_1.1.4_SHA256SUMS.txt"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.4-Live-DEBs
+          path: |
+            ${{ runner.temp }}/nextlock114/NextLock_1.1.4_Rootless.deb
+            ${{ runner.temp }}/nextlock114/NextLock_1.1.4_RootHide.deb
+            ${{ runner.temp }}/nextlock114/NextLock_1.1.4_SHA256SUMS.txt
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Publish live to Next Solution repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock114"; SITE="$RUNNER_TEMP/site"; P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          mkdir -p "$SITE/debfiles" "$SITE/transfer/files/NextLock/1.1.4"
+          cp "$OUT/NextLock_1.1.4_Rootless.deb" "$SITE/debfiles/"
+          cp "$OUT/NextLock_1.1.4_RootHide.deb" "$SITE/debfiles/"
+          cp "$OUT/NextLock_1.1.4_Rootless.deb" "$SITE/transfer/files/NextLock/1.1.4/"
+          cp "$OUT/NextLock_1.1.4_RootHide.deb" "$SITE/transfer/files/NextLock/1.1.4/"
+          cp "$OUT/NextLock_1.1.4_SHA256SUMS.txt" "$SITE/transfer/files/NextLock/1.1.4/"
+          cp "$P/prefs/Resources/NextLockIcon.png" "$SITE/NextLockIcon.png"
+
+          python3 - "$SITE" "$OUT" <<'PY'
+          import json,pathlib,hashlib,datetime,sys,re
+          site=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2])
+          sha=lambda n: hashlib.sha256((out/n).read_bytes()).hexdigest()
+          manifest=site/'transfer/index.json'; data=json.loads(manifest.read_text())
+          keep=[x for x in data.get('files',[]) if not str(x.get('id','')).startswith(('nextlock-','lockglyphtime-'))]
+          notes='NextLock 1.1.4 adds four simultaneous custom photo/sticker frames. Each frame has its own photo, enable switch, width, height, Time/Date anchor, placement and X/Y position. Frame 1 migrates the existing photo layout.'
+          data['updatedAt']=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          data['files']=[
+            {'id':'nextlock-1.1.4-roothide','name':'NextLock 1.1.4 RootHide','fileName':'NextLock_1.1.4_RootHide.deb','type':'deb','platform':'RootHide','version':'1.1.4','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb','sha256':sha('NextLock_1.1.4_RootHide.deb'),'notes':notes},
+            {'id':'nextlock-1.1.4-rootless','name':'NextLock 1.1.4 Rootless','fileName':'NextLock_1.1.4_Rootless.deb','type':'deb','platform':'Dopamine / Rootless','version':'1.1.4','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.4/NextLock_1.1.4_Rootless.deb','sha256':sha('NextLock_1.1.4_Rootless.deb'),'notes':notes}
+          ]+keep
+          manifest.write_text(json.dumps(data,indent=2)+'\n')
+
+          dep=site/'depictions/nextlock.html'
+          if dep.exists():
+              d=dep.read_text().replace('NextLock 1.1.3','NextLock 1.1.4').replace('Version 1.1.3','Version 1.1.4')
+              d=re.sub(r'<section class="section"><h2>Version 1\.1\.4</h2><p>.*?</p></section>', '<section class="section"><h2>Version 1.1.4</h2><p>Custom Photo now supports four simultaneous frames. Frame 1 preserves the existing photo setup and Frames 2–4 can be enabled separately. Every frame has independent photo selection, 20–600pt width and height, Time/Date anchor, placement and X/Y offsets.</p></section>', d, flags=re.S)
+              dep.write_text(d)
+          article=site/'nextlock-tweak.html'
+          if article.exists():
+              a=article.read_text().replace('NextLock 1.1.3','NextLock 1.1.4')
+              a=a.replace('<div><b>Current version</b></div><div>1.1.3</div>','<div><b>Current version</b></div><div>1.1.4</div>')
+              a=a.replace('/NextLock/1.1.3/NextLock_1.1.3_Rootless.deb','/NextLock/1.1.4/NextLock_1.1.4_Rootless.deb')
+              a=a.replace('/NextLock/1.1.3/NextLock_1.1.3_RootHide.deb','/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb')
+              section='<section class="section">\n      <h2>NextLock 1.1.4 update</h2>\n      <p>NextLock 1.1.4 expands Custom Photo into four independent frames that can appear together on the Lock Screen. Each frame has its own image, enable switch, width, height, Time/Date anchor, placement and horizontal/vertical offsets. Frame 1 migrates the previous single-photo settings.</p>\n    </section>'
+              marker='<section class="section">\n      <h2>Compatibility</h2>'
+              if marker in a and 'NextLock 1.1.4 update</h2>' not in a: a=a.replace(marker,section+'\n\n    '+marker,1)
+              article.write_text(a)
+          PY
+
+          cd "$SITE"
+          dpkg-scanpackages -m ./debfiles /dev/null | sed 's|^Filename: debfiles/|Filename: ./debfiles/|' > Packages
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages'); p.write_text(p.read_text().rstrip()+"\n")
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          grep -q '^Version: 1.1.4$' Packages
+          grep -q 'NextLock_1.1.4_Rootless.deb' Packages
+          grep -q 'NextLock_1.1.4_RootHide.deb' Packages
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A debfiles transfer Packages Packages.gz Packages.bz2 Packages.xz Packages.zst depictions/nextlock.html nextlock-tweak.html NextLockIcon.png
+          git commit -m 'Publish NextLock 1.1.4 multi-frame release'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then exit 0; fi
+            git rebase --abort || true
+            sleep $((attempt*3))
+          done
+          exit 1
