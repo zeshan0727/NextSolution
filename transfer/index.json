@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T13:44:00Z",
+  "updatedAt": "2026-08-17T13:56:05Z",
   "files": [
+    {
+      "id": "ns-admin-1.0.3",
+      "name": "NS Admin 1.0.3",
+      "fileName": "NS-Admin-1.0.3.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.3",
+      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.3/NS-Admin-1.0.3.tipa",
+      "sha256": "4badf40d9f7f411430bf881ec6f470739f5669ead878092580507875c8ca8f94",
+      "notes": "Adds a server-backed Active Devices tab showing every active license. Known Device IDs display in full locally; new server records use privacy-safe masked IDs. Supports direct one-tap revoke from the device list, including legacy hash-only licenses. Keeps TrollStore-safe GitHub token storage, Requests, Activate, Check and Revoke controls."
+    },
     {
       "id": "moduleglass-1.1.11-roothide",
       "name": "Module Glass 1.1.11 Complete RootHide",
@@ -23,17 +34,6 @@
       "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.11/ModuleGlass_1.1.11_Complete_Source.zip",
       "sha256": "f1bb0a5112f069154088460c131285c2fa088626e3bff83bd5ea1a41f0f656e1",
       "notes": "Matching source for the 1.1.11 expansion-safety RootHide test build."
-    },
-    {
-      "id": "ns-admin-1.0.2",
-      "name": "NS Admin 1.0.2",
-      "fileName": "NS-Admin-1.0.2.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / iOS 16+",
-      "version": "1.0.2",
-      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.2/NS-Admin-1.0.2.tipa",
-      "sha256": "b09a33bfb562dd4a415948fdd2d2ff2f641a3b104d3a06f66cf028b9c7483409",
-      "notes": "Renamed to NS Admin with a new licensing shield icon. Fixes GitHub token saving on TrollStore by using iOS Keychain when available and automatically falling back to private iOS Data Protection storage when the TrollStore signature has no Keychain entitlement. Keeps direct NextLock activate/check/revoke controls and request handoff."
     },
     {
       "id": "nextlock-1.1.0-license-test-roothide",
