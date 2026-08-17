@@ -1,7 +1,29 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T13:36:08Z",
+  "updatedAt": "2026-08-17T13:44:00Z",
   "files": [
+    {
+      "id": "moduleglass-1.1.11-roothide",
+      "name": "Module Glass 1.1.11 Complete RootHide",
+      "fileName": "ModuleGlass_1.1.11_Complete_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.11",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.11/ModuleGlass_1.1.11_Complete_RootHide.deb",
+      "sha256": "bb51c02dfe0ab97cc7d8039941a982aa0cb1de79cd0a2068c34fd8e9121fa7a4",
+      "notes": "Expansion-safety device test: pre-cleans custom visual state before module expansion, suspends rendering during expanded transitions, and restores the validated 1.1.10 renderer only after compact mode returns."
+    },
+    {
+      "id": "moduleglass-1.1.11-source",
+      "name": "Module Glass 1.1.11 Complete Source",
+      "fileName": "ModuleGlass_1.1.11_Complete_Source.zip",
+      "type": "zip",
+      "platform": "Source / Theos",
+      "version": "1.1.11",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.11/ModuleGlass_1.1.11_Complete_Source.zip",
+      "sha256": "f1bb0a5112f069154088460c131285c2fa088626e3bff83bd5ea1a41f0f656e1",
+      "notes": "Matching source for the 1.1.11 expansion-safety RootHide test build."
+    },
     {
       "id": "ns-admin-1.0.2",
       "name": "NS Admin 1.0.2",
@@ -47,28 +69,6 @@
       "notes": "Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured."
     },
     {
-      "id": "moduleglass-1.1.11-roothide",
-      "name": "Module Glass 1.1.11 Complete RootHide",
-      "fileName": "ModuleGlass_1.1.11_Complete_RootHide.deb",
-      "type": "deb",
-      "platform": "RootHide",
-      "version": "1.1.11",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.11/ModuleGlass_1.1.11_Complete_RootHide.deb",
-      "sha256": "bb51c02dfe0ab97cc7d8039941a982aa0cb1de79cd0a2068c34fd8e9121fa7a4",
-      "notes": "Expansion-safety device test: pre-cleans custom visual state before module expansion, suspends rendering during expanded transitions, and restores the validated 1.1.10 renderer only after compact mode returns."
-    },
-    {
-      "id": "moduleglass-1.1.11-source",
-      "name": "Module Glass 1.1.11 Complete Source",
-      "fileName": "ModuleGlass_1.1.11_Complete_Source.zip",
-      "type": "zip",
-      "platform": "Source / Theos",
-      "version": "1.1.11",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.11/ModuleGlass_1.1.11_Complete_Source.zip",
-      "sha256": "f1bb0a5112f069154088460c131285c2fa088626e3bff83bd5ea1a41f0f656e1",
-      "notes": "Matching source for the 1.1.11 expansion-safety RootHide test build."
-    },
-    {
       "id": "module-glass-preview-1.1.0",
       "name": "Module Glass Developer Console 1.1.0",
       "fileName": "ModuleGlass-Preview-1.1.0.tipa",
@@ -98,7 +98,7 @@
       "platform": "RootHide",
       "version": "1.0.5",
       "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.5/NextLock_1.0.5_RootHide.deb",
-      "sha256": "676222e5a73e0d02d5e3b19ecf8d75681b1d04d5336d6c6cbd96e6995bf37a1b",
+      "sha256": "676222e5a73e0d02d5e3b19ecf8d75681b1d04d5336d6c6bd96e6995bf37a1b",
       "notes": "Adds independent Custom Photo Width and Height controls from 20\u2013600pt, so photos and transparent stickers can be resized horizontally and vertically separately."
     },
     {
