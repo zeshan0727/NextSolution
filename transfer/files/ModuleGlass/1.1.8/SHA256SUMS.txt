@@ -1,2 +1,0 @@
-6b8aedeb67fb881a332ef183eb1237efc555548c200b86bd5c5353a63a08d616  ModuleGlass_1.1.8_Complete_RootHide.deb
-e652a9ae39b1396f6ad71ae2e051eb5c91a533c5f8beb5a77e6747c9ac027d71  ModuleGlass_1.1.8_Complete_Source.zip
