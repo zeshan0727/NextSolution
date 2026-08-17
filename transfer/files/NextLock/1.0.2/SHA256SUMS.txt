@@ -1,0 +1,2 @@
+8c3b2a24dfedaa91a2d44a9dacf2f8c112474e2582f7b6b0b1408b4be2e0333b  /Users/runner/work/_temp/nextlock-release/NextLock_1.0.2_RootHide.deb
+bd8d6b5555654ad4b579b58168c63d8c39799846490ecfe7c5c5b0329ce9bb2f  /Users/runner/work/_temp/nextlock-release/NextLock_1.0.2_Rootless.deb
