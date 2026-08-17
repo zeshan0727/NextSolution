@@ -1,7 +1,29 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T14:13:31Z",
+  "updatedAt": "2026-08-17T14:13:43Z",
   "files": [
+    {
+      "id": "moduleglass-1.1.12-roothide",
+      "name": "Module Glass 1.1.12 Transition Recovery RootHide",
+      "fileName": "ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.12",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.12/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb",
+      "sha256": "42084d1dcab2f554b89aa1532bb9d3b8bfdc1cc144c2cbf8e40d47470d0a6726",
+      "notes": "Device test for the expansion freeze: removes broad layout/disappear transition cleanup, suspends once on an actual size transition, ignores stale completion callbacks, and only restores Module Glass after compact Control Center geometry is stable."
+    },
+    {
+      "id": "moduleglass-1.1.12-source",
+      "name": "Module Glass 1.1.12 Transition Recovery Source",
+      "fileName": "ModuleGlass_1.1.12_Complete_Source.zip",
+      "type": "zip",
+      "platform": "Source / Theos",
+      "version": "1.1.12",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.12/ModuleGlass_1.1.12_Complete_Source.zip",
+      "sha256": "c6084b0c4daef615ee1d51a49bf795984fa757b153046143e94020dcd86fdee7",
+      "notes": "Exact matching source for the 1.1.12 RootHide transition-recovery test build."
+    },
     {
       "id": "nextlock-1.1.1-license-test-roothide",
       "name": "NextLock 1.1.1 License Test RootHide",
