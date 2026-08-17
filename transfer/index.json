@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T13:31:19Z",
+  "updatedAt": "2026-08-17T13:36:08Z",
   "files": [
     {
-      "id": "nextsolution-license-admin-1.0.1",
-      "name": "NextSolution License Admin 1.0.1",
-      "fileName": "NextSolution-License-Admin-1.0.1.tipa",
+      "id": "ns-admin-1.0.2",
+      "name": "NS Admin 1.0.2",
+      "fileName": "NS-Admin-1.0.2.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
-      "version": "1.0.1",
-      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.1/NextSolution-License-Admin-1.0.1.tipa",
-      "sha256": "bd00e415a45d5831a5703c04879bcbdbe811f020ef2d674cca4028affe3b7863",
-      "notes": "Fixes TrollStore error 303 by declaring and validating CFBundleExecutable and the packaged arm64 main binary. Private Next Solution licensing console for activation requests and direct activate/check/revoke actions."
+      "version": "1.0.2",
+      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.2/NS-Admin-1.0.2.tipa",
+      "sha256": "b09a33bfb562dd4a415948fdd2d2ff2f641a3b104d3a06f66cf028b9c7483409",
+      "notes": "Renamed to NS Admin with a new licensing shield icon. Fixes GitHub token saving on TrollStore by using iOS Keychain when available and automatically falling back to private iOS Data Protection storage when the TrollStore signature has no Keychain entitlement. Keeps direct NextLock activate/check/revoke controls and request handoff."
     },
     {
       "id": "nextlock-1.1.0-license-test-roothide",
