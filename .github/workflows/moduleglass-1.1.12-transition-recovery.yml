@@ -5,7 +5,7 @@ on:
     branches:
       - build/moduleglass-1.1.12-transition-recovery
     paths:
-      - '.moduleglass-build/moduleglass-1.1.12-runtime.b64'
+      - '.moduleglass-build/moduleglass-1.1.12.part*'
       - '.github/workflows/moduleglass-1.1.12-transition-recovery.yml'
   workflow_dispatch:
 
@@ -31,11 +31,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cat .moduleglass-build/moduleglass-1.1.12.part* > /tmp/moduleglass112-runtime.b64
+          test "$(wc -c < /tmp/moduleglass112-runtime.b64 | tr -d ' ')" = "24396"
           python3 - <<'PY'
           import base64, pathlib, hashlib
-          root = pathlib.Path('${{ github.workspace }}')
-          encoded = (root / '.moduleglass-build/moduleglass-1.1.12-runtime.b64').read_text().strip()
-          payload = base64.b64decode(encoded)
+          encoded = pathlib.Path('/tmp/moduleglass112-runtime.b64').read_text().strip()
+          payload = base64.b64decode(encoded, validate=True)
           expected = '780b1da230768f1c65cbe68074ae6afb540cf7834f594e51b6942defe18f122b'
           actual = hashlib.sha256(payload).hexdigest()
           assert actual == expected, (actual, expected)
@@ -58,7 +59,9 @@ jobs:
           set -euo pipefail
           mkdir -p output/source-stage
           cp -R buildsrc/Runtime output/source-stage/ModuleGlass-1.1.12-Complete-Source
-          ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.12-Complete-Source output/ModuleGlass_1.1.12_Complete_Source.zip
+          ditto -c -k --sequesterRsrc --keepParent \
+            output/source-stage/ModuleGlass-1.1.12-Complete-Source \
+            output/ModuleGlass_1.1.12_Complete_Source.zip
 
       - name: Install package tools
         shell: bash
@@ -146,7 +149,9 @@ jobs:
           mkdir -p "$DEST"
           cp output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb "$DEST/"
           cp output/ModuleGlass_1.1.12_Complete_Source.zip "$DEST/"
-          python3 - "$SITE/transfer/index.json" output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb output/ModuleGlass_1.1.12_Complete_Source.zip <<'PY'
+          python3 - "$SITE/transfer/index.json" \
+            output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb \
+            output/ModuleGlass_1.1.12_Complete_Source.zip <<'PY'
           import json, pathlib, hashlib, datetime, sys
           manifest=pathlib.Path(sys.argv[1])
           deb=pathlib.Path(sys.argv[2])
@@ -155,10 +160,34 @@ jobs:
           files=[x for x in data.get('files',[]) if not str(x.get('id','')).startswith('moduleglass-1.1.12-')]
           base='https://nextsolution.cc/transfer/files/ModuleGlass/1.1.12/'
           entries=[
-            {'id':'moduleglass-1.1.12-roothide','name':'Module Glass 1.1.12 Transition Recovery RootHide','fileName':deb.name,'type':'deb','platform':'RootHide','version':'1.1.12','url':base+deb.name,'sha256':hashlib.sha256(deb.read_bytes()).hexdigest(),'notes':'Device test for the expansion freeze: removes broad layout/disappear transition cleanup, suspends once on an actual size transition, ignores stale completion callbacks, and only restores Module Glass after compact Control Center geometry is stable.'},
-            {'id':'moduleglass-1.1.12-source','name':'Module Glass 1.1.12 Transition Recovery Source','fileName':src.name,'type':'zip','platform':'Source / Theos','version':'1.1.12','url':base+src.name,'sha256':hashlib.sha256(src.read_bytes()).hexdigest(),'notes':'Exact matching source for the 1.1.12 RootHide transition-recovery test build.'}
+            {
+              'id':'moduleglass-1.1.12-roothide',
+              'name':'Module Glass 1.1.12 Transition Recovery RootHide',
+              'fileName':deb.name,
+              'type':'deb',
+              'platform':'RootHide',
+              'version':'1.1.12',
+              'url':base+deb.name,
+              'sha256':hashlib.sha256(deb.read_bytes()).hexdigest(),
+              'notes':'Device test for the expansion freeze: removes broad layout/disappear transition cleanup, suspends once on an actual size transition, ignores stale completion callbacks, and only restores Module Glass after compact Control Center geometry is stable.'
+            },
+            {
+              'id':'moduleglass-1.1.12-source',
+              'name':'Module Glass 1.1.12 Transition Recovery Source',
+              'fileName':src.name,
+              'type':'zip',
+              'platform':'Source / Theos',
+              'version':'1.1.12',
+              'url':base+src.name,
+              'sha256':hashlib.sha256(src.read_bytes()).hexdigest(),
+              'notes':'Exact matching source for the 1.1.12 RootHide transition-recovery test build.'
+            }
           ]
-          payload={'version':1,'updatedAt':datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'files':entries+files}
+          payload={
+            'version':1,
+            'updatedAt':datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'files':entries+files
+          }
           manifest.write_text(json.dumps(payload,indent=2)+'\n')
           PY
           git -C "$SITE" config user.name "github-actions[bot]"
