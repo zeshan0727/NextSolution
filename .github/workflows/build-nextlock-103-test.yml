@@ -1,0 +1,110 @@
+name: Build NextLock 1.0.3 Test DEBs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - ".github/workflows/build-nextlock-103-test.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextlock-1-0-3-test
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Generate and validate direct clock hook
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          python3 "$P/prefs/generate_root.py"
+          python3 "$P/patch_v023.py"
+          python3 "$P/patch_v024.py"
+          python3 "$P/patch_v025.py"
+          grep -q '^Version: 1.0.3$' "$P/control"
+          grep -q 'LGTHookedUILabelSetText' "$P/RuntimeV023.xm"
+          grep -q 'LGTHookedUILabelSetAttributedText' "$P/RuntimeV023.xm"
+          grep -q 'LGTReapplyAfterAppleClockMutation' "$P/RuntimeV023.xm"
+          grep -q 'LGTLockScreenContainerForLabel' "$P/RuntimeV023.xm"
+          grep -q 'gLGTInternalLabelMutation' "$P/RuntimeV023.xm"
+          grep -q 'MSHookMessageEx(UILabel.class,@selector(setText:)' "$P/RuntimeV023.xm"
+          grep -q 'MSHookMessageEx(UILabel.class,@selector(setAttributedText:)' "$P/RuntimeV023.xm"
+          grep -q 'patch_v025.py' "$P/Makefile"
+
+      - name: Build Rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-103"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.3_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-103"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.3_RootHide.deb"
+
+      - name: Validate packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock-103"
+          for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
+            set -- $spec
+            deb="$OUT/NextLock_1.0.3_$1.deb"
+            test -s "$deb"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
+            test "$(dpkg-deb -f "$deb" Version)" = 1.0.3
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$2"
+            test "$(dpkg-deb -f "$deb" Name)" = NextLock
+            x="$(mktemp -d)"
+            dpkg-deb -x "$deb" "$x"
+            test -s "$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            test -s "$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
+            rm -rf "$x"
+          done
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
+
+      - name: Upload test DEBs
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.0.3-Test-DEBs
+          path: |
+            ${{ runner.temp }}/nextlock-103/NextLock_1.0.3_Rootless.deb
+            ${{ runner.temp }}/nextlock-103/NextLock_1.0.3_RootHide.deb
+            ${{ runner.temp }}/nextlock-103/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
