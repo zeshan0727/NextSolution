@@ -1,0 +1,89 @@
+name: Build ModuleGlass RootHide Test
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.4-roothide-test
+    paths:
+      - '.github/workflows/moduleglass-roothide-test.yml'
+      - '.moduleglass-build/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 20
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+
+    steps:
+      - name: Checkout temporary build branch
+        uses: actions/checkout@v4
+
+      - name: Reconstruct and verify hardened source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat .moduleglass-build/runtime.part* > /tmp/moduleglass-runtime.b64
+          python3 - <<'PY'
+          import base64, pathlib
+          src = pathlib.Path('/tmp/moduleglass-runtime.b64').read_text()
+          pathlib.Path('/tmp/moduleglass-runtime.tar.gz').write_bytes(base64.b64decode(src))
+          PY
+          echo 'cc5e80f33b03eea681cbe687012f126b7e025a8aec043de4da8317d98dce5e94  /tmp/moduleglass-runtime.tar.gz' | shasum -a 256 -c -
+          mkdir -p buildsrc
+          tar -xzf /tmp/moduleglass-runtime.tar.gz -C buildsrc
+          test -f buildsrc/Runtime/Tweak.m
+          test -f buildsrc/Runtime/Makefile
+          grep -q 'Version: 1.1.4' buildsrc/Runtime/control
+
+      - name: Install RootHide Theos toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          brew install ldid xz || true
+          git clone --depth 1 --recursive https://github.com/roothide/theos.git "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/iPhoneOS16.5.sdk.tar.xz
+          tar -xJf /tmp/iPhoneOS16.5.sdk.tar.xz -C "$THEOS/sdks"
+          test -f "$THEOS/makefiles/common.mk"
+          test -d "$THEOS/sdks/iPhoneOS16.5.sdk"
+
+      - name: Build RootHide runtime package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd buildsrc/Runtime
+          make clean
+          make package FINALPACKAGE=1
+          DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$DEB"
+          echo "DEB=$DEB" >> "$GITHUB_ENV"
+
+      - name: Verify package and Mach-O
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p verify/root verify/control
+          dpkg-deb -x "buildsrc/Runtime/$DEB" verify/root
+          dpkg-deb -e "buildsrc/Runtime/$DEB" verify/control
+          cat verify/control/control
+          grep -q '^Architecture: iphoneos-arm64e$' verify/control/control
+          DYLIB="$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' -print -quit)"
+          test -n "$DYLIB"
+          file "$DYLIB"
+          lipo -info "$DYLIB"
+          otool -L "$DYLIB"
+          shasum -a 256 "buildsrc/Runtime/$DEB"
+
+      - name: Upload verified RootHide package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.4-RootHide-Test
+          path: buildsrc/Runtime/packages/*.deb
+          if-no-files-found: error
+          retention-days: 3
