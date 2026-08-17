@@ -94,11 +94,15 @@ jobs:
             dpkg-deb -x "$deb" "$x"
             dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
             prefs="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
+            info="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Info.plist' -print -quit)"
             about="$(find "$x" -path '*LockGlyphTimePrefs.bundle/About.plist' -print -quit)"
             test -s "$dylib"
             test -s "$prefs"
+            test -s "$info"
             test -s "$about"
-            grep -q 'Version 1.0.2' "$about"
+            plutil -lint "$info"
+            plutil -lint "$about"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info")" = 1.0.2
             file "$dylib"
             rm -rf "$x"
           done
