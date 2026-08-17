@@ -47,17 +47,15 @@ jobs:
               px=int(round(size*scale))
               idiom='ios-marketing' if size==1024 else ('ipad' if size in (76,83.5) else 'iphone')
               name=f'AppIcon-{px}.png'
-              item={'idiom':idiom,'size':f'{size}x{size}','scale':f'{scale}x','filename':name}
-              images.append(item)
+              images.append({'idiom':idiom,'size':f'{size}x{size}','scale':f'{scale}x','filename':name})
           Path('Resources/Assets.xcassets/AppIcon.appiconset/Contents.json').write_text(json.dumps({'images':images,'info':{'author':'xcode','version':1}},indent=2)+'\n')
           Path('Resources/Assets.xcassets/Contents.json').write_text(json.dumps({'info':{'author':'xcode','version':1}},indent=2)+'\n')
           PY
-          for px in 40 60 58 87 80 120 152 167 1024; do
+          for px in 40 60 58 87 80 120 180 152 167 1024; do
             sips -z "$px" "$px" "$SRC" --out "$ASSET/AppIcon-$px.png" >/dev/null
           done
-          # Legacy bundle icon files referenced by Info.plist.
           cp "$ASSET/AppIcon-120.png" Resources/AppIcon60x60@2x.png
-          cp "$ASSET/AppIcon-180.png" Resources/AppIcon60x60@3x.png 2>/dev/null || sips -z 180 180 "$SRC" --out Resources/AppIcon60x60@3x.png >/dev/null
+          cp "$ASSET/AppIcon-180.png" Resources/AppIcon60x60@3x.png
 
       - name: Generate Xcode project
         working-directory: NextSolutionLicenseAdmin
@@ -88,7 +86,7 @@ jobs:
           test -d "$APP"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.licenseadmin"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.0.0"
-          grep -R -q "nextsolutionlicense" "$APP/Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes:0' "$APP/Info.plist")" = "nextsolutionlicense"
           /usr/bin/codesign --force --sign - --entitlements NextSolutionLicenseAdmin.entitlements --generate-entitlement-der "$APP"
           /usr/bin/codesign --verify --verbose=2 "$APP"
 
