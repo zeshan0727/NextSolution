@@ -2,16 +2,16 @@ name: ModuleGlassPreview
 options:
   bundleIdPrefix: com.nextsolution
   deploymentTarget:
-    iOS: "15.0"
+    iOS: "16.0"
 settings:
   base:
     PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.moduleglasspreview
     PRODUCT_NAME: ModuleGlassPreview
     SWIFT_VERSION: 5.9
     TARGETED_DEVICE_FAMILY: "1,2"
-    MARKETING_VERSION: 1.0.0
-    CURRENT_PROJECT_VERSION: 1
-    IPHONEOS_DEPLOYMENT_TARGET: 15.0
+    MARKETING_VERSION: 1.1.0
+    CURRENT_PROJECT_VERSION: 110
+    IPHONEOS_DEPLOYMENT_TARGET: 16.0
     SUPPORTS_MACCATALYST: NO
     CODE_SIGNING_ALLOWED: NO
     ENABLE_BITCODE: NO
@@ -20,7 +20,7 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: ModuleGlassPreview.swift
+      - path: Sources
     settings:
       base:
         INFOPLIST_FILE: Info.plist
