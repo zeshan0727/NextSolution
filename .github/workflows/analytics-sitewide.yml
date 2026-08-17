@@ -1,0 +1,121 @@
+name: Google Analytics Sitewide
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.html'
+      - '.github/workflows/analytics-sitewide.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: google-analytics-sitewide-main
+  cancel-in-progress: false
+
+jobs:
+  ensure-analytics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ensure Google Analytics on every HTML page
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          GA_ID = 'G-3JPKHN1068'
+          START = '<!-- google-analytics-auto:start -->'
+          END = '<!-- google-analytics-auto:end -->'
+          BLOCK = f'''{START}
+          <!-- Google tag (gtag.js) -->
+          <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
+          <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){{dataLayer.push(arguments);}}
+            gtag('js', new Date());
+            gtag('config', '{GA_ID}');
+          </script>
+          {END}'''
+
+          skip_parts = {
+              '.git', 'node_modules', 'vendor', '.venv', 'venv',
+              'dist', 'build', 'DerivedData', '.build'
+          }
+
+          marker_re = re.compile(
+              re.escape(START) + r'.*?' + re.escape(END),
+              re.IGNORECASE | re.DOTALL,
+          )
+
+          changed = []
+          skipped_existing = []
+
+          for path in sorted(Path('.').rglob('*.html')):
+              if any(part in skip_parts for part in path.parts):
+                  continue
+
+              try:
+                  original = path.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+
+              text = original
+
+              # Normalize blocks previously managed by this workflow.
+              if marker_re.search(text):
+                  text = marker_re.sub(BLOCK, text, count=1)
+              # If this exact GA property is already installed manually, never duplicate it.
+              elif GA_ID in text:
+                  skipped_existing.append(str(path))
+                  continue
+              elif re.search(r'</head\s*>', text, flags=re.IGNORECASE):
+                  text = re.sub(
+                      r'</head\s*>',
+                      BLOCK + '\n</head>',
+                      text,
+                      count=1,
+                      flags=re.IGNORECASE,
+                  )
+              else:
+                  # Only valid HTML documents with a head are modified.
+                  continue
+
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  changed.append(str(path))
+
+          print(f'Analytics property: {GA_ID}')
+          print(f'Updated HTML pages: {len(changed)}')
+          for item in changed:
+              print(f'  + {item}')
+          if skipped_existing:
+              print(f'Pages already containing {GA_ID}: {len(skipped_existing)}')
+          PY
+
+      - name: Commit sitewide Analytics updates
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No Analytics changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- '*.html'
+          git commit -m "chore: ensure Google Analytics sitewide"
+          git push origin main
