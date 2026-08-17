@@ -1,0 +1,95 @@
+name: Build and Publish Module Glass Preview TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ModuleGlassPreview/**'
+      - '.github/workflows/build-publish-moduleglass-preview-tipa.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: module-glass-preview-tipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ModuleGlassPreview
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        working-directory: ModuleGlassPreview
+        run: |
+          set -o pipefail
+          rm -rf build build-output Payload
+          mkdir -p build-output
+          xcodebuild \
+            -project ModuleGlassPreview.xcodeproj \
+            -scheme ModuleGlassPreview \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build-output/xcodebuild.log
+
+      - name: Ad-hoc sign with TrollStore entitlements
+        working-directory: ModuleGlassPreview
+        run: |
+          APP="build/Build/Products/Release-iphoneos/ModuleGlassPreview.app"
+          test -d "$APP"
+          /usr/bin/codesign --force --sign - --entitlements ModuleGlassPreview.entitlements --generate-entitlement-der "$APP"
+          /usr/bin/codesign --verify --verbose=2 "$APP"
+          /usr/bin/codesign -d --entitlements :- "$APP" > build-output/embedded-entitlements.plist 2>&1 || true
+          grep -q "com.apple.private.security.no-container" build-output/embedded-entitlements.plist
+          grep -q "platform-application" build-output/embedded-entitlements.plist
+
+      - name: Package and validate TIPA
+        working-directory: ModuleGlassPreview
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/ModuleGlassPreview.app Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload ModuleGlass-Preview-1.0.0.tipa
+          cp ModuleGlass-Preview-1.0.0.tipa build-output/ModuleGlass-Preview-1.0.0.tipa
+          shasum -a 256 ModuleGlass-Preview-1.0.0.tipa | tee build-output/ModuleGlass-Preview-1.0.0.sha256
+          unzip -l ModuleGlass-Preview-1.0.0.tipa | grep -q "Payload/ModuleGlassPreview.app/ModuleGlassPreview"
+          test -s ModuleGlass-Preview-1.0.0.tipa
+
+      - name: Put TIPA in Next Solution Transfer uploads
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          DEST="transfer/uploads/20260817-ModuleGlass-Preview-1.0.0.tipa"
+          mkdir -p transfer/uploads
+          cp ModuleGlassPreview/ModuleGlass-Preview-1.0.0.tipa "$DEST"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "$DEST"
+          git commit -m "Upload Module Glass Preview 1.0.0 TIPA" || true
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-Preview-1.0.0-TIPA
+          path: |
+            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.0.0.tipa
+            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.0.0.sha256
+            ModuleGlassPreview/build-output/embedded-entitlements.plist
+          if-no-files-found: error
