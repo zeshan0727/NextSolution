@@ -1,0 +1,220 @@
+name: Build and Publish NextLock 1.1.3 Live
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - '.github/workflows/build-publish-nextlock-113-live.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextlock-1-1-3-live-release
+  cancel-in-progress: true
+
+jobs:
+  build_publish:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: agent/lockglyphtime
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Validate public 1.1.3 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          python3 "$P/prefs/generate_root.py"
+          python3 "$P/patch_v023.py"
+          python3 "$P/patch_v024.py"
+          python3 "$P/patch_v025.py"
+          python3 "$P/patch_v026.py"
+          python3 "$P/patch_v027.py"
+          python3 "$P/patch_v028.py"
+          python3 "$P/patch_v029.py"
+          python3 "$P/patch_v030.py"
+          python3 "$P/patch_v031.py"
+          python3 "$P/generate_nextlock_icon.py"
+          grep -q '^Version: 1.1.3$' "$P/control"
+          grep -q 'raw.githubusercontent.com/zeshan0727/NextSolution/main/licenses/nextlock.json' "$P/RuntimeV023.xm"
+          grep -q '10\*NSEC_PER_SEC' "$P/RuntimeV023.xm"
+          ! grep -q 'shareDeviceDetails' "$P/prefs/LGTListControllerV023.m"
+          ! grep -q 'Send Device Details to NS Admin' "$P/prefs/Resources/Root.plist"
+          python3 - "$P/prefs/Resources/Root.plist" <<'PY'
+          import plistlib,sys
+          items=plistlib.load(open(sys.argv[1],'rb'))['items']
+          expected=['ACTIVATION','Status','Device ID','Copy Device ID','Buy / Activate — $1.00','Check Activation']
+          tail=[]
+          for x in items[-6:]:
+              tail.append(x.get('label',''))
+          assert tail==expected, (tail, expected)
+          assert not any(x.get('label')=='ACTIVATION' for x in items[:-6])
+          PY
+          plutil -lint "$P/prefs/Resources/Root.plist"
+          plutil -lint "$P/prefs/Resources/Info.plist"
+
+      - name: Build Rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock113live"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.3_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock113live"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.3_RootHide.deb"
+
+      - name: Validate final packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock113live"
+          for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
+            set -- $spec
+            deb="$OUT/NextLock_1.1.3_$1.deb"; arch="$2"; x="$(mktemp -d)"
+            test -s "$deb"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
+            test "$(dpkg-deb -f "$deb" Version)" = 1.1.3
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            test "$(dpkg-deb -f "$deb" Name)" = NextLock
+            dpkg-deb -x "$deb" "$x"
+            rootplist="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
+            dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            test -s "$rootplist"; test -s "$dylib"
+            ! grep -q 'Send Device Details to NS Admin' "$rootplist"
+            python3 - "$rootplist" <<'PY'
+          import plistlib,sys
+          items=plistlib.load(open(sys.argv[1],'rb'))['items']
+          assert [x.get('label','') for x in items[-6:]] == ['ACTIVATION','Status','Device ID','Copy Device ID','Buy / Activate — $1.00','Check Activation']
+          PY
+            strings "$dylib" | grep -q 'raw.githubusercontent.com/zeshan0727/NextSolution/main/licenses/nextlock.json'
+            rm -rf "$x"
+          done
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/NextLock_1.1.3_SHA256SUMS.txt"
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.3-Live-DEBs
+          path: |
+            ${{ runner.temp }}/nextlock113live/NextLock_1.1.3_Rootless.deb
+            ${{ runner.temp }}/nextlock113live/NextLock_1.1.3_RootHide.deb
+            ${{ runner.temp }}/nextlock113live/NextLock_1.1.3_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish live Sileo release to nextsolution.cc
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock113live"
+          SITE="$RUNNER_TEMP/site"
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+
+          mkdir -p "$SITE/debfiles" "$SITE/transfer/files/NextLock/1.1.3"
+          cp "$OUT/NextLock_1.1.3_Rootless.deb" "$SITE/debfiles/"
+          cp "$OUT/NextLock_1.1.3_RootHide.deb" "$SITE/debfiles/"
+          cp "$OUT/NextLock_1.1.3_Rootless.deb" "$SITE/transfer/files/NextLock/1.1.3/"
+          cp "$OUT/NextLock_1.1.3_RootHide.deb" "$SITE/transfer/files/NextLock/1.1.3/"
+          cp "$OUT/NextLock_1.1.3_SHA256SUMS.txt" "$SITE/transfer/files/NextLock/1.1.3/"
+          cp "$P/prefs/Resources/NextLockIcon.png" "$SITE/NextLockIcon.png"
+
+          python3 - "$SITE" "$OUT" <<'PY'
+          import json,pathlib,hashlib,datetime,sys,re
+          site=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2])
+          def sha(name): return hashlib.sha256((out/name).read_bytes()).hexdigest()
+          manifest=site/'transfer/index.json'
+          data=json.loads(manifest.read_text()) if manifest.exists() else {'version':1,'files':[]}
+          files=[x for x in data.get('files',[]) if not str(x.get('id','')).startswith(('nextlock-','lockglyphtime-'))]
+          notes='NextLock 1.1.3 live release. Moves the Activation section to the bottom of Settings while retaining fast direct license checks, ~10-second activation/revocation refresh, the polished Settings icon, and device model/iOS metadata in activation requests.'
+          data['updatedAt']=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          data['files']=[
+            {'id':'nextlock-1.1.3-roothide','name':'NextLock 1.1.3 RootHide','fileName':'NextLock_1.1.3_RootHide.deb','type':'deb','platform':'RootHide','version':'1.1.3','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.3/NextLock_1.1.3_RootHide.deb','sha256':sha('NextLock_1.1.3_RootHide.deb'),'notes':notes},
+            {'id':'nextlock-1.1.3-rootless','name':'NextLock 1.1.3 Rootless','fileName':'NextLock_1.1.3_Rootless.deb','type':'deb','platform':'Dopamine / Rootless','version':'1.1.3','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.3/NextLock_1.1.3_Rootless.deb','sha256':sha('NextLock_1.1.3_Rootless.deb'),'notes':notes}
+          ] + files
+          manifest.write_text(json.dumps(data,indent=2)+'\n')
+
+          dep=site/'depictions/nextlock.html'
+          if dep.exists():
+              d=dep.read_text().replace('NextLock 1.1.2','NextLock 1.1.3').replace('Version 1.1.2','Version 1.1.3')
+              d=re.sub(r'<section class="section"><h2>Version 1\.1\.3</h2><p>.*?</p></section>', '<section class="section"><h2>Version 1.1.3</h2><p>The Activation section now appears at the bottom of NextLock Settings instead of directly below the main Enable/Disable control. Fast live license checks, quick revocation, the polished icon, and device/iOS activation metadata remain unchanged.</p></section>', d, flags=re.S)
+              dep.write_text(d)
+
+          article=site/'nextlock-tweak.html'
+          if article.exists():
+              a=article.read_text().replace('NextLock 1.1.2','NextLock 1.1.3')
+              a=a.replace('<div><b>Current version</b></div><div>1.1.2</div>','<div><b>Current version</b></div><div>1.1.3</div>')
+              a=a.replace('/NextLock/1.1.2/NextLock_1.1.2_Rootless.deb','/NextLock/1.1.3/NextLock_1.1.3_Rootless.deb')
+              a=a.replace('/NextLock/1.1.2/NextLock_1.1.2_RootHide.deb','/NextLock/1.1.3/NextLock_1.1.3_RootHide.deb')
+              pat=r'<section class="section">\s*<h2>NextLock 1\.1\.3 update</h2>.*?</section>'
+              section='<section class="section">\n      <h2>NextLock 1.1.3 update</h2>\n      <p>NextLock 1.1.3 moves the complete Activation section to the bottom of the tweak preferences, keeping General and the normal customization pages first. The fast direct license registry checks and automatic activation/revocation refresh remain unchanged.</p>\n    </section>'
+              if re.search(pat,a,flags=re.S): a=re.sub(pat,section,a,count=1,flags=re.S)
+              article.write_text(a)
+          PY
+
+          cd "$SITE"
+          dpkg-scanpackages -m ./debfiles /dev/null | sed 's|^Filename: debfiles/|Filename: ./debfiles/|' > Packages
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages'); p.write_text(p.read_text().rstrip()+"\n")
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+
+          grep -q '^Version: 1.1.3$' Packages
+          grep -q 'NextLock_1.1.3_Rootless.deb' Packages
+          grep -q 'NextLock_1.1.3_RootHide.deb' Packages
+          grep -q 'Version 1.1.3' depictions/nextlock.html
+          grep -q 'Current version</b></div><div>1.1.3' nextlock-tweak.html
+
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A debfiles transfer Packages Packages.gz Packages.bz2 Packages.xz Packages.zst depictions/nextlock.html nextlock-tweak.html NextLockIcon.png
+          git commit -m 'Publish NextLock 1.1.3 settings layout update'
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main; then
+              if git push origin HEAD:main; then exit 0; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep $((attempt*3))
+          done
+          exit 1
