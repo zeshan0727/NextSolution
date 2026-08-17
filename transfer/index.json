@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T12:04:40Z",
+  "updatedAt": "2026-08-17T12:21:59Z",
   "files": [
+    {
+      "id": "module-glass-preview-1.1.1",
+      "name": "Module Glass Developer Console 1.1.1",
+      "fileName": "ModuleGlass-Preview-1.1.1.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / Jailbroken iOS 16+",
+      "version": "1.1.1",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa",
+      "sha256": "eb80d49fbda6fd7ccef5b1cc7cb96ec5ac7483423b90df063a21e4ca5b075f24",
+      "notes": "Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured."
+    },
     {
       "id": "module-glass-preview-1.1.0",
       "name": "Module Glass Developer Console 1.1.0",
