@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T11:59:15Z",
+  "updatedAt": "2026-08-17T12:04:40Z",
   "files": [
+    {
+      "id": "module-glass-preview-1.1.0",
+      "name": "Module Glass Developer Console 1.1.0",
+      "fileName": "ModuleGlass-Preview-1.1.0.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / Jailbroken iOS 16+",
+      "version": "1.1.0",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.0/ModuleGlass-Preview-1.1.0.tipa",
+      "sha256": "d25967e5ddfe2d9e4e7b7f03685f4068a010ee688b4b7f3c3106f1d7c296d230",
+      "notes": "Advanced Module Glass developer console with realistic live Control Center preview, per-module crop/position editor, continuous device apply, Stable Recovery preference bridge, deep diagnostics, Keychain-protected GitHub PAT, and one-tap diagnostic log upload."
+    },
     {
       "id": "nextlock-1.0.5-rootless",
       "name": "NextLock 1.0.5 Rootless",
