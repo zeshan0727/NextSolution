@@ -1,28 +1,28 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T14:19:30Z",
+  "updatedAt": "2026-08-17T18:40:26Z",
   "files": [
     {
-      "id": "nextlock-1.1.2-license-test-roothide",
-      "name": "NextLock 1.1.2 License Test RootHide",
-      "fileName": "NextLock_1.1.2_LicenseTest_RootHide.deb",
+      "id": "nextlock-1.1.2-roothide",
+      "name": "NextLock 1.1.2 RootHide",
+      "fileName": "NextLock_1.1.2_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.2 License Test",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.2-LicenseTest/NextLock_1.1.2_LicenseTest_RootHide.deb",
-      "sha256": "3ff47e23c2f0b0ab262d2cc602a110223ac9361ca7b32f28e0026dd321e72832",
-      "notes": "Fast licensing test: direct live-registry checks, ~10-second activation/revocation refresh, polished preference icon, device model + iOS metadata, plus Send Device Details to NS Admin for already-paid devices."
+      "version": "1.1.2",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.2/NextLock_1.1.2_RootHide.deb",
+      "sha256": "778e50330d095e11d6cc72d17ee0123f41ee52a37d1cbe34c2137d3fc24577f1",
+      "notes": "NextLock 1.1.2 live release with fast direct license checks, automatic ~10-second activation/revocation refresh, polished Settings icon, and device model/iOS metadata in activation requests."
     },
     {
-      "id": "nextlock-1.1.2-license-test-rootless",
-      "name": "NextLock 1.1.2 License Test Rootless",
-      "fileName": "NextLock_1.1.2_LicenseTest_Rootless.deb",
+      "id": "nextlock-1.1.2-rootless",
+      "name": "NextLock 1.1.2 Rootless",
+      "fileName": "NextLock_1.1.2_Rootless.deb",
       "type": "deb",
       "platform": "Dopamine / Rootless",
-      "version": "1.1.2 License Test",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.2-LicenseTest/NextLock_1.1.2_LicenseTest_Rootless.deb",
-      "sha256": "f32f8901b6764f794464c0782071a5f2b177ab4f48a2ae2549f10254ad5a9935",
-      "notes": "Fast licensing test: direct live-registry checks, ~10-second activation/revocation refresh, polished preference icon, device model + iOS metadata, plus Send Device Details to NS Admin for already-paid devices."
+      "version": "1.1.2",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.2/NextLock_1.1.2_Rootless.deb",
+      "sha256": "e6e44346da51337bbab937539f362ed6df5bf2bb9eafe1ee5b4ef94d22aea695",
+      "notes": "NextLock 1.1.2 live release with fast direct license checks, automatic ~10-second activation/revocation refresh, polished Settings icon, and device model/iOS metadata in activation requests."
     },
     {
       "id": "moduleglass-1.1.12-roothide",
@@ -78,28 +78,6 @@
       "type": "tipa",
       "name": "Module Glass Developer Console 1.1.1",
       "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa"
-    },
-    {
-      "sha256": "cefe2d706c1f995ffb900d95941bb121ab878e08ee42362dcfcce7f2c8893984",
-      "id": "nextlock-1.0.5-rootless",
-      "fileName": "NextLock_1.0.5_Rootless.deb",
-      "platform": "Dopamine / Rootless",
-      "notes": "Adds independent Custom Photo Width and Height controls from 20\u2013600pt, so photos and transparent stickers can be resized horizontally and vertically separately.",
-      "version": "1.0.5",
-      "type": "deb",
-      "name": "NextLock 1.0.5 Rootless",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.5/NextLock_1.0.5_Rootless.deb"
-    },
-    {
-      "sha256": "676222e5a73e0d02d5e3b19ecf8d75681b1d04d5336d6c6bd96e6995bf37a1b",
-      "id": "nextlock-1.0.5-roothide",
-      "fileName": "NextLock_1.0.5_RootHide.deb",
-      "platform": "RootHide",
-      "notes": "Adds independent Custom Photo Width and Height controls from 20\u2013600pt, so photos and transparent stickers can be resized horizontally and vertically separately.",
-      "version": "1.0.5",
-      "type": "deb",
-      "name": "NextLock 1.0.5 RootHide",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.5/NextLock_1.0.5_RootHide.deb"
     },
     {
       "sha256": "d1682506fd4d0631b768a66190aa30c8f7eb838a6c8d0270769112c63a9b974d",

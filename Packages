@@ -499,6 +499,46 @@ Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
 Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 
+Package: com.nextsolution.lockglyphtime
+Version: 1.1.2
+Architecture: iphoneos-arm64
+Maintainer: Next Solution - Zeeshan Barvi
+Installed-Size: 572
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextLock_1.1.2_Rootless.deb
+Size: 96196
+MD5sum: 0c9d463b5b8bc5e87ac5d5ce68441acf
+SHA1: ed6598e623243c025daa8347265efb5a45e266b2
+SHA256: e6e44346da51337bbab937539f362ed6df5bf2bb9eafe1ee5b4ef94d22aea695
+Section: Tweaks
+Homepage: https://nextsolution.cc
+Description: Next Solution lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Solution - Zeeshan Barvi
+Depiction: https://nextsolution.cc/depictions/nextlock.html
+Icon: https://nextsolution.cc/NextLockIcon.png
+Name: NextLock
+Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+
+Package: com.nextsolution.lockglyphtime
+Version: 1.1.2
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution - Zeeshan Barvi
+Installed-Size: 572
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextLock_1.1.2_RootHide.deb
+Size: 95938
+MD5sum: f27d2c8e9ad6dc0f46f8f24448caa297
+SHA1: c0a75a4c7920173c313b946f3b729965e235d9bb
+SHA256: 778e50330d095e11d6cc72d17ee0123f41ee52a37d1cbe34c2137d3fc24577f1
+Section: Tweaks
+Homepage: https://nextsolution.cc
+Description: Next Solution lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Solution - Zeeshan Barvi
+Depiction: https://nextsolution.cc/depictions/nextlock.html
+Icon: https://nextsolution.cc/NextLockIcon.png
+Name: NextLock
+Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+
 Package: com.nextsolution.lowpowermodehaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
