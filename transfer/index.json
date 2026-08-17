@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T13:14:29Z",
+  "updatedAt": "2026-08-17T13:15:16Z",
   "files": [
     {
       "id": "nextsolution-license-admin-1.0.0",
@@ -47,26 +47,26 @@
       "notes": "Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured."
     },
     {
-      "id": "moduleglass-1.1.9-roothide",
-      "name": "Module Glass 1.1.9 Complete RootHide",
-      "fileName": "ModuleGlass_1.1.9_Complete_RootHide.deb",
+      "id": "moduleglass-1.1.10-roothide",
+      "name": "Module Glass 1.1.10 Complete RootHide",
+      "fileName": "ModuleGlass_1.1.10_Complete_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.9",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.9/ModuleGlass_1.1.9_Complete_RootHide.deb",
-      "sha256": "c149e78e6057b4442e7f0aec522673d199add01377f0c0e1b8276cbfe2c34cdf",
-      "notes": "Slider-only device test: Brightness and Volume share a permanent full rounded shell and one identical 0-100% custom-image fill path. Other validated 1.1.8 behavior is unchanged."
+      "version": "1.1.10",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.10/ModuleGlass_1.1.10_Complete_RootHide.deb",
+      "sha256": "ab0b379d1927d655a8c64483df813c6406e54c116b67de66aa6a2c182e1b3c9f",
+      "notes": "Slider-shell-only device test: removes the remaining translucent gray slider background while preserving the validated 1.1.9 full rounded 0-100% Brightness/Volume fill behavior."
     },
     {
-      "id": "moduleglass-1.1.9-source",
-      "name": "Module Glass 1.1.9 Complete Source",
-      "fileName": "ModuleGlass_1.1.9_Complete_Source.zip",
+      "id": "moduleglass-1.1.10-source",
+      "name": "Module Glass 1.1.10 Complete Source",
+      "fileName": "ModuleGlass_1.1.10_Complete_Source.zip",
       "type": "zip",
       "platform": "Source / Theos",
-      "version": "1.1.9",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.9/ModuleGlass_1.1.9_Complete_Source.zip",
-      "sha256": "b2207cf747e77f77ba7cc2a21682b7fd83cb33f2d859a645d01090c254214fe5",
-      "notes": "Matching source for the validated 1.1.9 RootHide slider test build."
+      "version": "1.1.10",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.10/ModuleGlass_1.1.10_Complete_Source.zip",
+      "sha256": "4e4091183ae58977a4966c39889a3ee3cb1e6df37f3cf13f1aaaa893af937804",
+      "notes": "Matching source for the validated 1.1.10 transparent-slider-shell RootHide test build."
     },
     {
       "id": "module-glass-preview-1.1.0",
