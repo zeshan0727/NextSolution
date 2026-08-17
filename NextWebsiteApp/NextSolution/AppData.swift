@@ -7,13 +7,13 @@ enum AppData {
     static let instagramURL = URL(string: "https://instagram.com/nextsolut1on")!
     static let emailURL = URL(string: "mailto:NextSolution@zeshanbarvi.uk")!
     static let githubURL = URL(string: "https://github.com/zeshan0727/NextSolution")!
-    static let repoURL = URL(string: "https://nextsolution.cc/")!
-    static let sileoURL = URL(string: "sileo://source/https://nextsolution.cc/")!
+    static let repoURL = URL(string: "https://zeshan0727.github.io/")!
+    static let sileoURL = URL(string: "sileo://source/https://zeshan0727.github.io/")!
 
     static let tutorials: [Tutorial] = [
         Tutorial(
             id: "phoneaura",
-            title: "PhoneAura 0.4.16",
+            title: "PhoneAura 0.4.15",
             subtitle: "A complete native Phone app redesign for iOS 16 jailbreaks.",
             icon: "phone.fill",
             tags: ["iOS 16+", "RootHide", "Rootless", "Free"],
@@ -43,7 +43,7 @@ enum AppData {
                 ),
                 TutorialSection(
                     title: "Installation",
-                    body: "Add the Next Solution repository in Sileo, search for PhoneAura, confirm version 0.4.16 and the correct architecture, install, then respring.",
+                    body: "Add the Next Solution repository in Sileo, search for PhoneAura, confirm version 0.4.15 and the correct architecture, install, then respring.",
                     bullets: [
                         "Fully close the Phone app after respring.",
                         "Open Settings → PhoneAura and choose the replacement tabs.",
@@ -177,25 +177,36 @@ enum AppData {
 
     static let downloads: [DownloadItem] = [
         DownloadItem(
+            id: "module-glass-preview",
+            title: "Module Glass Preview",
+            detail: "Live companion for previewing and changing Module Glass Control Center backgrounds on a TrollStore device.",
+            version: "1.0.0",
+            kind: .app,
+            icon: "square.grid.2x2.fill",
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa")!,
+            fileName: "ModuleGlass-Preview-1.0.0.tipa",
+            externalOnly: false
+        ),
+        DownloadItem(
             id: "phoneaura-roothide",
             title: "PhoneAura RootHide",
             detail: "RootHide build for iphoneos-arm64e devices.",
-            version: "0.4.16",
+            version: "0.4.15",
             kind: .package,
             icon: "phone.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.16_RootHide_iOS16.deb")!,
-            fileName: "PhoneAura_0.4.16_RootHide_iOS16.deb",
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.15_RootHide_iOS16.deb")!,
+            fileName: "PhoneAura_0.4.15_RootHide_iOS16.deb",
             externalOnly: false
         ),
         DownloadItem(
             id: "phoneaura-rootless",
             title: "PhoneAura Rootless",
             detail: "Standard rootless build for iphoneos-arm64.",
-            version: "0.4.16",
+            version: "0.4.15",
             kind: .package,
             icon: "phone.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/PhoneAura_0.4.16_Rootless_iOS16.deb")!,
-            fileName: "PhoneAura_0.4.16_Rootless_iOS16.deb",
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/debfiles/PhoneAura_0.4.15_Rootless_iOS16.deb")!,
+            fileName: "PhoneAura_0.4.15_Rootless_iOS16.deb",
             externalOnly: false
         ),
         DownloadItem(
