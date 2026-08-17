@@ -1,0 +1,57 @@
+name: Finish NextLock 1.0.4 Page
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - ".github/workflows/fix-nextlock-104-page.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextlock-104-page-fix
+  cancel-in-progress: true
+
+jobs:
+  update_page:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update live NextLock page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE="$RUNNER_TEMP/site"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          cd "$SITE"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('nextlock-tweak.html')
+          s=p.read_text()
+          s=s.replace('<div><b>Current version</b></div><div>1.0.1</div>', '<div><b>Current version</b></div><div>1.0.4</div>')
+          s=s.replace('https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_Rootless.deb', 'https://nextsolution.cc/transfer/files/NextLock/1.0.4/NextLock_1.0.4_Rootless.deb')
+          s=s.replace('https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_RootHide.deb', 'https://nextsolution.cc/transfer/files/NextLock/1.0.4/NextLock_1.0.4_RootHide.deb')
+          old='<h2>NextLock 1.0.4 update</h2>\n      <p>Version 1.0.1 is the polished public release of the NextLock branding. It keeps the transparent sticker-photo renderer, rounded-square normal photo treatment and all existing time/date/icon controls, while updating the Settings / PreferenceLoader icon resources for the correct iOS scale sizes and cleaning older branding assets.</p>'
+          new='<h2>NextLock 1.0.4 update</h2>\n      <p>Version 1.0.4 keeps the native Lock Screen clock refresh fix and adds a separate <strong>Photo Frame Size</strong> control from <strong>20–180pt</strong>. Custom photos and transparent sticker PNGs can now be enlarged independently without changing SF Symbol icon size. The update also preserves the existing time, date, positioning, shadow and custom-photo behavior.</p>'
+          s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          grep -q '<div><b>Current version</b></div><div>1.0.4</div>' nextlock-tweak.html
+          grep -q 'NextLock/1.0.4/NextLock_1.0.4_Rootless.deb' nextlock-tweak.html
+          grep -q 'NextLock/1.0.4/NextLock_1.0.4_RootHide.deb' nextlock-tweak.html
+          grep -q 'Photo Frame Size' nextlock-tweak.html
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add nextlock-tweak.html
+          git commit -m "Finish NextLock 1.0.4 article links" || exit 0
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep 2; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((attempt * 2))
+          done
+          echo "Failed to publish article after retries" >&2
+          exit 1
