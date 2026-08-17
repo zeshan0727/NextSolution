@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T07:11:03Z",
+  "updatedAt": "2026-08-17T11:30:00Z",
   "files": [
+    {
+      "id": "moduleglass-1.1.4-roothide",
+      "name": "Module Glass 1.1.4 RootHide",
+      "fileName": "ModuleGlass_1.1.4_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.4",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.4/ModuleGlass_1.1.4_RootHide.deb",
+      "sha256": "56a4ec3a46df66682edf16ce506664d1f4860d52c4b10d53397a77c656f03e84",
+      "notes": "Hardened Module Glass runtime with state-driven rendering, cached preferences, asynchronous image decoding, exact restoration tracking, live Volume tint updates, Remove Blur, Glow, and expanded-module safety."
+    },
     {
       "id": "nextlock-1.0.3-rootless",
       "name": "NextLock 1.0.3 Rootless",
