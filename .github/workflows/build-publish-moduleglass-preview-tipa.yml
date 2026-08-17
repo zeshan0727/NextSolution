@@ -1,4 +1,4 @@
-name: Build and Publish Module Glass Preview TIPA
+name: Build and Publish Module Glass Developer Console
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -49,11 +49,14 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee build-output/xcodebuild.log
 
-      - name: Ad-hoc sign with TrollStore entitlements
+      - name: Validate app metadata and sign for TrollStore
         working-directory: ModuleGlassPreview
         run: |
+          set -euo pipefail
           APP="build/Build/Products/Release-iphoneos/ModuleGlassPreview.app"
           test -d "$APP"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.0"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.moduleglasspreview"
           /usr/bin/codesign --force --sign - --entitlements ModuleGlassPreview.entitlements --generate-entitlement-der "$APP"
           /usr/bin/codesign --verify --verbose=2 "$APP"
           /usr/bin/codesign -d --entitlements :- "$APP" > build-output/embedded-entitlements.plist 2>&1 || true
@@ -63,35 +66,67 @@ jobs:
       - name: Package and validate TIPA
         working-directory: ModuleGlassPreview
         run: |
+          set -euo pipefail
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/ModuleGlassPreview.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload ModuleGlass-Preview-1.0.0.tipa
-          cp ModuleGlass-Preview-1.0.0.tipa build-output/ModuleGlass-Preview-1.0.0.tipa
-          shasum -a 256 ModuleGlass-Preview-1.0.0.tipa | tee build-output/ModuleGlass-Preview-1.0.0.sha256
-          unzip -l ModuleGlass-Preview-1.0.0.tipa | grep -q "Payload/ModuleGlassPreview.app/ModuleGlassPreview"
-          test -s ModuleGlass-Preview-1.0.0.tipa
+          ditto -c -k --sequesterRsrc --keepParent Payload ModuleGlass-Preview-1.1.0.tipa
+          cp ModuleGlass-Preview-1.1.0.tipa build-output/ModuleGlass-Preview-1.1.0.tipa
+          shasum -a 256 ModuleGlass-Preview-1.1.0.tipa | tee build-output/ModuleGlass-Preview-1.1.0.sha256
+          unzip -l ModuleGlass-Preview-1.1.0.tipa | grep -q "Payload/ModuleGlassPreview.app/ModuleGlassPreview"
+          test -s ModuleGlass-Preview-1.1.0.tipa
 
-      - name: Publish TIPA to Next Solution app downloads
+      - name: Publish to NextSolution Transfer feed
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          DEST="NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa"
-          OLD="transfer/uploads/20260817-ModuleGlass-Preview-1.0.0.tipa"
-          mkdir -p NextWebsiteApp/downloads
-          cp ModuleGlassPreview/ModuleGlass-Preview-1.0.0.tipa "$DEST"
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f "$DEST"
-          if [ -f "$OLD" ]; then git rm -f "$OLD"; fi
-          git commit -m "Publish Module Glass Preview 1.0.0 in app downloads" || true
+          git pull --rebase origin main
+
+          DEST="transfer/files/ModuleGlassPreview/1.1.0/ModuleGlass-Preview-1.1.0.tipa"
+          mkdir -p "$(dirname "$DEST")"
+          cp ModuleGlassPreview/ModuleGlass-Preview-1.1.0.tipa "$DEST"
+          SHA=$(shasum -a 256 "$DEST" | awk '{print $1}')
+          SIZE=$(stat -f '%z' "$DEST")
+
+          python3 - "$SHA" "$SIZE" <<'PY'
+          import json, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          sha, size = sys.argv[1], int(sys.argv[2])
+          p = Path('transfer/index.json')
+          data = json.loads(p.read_text()) if p.exists() else {'version': 1, 'files': []}
+          entry = {
+              'id': 'module-glass-preview-1.1.0',
+              'name': 'Module Glass Developer Console 1.1.0',
+              'fileName': 'ModuleGlass-Preview-1.1.0.tipa',
+              'type': 'tipa',
+              'platform': 'TrollStore / Jailbroken iOS 16+',
+              'version': '1.1.0',
+              'url': 'https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.0/ModuleGlass-Preview-1.1.0.tipa',
+              'sha256': sha,
+              'notes': 'Advanced Module Glass developer console with realistic live Control Center preview, per-module crop/position editor, continuous device apply, Stable Recovery preference bridge, deep diagnostics, Keychain-protected GitHub PAT, and one-tap diagnostic log upload.'
+          }
+          files = [x for x in data.get('files', []) if x.get('id') != entry['id']]
+          data['version'] = data.get('version', 1)
+          data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          data['files'] = [entry] + files
+          p.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+          git add -f "$DEST" transfer/index.json
+          git commit -m "Publish Module Glass Developer Console 1.1.0 to Transfer"
           git pull --rebase origin main
           git push origin HEAD:main
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ModuleGlass-Preview-1.0.0-TIPA
+          name: ModuleGlass-Developer-Console-1.1.0
           path: |
-            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.0.0.tipa
-            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.0.0.sha256
+            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.1.0.tipa
+            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.1.0.sha256
             ModuleGlassPreview/build-output/embedded-entitlements.plist
+            ModuleGlassPreview/build-output/xcodebuild.log
           if-no-files-found: error
