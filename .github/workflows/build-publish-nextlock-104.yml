@@ -1,0 +1,195 @@
+name: Build and Publish NextLock 1.0.4
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - ".github/workflows/build-publish-nextlock-104.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextlock-1-0-4-release
+  cancel-in-progress: true
+
+jobs:
+  build_publish:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Validate 1.0.4 source generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          python3 "$P/prefs/generate_root.py"
+          python3 "$P/patch_v023.py"
+          python3 "$P/patch_v024.py"
+          python3 "$P/patch_v025.py"
+          python3 "$P/patch_v026.py"
+          grep -q '^Version: 1.0.4$' "$P/control"
+          grep -q 'gPhotoFrameSize' "$P/RuntimeV023.xm"
+          grep -q 'displaySize=custom?gPhotoFrameSize:gIconSize' "$P/RuntimeV023.xm"
+          grep -q 'LGTHookedUILabelSetText' "$P/RuntimeV023.xm"
+          grep -q 'LGTHookedUILabelSetAttributedText' "$P/RuntimeV023.xm"
+          plutil -lint "$P/prefs/Resources/Photo.plist"
+          plutil -extract items xml1 -o - "$P/prefs/Resources/Photo.plist" | grep -q 'photoFrameSize'
+          plutil -extract items xml1 -o - "$P/prefs/Resources/Photo.plist" | grep -q 'Photo Frame Size'
+
+      - name: Build Rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock104"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.4_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock104"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.0.4_RootHide.deb"
+
+      - name: Validate final packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock104"
+          for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
+            set -- $spec
+            deb="$OUT/NextLock_1.0.4_$1.deb"; arch="$2"; x="$(mktemp -d)"
+            test -s "$deb"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
+            test "$(dpkg-deb -f "$deb" Version)" = 1.0.4
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
+            test "$(dpkg-deb -f "$deb" Name)" = NextLock
+            dpkg-deb -f "$deb" Description | grep -q 'frame-size control up to 180pt'
+            dpkg-deb -x "$deb" "$x"
+            dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            photo="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Photo.plist' -print -quit)"
+            test -s "$dylib"
+            test -s "$photo"
+            plutil -extract items xml1 -o - "$photo" | grep -q 'photoFrameSize'
+            plutil -extract items xml1 -o - "$photo" | grep -q '<integer>180</integer>'
+            rm -rf "$x"
+          done
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/NextLock_1.0.4_SHA256SUMS.txt"
+
+      - name: Upload 1.0.4 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.0.4-DEBs
+          path: |
+            ${{ runner.temp }}/nextlock104/NextLock_1.0.4_Rootless.deb
+            ${{ runner.temp }}/nextlock104/NextLock_1.0.4_RootHide.deb
+            ${{ runner.temp }}/nextlock104/NextLock_1.0.4_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish to nextsolution.cc
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock104"
+          SITE="$RUNNER_TEMP/site"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          mkdir -p "$SITE/transfer/files/NextLock/1.0.4" "$SITE/debfiles"
+          cp "$OUT/NextLock_1.0.4_Rootless.deb" "$SITE/transfer/files/NextLock/1.0.4/"
+          cp "$OUT/NextLock_1.0.4_RootHide.deb" "$SITE/transfer/files/NextLock/1.0.4/"
+          cp "$OUT/NextLock_1.0.4_SHA256SUMS.txt" "$SITE/transfer/files/NextLock/1.0.4/"
+          cp "$OUT/NextLock_1.0.4_Rootless.deb" "$SITE/debfiles/"
+          cp "$OUT/NextLock_1.0.4_RootHide.deb" "$SITE/debfiles/"
+
+          python3 - "$SITE" "$OUT" <<'PY'
+          import json, pathlib, hashlib, datetime, sys, re
+          site=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2])
+          def sha(n): return hashlib.sha256((out/n).read_bytes()).hexdigest()
+
+          manifest=site/'transfer/index.json'
+          try: data=json.loads(manifest.read_text())
+          except Exception: data={'version':1,'files':[]}
+          files=[x for x in data.get('files',[]) if not str(x.get('id','')).startswith(('nextlock-','lockglyphtime-'))]
+          files=[
+            {'id':'nextlock-1.0.4-rootless','name':'NextLock 1.0.4 Rootless','fileName':'NextLock_1.0.4_Rootless.deb','type':'deb','platform':'Dopamine / Rootless','version':'1.0.4','url':'https://nextsolution.cc/transfer/files/NextLock/1.0.4/NextLock_1.0.4_Rootless.deb','sha256':sha('NextLock_1.0.4_Rootless.deb'),'notes':'Adds an independent Custom Photo Frame Size slider from 20–180pt while preserving native clock refresh and transparent sticker behavior.'},
+            {'id':'nextlock-1.0.4-roothide','name':'NextLock 1.0.4 RootHide','fileName':'NextLock_1.0.4_RootHide.deb','type':'deb','platform':'RootHide','version':'1.0.4','url':'https://nextsolution.cc/transfer/files/NextLock/1.0.4/NextLock_1.0.4_RootHide.deb','sha256':sha('NextLock_1.0.4_RootHide.deb'),'notes':'Adds an independent Custom Photo Frame Size slider from 20–180pt while preserving native clock refresh and transparent sticker behavior.'}
+          ]+files
+          manifest.write_text(json.dumps({'version':1,'updatedAt':datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'files':files},indent=2)+'\n')
+
+          dep=site/'depictions/nextlock.html'
+          text=dep.read_text()
+          text=text.replace('NextLock 1.0.3','NextLock 1.0.4').replace('Version 1.0.3','Version 1.0.4')
+          old='Fixes the Lock Screen clock refresh path by following Apple\'s native time-label updates directly, while retaining the timer as a fallback. Customized time now advances without requiring another respring.'
+          new='Keeps the native Lock Screen clock refresh fix and adds a dedicated Custom Photo Frame Size control from 20–180pt. Custom photos and transparent sticker PNGs can now be enlarged independently from SF Symbol icons.'
+          text=text.replace(old,new)
+          dep.write_text(text)
+
+          article=site/'nextlock-tweak.html'
+          if article.exists():
+              a=article.read_text()
+              a=a.replace('NextLock 1.0.1','NextLock 1.0.4')
+              a=a.replace('"dateModified":"2026-08-16"','"dateModified":"2026-08-17"')
+              needle='<h3>Your own photo</h3>\n      <p>The built-in photo editor lets you choose an image from Photos, crop and zoom it, and use it directly on the Lock Screen. NextLock preserves the selected image as PNG data so transparent artwork stays transparent.</p>'
+              repl='<h3>Your own photo</h3>\n      <p>The built-in photo editor lets you choose an image from Photos, crop and zoom it, and use it directly on the Lock Screen. NextLock preserves the selected image as PNG data so transparent artwork stays transparent. <strong>Version 1.0.4 adds a separate Photo Frame Size slider from 20–180pt</strong>, letting photos and stickers grow much larger without changing SF Symbol icon size.</p>'
+              a=a.replace(needle,repl)
+              article.write_text(a)
+
+          rel=site/'Release'
+          if rel.exists():
+              r=rel.read_text()
+              r=re.sub(r'^Version: .*$', 'Version: 1.1.4', r, flags=re.M)
+              r=re.sub(r'^Date: .*$', 'Date: Mon, 17 Aug 2026 11:28:00 GMT', r, flags=re.M)
+              rel.write_text(r)
+          PY
+
+          cd "$SITE"
+          dpkg-scanpackages -m ./debfiles /dev/null | sed 's|^Filename: debfiles/|Filename: ./debfiles/|' > Packages
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages'); p.write_text(p.read_text().rstrip()+"\n")
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          grep -q '^Package: com.nextsolution.lockglyphtime$' Packages
+          grep -q '^Version: 1.0.4$' Packages
+          grep -q 'NextLock_1.0.4_Rootless.deb' Packages
+          grep -q 'NextLock_1.0.4_RootHide.deb' Packages
+          grep -q 'Version 1.0.4' depictions/nextlock.html
+          grep -q 'Photo Frame Size slider from 20–180pt' nextlock-tweak.html
+
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add transfer debfiles/NextLock_1.0.4_Rootless.deb debfiles/NextLock_1.0.4_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release depictions/nextlock.html nextlock-tweak.html
+          git commit -m "Publish NextLock 1.0.4 photo frame size update"
+          git pull --rebase origin main
+          git push origin main
