@@ -1,0 +1,162 @@
+name: Build and Publish NextSolution License Admin
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'NextSolutionLicenseAdmin/**'
+      - '.github/workflows/build-publish-license-admin-tipa.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextsolution-license-admin-tipa
+  cancel-in-progress: true
+
+jobs:
+  build_publish:
+    runs-on: macos-15
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate app icon assets
+        working-directory: NextSolutionLicenseAdmin
+        run: |
+          set -euo pipefail
+          SRC="../NextSolutionRepoIcon.png"
+          test -f "$SRC"
+          ASSET="Resources/Assets.xcassets/AppIcon.appiconset"
+          mkdir -p "$ASSET"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          sizes = [
+            (20,2),(20,3),(29,2),(29,3),(40,2),(40,3),(60,2),(60,3),(76,1),(76,2),(83.5,2),(1024,1)
+          ]
+          images=[]
+          for size,scale in sizes:
+              px=int(round(size*scale))
+              idiom='ios-marketing' if size==1024 else ('ipad' if size in (76,83.5) else 'iphone')
+              name=f'AppIcon-{px}.png'
+              item={'idiom':idiom,'size':f'{size}x{size}','scale':f'{scale}x','filename':name}
+              images.append(item)
+          Path('Resources/Assets.xcassets/AppIcon.appiconset/Contents.json').write_text(json.dumps({'images':images,'info':{'author':'xcode','version':1}},indent=2)+'\n')
+          Path('Resources/Assets.xcassets/Contents.json').write_text(json.dumps({'info':{'author':'xcode','version':1}},indent=2)+'\n')
+          PY
+          for px in 40 60 58 87 80 120 152 167 1024; do
+            sips -z "$px" "$px" "$SRC" --out "$ASSET/AppIcon-$px.png" >/dev/null
+          done
+          # Legacy bundle icon files referenced by Info.plist.
+          cp "$ASSET/AppIcon-120.png" Resources/AppIcon60x60@2x.png
+          cp "$ASSET/AppIcon-180.png" Resources/AppIcon60x60@3x.png 2>/dev/null || sips -z 180 180 "$SRC" --out Resources/AppIcon60x60@3x.png >/dev/null
+
+      - name: Generate Xcode project
+        working-directory: NextSolutionLicenseAdmin
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        working-directory: NextSolutionLicenseAdmin
+        run: |
+          set -o pipefail
+          rm -rf build build-output Payload
+          mkdir -p build-output
+          xcodebuild \
+            -project NextSolutionLicenseAdmin.xcodeproj \
+            -scheme NextSolutionLicenseAdmin \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build-output/xcodebuild.log
+
+      - name: Validate and ad-hoc sign app
+        working-directory: NextSolutionLicenseAdmin
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release-iphoneos/NextSolutionLicenseAdmin.app"
+          test -d "$APP"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.licenseadmin"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.0.0"
+          grep -R -q "nextsolutionlicense" "$APP/Info.plist"
+          /usr/bin/codesign --force --sign - --entitlements NextSolutionLicenseAdmin.entitlements --generate-entitlement-der "$APP"
+          /usr/bin/codesign --verify --verbose=2 "$APP"
+
+      - name: Package TIPA
+        working-directory: NextSolutionLicenseAdmin
+        run: |
+          set -euo pipefail
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/NextSolutionLicenseAdmin.app Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextSolution-License-Admin-1.0.0.tipa
+          cp NextSolution-License-Admin-1.0.0.tipa build-output/
+          shasum -a 256 NextSolution-License-Admin-1.0.0.tipa | tee build-output/NextSolution-License-Admin-1.0.0.sha256
+          unzip -l NextSolution-License-Admin-1.0.0.tipa | grep -q "Payload/NextSolutionLicenseAdmin.app/NextSolutionLicenseAdmin"
+          test -s NextSolution-License-Admin-1.0.0.tipa
+
+      - name: Publish to NextSolution Transfer
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git pull --rebase origin main
+
+          DEST="transfer/files/NextSolutionLicenseAdmin/1.0.0/NextSolution-License-Admin-1.0.0.tipa"
+          mkdir -p "$(dirname "$DEST")"
+          cp NextSolutionLicenseAdmin/NextSolution-License-Admin-1.0.0.tipa "$DEST"
+          SHA=$(shasum -a 256 "$DEST" | awk '{print $1}')
+
+          python3 - "$SHA" <<'PY'
+          import json, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          sha=sys.argv[1]
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text()) if p.exists() else {'version':1,'files':[]}
+          entry={
+            'id':'nextsolution-license-admin-1.0.0',
+            'name':'NextSolution License Admin 1.0.0',
+            'fileName':'NextSolution-License-Admin-1.0.0.tipa',
+            'type':'tipa',
+            'platform':'TrollStore / iOS 16+',
+            'version':'1.0.0',
+            'url':'https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.0/NextSolution-License-Admin-1.0.0.tipa',
+            'sha256':sha,
+            'notes':'Private Next Solution licensing console. Receives customer activation-request links with tweak name and Device ID, stores requests locally, and activates/checks/revokes licenses directly through the NextSolution GitHub registry using a Keychain-protected fine-grained token.'
+          }
+          files=[x for x in data.get('files',[]) if x.get('id')!=entry['id']]
+          data['version']=data.get('version',1)
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          data['files']=[entry]+files
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git add -f "$DEST" transfer/index.json
+          git commit -m "Publish NextSolution License Admin 1.0.0"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "Publish race; retry $attempt"
+            sleep $((attempt*3))
+          done
+          exit 1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextSolution-License-Admin-1.0.0
+          path: |
+            NextSolutionLicenseAdmin/build-output/NextSolution-License-Admin-1.0.0.tipa
+            NextSolutionLicenseAdmin/build-output/NextSolution-License-Admin-1.0.0.sha256
+            NextSolutionLicenseAdmin/build-output/xcodebuild.log
+          if-no-files-found: error
