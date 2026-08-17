@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T12:22:14Z",
+  "updatedAt": "2026-08-17T12:40:23Z",
   "files": [
     {
       "id": "module-glass-preview-1.1.1",
@@ -14,26 +14,26 @@
       "notes": "Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured."
     },
     {
-      "id": "moduleglass-1.1.6-roothide",
-      "name": "Module Glass 1.1.6 Complete RootHide",
-      "fileName": "ModuleGlass_1.1.6_Complete_RootHide.deb",
+      "id": "moduleglass-1.1.7-roothide",
+      "name": "Module Glass 1.1.7 Complete RootHide",
+      "fileName": "ModuleGlass_1.1.7_Complete_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.6",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.6/ModuleGlass_1.1.6_Complete_RootHide.deb",
-      "sha256": "f361be018ee8f5e6fa9c657ddcff76000467cc336eb72579a85bcbb6a8634695",
-      "notes": "Device-test renderer: images stretch to module size, standard module glyphs/text remain native, and Volume uses the same fill-aware slider pattern as Brightness."
+      "version": "1.1.7",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.7/ModuleGlass_1.1.7_Complete_RootHide.deb",
+      "sha256": "085ccb4a47660a119da2314f504f4740ccda3076427f70db41739014ba98d67d",
+      "notes": "Crisp background test: Remove Blur safely suppresses only module-sized non-interactive material surfaces, while Volume custom image fill follows the live slider from 0% to 100% like Brightness."
     },
     {
-      "id": "moduleglass-1.1.6-source",
-      "name": "Module Glass 1.1.6 Complete Source",
-      "fileName": "ModuleGlass_1.1.6_Complete_Source.zip",
+      "id": "moduleglass-1.1.7-source",
+      "name": "Module Glass 1.1.7 Complete Source",
+      "fileName": "ModuleGlass_1.1.7_Complete_Source.zip",
       "type": "zip",
       "platform": "Source / Theos",
-      "version": "1.1.6",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.6/ModuleGlass_1.1.6_Complete_Source.zip",
-      "sha256": "a5f9f0060d15ec8900e09a22d51dba816c6d3730784bc52351de98d8ee52b359",
-      "notes": "Matching source for the 1.1.6 glyph-safe stretch renderer test build."
+      "version": "1.1.7",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.7/ModuleGlass_1.1.7_Complete_Source.zip",
+      "sha256": "9b9340a340cd90e780d5116553b8578a1914dc2ab69cd6b62dbac243c687a28b",
+      "notes": "Matching source for the validated Module Glass 1.1.7 RootHide build."
     },
     {
       "id": "module-glass-preview-1.1.0",
