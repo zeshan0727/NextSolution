@@ -1,28 +1,28 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T18:40:26Z",
+  "updatedAt": "2026-08-17T18:54:37Z",
   "files": [
     {
-      "id": "nextlock-1.1.2-roothide",
-      "name": "NextLock 1.1.2 RootHide",
-      "fileName": "NextLock_1.1.2_RootHide.deb",
+      "id": "nextlock-1.1.3-roothide",
+      "name": "NextLock 1.1.3 RootHide",
+      "fileName": "NextLock_1.1.3_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.2",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.2/NextLock_1.1.2_RootHide.deb",
-      "sha256": "778e50330d095e11d6cc72d17ee0123f41ee52a37d1cbe34c2137d3fc24577f1",
-      "notes": "NextLock 1.1.2 live release with fast direct license checks, automatic ~10-second activation/revocation refresh, polished Settings icon, and device model/iOS metadata in activation requests."
+      "version": "1.1.3",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.3/NextLock_1.1.3_RootHide.deb",
+      "sha256": "3286fa216bd3b53bb342d9db89d00896fa1a81749c89752984769269b074f131",
+      "notes": "NextLock 1.1.3 live release. Moves the Activation section to the bottom of Settings while retaining fast direct license checks, ~10-second activation/revocation refresh, the polished Settings icon, and device model/iOS metadata in activation requests."
     },
     {
-      "id": "nextlock-1.1.2-rootless",
-      "name": "NextLock 1.1.2 Rootless",
-      "fileName": "NextLock_1.1.2_Rootless.deb",
+      "id": "nextlock-1.1.3-rootless",
+      "name": "NextLock 1.1.3 Rootless",
+      "fileName": "NextLock_1.1.3_Rootless.deb",
       "type": "deb",
       "platform": "Dopamine / Rootless",
-      "version": "1.1.2",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.2/NextLock_1.1.2_Rootless.deb",
-      "sha256": "e6e44346da51337bbab937539f362ed6df5bf2bb9eafe1ee5b4ef94d22aea695",
-      "notes": "NextLock 1.1.2 live release with fast direct license checks, automatic ~10-second activation/revocation refresh, polished Settings icon, and device model/iOS metadata in activation requests."
+      "version": "1.1.3",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.3/NextLock_1.1.3_Rootless.deb",
+      "sha256": "b03b77183f4ba3c135b71dfdcf842e3b3e9e11b351f6b1a40950073296de9d5a",
+      "notes": "NextLock 1.1.3 live release. Moves the Activation section to the bottom of Settings while retaining fast direct license checks, ~10-second activation/revocation refresh, the polished Settings icon, and device model/iOS metadata in activation requests."
     },
     {
       "id": "moduleglass-1.1.12-roothide",

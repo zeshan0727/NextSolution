@@ -539,6 +539,46 @@ Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
 Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 
+Package: com.nextsolution.lockglyphtime
+Version: 1.1.3
+Architecture: iphoneos-arm64
+Maintainer: Next Solution - Zeeshan Barvi
+Installed-Size: 572
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextLock_1.1.3_Rootless.deb
+Size: 95942
+MD5sum: e347fba309fcac0069e834f8afcfaea9
+SHA1: 4fb9c76a443d117db305551049d2c75bc77ab6f5
+SHA256: b03b77183f4ba3c135b71dfdcf842e3b3e9e11b351f6b1a40950073296de9d5a
+Section: Tweaks
+Homepage: https://nextsolution.cc
+Description: Next Solution lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Solution - Zeeshan Barvi
+Depiction: https://nextsolution.cc/depictions/nextlock.html
+Icon: https://nextsolution.cc/NextLockIcon.png
+Name: NextLock
+Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+
+Package: com.nextsolution.lockglyphtime
+Version: 1.1.3
+Architecture: iphoneos-arm64e
+Maintainer: Next Solution - Zeeshan Barvi
+Installed-Size: 572
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/NextLock_1.1.3_RootHide.deb
+Size: 96044
+MD5sum: f91af0fe26193bf4dccbc05381416fca
+SHA1: 7c1a155e4ebcdb834413595ebd1a3c6d3ddeb5d4
+SHA256: 3286fa216bd3b53bb342d9db89d00896fa1a81749c89752984769269b074f131
+Section: Tweaks
+Homepage: https://nextsolution.cc
+Description: Next Solution lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Solution - Zeeshan Barvi
+Depiction: https://nextsolution.cc/depictions/nextlock.html
+Icon: https://nextsolution.cc/NextLockIcon.png
+Name: NextLock
+Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+
 Package: com.nextsolution.lowpowermodehaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
