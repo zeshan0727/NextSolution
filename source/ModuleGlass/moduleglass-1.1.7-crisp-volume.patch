@@ -1,0 +1,287 @@
+--- a/source/ModuleGlass/Tweak.m
++++ b/source/ModuleGlass/Tweak.m
+@@ -26,6 +26,9 @@
+ static char MGVolumeOriginalPercentageTextColorKey;
+ static char MGVolumeOriginalPercentageAttributedKey;
+ static char MGBrightnessOriginalLayerOpacityKey;
++static char MGBlurOriginalAlphaKey;
++static char MGVolumeFillMaskKey;
++static char MGVolumeFillImageKey;
+ 
+ static void (*MGOrigLabelSetText)(UILabel *, SEL, NSString *);
+ static void (*MGOrigLabelSetAttributedText)(UILabel *, SEL, NSAttributedString *);
+@@ -35,6 +38,7 @@
+ static void (*MGOrigModuleLayout)(id, SEL);
+ static void (*MGOrigContentViewDidLoad)(id, SEL);
+ static void (*MGOrigContentLayout)(id, SEL);
++static void (*MGOrigSliderSetValue)(id, SEL, CGFloat);
+ 
+ static void MGApplyController(id controller, NSString *source);
+ 
+@@ -912,6 +916,157 @@
+     return YES;
+ }
+ 
++
++#pragma mark - Glyph-safe blur removal / slider reveal
++
++static BOOL MGSubtreeContainsForegroundControl(UIView *view, UIImageView *customImage) {
++    if (!view) return NO;
++    if (view == customImage || view.tag == MGImageTag) return NO;
++    if ([view isKindOfClass:UIControl.class] || [view isKindOfClass:UILabel.class] ||
++        [view isKindOfClass:UIImageView.class] || [view isKindOfClass:UIButton.class]) return YES;
++    for (UIView *child in view.subviews) {
++        if (MGSubtreeContainsForegroundControl(child, customImage)) return YES;
++    }
++    return NO;
++}
++
++static BOOL MGIsModuleSizedBlurVisual(UIView *view, UIView *root, UIImageView *customImage) {
++    if (!view || !root || view == root || view == customImage || view.tag == MGImageTag || view.hidden) return NO;
++    if ([customImage isDescendantOfView:view]) return NO;
++    if ([view isKindOfClass:UIControl.class] || [view isKindOfClass:UILabel.class] ||
++        [view isKindOfClass:UIImageView.class] || [view isKindOfClass:UIButton.class]) return NO;
++
++    NSString *name = NSStringFromClass(view.class).lowercaseString ?: @"";
++    BOOL visualClass = [name containsString:@"material"] || [name containsString:@"visualeffect"] ||
++                       [name containsString:@"backdrop"] || [name containsString:@"blur"] ||
++                       [name containsString:@"background"];
++    if (!visualClass) return NO;
++
++    CGRect rect = [view convertRect:view.bounds toView:root];
++    CGFloat rootW = CGRectGetWidth(root.bounds), rootH = CGRectGetHeight(root.bounds);
++    CGFloat w = CGRectGetWidth(rect), h = CGRectGetHeight(rect);
++    if (rootW <= 1.0 || rootH <= 1.0 || w <= 1.0 || h <= 1.0) return NO;
++    CGFloat areaRatio = (w * h) / MAX(1.0, rootW * rootH);
++    CGFloat widthRatio = w / rootW, heightRatio = h / rootH;
++    CGFloat centerDistance = hypot(CGRectGetMidX(rect) - CGRectGetMidX(root.bounds),
++                                   CGRectGetMidY(rect) - CGRectGetMidY(root.bounds));
++    if (areaRatio < 0.70 || areaRatio > 1.40) return NO;
++    if (widthRatio < 0.72 || heightRatio < 0.72) return NO;
++    if (centerDistance > MAX(rootW, rootH) * 0.20) return NO;
++
++    return !MGSubtreeContainsForegroundControl(view, customImage);
++}
++
++static NSUInteger MGSetModuleBlurHiddenRecursive(UIView *node, UIView *root, UIImageView *customImage,
++                                                   BOOL hidden, NSMutableArray<NSString *> *classes, NSInteger depth) {
++    if (!node || !root || depth > 24) return 0;
++    NSUInteger count = 0;
++    for (UIView *child in node.subviews.copy) {
++        if (child == customImage || child.tag == MGImageTag) continue;
++        if (MGIsModuleSizedBlurVisual(child, root, customImage)) {
++            NSNumber *saved = objc_getAssociatedObject(child, &MGBlurOriginalAlphaKey);
++            if (hidden) {
++                if (!saved) objc_setAssociatedObject(child, &MGBlurOriginalAlphaKey, @(child.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++                child.alpha = 0.0;
++                if (classes) [classes addObject:NSStringFromClass(child.class) ?: @"UIView"];
++            } else if (saved) {
++                child.alpha = saved.doubleValue;
++                objc_setAssociatedObject(child, &MGBlurOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++            }
++            count++;
++            continue;
++        }
++        count += MGSetModuleBlurHiddenRecursive(child, root, customImage, hidden, classes, depth + 1);
++    }
++    return count;
++}
++
++static void MGRestoreModuleBlurVisuals(UIView *root) {
++    if (!root) return;
++    NSNumber *saved = objc_getAssociatedObject(root, &MGBlurOriginalAlphaKey);
++    if (saved) {
++        root.alpha = saved.doubleValue;
++        objc_setAssociatedObject(root, &MGBlurOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++    }
++    for (UIView *child in root.subviews.copy) MGRestoreModuleBlurVisuals(child);
++}
++
++static CGFloat MGSliderNormalizedValue(UIView *slider) {
++    if (!slider) return NAN;
++    NSArray<NSString *> *valueKeys = @[@"value", @"_value", @"normalizedValue", @"_normalizedValue"];
++    NSNumber *value = nil;
++    for (NSString *key in valueKeys) {
++        @try {
++            id candidate = [slider valueForKey:key];
++            if ([candidate respondsToSelector:@selector(doubleValue)]) { value = candidate; break; }
++        } @catch (__unused NSException *e) {}
++    }
++    if (!value) return NAN;
++
++    CGFloat v = value.doubleValue;
++    CGFloat minV = 0.0, maxV = 1.0;
++    @try {
++        id candidate = [slider valueForKey:@"minimumValue"];
++        if ([candidate respondsToSelector:@selector(doubleValue)]) minV = [candidate doubleValue];
++    } @catch (__unused NSException *e) {}
++    @try {
++        id candidate = [slider valueForKey:@"maximumValue"];
++        if ([candidate respondsToSelector:@selector(doubleValue)]) maxV = [candidate doubleValue];
++    } @catch (__unused NSException *e) {}
++    if (!isfinite(v)) return NAN;
++    if (!isfinite(minV) || !isfinite(maxV) || fabs(maxV - minV) < 0.0001) {
++        minV = 0.0; maxV = 1.0;
++    }
++    CGFloat normalized = (v - minV) / (maxV - minV);
++    return MIN(1.0, MAX(0.0, normalized));
++}
++
++static void MGClearVolumeFillMask(UIImageView *imageView) {
++    if (!imageView) return;
++    CALayer *mask = objc_getAssociatedObject(imageView, &MGVolumeFillMaskKey);
++    if (mask && imageView.layer.mask == mask) imageView.layer.mask = nil;
++    objc_setAssociatedObject(imageView, &MGVolumeFillMaskKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++}
++
++static CGFloat MGApplyVolumeFillMask(UIImageView *imageView, UIView *slider) {
++    if (!imageView || !slider) return NAN;
++    CGFloat value = MGSliderNormalizedValue(slider);
++    if (!isfinite(value)) {
++        MGClearVolumeFillMask(imageView);
++        return NAN;
++    }
++
++    CGRect bounds = imageView.bounds;
++    CGFloat h = CGRectGetHeight(bounds);
++    CGFloat w = CGRectGetWidth(bounds);
++    if (w <= 1.0 || h <= 1.0) return value;
++
++    imageView.layer.cornerRadius = MIN(w, h) * 0.5;
++    if (@available(iOS 13.0, *)) imageView.layer.cornerCurve = kCACornerCurveContinuous;
++    imageView.layer.masksToBounds = YES;
++    CGFloat revealH = h * value;
++    CALayer *mask = [CALayer layer];
++    mask.frame = CGRectMake(0.0, h - revealH, w, revealH);
++    mask.backgroundColor = UIColor.blackColor.CGColor;
++    imageView.layer.mask = mask;
++    objc_setAssociatedObject(imageView, &MGVolumeFillMaskKey, mask, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++    objc_setAssociatedObject(slider, &MGVolumeFillImageKey, imageView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++    return value;
++}
++
++static void MGSliderSetValue(id self, SEL _cmd, CGFloat value) {
++    if (MGOrigSliderSetValue) MGOrigSliderSetValue(self, _cmd, value);
++    if (![self isKindOfClass:UIView.class]) return;
++    UIImageView *imageView = objc_getAssociatedObject(self, &MGVolumeFillImageKey);
++    if ([imageView isKindOfClass:UIImageView.class] && imageView.superview) {
++        MGApplyVolumeFillMask(imageView, (UIView *)self);
++    }
++}
++
+ #pragma mark - Apply
+ 
+ static void MGDiagnosticOnce(id controller, NSString *signature, NSString *line) {
+@@ -932,6 +1087,7 @@
+     MGRestoreVolumeColorPresentation(root);
+     MGRestoreVolumeVisuals(root);
+     MGRestoreBrightnessLayers(root.layer);
++    MGRestoreModuleBlurVisuals(root);
+     BOOL expanded = MGIsExpanded(root);
+     BOOL enabled = MGBoolPreference(@"CCModuleBackgroundsEnabled", YES);
+     CGFloat opacity = MIN(1.0, MAX(0.0, MGFloatPreference(@"CCModuleBackgroundOpacity", 1.0)));
+@@ -940,6 +1096,10 @@
+     BOOL exists = [NSFileManager.defaultManager fileExistsAtPath:path];
+ 
+     if (expanded) {
++        if ([slot isEqualToString:@"volume"]) {
++            UIView *slider = MGFindSliderView(root);
++            if (slider) objc_setAssociatedObject(slider, &MGVolumeFillImageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++        }
+         MGRemoveTaggedImages(root, nil);
+         NSString *sig = [NSString stringWithFormat:@"expanded|%@|%.0fx%.0f", slot, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds)];
+         MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"expanded-bypass source=%@ controller=%@ slot=%@ frame=%@ candidates=%@", source, NSStringFromClass([controller class]), slot, NSStringFromCGRect(root.frame), candidates]);
+@@ -965,6 +1125,10 @@
+     }
+ 
+     if (!enabled || !exists) {
++        if ([slot isEqualToString:@"volume"]) {
++            UIView *slider = MGFindSliderView(root);
++            if (slider) objc_setAssociatedObject(slider, &MGVolumeFillImageKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++        }
+         MGRemoveTaggedImages(root, nil);
+         NSString *sig = [NSString stringWithFormat:@"inactive|%@|%d|%d|icon=%d|%@", slot, enabled, exists, volumeIconApplied, volumeIconColorHex];
+         MGDiagnosticOnce(controller, sig, [NSString stringWithFormat:@"apply source=%@ controller=%@ slot=%@ enabled=%d exists=%d expanded=0 result=removed volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@", source, NSStringFromClass([controller class]), slot, enabled, exists, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText]);
+@@ -998,38 +1162,50 @@
+     imageView.userInteractionEnabled = NO;
+     MGCopyCornerGeometry(imageView, cornerSource, root);
+     MGApplyModuleShapeFallback(imageView, slot);
++    if (![slot isEqualToString:@"volume"]) MGClearVolumeFillMask(imageView);
+ 
+     NSUInteger imageFirstSuppressed = 0;
+     NSArray<NSString *> *imageFirstSuppressedClasses = @[];
++    CGFloat volumeFillValue = NAN;
++    NSUInteger blurSuppressed = 0;
++    NSArray<NSString *> *blurSuppressedClasses = @[];
+     if (imageView.image) {
+         BOOL sliderSlot = [slot isEqualToString:@"brightness"] || [slot isEqualToString:@"volume"];
+         if (sliderSlot) {
+             UIView *imageScope = MGFindSliderView(root) ?: root;
+             NSMutableArray<NSString *> *classes=[NSMutableArray array];
+ 
+-            // Volume now follows the exact same fill-aware renderer as Brightness.
+-            // Only slider background/fill visuals are suppressed. Glyphs, labels,
+-            // UIImageViews and controls stay native and above the custom image.
++            // Both sliders keep the same safe fill-aware cleanup. Volume also gets
++            // an explicit live bottom-up reveal mask so its custom image follows the
++            // actual volume value exactly like Brightness does visually.
+             imageFirstSuppressed = MGApplyBrightnessImageMode(imageScope, imageView, classes);
+             imageFirstSuppressed += MGApplyBrightnessLayerMode(imageScope.layer, imageScope.layer, imageView.layer, classes);
++            if ([slot isEqualToString:@"volume"]) volumeFillValue = MGApplyVolumeFillMask(imageView, imageScope);
+             strategy = [NSString stringWithFormat:@"%@-brightness-pattern-fill-aware", slot];
+             imageFirstSuppressedClasses = classes.copy;
+         } else {
+             // Normal modules are background-only: never recursively hide their UI.
+             strategy = [NSString stringWithFormat:@"%@-glyph-safe-background-only", slot];
+         }
++
++        if (removeBlur) {
++            NSMutableArray<NSString *> *classes=[NSMutableArray array];
++            blurSuppressed = MGSetModuleBlurHiddenRecursive(root, root, imageView, YES, classes, 0);
++            blurSuppressedClasses = classes.copy;
++            strategy = [strategy stringByAppendingString:@"-crisp"];
++        }
+     }
+ 
+-    // Safety rule: these preferences are intentionally never implemented by mutating,
+-    // hiding, removing or reparenting Apple's material/effect views.
++    // Blur removal only touches module-sized, non-interactive material surfaces
++    // and every touched alpha is restored before each apply/expansion.
+     BOOL glow = MGBoolPreference(@"CCModuleControlGlowEnabled", NO);
+     CGFloat glowIntensity = MGFloatPreference(@"CCModuleControlGlowIntensity", 0.0);
+     CGFloat glowWidth = MGFloatPreference(@"CCModuleControlGlowWidth", 0.0);
+ 
+     NSString *sig = [NSString stringWithFormat:@"%@|%@|%d|%d|%.3f|%.0fx%.0f|%@", slot, strategy, enabled, exists, opacity, CGRectGetWidth(root.bounds), CGRectGetHeight(root.bounds), path];
+     MGDiagnosticOnce(controller, sig,
+-                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d materialMutation=0 opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ imageFirstSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
+-                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)imageFirstSuppressed, imageFirstSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, glow, glowIntensity, glowWidth]);
++                     [NSString stringWithFormat:@"apply source=%@ controller=%@ candidates=%@ slot=%@ path=%@ exists=%d enabled=%d imageLoaded=%d removeBlurPref=%d blurSuppressed=%lu blurClasses=%@ opacity=%.2f expanded=0 strategy=%@ root=%@ frame=%@ parent=%@ nativeBackground=%@ nativeFrame=%@ nativeRadius=%.2f imageFrame=%@ subviews=%lu imageView=%@ imageFirstSuppressed=%lu suppressedClasses=%@ volumeIconColorEnabled=%d volumeIconApplied=%d volumeIconColor=%@ volumeIconClass=%@ volumeIconFrame=%@ volumePercentageApplied=%d volumePercentageClass=%@ volumePercentageFrame=%@ volumePercentageText=%@ volumeFill=%.3f glowPref=%d glowIntensity=%.2f glowWidth=%.2f",
++                      source, NSStringFromClass([controller class]), candidates, slot, path, exists, enabled, imageView.image != nil, removeBlur, (unsigned long)blurSuppressed, blurSuppressedClasses, opacity, strategy, NSStringFromClass(root.class), NSStringFromCGRect(root.frame), NSStringFromClass(parent.class), anchor ? NSStringFromClass(anchor.class) : @"<none>", anchor ? NSStringFromCGRect(anchor.frame) : @"<none>", cornerSource.layer.cornerRadius, NSStringFromCGRect(imageView.frame), (unsigned long)parent.subviews.count, imageView, (unsigned long)imageFirstSuppressed, imageFirstSuppressedClasses, volumeIconColorEnabled, volumeIconApplied, volumeIconColorHex, volumeIconClass, NSStringFromCGRect(volumeIconFrame), volumePercentageApplied, volumePercentageClass, NSStringFromCGRect(volumePercentageFrame), volumePercentageText, volumeFillValue, glow, glowIntensity, glowWidth]);
+ }
+ 
+ static void MGTrackAndApply(id controller, NSString *source) {
+@@ -1089,9 +1265,13 @@
+         void *handle = dlopen("/System/Library/PrivateFrameworks/ControlCenterUI.framework/ControlCenterUI", RTLD_LAZY);
+         Class moduleClass = NSClassFromString(@"CCUIModuleContainerViewController");
+         Class contentClass = NSClassFromString(@"CCUIContentModuleContainerViewController");
++        Class sliderClass = NSClassFromString(@"CCUIContinuousSliderView");
+ 
+         MGHookController(moduleClass, (IMP)MGModuleViewDidLoad, (IMP)MGModuleLayout, (IMP *)&MGOrigModuleViewDidLoad, (IMP *)&MGOrigModuleLayout);
+         MGHookController(contentClass, (IMP)MGContentViewDidLoad, (IMP)MGContentLayout, (IMP *)&MGOrigContentViewDidLoad, (IMP *)&MGOrigContentLayout);
++        if (sliderClass && class_getInstanceMethod(sliderClass, @selector(setValue:))) {
++            MSHookMessageEx(sliderClass, @selector(setValue:), (IMP)MGSliderSetValue, (IMP *)&MGOrigSliderSetValue);
++        }
+ 
+         MSHookMessageEx(UILabel.class, @selector(setText:), (IMP)MGLabelSetText, (IMP *)&MGOrigLabelSetText);
+         MSHookMessageEx(UILabel.class, @selector(setAttributedText:), (IMP)MGLabelSetAttributedText, (IMP *)&MGOrigLabelSetAttributedText);
+@@ -1103,8 +1283,8 @@
+         CFNotificationCenterAddObserver(darwin, NULL, MGPrefsChanged, CFSTR("com.nextsolution.nextlog/control.changed"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+ 
+         [NSFileManager.defaultManager createDirectoryAtPath:MGBackgroundDirectory withIntermediateDirectories:YES attributes:nil error:nil];
+-        MGLog(@"ModuleGlassRuntime 1.1.6 Glyph Safe Stretch Renderer loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
+-        MGLog(@"Glyph-safe stretch runtime with shared Brightness/Volume slider pattern process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass);
++        MGLog(@"ModuleGlassRuntime 1.1.7 Crisp Blur + Volume Fill Renderer loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));
++        MGLog(@"Glyph-safe stretch runtime with shared Brightness/Volume slider pattern process=%@ pid=%d dlopen=%p moduleClass=%@ contentClass=%@ sliderClass=%@", NSProcessInfo.processInfo.processName, getpid(), handle, moduleClass, contentClass, sliderClass);
+         MGLog(@"diagnostic-control active=%d prefsDomain=%@ backgroundDirectory=%@ log=%@", MGVerboseDiagnosticsEnabled(), (__bridge NSString *)MGPrefsDomain, MGBackgroundDirectory, MGLogPath);
+     }
+ }
