@@ -1,7 +1,29 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T12:40:23Z",
+  "updatedAt": "2026-08-17T12:47:59Z",
   "files": [
+    {
+      "id": "nextlock-1.1.0-license-test-roothide",
+      "name": "NextLock 1.1.0 License Test RootHide",
+      "fileName": "NextLock_1.1.0_LicenseTest_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.0 License Test",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.0-LicenseTest/NextLock_1.1.0_LicenseTest_RootHide.deb",
+      "sha256": "223fe0e4ba45b77d28317f380d9cc1f392714b4bdbf444d0e0465852009a15b9",
+      "notes": "Private licensing test build. Shows Next Solution Device ID, Unactivated/Activated status, $1 PayPal purchase flow, Check Activation, automatic license checks, and runtime activation gate. Public Sileo release remains 1.0.5 during testing."
+    },
+    {
+      "id": "nextlock-1.1.0-license-test-rootless",
+      "name": "NextLock 1.1.0 License Test Rootless",
+      "fileName": "NextLock_1.1.0_LicenseTest_Rootless.deb",
+      "type": "deb",
+      "platform": "Dopamine / Rootless",
+      "version": "1.1.0 License Test",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.0-LicenseTest/NextLock_1.1.0_LicenseTest_Rootless.deb",
+      "sha256": "aada365161a20d1a2860a2545473ce49e81f0016a47cd5aee2e5238e10d38c7a",
+      "notes": "Private licensing test build. Shows Next Solution Device ID, Unactivated/Activated status, $1 PayPal purchase flow, Check Activation, automatic license checks, and runtime activation gate. Public Sileo release remains 1.0.5 during testing."
+    },
     {
       "id": "module-glass-preview-1.1.1",
       "name": "Module Glass Developer Console 1.1.1",
