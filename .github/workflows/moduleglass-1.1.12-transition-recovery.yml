@@ -103,29 +103,36 @@ jobs:
       - name: Verify package architecture, linkage, and metadata
         shell: bash
         run: |
-          set -euxo pipefail
+          set -uo pipefail
+          fail() { echo "::error title=Module Glass verification::$1"; exit 1; }
           DEB="${{ github.workspace }}/output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb"
-          test "$(dpkg-deb -f "$DEB" Version)" = "1.1.12"
-          test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm64e"
-          test "$(dpkg-deb -f "$DEB" Package)" = "com.nextsolution.nextaura.cc-module-backgrounds"
+          test -f "$DEB" || fail "Built DEB is missing"
+          VERSION="$(dpkg-deb -f "$DEB" Version)"
+          PKGARCH="$(dpkg-deb -f "$DEB" Architecture)"
+          PKGID="$(dpkg-deb -f "$DEB" Package)"
+          echo "Package=$PKGID Version=$VERSION Architecture=$PKGARCH"
+          [ "$VERSION" = "1.1.12" ] || fail "Unexpected version: $VERSION"
+          [ "$PKGARCH" = "iphoneos-arm64e" ] || fail "Unexpected package architecture: $PKGARCH"
+          [ "$PKGID" = "com.nextsolution.nextaura.cc-module-backgrounds" ] || fail "Unexpected package id: $PKGID"
+          rm -rf verify
           mkdir -p verify/root verify/control
-          dpkg-deb -x "$DEB" verify/root
-          dpkg-deb -e "$DEB" verify/control
+          dpkg-deb -x "$DEB" verify/root || fail "Could not extract DEB payload"
+          dpkg-deb -e "$DEB" verify/control || fail "Could not extract DEB control"
           cat verify/control/control
           DYLIB="$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' -print -quit)"
           PLIST="$(find verify/root -type f -name 'CCModuleBackgrounds.plist' -print -quit)"
-          test -n "$DYLIB"
-          test -n "$PLIST"
-          ARCHS="$(lipo -archs "$DYLIB")"
+          [ -n "$DYLIB" ] || fail "CCModuleBackgrounds.dylib missing from package"
+          [ -n "$PLIST" ] || fail "CCModuleBackgrounds.plist missing from package"
+          ARCHS="$(lipo -archs "$DYLIB")" || fail "lipo could not read dylib"
           echo "Architectures: $ARCHS"
-          echo "$ARCHS" | grep -qw arm64
-          echo "$ARCHS" | grep -qw arm64e
-          otool -L "$DYLIB"
-          strings "$DYLIB" > verify/dylib.strings
-          grep -q '@loader_path/.jbroot/' verify/dylib.strings
-          grep -q 'ModuleGlassRuntime 1.1.12 One-Shot Transition Recovery Renderer' verify/dylib.strings
-          grep -q 'SpringBoard' "$PLIST"
-          shasum -a 256 "$DEB" output/ModuleGlass_1.1.12_Complete_Source.zip | tee output/SHA256SUMS.txt
+          case " $ARCHS " in *" arm64 "*) ;; *) fail "arm64 slice missing: $ARCHS";; esac
+          case " $ARCHS " in *" arm64e "*) ;; *) fail "arm64e slice missing: $ARCHS";; esac
+          otool -L "$DYLIB" | tee verify/otool.txt || fail "otool failed"
+          grep -Fq '@loader_path/.jbroot/' verify/otool.txt || fail "RootHide .jbroot linkage missing"
+          strings "$DYLIB" > verify/dylib.strings || fail "strings failed"
+          grep -Fq 'ModuleGlassRuntime 1.1.12 One-Shot Transition Recovery Renderer' verify/dylib.strings || fail "1.1.12 runtime marker missing"
+          grep -Fq 'SpringBoard' "$PLIST" || fail "SpringBoard filter missing"
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.12_Complete_Source.zip | tee output/SHA256SUMS.txt || fail "SHA256 generation failed"
 
       - name: Upload verified test artifacts
         uses: actions/upload-artifact@v4
