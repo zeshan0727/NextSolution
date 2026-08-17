@@ -1,6 +1,6 @@
 {
   "version" : 1,
-  "updatedAt" : "2026-08-17T14:02:05Z",
+  "updatedAt" : "2026-08-17T14:03:19Z",
   "files" : [
     {
       "sha256" : "4badf40d9f7f411430bf881ec6f470739f5669ead878092580507875c8ca8f94",
@@ -56,17 +56,6 @@
       "type" : "tipa",
       "name" : "Module Glass Developer Console 1.1.1",
       "url" : "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa"
-    },
-    {
-      "sha256" : "d25967e5ddfe2d9e4e7b7f03685f4068a010ee688b4b7f3c3106f1d7c296d230",
-      "id" : "module-glass-preview-1.1.0",
-      "fileName" : "ModuleGlass-Preview-1.1.0.tipa",
-      "platform" : "TrollStore / Jailbroken iOS 16+",
-      "notes" : "Advanced Module Glass developer console with realistic live Control Center preview, per-module crop/position editor, continuous device apply, Stable Recovery preference bridge, deep diagnostics, Keychain-protected GitHub PAT, and one-tap diagnostic log upload.",
-      "version" : "1.1.0",
-      "type" : "tipa",
-      "name" : "Module Glass Developer Console 1.1.0",
-      "url" : "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.0/ModuleGlass-Preview-1.1.0.tipa"
     },
     {
       "sha256" : "cefe2d706c1f995ffb900d95941bb121ab878e08ee42362dcfcce7f2c8893984",
