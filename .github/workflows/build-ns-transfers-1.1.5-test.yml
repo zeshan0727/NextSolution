@@ -1,0 +1,177 @@
+name: Build NS Transfers 1.1.5 Test TIPA
+
+on:
+  push:
+    branches:
+      - agent/ns-transfers-1.1.5-build
+    paths:
+      - 'TransferApp/**'
+      - '.github/workflows/build-ns-transfers-1.1.5-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ns-transfers-1.1.5-test
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare NS Transfers 1.1.5 source
+        run: |
+          set -euo pipefail
+          python3 TransferApp/prepare_ns_transfers_115.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('TransferApp/Sources/NextSolutionTransferApp.swift')
+          text = p.read_text()
+          old = '''                                ContentUnavailableView(
+                                      "No Matching Files",
+                                      systemImage: "magnifyingglass",
+                                      description: Text("Try another file name, version, type, or platform.")
+                                  )'''
+          # The generated spacing can differ, so replace structurally if exact text is absent.
+          if 'ContentUnavailableView(' in text:
+              start = text.index('                                ContentUnavailableView(')
+              end_marker = '                                )\n                            } else {'
+              end = text.index(end_marker, start)
+              replacement = '''                                VStack(spacing: 6) {
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.title2)
+                                        .foregroundColor(.secondary)
+                                    Text("No Matching Files")
+                                        .font(.headline)
+                                    Text("Try another file name, version, type, or platform.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+                                }\n'''
+              text = text[:start] + replacement + text[end + len('                                )\n'):]
+          p.write_text(text)
+          PY
+          grep -q 'navigationTitle("NS Transfers")' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'Search files' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'Label("Delete", systemImage: "trash")' TransferApp/Sources/NextSolutionTransferApp.swift
+          grep -q 'Remove Added File' TransferApp/Sources/EnhancedUploadView.swift
+          grep -q 'MARKETING_VERSION: 1.1.5' TransferApp/project.yml
+          grep -q 'CURRENT_PROJECT_VERSION: 115' TransferApp/project.yml
+          grep -q 'INFOPLIST_KEY_CFBundleDisplayName: "NS Transfers"' TransferApp/project.yml
+          ! grep -q 'ContentUnavailableView' TransferApp/Sources/NextSolutionTransferApp.swift
+
+      - name: Install build tools
+        run: brew install xcodegen imagemagick
+
+      - name: Generate AppIcon asset catalog
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          ROOT="GeneratedAssets/Assets.xcassets"
+          SET="$ROOT/AppIcon.appiconset"
+          rm -rf GeneratedAssets
+          mkdir -p "$SET"
+          cat > "$ROOT/Contents.json" <<'JSON'
+          {"info":{"author":"xcode","version":1}}
+          JSON
+          magick -background none Resources/AppIcon.svg -resize 1024x1024 "$SET/AppIcon-1024.png"
+          make_icon() { magick "$SET/AppIcon-1024.png" -resize "${2}x${2}" "$SET/$1"; }
+          make_icon AppIcon-20.png 20
+          make_icon AppIcon-20@2x.png 40
+          make_icon AppIcon-20@3x.png 60
+          make_icon AppIcon-29.png 29
+          make_icon AppIcon-29@2x.png 58
+          make_icon AppIcon-29@3x.png 87
+          make_icon AppIcon-40.png 40
+          make_icon AppIcon-40@2x.png 80
+          make_icon AppIcon-40@3x.png 120
+          make_icon AppIcon-60@2x.png 120
+          make_icon AppIcon-60@3x.png 180
+          make_icon AppIcon-76.png 76
+          make_icon AppIcon-76@2x.png 152
+          make_icon AppIcon-83.5@2x.png 167
+          cat > "$SET/Contents.json" <<'JSON'
+          {
+            "images": [
+              {"filename":"AppIcon-20@2x.png","idiom":"iphone","scale":"2x","size":"20x20"},
+              {"filename":"AppIcon-20@3x.png","idiom":"iphone","scale":"3x","size":"20x20"},
+              {"filename":"AppIcon-29@2x.png","idiom":"iphone","scale":"2x","size":"29x29"},
+              {"filename":"AppIcon-29@3x.png","idiom":"iphone","scale":"3x","size":"29x29"},
+              {"filename":"AppIcon-40@2x.png","idiom":"iphone","scale":"2x","size":"40x40"},
+              {"filename":"AppIcon-40@3x.png","idiom":"iphone","scale":"3x","size":"40x40"},
+              {"filename":"AppIcon-60@2x.png","idiom":"iphone","scale":"2x","size":"60x60"},
+              {"filename":"AppIcon-60@3x.png","idiom":"iphone","scale":"3x","size":"60x60"},
+              {"filename":"AppIcon-20.png","idiom":"ipad","scale":"1x","size":"20x20"},
+              {"filename":"AppIcon-20@2x.png","idiom":"ipad","scale":"2x","size":"20x20"},
+              {"filename":"AppIcon-29.png","idiom":"ipad","scale":"1x","size":"29x29"},
+              {"filename":"AppIcon-29@2x.png","idiom":"ipad","scale":"2x","size":"29x29"},
+              {"filename":"AppIcon-40.png","idiom":"ipad","scale":"1x","size":"40x40"},
+              {"filename":"AppIcon-40@2x.png","idiom":"ipad","scale":"2x","size":"40x40"},
+              {"filename":"AppIcon-76.png","idiom":"ipad","scale":"1x","size":"76x76"},
+              {"filename":"AppIcon-76@2x.png","idiom":"ipad","scale":"2x","size":"76x76"},
+              {"filename":"AppIcon-83.5@2x.png","idiom":"ipad","scale":"2x","size":"83.5x83.5"},
+              {"filename":"AppIcon-1024.png","idiom":"ios-marketing","scale":"1x","size":"1024x1024"}
+            ],
+            "info":{"author":"xcode","version":1}
+          }
+          JSON
+
+      - name: Generate Xcode project
+        working-directory: TransferApp
+        run: xcodegen generate
+
+      - name: Build unsigned app
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          rm -rf build Payload output
+          xcodebuild \
+            -project NextSolutionTransfer.xcodeproj \
+            -scheme NextSolutionTransfer \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package TIPA
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          mkdir -p Payload output
+          cp -R build/Build/Products/Release-iphoneos/NextSolutionTransfer.app Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload output/NS-Transfers-1.1.5.tipa
+          shasum -a 256 output/NS-Transfers-1.1.5.tipa > output/NS-Transfers-1.1.5.sha256
+
+      - name: Validate TIPA
+        working-directory: TransferApp
+        run: |
+          set -euo pipefail
+          rm -rf verify
+          mkdir verify
+          ditto -x -k output/NS-Transfers-1.1.5.tipa verify
+          APP=verify/Payload/NextSolutionTransfer.app
+          BIN="$APP/NextSolutionTransfer"
+          test -f "$BIN"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.5"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = "115"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist")" = "NS Transfers"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.transfer"
+          strings "$BIN" | grep -q 'NS Transfers'
+          strings "$BIN" | grep -q 'Search files'
+          strings "$BIN" | grep -q 'Remove Added File'
+
+      - name: Upload NS Transfers TIPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NS-Transfers-1.1.5
+          path: |
+            TransferApp/output/NS-Transfers-1.1.5.tipa
+            TransferApp/output/NS-Transfers-1.1.5.sha256
+          if-no-files-found: error
