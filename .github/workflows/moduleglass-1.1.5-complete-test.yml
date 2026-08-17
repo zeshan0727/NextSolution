@@ -1,0 +1,174 @@
+name: Build ModuleGlass 1.1.5 Complete RootHide
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.5-complete-roothide
+    paths:
+      - '.github/workflows/moduleglass-1.1.5-complete-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 20
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+
+    steps:
+      - name: Checkout isolated build branch
+        uses: actions/checkout@v4
+
+      - name: Verify known-good recovery source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo '0786f80dadb2ee439b2466c07ae7d30b75aff90a95bf3627b9f1ea8fc3fd072f  source/ModuleGlass/Tweak.m' | shasum -a 256 -c -
+          echo 'fe567ad205d8926e3780116412c99d819eb887fa7b975c64281d9db8d2274fde  source/ModuleGlass/CCModuleBackgrounds.plist' | shasum -a 256 -c -
+          echo '2250503a856e58d39397e6dc6d902e9ee5933b85eb9dc395e981aa42e6c42797  source/ModuleGlass/Compat.h' | shasum -a 256 -c -
+          grep -q 'ModuleGlassRuntime 1.0.14 Rounded Volume Pattern loaded' source/ModuleGlass/Tweak.m
+
+      - name: Install RootHide Theos toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          brew install ldid xz dpkg || true
+          command -v dpkg-deb
+          git clone --depth 1 --recursive https://github.com/roothide/theos.git "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/iPhoneOS16.5.sdk.tar.xz
+          tar -xJf /tmp/iPhoneOS16.5.sdk.tar.xz -C "$THEOS/sdks"
+          test -f "$THEOS/makefiles/common.mk"
+          test -d "$THEOS/sdks/iPhoneOS16.5.sdk"
+
+      - name: Prepare complete Module Glass package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf complete-build
+          mkdir -p complete-build
+          cp source/ModuleGlass/Tweak.m complete-build/Tweak.m
+          cp source/ModuleGlass/Compat.h complete-build/Compat.h
+          cp source/ModuleGlass/CCModuleBackgrounds.plist complete-build/CCModuleBackgrounds.plist
+          cat > complete-build/Makefile <<'EOF'
+          ARCHS = arm64 arm64e
+          TARGET = iphone:clang:latest:16.0
+          THEOS_PACKAGE_SCHEME ?= roothide
+          INSTALL_TARGET_PROCESSES = SpringBoard
+
+          include $(THEOS)/makefiles/common.mk
+
+          TWEAK_NAME = CCModuleBackgrounds
+          CCModuleBackgrounds_FILES = Tweak.m
+          CCModuleBackgrounds_CFLAGS = -fobjc-arc -include $(THEOS_PROJECT_DIR)/Compat.h
+          CCModuleBackgrounds_FRAMEWORKS = Foundation UIKit CoreFoundation CoreGraphics QuartzCore
+          CCModuleBackgrounds_LIBRARIES = substrate
+
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          EOF
+          sed -i '' 's/^          //' complete-build/Makefile
+          cat > complete-build/control <<'EOF'
+          Package: com.nextsolution.nextaura.cc-module-backgrounds
+          Name: Module Glass
+          Version: 1.1.5
+          Architecture: iphoneos-arm64e
+          Description: Complete RootHide Module Glass package with the validated stable recovery renderer embedded directly, shared Aura preference support, and upgrade-safe replacement of broken standalone renderer builds.
+          Maintainer: Next Solution
+          Author: Next Solution - zeshan0727
+          Section: Tweaks
+          Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5)
+          Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.5)
+          Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.4), com.nextsolution.unlockvibrate
+          Breaks: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.4)
+          Replaces: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.4)
+          Priority: optional
+          Homepage: https://nextsolution.cc/
+          Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
+          Tag: role::cydia
+          EOF
+          sed -i '' 's/^          //' complete-build/control
+
+      - name: Build complete RootHide package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd complete-build
+          make clean
+          make package FINALPACKAGE=1
+          RAW_DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$RAW_DEB"
+          cp "$RAW_DEB" ../ModuleGlass_1.1.5_Complete_RootHide.deb
+
+      - name: Verify complete package safety and architecture
+        shell: bash
+        run: |
+          set -euxo pipefail
+          DEB=ModuleGlass_1.1.5_Complete_RootHide.deb
+          mkdir -p verify/root verify/control
+          dpkg-deb -x "$DEB" verify/root
+          dpkg-deb -e "$DEB" verify/control
+          cat verify/control/control
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.5'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          DEPENDS="$(dpkg-deb -f "$DEB" Depends)"
+          PROVIDES="$(dpkg-deb -f "$DEB" Provides)"
+          CONFLICTS="$(dpkg-deb -f "$DEB" Conflicts)"
+          echo "$DEPENDS" | grep -q 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.5)'
+          if echo "$DEPENDS" | grep -q 'runtime.ccbackgrounds'; then echo 'ERROR: complete package still depends on standalone renderer'; exit 1; fi
+          echo "$PROVIDES" | grep -q 'com.nextsolution.nextaura.runtime.ccbackgrounds'
+          echo "$CONFLICTS" | grep -q 'com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.4)'
+          DYLIB="$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' -print -quit)"
+          FILTER="$(find verify/root -type f -name 'CCModuleBackgrounds.plist' -print -quit)"
+          test -n "$DYLIB"
+          test -n "$FILTER"
+          test "$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' | wc -l | tr -d ' ')" = '1'
+          file "$DYLIB"
+          lipo -info "$DYLIB" | tee verify/lipo.txt
+          grep -q 'arm64' verify/lipo.txt
+          grep -q 'arm64e' verify/lipo.txt
+          otool -L "$DYLIB" | tee verify/otool.txt
+          grep -q '@loader_path/.jbroot/' verify/otool.txt
+          strings "$DYLIB" | grep -q 'ModuleGlassRuntime 1.0.14 Rounded Volume Pattern loaded'
+          grep -q 'SpringBoard' "$FILTER"
+          shasum -a 256 "$DEB" | tee verify/deb.sha256
+
+      - name: Create matching complete source archive
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf ModuleGlass-1.1.5-Complete-Source
+          mkdir -p ModuleGlass-1.1.5-Complete-Source
+          cp complete-build/Tweak.m ModuleGlass-1.1.5-Complete-Source/Tweak.m
+          cp complete-build/Compat.h ModuleGlass-1.1.5-Complete-Source/Compat.h
+          cp complete-build/CCModuleBackgrounds.plist ModuleGlass-1.1.5-Complete-Source/CCModuleBackgrounds.plist
+          cp complete-build/Makefile ModuleGlass-1.1.5-Complete-Source/Makefile
+          cp complete-build/control ModuleGlass-1.1.5-Complete-Source/control
+          cat > ModuleGlass-1.1.5-Complete-Source/README.md <<'EOF'
+          # Module Glass 1.1.5 Complete RootHide
+
+          This recovery-first complete package embeds the validated stable Module Glass 1.0.14 renderer directly in `com.nextsolution.nextaura.cc-module-backgrounds`.
+
+          It intentionally does not use the failed 1.1.4 hardened renderer. The package provides the historical runtime capability itself and conflicts with standalone renderer versions through 1.1.4 so Sileo/APT cannot leave the crashing renderer installed underneath it.
+
+          Shared Settings UI remains provided by `com.nextsolution.nextaura.runtime.preferences >= 1.0.5`, the normal modular NextAura preference runtime.
+          EOF
+          sed -i '' 's/^          //' ModuleGlass-1.1.5-Complete-Source/README.md
+          zip -qry ModuleGlass_1.1.5_Complete_Source.zip ModuleGlass-1.1.5-Complete-Source
+          shasum -a 256 ModuleGlass_1.1.5_Complete_Source.zip | tee verify/source.sha256
+          cat verify/deb.sha256 verify/source.sha256 > SHA256SUMS.txt
+
+      - name: Upload verified complete package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.5-Complete-RootHide
+          path: |
+            ModuleGlass_1.1.5_Complete_RootHide.deb
+            ModuleGlass_1.1.5_Complete_Source.zip
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 3
