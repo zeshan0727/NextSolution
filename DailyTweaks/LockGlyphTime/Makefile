@@ -10,6 +10,7 @@ before-all::
 	python3 prefs/generate_root.py
 	python3 patch_v023.py
 	python3 patch_v024.py
+	python3 patch_v025.py
 
 TWEAK_NAME = LockGlyphTime
 LockGlyphTime_FILES = RuntimeV023.xm
