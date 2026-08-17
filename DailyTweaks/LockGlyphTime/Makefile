@@ -13,6 +13,7 @@ before-all::
 	python3 patch_v025.py
 	python3 patch_v026.py
 	python3 patch_v027.py
+	python3 patch_v028.py
 
 TWEAK_NAME = LockGlyphTime
 LockGlyphTime_FILES = RuntimeV023.xm
