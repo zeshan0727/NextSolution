@@ -39,6 +39,7 @@ jobs:
           grep -q 'AppleICUForce24HourTime' "$P/RuntimeV023.xm"
           grep -q 'UIApplicationSignificantTimeChangeNotification' "$P/RuntimeV023.xm"
           grep -q '60 \* NSEC_PER_SEC' "$P/RuntimeV023.xm"
+          grep -q 'dispatch_source_set_timer' "$P/RuntimeV023.xm"
           plutil -lint "$P/prefs/Resources/Info.plist"
           plutil -lint "$P/prefs/Resources/About.plist"
 
@@ -84,14 +85,21 @@ jobs:
           for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
             set -- $spec
             deb="$OUT/NextLock_1.0.2_$1.deb"; arch="$2"; x="$(mktemp -d)"
+            test -s "$deb"
+            test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
             test "$(dpkg-deb -f "$deb" Version)" = 1.0.2
             test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
             test "$(dpkg-deb -f "$deb" Name)" = NextLock
+            dpkg-deb -f "$deb" Description | grep -q 'live clock refresh'
             dpkg-deb -x "$deb" "$x"
             dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
-            test -n "$dylib"
-            strings -a "$dylib" | grep -q AppleICUForce24HourTime
-            strings -a "$dylib" | grep -q UIApplicationSignificantTimeChangeNotification
+            prefs="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
+            about="$(find "$x" -path '*LockGlyphTimePrefs.bundle/About.plist' -print -quit)"
+            test -s "$dylib"
+            test -s "$prefs"
+            test -s "$about"
+            grep -q 'Version 1.0.2' "$about"
+            file "$dylib"
             rm -rf "$x"
           done
           shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
@@ -145,6 +153,7 @@ jobs:
           bzip2 -9 -c Packages > Packages.bz2
           xz -9e -c Packages > Packages.xz
           zstd -19 -q -c Packages > Packages.zst
+          grep -q '^Package: com.nextsolution.lockglyphtime$' Packages
           grep -q '^Version: 1.0.2$' Packages
           grep -q 'NextLock_1.0.2_Rootless.deb' Packages
           grep -q 'NextLock_1.0.2_RootHide.deb' Packages
