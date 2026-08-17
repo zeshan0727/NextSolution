@@ -3,6 +3,7 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDisplayName</key><string>NextSolution License</string>
+  <key>CFBundleExecutable</key><string>NextSolutionLicenseAdmin</string>
   <key>CFBundleIdentifier</key><string>com.nextsolution.licenseadmin</string>
   <key>CFBundleName</key><string>NextSolutionLicenseAdmin</string>
   <key>CFBundlePackageType</key><string>APPL</string>
