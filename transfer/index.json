@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T13:14:13Z",
+  "updatedAt": "2026-08-17T13:14:18Z",
   "files": [
     {
       "id": "nextsolution-license-admin-1.0.0",
@@ -54,7 +54,7 @@
       "platform": "RootHide",
       "version": "1.1.9",
       "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.9/ModuleGlass_1.1.9_Complete_RootHide.deb",
-      "sha256": "633687d98863afe5f6a1c7faa5f2a4fd3f29cf488e42f5dba6f5627e7d005015",
+      "sha256": "8290a59cf5365ca667ef8d9998bc884f533442b3cb0fe71c247a645bdc432957",
       "notes": "Slider-only device test: Brightness and Volume share a permanent full rounded shell and one identical 0-100% custom-image fill path. Other validated 1.1.8 behavior is unchanged."
     },
     {
@@ -65,7 +65,7 @@
       "platform": "Source / Theos",
       "version": "1.1.9",
       "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.9/ModuleGlass_1.1.9_Complete_Source.zip",
-      "sha256": "676032ed43f5750eff4b3865d5a6aa631216a5ec8b496b07519fbce93ac205d5",
+      "sha256": "d40cee0fc2bb1f079525f7c4267e50c448afebc79a4ac5f800eb120b2f9122e4",
       "notes": "Matching source for the validated 1.1.9 RootHide slider test build."
     },
     {
