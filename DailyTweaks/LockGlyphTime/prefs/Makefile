@@ -2,7 +2,7 @@ include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = LockGlyphTimePrefs
 LockGlyphTimePrefs_FILES = LGTListControllerV023.m
-LockGlyphTimePrefs_FRAMEWORKS = UIKit PhotosUI
+LockGlyphTimePrefs_FRAMEWORKS = UIKit PhotosUI Foundation
 LockGlyphTimePrefs_INSTALL_PATH = /Library/PreferenceBundles
 LockGlyphTimePrefs_RESOURCE_DIRS = Resources
 LockGlyphTimePrefs_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
