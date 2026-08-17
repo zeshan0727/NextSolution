@@ -1,0 +1,265 @@
+name: Build ModuleGlass 1.1.6 Glyph Safe
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.6-glyphsafe
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+
+    steps:
+      - name: Checkout isolated build branch
+        uses: actions/checkout@v4
+
+      - name: Verify stable baseline and apply requested renderer rules
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo '0786f80dadb2ee439b2466c07ae7d30b75aff90a95bf3627b9f1ea8fc3fd072f  source/ModuleGlass/Tweak.m' | shasum -a 256 -c -
+          python3 source/ModuleGlass/apply-1.1.6-glyphsafe.py
+          grep -q 'UIViewContentModeScaleToFill' source/ModuleGlass/Tweak.m
+          grep -q 'MGFindModuleSizedBackground' source/ModuleGlass/Tweak.m
+          grep -q 'glyph-safe-background-only' source/ModuleGlass/Tweak.m
+          grep -q 'brightness-pattern-fill-aware' source/ModuleGlass/Tweak.m
+          grep -q '1.1.6 Glyph Safe Stretch Renderer' source/ModuleGlass/Tweak.m
+          if grep -q 'MGApplyVolumeImageMode(imageScope' source/ModuleGlass/Tweak.m; then
+            echo 'ERROR: old generic Volume suppression is still used in the apply path'
+            exit 1
+          fi
+
+      - name: Install RootHide Theos toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          brew install ldid xz dpkg || true
+          command -v dpkg-deb
+          git clone --depth 1 --recursive https://github.com/roothide/theos.git "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/iPhoneOS16.5.sdk.tar.xz
+          tar -xJf /tmp/iPhoneOS16.5.sdk.tar.xz -C "$THEOS/sdks"
+          test -f "$THEOS/makefiles/common.mk"
+          test -d "$THEOS/sdks/iPhoneOS16.5.sdk"
+
+      - name: Prepare Module Glass 1.1.6 complete package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf complete-build
+          mkdir -p complete-build
+          cp source/ModuleGlass/Tweak.m complete-build/Tweak.m
+          cp source/ModuleGlass/Compat.h complete-build/Compat.h
+          cp source/ModuleGlass/CCModuleBackgrounds.plist complete-build/CCModuleBackgrounds.plist
+          cat > complete-build/Makefile <<'EOF'
+          ARCHS = arm64 arm64e
+          TARGET = iphone:clang:latest:16.0
+          THEOS_PACKAGE_SCHEME ?= roothide
+          INSTALL_TARGET_PROCESSES = SpringBoard
+
+          include $(THEOS)/makefiles/common.mk
+
+          TWEAK_NAME = CCModuleBackgrounds
+          CCModuleBackgrounds_FILES = Tweak.m
+          CCModuleBackgrounds_CFLAGS = -fobjc-arc -include $(THEOS_PROJECT_DIR)/Compat.h
+          CCModuleBackgrounds_FRAMEWORKS = Foundation UIKit CoreFoundation CoreGraphics QuartzCore
+          CCModuleBackgrounds_LIBRARIES = substrate
+
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          EOF
+          sed -i '' 's/^          //' complete-build/Makefile
+          cat > complete-build/control <<'EOF'
+          Package: com.nextsolution.nextaura.cc-module-backgrounds
+          Name: Module Glass
+          Version: 1.1.6
+          Architecture: iphoneos-arm64e
+          Description: Complete RootHide Module Glass package with module-sized stretched backgrounds, glyph-safe standard module rendering, and a shared Brightness/Volume slider pattern.
+          Maintainer: Next Solution
+          Author: Next Solution - zeshan0727
+          Section: Tweaks
+          Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5)
+          Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.6)
+          Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.5), com.nextsolution.unlockvibrate
+          Breaks: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.5)
+          Replaces: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.5)
+          Priority: optional
+          Homepage: https://nextsolution.cc/
+          Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
+          Tag: role::cydia
+          EOF
+          sed -i '' 's/^          //' complete-build/control
+
+      - name: Build complete RootHide package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd complete-build
+          make clean
+          make package FINALPACKAGE=1
+          RAW_DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$RAW_DEB"
+          cp "$RAW_DEB" ../ModuleGlass_1.1.6_Complete_RootHide.deb
+
+      - name: Verify package, architecture and requested rendering rules
+        shell: bash
+        run: |
+          set -euxo pipefail
+          DEB=ModuleGlass_1.1.6_Complete_RootHide.deb
+          mkdir -p verify/root verify/control
+          dpkg-deb -x "$DEB" verify/root
+          dpkg-deb -e "$DEB" verify/control
+          cat verify/control/control
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.6'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          DEPENDS="$(dpkg-deb -f "$DEB" Depends)"
+          PROVIDES="$(dpkg-deb -f "$DEB" Provides)"
+          CONFLICTS="$(dpkg-deb -f "$DEB" Conflicts)"
+          echo "$DEPENDS" | grep -q 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.5)'
+          if echo "$DEPENDS" | grep -q 'runtime.ccbackgrounds'; then
+            echo 'ERROR: complete package depends on a separate renderer'
+            exit 1
+          fi
+          echo "$PROVIDES" | grep -q 'com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.6)'
+          echo "$CONFLICTS" | grep -q 'com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.5)'
+          DYLIB="$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' -print -quit)"
+          FILTER="$(find verify/root -type f -name 'CCModuleBackgrounds.plist' -print -quit)"
+          test -n "$DYLIB"
+          test -n "$FILTER"
+          test "$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' | wc -l | tr -d ' ')" = '1'
+          lipo -info "$DYLIB" | tee verify/lipo.txt
+          grep -q 'arm64' verify/lipo.txt
+          grep -q 'arm64e' verify/lipo.txt
+          otool -L "$DYLIB" | tee verify/otool.txt
+          grep -q '@loader_path/.jbroot/' verify/otool.txt
+          strings "$DYLIB" | grep -q 'ModuleGlassRuntime 1.1.6 Glyph Safe Stretch Renderer loaded'
+          grep -q 'SpringBoard' "$FILTER"
+          grep -q 'UIViewContentModeScaleToFill' complete-build/Tweak.m
+          grep -q 'glyph-safe-background-only' complete-build/Tweak.m
+          grep -q 'MGApplyBrightnessImageMode(imageScope' complete-build/Tweak.m
+          if grep -q 'MGApplyVolumeImageMode(imageScope' complete-build/Tweak.m; then exit 1; fi
+          shasum -a 256 "$DEB" | tee verify/deb.sha256
+
+      - name: Create matching source archive
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf ModuleGlass-1.1.6-Complete-Source
+          mkdir -p ModuleGlass-1.1.6-Complete-Source
+          cp complete-build/Tweak.m ModuleGlass-1.1.6-Complete-Source/Tweak.m
+          cp complete-build/Compat.h ModuleGlass-1.1.6-Complete-Source/Compat.h
+          cp complete-build/CCModuleBackgrounds.plist ModuleGlass-1.1.6-Complete-Source/CCModuleBackgrounds.plist
+          cp complete-build/Makefile ModuleGlass-1.1.6-Complete-Source/Makefile
+          cp complete-build/control ModuleGlass-1.1.6-Complete-Source/control
+          cat > ModuleGlass-1.1.6-Complete-Source/README.md <<'EOF'
+          # Module Glass 1.1.6 Complete RootHide
+
+          Device-test build implementing three renderer rules:
+          1. Custom images use ScaleToFill and stretch to the selected compact module shell.
+          2. Standard modules are background-only; native glyphs, labels, buttons and indicators are never recursively suppressed.
+          3. Volume and Brightness share the same slider placement, pill geometry and fill-aware cleanup path.
+
+          This build stays on the stable recovery renderer foundation and does not restore the failed 1.1.4 hardened renderer.
+          EOF
+          sed -i '' 's/^          //' ModuleGlass-1.1.6-Complete-Source/README.md
+          zip -qry ModuleGlass_1.1.6_Complete_Source.zip ModuleGlass-1.1.6-Complete-Source
+          shasum -a 256 ModuleGlass_1.1.6_Complete_Source.zip | tee verify/source.sha256
+          cat verify/deb.sha256 verify/source.sha256 > SHA256SUMS.txt
+
+      - name: Upload exact verified artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.6-Complete-RootHide
+          path: |
+            ModuleGlass_1.1.6_Complete_RootHide.deb
+            ModuleGlass_1.1.6_Complete_Source.zip
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Replace previous Module Glass Transfer files with exact verified build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PUBLISH=/tmp/moduleglass-1.1.6-publish
+          rm -rf "$PUBLISH"
+          mkdir -p "$PUBLISH"
+          cp ModuleGlass_1.1.6_Complete_RootHide.deb "$PUBLISH/"
+          cp ModuleGlass_1.1.6_Complete_Source.zip "$PUBLISH/"
+          cp SHA256SUMS.txt "$PUBLISH/"
+          DEB_SHA="$(shasum -a 256 "$PUBLISH/ModuleGlass_1.1.6_Complete_RootHide.deb" | awk '{print $1}')"
+          SRC_SHA="$(shasum -a 256 "$PUBLISH/ModuleGlass_1.1.6_Complete_Source.zip" | awk '{print $1}')"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git reset --hard HEAD
+          git clean -fdx
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git checkout -B moduleglass-transfer-publish origin/main
+            rm -rf transfer/files/ModuleGlass/1.1.4 transfer/files/ModuleGlass/1.1.5 transfer/files/ModuleGlass/1.1.6
+            mkdir -p transfer/files/ModuleGlass/1.1.6
+            cp "$PUBLISH/ModuleGlass_1.1.6_Complete_RootHide.deb" transfer/files/ModuleGlass/1.1.6/
+            cp "$PUBLISH/ModuleGlass_1.1.6_Complete_Source.zip" transfer/files/ModuleGlass/1.1.6/
+            cp "$PUBLISH/SHA256SUMS.txt" transfer/files/ModuleGlass/1.1.6/SHA256SUMS.txt
+            python3 - "$DEB_SHA" "$SRC_SHA" <<'PY'
+          import datetime, json, pathlib, sys
+          deb_sha, src_sha = sys.argv[1], sys.argv[2]
+          p = pathlib.Path('transfer/index.json')
+          data = json.loads(p.read_text())
+          remove_ids = {
+              'moduleglass-1.1.4-roothide', 'moduleglass-1.1.4-source',
+              'moduleglass-1.1.5-roothide', 'moduleglass-1.1.5-source',
+              'moduleglass-1.1.6-roothide', 'moduleglass-1.1.6-source',
+          }
+          files = [item for item in data.get('files', []) if item.get('id') not in remove_ids]
+          new_items = [
+              {
+                  'id': 'moduleglass-1.1.6-roothide',
+                  'name': 'Module Glass 1.1.6 Complete RootHide',
+                  'fileName': 'ModuleGlass_1.1.6_Complete_RootHide.deb',
+                  'type': 'deb',
+                  'platform': 'RootHide',
+                  'version': '1.1.6',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.6/ModuleGlass_1.1.6_Complete_RootHide.deb',
+                  'sha256': deb_sha,
+                  'notes': 'Device-test renderer: images stretch to module size, standard module glyphs/text remain native, and Volume uses the same fill-aware slider pattern as Brightness.'
+              },
+              {
+                  'id': 'moduleglass-1.1.6-source',
+                  'name': 'Module Glass 1.1.6 Complete Source',
+                  'fileName': 'ModuleGlass_1.1.6_Complete_Source.zip',
+                  'type': 'zip',
+                  'platform': 'Source / Theos',
+                  'version': '1.1.6',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.6/ModuleGlass_1.1.6_Complete_Source.zip',
+                  'sha256': src_sha,
+                  'notes': 'Matching source for the 1.1.6 glyph-safe stretch renderer test build.'
+              }
+          ]
+          insert_at = next((i + 1 for i, item in enumerate(files) if str(item.get('id', '')).startswith('module-glass-preview')), 0)
+          files[insert_at:insert_at] = new_items
+          data['files'] = files
+          data['updatedAt'] = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          p.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+            git add -A transfer/files/ModuleGlass transfer/index.json
+            if git diff --cached --quiet; then
+              echo 'Transfer already contains this exact 1.1.6 build.'
+              exit 0
+            fi
+            git commit -m 'Replace Module Glass with 1.1.6 glyph-safe stretch test'
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git reset --hard
+          done
+          echo 'Failed to publish Module Glass 1.1.6 after retries.' >&2
+          exit 1
