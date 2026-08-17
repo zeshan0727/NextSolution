@@ -31,12 +31,6 @@ jobs:
           from pathlib import Path
           p = Path('TransferApp/Sources/NextSolutionTransferApp.swift')
           text = p.read_text()
-          old = '''                                ContentUnavailableView(
-                                      "No Matching Files",
-                                      systemImage: "magnifyingglass",
-                                      description: Text("Try another file name, version, type, or platform.")
-                                  )'''
-          # The generated spacing can differ, so replace structurally if exact text is absent.
           if 'ContentUnavailableView(' in text:
               start = text.index('                                ContentUnavailableView(')
               end_marker = '                                )\n                            } else {'
@@ -159,13 +153,18 @@ jobs:
           APP=verify/Payload/NextSolutionTransfer.app
           BIN="$APP/NextSolutionTransfer"
           test -f "$BIN"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.5"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = "115"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist")" = "NS Transfers"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.transfer"
-          strings "$BIN" | grep -q 'NS Transfers'
-          strings "$BIN" | grep -q 'Search files'
-          strings "$BIN" | grep -q 'Remove Added File'
+          SHORT=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")
+          BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")
+          NAME=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist")
+          BUNDLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
+          echo "Version=$SHORT Build=$BUILD Name=$NAME Bundle=$BUNDLE"
+          test "$SHORT" = "1.1.5"
+          test "$BUILD" = "115"
+          test "$NAME" = "NS Transfers"
+          test "$BUNDLE" = "com.nextsolution.transfer"
+          test -f "$APP/Assets.car"
+          grep -q 'Search files' Sources/NextSolutionTransferApp.swift
+          grep -q 'Remove Added File' Sources/EnhancedUploadView.swift
 
       - name: Upload NS Transfers TIPA
         uses: actions/upload-artifact@v4
