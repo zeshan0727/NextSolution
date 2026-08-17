@@ -53,16 +53,28 @@ jobs:
           path = pathlib.Path('licenses/nextlock.json')
           data = json.loads(path.read_text())
           active = [str(x).lower() for x in data.get('active', [])]
+          records = [x for x in data.get('devices', []) if isinstance(x, dict)]
+          records = [x for x in records if str(x.get('token', '')).lower() != token]
+
+          now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          parts = device.split('-')
+          masked = f'NS-{parts[1]}-••••-••••-{parts[4]}'
 
           if action == 'activate':
               if token not in active:
                   active.append(token)
+              records.append({
+                  'token': token,
+                  'maskedDeviceID': masked,
+                  'activatedAt': now,
+              })
           else:
               active = [x for x in active if x != token]
 
           data['active'] = sorted(set(active))
-          data['updatedAt'] = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
-          path.write_text(json.dumps(data, indent=2) + '\n')
+          data['devices'] = sorted(records, key=lambda x: str(x.get('maskedDeviceID', '')))
+          data['updatedAt'] = now
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
           print(f'{action.upper()} {device}')
           print(f'License token: {token}')
           PY
