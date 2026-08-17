@@ -3,6 +3,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 #import <stdatomic.h>
+#import <unistd.h>
 
 static NSString *const NDControlPath=@"/var/mobile/Library/Preferences/com.nextsolution.nextdiagnostics.control.plist";
 static NSString *const NDNotify=@"com.nextsolution.nextdiagnostics/control.changed";
