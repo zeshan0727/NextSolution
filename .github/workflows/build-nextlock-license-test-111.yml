@@ -1,4 +1,4 @@
-name: Build and Publish NextLock 1.1.1 License Test
+name: Build and Publish NextLock 1.1.2 License Test
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: nextlock-1-1-1-license-test
+  group: nextlock-1-1-2-license-test
   cancel-in-progress: true
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
       - name: Install build tools
         run: brew install dpkg ldid xz zstd
 
-      - name: Validate generated 1.1.1 source
+      - name: Validate generated 1.1.2 source
         shell: bash
         run: |
           set -euo pipefail
@@ -41,12 +41,15 @@ jobs:
           python3 "$P/patch_v027.py"
           python3 "$P/patch_v028.py"
           python3 "$P/patch_v029.py"
+          python3 "$P/patch_v030.py"
           python3 "$P/generate_nextlock_icon.py"
-          grep -q '^Version: 1.1.1$' "$P/control"
+          grep -q '^Version: 1.1.2$' "$P/control"
           grep -q 'raw.githubusercontent.com/zeshan0727/NextSolution/main/licenses/nextlock.json' "$P/RuntimeV023.xm"
           grep -q '10\*NSEC_PER_SEC' "$P/RuntimeV023.xm"
           grep -q 'LGTPrefsHardwareModel' "$P/prefs/LGTListControllerV023.m"
           grep -q '&model=%@&ios=%@' "$P/prefs/LGTListControllerV023.m"
+          grep -q 'shareDeviceDetails' "$P/prefs/LGTListControllerV023.m"
+          plutil -extract items xml1 -o - "$P/prefs/Resources/Root.plist" | grep -q 'Send Device Details to NS Admin'
           plutil -lint "$P/prefs/Resources/Root.plist"
           python3 - <<'PY'
           from pathlib import Path
@@ -61,19 +64,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/nextlock111"; mkdir -p "$OUT"
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/nextlock112"; mkdir -p "$OUT"
           git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
           export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
           rm -rf "$P/packages"
           make -C "$P" clean package FINALPACKAGE=1
           DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"; test -n "$DEB"
-          cp "$DEB" "$OUT/NextLock_1.1.1_LicenseTest_Rootless.deb"
+          cp "$DEB" "$OUT/NextLock_1.1.2_LicenseTest_Rootless.deb"
 
       - name: Build RootHide
         shell: bash
         run: |
           set -euo pipefail
-          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/nextlock111"
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"; OUT="$RUNNER_TEMP/nextlock112"
           git init "$RUNNER_TEMP/theos-roothide"
           git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
           git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
@@ -84,56 +87,56 @@ jobs:
           rm -rf "$P/packages"
           make -C "$P" clean package FINALPACKAGE=1
           DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"; test -n "$DEB"
-          cp "$DEB" "$OUT/NextLock_1.1.1_LicenseTest_RootHide.deb"
+          cp "$DEB" "$OUT/NextLock_1.1.2_LicenseTest_RootHide.deb"
 
       - name: Validate packages
         shell: bash
         run: |
           set -euo pipefail
-          OUT="$RUNNER_TEMP/nextlock111"
+          OUT="$RUNNER_TEMP/nextlock112"
           for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
-            set -- $spec; deb="$OUT/NextLock_1.1.1_LicenseTest_$1.deb"; arch="$2"; x="$(mktemp -d)"
+            set -- $spec; deb="$OUT/NextLock_1.1.2_LicenseTest_$1.deb"; arch="$2"; x="$(mktemp -d)"
             test "$(dpkg-deb -f "$deb" Package)" = com.nextsolution.lockglyphtime
-            test "$(dpkg-deb -f "$deb" Version)" = 1.1.1
+            test "$(dpkg-deb -f "$deb" Version)" = 1.1.2
             test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
             dpkg-deb -x "$deb" "$x"
             dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
             test -s "$dylib"
             strings "$dylib" | grep -q 'raw.githubusercontent.com/zeshan0727/NextSolution/main/licenses/nextlock.json'
-            icon="$(find "$x" -path '*PreferenceLoader/Preferences/NextLockIcon@3x.png' -print -quit)"
-            test -s "$icon"
+            icon="$(find "$x" -path '*PreferenceLoader/Preferences/NextLockIcon@3x.png' -print -quit)"; test -s "$icon"
             rootplist="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
-            plutil -extract items xml1 -o - "$rootplist" | grep -q 'Check Activation'
+            plutil -extract items xml1 -o - "$rootplist" | grep -q 'Send Device Details to NS Admin'
             rm -rf "$x"
           done
-          shasum -a 256 "$OUT"/*.deb | tee "$OUT/NextLock_1.1.1_LicenseTest_SHA256SUMS.txt"
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/NextLock_1.1.2_LicenseTest_SHA256SUMS.txt"
 
-      - name: Publish 1.1.1 to NextSolution Transfer
+      - name: Publish 1.1.2 to NextSolution Transfer
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          OUT="$RUNNER_TEMP/nextlock111"
+          OUT="$RUNNER_TEMP/nextlock112"
           git clone "https://x-access-token:${GH_TOKEN}@github.com/zeshan0727/NextSolution.git" "$RUNNER_TEMP/publish"
           cd "$RUNNER_TEMP/publish"
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
-          DEST="transfer/files/NextLock/1.1.1-LicenseTest"; mkdir -p "$DEST"
-          cp "$OUT/NextLock_1.1.1_LicenseTest_Rootless.deb" "$DEST/"
-          cp "$OUT/NextLock_1.1.1_LicenseTest_RootHide.deb" "$DEST/"
-          cp "$OUT/NextLock_1.1.1_LicenseTest_SHA256SUMS.txt" "$DEST/"
-          ROOTLESS_SHA=$(shasum -a 256 "$DEST/NextLock_1.1.1_LicenseTest_Rootless.deb" | awk '{print $1}')
-          ROOTHIDE_SHA=$(shasum -a 256 "$DEST/NextLock_1.1.1_LicenseTest_RootHide.deb" | awk '{print $1}')
+          DEST="transfer/files/NextLock/1.1.2-LicenseTest"; mkdir -p "$DEST"
+          cp "$OUT/NextLock_1.1.2_LicenseTest_Rootless.deb" "$DEST/"
+          cp "$OUT/NextLock_1.1.2_LicenseTest_RootHide.deb" "$DEST/"
+          cp "$OUT/NextLock_1.1.2_LicenseTest_SHA256SUMS.txt" "$DEST/"
+          ROOTLESS_SHA=$(shasum -a 256 "$DEST/NextLock_1.1.2_LicenseTest_Rootless.deb" | awk '{print $1}')
+          ROOTHIDE_SHA=$(shasum -a 256 "$DEST/NextLock_1.1.2_LicenseTest_RootHide.deb" | awk '{print $1}')
           python3 - "$ROOTLESS_SHA" "$ROOTHIDE_SHA" <<'PY'
           import json,sys
           from datetime import datetime,timezone
           from pathlib import Path
           rootless,roothide=sys.argv[1:3]
           p=Path('transfer/index.json'); data=json.loads(p.read_text())
+          notes='Fast licensing test: direct live-registry checks, ~10-second activation/revocation refresh, polished preference icon, device model + iOS metadata, plus Send Device Details to NS Admin for already-paid devices.'
           entries=[
-            {'id':'nextlock-1.1.1-license-test-roothide','name':'NextLock 1.1.1 License Test RootHide','fileName':'NextLock_1.1.1_LicenseTest_RootHide.deb','type':'deb','platform':'RootHide','version':'1.1.1 License Test','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.1-LicenseTest/NextLock_1.1.1_LicenseTest_RootHide.deb','sha256':roothide,'notes':'Fast licensing test: direct live-registry checks, ~10-second automatic activation/revocation refresh, device model + iOS metadata handoff, and redesigned native-style preference icon.'},
-            {'id':'nextlock-1.1.1-license-test-rootless','name':'NextLock 1.1.1 License Test Rootless','fileName':'NextLock_1.1.1_LicenseTest_Rootless.deb','type':'deb','platform':'Dopamine / Rootless','version':'1.1.1 License Test','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.1-LicenseTest/NextLock_1.1.1_LicenseTest_Rootless.deb','sha256':rootless,'notes':'Fast licensing test: direct live-registry checks, ~10-second automatic activation/revocation refresh, device model + iOS metadata handoff, and redesigned native-style preference icon.'}
+            {'id':'nextlock-1.1.2-license-test-roothide','name':'NextLock 1.1.2 License Test RootHide','fileName':'NextLock_1.1.2_LicenseTest_RootHide.deb','type':'deb','platform':'RootHide','version':'1.1.2 License Test','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.2-LicenseTest/NextLock_1.1.2_LicenseTest_RootHide.deb','sha256':roothide,'notes':notes},
+            {'id':'nextlock-1.1.2-license-test-rootless','name':'NextLock 1.1.2 License Test Rootless','fileName':'NextLock_1.1.2_LicenseTest_Rootless.deb','type':'deb','platform':'Dopamine / Rootless','version':'1.1.2 License Test','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.2-LicenseTest/NextLock_1.1.2_LicenseTest_Rootless.deb','sha256':rootless,'notes':notes}
           ]
           files=[x for x in data.get('files',[]) if not x.get('id','').startswith('nextlock-1.1.')]
           data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
@@ -141,7 +144,7 @@ jobs:
           p.write_text(json.dumps(data,indent=2)+'\n')
           PY
           git add -f "$DEST" transfer/index.json
-          git commit -m 'Publish NextLock 1.1.1 fast license test'
+          git commit -m 'Publish NextLock 1.1.2 fast license test'
           for attempt in 1 2 3; do
             if git pull --rebase origin main && git push origin main; then exit 0; fi
             sleep $((attempt*3))
@@ -151,10 +154,10 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: NextLock-1.1.1-LicenseTest-DEBs
+          name: NextLock-1.1.2-LicenseTest-DEBs
           path: |
-            ${{ runner.temp }}/nextlock111/NextLock_1.1.1_LicenseTest_Rootless.deb
-            ${{ runner.temp }}/nextlock111/NextLock_1.1.1_LicenseTest_RootHide.deb
-            ${{ runner.temp }}/nextlock111/NextLock_1.1.1_LicenseTest_SHA256SUMS.txt
+            ${{ runner.temp }}/nextlock112/NextLock_1.1.2_LicenseTest_Rootless.deb
+            ${{ runner.temp }}/nextlock112/NextLock_1.1.2_LicenseTest_RootHide.deb
+            ${{ runner.temp }}/nextlock112/NextLock_1.1.2_LicenseTest_SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
