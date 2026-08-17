@@ -1,0 +1,166 @@
+name: Publish NextLock 1.0.3
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [agent/lockglyphtime]
+    paths:
+      - ".github/workflows/publish-nextlock-103.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: nextlock-1-0-3-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install repo tools
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev xz-utils zstd bzip2 unzip
+
+      - name: Download exact approved 1.0.3 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nextlock103
+          curl -fL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9278452504/zip" \
+            -o /tmp/nextlock103/artifact.zip
+          unzip -o /tmp/nextlock103/artifact.zip -d /tmp/nextlock103/files
+          find /tmp/nextlock103/files -maxdepth 2 -type f -print
+
+      - name: Verify exact DEBs
+        run: |
+          set -euo pipefail
+          ROOTLESS="$(find /tmp/nextlock103/files -name 'NextLock_1.0.3_Rootless.deb' -print -quit)"
+          ROOTHIDE="$(find /tmp/nextlock103/files -name 'NextLock_1.0.3_RootHide.deb' -print -quit)"
+          test -s "$ROOTLESS"
+          test -s "$ROOTHIDE"
+          echo "369c915cf48bae2087ea32714cddf36e69c85676b643a1545ab5c521fcd3495e  $ROOTLESS" | sha256sum -c -
+          echo "0b31981ae213933561a94de7d8d4e9fd139257d8b6f309734eb6199f1687372e  $ROOTHIDE" | sha256sum -c -
+          test "$(dpkg-deb -f "$ROOTLESS" Package)" = "com.nextsolution.lockglyphtime"
+          test "$(dpkg-deb -f "$ROOTHIDE" Package)" = "com.nextsolution.lockglyphtime"
+          test "$(dpkg-deb -f "$ROOTLESS" Version)" = "1.0.3"
+          test "$(dpkg-deb -f "$ROOTHIDE" Version)" = "1.0.3"
+          test "$(dpkg-deb -f "$ROOTLESS" Architecture)" = "iphoneos-arm64"
+          test "$(dpkg-deb -f "$ROOTHIDE" Architecture)" = "iphoneos-arm64e"
+
+      - name: Publish to nextsolution.cc repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SITE=/tmp/site
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          ROOTLESS="$(find /tmp/nextlock103/files -name 'NextLock_1.0.3_Rootless.deb' -print -quit)"
+          ROOTHIDE="$(find /tmp/nextlock103/files -name 'NextLock_1.0.3_RootHide.deb' -print -quit)"
+
+          mkdir -p "$SITE/debfiles" "$SITE/transfer/files/NextLock/1.0.3"
+          cp "$ROOTLESS" "$SITE/debfiles/NextLock_1.0.3_Rootless.deb"
+          cp "$ROOTHIDE" "$SITE/debfiles/NextLock_1.0.3_RootHide.deb"
+          cp "$ROOTLESS" "$SITE/transfer/files/NextLock/1.0.3/NextLock_1.0.3_Rootless.deb"
+          cp "$ROOTHIDE" "$SITE/transfer/files/NextLock/1.0.3/NextLock_1.0.3_RootHide.deb"
+          printf '%s  %s\n%s  %s\n' \
+            '369c915cf48bae2087ea32714cddf36e69c85676b643a1545ab5c521fcd3495e' 'NextLock_1.0.3_Rootless.deb' \
+            '0b31981ae213933561a94de7d8d4e9fd139257d8b6f309734eb6199f1687372e' 'NextLock_1.0.3_RootHide.deb' \
+            > "$SITE/transfer/files/NextLock/1.0.3/SHA256SUMS.txt"
+
+          python3 - "$SITE/transfer/index.json" <<'PY'
+          import json, pathlib, datetime, sys
+          p = pathlib.Path(sys.argv[1])
+          try:
+              data = json.loads(p.read_text())
+          except Exception:
+              data = {"version": 1, "files": []}
+          files = [x for x in data.get("files", []) if not str(x.get("id", "")).startswith(("nextlock-", "lockglyphtime-"))]
+          latest = [
+              {
+                  "id": "nextlock-1.0.3-rootless",
+                  "name": "NextLock 1.0.3 Rootless",
+                  "fileName": "NextLock_1.0.3_Rootless.deb",
+                  "type": "deb",
+                  "platform": "Dopamine / Rootless",
+                  "version": "1.0.3",
+                  "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.3/NextLock_1.0.3_Rootless.deb",
+                  "sha256": "369c915cf48bae2087ea32714cddf36e69c85676b643a1545ab5c521fcd3495e",
+                  "notes": "Directly follows Apple's native Lock Screen clock text updates so customized time advances normally without respring."
+              },
+              {
+                  "id": "nextlock-1.0.3-roothide",
+                  "name": "NextLock 1.0.3 RootHide",
+                  "fileName": "NextLock_1.0.3_RootHide.deb",
+                  "type": "deb",
+                  "platform": "RootHide",
+                  "version": "1.0.3",
+                  "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.3/NextLock_1.0.3_RootHide.deb",
+                  "sha256": "0b31981ae213933561a94de7d8d4e9fd139257d8b6f309734eb6199f1687372e",
+                  "notes": "Directly follows Apple's native Lock Screen clock text updates so customized time advances normally without respring."
+              }
+          ]
+          data = {
+              "version": 1,
+              "updatedAt": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              "files": latest + files,
+          }
+          p.write_text(json.dumps(data, indent=2) + "\n")
+          PY
+
+          python3 - "$SITE/depictions/nextlock.html" <<'PY'
+          from pathlib import Path
+          import sys
+          p = Path(sys.argv[1])
+          s = p.read_text()
+          s = s.replace("NextLock 1.0.1", "NextLock 1.0.3")
+          s = s.replace("Version 1.0.1", "Version 1.0.3")
+          s = s.replace("NextLock 1.0.1 •", "NextLock 1.0.3 •")
+          old = "Includes the polished NextLock branding and corrected Settings / PreferenceLoader icon resources for standard, @2x and @3x display scales."
+          new = "Fixes the Lock Screen clock refresh path by following Apple's native time-label updates directly, while retaining the timer as a fallback. Customized time now advances without requiring another respring."
+          s = s.replace(old, new)
+          p.write_text(s)
+          PY
+
+          python3 - "$SITE/Release" <<'PY'
+          from pathlib import Path
+          from email.utils import formatdate
+          import re, time, sys
+          p = Path(sys.argv[1])
+          s = p.read_text()
+          s = re.sub(r'^Date:.*$', 'Date: ' + formatdate(time.time(), usegmt=True), s, flags=re.M)
+          p.write_text(s)
+          PY
+
+          cd "$SITE"
+          dpkg-scanpackages -m ./debfiles /dev/null | sed 's|^Filename: debfiles/|Filename: ./debfiles/|' > Packages
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages')
+          p.write_text(p.read_text().rstrip()+"\n")
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+
+          grep -q '^Package: com.nextsolution.lockglyphtime$' Packages
+          grep -q '^Version: 1.0.3$' Packages
+          grep -q 'NextLock_1.0.3_Rootless.deb' Packages
+          grep -q 'NextLock_1.0.3_RootHide.deb' Packages
+          grep -q 'Version 1.0.3' depictions/nextlock.html
+          grep -q 'nextlock-1.0.3-rootless' transfer/index.json
+
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add debfiles/NextLock_1.0.3_Rootless.deb debfiles/NextLock_1.0.3_RootHide.deb \
+                  transfer/files/NextLock/1.0.3 transfer/index.json depictions/nextlock.html Release \
+                  Packages Packages.gz Packages.bz2 Packages.xz Packages.zst
+          git commit -m "Publish NextLock 1.0.3 clock refresh fix"
+          git pull --rebase origin main
+          git push origin main
