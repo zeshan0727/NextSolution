@@ -55,7 +55,7 @@ jobs:
           set -euo pipefail
           APP="build/Build/Products/Release-iphoneos/ModuleGlassPreview.app"
           test -d "$APP"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.0"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.1.1"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.moduleglasspreview"
           /usr/bin/codesign --force --sign - --entitlements ModuleGlassPreview.entitlements --generate-entitlement-der "$APP"
           /usr/bin/codesign --verify --verbose=2 "$APP"
@@ -69,11 +69,11 @@ jobs:
           set -euo pipefail
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/ModuleGlassPreview.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload ModuleGlass-Preview-1.1.0.tipa
-          cp ModuleGlass-Preview-1.1.0.tipa build-output/ModuleGlass-Preview-1.1.0.tipa
-          shasum -a 256 ModuleGlass-Preview-1.1.0.tipa | tee build-output/ModuleGlass-Preview-1.1.0.sha256
-          unzip -l ModuleGlass-Preview-1.1.0.tipa | grep -q "Payload/ModuleGlassPreview.app/ModuleGlassPreview"
-          test -s ModuleGlass-Preview-1.1.0.tipa
+          ditto -c -k --sequesterRsrc --keepParent Payload ModuleGlass-Preview-1.1.1.tipa
+          cp ModuleGlass-Preview-1.1.1.tipa build-output/ModuleGlass-Preview-1.1.1.tipa
+          shasum -a 256 ModuleGlass-Preview-1.1.1.tipa | tee build-output/ModuleGlass-Preview-1.1.1.sha256
+          unzip -l ModuleGlass-Preview-1.1.1.tipa | grep -q "Payload/ModuleGlassPreview.app/ModuleGlassPreview"
+          test -s ModuleGlass-Preview-1.1.1.tipa
 
       - name: Publish to NextSolution Transfer feed
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -83,9 +83,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase origin main
 
-          DEST="transfer/files/ModuleGlassPreview/1.1.0/ModuleGlass-Preview-1.1.0.tipa"
+          DEST="transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa"
           mkdir -p "$(dirname "$DEST")"
-          cp ModuleGlassPreview/ModuleGlass-Preview-1.1.0.tipa "$DEST"
+          cp ModuleGlassPreview/ModuleGlass-Preview-1.1.1.tipa "$DEST"
           SHA=$(shasum -a 256 "$DEST" | awk '{print $1}')
           SIZE=$(stat -f '%z' "$DEST")
 
@@ -98,15 +98,15 @@ jobs:
           p = Path('transfer/index.json')
           data = json.loads(p.read_text()) if p.exists() else {'version': 1, 'files': []}
           entry = {
-              'id': 'module-glass-preview-1.1.0',
-              'name': 'Module Glass Developer Console 1.1.0',
-              'fileName': 'ModuleGlass-Preview-1.1.0.tipa',
+              'id': 'module-glass-preview-1.1.1',
+              'name': 'Module Glass Developer Console 1.1.1',
+              'fileName': 'ModuleGlass-Preview-1.1.1.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / Jailbroken iOS 16+',
-              'version': '1.1.0',
-              'url': 'https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.0/ModuleGlass-Preview-1.1.0.tipa',
+              'version': '1.1.1',
+              'url': 'https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa',
               'sha256': sha,
-              'notes': 'Advanced Module Glass developer console with realistic live Control Center preview, per-module crop/position editor, continuous device apply, Stable Recovery preference bridge, deep diagnostics, Keychain-protected GitHub PAT, and one-tap diagnostic log upload.'
+              'notes': 'Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured.'
           }
           files = [x for x in data.get('files', []) if x.get('id') != entry['id']]
           data['version'] = data.get('version', 1)
@@ -116,17 +116,17 @@ jobs:
           PY
 
           git add -f "$DEST" transfer/index.json
-          git commit -m "Publish Module Glass Developer Console 1.1.0 to Transfer"
+          git commit -m "Publish Module Glass Developer Console 1.1.1 to Transfer"
           git pull --rebase origin main
           git push origin HEAD:main
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ModuleGlass-Developer-Console-1.1.0
+          name: ModuleGlass-Developer-Console-1.1.1
           path: |
-            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.1.0.tipa
-            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.1.0.sha256
+            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.1.1.tipa
+            ModuleGlassPreview/build-output/ModuleGlass-Preview-1.1.1.sha256
             ModuleGlassPreview/build-output/embedded-entitlements.plist
             ModuleGlassPreview/build-output/xcodebuild.log
           if-no-files-found: error
