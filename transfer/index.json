@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T11:53:23Z",
+  "updatedAt": "2026-08-17T11:59:15Z",
   "files": [
     {
       "id": "nextlock-1.0.5-rootless",
@@ -36,26 +36,26 @@
       "notes": "Live companion app for Module Glass Stable Recovery. Provides Control Center preview, Device Live preference/image changes, Darwin reload notifications, and direct Module Glass log viewing."
     },
     {
-      "id": "moduleglass-1.1.4-roothide",
-      "name": "Module Glass 1.1.4 RootHide",
-      "fileName": "ModuleGlass_1.1.4_RootHide.deb",
+      "id": "moduleglass-1.1.5-roothide",
+      "name": "Module Glass 1.1.5 Complete RootHide",
+      "fileName": "ModuleGlass_1.1.5_Complete_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.4",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.4/ModuleGlass_1.1.4_RootHide.deb",
-      "sha256": "56a4ec3a46df66682edf16ce506664d1f4860d52c4b10d53397a77c656f03e84",
-      "notes": "Hardened Module Glass runtime with state-driven rendering, cached preferences, asynchronous image decoding, exact restoration tracking, live Volume tint updates, Remove Blur, Glow, and expanded-module safety."
+      "version": "1.1.5",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_RootHide.deb",
+      "sha256": "de5064ba76703b920d5c068e3eb92be88fdb0027866fe8728a0fc44d7717c74f",
+      "notes": "Complete recovery-first Module Glass package. Embeds the validated stable renderer directly, replaces the failed standalone runtime through 1.1.4, and keeps the shared Aura Settings runtime dependency."
     },
     {
-      "id": "moduleglass-1.1.4-source",
-      "name": "Module Glass 1.1.4 Hardened Source",
-      "fileName": "ModuleGlass_1.1.4_Hardened_Source.zip",
+      "id": "moduleglass-1.1.5-source",
+      "name": "Module Glass 1.1.5 Complete Source",
+      "fileName": "ModuleGlass_1.1.5_Complete_Source.zip",
       "type": "zip",
       "platform": "Source / Theos",
-      "version": "1.1.4",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.4/ModuleGlass_1.1.4_Hardened_Source.zip",
-      "sha256": "6ef159cd4fdb8d3ea9471435942b5ebb6867dd65e233da8528788f43f830f90d",
-      "notes": "Final hardened Module Glass 1.1.4 source used for the verified RootHide build, including crash-safety and smoothness optimizations."
+      "version": "1.1.5",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_Source.zip",
+      "sha256": "692a82e865300733ff9f56a8ab24b219efb0f9b4fabbf2220c2593ec601bde13",
+      "notes": "Matching source for the complete RootHide package, built from the validated stable Module Glass 1.0.14 renderer source rather than the failed 1.1.4 hardened renderer."
     },
     {
       "id": "nextsolution-transfer-1.1.4",
