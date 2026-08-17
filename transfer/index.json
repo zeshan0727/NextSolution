@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T11:30:00Z",
+  "updatedAt": "2026-08-17T11:33:30Z",
   "files": [
+    {
+      "id": "module-glass-preview-1.0.0",
+      "name": "Module Glass Preview 1.0.0",
+      "fileName": "ModuleGlass-Preview-1.0.0.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / Jailbroken iOS 15+",
+      "version": "1.0.0",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa",
+      "sha256": "d1682506fd4d0631b768a66190aa30c8f7eb838a6c8d0270769112c63a9b974d",
+      "notes": "Live companion app for Module Glass Stable Recovery. Provides Control Center preview, Device Live preference/image changes, Darwin reload notifications, and direct Module Glass log viewing."
+    },
     {
       "id": "moduleglass-1.1.4-roothide",
       "name": "Module Glass 1.1.4 RootHide",
