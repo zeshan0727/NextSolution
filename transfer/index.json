@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T13:15:16Z",
+  "updatedAt": "2026-08-17T13:16:16Z",
   "files": [
     {
-      "id": "nextsolution-license-admin-1.0.0",
-      "name": "NextSolution License Admin 1.0.0",
-      "fileName": "NextSolution-License-Admin-1.0.0.tipa",
+      "id": "nextsolution-license-admin-1.0.1",
+      "name": "NextSolution License Admin 1.0.1",
+      "fileName": "NextSolution-License-Admin-1.0.1.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
-      "version": "1.0.0",
-      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.0/NextSolution-License-Admin-1.0.0.tipa",
-      "sha256": "89cd2706a14bd6f13a00261e88cc2f1df9d5a41004d4b7fa12fb44105c07f6ee",
-      "notes": "Private Next Solution licensing console. Receives customer activation-request links with tweak name and Device ID, stores requests locally, and activates/checks/revokes licenses directly through the NextSolution GitHub registry using a Keychain-protected fine-grained token."
+      "version": "1.0.1",
+      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.1/NextSolution-License-Admin-1.0.1.tipa",
+      "sha256": "bd00e415a45d5831a5703c04879bcbdbe811f020ef2d674cca4028affe3b7863",
+      "notes": "Fixes TrollStore error 303 by declaring and validating CFBundleExecutable and the packaged arm64 main binary. Private Next Solution licensing console for activation requests and direct activate/check/revoke actions."
     },
     {
       "id": "nextlock-1.1.0-license-test-roothide",
