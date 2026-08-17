@@ -1,0 +1,42 @@
+name: Verify Module Glass Developer Console 1.1.0
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/verify-moduleglass-console-1.1.0.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Verify public manifest and TIPA SHA-256
+        run: |
+          set -euo pipefail
+          INDEX_URL='https://nextsolution.cc/transfer/index.json'
+          FILE_URL='https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.0/ModuleGlass-Preview-1.1.0.tipa'
+          EXPECTED_SHA='d25967e5ddfe2d9e4e7b7f03685f4068a010ee688b4b7f3c3106f1d7c296d230'
+          for i in $(seq 1 90); do
+            rm -f /tmp/index.json /tmp/moduleglass-console.tipa
+            if curl -fsSL --max-time 30 "$INDEX_URL" -o /tmp/index.json \
+              && grep -q '"id": "module-glass-preview-1.1.0"' /tmp/index.json \
+              && grep -q "$EXPECTED_SHA" /tmp/index.json \
+              && curl -fsSL --max-time 60 "$FILE_URL" -o /tmp/moduleglass-console.tipa; then
+              ACTUAL_SHA=$(sha256sum /tmp/moduleglass-console.tipa | awk '{print $1}')
+              if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
+                echo "PUBLIC_TRANSFER_VERIFIED"
+                echo "URL=$FILE_URL"
+                echo "SHA256=$ACTUAL_SHA"
+                echo "SIZE=$(stat -c '%s' /tmp/moduleglass-console.tipa)"
+                exit 0
+              fi
+            fi
+            echo "Waiting for nextsolution.cc deployment ($i/90)..."
+            sleep 5
+          done
+          echo 'Public Transfer verification timed out.' >&2
+          exit 1
