@@ -1,0 +1,136 @@
+name: Validate ModuleGlass 1.1.7 Crisp Volume
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.7-crisp-volume-fill
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare exact renderer source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo '0786f80dadb2ee439b2466c07ae7d30b75aff90a95bf3627b9f1ea8fc3fd072f  source/ModuleGlass/Tweak.m' | shasum -a 256 -c -
+          python3 source/ModuleGlass/apply-1.1.6-glyphsafe.py
+          echo '1e5fda7e161c707b580dd5935e46aceb2e3fedae965ff09ce6e2b39735bafce9  source/ModuleGlass/Tweak.m' | shasum -a 256 -c -
+          git apply source/ModuleGlass/moduleglass-1.1.7-crisp-volume.patch
+          shasum -a 256 source/ModuleGlass/Tweak.m | tee final-source.sha256
+          grep -q 'MGSetModuleBlurHiddenRecursive' source/ModuleGlass/Tweak.m
+          grep -q 'MGRestoreModuleBlurVisuals' source/ModuleGlass/Tweak.m
+          grep -q 'MGApplyVolumeFillMask' source/ModuleGlass/Tweak.m
+          grep -q 'MGSliderSetValue' source/ModuleGlass/Tweak.m
+          grep -q 'CCUIContinuousSliderView' source/ModuleGlass/Tweak.m
+          grep -q 'glyph-safe-background-only' source/ModuleGlass/Tweak.m
+          grep -q 'UIViewContentModeScaleToFill' source/ModuleGlass/Tweak.m
+
+      - name: Install RootHide build tools
+        shell: bash
+        run: |
+          set -euxo pipefail
+          brew install ldid xz dpkg || true
+          git clone --depth 1 --recursive https://github.com/roothide/theos.git "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/sdk.tar.xz
+          tar -xJf /tmp/sdk.tar.xz -C "$THEOS/sdks"
+
+      - name: Build complete RootHide DEB
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p complete-build
+          cp source/ModuleGlass/Tweak.m source/ModuleGlass/Compat.h source/ModuleGlass/CCModuleBackgrounds.plist complete-build/
+          cat > complete-build/Makefile <<'EOF'
+          ARCHS = arm64 arm64e
+          TARGET = iphone:clang:latest:16.0
+          THEOS_PACKAGE_SCHEME ?= roothide
+          INSTALL_TARGET_PROCESSES = SpringBoard
+          include $(THEOS)/makefiles/common.mk
+          TWEAK_NAME = CCModuleBackgrounds
+          CCModuleBackgrounds_FILES = Tweak.m
+          CCModuleBackgrounds_CFLAGS = -fobjc-arc -Wno-unneeded-internal-declaration -include $(THEOS_PROJECT_DIR)/Compat.h
+          CCModuleBackgrounds_FRAMEWORKS = Foundation UIKit CoreFoundation CoreGraphics QuartzCore
+          CCModuleBackgrounds_LIBRARIES = substrate
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          EOF
+          sed -i '' 's/^          //' complete-build/Makefile
+          cat > complete-build/control <<'EOF'
+          Package: com.nextsolution.nextaura.cc-module-backgrounds
+          Name: Module Glass
+          Version: 1.1.7
+          Architecture: iphoneos-arm64e
+          Description: Complete RootHide Module Glass with crisp custom backgrounds and live Brightness-style Volume fill.
+          Maintainer: Next Solution
+          Author: Next Solution - zeshan0727
+          Section: Tweaks
+          Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5)
+          Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.7)
+          Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.6), com.nextsolution.unlockvibrate
+          Breaks: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.6)
+          Replaces: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.6)
+          Priority: optional
+          Homepage: https://nextsolution.cc/
+          Tag: role::cydia
+          EOF
+          sed -i '' 's/^          //' complete-build/control
+          cd complete-build
+          make clean
+          make package FINALPACKAGE=1
+          cp "$(find packages -type f -name '*.deb' -print -quit)" ../ModuleGlass_1.1.7_Complete_RootHide.deb
+
+      - name: Verify binary and package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          DEB=ModuleGlass_1.1.7_Complete_RootHide.deb
+          mkdir -p verify/root
+          dpkg-deb -x "$DEB" verify/root
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.7'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          DYLIB="$(find verify/root -name CCModuleBackgrounds.dylib -print -quit)"
+          FILTER="$(find verify/root -name CCModuleBackgrounds.plist -print -quit)"
+          lipo -info "$DYLIB" | tee lipo.txt
+          grep -q arm64 lipo.txt && grep -q arm64e lipo.txt
+          otool -L "$DYLIB" | tee otool.txt
+          grep -q '@loader_path/.jbroot/' otool.txt
+          strings "$DYLIB" | grep -q '1.1.7 Crisp Blur + Volume Fill Renderer'
+          grep -q SpringBoard "$FILTER"
+          shasum -a 256 "$DEB" | tee deb.sha256
+
+      - name: Package matching source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p ModuleGlass-1.1.7-Complete-Source
+          cp complete-build/Tweak.m complete-build/Compat.h complete-build/CCModuleBackgrounds.plist complete-build/Makefile complete-build/control ModuleGlass-1.1.7-Complete-Source/
+          cat > ModuleGlass-1.1.7-Complete-Source/README.md <<'EOF'
+          Module Glass 1.1.7 Complete RootHide
+          - 1.1.6 glyph-safe stretched rendering retained.
+          - Remove Blur safely suppresses only module-sized non-interactive material surfaces and restores them on disable/expansion.
+          - Volume image reveal follows the live slider value bottom-to-top, matching Brightness at 0-100%.
+          EOF
+          sed -i '' 's/^          //' ModuleGlass-1.1.7-Complete-Source/README.md
+          zip -qry ModuleGlass_1.1.7_Complete_Source.zip ModuleGlass-1.1.7-Complete-Source
+          shasum -a 256 ModuleGlass_1.1.7_Complete_Source.zip | tee source.sha256
+          cat deb.sha256 source.sha256 > SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.7-Complete-RootHide-Validated
+          path: |
+            ModuleGlass_1.1.7_Complete_RootHide.deb
+            ModuleGlass_1.1.7_Complete_Source.zip
+            SHA256SUMS.txt
+            final-source.sha256
+          if-no-files-found: error
+          retention-days: 3
