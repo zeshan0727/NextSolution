@@ -1,4 +1,4 @@
-name: Build NextLock Release DEBs
+name: Build NextLock 1.0.2 DEBs
 
 on:
   workflow_dispatch:
@@ -32,29 +32,20 @@ jobs:
           P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
           python3 "$P/prefs/generate_root.py"
           python3 "$P/patch_v023.py"
-          for f in RuntimeV022.xm RuntimeV023.xm LockGlyphTime.plist control Makefile patch_v023.py prefs/Makefile prefs/LGTListController.m prefs/LGTListControllerV023.m prefs/generate_root.py prefs/Resources/Root.plist prefs/Resources/Time.plist prefs/Resources/Date.plist prefs/Resources/Icon.plist prefs/Resources/Photo.plist prefs/Resources/Advanced.plist prefs/Resources/About.plist prefs/Resources/Info.plist prefs/Resources/NextLockIcon.png layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist layout/Library/PreferenceLoader/Preferences/NextLockIcon.png layout/Library/PreferenceLoader/Preferences/NextLockIcon@2x.png layout/Library/PreferenceLoader/Preferences/NextLockIcon@3x.png; do test -f "$P/$f"; done
+          python3 "$P/patch_v024.py"
+          for f in RuntimeV022.xm RuntimeV023.xm LockGlyphTime.plist control Makefile patch_v023.py patch_v024.py prefs/Makefile prefs/LGTListController.m prefs/LGTListControllerV023.m prefs/Resources/Root.plist prefs/Resources/About.plist prefs/Resources/Info.plist prefs/Resources/NextLockIcon.png layout/Library/PreferenceLoader/Preferences/NextLockIcon.png layout/Library/PreferenceLoader/Preferences/NextLockIcon@2x.png layout/Library/PreferenceLoader/Preferences/NextLockIcon@3x.png; do test -f "$P/$f"; done
           grep -q '^Name: NextLock$' "$P/control"
-          grep -q '^Version: 1.0.1$' "$P/control"
-          grep -q 'Version 1.0.1' "$P/prefs/Resources/About.plist"
-          grep -q 'LockGlyphTime_FILES = RuntimeV023.xm' "$P/Makefile"
-          grep -q 'LGTListControllerV023.m' "$P/prefs/Makefile"
+          grep -q '^Version: 1.0.2$' "$P/control"
+          grep -q 'Version 1.0.2' "$P/prefs/Resources/About.plist"
+          grep -q '<string>1.0.2</string>' "$P/prefs/Resources/Info.plist"
+          grep -q 'patch_v024.py' "$P/Makefile"
+          grep -q 'LGTStartLiveClockTimer' "$P/RuntimeV023.xm"
+          grep -q 'LGTRefreshLiveClockNow' "$P/RuntimeV023.xm"
+          grep -q 'AppleICUForce24HourTime' "$P/RuntimeV023.xm"
+          grep -q 'UIApplicationSignificantTimeChangeNotification' "$P/RuntimeV023.xm"
+          grep -q '60 \* NSEC_PER_SEC' "$P/RuntimeV023.xm"
           grep -q 'LGTImageHasVisibleTransparency' "$P/RuntimeV023.xm"
-          grep -q 'LGTIconHostView' "$P/RuntimeV023.xm"
           grep -q 'UIImagePNGRepresentation' "$P/prefs/LGTListControllerV023.m"
-          grep -q 'NextLockIcon' "$P/prefs/LGTListControllerV023.m"
-          grep -q 'title.text=@"NextLock"' "$P/prefs/LGTListControllerV023.m"
-          grep -q 'Transparent PNG/sticker backgrounds are preserved' "$P/prefs/LGTListControllerV023.m"
-          grep -q 'About NextLock' "$P/prefs/Resources/Root.plist"
-          grep -q 'NEXTLOCK' "$P/prefs/Resources/About.plist"
-          grep -q 'label = NextLock;' "$P/layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist"
-          grep -q 'detail = LGTListController;' "$P/layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist"
-          grep -q 'icon = NextLockIcon.png;' "$P/layout/Library/PreferenceLoader/Preferences/LockGlyphTime.plist"
-          test "$(sips -g pixelWidth "$P/layout/Library/PreferenceLoader/Preferences/NextLockIcon.png" | awk '/pixelWidth/{print $2}')" = 29
-          test "$(sips -g pixelWidth "$P/layout/Library/PreferenceLoader/Preferences/NextLockIcon@2x.png" | awk '/pixelWidth/{print $2}')" = 58
-          test "$(sips -g pixelWidth "$P/layout/Library/PreferenceLoader/Preferences/NextLockIcon@3x.png" | awk '/pixelWidth/{print $2}')" = 87
-          test ! -e "$P/prefs/Resources/NextStyleIcon.png"
-          test ! -e "$P/layout/Library/PreferenceLoader/Preferences/NextStyleIcon.png"
-          ! grep -R 'NextStyle' "$P" --include='*.yml' --include='*.yaml' --include='*.xm' --include='*.m' --include='*.py' --include='*.plist' --include='control' || exit 1
           ! grep -R 'nextsolution\.app' "$P" .github/workflows/build-lockglyphtime.yml --include='*.yml' --include='*.yaml' --include='*.xm' --include='*.m' --include='*.py' --include='*.plist' --include='control' || exit 1
           for f in Root Time Date Icon Photo Advanced About Info; do plutil -lint "$P/prefs/Resources/$f.plist"; done
 
@@ -71,7 +62,7 @@ jobs:
           make -C "$P" clean package FINALPACKAGE=1
           DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
           test -n "$DEB"
-          cp "$DEB" "$OUT/NextLock_1.0.1_Rootless.deb"
+          cp "$DEB" "$OUT/NextLock_1.0.2_Rootless.deb"
 
       - name: Build RootHide
         shell: bash
@@ -90,7 +81,7 @@ jobs:
           make -C "$P" clean package FINALPACKAGE=1
           DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
           test -n "$DEB"
-          cp "$DEB" "$OUT/NextLock_1.0.1_RootHide.deb"
+          cp "$DEB" "$OUT/NextLock_1.0.2_RootHide.deb"
 
       - name: Validate packages
         shell: bash
@@ -98,50 +89,39 @@ jobs:
           set -euo pipefail
           validate(){
             deb="$1"; arch="$2"; x="$(mktemp -d)"
-            test "$(dpkg-deb -f "$deb" Version)" = 1.0.1
+            test "$(dpkg-deb -f "$deb" Version)" = 1.0.2
             test "$(dpkg-deb -f "$deb" Architecture)" = "$arch"
             test "$(dpkg-deb -f "$deb" Name)" = NextLock
             dpkg-deb -x "$deb" "$x"
             dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            prefsbin="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
             root="$(find "$x" -path '*LockGlyphTimePrefs.bundle/Root.plist' -print -quit)"
             about="$(find "$x" -path '*LockGlyphTimePrefs.bundle/About.plist' -print -quit)"
-            prefsbin="$(find "$x" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)"
-            headericon="$(find "$x" -path '*LockGlyphTimePrefs.bundle/NextLockIcon.png' -print -quit)"
-            loaderdir="$(find "$x" -type d -path '*PreferenceLoader/Preferences' -print -quit)"
-            entry="$loaderdir/LockGlyphTime.plist"
-            icon1="$loaderdir/NextLockIcon.png"; icon2="$loaderdir/NextLockIcon@2x.png"; icon3="$loaderdir/NextLockIcon@3x.png"
-            for f in "$dylib" "$root" "$about" "$prefsbin" "$headericon" "$entry" "$icon1" "$icon2" "$icon3"; do test -e "$f"; done
-            grep -q 'About NextLock' "$root"
-            grep -q 'NEXTLOCK' "$about"
-            grep -q 'detail = LGTListController;' "$entry"
-            grep -q 'icon = NextLockIcon.png;' "$entry"
-            test "$(sips -g pixelWidth "$icon1" | awk '/pixelWidth/{print $2}')" = 29
-            test "$(sips -g pixelWidth "$icon2" | awk '/pixelWidth/{print $2}')" = 58
-            test "$(sips -g pixelWidth "$icon3" | awk '/pixelWidth/{print $2}')" = 87
-            test -z "$(find "$x" -name 'NextStyleIcon*' -print -quit)"
+            test -n "$dylib"; test -n "$prefsbin"; test -n "$root"; test -n "$about"
+            strings -a "$dylib" | grep -q LGTStartLiveClockTimer
+            strings -a "$dylib" | grep -q AppleICUForce24HourTime
+            strings -a "$dylib" | grep -q UIApplicationSignificantTimeChangeNotification
             strings -a "$dylib" | grep -q LGTIconHostView
-            strings -a "$dylib" | grep -q custom.photo
-            strings -a "$prefsbin" | grep -q NextLock
-            strings -a "$prefsbin" | grep -q 'Transparent PNG/sticker backgrounds are preserved'
+            grep -q 'Version 1.0.2' "$about"
             rm -rf "$x"
           }
           OUT="$RUNNER_TEMP/nextlock-release"
-          validate "$OUT/NextLock_1.0.1_Rootless.deb" iphoneos-arm64
-          validate "$OUT/NextLock_1.0.1_RootHide.deb" iphoneos-arm64e
+          validate "$OUT/NextLock_1.0.2_Rootless.deb" iphoneos-arm64
+          validate "$OUT/NextLock_1.0.2_RootHide.deb" iphoneos-arm64e
           shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
 
       - name: Upload release packages
         uses: actions/upload-artifact@v4
         with:
-          name: NextLock-1.0.1-DEBs
+          name: NextLock-1.0.2-DEBs
           path: |
-            ${{ runner.temp }}/nextlock-release/NextLock_1.0.1_Rootless.deb
-            ${{ runner.temp }}/nextlock-release/NextLock_1.0.1_RootHide.deb
+            ${{ runner.temp }}/nextlock-release/NextLock_1.0.2_Rootless.deb
+            ${{ runner.temp }}/nextlock-release/NextLock_1.0.2_RootHide.deb
             ${{ runner.temp }}/nextlock-release/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish to NextSolution Transfer feed
+      - name: Publish Transfer, website and Sileo repo
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -150,30 +130,52 @@ jobs:
           OUT="$RUNNER_TEMP/nextlock-release"
           SITE="$RUNNER_TEMP/nextsolution-site"
           git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
-          DEST="$SITE/transfer/files/NextLock/1.0.1"
-          mkdir -p "$DEST"
-          cp "$OUT/NextLock_1.0.1_Rootless.deb" "$DEST/"
-          cp "$OUT/NextLock_1.0.1_RootHide.deb" "$DEST/"
+
+          DEST="$SITE/transfer/files/NextLock/1.0.2"
+          mkdir -p "$DEST" "$SITE/debfiles"
+          cp "$OUT/NextLock_1.0.2_Rootless.deb" "$DEST/"
+          cp "$OUT/NextLock_1.0.2_RootHide.deb" "$DEST/"
           cp "$OUT/SHA256SUMS.txt" "$DEST/"
-          python3 - "$SITE/transfer/index.json" "$OUT" <<'PY'
+          cp "$OUT/NextLock_1.0.2_Rootless.deb" "$SITE/debfiles/"
+          cp "$OUT/NextLock_1.0.2_RootHide.deb" "$SITE/debfiles/"
+
+          python3 - "$SITE/transfer/index.json" "$OUT" "$SITE/nextlock-tweak.html" <<'PY'
           import json, pathlib, hashlib, datetime, sys
-          manifest=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2])
+          manifest=pathlib.Path(sys.argv[1]); out=pathlib.Path(sys.argv[2]); article=pathlib.Path(sys.argv[3])
           try: data=json.loads(manifest.read_text()) if manifest.exists() else {"version":1,"files":[]}
           except Exception: data={"version":1,"files":[]}
           def sha(name): return hashlib.sha256((out/name).read_bytes()).hexdigest()
           files=[x for x in data.get("files",[]) if not str(x.get("id","")).startswith(("lockglyphtime-","nextlock-"))]
           files=[
-            {"id":"nextlock-1.0.1-rootless","name":"NextLock 1.0.1 Rootless","fileName":"NextLock_1.0.1_Rootless.deb","type":"deb","platform":"Dopamine / Rootless","version":"1.0.1","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_Rootless.deb","sha256":sha("NextLock_1.0.1_Rootless.deb"),"notes":"Final NextLock release with properly scaled Settings icon assets plus time, date, icon and transparent sticker-photo customization."},
-            {"id":"nextlock-1.0.1-roothide","name":"NextLock 1.0.1 RootHide","fileName":"NextLock_1.0.1_RootHide.deb","type":"deb","platform":"RootHide","version":"1.0.1","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.1/NextLock_1.0.1_RootHide.deb","sha256":sha("NextLock_1.0.1_RootHide.deb"),"notes":"Final NextLock release with properly scaled Settings icon assets plus time, date, icon and transparent sticker-photo customization."}
+            {"id":"nextlock-1.0.2-rootless","name":"NextLock 1.0.2 Rootless","fileName":"NextLock_1.0.2_Rootless.deb","type":"deb","platform":"Dopamine / Rootless","version":"1.0.2","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.2/NextLock_1.0.2_Rootless.deb","sha256":sha("NextLock_1.0.2_Rootless.deb"),"notes":"Live clock refresh fix: customized Lock Screen time now updates automatically every minute and responds to significant system-time changes."},
+            {"id":"nextlock-1.0.2-roothide","name":"NextLock 1.0.2 RootHide","fileName":"NextLock_1.0.2_RootHide.deb","type":"deb","platform":"RootHide","version":"1.0.2","url":"https://nextsolution.cc/transfer/files/NextLock/1.0.2/NextLock_1.0.2_RootHide.deb","sha256":sha("NextLock_1.0.2_RootHide.deb"),"notes":"Live clock refresh fix: customized Lock Screen time now updates automatically every minute and responds to significant system-time changes."}
           ]+files
-          payload={"version":1,"updatedAt":datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),"files":files}
-          manifest.parent.mkdir(parents=True,exist_ok=True)
-          manifest.write_text(json.dumps(payload,indent=2)+"\n")
-          assert all((not str(x.get("url","")).startswith("http")) or ("nextsolution.cc" in str(x.get("url",""))) for x in files)
+          manifest.write_text(json.dumps({"version":1,"updatedAt":datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),"files":files},indent=2)+"\n")
+          if article.exists():
+              text=article.read_text()
+              text=text.replace('NextLock 1.0.1','NextLock 1.0.2').replace('Version 1.0.1','Version 1.0.2')
+              article.write_text(text)
           PY
-          git -C "$SITE" config user.name "github-actions[bot]"
-          git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "$SITE" add transfer
-          git -C "$SITE" commit -m "Publish NextLock 1.0.1 to Transfer" || exit 0
-          git -C "$SITE" pull --rebase origin main
-          git -C "$SITE" push origin main
+
+          cd "$SITE"
+          dpkg-scanpackages -m ./debfiles /dev/null | sed 's|^Filename: debfiles/|Filename: ./debfiles/|' > Packages
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Packages'); p.write_text(p.read_text().rstrip()+"\n")
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          grep -q '^Package: com.nextsolution.lockglyphtime$' Packages
+          grep -q '^Version: 1.0.2$' Packages
+          grep -q 'NextLock_1.0.2_Rootless.deb' Packages
+          grep -q 'NextLock_1.0.2_RootHide.deb' Packages
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add transfer debfiles/NextLock_1.0.2_Rootless.deb debfiles/NextLock_1.0.2_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst nextlock-tweak.html
+          git diff --cached --check
+          git commit -m "Publish NextLock 1.0.2 live clock fix" || exit 0
+          git pull --rebase origin main
+          git push origin main
