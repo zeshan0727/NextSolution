@@ -1,0 +1,169 @@
+name: Build Module Glass 1.1.12 Transition Recovery
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.12-transition-recovery
+    paths:
+      - '.moduleglass-build/moduleglass-1.1.12-runtime.b64'
+      - '.github/workflows/moduleglass-1.1.12-transition-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: moduleglass-1.1.12-transition-recovery
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 25
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reconstruct exact 1.1.12 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, pathlib, hashlib
+          root = pathlib.Path('${{ github.workspace }}')
+          encoded = (root / '.moduleglass-build/moduleglass-1.1.12-runtime.b64').read_text().strip()
+          payload = base64.b64decode(encoded)
+          expected = '780b1da230768f1c65cbe68074ae6afb540cf7834f594e51b6942defe18f122b'
+          actual = hashlib.sha256(payload).hexdigest()
+          assert actual == expected, (actual, expected)
+          archive = pathlib.Path('/tmp/moduleglass112-runtime.tar.gz')
+          archive.write_bytes(payload)
+          PY
+          mkdir -p buildsrc
+          tar -xzf /tmp/moduleglass112-runtime.tar.gz -C buildsrc
+          test -f buildsrc/Runtime/Tweak.m
+          test -f buildsrc/Runtime/control
+          grep -q 'Version: 1.1.12' buildsrc/Runtime/control
+          grep -q 'One-Shot Transition Recovery Renderer' buildsrc/Runtime/Tweak.m
+          ! grep -q 'MGModuleWillLayout' buildsrc/Runtime/Tweak.m
+          ! grep -q 'MGModuleWillDisappear' buildsrc/Runtime/Tweak.m
+          ! grep -q 'presentedViewController' buildsrc/Runtime/Tweak.m
+
+      - name: Prepare matching source ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output/source-stage
+          cp -R buildsrc/Runtime output/source-stage/ModuleGlass-1.1.12-Complete-Source
+          ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.12-Complete-Source output/ModuleGlass_1.1.12_Complete_Source.zip
+
+      - name: Install package tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install dpkg ldid xz
+
+      - name: Install RootHide Theos
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p "$THEOS"
+          curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
+          bash /tmp/install-theos
+          test -f "$THEOS/makefiles/common.mk"
+
+      - name: Ensure iOS 16.5 SDK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p "$THEOS/sdks"
+          if ! ls "$THEOS"/sdks/iPhoneOS*.sdk >/dev/null 2>&1; then
+            curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/iPhoneOS16.5.sdk.tar.xz
+            tar -xJf /tmp/iPhoneOS16.5.sdk.tar.xz -C "$THEOS/sdks"
+          fi
+          ls -d "$THEOS"/sdks/iPhoneOS*.sdk
+
+      - name: Build RootHide arm64 + arm64e package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd buildsrc/Runtime
+          make clean
+          make package FINALPACKAGE=1
+          DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "${{ github.workspace }}/output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb"
+
+      - name: Verify package architecture, linkage, and metadata
+        shell: bash
+        run: |
+          set -euxo pipefail
+          DEB="${{ github.workspace }}/output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb"
+          test "$(dpkg-deb -f "$DEB" Version)" = "1.1.12"
+          test "$(dpkg-deb -f "$DEB" Architecture)" = "iphoneos-arm64e"
+          test "$(dpkg-deb -f "$DEB" Package)" = "com.nextsolution.nextaura.cc-module-backgrounds"
+          mkdir -p verify/root verify/control
+          dpkg-deb -x "$DEB" verify/root
+          dpkg-deb -e "$DEB" verify/control
+          cat verify/control/control
+          DYLIB="$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' -print -quit)"
+          PLIST="$(find verify/root -type f -name 'CCModuleBackgrounds.plist' -print -quit)"
+          test -n "$DYLIB"
+          test -n "$PLIST"
+          ARCHS="$(lipo -archs "$DYLIB")"
+          echo "Architectures: $ARCHS"
+          echo "$ARCHS" | grep -qw arm64
+          echo "$ARCHS" | grep -qw arm64e
+          otool -L "$DYLIB"
+          strings "$DYLIB" | grep -q '@loader_path/.jbroot/'
+          strings "$DYLIB" | grep -q 'ModuleGlassRuntime 1.1.12 One-Shot Transition Recovery Renderer'
+          grep -q 'SpringBoard' "$PLIST"
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.12_Complete_Source.zip | tee output/SHA256SUMS.txt
+
+      - name: Upload verified test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.12-Transition-Recovery-Test
+          path: |
+            output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb
+            output/ModuleGlass_1.1.12_Complete_Source.zip
+            output/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Publish verified build to NextSolution Transfer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE="$RUNNER_TEMP/nextsolution-site"
+          git clone --depth 1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$SITE"
+          DEST="$SITE/transfer/files/ModuleGlass/1.1.12"
+          mkdir -p "$DEST"
+          cp output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb "$DEST/"
+          cp output/ModuleGlass_1.1.12_Complete_Source.zip "$DEST/"
+          python3 - "$SITE/transfer/index.json" output/ModuleGlass_1.1.12_TransitionRecovery_RootHide.deb output/ModuleGlass_1.1.12_Complete_Source.zip <<'PY'
+          import json, pathlib, hashlib, datetime, sys
+          manifest=pathlib.Path(sys.argv[1])
+          deb=pathlib.Path(sys.argv[2])
+          src=pathlib.Path(sys.argv[3])
+          data=json.loads(manifest.read_text())
+          files=[x for x in data.get('files',[]) if not str(x.get('id','')).startswith('moduleglass-1.1.12-')]
+          base='https://nextsolution.cc/transfer/files/ModuleGlass/1.1.12/'
+          entries=[
+            {'id':'moduleglass-1.1.12-roothide','name':'Module Glass 1.1.12 Transition Recovery RootHide','fileName':deb.name,'type':'deb','platform':'RootHide','version':'1.1.12','url':base+deb.name,'sha256':hashlib.sha256(deb.read_bytes()).hexdigest(),'notes':'Device test for the expansion freeze: removes broad layout/disappear transition cleanup, suspends once on an actual size transition, ignores stale completion callbacks, and only restores Module Glass after compact Control Center geometry is stable.'},
+            {'id':'moduleglass-1.1.12-source','name':'Module Glass 1.1.12 Transition Recovery Source','fileName':src.name,'type':'zip','platform':'Source / Theos','version':'1.1.12','url':base+src.name,'sha256':hashlib.sha256(src.read_bytes()).hexdigest(),'notes':'Exact matching source for the 1.1.12 RootHide transition-recovery test build.'}
+          ]
+          payload={'version':1,'updatedAt':datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'files':entries+files}
+          manifest.write_text(json.dumps(payload,indent=2)+'\n')
+          PY
+          git -C "$SITE" config user.name "github-actions[bot]"
+          git -C "$SITE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$SITE" add transfer
+          git -C "$SITE" commit -m "Publish Module Glass 1.1.12 transition recovery test"
+          git -C "$SITE" pull --rebase origin main
+          git -C "$SITE" push origin main
