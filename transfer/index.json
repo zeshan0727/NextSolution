@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T13:05:09Z",
+  "updatedAt": "2026-08-17T13:08:22Z",
   "files": [
+    {
+      "id": "nextsolution-license-admin-1.0.0",
+      "name": "NextSolution License Admin 1.0.0",
+      "fileName": "NextSolution-License-Admin-1.0.0.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.0",
+      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.0/NextSolution-License-Admin-1.0.0.tipa",
+      "sha256": "89cd2706a14bd6f13a00261e88cc2f1df9d5a41004d4b7fa12fb44105c07f6ee",
+      "notes": "Private Next Solution licensing console. Receives customer activation-request links with tweak name and Device ID, stores requests locally, and activates/checks/revokes licenses directly through the NextSolution GitHub registry using a Keychain-protected fine-grained token."
+    },
     {
       "id": "nextlock-1.1.0-license-test-roothide",
       "name": "NextLock 1.1.0 License Test RootHide",
