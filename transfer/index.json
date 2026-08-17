@@ -1,7 +1,29 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T11:34:30Z",
+  "updatedAt": "2026-08-17T11:36:09Z",
   "files": [
+    {
+      "id": "nextlock-1.0.4-rootless",
+      "name": "NextLock 1.0.4 Rootless",
+      "fileName": "NextLock_1.0.4_Rootless.deb",
+      "type": "deb",
+      "platform": "Dopamine / Rootless",
+      "version": "1.0.4",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.4/NextLock_1.0.4_Rootless.deb",
+      "sha256": "fc7355239c645804fd83c1ebfc7f3d3098fbbce4e2c3c4d5d8eb0840774b1e46",
+      "notes": "Adds an independent Custom Photo Frame Size slider from 20\u2013180pt while preserving native clock refresh and transparent sticker behavior."
+    },
+    {
+      "id": "nextlock-1.0.4-roothide",
+      "name": "NextLock 1.0.4 RootHide",
+      "fileName": "NextLock_1.0.4_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.0.4",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.4/NextLock_1.0.4_RootHide.deb",
+      "sha256": "9e437fda714b932aa633fa7047c1b65de953dbcce793c660bbfbc68318cb1da0",
+      "notes": "Adds an independent Custom Photo Frame Size slider from 20\u2013180pt while preserving native clock refresh and transparent sticker behavior."
+    },
     {
       "id": "module-glass-preview-1.0.0",
       "name": "Module Glass Preview 1.0.0",
@@ -34,28 +56,6 @@
       "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.4/ModuleGlass_1.1.4_Hardened_Source.zip",
       "sha256": "6ef159cd4fdb8d3ea9471435942b5ebb6867dd65e233da8528788f43f830f90d",
       "notes": "Final hardened Module Glass 1.1.4 source used for the verified RootHide build, including crash-safety and smoothness optimizations."
-    },
-    {
-      "id": "nextlock-1.0.3-rootless",
-      "name": "NextLock 1.0.3 Rootless",
-      "fileName": "NextLock_1.0.3_Rootless.deb",
-      "type": "deb",
-      "platform": "Dopamine / Rootless",
-      "version": "1.0.3",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.3/NextLock_1.0.3_Rootless.deb",
-      "sha256": "369c915cf48bae2087ea32714cddf36e69c85676b643a1545ab5c521fcd3495e",
-      "notes": "Directly follows Apple's native Lock Screen clock text updates so customized time advances normally without respring."
-    },
-    {
-      "id": "nextlock-1.0.3-roothide",
-      "name": "NextLock 1.0.3 RootHide",
-      "fileName": "NextLock_1.0.3_RootHide.deb",
-      "type": "deb",
-      "platform": "RootHide",
-      "version": "1.0.3",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.0.3/NextLock_1.0.3_RootHide.deb",
-      "sha256": "0b31981ae213933561a94de7d8d4e9fd139257d8b6f309734eb6199f1687372e",
-      "notes": "Directly follows Apple's native Lock Screen clock text updates so customized time advances normally without respring."
     },
     {
       "id": "nextsolution-transfer-1.1.4",
