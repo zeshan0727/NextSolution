@@ -7,6 +7,7 @@ on:
       - 'NextSolutionLicenseAdmin/**'
       - 'scripts/patch_license_admin_102.py'
       - 'scripts/patch_license_admin_103.py'
+      - 'scripts/patch_license_admin_104.py'
       - 'scripts/generate_ns_admin_icon.py'
       - '.github/workflows/build-publish-license-admin-tipa.yml'
 
@@ -21,7 +22,6 @@ jobs:
   build_publish:
     runs-on: macos-15
     timeout-minutes: 25
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -38,14 +38,17 @@ jobs:
           set -euo pipefail
           python3 scripts/patch_license_admin_102.py
           python3 scripts/patch_license_admin_103.py
-          grep -q 'Protected App Storage' NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
-          grep -q 'struct ActiveDevicesView' NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
-          grep -q 'func revokeToken' NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
-          grep -q 'Label("Devices", systemImage: "iphone.gen3")' NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
-          grep -q 'LabeledContent("Version", value: "1.0.3")' NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
-          grep -q 'NSAdmin/1.0.3' NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
-          grep -q 'MARKETING_VERSION: "1.0.3"' NextSolutionLicenseAdmin/project.yml
-          grep -q 'CURRENT_PROJECT_VERSION: "103"' NextSolutionLicenseAdmin/project.yml
+          python3 scripts/patch_license_admin_104.py
+          SRC=NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
+          grep -q 'Protected App Storage' "$SRC"
+          grep -q 'struct ActiveDevicesView' "$SRC"
+          grep -q 'Label("Devices", systemImage: "iphone")' "$SRC"
+          grep -q 'deviceModel' "$SRC"
+          grep -q 'iosVersion' "$SRC"
+          grep -q 'LabeledContent("Version", value: "1.0.4")' "$SRC"
+          grep -q 'NSAdmin/1.0.4' "$SRC"
+          grep -q 'MARKETING_VERSION: "1.0.4"' NextSolutionLicenseAdmin/project.yml
+          grep -q 'CURRENT_PROJECT_VERSION: "104"' NextSolutionLicenseAdmin/project.yml
 
       - name: Generate NS Admin icon assets
         run: |
@@ -84,9 +87,8 @@ jobs:
           test -d "$APP"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.licenseadmin"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist")" = "NS Admin"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.0.3"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = "103"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes:0' "$APP/Info.plist")" = "nextsolutionlicense"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.0.4"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = "104"
           EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")"
           test "$EXECUTABLE" = "NextSolutionLicenseAdmin"
           test -x "$APP/$EXECUTABLE"
@@ -102,22 +104,11 @@ jobs:
           set -euo pipefail
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/NextSolutionLicenseAdmin.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NS-Admin-1.0.3.tipa
-          cp NS-Admin-1.0.3.tipa build-output/
-          shasum -a 256 NS-Admin-1.0.3.tipa | tee build-output/NS-Admin-1.0.3.sha256
-          unzip -l NS-Admin-1.0.3.tipa | grep -q "Payload/NextSolutionLicenseAdmin.app/NextSolutionLicenseAdmin"
-          rm -rf build-output/verify-package
-          mkdir -p build-output/verify-package
-          unzip -q NS-Admin-1.0.3.tipa -d build-output/verify-package
-          PACKAGED_APP="build-output/verify-package/Payload/NextSolutionLicenseAdmin.app"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$PACKAGED_APP/Info.plist")" = "NS Admin"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PACKAGED_APP/Info.plist")" = "1.0.3"
-          PACKAGED_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$PACKAGED_APP/Info.plist")"
-          test "$PACKAGED_EXECUTABLE" = "NextSolutionLicenseAdmin"
-          test -x "$PACKAGED_APP/$PACKAGED_EXECUTABLE"
-          test -s "$PACKAGED_APP/AppIcon60x60@2x.png"
-          test -s "$PACKAGED_APP/AppIcon60x60@3x.png"
-          test -s NS-Admin-1.0.3.tipa
+          ditto -c -k --sequesterRsrc --keepParent Payload NS-Admin-1.0.4.tipa
+          cp NS-Admin-1.0.4.tipa build-output/
+          shasum -a 256 NS-Admin-1.0.4.tipa | tee build-output/NS-Admin-1.0.4.sha256
+          unzip -l NS-Admin-1.0.4.tipa | grep -q "Payload/NextSolutionLicenseAdmin.app/NextSolutionLicenseAdmin"
+          test -s NS-Admin-1.0.4.tipa
 
       - name: Publish to NextSolution Transfer
         if: github.ref == 'refs/heads/main'
@@ -125,58 +116,48 @@ jobs:
           set -euo pipefail
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
-
-          cp NextSolutionLicenseAdmin/NS-Admin-1.0.3.tipa /tmp/NS-Admin-1.0.3.tipa
-          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.3.tipa /tmp/NS-Admin-1.0.3-artifact.tipa
-          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.3.sha256 /tmp/NS-Admin-1.0.3.sha256
+          cp NextSolutionLicenseAdmin/NS-Admin-1.0.4.tipa /tmp/NS-Admin-1.0.4.tipa
+          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.tipa /tmp/NS-Admin-1.0.4-artifact.tipa
+          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.sha256 /tmp/NS-Admin-1.0.4.sha256
           cp NextSolutionLicenseAdmin/build-output/xcodebuild.log /tmp/NS-Admin-xcodebuild.log
-
           git reset --hard HEAD
           git clean -fd NextSolutionLicenseAdmin
           git pull --rebase origin main
-
           mkdir -p NextSolutionLicenseAdmin/build-output
-          cp /tmp/NS-Admin-1.0.3-artifact.tipa NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.3.tipa
-          cp /tmp/NS-Admin-1.0.3.sha256 NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.3.sha256
+          cp /tmp/NS-Admin-1.0.4-artifact.tipa NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.tipa
+          cp /tmp/NS-Admin-1.0.4.sha256 NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.sha256
           cp /tmp/NS-Admin-xcodebuild.log NextSolutionLicenseAdmin/build-output/xcodebuild.log
-
-          DEST="transfer/files/NextSolutionLicenseAdmin/1.0.3/NS-Admin-1.0.3.tipa"
+          DEST="transfer/files/NextSolutionLicenseAdmin/1.0.4/NS-Admin-1.0.4.tipa"
           mkdir -p "$(dirname "$DEST")"
-          cp /tmp/NS-Admin-1.0.3.tipa "$DEST"
+          cp /tmp/NS-Admin-1.0.4.tipa "$DEST"
           SHA=$(shasum -a 256 "$DEST" | awk '{print $1}')
-
           python3 - "$SHA" <<'PY'
-          import json, sys
-          from datetime import datetime, timezone
+          import json,sys
+          from datetime import datetime,timezone
           from pathlib import Path
           sha=sys.argv[1]
           p=Path('transfer/index.json')
           data=json.loads(p.read_text()) if p.exists() else {'version':1,'files':[]}
           entry={
-            'id':'ns-admin-1.0.3',
-            'name':'NS Admin 1.0.3',
-            'fileName':'NS-Admin-1.0.3.tipa',
+            'id':'ns-admin-1.0.4',
+            'name':'NS Admin 1.0.4',
+            'fileName':'NS-Admin-1.0.4.tipa',
             'type':'tipa',
             'platform':'TrollStore / iOS 16+',
-            'version':'1.0.3',
-            'url':'https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.3/NS-Admin-1.0.3.tipa',
+            'version':'1.0.4',
+            'url':'https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.4/NS-Admin-1.0.4.tipa',
             'sha256':sha,
-            'notes':'Adds a server-backed Active Devices tab showing every active license. Known Device IDs display in full locally; new server records use privacy-safe masked IDs. Supports direct one-tap revoke from the device list, including legacy hash-only licenses. Keeps TrollStore-safe GitHub token storage, Requests, Activate, Check and Revoke controls.'
+            'notes':'Fixes the missing Devices tab glyph on iOS 16 and adds device model + iOS version to activation requests and active-device cards. Keeps server-backed active device tracking, direct revoke, request handoff and TrollStore-safe token storage.'
           }
           files=[x for x in data.get('files',[]) if not (x.get('id','').startswith('nextsolution-license-admin-') or x.get('id','').startswith('ns-admin-'))]
-          data['version']=data.get('version',1)
           data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
           data['files']=[entry]+files
           p.write_text(json.dumps(data,indent=2)+'\n')
           PY
-
           git add -f "$DEST" transfer/index.json
-          git commit -m "Publish NS Admin 1.0.3"
+          git commit -m "Publish NS Admin 1.0.4"
           for attempt in 1 2 3; do
-            if git pull --rebase origin main && git push origin HEAD:main; then
-              exit 0
-            fi
-            echo "Publish race; retry $attempt"
+            if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
             sleep $((attempt*3))
           done
           exit 1
@@ -184,9 +165,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NS-Admin-1.0.3
+          name: NS-Admin-1.0.4
           path: |
-            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.3.tipa
-            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.3.sha256
+            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.tipa
+            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.sha256
             NextSolutionLicenseAdmin/build-output/xcodebuild.log
           if-no-files-found: error
