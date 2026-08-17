@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T12:21:59Z",
+  "updatedAt": "2026-08-17T12:22:14Z",
   "files": [
     {
       "id": "module-glass-preview-1.1.1",
@@ -12,6 +12,28 @@
       "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa",
       "sha256": "eb80d49fbda6fd7ccef5b1cc7cb96ec5ac7483423b90df063a21e4ca5b075f24",
       "notes": "Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured."
+    },
+    {
+      "id": "moduleglass-1.1.6-roothide",
+      "name": "Module Glass 1.1.6 Complete RootHide",
+      "fileName": "ModuleGlass_1.1.6_Complete_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.6",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.6/ModuleGlass_1.1.6_Complete_RootHide.deb",
+      "sha256": "f361be018ee8f5e6fa9c657ddcff76000467cc336eb72579a85bcbb6a8634695",
+      "notes": "Device-test renderer: images stretch to module size, standard module glyphs/text remain native, and Volume uses the same fill-aware slider pattern as Brightness."
+    },
+    {
+      "id": "moduleglass-1.1.6-source",
+      "name": "Module Glass 1.1.6 Complete Source",
+      "fileName": "ModuleGlass_1.1.6_Complete_Source.zip",
+      "type": "zip",
+      "platform": "Source / Theos",
+      "version": "1.1.6",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.6/ModuleGlass_1.1.6_Complete_Source.zip",
+      "sha256": "a5f9f0060d15ec8900e09a22d51dba816c6d3730784bc52351de98d8ee52b359",
+      "notes": "Matching source for the 1.1.6 glyph-safe stretch renderer test build."
     },
     {
       "id": "module-glass-preview-1.1.0",
@@ -56,28 +78,6 @@
       "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa",
       "sha256": "d1682506fd4d0631b768a66190aa30c8f7eb838a6c8d0270769112c63a9b974d",
       "notes": "Live companion app for Module Glass Stable Recovery. Provides Control Center preview, Device Live preference/image changes, Darwin reload notifications, and direct Module Glass log viewing."
-    },
-    {
-      "id": "moduleglass-1.1.5-roothide",
-      "name": "Module Glass 1.1.5 Complete RootHide",
-      "fileName": "ModuleGlass_1.1.5_Complete_RootHide.deb",
-      "type": "deb",
-      "platform": "RootHide",
-      "version": "1.1.5",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_RootHide.deb",
-      "sha256": "de5064ba76703b920d5c068e3eb92be88fdb0027866fe8728a0fc44d7717c74f",
-      "notes": "Complete recovery-first Module Glass package. Embeds the validated stable renderer directly, replaces the failed standalone runtime through 1.1.4, and keeps the shared Aura Settings runtime dependency."
-    },
-    {
-      "id": "moduleglass-1.1.5-source",
-      "name": "Module Glass 1.1.5 Complete Source",
-      "fileName": "ModuleGlass_1.1.5_Complete_Source.zip",
-      "type": "zip",
-      "platform": "Source / Theos",
-      "version": "1.1.5",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_Source.zip",
-      "sha256": "692a82e865300733ff9f56a8ab24b219efb0f9b4fabbf2220c2593ec601bde13",
-      "notes": "Matching source for the complete RootHide package, built from the validated stable Module Glass 1.0.14 renderer source rather than the failed 1.1.4 hardened renderer."
     },
     {
       "id": "nextsolution-transfer-1.1.4",
