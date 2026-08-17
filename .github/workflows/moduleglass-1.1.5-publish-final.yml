@@ -1,0 +1,113 @@
+name: Publish ModuleGlass 1.1.5 Final
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.5-complete-roothide
+    paths:
+      - '.github/workflows/moduleglass-1.1.5-publish-final.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout publishing branch
+        uses: actions/checkout@v4
+
+      - name: Download exact verified artifact from run 32027328732
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          rm -rf /tmp/mg-final
+          mkdir -p /tmp/mg-final
+          gh run download 32027328732 --repo "$GITHUB_REPOSITORY" --name ModuleGlass-1.1.5-Complete-RootHide --dir /tmp/mg-final
+          test -f /tmp/mg-final/ModuleGlass_1.1.5_Complete_RootHide.deb
+          test -f /tmp/mg-final/ModuleGlass_1.1.5_Complete_Source.zip
+          test -f /tmp/mg-final/SHA256SUMS.txt
+          echo 'de5064ba76703b920d5c068e3eb92be88fdb0027866fe8728a0fc44d7717c74f  /tmp/mg-final/ModuleGlass_1.1.5_Complete_RootHide.deb' | sha256sum -c -
+          echo '692a82e865300733ff9f56a8ab24b219efb0f9b4fabbf2220c2593ec601bde13  /tmp/mg-final/ModuleGlass_1.1.5_Complete_Source.zip' | sha256sum -c -
+          grep -q '^de5064ba76703b920d5c068e3eb92be88fdb0027866fe8728a0fc44d7717c74f  ModuleGlass_1.1.5_Complete_RootHide.deb$' /tmp/mg-final/SHA256SUMS.txt
+          grep -q '^692a82e865300733ff9f56a8ab24b219efb0f9b4fabbf2220c2593ec601bde13  ModuleGlass_1.1.5_Complete_Source.zip$' /tmp/mg-final/SHA256SUMS.txt
+
+      - name: Replace failed 1.1.4 Transfer files atomically
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git checkout -B moduleglass-final-publish origin/main
+            rm -rf transfer/files/ModuleGlass/1.1.4
+            rm -rf transfer/files/ModuleGlass/1.1.5
+            mkdir -p transfer/files/ModuleGlass/1.1.5
+            cp /tmp/mg-final/ModuleGlass_1.1.5_Complete_RootHide.deb transfer/files/ModuleGlass/1.1.5/
+            cp /tmp/mg-final/ModuleGlass_1.1.5_Complete_Source.zip transfer/files/ModuleGlass/1.1.5/
+            cp /tmp/mg-final/SHA256SUMS.txt transfer/files/ModuleGlass/1.1.5/
+            python3 <<'PY'
+          import datetime, json, pathlib
+          p = pathlib.Path('transfer/index.json')
+          data = json.loads(p.read_text())
+          remove_ids = {
+              'moduleglass-1.1.4-roothide', 'moduleglass-1.1.4-source',
+              'moduleglass-1.1.5-roothide', 'moduleglass-1.1.5-source'
+          }
+          files = [x for x in data.get('files', []) if x.get('id') not in remove_ids]
+          new = [
+              {
+                  'id': 'moduleglass-1.1.5-roothide',
+                  'name': 'Module Glass 1.1.5 Complete RootHide',
+                  'fileName': 'ModuleGlass_1.1.5_Complete_RootHide.deb',
+                  'type': 'deb',
+                  'platform': 'RootHide',
+                  'version': '1.1.5',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_RootHide.deb',
+                  'sha256': 'de5064ba76703b920d5c068e3eb92be88fdb0027866fe8728a0fc44d7717c74f',
+                  'notes': 'Complete recovery-first Module Glass package. Embeds the validated stable renderer directly, replaces the failed standalone runtime through 1.1.4, and keeps the shared Aura Settings runtime dependency.'
+              },
+              {
+                  'id': 'moduleglass-1.1.5-source',
+                  'name': 'Module Glass 1.1.5 Complete Source',
+                  'fileName': 'ModuleGlass_1.1.5_Complete_Source.zip',
+                  'type': 'zip',
+                  'platform': 'Source / Theos',
+                  'version': '1.1.5',
+                  'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_Source.zip',
+                  'sha256': '692a82e865300733ff9f56a8ab24b219efb0f9b4fabbf2220c2593ec601bde13',
+                  'notes': 'Matching source for the complete RootHide package, built from the validated stable Module Glass 1.0.14 renderer source rather than the failed 1.1.4 hardened renderer.'
+              }
+          ]
+          pos = next((i + 1 for i, x in enumerate(files) if x.get('id') == 'module-glass-preview-1.0.0'), 0)
+          files[pos:pos] = new
+          data['files'] = files
+          data['updatedAt'] = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+            git add -A transfer/files/ModuleGlass transfer/index.json
+            test -f transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_RootHide.deb
+            test -f transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_Source.zip
+            test ! -e transfer/files/ModuleGlass/1.1.4
+            sha256sum transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_RootHide.deb | grep -q '^de5064ba76703b920d5c068e3eb92be88fdb0027866fe8728a0fc44d7717c74f '
+            sha256sum transfer/files/ModuleGlass/1.1.5/ModuleGlass_1.1.5_Complete_Source.zip | grep -q '^692a82e865300733ff9f56a8ab24b219efb0f9b4fabbf2220c2593ec601bde13 '
+            grep -q 'moduleglass-1.1.5-roothide' transfer/index.json
+            if grep -q 'moduleglass-1.1.4-' transfer/index.json; then echo 'Old 1.1.4 still indexed'; exit 1; fi
+            if git diff --cached --quiet; then
+              echo 'Verified final files already published.'
+              exit 0
+            fi
+            git commit -m 'Replace failed Module Glass 1.1.4 with complete 1.1.5'
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git reset --hard
+          done
+          echo 'Could not publish after five rebases.' >&2
+          exit 1
