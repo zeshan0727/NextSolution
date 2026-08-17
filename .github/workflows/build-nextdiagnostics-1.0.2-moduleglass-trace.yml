@@ -1,0 +1,133 @@
+name: Build Next Diagnostics 1.0.2 Module Glass Trace
+
+on:
+  push:
+    branches:
+      - build/nextdiagnostics-1.0.2-moduleglass-trace
+    paths:
+      - 'source/NextDiagnosticsRuntime/1.0.2/**'
+      - '.github/workflows/build-nextdiagnostics-1.0.2-moduleglass-trace.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextdiagnostics-1.0.2-moduleglass-trace
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 25
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install dpkg ldid xz
+          mkdir -p "$THEOS"
+          curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
+          bash /tmp/install-theos
+          mkdir -p "$THEOS/sdks"
+          if ! ls "$THEOS"/sdks/iPhoneOS*.sdk >/dev/null 2>&1; then
+            curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/sdk.tar.xz
+            tar -xJf /tmp/sdk.tar.xz -C "$THEOS/sdks"
+          fi
+
+      - name: Build observational SpringBoard trace probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd source/NextDiagnosticsRuntime/1.0.2
+          make clean
+          make FINALPACKAGE=1
+          DYLIB="$(find .theos -type f -name 'NextDiagnosticsModuleGlassTrace.dylib' -print -quit)"
+          test -n "$DYLIB"
+          lipo -archs "$DYLIB" | tee /tmp/archs.txt
+          grep -q arm64 /tmp/archs.txt
+          grep -q arm64e /tmp/archs.txt
+          strings "$DYLIB" | grep -Fq 'MODULE_GLASS_CAPTURE_ARMED'
+          strings "$DYLIB" | grep -Fq 'SEND_EVENT_ENTER'
+          strings "$DYLIB" | grep -Fq 'MAIN_STALL'
+          strings "$DYLIB" | grep -Fq 'VIEW_SNAPSHOT'
+          mkdir -p ../../../output
+          cp "$DYLIB" ../../../output/NextDiagnosticsModuleGlassTrace.dylib
+
+      - name: Repackage exact 1.0.1 runtime as 1.0.2 plus trace probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://raw.githubusercontent.com/zeshan0727/NextSolution/ed2538f8dea9a94ca2cf7f8b834cf2705c4ca4a9/debfiles/NextDiagnosticsRuntime_1.0.1_RootHide.deb'
+          curl -fL "$BASE" -o /tmp/base.deb
+          rm -rf /tmp/pkg && mkdir -p /tmp/pkg
+          dpkg-deb -R /tmp/base.deb /tmp/pkg
+          test "$(dpkg-deb -f /tmp/base.deb Package)" = 'com.nextsolution.nextdiagnostics.runtime'
+          test "$(dpkg-deb -f /tmp/base.deb Version)" = '1.0.1'
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/pkg/DEBIAN/control')
+          s=p.read_text()
+          s=s.replace('Version: 1.0.1','Version: 1.0.2',1)
+          old='Description: Shared RootHide diagnostic runtime for Next Solution tweaks. Idle until Next Log starts a focused capture, then reports target-process injection and loaded tweak dylibs.'
+          new='Description: Next Log diagnostic runtime with Module Glass touch, gesture, Control Center lifecycle, hierarchy and main-thread stall tracing. Capture activates only for the module-glass profile.'
+          assert old in s
+          p.write_text(s.replace(old,new,1))
+          PY
+          DEST='/tmp/pkg/Library/MobileSubstrate/DynamicLibraries'
+          cp output/NextDiagnosticsModuleGlassTrace.dylib "$DEST/NextDiagnosticsModuleGlassTrace.dylib"
+          cp source/NextDiagnosticsRuntime/1.0.2/NextDiagnosticsModuleGlassTrace.plist "$DEST/NextDiagnosticsModuleGlassTrace.plist"
+          python3 - <<'PY'
+          import plistlib
+          p='/tmp/pkg/Library/Application Support/NextDiagnostics/manifest.plist'
+          with open(p,'rb') as f: d=plistlib.load(f)
+          d['runtimeVersion']='1.0.2'
+          for t in d.get('tweaks',[]):
+              if t.get('slug')=='module-glass':
+                  t['version']='1.1.15'
+                  t['packageID']='com.nextsolution.nextaura.cc-module-backgrounds'
+                  t['dylibs']=['CCModuleBackgrounds.dylib','NextDiagnosticsModuleGlassTrace.dylib']
+                  t['executables']=['SpringBoard']
+          with open(p,'wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_BINARY)
+          PY
+          chmod 755 /tmp/pkg/DEBIAN/postinst || true
+          dpkg-deb -b /tmp/pkg output/NextDiagnosticsRuntime_1.0.2_RootHide.deb
+
+      - name: Verify package and privacy boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEB=output/NextDiagnosticsRuntime_1.0.2_RootHide.deb
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextdiagnostics.runtime'
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.0.2'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          rm -rf /tmp/verify && mkdir /tmp/verify
+          dpkg-deb -x "$DEB" /tmp/verify
+          test -f '/tmp/verify/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsBundles.dylib'
+          test -f '/tmp/verify/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsExecutables.dylib'
+          test -f '/tmp/verify/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsModuleGlassTrace.dylib'
+          test -f '/tmp/verify/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsModuleGlassTrace.plist'
+          plutil -p '/tmp/verify/Library/Application Support/NextDiagnostics/manifest.plist' | grep -Fq '1.0.2'
+          strings '/tmp/verify/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsModuleGlassTrace.dylib' > output/trace.strings
+          ! grep -Eqi 'keyboard|UITextField|UITextView|pressesBegan|keyCommand' output/trace.strings
+          shasum -a 256 "$DEB" | tee output/SHA256SUMS.txt
+          mkdir -p output/source/NextDiagnosticsRuntime-1.0.2-Source
+          cp source/NextDiagnosticsRuntime/1.0.2/* output/source/NextDiagnosticsRuntime-1.0.2-Source/
+          ditto -c -k --keepParent output/source/NextDiagnosticsRuntime-1.0.2-Source output/NextDiagnosticsRuntime_1.0.2_Source.zip
+          shasum -a 256 output/NextDiagnosticsRuntime_1.0.2_Source.zip >> output/SHA256SUMS.txt
+
+      - name: Upload verified test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextDiagnostics-1.0.2-ModuleGlass-Trace
+          path: |
+            output/NextDiagnosticsRuntime_1.0.2_RootHide.deb
+            output/NextDiagnosticsRuntime_1.0.2_Source.zip
+            output/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
