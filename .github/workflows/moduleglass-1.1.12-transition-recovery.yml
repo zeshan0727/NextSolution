@@ -121,8 +121,9 @@ jobs:
           echo "$ARCHS" | grep -qw arm64
           echo "$ARCHS" | grep -qw arm64e
           otool -L "$DYLIB"
-          strings "$DYLIB" | grep -q '@loader_path/.jbroot/'
-          strings "$DYLIB" | grep -q 'ModuleGlassRuntime 1.1.12 One-Shot Transition Recovery Renderer'
+          strings "$DYLIB" > verify/dylib.strings
+          grep -q '@loader_path/.jbroot/' verify/dylib.strings
+          grep -q 'ModuleGlassRuntime 1.1.12 One-Shot Transition Recovery Renderer' verify/dylib.strings
           grep -q 'SpringBoard' "$PLIST"
           shasum -a 256 "$DEB" output/ModuleGlass_1.1.12_Complete_Source.zip | tee output/SHA256SUMS.txt
 
