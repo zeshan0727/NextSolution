@@ -45,7 +45,8 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          brew install ldid xz || true
+          brew install ldid xz dpkg || true
+          command -v dpkg-deb
           git clone --depth 1 --recursive https://github.com/roothide/theos.git "$THEOS"
           mkdir -p "$THEOS/sdks"
           curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/iPhoneOS16.5.sdk.tar.xz
@@ -74,11 +75,17 @@ jobs:
           cat verify/control/control
           grep -q '^Architecture: iphoneos-arm64e$' verify/control/control
           DYLIB="$(find verify/root -type f -name 'CCModuleBackgrounds.dylib' -print -quit)"
+          FILTER="$(find verify/root -type f -name 'CCModuleBackgrounds.plist' -print -quit)"
           test -n "$DYLIB"
+          test -n "$FILTER"
           file "$DYLIB"
-          lipo -info "$DYLIB"
-          otool -L "$DYLIB"
-          shasum -a 256 "buildsrc/Runtime/$DEB"
+          lipo -info "$DYLIB" | tee verify/lipo.txt
+          grep -q 'arm64' verify/lipo.txt
+          grep -q 'arm64e' verify/lipo.txt
+          otool -L "$DYLIB" | tee verify/otool.txt
+          grep -q '@loader_path/.jbroot/' verify/otool.txt
+          grep -q 'SpringBoard' "$FILTER"
+          shasum -a 256 "buildsrc/Runtime/$DEB" | tee verify/deb.sha256
 
       - name: Upload verified RootHide package
         uses: actions/upload-artifact@v4
