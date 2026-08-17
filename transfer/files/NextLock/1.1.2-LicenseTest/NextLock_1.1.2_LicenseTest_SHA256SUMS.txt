@@ -1,0 +1,2 @@
+3ff47e23c2f0b0ab262d2cc602a110223ac9361ca7b32f28e0026dd321e72832  /Users/runner/work/_temp/nextlock112/NextLock_1.1.2_LicenseTest_RootHide.deb
+f32f8901b6764f794464c0782071a5f2b177ab4f48a2ae2549f10254ad5a9935  /Users/runner/work/_temp/nextlock112/NextLock_1.1.2_LicenseTest_Rootless.deb
