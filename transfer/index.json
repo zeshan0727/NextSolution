@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-18T13:39:56Z",
+  "updatedAt": "2026-08-18T13:43:00Z",
   "files": [
+    {
+      "id": "nextpost-1.0.1-levelplay-test",
+      "name": "Next Post 1.0.1 LevelPlay Test",
+      "fileName": "NextPost-1.0.1-LevelPlay-Test.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.1",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.1/NextPost-1.0.1-LevelPlay-Test.tipa",
+      "sha256": "7b82ef82a811b22a4cd770e8e703d209076c479aa506f847ed65eec27d78acb9",
+      "notes": "Test build with Unity LevelPlay monetization integration: adaptive bottom banner plus frequency-limited interstitial after five successful post generations. Ad loading remains non-blocking while the LevelPlay account is pending approval."
+    },
     {
       "id": "nextsigner-1.1.1",
       "name": "Next Signer 1.1.1",
