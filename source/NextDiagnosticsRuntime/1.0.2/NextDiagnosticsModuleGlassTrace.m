@@ -72,7 +72,9 @@ static void NDSnapshotNode(UIView *v, NSUInteger depth, NSUInteger *count, NSMut
 }
 static void NDSnapshot(UIView *t, NSString *reason){
     if(!NDActive || !t) return;
-    UIView *root=NDModuleAncestor(t) ?: t.window.rootViewController.view ?: t.window;
+    UIView *root=NDModuleAncestor(t);
+    if(!root && t.window.rootViewController) root=t.window.rootViewController.view;
+    if(!root) root=(UIView *)t.window;
     if(!root) return;
     NSUInteger count=0; NSMutableString *out=[NSMutableString string];
     NDSnapshotNode(root,0,&count,out);
