@@ -105,7 +105,7 @@ final class LedgerStore: ObservableObject {
             amount: amount,
             date: date,
             category: category,
-            vendor: (cleanedVendor.nilIfEmpty ?? LedgerTransaction.vendorFromMessage(cleanedDetails)),
+            vendor: cleanedVendor.nilIfEmpty,
             details: cleanedDetails,
             accountID: accountID ?? defaultAccountID
         )
@@ -376,23 +376,15 @@ final class LedgerStore: ObservableObject {
     }
 
     func isReportIncome(_ transaction: LedgerTransaction) -> Bool {
-        transaction.type == .income || isAmaraTransfer(transaction)
+        transaction.type == .income
     }
 
     func reportIncomeAmount(_ transaction: LedgerTransaction) -> Decimal {
-        isAmaraTransfer(transaction)
-            ? (transaction.destinationAmount ?? transaction.amount)
-            : transaction.amount
+        transaction.amount
     }
 
     func reportIncomeAccountID(_ transaction: LedgerTransaction) -> UUID? {
-        isAmaraTransfer(transaction) ? transaction.destinationAccountID : transaction.accountID
-    }
-
-    private func isAmaraTransfer(_ transaction: LedgerTransaction) -> Bool {
-        guard transaction.type == .transfer,
-              let name = account(withID: transaction.accountID)?.name else { return false }
-        return name.localizedCaseInsensitiveContains("amara")
+        transaction.accountID
     }
 
     func remainingBalance(accountIDs: Set<UUID>? = nil) -> Decimal {
@@ -457,26 +449,6 @@ final class LedgerStore: ObservableObject {
         }
     }
 
-    func updateSMSAutoImport(_ enabled: Bool) {
-        guard enabled != settings.smsAutoImportEnabled else { return }
-        updateLedger(failureMessage: "The SMS auto-import setting could not be updated.") { ledger in
-            ledger.settings.smsAutoImportEnabled = enabled
-        }
-    }
-
-    func updateSMSPreferences(matchText: String, destinationAccountID: UUID?) {
-        updateLedger(failureMessage: "The SMS import preferences could not be updated.") { ledger in
-            ledger.settings.smsMatchText = matchText.trimmingCharacters(in: .whitespacesAndNewlines)
-            ledger.settings.smsDestinationAccountID = destinationAccountID
-        }
-    }
-
-    func requestSMSRescan() {
-        updateLedger(failureMessage: "The SMS rescan could not be requested.") { ledger in
-            ledger.settings.smsRescanRequestID += 1
-        }
-    }
-
     func saveVendorRule(_ rule: VendorCategoryRule) {
         updateLedger(failureMessage: "The vendor rule could not be saved.") { ledger in
             if let index = ledger.settings.vendorRules.firstIndex(where: { $0.id == rule.id }) {
@@ -504,18 +476,8 @@ final class LedgerStore: ObservableObject {
     }
 
     private func vendorLearningKeyword(for transaction: LedgerTransaction) -> String? {
-        var merchant = transaction.vendor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if merchant.isEmpty {
-            let pattern = #"\bat\s+(.+?)\s+at\s+\d{1,2}:\d{2}"#
-            if let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
-               let match = expression.firstMatch(
-                    in: transaction.details,
-                    range: NSRange(transaction.details.startIndex..., in: transaction.details)
-               ),
-               let range = Range(match.range(at: 1), in: transaction.details) {
-                merchant = String(transaction.details[range])
-            }
-        }
+        let merchant = transaction.vendor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !merchant.isEmpty else { return nil }
         let words = merchant
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
@@ -827,9 +789,10 @@ final class LedgerStore: ObservableObject {
         now: Date
     ) -> Bool {
         guard transaction.type != .transfer else { return false }
-        let categoryMatches = transaction.category
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .caseInsensitiveCompare("Z-iP-14PM-16.0") == .orderedSame
+        let cleanedCategory = transaction.category.trimmingCharacters(in: .whitespacesAndNewlines)
+        let categoryMatches = cleanedCategory.isEmpty ||
+            cleanedCategory.caseInsensitiveCompare("Other") == .orderedSame ||
+            cleanedCategory.caseInsensitiveCompare("Uncategorized") == .orderedSame
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: now)
             ?? now.addingTimeInterval(-30 * 24 * 60 * 60)
         return categoryMatches && transaction.date >= cutoff && transaction.date <= now
