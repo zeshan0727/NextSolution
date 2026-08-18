@@ -1,11 +1,9 @@
-import BackgroundTasks
 import Combine
 import Foundation
 import UIKit
 
 final class BackupSyncService: ObservableObject {
     static let shared = BackupSyncService()
-    static let taskIdentifier = "com.nextsolution.nextledger.backup-refresh"
 
     @Published private(set) var status = "Local automatic backup is ready."
     @Published private(set) var lastBackupDate: Date?
@@ -56,12 +54,6 @@ final class BackupSyncService: ObservableObject {
         return try decoder.decode(LedgerData.self, from: data)
     }
 
-    func scheduleBackgroundRefresh() {
-        let request = BGAppRefreshTaskRequest(identifier: Self.taskIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
-        try? BGTaskScheduler.shared.submit(request)
-    }
-
     func handleDidEnterBackground(ledger: LedgerData) {
         var taskID = UIBackgroundTaskIdentifier.invalid
         taskID = UIApplication.shared.beginBackgroundTask(withName: "NextLedgerBackup") {
@@ -71,20 +63,8 @@ final class BackupSyncService: ObservableObject {
             }
         }
         syncNow(ledger: ledger)
-        scheduleBackgroundRefresh()
         if taskID != .invalid {
             UIApplication.shared.endBackgroundTask(taskID)
-        }
-    }
-
-    func registerBackgroundTask() {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.taskIdentifier, using: nil) { task in
-            guard let refresh = task as? BGAppRefreshTask else { return }
-            Task { @MainActor in
-                self.syncNow(ledger: LedgerDiskStore.shared.load())
-                refresh.setTaskCompleted(success: true)
-                self.scheduleBackgroundRefresh()
-            }
         }
     }
 
