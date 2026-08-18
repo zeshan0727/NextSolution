@@ -5,7 +5,7 @@ struct AddExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Expense"
     static let description = IntentDescription("Record an expense in Next Ledger without opening the app.")
     static let openAppWhenRun = false
-    static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresLocalDeviceAuthentication
 
     @Parameter(title: "Amount")
     var amount: Double
@@ -49,7 +49,7 @@ struct AddIncomeIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Income"
     static let description = IntentDescription("Record income in Next Ledger without opening the app.")
     static let openAppWhenRun = false
-    static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresLocalDeviceAuthentication
 
     @Parameter(title: "Amount")
     var amount: Double
@@ -93,7 +93,7 @@ struct TransferMoneyIntent: AppIntent {
     static let title: LocalizedStringResource = "Transfer Money"
     static let description = IntentDescription("Move money between two Next Ledger accounts.")
     static let openAppWhenRun = false
-    static let authenticationPolicy: IntentAuthenticationPolicy = .alwaysAllowed
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresLocalDeviceAuthentication
 
     @Parameter(title: "From Account")
     var sourceAccount: String
@@ -166,7 +166,7 @@ struct OpenAddIncomeIntent: AppIntent {
     }
 }
 
-struct DailyLedgerShortcuts: AppShortcutsProvider {
+struct NextLedgerShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: AddExpenseIntent(),
