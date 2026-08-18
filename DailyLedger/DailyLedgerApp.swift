@@ -7,7 +7,6 @@ struct DailyLedgerApp: App {
     @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
 
     init() {
-        BackupSyncService.shared.registerBackgroundTask()
         BudgetNotificationService.configure()
     }
 
