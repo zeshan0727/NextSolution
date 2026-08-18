@@ -3,6 +3,19 @@
   "updated": "2026-08-18",
   "apps": [
     {
+      "id": "dopamine-3",
+      "name": "Dopamine",
+      "version": "3.0.7",
+      "build": "1",
+      "platform": "iPhone",
+      "minimumOS": "iOS 10+",
+      "bundleId": "com.opa334.Dopamine",
+      "icon": "/logo.png",
+      "manifest": "/install/dopamine-3.plist",
+      "available": false,
+      "status": "IPA upload required before install"
+    },
+    {
       "id": "insta-regram",
       "name": "Insta Regram",
       "version": "382.0.0",
