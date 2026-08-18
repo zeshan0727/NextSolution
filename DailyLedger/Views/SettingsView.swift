@@ -9,8 +9,8 @@ private struct SettingsNotice: Identifiable {
 }
 
 private enum ImportSource {
-    case files
-    case googleDrive
+    case importFile
+    case restoreBackup
 }
 
 struct SettingsView: View {
@@ -21,8 +21,8 @@ struct SettingsView: View {
     @State private var exportingBackup = false
     @State private var exportingCSV = false
     @State private var showingImporter = false
-    @State private var importSource = ImportSource.files
-    @State private var exportingGoogleDrive = false
+    @State private var importSource = ImportSource.importFile
+    @State private var exportingFilesBackup = false
     @State private var notice: SettingsNotice?
     @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
     @AppStorage("DailyLedgerVisualTheme") private var visualTheme = AppVisualTheme.glass.rawValue
@@ -78,7 +78,7 @@ struct SettingsView: View {
                     }
 
                     Button {
-                        importSource = .files
+                        importSource = .importFile
                         showingImporter = true
                     } label: {
                         SettingsRow(
@@ -107,15 +107,15 @@ struct SettingsView: View {
                         Label("Restore Latest iCloud Backup", systemImage: "icloud.and.arrow.down.fill")
                     }
                     Button {
-                        exportingGoogleDrive = true
+                        exportingFilesBackup = true
                     } label: {
-                        Label("Back Up to Google Drive", systemImage: "externaldrive.badge.icloud")
+                        Label("Back Up to Files", systemImage: "folder.fill.badge.plus")
                     }
                     Button {
-                        importSource = .googleDrive
+                        importSource = .restoreBackup
                         showingImporter = true
                     } label: {
-                        Label("Restore from Google Drive", systemImage: "arrow.down.doc.fill")
+                        Label("Restore from Files", systemImage: "folder.fill.badge.arrow.down")
                     }
                     LabeledContent("Last Backup") {
                         Text(backupSync.lastBackupDate?.formatted(date: .abbreviated, time: .shortened) ?? "Never")
@@ -126,7 +126,7 @@ struct SettingsView: View {
                 } header: {
                     Label("Backup & Sync", systemImage: "icloud.fill")
                 } footer: {
-                    Text("iCloud backup uses your private iCloud Drive container. File-provider backups use Apple's system file picker and only access locations you choose.")
+                    Text("iCloud backup uses your private iCloud Drive container. File backups use Apple's system file picker and only access locations you choose.")
                 }
 
                 Section {
@@ -213,10 +213,10 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Link(destination: URL(string: "https://nextsolution.cc/next-ledger-privacy.html")!) {
+                    Link(destination: URL(string: "https://nextsolution.cc/next-ledger-privacy/")!) {
                         Label("Privacy Policy", systemImage: "hand.raised.fill")
                     }
-                    Link(destination: URL(string: "https://nextsolution.cc/next-ledger-support.html")!) {
+                    Link(destination: URL(string: "https://nextsolution.cc/next-ledger-support/")!) {
                         Label("Support Website", systemImage: "safari.fill")
                     }
                 } header: {
@@ -254,12 +254,12 @@ struct SettingsView: View {
                 showExportResult(result, format: "CSV file")
             }
             .fileExporter(
-                isPresented: $exportingGoogleDrive,
+                isPresented: $exportingFilesBackup,
                 document: backupDocument,
                 contentType: .json,
-                defaultFilename: "NextLedger-GoogleDrive-Backup"
+                defaultFilename: "NextLedger-Backup"
             ) { result in
-                showExportResult(result, format: "Google Drive backup")
+                showExportResult(result, format: "backup file")
             }
             .sheet(isPresented: $showingImporter) {
                 ImportDocumentPicker { result in
@@ -330,12 +330,12 @@ struct SettingsView: View {
                 ? "1 account"
                 : "\(summary.accountCount) accounts"
             notice = SettingsNotice(
-                title: source == .googleDrive ? "Restore Complete" : "Import Complete",
+                title: source == .restoreBackup ? "Restore Complete" : "Import Complete",
                 message: "Added \(transactionText) and \(accountText)."
             )
         } catch {
             notice = SettingsNotice(
-                title: source == .googleDrive ? "Restore Failed" : "Import Failed",
+                title: source == .restoreBackup ? "Restore Failed" : "Import Failed",
                 message: error.localizedDescription
             )
         }
