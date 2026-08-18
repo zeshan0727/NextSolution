@@ -37,8 +37,6 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          # Fix the Swift/ObjC++ bridge so it matches the current C++ API and does
-          # not crash when an optional completion callback is absent.
           bridge = Path('NextSigner/Vendor/Zsign-Package/swift/zsign.mm')
           s = bridge.read_text()
           s = s.replace('void(^completionHandler)(BOOL success, NSError *error)',
@@ -51,10 +49,6 @@ jobs:
           s = s.replace('completionHandler(bRet);', 'if (completionHandler) { completionHandler(bRet); }')
           bridge.write_text(s)
 
-          # Upstream currently removes embedded.mobileprovision and then writes it
-          # only when bRemoveProvision == true. That condition is inverted. The
-          # public Swift API passes false when the profile should be embedded, so
-          # correct the implementation before compiling Zsign locally.
           bundle = Path('NextSigner/Vendor/Zsign-Package/src/bundle.cpp')
           b = bundle.read_text()
           old = '''if (!pSignAsset->m_strProvData.empty()) {
@@ -113,5 +107,3 @@ jobs:
             ${{ runner.temp }}/NextSigner-1.2.1.ipa
           if-no-files-found: error
           retention-days: 30
-
-# CI trigger: rebuild Next Signer 1.2.1 after Zsign provisioning fix.
