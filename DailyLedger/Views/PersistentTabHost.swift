@@ -13,7 +13,6 @@ struct PersistentTabHost: UIViewControllerRepresentable {
             .home: host(DashboardView(onAdd: onAdd, onTransfer: onTransfer)),
             .accounts: host(AccountsView()),
             .transactions: host(TransactionsView(onAdd: onAdd, onTransfer: onTransfer)),
-            .insights: host(InsightsView()),
             .reports: host(ReportsView()),
             .settings: host(SettingsView())
         ])
