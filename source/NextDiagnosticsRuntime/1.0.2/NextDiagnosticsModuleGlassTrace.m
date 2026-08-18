@@ -78,7 +78,19 @@ static void NDSnapshot(UIView *t, NSString *reason){
     NDSnapshotNode(root,0,&count,out);
     NDWrite(@"VIEW_SNAPSHOT",[NSString stringWithFormat:@"reason=%@ root=%@ nodes=%lu data=%@",reason,NDClass(root),(unsigned long)count,NDEscape(out)]);
 }
-static NSString *NDPhase(UITouchPhase p){ switch(p){case UITouchPhaseBegan:return @"began";case UITouchPhaseMoved:return @"moved";case UITouchPhaseStationary:return @"stationary";case UITouchPhaseEnded:return @"ended";case UITouchPhaseCancelled:return @"cancelled";} return @"unknown"; }
+static NSString *NDPhase(UITouchPhase p){
+    switch(p){
+        case UITouchPhaseBegan:return @"began";
+        case UITouchPhaseMoved:return @"moved";
+        case UITouchPhaseStationary:return @"stationary";
+        case UITouchPhaseEnded:return @"ended";
+        case UITouchPhaseCancelled:return @"cancelled";
+        case UITouchPhaseRegionEntered:return @"region-entered";
+        case UITouchPhaseRegionMoved:return @"region-moved";
+        case UITouchPhaseRegionExited:return @"region-exited";
+    }
+    return @"unknown";
+}
 static BOOL NDRelevantTouch(UITouch *t){
     UIView *v=t.view;
     if(!v) return NO;
