@@ -24,16 +24,22 @@
 - [x] OpenAI service removed from App Store branch
 - [x] DeepSeek service removed from App Store branch
 - [x] AI chat views removed from App Store branch
-- [x] SMS importer settings removed from customer UI
+- [x] SMS importer UI and service sources removed from App Store branch
+- [x] SMS preference methods removed from `LedgerStore`
+- [x] SMS preference fields and bank-message parsing removed from App Store models
 - [x] No SMS / Messages entitlement requested
-- [x] Developer Lab removed from App Store branch
-- [x] Local legacy chat-search helper removed from App Store branch
-- [x] Unused secret helper excluded from App Store target
+- [x] Personal `Amara` transfer-report special case removed
+- [x] Personal device marker `Z-iP-14PM-16.0` removed from categorization logic
+- [x] Personal account UUID/chart migration table removed from App Store models
 - [x] Personal legacy CSV account-name mappings removed
+- [x] Brand-specific default vendor rules reduced to generic terms
 - [x] Current CSV format uses generic account import and preserves source/destination currencies
+- [x] Developer Lab removed
+- [x] Local legacy chat-search helper removed
+- [x] Unused secret-store helper removed
 - [x] Legacy `dailyledger://` URL scheme removed; only `nextledger://` remains
 - [x] Customer-facing "Books vs Message Balance" renamed to "Balance Reconciliation"
-- [x] Misleading Google Drive labels remapped to generic Files wording
+- [x] Backup UI uses generic Files wording rather than implying a direct third-party integration
 - [x] Customer-facing "iOS 26 Glass Style" renamed to "Glass Style"
 - [x] App Intents that write financial records require local device authentication
 - [x] Privacy manifest present
@@ -42,10 +48,9 @@
 - [x] iCloud Documents entitlement configured
 - [x] App-specific privacy/support web pages contain no analytics or ad scripts
 - [x] App Review notes contain only shipped App Store functionality
-- [ ] Remove/neutralize remaining personal-specific report rule in `LedgerStore` (`Amara` transfer special-case)
-- [ ] Review dormant legacy SMS preference methods/model fields and remove if they can be safely migrated without breaking existing backup compatibility
-- [ ] Run final source scan on exact release branch for OpenAI, DeepSeek, SMS, Messages, RootHide, jailbreak, TrollStore, Sileo, daemon, private framework/API references
-- [ ] Verify exact generated Xcode target does not compile excluded/internal files
+- [x] Rejection-risk source marker guard added: `AppStore/verify_appstore_source.sh`
+- [ ] Run source guard on Mac against exact checkout
+- [ ] Build exact generated Xcode target and resolve any compiler warnings/errors
 - [ ] Verify no private frameworks or unsupported entitlements in archived binary
 
 ## Functional test before upload
