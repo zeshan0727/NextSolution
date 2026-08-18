@@ -19,10 +19,6 @@ targets:
     platform: iOS
     sources:
       - path: DailyLedger
-        excludes:
-          - Views/DeveloperLabView.swift
-          - Services/LedgerChatSearch.swift
-          - Services/ProtectedSecretStore.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextledger
