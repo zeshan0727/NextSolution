@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-18T13:52:00Z",
+  "updatedAt": "2026-08-18T13:54:51Z",
   "files": [
+    {
+      "id": "nextpost-1.0.2-levelplay-diagnostic",
+      "name": "Next Post 1.0.2 LevelPlay Diagnostic",
+      "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.2",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.2/NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
+      "sha256": "ee35fd00462b5b5fafdfc3b307594d6bf7d8577855e7707404c3c1efc1c8a9c0",
+      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval."
+    },
     {
       "id": "nextsigner-1.1.2",
       "name": "Next Signer 1.1.2",
