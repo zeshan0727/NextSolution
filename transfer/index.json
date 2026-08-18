@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-18T13:08:10Z",
+  "updatedAt": "2026-08-18T13:23:54Z",
   "files": [
+    {
+      "id": "nextsigner-1.1",
+      "name": "Next Signer 1.1",
+      "fileName": "NextSigner-1.1.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.1",
+      "url": "https://nextsolution.cc/transfer/files/NextSigner/1.1/NextSigner-1.1.tipa",
+      "sha256": "a3f9254673118986e9e088e43d33955c46a8653b65595113d3ba82f3966a44c7",
+      "notes": "Next Signer 1.1. Imports a P12 certificate and mobileprovision profile, signs IPA files locally on-device with Zsign, verifies the signed output, and supports export/publish after successful signing."
+    },
     {
       "id": "nextpost-1.0.0",
       "name": "Next Post 1.0.0",
