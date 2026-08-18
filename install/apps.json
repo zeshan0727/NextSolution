@@ -2,6 +2,19 @@
   "apps" : [
     {
       "available" : true,
+      "build" : "5",
+      "bundleId" : "com.nextsolution.af8f32f92d4b4e51bdf8",
+      "icon" : "/logo.png",
+      "id" : "aspire-green",
+      "manifest" : "/install/manifests/aspire-green.plist",
+      "minimumOS" : "iOS 16.0+",
+      "name" : "Aspire Green",
+      "platform" : "iPhone",
+      "status" : "Ready to install",
+      "version" : "1.1.2"
+    },
+    {
+      "available" : true,
       "build" : "2",
       "bundleId" : "com.nextsolution.ksign",
       "icon" : "/logo.png",
