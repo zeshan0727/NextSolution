@@ -42,6 +42,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
         INFOPLIST_KEY_UIFileSharingEnabled: "YES"
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: "YES"
+        OTHER_LDFLAGS: "$(inherited) $(BUILT_PRODUCTS_DIR)/ZsignC.o"
     scheme:
       shared: true
       gatherCoverageData: false
