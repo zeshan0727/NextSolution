@@ -26,6 +26,7 @@ targets:
     platform: iOS
     sources:
       - path: NextSigner
+      - path: Vendor/Zsign-Package/swift/zsign.mm
     dependencies:
       - package: Zsign
         product: Zsign
@@ -42,6 +43,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
         INFOPLIST_KEY_UIFileSharingEnabled: "YES"
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: "YES"
+        HEADER_SEARCH_PATHS: "$(inherited) $(SRCROOT)/Vendor/Zsign-Package/src $(SRCROOT)/Vendor/Zsign-Package/src/common $(SRCROOT)/Vendor/Zsign-Package/swift"
         OTHER_LDFLAGS: "$(inherited) $(BUILT_PRODUCTS_DIR)/ZsignC.o"
     scheme:
       shared: true
