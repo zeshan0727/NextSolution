@@ -83,8 +83,7 @@ struct PostComposer {
     }
 
     private func hashtag(_ value: String) -> String? {
-        let scalars = value.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }
-        let result = String(String.UnicodeScalarView(scalars))
+        let result = String(value.filter { $0.isLetter || $0.isNumber })
         guard result.count >= 2 else { return nil }
         return "#\(result)"
     }
