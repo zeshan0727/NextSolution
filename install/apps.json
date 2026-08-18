@@ -13,7 +13,7 @@
       "icon": "/logo.png",
       "manifest": "/install/dopamine-3.plist",
       "available": false,
-      "status": "IPA upload required before install"
+      "status": "Re-sign once for registered-device OTA"
     },
     {
       "id": "insta-regram",
