@@ -1,0 +1,77 @@
+name: Build Next Ledger App Store IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-nextledger-appstore.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26.6
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare App Store metadata
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleURLTypes:0:CFBundleURLName com.nextsolution.nextledger" DailyLedger/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :BGTaskSchedulerPermittedIdentifiers:0 com.nextsolution.nextledger.backup-refresh" DailyLedger/Info.plist
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned App Store base
+        run: |
+          xcodebuild \
+            -project DailyLedger.xcodeproj \
+            -scheme DailyLedger \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build-appstore \
+            PRODUCT_BUNDLE_IDENTIFIER=com.nextsolution.nextledger \
+            MARKETING_VERSION=1.3.76 \
+            CURRENT_PROJECT_VERSION=85 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        run: |
+          APP_PATH="$(find build-appstore/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload NextLedger-1.3.76-AppStore-Unsigned.ipa
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.76-AppStore-Unsigned.ipa
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :DTXcode" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :DTSDKName" "$APP_PATH/Info.plist"
+          shasum -a 256 NextLedger-1.3.76-AppStore-Unsigned.ipa > NextLedger-1.3.76-AppStore-Unsigned.sha256
+
+      - name: Upload App Store base IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-AppStore-Unsigned
+          path: |
+            NextLedger-1.3.76-AppStore-Unsigned.ipa
+            NextLedger-1.3.76-AppStore-Unsigned.sha256
+          if-no-files-found: error
