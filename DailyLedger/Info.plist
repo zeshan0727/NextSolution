@@ -28,7 +28,6 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>nextledger</string>
-				<string>dailyledger</string>
 			</array>
 		</dict>
 	</array>
