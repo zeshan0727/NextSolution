@@ -7,6 +7,13 @@ final class SignerStore: ObservableObject {
     @Published var configuration: GitHubConfiguration
     @Published var token: String
     @Published var tokenIsStored: Bool
+
+    @Published var p12Password: String
+    @Published var p12PasswordIsStored: Bool
+    @Published var hasP12: Bool
+    @Published var hasProvisioningProfile: Bool
+
+    @Published var signedResult: SignedAppResult?
     @Published var isWorking = false
     @Published var progress: Double = 0
     @Published var activeJob: SigningJob?
@@ -15,24 +22,34 @@ final class SignerStore: ObservableObject {
 
     private let defaults = UserDefaults.standard
     private let tokenAccount = "github-token"
+    private let p12PasswordAccount = "p12-password"
 
     init() {
         configuration = GitHubConfiguration(
             owner: UserDefaults.standard.string(forKey: "githubOwner") ?? "zeshan0727",
             repository: UserDefaults.standard.string(forKey: "githubRepository") ?? "NextSolution",
-            branch: UserDefaults.standard.string(forKey: "githubBranch") ?? "main",
-            workflowFile: UserDefaults.standard.string(forKey: "githubWorkflow") ?? "nextsigner-sign-publish.yml"
+            branch: UserDefaults.standard.string(forKey: "githubBranch") ?? "main"
         )
-        let stored = KeychainStore.load(account: tokenAccount) ?? ""
-        token = stored
-        tokenIsStored = !stored.isEmpty
+
+        let storedToken = KeychainStore.load(account: tokenAccount) ?? ""
+        token = storedToken
+        tokenIsStored = !storedToken.isEmpty
+
+        let storedPassword = KeychainStore.load(account: p12PasswordAccount) ?? ""
+        p12Password = storedPassword
+        p12PasswordIsStored = !storedPassword.isEmpty
+        hasP12 = CredentialStore.exists(.p12)
+        hasProvisioningProfile = CredentialStore.exists(.provisioning)
+    }
+
+    var credentialsReady: Bool {
+        hasP12 && hasProvisioningProfile && p12PasswordIsStored
     }
 
     func persistConfiguration() {
         defaults.set(configuration.owner, forKey: "githubOwner")
         defaults.set(configuration.repository, forKey: "githubRepository")
         defaults.set(configuration.branch, forKey: "githubBranch")
-        defaults.set(configuration.workflowFile, forKey: "githubWorkflow")
     }
 
     func saveToken() {
@@ -52,10 +69,41 @@ final class SignerStore: ObservableObject {
         }
     }
 
+    func saveP12Password() {
+        do {
+            if p12Password.isEmpty {
+                KeychainStore.delete(account: p12PasswordAccount)
+                p12PasswordIsStored = false
+            } else {
+                try KeychainStore.save(p12Password, account: p12PasswordAccount)
+                p12PasswordIsStored = true
+            }
+            errorMessage = nil
+        } catch {
+            errorMessage = "Could not save the certificate password: \(error.localizedDescription)"
+        }
+    }
+
+    func importCredential(from pickedURL: URL, kind: CredentialStore.Kind) {
+        do {
+            try CredentialStore.importFile(from: pickedURL, as: kind)
+            hasP12 = CredentialStore.exists(.p12)
+            hasProvisioningProfile = CredentialStore.exists(.provisioning)
+            successMessage = kind == .p12 ? "P12 certificate imported on this device." : "Provisioning profile imported on this device."
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to import signing credential: \(error.localizedDescription)"
+        }
+    }
+
     func importIPA(from pickedURL: URL) {
         do {
             let localURL = try copyIntoPrivateStaging(pickedURL)
             request.ipaURL = localURL
+            signedResult = nil
+            activeJob = nil
+            progress = 0
+
             if request.appName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 request.appName = suggestedAppName(from: localURL.lastPathComponent)
             }
@@ -71,17 +119,85 @@ final class SignerStore: ObservableObject {
 
     func clearSelectedIPA() {
         if let url = request.ipaURL {
-            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
         }
         request.ipaURL = nil
+        signedResult = nil
         activeJob = nil
         progress = 0
+        successMessage = nil
     }
 
-    func signAndPublish() {
+    func signLocally() {
         guard !isWorking else { return }
-        guard request.isReady else {
+        guard request.isReady, let ipaURL = request.ipaURL else {
             errorMessage = "Choose an IPA and enter a valid app name and bundle identifier."
+            return
+        }
+        guard hasP12 else {
+            errorMessage = LocalSignerError.missingCertificate.localizedDescription
+            return
+        }
+        guard hasProvisioningProfile else {
+            errorMessage = LocalSignerError.missingProvisioningProfile.localizedDescription
+            return
+        }
+        let password = KeychainStore.load(account: p12PasswordAccount) ?? p12Password
+        guard !password.isEmpty else {
+            errorMessage = LocalSignerError.missingPassword.localizedDescription
+            return
+        }
+
+        let appName = request.appName
+        let bundleID = request.bundleID
+        let p12URL = CredentialStore.url(for: .p12)
+        let provisioningURL = CredentialStore.url(for: .provisioning)
+
+        isWorking = true
+        progress = 0.08
+        errorMessage = nil
+        successMessage = nil
+        signedResult = nil
+        activeJob = SigningJob(
+            sourceName: ipaURL.lastPathComponent,
+            requestedBundleID: bundleID,
+            requestedAppName: appName,
+            stage: .signing,
+            detail: "Signing locally on this iPhone. Nothing is being uploaded."
+        )
+
+        Task {
+            do {
+                progress = 0.2
+                let result = try await Task.detached(priority: .userInitiated) {
+                    try LocalSignerService().sign(
+                        ipaURL: ipaURL,
+                        requestedName: appName,
+                        requestedBundleID: bundleID,
+                        p12URL: p12URL,
+                        provisioningURL: provisioningURL,
+                        p12Password: password
+                    )
+                }.value
+
+                signedResult = result
+                activeJob?.stage = .signed
+                activeJob?.detail = "Signed locally and verified. Ready to publish."
+                progress = 1
+                successMessage = "Signed locally. The signed IPA has not been uploaded yet."
+            } catch {
+                activeJob?.stage = .failed
+                activeJob?.detail = error.localizedDescription
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
+        }
+    }
+
+    func publishSigned() {
+        guard !isWorking else { return }
+        guard let signed = signedResult else {
+            errorMessage = "Sign the IPA locally first."
             return
         }
         guard configuration.isValid else {
@@ -93,46 +209,24 @@ final class SignerStore: ObservableObject {
             errorMessage = NextSignerError.missingToken.localizedDescription
             return
         }
-        guard let ipaURL = request.ipaURL else { return }
 
         persistConfiguration()
         isWorking = true
         progress = 0
         errorMessage = nil
         successMessage = nil
-        activeJob = SigningJob(
-            sourceName: ipaURL.lastPathComponent,
-            requestedBundleID: request.bundleID,
-            requestedAppName: request.appName,
-            stage: .preparing,
-            detail: "Preparing secure upload"
-        )
+        activeJob?.stage = .uploading
+        activeJob?.detail = "Uploading the already-signed IPA to Next Solution."
 
         let service = GitHubService(token: currentToken, configuration: configuration)
-        let appName = request.appName
-        let bundleID = request.bundleID
-
         Task {
             do {
-                activeJob?.stage = .uploading
-                activeJob?.detail = "Uploading IPA to the private signing inbox"
-                let response = try await service.uploadAndDispatch(
-                    ipaURL: ipaURL,
-                    appName: appName,
-                    bundleID: bundleID,
-                    progress: { value in
-                        await MainActor.run {
-                            self.progress = value
-                        }
-                    }
-                )
-                activeJob?.stage = .queued
-                if let runURL = response?.htmlURL, !runURL.isEmpty {
-                    activeJob?.detail = "Signing and publishing started: \(runURL)"
-                } else {
-                    activeJob?.detail = "Signing and publishing workflow queued"
+                _ = try await service.publishSignedIPA(signed) { value in
+                    await MainActor.run { self.progress = value }
                 }
-                successMessage = "Uploaded successfully. GitHub is now signing the IPA and publishing it to your private app page."
+                activeJob?.stage = .published
+                activeJob?.detail = "Published to nextsolution.cc/install/."
+                successMessage = "Signed IPA published successfully. Registered devices can install it from the private app page."
                 progress = 1
             } catch {
                 activeJob?.stage = .failed
@@ -149,15 +243,13 @@ final class SignerStore: ObservableObject {
             if accessed { source.stopAccessingSecurityScopedResource() }
         }
 
-        let folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let root = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("NextSignerInbox", isDirectory: true)
+        let folder = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
         let sanitized = source.lastPathComponent.replacingOccurrences(of: "/", with: "-")
-        let destination = folder.appendingPathComponent("\(UUID().uuidString)-\(sanitized)")
-        if FileManager.default.fileExists(atPath: destination.path) {
-            try FileManager.default.removeItem(at: destination)
-        }
+        let destination = folder.appendingPathComponent(sanitized)
         try FileManager.default.copyItem(at: source, to: destination)
         return destination
     }
