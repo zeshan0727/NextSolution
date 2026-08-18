@@ -2,6 +2,19 @@
   "apps" : [
     {
       "available" : true,
+      "build" : "12",
+      "bundleId" : "com.nextsolution.nextmedia146",
+      "icon" : "/logo.png",
+      "id" : "next-media-1-4-6",
+      "manifest" : "/install/manifests/next-media-1-4-6.plist",
+      "minimumOS" : "iOS",
+      "name" : "Next Media 1.4.6",
+      "platform" : "iPhone",
+      "status" : "Ready to install",
+      "version" : "1.4.6"
+    },
+    {
+      "available" : true,
       "build" : "5",
       "bundleId" : "com.nextsolution.af8f32f92d4b4e51bdf8",
       "icon" : "/logo.png",
