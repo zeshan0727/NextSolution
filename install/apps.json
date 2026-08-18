@@ -1,0 +1,19 @@
+{
+  "catalog": "Next Solution Private Apps",
+  "updated": "2026-08-18",
+  "apps": [
+    {
+      "id": "next-ledger",
+      "name": "Next Ledger",
+      "version": "1.0",
+      "build": "1",
+      "platform": "iPhone",
+      "minimumOS": "iOS 16+",
+      "bundleId": "com.nextsolution.nextledger",
+      "icon": "/DailyLedger/Assets.xcassets/AppIcon.appiconset/icon-180.png",
+      "manifest": "/install/next-ledger.plist",
+      "available": false,
+      "status": "Waiting for signed IPA"
+    }
+  ]
+}
