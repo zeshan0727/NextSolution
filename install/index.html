@@ -10,43 +10,64 @@
     :root{color-scheme:light dark;--bg:#f3f6fb;--card:#fff;--text:#111827;--muted:#667085;--line:rgba(17,24,39,.09);--accent:#6a11cb;--accent2:#2575fc;--ok:#0a8f5a;--wait:#b7791f}
     @media(prefers-color-scheme:dark){:root{--bg:#0b0f17;--card:#151b27;--text:#f7f9fc;--muted:#aab4c5;--line:rgba(255,255,255,.10);--ok:#57d39a;--wait:#f6c453}}
     *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#dfe9ff 0,transparent 38%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;min-height:100vh}
-    .wrap{width:min(760px,calc(100% - 28px));margin:0 auto;padding:28px 0 48px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}.brand img{width:42px;height:42px;border-radius:12px}.brand strong{font-size:1.12rem}.hero{margin:18px 0 24px}.hero h1{font-size:clamp(2rem,7vw,3.5rem);line-height:1.02;margin:0 0 12px;letter-spacing:-.04em}.hero p{color:var(--muted);font-size:1rem;margin:0;max-width:620px}.card{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.08)}.app{display:grid;grid-template-columns:76px 1fr;gap:16px;align-items:center}.appicon{width:76px;height:76px;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.14)}h2{margin:0 0 5px;font-size:1.35rem}.meta{color:var(--muted);font-size:.94rem}.status{display:inline-flex;align-items:center;gap:7px;margin-top:9px;color:var(--wait);font-weight:700;font-size:.9rem}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}.install{display:block;text-align:center;margin-top:20px;padding:15px 18px;border-radius:16px;text-decoration:none;color:white;font-size:1.05rem;font-weight:800;background:linear-gradient(135deg,#9ca3af,#6b7280);box-shadow:none;pointer-events:none;opacity:.8}.note{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:18px;color:var(--muted);font-size:.92rem;line-height:1.55}.note strong{color:var(--text)}.steps{margin:22px 0 0;padding:0;list-style:none;counter-reset:s}.steps li{counter-increment:s;position:relative;padding-left:38px;margin:12px 0;color:var(--muted)}.steps li:before{content:counter(s);position:absolute;left:0;top:-1px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);color:var(--text);font-weight:800;font-size:.82rem}.footer{text-align:center;color:var(--muted);font-size:.82rem;margin-top:28px}.small{font-size:.82rem;color:var(--muted);margin-top:12px;text-align:center}@media(max-width:480px){.app{grid-template-columns:64px 1fr}.appicon{width:64px;height:64px;border-radius:15px}.card{padding:17px}}
+    .wrap{width:min(820px,calc(100% - 28px));margin:0 auto;padding:28px 0 48px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}.brand img{width:42px;height:42px;border-radius:12px}.brand strong{font-size:1.12rem}.hero{margin:18px 0 24px}.hero h1{font-size:clamp(2rem,7vw,3.5rem);line-height:1.02;margin:0 0 12px;letter-spacing:-.04em}.hero p{color:var(--muted);font-size:1rem;margin:0;max-width:680px}.catalog{display:grid;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.07)}.app{display:grid;grid-template-columns:76px 1fr;gap:16px;align-items:center}.appicon{width:76px;height:76px;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.14);object-fit:cover}h2{margin:0 0 5px;font-size:1.35rem}.meta{color:var(--muted);font-size:.94rem}.bundle{color:var(--muted);font-size:.78rem;margin-top:4px;overflow-wrap:anywhere}.status{display:inline-flex;align-items:center;gap:7px;margin-top:9px;color:var(--ok);font-weight:700;font-size:.9rem}.status.wait{color:var(--wait)}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}.install{display:block;text-align:center;margin-top:20px;padding:15px 18px;border-radius:16px;text-decoration:none;color:white;font-size:1.05rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(80,70,220,.26)}.install:active{transform:scale(.99)}.install.disabled{background:linear-gradient(135deg,#9ca3af,#6b7280);box-shadow:none;pointer-events:none;opacity:.8}.info{margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:20px;background:var(--card);color:var(--muted);line-height:1.6;font-size:.93rem}.info strong{color:var(--text)}.footer{text-align:center;color:var(--muted);font-size:.82rem;margin-top:28px}.empty{padding:30px;text-align:center;color:var(--muted)}@media(max-width:480px){.app{grid-template-columns:64px 1fr}.appicon{width:64px;height:64px;border-radius:15px}.card{padding:17px}}
   </style>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214" crossorigin="anonymous"></script>
 </head>
 <body>
   <main class="wrap">
     <div class="brand"><img src="/logo.png" alt="Next Solution"><strong>Next Solution Private Apps</strong></div>
     <section class="hero">
-      <h1>Install on registered devices.</h1>
-      <p>This private installer is intended for devices registered to the Next Solution Apple Developer account. The provisioning profile inside each signed app determines which devices are allowed to run it.</p>
+      <h1>Private apps for registered devices.</h1>
+      <p>Apps listed here are privately signed for devices registered to the Next Solution Apple Developer account. A device must be included in the provisioning profile embedded in the signed app.</p>
     </section>
 
-    <section class="card">
-      <div class="app">
-        <img class="appicon" src="/DailyLedger/Assets.xcassets/AppIcon.appiconset/icon-180.png" alt="Next Ledger icon">
-        <div>
-          <h2>Next Ledger</h2>
-          <div class="meta">Version 1.0 · Build 1 · iPhone · iOS 16+</div>
-          <div class="status"><span class="dot"></span>Waiting for signed IPA</div>
-        </div>
-      </div>
+    <section id="catalog" class="catalog"><div class="card empty">Loading app catalog…</div></section>
 
-      <span class="install">Install not ready yet</span>
-      <div class="small">The button will be enabled after the signed IPA is uploaded.</div>
-
-      <div class="note">
-        <strong>Current status:</strong> The installer page and manifest are ready, but the signed Next Ledger IPA has not been uploaded to the website yet. Once the properly signed IPA is present, this page will be switched to one-tap installation.
-      </div>
-
-      <ol class="steps">
-        <li>Sign Next Ledger with the correct Ad Hoc provisioning profile.</li>
-        <li>Upload the signed IPA to the installer.</li>
-        <li>Return here in Safari and tap Install Next Ledger.</li>
-      </ol>
+    <section class="info">
+      <strong>How it works:</strong> each app is signed with an Apple certificate and an Ad Hoc provisioning profile that contains the permitted device UDIDs. The website provides the OTA installation link; iOS enforces whether the signed app is allowed on that device.<br><br>
+      <strong>Trust:</strong> with normal Ad Hoc distribution, the provisioning profile is embedded in the app and the registered UDID is the main authorization check. If iOS specifically shows a developer-trust prompt for a particular signing method, follow the device prompt under Settings → General → VPN &amp; Device Management. Do not install or trust an unrelated profile.
     </section>
 
-    <div class="footer">Private testing distribution · Next Solution</div>
+    <div class="footer">Registered-device testing distribution · Next Solution</div>
   </main>
+
+  <script>
+    async function loadCatalog(){
+      const root=document.getElementById('catalog');
+      try{
+        const response=await fetch('/install/apps.json',{cache:'no-store'});
+        if(!response.ok) throw new Error('Catalog unavailable');
+        const data=await response.json();
+        root.innerHTML='';
+        for(const app of data.apps||[]){
+          const card=document.createElement('article');
+          card.className='card';
+          const manifest=new URL(app.manifest,location.origin).href;
+          const installURL='itms-services://?action=download-manifest&url='+encodeURIComponent(manifest);
+          const statusClass=app.available?'status':'status wait';
+          const button=app.available
+            ? `<a class="install" href="${installURL}">Install ${escapeHTML(app.name)}</a>`
+            : `<span class="install disabled">${escapeHTML(app.status||'Not available yet')}</span>`;
+          card.innerHTML=`
+            <div class="app">
+              <img class="appicon" src="${escapeAttr(app.icon)}" alt="${escapeAttr(app.name)} icon">
+              <div>
+                <h2>${escapeHTML(app.name)}</h2>
+                <div class="meta">Version ${escapeHTML(app.version)} · Build ${escapeHTML(app.build)} · ${escapeHTML(app.platform)} · ${escapeHTML(app.minimumOS)}</div>
+                <div class="bundle">${escapeHTML(app.bundleId)}</div>
+                <div class="${statusClass}"><span class="dot"></span>${escapeHTML(app.available?'Ready to install':(app.status||'Not available'))}</div>
+              </div>
+            </div>${button}`;
+          root.appendChild(card);
+        }
+        if(!root.children.length) root.innerHTML='<div class="card empty">No apps are published yet.</div>';
+      }catch(error){
+        root.innerHTML='<div class="card empty">Unable to load the private app catalog.</div>';
+      }
+    }
+    function escapeHTML(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+    function escapeAttr(value){return escapeHTML(value);}
+    loadCatalog();
+  </script>
 </body>
 </html>
