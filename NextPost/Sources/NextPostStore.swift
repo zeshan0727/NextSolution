@@ -1,0 +1,179 @@
+import Foundation
+import UIKit
+
+@MainActor
+final class NextPostStore: ObservableObject {
+    @Published var generatedPost = ""
+    @Published var selectedArticle: PublishedArticle?
+    @Published var isLoading = false
+    @Published var statusText = "Ready"
+    @Published var errorMessage: String?
+    @Published var totalArticles = 0
+    @Published var remainingThisCycle = 0
+    @Published var generatedCount = 0
+    @Published var cycleNumber = 1
+    @Published var copied = false
+
+    private let service = ArticleService()
+    private let composer = PostComposer()
+    private let defaults = UserDefaults.standard
+
+    private var usedLinks = Set<String>()
+    private var lastArticleLink: String?
+
+    private enum Key {
+        static let usedLinks = "NextPost.usedLinks"
+        static let lastArticleLink = "NextPost.lastArticleLink"
+        static let generatedCount = "NextPost.generatedCount"
+        static let cycleNumber = "NextPost.cycleNumber"
+        static let generatedPost = "NextPost.generatedPost"
+        static let selectedTitle = "NextPost.selectedTitle"
+        static let selectedURL = "NextPost.selectedURL"
+    }
+
+    init() {
+        usedLinks = Set(defaults.stringArray(forKey: Key.usedLinks) ?? [])
+        lastArticleLink = defaults.string(forKey: Key.lastArticleLink)
+        generatedCount = defaults.integer(forKey: Key.generatedCount)
+        cycleNumber = max(1, defaults.integer(forKey: Key.cycleNumber))
+        generatedPost = defaults.string(forKey: Key.generatedPost) ?? ""
+
+        if let title = defaults.string(forKey: Key.selectedTitle),
+           let url = defaults.string(forKey: Key.selectedURL) {
+            selectedArticle = PublishedArticle(
+                name: title,
+                title: title,
+                description: "",
+                href: url,
+                version: nil,
+                category: .empty
+            )
+        }
+    }
+
+    func refreshStats() async {
+        do {
+            let articles = try await service.fetchArticles()
+            reconcileUsedLinks(with: articles)
+            totalArticles = articles.count
+            remainingThisCycle = max(0, articles.count - usedLinks.count)
+            statusText = articles.isEmpty ? "No articles found" : "Connected to nextsolution.cc"
+        } catch {
+            statusText = "Could not refresh articles"
+        }
+    }
+
+    func generate() async {
+        guard !isLoading else { return }
+        isLoading = true
+        errorMessage = nil
+        copied = false
+        statusText = "Fetching latest articles…"
+
+        defer { isLoading = false }
+
+        do {
+            let articles = try await service.fetchArticles()
+            guard !articles.isEmpty else { throw ArticleServiceError.noArticles }
+
+            reconcileUsedLinks(with: articles)
+            totalArticles = articles.count
+
+            var candidates = articles.filter { !usedLinks.contains($0.cleanURL.absoluteString) }
+
+            if candidates.isEmpty {
+                usedLinks.removeAll()
+                cycleNumber += 1
+                defaults.set(cycleNumber, forKey: Key.cycleNumber)
+
+                if articles.count > 1, let lastArticleLink {
+                    candidates = articles.filter { $0.cleanURL.absoluteString != lastArticleLink }
+                } else {
+                    candidates = articles
+                }
+            }
+
+            guard let article = candidates.randomElement() else {
+                throw ArticleServiceError.noArticles
+            }
+
+            let post = composer.compose(for: article)
+            let link = article.cleanURL.absoluteString
+
+            usedLinks.insert(link)
+            lastArticleLink = link
+            generatedCount += 1
+            generatedPost = post
+            selectedArticle = article
+            remainingThisCycle = max(0, articles.count - usedLinks.count)
+            statusText = remainingThisCycle == 0
+                ? "All articles used — next tap starts a fresh cycle"
+                : "\(remainingThisCycle) article\(remainingThisCycle == 1 ? "" : "s") left before repeats"
+
+            persist()
+        } catch {
+            errorMessage = error.localizedDescription
+            statusText = "Generation failed"
+        }
+    }
+
+    func copyPost() {
+        guard !generatedPost.isEmpty else { return }
+        UIPasteboard.general.string = generatedPost
+        copied = true
+
+        Task {
+            try? await Task.sleep(nanoseconds: 1_300_000_000)
+            if !Task.isCancelled {
+                copied = false
+            }
+        }
+    }
+
+    func openInX() {
+        guard !generatedPost.isEmpty else { return }
+
+        let encoded = generatedPost.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let appURL = URL(string: "twitter://post?message=\(encoded)") {
+            UIApplication.shared.open(appURL, options: [:]) { success in
+                guard !success else { return }
+                Task { @MainActor in
+                    self.openXWebIntent()
+                }
+            }
+        } else {
+            openXWebIntent()
+        }
+    }
+
+    func openArticle() {
+        guard let url = selectedArticle?.cleanURL else { return }
+        UIApplication.shared.open(url)
+    }
+
+    private func openXWebIntent() {
+        var components = URLComponents(string: "https://twitter.com/intent/tweet")
+        components?.queryItems = [URLQueryItem(name: "text", value: generatedPost)]
+        guard let url = components?.url else { return }
+        UIApplication.shared.open(url)
+    }
+
+    private func reconcileUsedLinks(with articles: [PublishedArticle]) {
+        let currentLinks = Set(articles.map { $0.cleanURL.absoluteString })
+        let cleaned = usedLinks.intersection(currentLinks)
+        if cleaned != usedLinks {
+            usedLinks = cleaned
+            defaults.set(Array(usedLinks), forKey: Key.usedLinks)
+        }
+    }
+
+    private func persist() {
+        defaults.set(Array(usedLinks), forKey: Key.usedLinks)
+        defaults.set(lastArticleLink, forKey: Key.lastArticleLink)
+        defaults.set(generatedCount, forKey: Key.generatedCount)
+        defaults.set(cycleNumber, forKey: Key.cycleNumber)
+        defaults.set(generatedPost, forKey: Key.generatedPost)
+        defaults.set(selectedArticle?.title, forKey: Key.selectedTitle)
+        defaults.set(selectedArticle?.cleanURL.absoluteString, forKey: Key.selectedURL)
+    }
+}
