@@ -138,7 +138,7 @@ private struct SignView: View {
 
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: store.request.isValidBundleID ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(store.request.isValidBundleID ? .green : .orange)
+                        .foregroundColor(store.request.isValidBundleID ? .green : .orange)
                     Text(store.request.isValidBundleID
                          ? "The bundle identifier format is valid. Keep it under com.nextsolution.* when using your wildcard Ad Hoc profile."
                          : "Enter a valid reverse-DNS bundle identifier, for example com.nextsolution.myapp.")
@@ -165,7 +165,7 @@ private struct SignView: View {
                 if let success = store.successMessage {
                     Label(success, systemImage: "checkmark.circle.fill")
                         .font(.caption)
-                        .foregroundStyle(.green)
+                        .foregroundColor(.green)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
@@ -218,11 +218,21 @@ private struct ActivityView: View {
                         .padding(.vertical, 4)
                     }
                 } else {
-                    ContentUnavailableView(
-                        "No signing jobs yet",
-                        systemImage: "signature",
-                        description: Text("Your latest Sign & Publish job will appear here.")
-                    )
+                    Section {
+                        VStack(spacing: 10) {
+                            Image(systemName: "signature")
+                                .font(.system(size: 34))
+                                .foregroundStyle(.secondary)
+                            Text("No signing jobs yet")
+                                .font(.headline)
+                            Text("Your latest Sign & Publish job will appear here.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                    }
                 }
 
                 Section("Installer") {
@@ -282,7 +292,7 @@ private struct SettingsView: View {
                     Label(store.tokenIsStored ? "Token stored on this device" : "Token not configured",
                           systemImage: store.tokenIsStored ? "lock.fill" : "lock.open")
                         .font(.caption)
-                        .foregroundStyle(store.tokenIsStored ? .green : .secondary)
+                        .foregroundColor(store.tokenIsStored ? .green : .gray)
                 }
 
                 Section("Required token permissions") {
