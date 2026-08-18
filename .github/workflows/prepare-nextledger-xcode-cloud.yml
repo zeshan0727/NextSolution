@@ -1,0 +1,83 @@
+name: Prepare Next Ledger Xcode Cloud Project
+
+on:
+  workflow_dispatch:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  prepare:
+    if: github.event_name != 'issues' || github.event.issue.title == 'prepare-nextledger-xcode-cloud'
+    runs-on: macos-26
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate committed Xcode Cloud project
+        run: |
+          cat > nextledger-xcode-cloud.yml <<'YAML'
+          name: NextLedger
+          options:
+            bundleIdPrefix: com.nextsolution
+            deploymentTarget:
+              iOS: "16.0"
+            createIntermediateGroups: true
+          settings:
+            base:
+              SWIFT_VERSION: "5.7"
+              IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+              TARGETED_DEVICE_FAMILY: "1"
+              SUPPORTS_MACCATALYST: "NO"
+              CODE_SIGN_STYLE: Automatic
+              MARKETING_VERSION: "1.3.76"
+              CURRENT_PROJECT_VERSION: "85"
+          targets:
+            NextLedger:
+              type: application
+              platform: iOS
+              sources:
+                - path: DailyLedger
+              settings:
+                base:
+                  PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextledger
+                  PRODUCT_NAME: Next Ledger
+                  INFOPLIST_FILE: DailyLedger/Info.plist
+                  ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+                  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+                  GENERATE_INFOPLIST_FILE: "NO"
+              scheme:
+                shared: true
+                gatherCoverageData: false
+          YAML
+          xcodegen generate --spec nextledger-xcode-cloud.yml
+          rm nextledger-xcode-cloud.yml
+          test -f NextLedger.xcodeproj/project.pbxproj
+          test -f NextLedger.xcodeproj/xcshareddata/xcschemes/NextLedger.xcscheme
+
+      - name: Commit Xcode project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add NextLedger.xcodeproj
+          if git diff --cached --quiet; then
+            echo "NextLedger.xcodeproj is already current."
+            exit 0
+          fi
+          git commit -m "Add Next Ledger Xcode Cloud project"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Report result
+        if: always() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "Next Ledger Xcode Cloud project preparation finished with status: **${{ job.status }}**."
