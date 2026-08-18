@@ -9,11 +9,11 @@
       "build": "1",
       "platform": "iPhone",
       "minimumOS": "iOS 10+",
-      "bundleId": "p3.xyz.yyyue.esign",
+      "bundleId": "com.nextsolution.esign",
       "icon": "/logo.png",
       "manifest": "/install/esign.plist",
-      "available": false,
-      "status": "Waiting for corrected registered-device signing"
+      "available": true,
+      "status": "Ready to install"
     },
     {
       "id": "dopamine-3",
