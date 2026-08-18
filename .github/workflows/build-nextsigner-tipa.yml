@@ -8,6 +8,13 @@ on:
     paths:
       - 'NextSigner/**'
       - '.github/workflows/build-nextsigner-tipa.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'NextSigner/**'
+      - '.github/workflows/build-nextsigner-tipa.yml'
+      - '.github/workflows/nextsigner-sign-publish.yml'
 
 permissions:
   contents: read
