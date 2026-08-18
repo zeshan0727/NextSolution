@@ -5,9 +5,9 @@ options:
     iOS: "16.0"
   createIntermediateGroups: true
 packages:
-  Zsign:
-    url: https://github.com/claration/Zsign-Package
-    branch: package
+  ProStoreTools:
+    url: https://github.com/ProStore-iOS/ProStoreTools.git
+    branch: main
   ZIPFoundation:
     url: https://github.com/weichsel/ZIPFoundation.git
     from: 0.9.0
@@ -27,8 +27,8 @@ targets:
     sources:
       - path: NextSigner
     dependencies:
-      - package: Zsign
-        product: Zsign
+      - package: ProStoreTools
+        product: ProStoreTools
       - package: ZIPFoundation
         product: ZIPFoundation
     settings:
