@@ -21,7 +21,7 @@ final class OpenAIService: ObservableObject {
     static let shared = OpenAIService()
     static let selectableModels = [
         "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4o-mini",
-        "gpt-5-nano", "gpt-5-mini", "gpt-5.6-sol"
+        "gpt-5-nano", "gpt-5-mini"
     ]
     private static let service = "com.nextsolution.dailyledger.openai"
     private static let account = "api-key"
