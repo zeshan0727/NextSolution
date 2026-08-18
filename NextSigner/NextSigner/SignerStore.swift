@@ -169,16 +169,14 @@ final class SignerStore: ObservableObject {
         Task {
             do {
                 progress = 0.2
-                let result = try await Task.detached(priority: .userInitiated) {
-                    try LocalSignerService().sign(
-                        ipaURL: ipaURL,
-                        requestedName: appName,
-                        requestedBundleID: bundleID,
-                        p12URL: p12URL,
-                        provisioningURL: provisioningURL,
-                        p12Password: password
-                    )
-                }.value
+                let result = try await LocalSignerService().sign(
+                    ipaURL: ipaURL,
+                    requestedName: appName,
+                    requestedBundleID: bundleID,
+                    p12URL: p12URL,
+                    provisioningURL: provisioningURL,
+                    p12Password: password
+                )
 
                 signedResult = result
                 activeJob?.stage = .signed
