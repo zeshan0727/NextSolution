@@ -4,7 +4,7 @@ import SwiftUI
 struct NextSignerApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NextSignerRootView()
         }
     }
 }
