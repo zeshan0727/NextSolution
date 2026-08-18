@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-18T14:09:56Z",
+  "updatedAt": "2026-08-18T16:27:34Z",
   "files": [
+    {
+      "id": "module-glass-preview-1.0.0",
+      "name": "Module Glass Preview 1.0.0",
+      "fileName": "ModuleGlass-Preview-1.0.0.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / Jailbroken iOS 15+",
+      "version": "1.0.0",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa",
+      "sha256": "50b39fcb855d2a44115b1b5e2c6d0a5ecec68236ab745ce260b736187a4f1143",
+      "notes": "Live companion app for Module Glass Stable Recovery. Provides Control Center preview, Device Live preference/image changes, Darwin reload notifications, and direct Module Glass log viewing."
+    },
     {
       "id": "nextpost-1.0.3-article-preview-fix",
       "name": "Next Post 1.0.3 Article Preview Fix",
@@ -133,17 +144,6 @@
       "type": "tipa",
       "name": "Module Glass Developer Console 1.1.1",
       "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa"
-    },
-    {
-      "sha256": "d1682506fd4d0631b768a66190aa30c8f7eb838a6c8d0270769112c63a9b974d",
-      "id": "module-glass-preview-1.0.0",
-      "fileName": "ModuleGlass-Preview-1.0.0.tipa",
-      "platform": "TrollStore / Jailbroken iOS 15+",
-      "notes": "Live companion app for Module Glass Stable Recovery. Provides Control Center preview, Device Live preference/image changes, Darwin reload notifications, and direct Module Glass log viewing.",
-      "version": "1.0.0",
-      "type": "tipa",
-      "name": "Module Glass Preview 1.0.0",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa"
     },
     {
       "sha256": "9c3616a2cad78211a0c44edf708c3601765c370eaed33f6de6068a9905f7271b",
