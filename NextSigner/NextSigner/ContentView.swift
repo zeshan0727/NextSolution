@@ -23,10 +23,6 @@ private struct SignView: View {
     @ObservedObject var store: SignerStore
     @State private var showsImporter = false
 
-    private var ipaType: UTType {
-        UTType(filenameExtension: "ipa") ?? .data
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -41,12 +37,18 @@ private struct SignView: View {
             .navigationTitle("Next Signer")
             .fileImporter(
                 isPresented: $showsImporter,
-                allowedContentTypes: [ipaType],
+                allowedContentTypes: [.item],
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
                 case let .success(urls):
-                    if let url = urls.first { store.importIPA(from: url) }
+                    guard let url = urls.first else { return }
+                    let ext = url.pathExtension.lowercased()
+                    guard ext == "ipa" || ext == "tipa" else {
+                        store.errorMessage = "Please choose an .ipa or .tipa file."
+                        return
+                    }
+                    store.importIPA(from: url)
                 case let .failure(error):
                     store.errorMessage = error.localizedDescription
                 }
@@ -101,7 +103,7 @@ private struct SignView: View {
                             .font(.system(size: 34))
                         Text("No IPA selected")
                             .font(.headline)
-                        Text("Import an IPA from Files.")
+                        Text("Import an IPA or TIPA from Files.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -112,7 +114,7 @@ private struct SignView: View {
                 Button {
                     showsImporter = true
                 } label: {
-                    Label(store.request.ipaURL == nil ? "Choose IPA" : "Choose Another IPA", systemImage: "folder")
+                    Label(store.request.ipaURL == nil ? "Choose IPA / TIPA" : "Choose Another IPA / TIPA", systemImage: "folder")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
