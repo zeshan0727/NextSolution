@@ -55,7 +55,14 @@ jobs:
             echo "Theos/Clang build failed with status $rc"
             exit "$rc"
           fi
-          DYLIB="$(find .theos -type f -name 'NextDiagnosticsModuleGlassTrace.dylib' -print -quit)"
+          DYLIB=''
+          while IFS= read -r candidate; do
+            archs="$(lipo -archs "$candidate" 2>/dev/null || true)"
+            if [[ " $archs " == *' arm64 '* && " $archs " == *' arm64e '* ]]; then
+              DYLIB="$candidate"
+              break
+            fi
+          done < <(find .theos -type f -name 'NextDiagnosticsModuleGlassTrace.dylib' -print)
           test -n "$DYLIB"
           lipo -archs "$DYLIB" | tee /tmp/archs.txt
           grep -q arm64 /tmp/archs.txt
