@@ -3,6 +3,19 @@
   "updated": "2026-08-18",
   "apps": [
     {
+      "id": "insta-regram",
+      "name": "Insta Regram",
+      "version": "382.0.0",
+      "build": "738721990",
+      "platform": "iPhone",
+      "minimumOS": "iOS 10+",
+      "bundleId": "com.nextsolution.instaregram",
+      "icon": "/install/icons/insta-regram.png",
+      "manifest": "/install/insta-regram.plist",
+      "available": false,
+      "status": "Re-sign once with NS 2 profile"
+    },
+    {
       "id": "next-ledger",
       "name": "Next Ledger",
       "version": "1.0",
