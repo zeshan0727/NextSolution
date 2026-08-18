@@ -113,3 +113,5 @@ jobs:
             ${{ runner.temp }}/NextSigner-1.2.1.ipa
           if-no-files-found: error
           retention-days: 30
+
+# CI trigger: rebuild Next Signer 1.2.1 after Zsign provisioning fix.
