@@ -27,6 +27,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare Zsign bridge sources
+        run: |
+          set -euo pipefail
+          rm -rf NextSigner/Vendor/Zsign-Package
+          git clone --depth 1 --branch package https://github.com/claration/Zsign-Package.git NextSigner/Vendor/Zsign-Package
+          # Upstream's SwiftPM target currently omits this Objective-C++ bridge from the
+          # final C object. Compile the bridge in Next Signer itself. Keep its signature
+          # aligned with swift/zsign.hpp so the Swift wrapper and C bridge agree.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('NextSigner/Vendor/Zsign-Package/swift/zsign.mm')
+          s = p.read_text()
+          s = s.replace('void(^completionHandler)(BOOL success, NSError *error)',
+                        'void(^completionHandler)(BOOL success)')
+          p.write_text(s)
+          PY
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
@@ -57,16 +74,16 @@ jobs:
           mkdir -p "$RUNNER_TEMP/package/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
           cd "$RUNNER_TEMP/package"
-          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.0.ipa" Payload
-          cp "$RUNNER_TEMP/NextSigner-1.0.ipa" "$RUNNER_TEMP/NextSigner-1.0.tipa"
-          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.0.ipa" "$RUNNER_TEMP/NextSigner-1.0.tipa"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.1.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-1.1.ipa" "$RUNNER_TEMP/NextSigner-1.1.tipa"
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.1.ipa" "$RUNNER_TEMP/NextSigner-1.1.tipa"
 
       - name: Upload TIPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextSigner-1.0-TIPA
+          name: NextSigner-1.1-TIPA
           path: |
-            ${{ runner.temp }}/NextSigner-1.0.tipa
-            ${{ runner.temp }}/NextSigner-1.0.ipa
+            ${{ runner.temp }}/NextSigner-1.1.tipa
+            ${{ runner.temp }}/NextSigner-1.1.ipa
           if-no-files-found: error
           retention-days: 30
