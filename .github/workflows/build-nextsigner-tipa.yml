@@ -33,6 +33,9 @@ jobs:
           set -euo pipefail
           rm -rf NextSigner/Vendor/Zsign-Package
           git clone --depth 1 --branch package https://github.com/claration/Zsign-Package.git NextSigner/Vendor/Zsign-Package
+          # The iOS Swift package bridge currently trails the C++ SignFolder API.
+          # Keep the bridge aligned with the current headers and make the optional
+          # completion callback safe. Next Signer also supplies a non-nil callback.
           python3 - <<'PY'
           from pathlib import Path
           p = Path('NextSigner/Vendor/Zsign-Package/swift/zsign.mm')
@@ -78,16 +81,17 @@ jobs:
           mkdir -p "$RUNNER_TEMP/package/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
           cd "$RUNNER_TEMP/package"
-          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.1.3.ipa" Payload
-          cp "$RUNNER_TEMP/NextSigner-1.1.3.ipa" "$RUNNER_TEMP/NextSigner-1.1.3.tipa"
-          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.1.3.ipa" "$RUNNER_TEMP/NextSigner-1.1.3.tipa"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.2.0.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-1.2.0.ipa" "$RUNNER_TEMP/NextSigner-1.2.0.tipa"
+          unzip -t "$RUNNER_TEMP/NextSigner-1.2.0.tipa" >/dev/null
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.2.0.ipa" "$RUNNER_TEMP/NextSigner-1.2.0.tipa"
 
       - name: Upload TIPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextSigner-1.1.3-TIPA
+          name: NextSigner-1.2.0-TIPA
           path: |
-            ${{ runner.temp }}/NextSigner-1.1.3.tipa
-            ${{ runner.temp }}/NextSigner-1.1.3.ipa
+            ${{ runner.temp }}/NextSigner-1.2.0.tipa
+            ${{ runner.temp }}/NextSigner-1.2.0.ipa
           if-no-files-found: error
           retention-days: 30
