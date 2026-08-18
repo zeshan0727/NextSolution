@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: nextdiagnostics-1.0.2-moduleglass-trace
@@ -150,3 +150,35 @@ jobs:
             output/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
+
+      - name: Persist failed compiler log to branch
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-output/NextDiagnostics/1.0.2
+          if [ -f output/build.log ]; then cp output/build.log build-output/NextDiagnostics/1.0.2/build.log; fi
+          if [ -f output/trace-build.strings ]; then cp output/trace-build.strings build-output/NextDiagnostics/1.0.2/trace-build.strings; fi
+          printf 'failure\n' > build-output/NextDiagnostics/1.0.2/status.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f build-output/NextDiagnostics/1.0.2
+          git commit -m 'Store Next Diagnostics 1.0.2 build diagnostics' || true
+          git push origin HEAD:build/nextdiagnostics-1.0.2-moduleglass-trace
+
+      - name: Persist verified package to branch
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-output/NextDiagnostics/1.0.2
+          cp output/NextDiagnosticsRuntime_1.0.2_RootHide.deb build-output/NextDiagnostics/1.0.2/
+          cp output/NextDiagnosticsRuntime_1.0.2_Source.zip build-output/NextDiagnostics/1.0.2/
+          cp output/SHA256SUMS.txt build-output/NextDiagnostics/1.0.2/
+          cp output/build.log build-output/NextDiagnostics/1.0.2/
+          printf 'success\n' > build-output/NextDiagnostics/1.0.2/status.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f build-output/NextDiagnostics/1.0.2
+          git commit -m 'Store verified Next Diagnostics 1.0.2 package' || true
+          git push origin HEAD:build/nextdiagnostics-1.0.2-moduleglass-trace
