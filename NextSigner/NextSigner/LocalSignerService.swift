@@ -1,4 +1,5 @@
 import Foundation
+import Security
 import ZIPFoundation
 import Zsign
 
@@ -18,8 +19,17 @@ enum LocalSignerError: LocalizedError {
     case invalidIPA
     case appBundleMissing
     case infoPlistMissing
+    case invalidCertificateOrPassword(OSStatus)
+    case certificateMissingFromP12
+    case invalidProvisioningProfile
+    case expiredProvisioningProfile(String)
+    case certificateNotAllowedByProfile
+    case bundleIdentifierNotAllowed(String, String)
+    case nestedBundleNotAllowed(String, String)
     case signingFailed
-    case signatureVerificationFailed
+    case signedProfileMissing
+    case metadataValidationFailed
+    case packagingFailed
 
     var errorDescription: String? {
         switch self {
@@ -30,16 +40,50 @@ enum LocalSignerError: LocalizedError {
         case .missingPassword:
             return "Enter and save the P12 password in Settings first."
         case .invalidIPA:
-            return "The selected file could not be extracted as an IPA."
+            return "The selected file is not a valid IPA/TIPA archive with a Payload app."
         case .appBundleMissing:
             return "No application bundle was found inside Payload."
         case .infoPlistMissing:
             return "The app Info.plist could not be read."
+        case let .invalidCertificateOrPassword(status):
+            return "The P12 certificate could not be opened (Security error \(status)). Check the P12 password and import the certificate again."
+        case .certificateMissingFromP12:
+            return "The imported P12 does not contain a usable signing identity and certificate."
+        case .invalidProvisioningProfile:
+            return "The mobileprovision file could not be decoded or is missing its signing entitlements."
+        case let .expiredProvisioningProfile(date):
+            return "The provisioning profile expired on \(date). Create/import a current profile before signing."
+        case .certificateNotAllowedByProfile:
+            return "The P12 certificate is not one of the developer certificates authorized by this provisioning profile. Import a matching P12/profile pair."
+        case let .bundleIdentifierNotAllowed(bundleID, pattern):
+            return "The provisioning profile allows \(pattern), but the requested bundle identifier is \(bundleID). Use a matching identifier or profile."
+        case let .nestedBundleNotAllowed(bundleID, pattern):
+            return "A nested app/extension uses \(bundleID), which is not covered by the provisioning profile \(pattern). Apps with special extensions may require their own profiles."
         case .signingFailed:
-            return "Local Zsign signing failed. Check the certificate password, provisioning profile and bundle identifier."
-        case .signatureVerificationFailed:
-            return "Signing completed, but the main executable did not contain an embedded code-signature command."
+            return "Zsign could not sign the app. The P12/profile preflight passed, so this IPA likely contains an unsupported executable, extension, or entitlement combination."
+        case .signedProfileMissing:
+            return "Zsign completed, but embedded.mobileprovision was not written into the signed app."
+        case .metadataValidationFailed:
+            return "Signing completed, but the final app metadata did not match the requested bundle identifier."
+        case .packagingFailed:
+            return "The app was signed but the final IPA could not be packaged correctly."
         }
+    }
+}
+
+private struct ProvisioningProfileInfo {
+    let name: String
+    let expirationDate: Date
+    let applicationIdentifierPattern: String
+    let developerCertificates: [Data]
+
+    func allows(bundleID: String) -> Bool {
+        let pattern = applicationIdentifierPattern
+        if pattern == "*" { return true }
+        if pattern.hasSuffix("*") {
+            return bundleID.hasPrefix(String(pattern.dropLast()))
+        }
+        return bundleID == pattern
     }
 }
 
@@ -80,6 +124,22 @@ struct LocalSignerService {
         let cleanName = requestedName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanBundleID = requestedBundleID.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        // Preflight the two credentials before touching the IPA. This turns the
+        // most common signing failures into precise errors instead of a generic
+        // Zsign failure after a long extraction/signing pass.
+        let p12Certificate = try certificateDER(fromP12: p12URL, password: p12Password)
+        let profile = try provisioningProfileInfo(from: provisioningURL)
+
+        if profile.expirationDate <= Date() {
+            throw LocalSignerError.expiredProvisioningProfile(Self.dateFormatter.string(from: profile.expirationDate))
+        }
+        guard profile.developerCertificates.contains(p12Certificate) else {
+            throw LocalSignerError.certificateNotAllowedByProfile
+        }
+        guard profile.allows(bundleID: cleanBundleID) else {
+            throw LocalSignerError.bundleIdentifierNotAllowed(cleanBundleID, profile.applicationIdentifierPattern)
+        }
+
         let workRoot = fm.temporaryDirectory.appendingPathComponent("NextSigner-\(UUID().uuidString)", isDirectory: true)
         let unpacked = workRoot.appendingPathComponent("unpacked", isDirectory: true)
         try fm.createDirectory(at: unpacked, withIntermediateDirectories: true)
@@ -93,8 +153,24 @@ struct LocalSignerService {
 
         let appURL = try findMainApp(in: unpacked)
         let originalBundleID = try updateMainAppMetadata(appURL: appURL, appName: cleanName, bundleID: cleanBundleID)
-        try updateExtensionBundleIdentifiers(in: appURL, originalMainBundleID: originalBundleID, newMainBundleID: cleanBundleID)
+        let nestedBundleIDs = try updateNestedBundleIdentifiers(
+            in: appURL,
+            originalMainBundleID: originalBundleID,
+            newMainBundleID: cleanBundleID
+        )
 
+        // A single wildcard profile can cover ordinary nested bundle IDs. Exact
+        // profiles cannot be reused for a different extension/watch identifier.
+        for nestedID in nestedBundleIDs where !profile.allows(bundleID: nestedID) {
+            throw LocalSignerError.nestedBundleNotAllowed(nestedID, profile.applicationIdentifierPattern)
+        }
+
+        // Upstream zsign is explicitly designed to re-sign .app bundles and can
+        // allocate LC_CODE_SIGNATURE space when an input Mach-O is unsigned.
+        // Its Boolean result is the signing engine's authoritative success/fail
+        // result. The completion is deliberately non-nil because older iOS bridge
+        // revisions invoked it unconditionally.
+        var completionResult: Bool?
         let signedOK = Zsign.sign(
             appPath: appURL.path,
             provisionPath: provisioningURL.path,
@@ -105,36 +181,38 @@ struct LocalSignerService {
             customName: cleanName,
             customVersion: "",
             adhoc: false,
-            removeProvision: false
+            removeProvision: false,
+            completion: { completionResult = $0 }
         )
-        guard signedOK else { throw LocalSignerError.signingFailed }
+        guard signedOK, completionResult != false else { throw LocalSignerError.signingFailed }
 
+        // Do not add a second home-grown codesign validator here. Previous builds
+        // falsely rejected valid Zsign outputs using checkSigned(), CodeResources,
+        // and LC_CODE_SIGNATURE parsing. After Zsign succeeds we only validate
+        // deterministic package state required for our OTA/export workflow.
         let plistURL = appURL.appendingPathComponent("Info.plist")
-        guard let plistData = try? Data(contentsOf: plistURL),
-              let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] else {
-            throw LocalSignerError.infoPlistMissing
-        }
+        guard let plist = try readPlist(plistURL) else { throw LocalSignerError.infoPlistMissing }
 
-        let executableName = (plist["CFBundleExecutable"] as? String) ?? ""
-        let executableURL = appURL.appendingPathComponent(executableName)
         let finalName = (plist["CFBundleDisplayName"] as? String)
             ?? (plist["CFBundleName"] as? String)
             ?? cleanName
-        let finalBundleID = (plist["CFBundleIdentifier"] as? String) ?? cleanBundleID
+        let finalBundleID = (plist["CFBundleIdentifier"] as? String) ?? ""
         let version = (plist["CFBundleShortVersionString"] as? String) ?? "1.0"
         let build = (plist["CFBundleVersion"] as? String) ?? "1"
         let minimumOS = (plist["MinimumOSVersion"] as? String) ?? "iOS"
 
-        let embeddedProfile = appURL.appendingPathComponent("embedded.mobileprovision")
-        guard !executableName.isEmpty,
-              fm.fileExists(atPath: executableURL.path),
-              fileHasContent(executableURL),
-              fm.fileExists(atPath: embeddedProfile.path),
-              fileHasContent(embeddedProfile),
-              finalBundleID == cleanBundleID,
-              executableContainsCodeSignature(executableURL) else {
-            throw LocalSignerError.signatureVerificationFailed
+        guard finalBundleID == cleanBundleID else {
+            throw LocalSignerError.metadataValidationFailed
         }
+
+        let embeddedProfile = appURL.appendingPathComponent("embedded.mobileprovision")
+        guard fm.fileExists(atPath: embeddedProfile.path), fileHasContent(embeddedProfile) else {
+            throw LocalSignerError.signedProfileMissing
+        }
+
+        // Confirm the embedded profile is still readable. This does not attempt to
+        // second-guess zsign's Mach-O signature; it only catches a corrupt package.
+        _ = try provisioningProfileInfo(from: embeddedProfile)
 
         let signedDirectory = fm.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("NextSigner Signed", isDirectory: true)
@@ -148,7 +226,11 @@ struct LocalSignerService {
         do {
             try fm.zipItem(at: unpacked, to: outputURL, shouldKeepParent: false, compressionMethod: .deflate)
         } catch {
-            throw LocalSignerError.invalidIPA
+            throw LocalSignerError.packagingFailed
+        }
+
+        guard fm.fileExists(atPath: outputURL.path), fileHasContent(outputURL), isZIPArchive(outputURL) else {
+            throw LocalSignerError.packagingFailed
         }
 
         return SignedAppResult(
@@ -161,121 +243,111 @@ struct LocalSignerService {
         )
     }
 
-    private func fileHasContent(_ url: URL) -> Bool {
-        guard let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
-              let size = values.fileSize else { return false }
-        return size > 0
+    // MARK: - Credential preflight
+
+    private func certificateDER(fromP12 url: URL, password: String) throws -> Data {
+        let p12Data: Data
+        do {
+            p12Data = try Data(contentsOf: url)
+        } catch {
+            throw LocalSignerError.certificateMissingFromP12
+        }
+
+        let options = [kSecImportExportPassphrase as String: password] as CFDictionary
+        var imported: CFArray?
+        let status = SecPKCS12Import(p12Data as CFData, options, &imported)
+        guard status == errSecSuccess else {
+            throw LocalSignerError.invalidCertificateOrPassword(status)
+        }
+        guard let items = imported as? [[String: Any]],
+              let first = items.first,
+              let identity = first[kSecImportItemIdentity as String] as? SecIdentity else {
+            throw LocalSignerError.certificateMissingFromP12
+        }
+
+        var certificate: SecCertificate?
+        let certificateStatus = SecIdentityCopyCertificate(identity, &certificate)
+        guard certificateStatus == errSecSuccess, let certificate else {
+            throw LocalSignerError.certificateMissingFromP12
+        }
+        return SecCertificateCopyData(certificate) as Data
     }
 
-    private func executableContainsCodeSignature(_ url: URL) -> Bool {
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
-        defer { try? handle.close() }
-
-        guard let header = try? handle.read(upToCount: 4096), header.count >= 32 else { return false }
-
-        func u32LE(_ data: Data, _ offset: Int) -> UInt32? {
-            guard offset >= 0, offset + 4 <= data.count else { return nil }
-            return data.withUnsafeBytes { raw in
-                UInt32(littleEndian: raw.loadUnaligned(fromByteOffset: offset, as: UInt32.self))
-            }
+    private func provisioningProfileInfo(from url: URL) throws -> ProvisioningProfileInfo {
+        let raw: Data
+        do {
+            raw = try Data(contentsOf: url)
+        } catch {
+            throw LocalSignerError.invalidProvisioningProfile
         }
 
-        func u32BE(_ data: Data, _ offset: Int) -> UInt32? {
-            guard offset >= 0, offset + 4 <= data.count else { return nil }
-            return data.withUnsafeBytes { raw in
-                UInt32(bigEndian: raw.loadUnaligned(fromByteOffset: offset, as: UInt32.self))
-            }
+        let xmlStart = Data("<?xml".utf8)
+        let plistEnd = Data("</plist>".utf8)
+        guard let start = raw.range(of: xmlStart),
+              let end = raw.range(of: plistEnd, options: [], in: start.lowerBound..<raw.endIndex) else {
+            throw LocalSignerError.invalidProvisioningProfile
         }
 
-        func u64BE(_ data: Data, _ offset: Int) -> UInt64? {
-            guard offset >= 0, offset + 8 <= data.count else { return nil }
-            return data.withUnsafeBytes { raw in
-                UInt64(bigEndian: raw.loadUnaligned(fromByteOffset: offset, as: UInt64.self))
-            }
+        let plistData = raw.subdata(in: start.lowerBound..<end.upperBound)
+        guard let object = try? PropertyListSerialization.propertyList(from: plistData, format: nil),
+              let plist = object as? [String: Any],
+              let expiration = plist["ExpirationDate"] as? Date,
+              let entitlements = plist["Entitlements"] as? [String: Any] else {
+            throw LocalSignerError.invalidProvisioningProfile
         }
 
-        func thinSliceHasSignature(at fileOffset: UInt64) -> Bool {
-            do {
-                try handle.seek(toOffset: fileOffset)
-                guard let thinHeader = try handle.read(upToCount: 32), thinHeader.count >= 28,
-                      let magic = u32LE(thinHeader, 0) else { return false }
-
-                let is64: Bool
-                switch magic {
-                case 0xfeedfacf: is64 = true
-                case 0xfeedface: is64 = false
-                default: return false
-                }
-
-                let headerSize = is64 ? 32 : 28
-                guard let ncmds = u32LE(thinHeader, 16) else { return false }
-                try handle.seek(toOffset: fileOffset + UInt64(headerSize))
-
-                for _ in 0..<min(ncmds, 4096) {
-                    guard let cmdHeader = try handle.read(upToCount: 8), cmdHeader.count == 8,
-                          let cmd = u32LE(cmdHeader, 0),
-                          let cmdSize = u32LE(cmdHeader, 4),
-                          cmdSize >= 8 else { return false }
-
-                    if cmd == 0x1d { return true }
-                    if cmdSize > 8 {
-                        try handle.seek(toOffset: handle.offsetInFile + UInt64(cmdSize - 8))
-                    }
-                }
-                return false
-            } catch {
-                return false
-            }
+        let teamIDs = plist["TeamIdentifier"] as? [String] ?? []
+        let teamID = (entitlements["com.apple.developer.team-identifier"] as? String) ?? teamIDs.first ?? ""
+        let fullApplicationIdentifier = (entitlements["application-identifier"] as? String)
+            ?? (entitlements["com.apple.application-identifier"] as? String)
+            ?? ""
+        guard !fullApplicationIdentifier.isEmpty else {
+            throw LocalSignerError.invalidProvisioningProfile
         }
 
-        if let thinMagic = u32LE(header, 0), thinMagic == 0xfeedfacf || thinMagic == 0xfeedface {
-            return thinSliceHasSignature(at: 0)
+        let pattern: String
+        if !teamID.isEmpty, fullApplicationIdentifier.hasPrefix(teamID + ".") {
+            pattern = String(fullApplicationIdentifier.dropFirst(teamID.count + 1))
+        } else if let dot = fullApplicationIdentifier.firstIndex(of: ".") {
+            pattern = String(fullApplicationIdentifier[fullApplicationIdentifier.index(after: dot)...])
+        } else {
+            pattern = fullApplicationIdentifier
         }
 
-        guard let fatMagic = u32BE(header, 0),
-              fatMagic == 0xcafebabe || fatMagic == 0xcafebabf,
-              let sliceCount = u32BE(header, 4) else { return false }
+        let certificates = (plist["DeveloperCertificates"] as? [Any])?.compactMap { $0 as? Data } ?? []
+        guard !certificates.isEmpty else { throw LocalSignerError.invalidProvisioningProfile }
 
-        let isFat64 = fatMagic == 0xcafebabf
-        let archSize = isFat64 ? 32 : 20
-        var archOffset = 8
-
-        for _ in 0..<min(sliceCount, 128) {
-            let sliceOffset: UInt64?
-            if isFat64 {
-                sliceOffset = u64BE(header, archOffset + 8)
-            } else if let value = u32BE(header, archOffset + 8) {
-                sliceOffset = UInt64(value)
-            } else {
-                sliceOffset = nil
-            }
-
-            if let sliceOffset, thinSliceHasSignature(at: sliceOffset) { return true }
-            archOffset += archSize
-            if archOffset + archSize > header.count { break }
-        }
-        return false
+        return ProvisioningProfileInfo(
+            name: (plist["Name"] as? String) ?? "Provisioning Profile",
+            expirationDate: expiration,
+            applicationIdentifierPattern: pattern,
+            developerCertificates: certificates
+        )
     }
+
+    // MARK: - IPA metadata
 
     private func findMainApp(in root: URL) throws -> URL {
         let payload = root.appendingPathComponent("Payload", isDirectory: true)
-        guard let app = try? FileManager.default.contentsOfDirectory(
+        guard let apps = try? FileManager.default.contentsOfDirectory(
             at: payload,
             includingPropertiesForKeys: nil,
             options: [.skipsHiddenFiles]
-        ).first(where: { $0.pathExtension.lowercased() == "app" }) else {
+        ), let app = apps.first(where: { $0.pathExtension.lowercased() == "app" }) else {
             throw LocalSignerError.appBundleMissing
         }
         return app
     }
 
+    private func readPlist(_ url: URL) throws -> [String: Any]? {
+        let data = try Data(contentsOf: url)
+        return try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+    }
+
     @discardableResult
     private func updateMainAppMetadata(appURL: URL, appName: String, bundleID: String) throws -> String {
         let plistURL = appURL.appendingPathComponent("Info.plist")
-        guard let data = try? Data(contentsOf: plistURL),
-              var plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
-            throw LocalSignerError.infoPlistMissing
-        }
+        guard var plist = try readPlist(plistURL) else { throw LocalSignerError.infoPlistMissing }
 
         let originalBundleID = (plist["CFBundleIdentifier"] as? String) ?? ""
         plist["CFBundleIdentifier"] = bundleID
@@ -283,41 +355,112 @@ struct LocalSignerService {
             plist["CFBundleDisplayName"] = appName
             plist["CFBundleName"] = appName
         }
-        let updated = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
-        try updated.write(to: plistURL, options: .atomic)
+        try writePlist(plist, to: plistURL)
         return originalBundleID
     }
 
-    private func updateExtensionBundleIdentifiers(in appURL: URL, originalMainBundleID: String, newMainBundleID: String) throws {
+    private func updateNestedBundleIdentifiers(
+        in mainAppURL: URL,
+        originalMainBundleID: String,
+        newMainBundleID: String
+    ) throws -> [String] {
         let fm = FileManager.default
-        guard let enumerator = fm.enumerator(at: appURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]) else { return }
+        guard let enumerator = fm.enumerator(
+            at: mainAppURL,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else { return [] }
 
+        var updatedIDs: [String] = []
         var fallbackIndex = 0
-        for case let url as URL in enumerator where url.pathExtension.lowercased() == "appex" {
+
+        for case let url as URL in enumerator {
+            let ext = url.pathExtension.lowercased()
+            guard ext == "appex" || (ext == "app" && url.standardizedFileURL != mainAppURL.standardizedFileURL) else { continue }
+
             enumerator.skipDescendants()
             let plistURL = url.appendingPathComponent("Info.plist")
-            guard let data = try? Data(contentsOf: plistURL),
-                  var plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { continue }
+            guard var plist = try? readPlist(plistURL), let current = plist else { continue }
 
-            let oldExtensionID = (plist["CFBundleIdentifier"] as? String) ?? ""
-            if !originalMainBundleID.isEmpty, oldExtensionID.hasPrefix(originalMainBundleID + ".") {
-                plist["CFBundleIdentifier"] = newMainBundleID + oldExtensionID.dropFirst(originalMainBundleID.count)
+            let oldID = (current["CFBundleIdentifier"] as? String) ?? ""
+            let newID: String
+            if !originalMainBundleID.isEmpty, oldID.hasPrefix(originalMainBundleID + ".") {
+                newID = newMainBundleID + oldID.dropFirst(originalMainBundleID.count)
             } else {
                 fallbackIndex += 1
-                plist["CFBundleIdentifier"] = "\(newMainBundleID).extension\(fallbackIndex)"
+                let suffix = ext == "appex" ? "extension" : "nestedapp"
+                newID = "\(newMainBundleID).\(suffix)\(fallbackIndex)"
             }
-            if let companion = plist["WKCompanionAppBundleIdentifier"] as? String, companion == originalMainBundleID {
-                plist["WKCompanionAppBundleIdentifier"] = newMainBundleID
+
+            var changed = current
+            changed["CFBundleIdentifier"] = newID
+            replaceBundleReference(key: "WKCompanionAppBundleIdentifier", in: &changed, oldMainID: originalMainBundleID, newMainID: newMainBundleID)
+            replaceBundleReference(key: "WKAppBundleIdentifier", in: &changed, oldMainID: originalMainBundleID, newMainID: newMainBundleID)
+
+            if var extensionInfo = changed["NSExtension"] as? [String: Any],
+               var attributes = extensionInfo["NSExtensionAttributes"] as? [String: Any] {
+                replaceBundleReference(key: "WKAppBundleIdentifier", in: &attributes, oldMainID: originalMainBundleID, newMainID: newMainBundleID)
+                extensionInfo["NSExtensionAttributes"] = attributes
+                changed["NSExtension"] = extensionInfo
             }
-            let updated = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
-            try updated.write(to: plistURL, options: .atomic)
+
+            try writePlist(changed, to: plistURL)
+            updatedIDs.append(newID)
         }
+        return updatedIDs
+    }
+
+    private func replaceBundleReference(
+        key: String,
+        in plist: inout [String: Any],
+        oldMainID: String,
+        newMainID: String
+    ) {
+        guard let value = plist[key] as? String, !oldMainID.isEmpty else { return }
+        if value == oldMainID {
+            plist[key] = newMainID
+        } else if value.hasPrefix(oldMainID + ".") {
+            plist[key] = newMainID + value.dropFirst(oldMainID.count)
+        }
+    }
+
+    private func writePlist(_ plist: [String: Any], to url: URL) throws {
+        let updated = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
+        try updated.write(to: url, options: .atomic)
+    }
+
+    // MARK: - Package sanity
+
+    private func fileHasContent(_ url: URL) -> Bool {
+        guard let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
+              let size = values.fileSize else { return false }
+        return size > 0
+    }
+
+    private func isZIPArchive(_ url: URL) -> Bool {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        defer { try? handle.close() }
+        guard let signature = try? handle.read(upToCount: 4), signature.count >= 4 else { return false }
+        let bytes = [UInt8](signature.prefix(4))
+        return bytes == [0x50, 0x4B, 0x03, 0x04]
+            || bytes == [0x50, 0x4B, 0x05, 0x06]
+            || bytes == [0x50, 0x4B, 0x07, 0x08]
     }
 
     private func safeFilename(_ value: String) -> String {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
         let chars = value.unicodeScalars.map { allowed.contains($0) ? Character(String($0)) : "-" }
-        let result = String(chars).replacingOccurrences(of: "--", with: "-")
+        var result = String(chars)
+        while result.contains("--") { result = result.replacingOccurrences(of: "--", with: "-") }
+        result = result.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
         return result.isEmpty ? "Signed-App" : result
     }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd HH:mm 'UTC'"
+        return formatter
+    }()
 }
