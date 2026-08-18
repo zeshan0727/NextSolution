@@ -44,20 +44,39 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/output"
           cd source/NextDiagnosticsRuntime/1.0.2
           make clean
-          make FINALPACKAGE=1
+          set +e
+          make FINALPACKAGE=1 2>&1 | tee "$GITHUB_WORKSPACE/output/build.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "Theos/Clang build failed with status $rc"
+            exit "$rc"
+          fi
           DYLIB="$(find .theos -type f -name 'NextDiagnosticsModuleGlassTrace.dylib' -print -quit)"
           test -n "$DYLIB"
           lipo -archs "$DYLIB" | tee /tmp/archs.txt
           grep -q arm64 /tmp/archs.txt
           grep -q arm64e /tmp/archs.txt
-          strings "$DYLIB" | grep -Fq 'MODULE_GLASS_CAPTURE_ARMED'
-          strings "$DYLIB" | grep -Fq 'SEND_EVENT_ENTER'
-          strings "$DYLIB" | grep -Fq 'MAIN_STALL'
-          strings "$DYLIB" | grep -Fq 'VIEW_SNAPSHOT'
-          mkdir -p ../../../output
-          cp "$DYLIB" ../../../output/NextDiagnosticsModuleGlassTrace.dylib
+          strings "$DYLIB" > "$GITHUB_WORKSPACE/output/trace-build.strings"
+          grep -Fq 'MODULE_GLASS_CAPTURE_ARMED' "$GITHUB_WORKSPACE/output/trace-build.strings"
+          grep -Fq 'SEND_EVENT_ENTER' "$GITHUB_WORKSPACE/output/trace-build.strings"
+          grep -Fq 'MAIN_STALL' "$GITHUB_WORKSPACE/output/trace-build.strings"
+          grep -Fq 'VIEW_SNAPSHOT' "$GITHUB_WORKSPACE/output/trace-build.strings"
+          cp "$DYLIB" "$GITHUB_WORKSPACE/output/NextDiagnosticsModuleGlassTrace.dylib"
+
+      - name: Upload raw build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextDiagnostics-1.0.2-build-log-${{ github.run_attempt }}
+          path: |
+            output/build.log
+            output/trace-build.strings
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Repackage exact 1.0.1 runtime as 1.0.2 plus trace probe
         shell: bash
