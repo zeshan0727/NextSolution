@@ -4,7 +4,7 @@ struct PostComposer {
     static let maximumCharacters = 280
 
     func compose(for article: PublishedArticle) -> String {
-        let link = article.cleanURL.absoluteString
+        let link = article.socialShareURL.absoluteString
         var tags = hashtags(for: article)
         var header = "🚀 \(clean(article.title))"
 
