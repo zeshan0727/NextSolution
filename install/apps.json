@@ -43,7 +43,7 @@
       "available" : true,
       "build" : "2",
       "bundleId" : "com.nextsolution.ksign",
-      "icon" : "/logo.png",
+      "icon" : "https://raw.githubusercontent.com/Nyasami/Ksign/03a3a9c86897d79f9faf8106037b9971841d56a0/Ksign/Resources/Assets.xcassets/AppIcon.appiconset/Ksign-default.png",
       "id" : "ksign",
       "manifest" : "/install/manifests/ksign.plist",
       "minimumOS" : "iOS 16.0+",
