@@ -21,13 +21,11 @@ struct GitHubConfiguration: Equatable {
     var owner: String = "zeshan0727"
     var repository: String = "NextSolution"
     var branch: String = "main"
-    var workflowFile: String = "nextsigner-sign-publish.yml"
 
     var isValid: Bool {
         !owner.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !repository.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !branch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !workflowFile.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !branch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 
@@ -41,8 +39,10 @@ struct SigningJob: Identifiable, Equatable {
 
     enum Stage: String {
         case preparing = "Preparing"
+        case signing = "Signing"
+        case signed = "Signed"
         case uploading = "Uploading"
-        case queued = "Queued"
+        case published = "Published"
         case failed = "Failed"
     }
 }
@@ -64,9 +64,12 @@ enum NextSignerError: LocalizedError {
         case .invalidResponse:
             return "GitHub returned an invalid response."
         case let .http(code, message):
+            if code == 403 {
+                return "GitHub error 403: \(message). Use a fine-grained token that has access to the NextSolution repository with Contents set to Read and write."
+            }
             return "GitHub error \(code): \(message)"
         case .uploadFailed:
-            return "The IPA could not be uploaded."
+            return "The signed IPA could not be uploaded."
         case .malformedURL:
             return "A GitHub API URL could not be created."
         }
