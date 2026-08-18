@@ -29,6 +29,28 @@ struct PublishedArticle: Decodable, Identifiable, Hashable {
         return URL(string: "https://nextsolution.cc/\(withoutHTML)/")!
     }
 
+    /// Dedicated sharing URL for X/Twitter cards.
+    ///
+    /// The article keeps its clean canonical route, while a small query string
+    /// gives X a fresh crawl target when a card image has previously been
+    /// cached. The website still declares the clean article URL as canonical.
+    var socialShareURL: URL {
+        guard var components = URLComponents(url: cleanURL, resolvingAgainstBaseURL: false) else {
+            return cleanURL
+        }
+
+        var items = components.queryItems ?? []
+        items.removeAll { ["utm_source", "utm_medium", "utm_campaign", "v"].contains($0.name) }
+        items.append(URLQueryItem(name: "utm_source", value: "nextpost"))
+        items.append(URLQueryItem(name: "utm_medium", value: "x"))
+        items.append(URLQueryItem(name: "utm_campaign", value: "article_share"))
+        if let version, !version.isEmpty {
+            items.append(URLQueryItem(name: "v", value: version))
+        }
+        components.queryItems = items
+        return components.url ?? cleanURL
+    }
+
     private static func cleaned(url: URL) -> URL {
         var value = url.absoluteString
         if value.hasSuffix(".html") {
