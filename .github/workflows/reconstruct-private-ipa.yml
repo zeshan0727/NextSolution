@@ -1,0 +1,37 @@
+name: Publish Private IPA
+
+on:
+  push:
+    paths:
+      - 'install/upload_parts/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat install/upload_parts/part-* > /tmp/nextledger.b64
+          base64 --decode /tmp/nextledger.b64 > install/NextLedger-1.0.ipa
+          echo "929e28a33a8f91e82b028b04109bfcd4ff13af64caeab6bac99fcfd473fd9940  install/NextLedger-1.0.ipa" | sha256sum -c -
+          rm -rf install/upload_parts
+
+      - name: Commit IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add install/NextLedger-1.0.ipa install/upload_parts
+          git commit -m "Publish signed Next Ledger private IPA"
+          git push
