@@ -125,10 +125,6 @@ struct LocalSignerService {
         let build = (plist["CFBundleVersion"] as? String) ?? "1"
         let minimumOS = (plist["MinimumOSVersion"] as? String) ?? "iOS"
 
-        // Zsign's own signing result is authoritative. For the post-sign guard,
-        // validate the artifacts that matter to iOS installation without requiring
-        // _CodeSignature/CodeResources (some third-party IPAs do not end up with that
-        // file even though the Mach-O executable has a valid LC_CODE_SIGNATURE).
         let embeddedProfile = appURL.appendingPathComponent("embedded.mobileprovision")
         guard !executableName.isEmpty,
               fm.fileExists(atPath: executableURL.path),
@@ -171,13 +167,11 @@ struct LocalSignerService {
         return size > 0
     }
 
-    /// Lightweight Mach-O validation used after Zsign succeeds.
-    /// Confirms at least one executable slice advertises LC_CODE_SIGNATURE.
     private func executableContainsCodeSignature(_ url: URL) -> Bool {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
         defer { try? handle.close() }
 
-        guard let header = try? handle.read(upToCount: 4096), let header, header.count >= 32 else { return false }
+        guard let header = try? handle.read(upToCount: 4096), header.count >= 32 else { return false }
 
         func u32LE(_ data: Data, _ offset: Int) -> UInt32? {
             guard offset >= 0, offset + 4 <= data.count else { return nil }
@@ -203,7 +197,7 @@ struct LocalSignerService {
         func thinSliceHasSignature(at fileOffset: UInt64) -> Bool {
             do {
                 try handle.seek(toOffset: fileOffset)
-                guard let thinHeader = try handle.read(upToCount: 32), let thinHeader, thinHeader.count >= 28,
+                guard let thinHeader = try handle.read(upToCount: 32), thinHeader.count >= 28,
                       let magic = u32LE(thinHeader, 0) else { return false }
 
                 let is64: Bool
@@ -218,12 +212,12 @@ struct LocalSignerService {
                 try handle.seek(toOffset: fileOffset + UInt64(headerSize))
 
                 for _ in 0..<min(ncmds, 4096) {
-                    guard let cmdHeader = try handle.read(upToCount: 8), let cmdHeader, cmdHeader.count == 8,
+                    guard let cmdHeader = try handle.read(upToCount: 8), cmdHeader.count == 8,
                           let cmd = u32LE(cmdHeader, 0),
                           let cmdSize = u32LE(cmdHeader, 4),
                           cmdSize >= 8 else { return false }
 
-                    if cmd == 0x1d { return true } // LC_CODE_SIGNATURE
+                    if cmd == 0x1d { return true }
                     if cmdSize > 8 {
                         try handle.seek(toOffset: handle.offsetInFile + UInt64(cmdSize - 8))
                     }
@@ -234,12 +228,10 @@ struct LocalSignerService {
             }
         }
 
-        // Thin 32/64-bit Mach-O.
         if let thinMagic = u32LE(header, 0), thinMagic == 0xfeedfacf || thinMagic == 0xfeedface {
             return thinSliceHasSignature(at: 0)
         }
 
-        // Universal/fat binaries use big-endian fat headers.
         guard let fatMagic = u32BE(header, 0),
               fatMagic == 0xcafebabe || fatMagic == 0xcafebabf,
               let sliceCount = u32BE(header, 4) else { return false }
