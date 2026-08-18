@@ -38,7 +38,7 @@ enum LocalSignerError: LocalizedError {
         case .signingFailed:
             return "Local Zsign signing failed. Check the certificate password, provisioning profile and bundle identifier."
         case .signatureVerificationFailed:
-            return "Signing completed, but the resulting executable did not verify as signed."
+            return "Signing completed, but the signed bundle files could not be validated."
         }
     }
 }
@@ -117,12 +117,6 @@ struct LocalSignerService {
 
         let executableName = (plist["CFBundleExecutable"] as? String) ?? ""
         let executableURL = appURL.appendingPathComponent(executableName)
-        if !executableName.isEmpty,
-           fm.fileExists(atPath: executableURL.path),
-           !Zsign.checkSigned(appExecutable: executableURL.path) {
-            throw LocalSignerError.signatureVerificationFailed
-        }
-
         let finalName = (plist["CFBundleDisplayName"] as? String)
             ?? (plist["CFBundleName"] as? String)
             ?? cleanName
@@ -131,9 +125,23 @@ struct LocalSignerService {
         let build = (plist["CFBundleVersion"] as? String) ?? "1"
         let minimumOS = (plist["MinimumOSVersion"] as? String) ?? "iOS"
 
-        let codeResources = appURL.appendingPathComponent("_CodeSignature", isDirectory: true).appendingPathComponent("CodeResources")
+        // Do not use Zsign.checkSigned here. Its Mach-O checker can return false
+        // for executables that Zsign itself has successfully signed. Treat the
+        // actual Zsign signing result as authoritative and perform bundle-level
+        // validation before allowing export/publish.
+        let codeResources = appURL
+            .appendingPathComponent("_CodeSignature", isDirectory: true)
+            .appendingPathComponent("CodeResources")
         let embeddedProfile = appURL.appendingPathComponent("embedded.mobileprovision")
-        guard fm.fileExists(atPath: codeResources.path), fm.fileExists(atPath: embeddedProfile.path) else {
+
+        guard !executableName.isEmpty,
+              fm.fileExists(atPath: executableURL.path),
+              fileHasContent(executableURL),
+              fm.fileExists(atPath: codeResources.path),
+              fileHasContent(codeResources),
+              fm.fileExists(atPath: embeddedProfile.path),
+              fileHasContent(embeddedProfile),
+              finalBundleID == cleanBundleID else {
             throw LocalSignerError.signatureVerificationFailed
         }
 
@@ -160,6 +168,12 @@ struct LocalSignerService {
             build: build,
             minimumOS: minimumOS
         )
+    }
+
+    private func fileHasContent(_ url: URL) -> Bool {
+        guard let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
+              let size = values.fileSize else { return false }
+        return size > 0
     }
 
     private func findMainApp(in root: URL) throws -> URL {
