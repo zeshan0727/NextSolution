@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/publish-nextpost-transfer.yml'
+      - 'applications/NextPost-1.0.3-Article-Preview-Fix.tipa'
 
 permissions:
   contents: write
@@ -27,9 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SRC='applications/NextPost-1.0.0.tipa'
-          DEST_DIR='transfer/files/NextPost/1.0.0'
-          DEST="$DEST_DIR/NextPost-1.0.0.tipa"
+          SRC='applications/NextPost-1.0.3-Article-Preview-Fix.tipa'
+          DEST_DIR='transfer/files/NextPost/1.0.3'
+          DEST="$DEST_DIR/NextPost-1.0.3-Article-Preview-Fix.tipa"
           INDEX='transfer/index.json'
 
           test -s "$SRC"
@@ -48,18 +48,18 @@ jobs:
           index_path = Path('transfer/index.json')
           data = json.loads(index_path.read_text())
           files = data.get('files', [])
-          entry_id = 'nextpost-1.0.0'
+          entry_id = 'nextpost-1.0.3-article-preview-fix'
           files = [item for item in files if item.get('id') != entry_id]
           entry = {
               'id': entry_id,
-              'name': 'Next Post 1.0.0',
-              'fileName': 'NextPost-1.0.0.tipa',
+              'name': 'Next Post 1.0.3 Article Preview Fix',
+              'fileName': 'NextPost-1.0.3-Article-Preview-Fix.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
-              'version': '1.0.0',
-              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.0/NextPost-1.0.0.tipa',
+              'version': '1.0.3',
+              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.3/NextPost-1.0.3-Article-Preview-Fix.tipa',
               'sha256': os.environ['SHA256'],
-              'notes': 'Next Solution X post generator. Pulls automated articles from nextsolution.cc, generates non-repeating X-ready posts with article link, SEO-focused descriptions and hashtags, supports copy, Open in X, source article access, and persistent generated-post counters.'
+              'notes': 'Fixes X/Twitter link cards so generated posts request the article-specific preview instead of the generic Next Solution image. Uses a cache-busting social share URL while keeping the clean canonical article route. Ads are not included in this build.'
           }
           data['files'] = [entry] + files
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -67,7 +67,7 @@ jobs:
           PY
 
           python3 -m json.tool "$INDEX" >/dev/null
-          grep -q 'nextpost-1.0.0' "$INDEX"
+          grep -q 'nextpost-1.0.3-article-preview-fix' "$INDEX"
           grep -q "$SHA256" "$INDEX"
           test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
 
@@ -77,7 +77,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add transfer/files/NextPost/1.0.0/NextPost-1.0.0.tipa transfer/index.json
-          git commit -m 'Publish Next Post 1.0.0 to Transfer' || true
+          git add transfer/files/NextPost/1.0.3/NextPost-1.0.3-Article-Preview-Fix.tipa transfer/index.json
+          git commit -m 'Publish Next Post 1.0.3 article preview fix to Transfer' || true
           git pull --rebase origin main
           git push origin HEAD:main
