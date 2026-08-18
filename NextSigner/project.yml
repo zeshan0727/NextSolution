@@ -25,7 +25,6 @@ targets:
     platform: iOS
     sources:
       - path: NextSigner
-      - path: Vendor/Zsign-Package/swift/zsign.mm
     dependencies:
       - package: Zsign
         product: Zsign
