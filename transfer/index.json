@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-18T13:54:51Z",
+  "updatedAt": "2026-08-18T14:09:56Z",
   "files": [
+    {
+      "id": "nextpost-1.0.3-article-preview-fix",
+      "name": "Next Post 1.0.3 Article Preview Fix",
+      "fileName": "NextPost-1.0.3-Article-Preview-Fix.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.3",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.3/NextPost-1.0.3-Article-Preview-Fix.tipa",
+      "sha256": "73079b9bd67fd6a49e4ab70036c4a7a1616db5183c308090eea886ad0e97bd06",
+      "notes": "Fixes X/Twitter link cards so generated posts request the article-specific preview instead of the generic Next Solution image. Uses a cache-busting social share URL while keeping the clean canonical article route. Ads are not included in this build."
+    },
     {
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
