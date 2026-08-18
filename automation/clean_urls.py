@@ -29,6 +29,11 @@ META_IMAGE_RE_REVERSED = re.compile(
     r"(?P<prefix><meta\s+[^>]*content=[\"'])(?P<url>[^\"']+)(?P<middle>[\"'][^>]*(?:property|name)=[\"'](?:og:image|twitter:image)[\"'][^>]*>)",
     re.IGNORECASE,
 )
+JSON_LD_IMAGE_RE = re.compile(r'"image"\s*:\s*"(?P<url>https://[^"\\]+)"', re.IGNORECASE)
+ARTICLE_HERO_IMAGE_RE = re.compile(
+    r'<figure\s+class=[\"\'][^\"\']*article-visual[^\"\']*[\"\'][^>]*>.*?<img\s+[^>]*src=[\"\'](?P<url>https://[^\"\']+)[\"\']',
+    re.IGNORECASE | re.DOTALL,
+)
 REDIRECT_MARKER = "data-clean-url-redirect"
 REDIRECT_SCRIPT = """  <script data-clean-url-redirect>\n    (function () {\n      var path = window.location.pathname;\n      if (/\\.html$/i.test(path) && path.toLowerCase() !== '/index.html') {\n        window.location.replace(path.slice(0, -5) + '/' + window.location.search + window.location.hash);\n      }\n    }());\n  </script>\n"""
 
@@ -116,27 +121,61 @@ def rewrite_absolute_page_urls(text: str, pages: set[str]) -> str:
 
 def social_image_is_safe(url: str) -> bool:
     parsed = urlsplit(url)
-    return (
-        parsed.scheme == "https"
-        and parsed.netloc.lower() in {"nextsolution.cc", "www.nextsolution.cc"}
-        and parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
-    )
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
+        return False
+
+    host = parsed.netloc.lower()
+    if host in {"nextsolution.cc", "www.nextsolution.cc"}:
+        return parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
+
+    # Havoc serves package screenshots from extensionless HTTPS media URLs.
+    # Those are valid Open Graph/Twitter card images and should not be replaced
+    # by the generic Next Solution brand image.
+    if host == "media.havoc.app":
+        return True
+
+    # Preserve other attributable external raster images when the URL itself
+    # clearly identifies a supported image format.
+    return parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
+
+
+def preferred_social_image(text: str) -> str | None:
+    """Recover the article-specific image from structured data or the hero.
+
+    Older clean-url runs replaced external OG/Twitter images with the generic
+    Next Solution showcase image. The original article image is still present
+    in JSON-LD and/or the authentic article hero, so use it to restore cards.
+    """
+    for pattern in (JSON_LD_IMAGE_RE, ARTICLE_HERO_IMAGE_RE):
+        match = pattern.search(text)
+        if match:
+            candidate = match.group("url")
+            if social_image_is_safe(candidate):
+                return candidate
+    return None
 
 
 def stabilize_social_images(text: str) -> str:
-    def repl(match: re.Match[str]) -> str:
-        url = match.group("url")
+    article_image = preferred_social_image(text)
+
+    def replacement_for(url: str) -> str:
+        if social_image_is_safe(url) and url != SOCIAL_IMAGE:
+            return url
+        if article_image:
+            return article_image
         if social_image_is_safe(url):
-            return match.group(0)
-        return f"{match.group('prefix')}{SOCIAL_IMAGE}{match.group('suffix')}"
+            return url
+        return SOCIAL_IMAGE
+
+    def repl(match: re.Match[str]) -> str:
+        url = replacement_for(match.group("url"))
+        return f"{match.group('prefix')}{url}{match.group('suffix')}"
 
     text = META_IMAGE_RE.sub(repl, text)
 
     def repl_reversed(match: re.Match[str]) -> str:
-        url = match.group("url")
-        if social_image_is_safe(url):
-            return match.group(0)
-        return f"{match.group('prefix')}{SOCIAL_IMAGE}{match.group('middle')}"
+        url = replacement_for(match.group("url"))
+        return f"{match.group('prefix')}{url}{match.group('middle')}"
 
     return META_IMAGE_RE_REVERSED.sub(repl_reversed, text)
 
