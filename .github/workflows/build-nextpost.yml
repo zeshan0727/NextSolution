@@ -23,11 +23,16 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Select Xcode 26.3
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+          xcodebuild -version
 
       - name: Install XcodeGen and icon renderer
         run: brew install xcodegen librsvg
@@ -62,8 +67,8 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.0.tipa
-          shasum -a 256 NextPost-1.0.0.tipa > NextPost-1.0.0.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.1-LevelPlay-Test.tipa
+          shasum -a 256 NextPost-1.0.1-LevelPlay-Test.tipa > NextPost-1.0.1-LevelPlay-Test.sha256
 
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
@@ -73,28 +78,28 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextPost-1.0.0
+          name: NextPost-1.0.1-LevelPlay-Test
           path: |
-            NextPost-1.0.0.tipa
-            NextPost-1.0.0.sha256
+            NextPost-1.0.1-LevelPlay-Test.tipa
+            NextPost-1.0.1-LevelPlay-Test.sha256
           if-no-files-found: error
 
       - name: Publish TIPA to repository
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p applications
-          cp NextPost-1.0.0.tipa applications/NextPost-1.0.0.tipa
-          cp NextPost-1.0.0.sha256 applications/NextPost-1.0.0.sha256
+          cp NextPost-1.0.1-LevelPlay-Test.tipa applications/NextPost-1.0.1-LevelPlay-Test.tipa
+          cp NextPost-1.0.1-LevelPlay-Test.sha256 applications/NextPost-1.0.1-LevelPlay-Test.sha256
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add applications/NextPost-1.0.0.tipa applications/NextPost-1.0.0.sha256
+          git add applications/NextPost-1.0.1-LevelPlay-Test.tipa applications/NextPost-1.0.1-LevelPlay-Test.sha256
 
           if git diff --cached --quiet; then
-            echo "Next Post build is already published."
+            echo "Next Post LevelPlay test build is already published."
             exit 0
           fi
 
-          git commit -m "Publish Next Post 1.0.0 TIPA"
+          git commit -m "Publish Next Post 1.0.1 LevelPlay test TIPA"
           git pull --rebase origin main
           git push origin HEAD:main
