@@ -80,16 +80,16 @@ jobs:
           mkdir -p "$RUNNER_TEMP/package/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
           cd "$RUNNER_TEMP/package"
-          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.1.1.ipa" Payload
-          cp "$RUNNER_TEMP/NextSigner-1.1.1.ipa" "$RUNNER_TEMP/NextSigner-1.1.1.tipa"
-          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.1.1.ipa" "$RUNNER_TEMP/NextSigner-1.1.1.tipa"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.1.2.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-1.1.2.ipa" "$RUNNER_TEMP/NextSigner-1.1.2.tipa"
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.1.2.ipa" "$RUNNER_TEMP/NextSigner-1.1.2.tipa"
 
       - name: Upload TIPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextSigner-1.1.1-TIPA
+          name: NextSigner-1.1.2-TIPA
           path: |
-            ${{ runner.temp }}/NextSigner-1.1.1.tipa
-            ${{ runner.temp }}/NextSigner-1.1.1.ipa
+            ${{ runner.temp }}/NextSigner-1.1.2.tipa
+            ${{ runner.temp }}/NextSigner-1.1.2.ipa
           if-no-files-found: error
           retention-days: 30
