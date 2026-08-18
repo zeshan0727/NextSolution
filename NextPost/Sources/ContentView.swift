@@ -23,6 +23,7 @@ struct ContentView: View {
                     generateButton
                     resultBox
                     actionButtons
+                    adBanner
                     sourceFooter
                 }
                 .padding(.horizontal, 18)
@@ -232,6 +233,20 @@ struct ContentView: View {
         }
         .buttonStyle(.plain)
         .opacity(store.generatedPost.isEmpty ? 0.55 : 1)
+    }
+
+    private var adBanner: some View {
+        VStack(spacing: 5) {
+            Text("ADVERTISEMENT")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.tertiary)
+            LevelPlayBannerView()
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .clipped()
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Advertisement")
     }
 
     private var sourceFooter: some View {
