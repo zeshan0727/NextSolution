@@ -22,11 +22,11 @@
       "build": "1",
       "platform": "iPhone",
       "minimumOS": "iOS 16+",
-      "bundleId": "com.nextsolution.nextledger",
+      "bundleId": "com.nextsolution.nextledgernn",
       "icon": "/DailyLedger/Assets.xcassets/AppIcon.appiconset/icon-180.png",
       "manifest": "/install/next-ledger.plist",
       "available": false,
-      "status": "Waiting for signed IPA"
+      "status": "Signed build verified — upload pending"
     }
   ]
 }
