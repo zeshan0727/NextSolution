@@ -1,0 +1,79 @@
+name: Build Next Ledger App Store Test IPA
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release/next-ledger-appstore-1.0
+    paths:
+      - ".github/workflows/build-next-ledger-appstore-test-ipa.yml"
+      - "DailyLedger/**"
+      - "project.yml"
+      - "AppStore/verify_appstore_source.sh"
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify App Store source
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x AppStore/verify_appstore_source.sh
+          AppStore/verify_appstore_source.sh
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild \
+            -project DailyLedger.xcodeproj \
+            -scheme DailyLedger \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build/xcodebuild.log
+
+      - name: Package unsigned IPA for ESign
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          /usr/bin/zip -qry NextLedger-1.0-AppStore-Test-Unsigned.ipa Payload
+          shasum -a 256 NextLedger-1.0-AppStore-Test-Unsigned.ipa > NextLedger-1.0-AppStore-Test-Unsigned.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-1.0-AppStore-Test-Unsigned
+          path: |
+            NextLedger-1.0-AppStore-Test-Unsigned.ipa
+            NextLedger-1.0-AppStore-Test-Unsigned.sha256
+          if-no-files-found: error
+
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-1.0-AppStore-Test-Diagnostics
+          path: build/xcodebuild.log
+          if-no-files-found: warn
