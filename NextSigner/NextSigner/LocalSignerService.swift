@@ -124,9 +124,8 @@ struct LocalSignerService {
         let cleanName = requestedName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanBundleID = requestedBundleID.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Preflight the two credentials before touching the IPA. This turns the
-        // most common signing failures into precise errors instead of a generic
-        // Zsign failure after a long extraction/signing pass.
+        // Validate the P12/profile pair up front so configuration problems are
+        // reported before extraction/signing instead of as misleading signature errors.
         let p12Certificate = try certificateDER(fromP12: p12URL, password: p12Password)
         let profile = try provisioningProfileInfo(from: provisioningURL)
 
@@ -159,17 +158,14 @@ struct LocalSignerService {
             newMainBundleID: cleanBundleID
         )
 
-        // A single wildcard profile can cover ordinary nested bundle IDs. Exact
-        // profiles cannot be reused for a different extension/watch identifier.
         for nestedID in nestedBundleIDs where !profile.allows(bundleID: nestedID) {
             throw LocalSignerError.nestedBundleNotAllowed(nestedID, profile.applicationIdentifierPattern)
         }
 
-        // Upstream zsign is explicitly designed to re-sign .app bundles and can
-        // allocate LC_CODE_SIGNATURE space when an input Mach-O is unsigned.
-        // Its Boolean result is the signing engine's authoritative success/fail
-        // result. The completion is deliberately non-nil because older iOS bridge
-        // revisions invoked it unconditionally.
+        // Upstream zsign supports signing an unsigned app/Mach-O and can allocate
+        // code-signature space itself. Its return value is the signing authority.
+        // Do not second-guess a successful sign with checkSigned(), CodeResources,
+        // or a custom LC_CODE_SIGNATURE parser; those caused false failures.
         var completionResult: Bool?
         let signedOK = Zsign.sign(
             appPath: appURL.path,
@@ -186,10 +182,8 @@ struct LocalSignerService {
         )
         guard signedOK, completionResult != false else { throw LocalSignerError.signingFailed }
 
-        // Do not add a second home-grown codesign validator here. Previous builds
-        // falsely rejected valid Zsign outputs using checkSigned(), CodeResources,
-        // and LC_CODE_SIGNATURE parsing. After Zsign succeeds we only validate
-        // deterministic package state required for our OTA/export workflow.
+        // Post-sign checks intentionally validate package state only. Zsign already
+        // performed the Mach-O signing operation.
         let plistURL = appURL.appendingPathComponent("Info.plist")
         guard let plist = try readPlist(plistURL) else { throw LocalSignerError.infoPlistMissing }
 
@@ -209,10 +203,6 @@ struct LocalSignerService {
         guard fm.fileExists(atPath: embeddedProfile.path), fileHasContent(embeddedProfile) else {
             throw LocalSignerError.signedProfileMissing
         }
-
-        // Confirm the embedded profile is still readable. This does not attempt to
-        // second-guess zsign's Mach-O signature; it only catches a corrupt package.
-        _ = try provisioningProfileInfo(from: embeddedProfile)
 
         let signedDirectory = fm.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("NextSigner Signed", isDirectory: true)
@@ -261,9 +251,15 @@ struct LocalSignerService {
         }
         guard let items = imported as? [[String: Any]],
               let first = items.first,
-              let identity = first[kSecImportItemIdentity as String] as? SecIdentity else {
+              let identityValue = first[kSecImportItemIdentity as String] else {
             throw LocalSignerError.certificateMissingFromP12
         }
+
+        let cfIdentity = identityValue as CFTypeRef
+        guard CFGetTypeID(cfIdentity) == SecIdentityGetTypeID() else {
+            throw LocalSignerError.certificateMissingFromP12
+        }
+        let identity = unsafeBitCast(cfIdentity, to: SecIdentity.self)
 
         var certificate: SecCertificate?
         let certificateStatus = SecIdentityCopyCertificate(identity, &certificate)
@@ -380,7 +376,7 @@ struct LocalSignerService {
 
             enumerator.skipDescendants()
             let plistURL = url.appendingPathComponent("Info.plist")
-            guard var plist = try? readPlist(plistURL), let current = plist else { continue }
+            guard let current = try? readPlist(plistURL) else { continue }
 
             let oldID = (current["CFBundleIdentifier"] as? String) ?? ""
             let newID: String
