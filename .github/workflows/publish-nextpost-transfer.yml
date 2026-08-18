@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'applications/NextPost-1.0.3-Article-Preview-Fix.tipa'
+      - '.github/workflows/publish-nextpost-transfer.yml'
 
 permissions:
   contents: write
