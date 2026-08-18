@@ -1,6 +1,6 @@
 import Foundation
 import ZIPFoundation
-import ProStoreTools
+import Zsign
 
 struct SignedAppResult: Equatable {
     let ipaURL: URL
@@ -18,8 +18,8 @@ enum LocalSignerError: LocalizedError {
     case invalidIPA
     case appBundleMissing
     case infoPlistMissing
-    case signingFailed(String)
-    case signedOutputInvalid
+    case signingFailed
+    case signatureVerificationFailed
 
     var errorDescription: String? {
         switch self {
@@ -35,10 +35,10 @@ enum LocalSignerError: LocalizedError {
             return "No application bundle was found inside Payload."
         case .infoPlistMissing:
             return "The app Info.plist could not be read."
-        case let .signingFailed(message):
-            return "Local signing failed: \(message)"
-        case .signedOutputInvalid:
-            return "Signing finished, but the resulting IPA did not contain the expected code-signature and provisioning files."
+        case .signingFailed:
+            return "Local Zsign signing failed. Check the certificate password, provisioning profile and bundle identifier."
+        case .signatureVerificationFailed:
+            return "Signing completed, but the resulting executable did not verify as signed."
         }
     }
 }
@@ -52,25 +52,38 @@ struct LocalSignerService {
         provisioningURL: URL,
         p12Password: String
     ) async throws -> SignedAppResult {
+        try await Task.detached(priority: .userInitiated) {
+            try signSynchronously(
+                ipaURL: ipaURL,
+                requestedName: requestedName,
+                requestedBundleID: requestedBundleID,
+                p12URL: p12URL,
+                provisioningURL: provisioningURL,
+                p12Password: p12Password
+            )
+        }.value
+    }
+
+    private func signSynchronously(
+        ipaURL: URL,
+        requestedName: String,
+        requestedBundleID: String,
+        p12URL: URL,
+        provisioningURL: URL,
+        p12Password: String
+    ) throws -> SignedAppResult {
         let fm = FileManager.default
-        guard fm.fileExists(atPath: p12URL.path) else {
-            throw LocalSignerError.missingCertificate
-        }
-        guard fm.fileExists(atPath: provisioningURL.path) else {
-            throw LocalSignerError.missingProvisioningProfile
-        }
-        guard !p12Password.isEmpty else {
-            throw LocalSignerError.missingPassword
-        }
+        guard fm.fileExists(atPath: p12URL.path) else { throw LocalSignerError.missingCertificate }
+        guard fm.fileExists(atPath: provisioningURL.path) else { throw LocalSignerError.missingProvisioningProfile }
+        guard !p12Password.isEmpty else { throw LocalSignerError.missingPassword }
 
         let cleanName = requestedName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanBundleID = requestedBundleID.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let preparationRoot = fm.temporaryDirectory
-            .appendingPathComponent("NextSignerPrepare-\(UUID().uuidString)", isDirectory: true)
-        let unpacked = preparationRoot.appendingPathComponent("unpacked", isDirectory: true)
+        let workRoot = fm.temporaryDirectory.appendingPathComponent("NextSigner-\(UUID().uuidString)", isDirectory: true)
+        let unpacked = workRoot.appendingPathComponent("unpacked", isDirectory: true)
         try fm.createDirectory(at: unpacked, withIntermediateDirectories: true)
-        defer { try? fm.removeItem(at: preparationRoot) }
+        defer { try? fm.removeItem(at: workRoot) }
 
         do {
             try fm.unzipItem(at: ipaURL, to: unpacked)
@@ -79,52 +92,49 @@ struct LocalSignerService {
         }
 
         let appURL = try findMainApp(in: unpacked)
-        let originalBundleID = try updateMainAppMetadata(
-            appURL: appURL,
-            appName: cleanName,
-            bundleID: cleanBundleID
-        )
-        try updateExtensionBundleIdentifiers(
-            in: appURL,
-            originalMainBundleID: originalBundleID,
-            newMainBundleID: cleanBundleID
-        )
+        let originalBundleID = try updateMainAppMetadata(appURL: appURL, appName: cleanName, bundleID: cleanBundleID)
+        try updateExtensionBundleIdentifiers(in: appURL, originalMainBundleID: originalBundleID, newMainBundleID: cleanBundleID)
 
-        let preparedIPA = preparationRoot.appendingPathComponent("prepared.ipa")
-        do {
-            try fm.zipItem(
-                at: unpacked,
-                to: preparedIPA,
-                shouldKeepParent: false,
-                compressionMethod: .deflate
-            )
-        } catch {
-            throw LocalSignerError.invalidIPA
+        let signedOK = Zsign.sign(
+            appPath: appURL.path,
+            provisionPath: provisioningURL.path,
+            p12Path: p12URL.path,
+            p12Password: p12Password,
+            entitlementsPath: "",
+            customIdentifier: cleanBundleID,
+            customName: cleanName,
+            customVersion: "",
+            adhoc: false,
+            removeProvision: false
+        )
+        guard signedOK else { throw LocalSignerError.signingFailed }
+
+        let plistURL = appURL.appendingPathComponent("Info.plist")
+        guard let plistData = try? Data(contentsOf: plistURL),
+              let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] else {
+            throw LocalSignerError.infoPlistMissing
         }
 
-        let producedURL: URL
-        do {
-            producedURL = try await withCheckedThrowingContinuation { continuation in
-                ProStoreTools.sign(
-                    ipaURL: preparedIPA,
-                    p12URL: p12URL,
-                    provURL: provisioningURL,
-                    p12Password: p12Password,
-                    progressUpdate: { _ in },
-                    completion: { result in
-                        continuation.resume(with: result)
-                    }
-                )
-            }
-        } catch {
-            throw LocalSignerError.signingFailed(error.localizedDescription)
+        let executableName = (plist["CFBundleExecutable"] as? String) ?? ""
+        let executableURL = appURL.appendingPathComponent(executableName)
+        if !executableName.isEmpty,
+           fm.fileExists(atPath: executableURL.path),
+           !Zsign.checkSigned(appExecutable: executableURL.path) {
+            throw LocalSignerError.signatureVerificationFailed
         }
 
-        let verified = try inspectSignedIPA(producedURL)
-        guard verified.bundleID == cleanBundleID,
-              verified.hasCodeResources,
-              verified.hasProvisioningProfile else {
-            throw LocalSignerError.signedOutputInvalid
+        let finalName = (plist["CFBundleDisplayName"] as? String)
+            ?? (plist["CFBundleName"] as? String)
+            ?? cleanName
+        let finalBundleID = (plist["CFBundleIdentifier"] as? String) ?? cleanBundleID
+        let version = (plist["CFBundleShortVersionString"] as? String) ?? "1.0"
+        let build = (plist["CFBundleVersion"] as? String) ?? "1"
+        let minimumOS = (plist["MinimumOSVersion"] as? String) ?? "iOS"
+
+        let codeResources = appURL.appendingPathComponent("_CodeSignature", isDirectory: true).appendingPathComponent("CodeResources")
+        let embeddedProfile = appURL.appendingPathComponent("embedded.mobileprovision")
+        guard fm.fileExists(atPath: codeResources.path), fm.fileExists(atPath: embeddedProfile.path) else {
+            throw LocalSignerError.signatureVerificationFailed
         }
 
         let signedDirectory = fm.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -132,21 +142,23 @@ struct LocalSignerService {
         try fm.createDirectory(at: signedDirectory, withIntermediateDirectories: true)
 
         let outputURL = signedDirectory.appendingPathComponent(
-            "\(safeFilename(verified.appName))-\(safeFilename(verified.version))-signed-\(Int(Date().timeIntervalSince1970)).ipa"
+            "\(safeFilename(finalName))-\(safeFilename(version))-signed-\(Int(Date().timeIntervalSince1970)).ipa"
         )
-        if fm.fileExists(atPath: outputURL.path) {
-            try fm.removeItem(at: outputURL)
+        if fm.fileExists(atPath: outputURL.path) { try fm.removeItem(at: outputURL) }
+
+        do {
+            try fm.zipItem(at: unpacked, to: outputURL, shouldKeepParent: false, compressionMethod: .deflate)
+        } catch {
+            throw LocalSignerError.invalidIPA
         }
-        try fm.copyItem(at: producedURL, to: outputURL)
-        try? fm.removeItem(at: producedURL)
 
         return SignedAppResult(
             ipaURL: outputURL,
-            appName: verified.appName,
-            bundleID: verified.bundleID,
-            version: verified.version,
-            build: verified.build,
-            minimumOS: verified.minimumOS
+            appName: finalName,
+            bundleID: finalBundleID,
+            version: version,
+            build: build,
+            minimumOS: minimumOS
         )
     }
 
@@ -181,110 +193,36 @@ struct LocalSignerService {
         return originalBundleID
     }
 
-    private func updateExtensionBundleIdentifiers(
-        in appURL: URL,
-        originalMainBundleID: String,
-        newMainBundleID: String
-    ) throws {
+    private func updateExtensionBundleIdentifiers(in appURL: URL, originalMainBundleID: String, newMainBundleID: String) throws {
         let fm = FileManager.default
-        guard let enumerator = fm.enumerator(
-            at: appURL,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) else { return }
+        guard let enumerator = fm.enumerator(at: appURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]) else { return }
 
         var fallbackIndex = 0
         for case let url as URL in enumerator where url.pathExtension.lowercased() == "appex" {
             enumerator.skipDescendants()
             let plistURL = url.appendingPathComponent("Info.plist")
             guard let data = try? Data(contentsOf: plistURL),
-                  var plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
-                continue
-            }
+                  var plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { continue }
 
             let oldExtensionID = (plist["CFBundleIdentifier"] as? String) ?? ""
-            let newExtensionID: String
-            if !originalMainBundleID.isEmpty,
-               oldExtensionID.hasPrefix(originalMainBundleID + ".") {
-                newExtensionID = newMainBundleID + oldExtensionID.dropFirst(originalMainBundleID.count)
+            if !originalMainBundleID.isEmpty, oldExtensionID.hasPrefix(originalMainBundleID + ".") {
+                plist["CFBundleIdentifier"] = newMainBundleID + oldExtensionID.dropFirst(originalMainBundleID.count)
             } else {
                 fallbackIndex += 1
-                newExtensionID = "\(newMainBundleID).extension\(fallbackIndex)"
+                plist["CFBundleIdentifier"] = "\(newMainBundleID).extension\(fallbackIndex)"
             }
-            plist["CFBundleIdentifier"] = newExtensionID
-
-            if let companion = plist["WKCompanionAppBundleIdentifier"] as? String,
-               companion == originalMainBundleID {
+            if let companion = plist["WKCompanionAppBundleIdentifier"] as? String, companion == originalMainBundleID {
                 plist["WKCompanionAppBundleIdentifier"] = newMainBundleID
             }
-
             let updated = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
             try updated.write(to: plistURL, options: .atomic)
         }
     }
 
-    private func inspectSignedIPA(_ ipaURL: URL) throws -> SignedInspection {
-        let fm = FileManager.default
-        let root = fm.temporaryDirectory
-            .appendingPathComponent("NextSignerVerify-\(UUID().uuidString)", isDirectory: true)
-        try fm.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? fm.removeItem(at: root) }
-
-        do {
-            try fm.unzipItem(at: ipaURL, to: root)
-        } catch {
-            throw LocalSignerError.signedOutputInvalid
-        }
-
-        let appURL = try findMainApp(in: root)
-        let plistURL = appURL.appendingPathComponent("Info.plist")
-        guard let data = try? Data(contentsOf: plistURL),
-              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
-            throw LocalSignerError.infoPlistMissing
-        }
-
-        let appName = (plist["CFBundleDisplayName"] as? String)
-            ?? (plist["CFBundleName"] as? String)
-            ?? "Signed App"
-        let bundleID = (plist["CFBundleIdentifier"] as? String) ?? ""
-        let version = (plist["CFBundleShortVersionString"] as? String) ?? "1.0"
-        let build = (plist["CFBundleVersion"] as? String) ?? "1"
-        let minimumOS = (plist["MinimumOSVersion"] as? String) ?? "iOS"
-
-        let codeResources = appURL
-            .appendingPathComponent("_CodeSignature", isDirectory: true)
-            .appendingPathComponent("CodeResources")
-        let embeddedProfile = appURL.appendingPathComponent("embedded.mobileprovision")
-
-        return SignedInspection(
-            appName: appName,
-            bundleID: bundleID,
-            version: version,
-            build: build,
-            minimumOS: minimumOS,
-            hasCodeResources: fm.fileExists(atPath: codeResources.path),
-            hasProvisioningProfile: fm.fileExists(atPath: embeddedProfile.path)
-        )
-    }
-
     private func safeFilename(_ value: String) -> String {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
         let chars = value.unicodeScalars.map { allowed.contains($0) ? Character(String($0)) : "-" }
-        var result = String(chars)
-        while result.contains("--") {
-            result = result.replacingOccurrences(of: "--", with: "-")
-        }
-        result = result.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        let result = String(chars).replacingOccurrences(of: "--", with: "-")
         return result.isEmpty ? "Signed-App" : result
-    }
-
-    private struct SignedInspection {
-        let appName: String
-        let bundleID: String
-        let version: String
-        let build: String
-        let minimumOS: String
-        let hasCodeResources: Bool
-        let hasProvisioningProfile: Bool
     }
 }
