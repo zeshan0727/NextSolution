@@ -1,0 +1,94 @@
+name: Build Next Post TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "NextPost/**"
+      - ".github/workflows/build-nextpost.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-nextpost
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen and icon renderer
+        run: brew install xcodegen librsvg
+
+      - name: Render app icon
+        run: |
+          rsvg-convert -w 1024 -h 1024 NextPost/Resources/AppIcon.svg > NextPost/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+          cp NextPost/Assets.xcassets/AppIcon.appiconset/AppIcon.png NextPost/Assets.xcassets/NextPostIcon.imageset/NextPostIcon.png
+
+      - name: Generate Xcode project
+        run: |
+          cd NextPost
+          xcodegen generate
+
+      - name: Build unsigned iPhone app
+        run: |
+          xcodebuild \
+            -project NextPost/NextPost.xcodeproj \
+            -scheme NextPost \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build-nextpost \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package TIPA
+        run: |
+          APP_PATH="$(find build-nextpost/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.0.tipa
+          shasum -a 256 NextPost-1.0.0.tipa > NextPost-1.0.0.sha256
+
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
+          file "$APP_PATH/Next Post"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextPost-1.0.0
+          path: |
+            NextPost-1.0.0.tipa
+            NextPost-1.0.0.sha256
+          if-no-files-found: error
+
+      - name: Publish TIPA to repository
+        run: |
+          mkdir -p applications
+          cp NextPost-1.0.0.tipa applications/NextPost-1.0.0.tipa
+          cp NextPost-1.0.0.sha256 applications/NextPost-1.0.0.sha256
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add applications/NextPost-1.0.0.tipa applications/NextPost-1.0.0.sha256
+
+          if git diff --cached --quiet; then
+            echo "Next Post build is already published."
+            exit 0
+          fi
+
+          git commit -m "Publish Next Post 1.0.0 TIPA"
+          git pull --rebase origin main
+          git push origin HEAD:main
