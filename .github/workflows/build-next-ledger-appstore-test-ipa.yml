@@ -13,15 +13,6 @@ on:
       - "DailyLedger/**"
       - "project.yml"
       - "AppStore/verify_appstore_source.sh"
-  pull_request:
-    branches:
-      - release/next-ledger-appstore-1.0
-    paths:
-      - ".build-trigger/appstore-esign-test.txt"
-      - ".github/workflows/build-next-ledger-appstore-test-ipa.yml"
-      - "DailyLedger/**"
-      - "project.yml"
-      - "AppStore/verify_appstore_source.sh"
 
 jobs:
   build:
