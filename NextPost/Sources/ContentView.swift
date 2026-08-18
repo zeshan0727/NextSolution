@@ -142,7 +142,7 @@ struct ContentView: View {
                 if !store.generatedPost.isEmpty {
                     Text("\(store.generatedPost.count)/\(PostComposer.maximumCharacters)")
                         .font(.caption.monospacedDigit())
-                        .foregroundStyle(store.generatedPost.count <= PostComposer.maximumCharacters ? .secondary : .red)
+                        .foregroundColor(store.generatedPost.count <= PostComposer.maximumCharacters ? Color.gray : Color.red)
                 }
             }
 
