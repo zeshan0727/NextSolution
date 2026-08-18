@@ -62,6 +62,10 @@ If a nested bundle identifier is not covered by the imported profile, Next Signe
 
 Signing and publishing are separate operations. GitHub credentials are not required to sign. For publishing, upload only the already-signed IPA as a GitHub Release asset, then update the OTA manifest/catalog. Never upload the unsigned source IPA.
 
+## CI verification
+
+Next Signer 1.2.1 must be built with the patched local Zsign package so `embedded.mobileprovision` is preserved during signing before a test TIPA is distributed.
+
 ## Reference
 
 Upstream zsign documents P12 + mobileprovision signing, bundle-ID/name changes, app-bundle signing, and re-signing of IPA/Mach-O content. Next Signer's implementation should follow zsign's own success/failure result rather than duplicating its Mach-O signature parser.
