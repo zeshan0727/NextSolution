@@ -2,6 +2,11 @@ name: Build Next Post TIPA
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "NextPost/**"
+      - ".github/workflows/build-nextpost.yml"
   push:
     branches: [main]
     paths:
@@ -12,7 +17,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: build-nextpost
+  group: build-nextpost-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -75,6 +80,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish TIPA to repository
+        if: github.event_name != 'pull_request'
         run: |
           mkdir -p applications
           cp NextPost-1.0.0.tipa applications/NextPost-1.0.0.tipa
