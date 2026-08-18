@@ -111,6 +111,7 @@ final class NextPostStore: ObservableObject {
                 : "\(remainingThisCycle) article\(remainingThisCycle == 1 ? "" : "s") left before repeats"
 
             persist()
+            AdsManager.shared.recordSuccessfulGeneration()
         } catch {
             errorMessage = error.localizedDescription
             statusText = "Generation failed"
