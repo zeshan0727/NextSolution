@@ -25,8 +25,8 @@
       "bundleId": "com.nextsolution.nextledgernn",
       "icon": "/DailyLedger/Assets.xcassets/AppIcon.appiconset/icon-180.png",
       "manifest": "/install/next-ledger.plist",
-      "available": false,
-      "status": "Signed build verified — upload pending"
+      "available": true,
+      "status": "Ready to install"
     }
   ]
 }
