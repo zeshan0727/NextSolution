@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>items</key>
+    <array>
+        <dict>
+            <key>cell</key><string>PSGroupCell</string>
+            <key>label</key><string>Next Quick Reminder</string>
+            <key>footerText</key><string>Select exactly one gesture. The other gestures are disabled immediately. The panel lets you enter a title, notes, date/time, email choice, notification choice and repeat setting.</string>
+        </dict>
+        <dict>
+            <key>cell</key><string>PSLinkListCell</string>
+            <key>label</key><string>Quick Reminder Gesture</string>
+            <key>key</key><string>gesture</string>
+            <key>default</key><string>statusbar</string>
+            <key>validTitles</key>
+            <array>
+                <string>Off</string>
+                <string>Double-tap Status-Bar Time</string>
+                <string>Shake Device</string>
+                <string>Hold Volume Up</string>
+            </array>
+            <key>validValues</key>
+            <array>
+                <string>off</string>
+                <string>statusbar</string>
+                <string>shake</string>
+                <string>volume</string>
+            </array>
+            <key>get</key><string>readPreferenceValue:</string>
+            <key>set</key><string>setPreferenceValue:specifier:</string>
+        </dict>
+
+        <dict>
+            <key>cell</key><string>PSGroupCell</string>
+            <key>label</key><string>Diagnostics</string>
+            <key>footerText</key><string>Temporary diagnostics record tweak loading, preference changes, gesture recognition, panel presentation and the Next Reminder URL-open result.</string>
+        </dict>
+        <dict>
+            <key>cell</key><string>PSSwitchCell</string>
+            <key>label</key><string>Diagnostic Logging</string>
+            <key>key</key><string>diagnosticLogging</string>
+            <key>default</key><true/>
+            <key>get</key><string>readPreferenceValue:</string>
+            <key>set</key><string>setPreferenceValue:specifier:</string>
+        </dict>
+        <dict>
+            <key>cell</key><string>PSButtonCell</string>
+            <key>label</key><string>Test Quick Panel</string>
+            <key>action</key><string>testQuickPanel</string>
+        </dict>
+        <dict>
+            <key>cell</key><string>PSLinkCell</string>
+            <key>label</key><string>Diagnostics &amp; Console</string>
+            <key>detail</key><string>NQRDiagnosticsController</string>
+        </dict>
+        <dict>
+            <key>cell</key><string>PSButtonCell</string>
+            <key>label</key><string>Clear Saved Draft</string>
+            <key>action</key><string>clearSavedDraft</string>
+        </dict>
+
+        <dict>
+            <key>cell</key><string>PSGroupCell</string>
+            <key>footerText</key><string>Hold Volume Up is detected from repeated volume-up pulses and does not disable the normal volume change. Shake monitoring runs only while Shake Device is selected.</string>
+        </dict>
+    </array>
+</dict>
+</plist>
