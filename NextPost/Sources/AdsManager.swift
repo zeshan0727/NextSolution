@@ -11,7 +11,6 @@ final class AdsManager: NSObject, ObservableObject {
     static let interstitialAdUnitID = "y23pc99ate029uga"
 
     @Published private(set) var isInitialized = false
-    @Published private(set) var bannerAvailable = false
 
     private var interstitialAd: LPMInterstitialAd?
     private var successfulGenerationsSinceLastInterstitial = 0
@@ -31,7 +30,7 @@ final class AdsManager: NSObject, ObservableObject {
                 guard let self else { return }
                 self.isInitializing = false
 
-                if error != nil {
+                guard error == nil else {
                     self.isInitialized = false
                     return
                 }
@@ -46,8 +45,7 @@ final class AdsManager: NSObject, ObservableObject {
         guard isInitialized else { return }
         successfulGenerationsSinceLastInterstitial += 1
 
-        // Natural, low-frequency break: one interstitial after every five
-        // successful generations, never on launch/copy/open actions.
+        // Keep full-screen ads infrequent and tied to a natural completed action.
         guard successfulGenerationsSinceLastInterstitial >= 5 else { return }
         guard let interstitialAd, interstitialAd.isAdReady() else { return }
         guard let presenter = Self.topViewController() else { return }
@@ -63,13 +61,16 @@ final class AdsManager: NSObject, ObservableObject {
         ad.loadAd()
     }
 
-    private static func topViewController(
-        from root: UIViewController? = UIApplication.shared.connectedScenes
+    private static func topViewController() -> UIViewController? {
+        let root = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
+            .flatMap { $0.windows }
             .first(where: { $0.isKeyWindow })?
             .rootViewController
-    ) -> UIViewController? {
+        return topViewController(from: root)
+    }
+
+    private static func topViewController(from root: UIViewController?) -> UIViewController? {
         if let nav = root as? UINavigationController {
             return topViewController(from: nav.visibleViewController)
         }
@@ -83,13 +84,9 @@ final class AdsManager: NSObject, ObservableObject {
     }
 }
 
-extension AdsManager: LPMInterstitialAdDelegate {
+extension AdsManager: @preconcurrency LPMInterstitialAdDelegate {
     func didLoadAd(with adInfo: LPMAdInfo) {}
-
-    func didFailToLoadAd(withAdUnitId adUnitId: String, error: Error) {
-        // Keep the app fully functional if ads are unavailable/pending approval.
-    }
-
+    func didFailToLoadAd(withAdUnitId adUnitId: String, error: Error) {}
     func didChangeAdInfo(_ adInfo: LPMAdInfo) {}
     func didDisplayAd(with adInfo: LPMAdInfo) {}
 
@@ -114,9 +111,10 @@ struct LevelPlayBannerView: UIViewControllerRepresentable {
     }
 }
 
-final class LevelPlayBannerHostController: UIViewController, LPMBannerAdViewDelegate {
+@MainActor
+final class LevelPlayBannerHostController: UIViewController, @preconcurrency LPMBannerAdViewDelegate {
     private var bannerAd: LPMBannerAdView?
-    private var observation: NSKeyValueObservation?
+    private var retryWorkItem: DispatchWorkItem?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -126,14 +124,19 @@ final class LevelPlayBannerHostController: UIViewController, LPMBannerAdViewDele
 
     func loadIfReady() {
         guard bannerAd == nil else { return }
+
         guard AdsManager.shared.isInitialized else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            retryWorkItem?.cancel()
+            let item = DispatchWorkItem { [weak self] in
                 self?.loadIfReady()
             }
+            retryWorkItem = item
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: item)
             return
         }
 
-        let bannerSize = LPMAdSize.createAdaptive()
+        guard let bannerSize = LPMAdSize.createAdaptive() else { return }
+
         let config = LPMBannerAdViewConfigBuilder()
             .set(adSize: bannerSize)
             .set(placementName: "NextPostBottom")
@@ -156,6 +159,7 @@ final class LevelPlayBannerHostController: UIViewController, LPMBannerAdViewDele
     }
 
     deinit {
+        retryWorkItem?.cancel()
         bannerAd?.destroy()
     }
 
