@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "fb6d1420127bf32a51a96e7a1cafe84173631b4baa033ec50a69825258907193",
+      "candidate_fingerprint": "f0590ad3de4e2cddfe04344a6dbf31f2e66b781ff56b682bd042bf4331521a7d",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Learn what Crane Lite 1.3.18-2 lists, including its description, architectures, dependencies, and the checks to complete before installation.",
+      "href": "crane-lite-tweak.html",
+      "image": "https://media.havoc.app/6207d31d7a62c3812d9ace86",
+      "media_credit": "Crane Lite official package listing",
+      "media_source_url": "https://havoc.app/package/cranelite",
+      "modified_at": "2026-08-18T03:40:24+00:00",
+      "name": "Crane Lite",
+      "package": "com.opa334.cranelite",
+      "published_at": "2026-08-15T15:37:52+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/cranelite",
+      "source_url": "https://havoc.app/",
+      "title": "Crane Lite 1.3.18-2: Multiple Containers for One Application",
+      "version": "1.3.18-2"
+    },
+    {
       "article_sha256": "64cce2cc4ed46996d1d03b88dc5566b6916370599a0b66b6208cac914115b288",
       "candidate_fingerprint": "5a1627756692d58c65be342fb3912be36ef04ead026c2ed59601749b20c66762",
       "category": {
@@ -91,29 +114,6 @@
       "source_url": "https://havoc.app/",
       "title": "Kayoko 4.3.1: Clipboard Experience and Compatibility Details",
       "version": "4.3.1"
-    },
-    {
-      "article_sha256": "8f6f61f476a376c78f0dad2e7e9ee6ea4a6f228ff0777c1a501f7c29e10ed670",
-      "candidate_fingerprint": "9133e1063e71d7908341b0e440e99d956dcc474930811ffd286184e6b9371498",
-      "category": {
-        "id": "system-utilities",
-        "label": "System & Utilities"
-      },
-      "description": "Review the listed features, package requirements, architectures, and installation checks for Crane Lite 1.3.18.",
-      "href": "crane-lite-tweak.html",
-      "image": "https://media.havoc.app/6207d31d7a62c3812d9ace86",
-      "media_credit": "Crane Lite official package listing",
-      "media_source_url": "https://havoc.app/package/cranelite",
-      "modified_at": "2026-08-15T15:37:52+00:00",
-      "name": "Crane Lite",
-      "package": "com.opa334.cranelite",
-      "published_at": "2026-08-15T15:37:52+00:00",
-      "selection_pool": "pending",
-      "source_name": "Havoc",
-      "source_page_url": "https://havoc.app/package/cranelite",
-      "source_url": "https://havoc.app/",
-      "title": "Crane Lite 1.3.18: Multiple Containers for One Application",
-      "version": "1.3.18"
     },
     {
       "article_sha256": "c9ff8e5fc6ad2f51b922edf16b85537395f314295ab6b1d72d76619ca118c13d",
@@ -539,8 +539,17 @@
       "published_at": "2026-08-17T03:45:45+00:00",
       "run_id": "31992122862",
       "version": "1.0.3"
+    },
+    {
+      "action": "update",
+      "candidate_fingerprint": "f0590ad3de4e2cddfe04344a6dbf31f2e66b781ff56b682bd042bf4331521a7d",
+      "href": "crane-lite-tweak.html",
+      "package": "com.opa334.cranelite",
+      "published_at": "2026-08-18T03:40:24+00:00",
+      "run_id": "32096249272",
+      "version": "1.3.18-2"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-17T03:45:45+00:00"
+  "updated_at": "2026-08-18T03:40:24+00:00"
 }
