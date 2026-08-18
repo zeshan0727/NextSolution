@@ -2,12 +2,13 @@ import SwiftUI
 
 @main
 struct DailyLedgerApp: App {
-    @StateObject private var store = LedgerStore()
+    @StateObject private var store: LedgerStore
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
 
     init() {
         AppStoreSanitizer.sanitizeLegacySettings()
+        _store = StateObject(wrappedValue: LedgerStore())
         BudgetNotificationService.configure()
     }
 
