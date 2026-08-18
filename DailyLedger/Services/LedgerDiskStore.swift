@@ -74,7 +74,6 @@ final class LedgerDiskStore {
                    ledger.accounts[0].id == LedgerAccount.legacyMainID {
                     ledger.accounts = []
                     ledger.settings.defaultAccountID = nil
-                    ledger.settings.smsDestinationAccountID = nil
                 }
                 let existingAccountIDs = Set(ledger.accounts.map(\.id))
                 ledger.accounts.append(contentsOf: incomingAccounts.filter {
@@ -155,7 +154,7 @@ final class LedgerDiskStore {
             in: .userDomainMask
         ).first!
         return root
-            .appendingPathComponent("DailyLedger", isDirectory: true)
+            .appendingPathComponent("NextLedger", isDirectory: true)
             .appendingPathComponent("ledger.json")
     }
 
