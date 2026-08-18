@@ -1,0 +1,1 @@
+Build Next Ledger 1.0 App Store-clean unsigned IPA for ESign test signing.
