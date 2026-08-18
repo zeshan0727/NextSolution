@@ -3,6 +3,19 @@
   "updated": "2026-08-18",
   "apps": [
     {
+      "id": "esign",
+      "name": "ESign",
+      "version": "5.0.2",
+      "build": "1",
+      "platform": "iPhone",
+      "minimumOS": "iOS 10+",
+      "bundleId": "p3.xyz.yyyue.esign",
+      "icon": "/logo.png",
+      "manifest": "/install/esign.plist",
+      "available": false,
+      "status": "Waiting for corrected registered-device signing"
+    },
+    {
       "id": "dopamine-3",
       "name": "Dopamine",
       "version": "3.0.7",
