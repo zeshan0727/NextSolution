@@ -7,7 +7,8 @@ on:
       - feature/nextsigner-1.0
       - feature/nextsigner-local-signing
     paths:
-      - 'NextSigner/**'
+      - 'NextSigner/NextSigner/**'
+      - 'NextSigner/project.yml'
       - '.github/workflows/build-nextsigner-tipa.yml'
   pull_request:
     branches:
@@ -18,7 +19,7 @@ on:
       - '.github/workflows/nextsigner-sign-publish.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -27,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Prepare patched Zsign sources
         run: |
@@ -107,3 +110,35 @@ jobs:
             ${{ runner.temp }}/NextSigner-1.2.1.ipa
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish test TIPA to feature branch
+        if: success() && github.event_name == 'push' && github.ref_name == 'feature/nextsigner-local-signing'
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT='NextSigner/Builds/1.2.1'
+          mkdir -p "$OUT"
+          cp "$RUNNER_TEMP/NextSigner-1.2.1.tipa" "$OUT/NextSigner-1.2.1.tipa"
+          SHA256=$(shasum -a 256 "$OUT/NextSigner-1.2.1.tipa" | awk '{print $1}')
+          printf 'status=success\nrun_id=%s\nsource_sha=%s\nsha256=%s\n' "$GITHUB_RUN_ID" "$GITHUB_SHA" "$SHA256" > "$OUT/status.txt"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$OUT/NextSigner-1.2.1.tipa" "$OUT/status.txt"
+          git commit -m 'Publish Next Signer 1.2.1 test TIPA' || true
+          git pull --rebase origin feature/nextsigner-local-signing
+          git push origin HEAD:feature/nextsigner-local-signing
+
+      - name: Publish failure marker
+        if: failure() && github.event_name == 'push' && github.ref_name == 'feature/nextsigner-local-signing'
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT='NextSigner/Builds/1.2.1'
+          mkdir -p "$OUT"
+          printf 'status=failed\nrun_id=%s\nsource_sha=%s\n' "$GITHUB_RUN_ID" "$GITHUB_SHA" > "$OUT/status.txt"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$OUT/status.txt"
+          git commit -m 'Record Next Signer 1.2.1 build failure' || true
+          git pull --rebase origin feature/nextsigner-local-signing
+          git push origin HEAD:feature/nextsigner-local-signing
