@@ -7,6 +7,7 @@ struct DailyLedgerApp: App {
     @AppStorage("DailyLedgerAppearance") private var appearance = AppAppearance.system.rawValue
 
     init() {
+        AppStoreSanitizer.sanitizeLegacySettings()
         BudgetNotificationService.configure()
     }
 
