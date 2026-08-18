@@ -1,0 +1,257 @@
+name: Next Signer - Sign and Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_asset:
+        description: Unsigned IPA asset in the Next Signer inbox release
+        required: true
+        type: string
+      requested_name:
+        description: Display name to use for the signed app
+        required: true
+        type: string
+      requested_bundle_id:
+        description: Bundle identifier to use for the signed app
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextsigner-publish
+  cancel-in-progress: false
+
+jobs:
+  sign-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ZSIGN_COMMIT: e803f870dc686e6161d00d9b22c425b8acdfacee
+      INBOX_TAG: nextsigner-inbox
+      PUBLISH_TAG: private-apps
+      P12_PASSWORD: ${{ secrets.NEXTSIGNER_P12_PASSWORD }}
+    steps:
+      - name: Check out website
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate signing secrets
+        shell: bash
+        env:
+          P12_B64: ${{ secrets.NEXTSIGNER_P12_BASE64 }}
+          PROVISION_B64: ${{ secrets.NEXTSIGNER_MOBILEPROVISION_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$P12_B64" || { echo "NEXTSIGNER_P12_BASE64 is missing"; exit 1; }
+          test -n "$P12_PASSWORD" || { echo "NEXTSIGNER_P12_PASSWORD is missing"; exit 1; }
+          test -n "$PROVISION_B64" || { echo "NEXTSIGNER_MOBILEPROVISION_BASE64 is missing"; exit 1; }
+          printf '%s' "$P12_B64" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          printf '%s' "$PROVISION_B64" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
+          chmod 600 "$RUNNER_TEMP/certificate.p12" "$RUNNER_TEMP/profile.mobileprovision"
+
+      - name: Download staged IPA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_ASSET: ${{ inputs.staging_asset }}
+        run: |
+          set -euo pipefail
+          RELEASES_JSON="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100")"
+          RELEASE_ID="$(printf '%s' "$RELEASES_JSON" | jq -r --arg tag "$INBOX_TAG" '.[] | select(.tag_name==$tag) | .id' | head -n1)"
+          test -n "$RELEASE_ID" && test "$RELEASE_ID" != "null" || { echo "Signing inbox release not found"; exit 1; }
+          ASSETS_JSON="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets")"
+          ASSET_ID="$(printf '%s' "$ASSETS_JSON" | jq -r --arg name "$STAGING_ASSET" '.[] | select(.name==$name) | .id' | head -n1)"
+          test -n "$ASSET_ID" && test "$ASSET_ID" != "null" || { echo "Staged IPA asset not found: $STAGING_ASSET"; exit 1; }
+          gh api -H 'Accept: application/octet-stream' "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET_ID" > "$RUNNER_TEMP/input.ipa"
+          echo "INBOX_RELEASE_ID=$RELEASE_ID" >> "$GITHUB_ENV"
+          echo "INBOX_ASSET_ID=$ASSET_ID" >> "$GITHUB_ENV"
+          test -s "$RUNNER_TEMP/input.ipa"
+
+      - name: Build pinned zsign
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y g++ pkg-config libssl-dev jq
+          git clone --filter=blob:none https://github.com/zhlynn/zsign.git "$RUNNER_TEMP/zsign"
+          git -C "$RUNNER_TEMP/zsign" checkout "$ZSIGN_COMMIT"
+          make -C "$RUNNER_TEMP/zsign/build/linux" clean
+          make -C "$RUNNER_TEMP/zsign/build/linux" -j"$(nproc)"
+          "$RUNNER_TEMP/zsign/bin/zsign" --version
+
+      - name: Sign IPA
+        shell: bash
+        env:
+          REQUESTED_NAME: ${{ inputs.requested_name }}
+          REQUESTED_BUNDLE_ID: ${{ inputs.requested_bundle_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/metadata"
+          "$RUNNER_TEMP/zsign/bin/zsign" \
+            -f \
+            -k "$RUNNER_TEMP/certificate.p12" \
+            -p "$P12_PASSWORD" \
+            -m "$RUNNER_TEMP/profile.mobileprovision" \
+            -b "$REQUESTED_BUNDLE_ID" \
+            -n "$REQUESTED_NAME" \
+            -x "$RUNNER_TEMP/metadata" \
+            -o "$RUNNER_TEMP/signed.ipa" \
+            "$RUNNER_TEMP/input.ipa"
+          test -s "$RUNNER_TEMP/signed.ipa"
+
+      - name: Read signed app metadata
+        shell: bash
+        env:
+          REQUESTED_NAME: ${{ inputs.requested_name }}
+          REQUESTED_BUNDLE_ID: ${{ inputs.requested_bundle_id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, plistlib, re, zipfile
+          ipa = os.path.join(os.environ['RUNNER_TEMP'], 'signed.ipa')
+          with zipfile.ZipFile(ipa) as z:
+              infos = [n for n in z.namelist() if re.fullmatch(r'Payload/[^/]+\.app/Info\.plist', n)]
+              if not infos:
+                  raise SystemExit('Main app Info.plist not found')
+              info = plistlib.loads(z.read(infos[0]))
+          name = info.get('CFBundleDisplayName') or info.get('CFBundleName') or os.environ['REQUESTED_NAME']
+          bundle_id = info.get('CFBundleIdentifier') or os.environ['REQUESTED_BUNDLE_ID']
+          version = str(info.get('CFBundleShortVersionString') or '1.0')
+          build = str(info.get('CFBundleVersion') or '1')
+          minimum = str(info.get('MinimumOSVersion') or 'Unknown')
+          slug = re.sub(r'[^a-z0-9]+', '-', bundle_id.lower()).strip('-')[-70:] or 'signed-app'
+          values = {
+              'APP_NAME': name,
+              'APP_BUNDLE_ID': bundle_id,
+              'APP_VERSION': version,
+              'APP_BUILD': build,
+              'APP_MINIMUM_OS': minimum,
+              'APP_SLUG': slug,
+              'SIGNED_FILENAME': f'{slug}.ipa',
+          }
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              for k, v in values.items():
+                  print(f'{k}={v}', file=f)
+          PY
+
+      - name: Publish signed IPA release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$PUBLISH_TAG" >/dev/null 2>&1; then
+            gh release create "$PUBLISH_TAG" --title "Next Solution Private Apps" --notes "Signed builds published by Next Signer." --latest=false
+          fi
+          cp "$RUNNER_TEMP/signed.ipa" "$RUNNER_TEMP/$SIGNED_FILENAME"
+          gh release upload "$PUBLISH_TAG" "$RUNNER_TEMP/$SIGNED_FILENAME" --clobber
+          echo "SIGNED_URL=https://github.com/$GITHUB_REPOSITORY/releases/download/$PUBLISH_TAG/$SIGNED_FILENAME" >> "$GITHUB_ENV"
+
+      - name: Publish icon, manifest and catalog entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p install/icons
+          ICON_PATH=""
+          while IFS= read -r -d '' candidate; do
+            ICON_PATH="$candidate"
+            break
+          done < <(find "$RUNNER_TEMP/metadata" -type f -iname '*.png' -print0)
+          if [ -n "$ICON_PATH" ]; then
+            cp "$ICON_PATH" "install/icons/$APP_SLUG.png"
+            ICON_URL="/install/icons/$APP_SLUG.png"
+          else
+            ICON_URL="/apple-touch-icon.png"
+          fi
+          export ICON_URL
+          python3 - <<'PY'
+          import json, os, pathlib, plistlib
+          root = pathlib.Path('install')
+          app = {
+              'id': os.environ['APP_SLUG'],
+              'name': os.environ['APP_NAME'],
+              'version': os.environ['APP_VERSION'],
+              'build': os.environ['APP_BUILD'],
+              'platform': 'iPhone',
+              'minimumOS': ('iOS ' + os.environ['APP_MINIMUM_OS'] + '+') if os.environ['APP_MINIMUM_OS'] != 'Unknown' else 'iOS',
+              'bundleId': os.environ['APP_BUNDLE_ID'],
+              'icon': os.environ['ICON_URL'],
+              'manifest': f"/install/{os.environ['APP_SLUG']}.plist",
+              'available': True,
+              'status': 'Ready to install'
+          }
+          catalog_path = root / 'apps.json'
+          if catalog_path.exists():
+              catalog = json.loads(catalog_path.read_text())
+          else:
+              catalog = {'catalog': 'Next Solution Private Apps', 'updated': '', 'apps': []}
+          apps = [x for x in catalog.get('apps', []) if x.get('id') != app['id']]
+          apps.insert(0, app)
+          catalog['apps'] = apps
+          from datetime import date
+          catalog['updated'] = date.today().isoformat()
+          catalog_path.write_text(json.dumps(catalog, indent=2) + '\n')
+
+          icon_absolute = 'https://nextsolution.cc' + os.environ['ICON_URL']
+          manifest = {
+              'items': [{
+                  'assets': [
+                      {'kind': 'software-package', 'url': os.environ['SIGNED_URL']},
+                      {'kind': 'display-image', 'needs-shine': False, 'url': icon_absolute},
+                      {'kind': 'full-size-image', 'needs-shine': False, 'url': icon_absolute},
+                  ],
+                  'metadata': {
+                      'bundle-identifier': os.environ['APP_BUNDLE_ID'],
+                      'bundle-version': os.environ['APP_BUILD'],
+                      'kind': 'software',
+                      'title': os.environ['APP_NAME'],
+                  }
+              }]
+          }
+          with open(root / f"{os.environ['APP_SLUG']}.plist", 'wb') as f:
+              plistlib.dump(manifest, f, fmt=plistlib.FMT_XML, sort_keys=False)
+          PY
+
+      - name: Commit catalog update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add install/apps.json "install/$APP_SLUG.plist" install/icons || true
+          if git diff --cached --quiet; then
+            echo "No website changes to commit"
+          else
+            git commit -m "Publish $APP_NAME via Next Signer"
+            git push origin main
+          fi
+
+      - name: Remove staged IPA after success
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$INBOX_ASSET_ID"
+
+      - name: Signing summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Next Signer"
+            echo
+            echo "App: ${APP_NAME:-${{ inputs.requested_name }}}"
+            echo "Bundle ID: ${APP_BUNDLE_ID:-${{ inputs.requested_bundle_id }}}"
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "Status: Signed and published"
+              echo "Installer: https://nextsolution.cc/install/"
+            else
+              echo "Status: Failed — inspect the signing log above"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

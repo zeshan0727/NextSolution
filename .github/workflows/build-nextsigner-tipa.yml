@@ -1,0 +1,72 @@
+name: Build Next Signer TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/nextsigner-1.0
+    paths:
+      - 'NextSigner/**'
+      - '.github/workflows/build-nextsigner-tipa.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'NextSigner/**'
+      - '.github/workflows/build-nextsigner-tipa.yml'
+      - '.github/workflows/nextsigner-sign-publish.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: NextSigner
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        working-directory: NextSigner
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project NextSigner.xcodeproj \
+            -scheme NextSigner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/NextSignerDerived" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA and TIPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextSignerDerived/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' | head -n1)"
+          test -n "$APP_PATH" || { echo 'Built .app not found'; exit 1; }
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
+          cd "$RUNNER_TEMP/package"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.0.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-1.0.ipa" "$RUNNER_TEMP/NextSigner-1.0.tipa"
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.0.ipa" "$RUNNER_TEMP/NextSigner-1.0.tipa"
+
+      - name: Upload TIPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextSigner-1.0-TIPA
+          path: |
+            ${{ runner.temp }}/NextSigner-1.0.tipa
+            ${{ runner.temp }}/NextSigner-1.0.ipa
+          if-no-files-found: error
+          retention-days: 30
