@@ -5,7 +5,7 @@ import UIKit
 
 final class BackupSyncService: ObservableObject {
     static let shared = BackupSyncService()
-    static let taskIdentifier = "com.nextsolution.dailyledger.backup-refresh"
+    static let taskIdentifier = "com.nextsolution.nextledger.backup-refresh"
 
     @Published private(set) var status = "Local automatic backup is ready."
     @Published private(set) var lastBackupDate: Date?
@@ -64,7 +64,7 @@ final class BackupSyncService: ObservableObject {
 
     func handleDidEnterBackground(ledger: LedgerData) {
         var taskID = UIBackgroundTaskIdentifier.invalid
-        taskID = UIApplication.shared.beginBackgroundTask(withName: "DailyLedgerBackup") {
+        taskID = UIApplication.shared.beginBackgroundTask(withName: "NextLedgerBackup") {
             if taskID != .invalid {
                 UIApplication.shared.endBackgroundTask(taskID)
                 taskID = .invalid
@@ -102,7 +102,7 @@ final class BackupSyncService: ObservableObject {
             }
             guard let cloudURL = iCloudBackupURL else {
                 publishBackupStatus(
-                    "Local backup saved. Automatic iCloud requires an Apple-provisioned iCloud entitlement.",
+                    "Local backup saved. Automatic iCloud requires the iCloud Documents capability.",
                     date: completedAt
                 )
                 return
@@ -142,6 +142,6 @@ enum BackupSyncError: LocalizedError {
     case iCloudBackupUnavailable
 
     var errorDescription: String? {
-        "No Next Ledger backup is available in iCloud Drive, or this TrollStore build has no iCloud entitlement."
+        "No Next Ledger backup is available in iCloud Drive, or iCloud Documents is not enabled for this build."
     }
 }
