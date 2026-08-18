@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/nextsigner-1.0
+      - feature/nextsigner-local-signing
     paths:
       - 'NextSigner/**'
       - '.github/workflows/build-nextsigner-tipa.yml'
@@ -26,6 +27,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Prepare patched Zsign sources
+        run: |
+          set -euo pipefail
+          rm -rf NextSigner/Vendor/Zsign-Package
+          git clone --depth 1 --branch package https://github.com/claration/Zsign-Package.git NextSigner/Vendor/Zsign-Package
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          bridge = Path('NextSigner/Vendor/Zsign-Package/swift/zsign.mm')
+          s = bridge.read_text()
+          s = s.replace('void(^completionHandler)(BOOL success, NSError *error)',
+                        'void(^completionHandler)(BOOL success)')
+          old_call = 'bundle.SignFolder(&zsa, strFolder, strBundleId, strBundleVersion, strDisplayName, arrDylibFiles, bForce, bWeakInject, bEnableCache, excludeprovion)'
+          new_call = 'bundle.SignFolder(&zsa, strFolder, strBundleId, strBundleVersion, strDisplayName, arrDylibFiles, arrDisDylibFiles, bForce, bWeakInject, bEnableCache, excludeprovion)'
+          if old_call not in s:
+              raise SystemExit('Expected stale SignFolder bridge call not found')
+          s = s.replace(old_call, new_call)
+          s = s.replace('completionHandler(bRet);', 'if (completionHandler) { completionHandler(bRet); }')
+          bridge.write_text(s)
+
+          bundle = Path('NextSigner/Vendor/Zsign-Package/src/bundle.cpp')
+          b = bundle.read_text()
+          old = '''if (!pSignAsset->m_strProvData.empty()) {
+		if (bRemoveProvision) {
+			if (!ZFile::WriteFileV(pSignAsset->m_strProvData, "%s/embedded.mobileprovision", m_strAppFolder.c_str())) { // embedded.mobileprovision'''
+          new = '''if (!pSignAsset->m_strProvData.empty()) {
+		if (!bRemoveProvision) {
+			if (!ZFile::WriteFileV(pSignAsset->m_strProvData, "%s/embedded.mobileprovision", m_strAppFolder.c_str())) { // embedded.mobileprovision'''
+          if old not in b:
+              raise SystemExit('Expected inverted embedded.mobileprovision condition not found')
+          b = b.replace(old, new, 1)
+          bundle.write_text(b)
+          PY
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -57,16 +93,17 @@ jobs:
           mkdir -p "$RUNNER_TEMP/package/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
           cd "$RUNNER_TEMP/package"
-          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.0.ipa" Payload
-          cp "$RUNNER_TEMP/NextSigner-1.0.ipa" "$RUNNER_TEMP/NextSigner-1.0.tipa"
-          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.0.ipa" "$RUNNER_TEMP/NextSigner-1.0.tipa"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.2.1.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-1.2.1.ipa" "$RUNNER_TEMP/NextSigner-1.2.1.tipa"
+          unzip -t "$RUNNER_TEMP/NextSigner-1.2.1.tipa" >/dev/null
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.2.1.ipa" "$RUNNER_TEMP/NextSigner-1.2.1.tipa"
 
       - name: Upload TIPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextSigner-1.0-TIPA
+          name: NextSigner-1.2.1-TIPA
           path: |
-            ${{ runner.temp }}/NextSigner-1.0.tipa
-            ${{ runner.temp }}/NextSigner-1.0.ipa
+            ${{ runner.temp }}/NextSigner-1.2.1.tipa
+            ${{ runner.temp }}/NextSigner-1.2.1.ipa
           if-no-files-found: error
           retention-days: 30
