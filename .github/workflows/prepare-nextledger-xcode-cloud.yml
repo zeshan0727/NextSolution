@@ -16,7 +16,7 @@ permissions:
 jobs:
   prepare:
     if: github.event_name != 'issues' || github.event.issue.title == 'prepare-nextledger-xcode-cloud'
-    runs-on: macos-26
+    runs-on: macos-latest
     timeout-minutes: 20
 
     steps:
