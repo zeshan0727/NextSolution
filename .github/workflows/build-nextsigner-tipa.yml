@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/nextsigner-1.0
+      - feature/nextsigner-local-signing
     paths:
       - 'NextSigner/**'
       - '.github/workflows/build-nextsigner-tipa.yml'
