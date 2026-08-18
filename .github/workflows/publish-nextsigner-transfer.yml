@@ -19,8 +19,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     env:
-      ARTIFACT_ID: '9326098805'
-      VERSION: '1.1'
+      ARTIFACT_ID: '9326818565'
+      VERSION: '1.1.1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,15 +36,15 @@ jobs:
           gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > "$RUNNER_TEMP/nextsigner-artifact.zip"
           mkdir -p "$RUNNER_TEMP/nextsigner-artifact"
           unzip -q "$RUNNER_TEMP/nextsigner-artifact.zip" -d "$RUNNER_TEMP/nextsigner-artifact"
-          test -s "$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.tipa"
+          test -s "$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.1.tipa"
 
       - name: Publish Next Signer and update Transfer manifest
         shell: bash
         run: |
           set -euo pipefail
-          SRC="$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.tipa"
-          DEST_DIR='transfer/files/NextSigner/1.1'
-          DEST="$DEST_DIR/NextSigner-1.1.tipa"
+          SRC="$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.1.tipa"
+          DEST_DIR='transfer/files/NextSigner/1.1.1'
+          DEST="$DEST_DIR/NextSigner-1.1.1.tipa"
           INDEX='transfer/index.json'
 
           test -s "$SRC"
@@ -63,18 +63,18 @@ jobs:
           index_path = Path('transfer/index.json')
           data = json.loads(index_path.read_text())
           files = data.get('files', [])
-          entry_id = 'nextsigner-1.1'
-          files = [item for item in files if item.get('id') != entry_id]
+          entry_id = 'nextsigner-1.1.1'
+          files = [item for item in files if item.get('id') not in {entry_id, 'nextsigner-1.1'}]
           entry = {
               'id': entry_id,
-              'name': 'Next Signer 1.1',
-              'fileName': 'NextSigner-1.1.tipa',
+              'name': 'Next Signer 1.1.1',
+              'fileName': 'NextSigner-1.1.1.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
-              'version': '1.1',
-              'url': 'https://nextsolution.cc/transfer/files/NextSigner/1.1/NextSigner-1.1.tipa',
+              'version': '1.1.1',
+              'url': 'https://nextsolution.cc/transfer/files/NextSigner/1.1.1/NextSigner-1.1.1.tipa',
               'sha256': os.environ['SHA256'],
-              'notes': 'Next Signer 1.1. Imports a P12 certificate and mobileprovision profile, signs IPA files locally on-device with Zsign, verifies the signed output, and supports export/publish after successful signing.'
+              'notes': 'Crash fix for local signing: safely handles the optional Zsign completion callback. Keeps on-device P12 + mobileprovision signing, signature verification, export, and publish-after-sign flow.'
           }
           data['files'] = [entry] + files
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -83,7 +83,7 @@ jobs:
 
           python3 -m json.tool "$INDEX" >/dev/null
           test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
-          test "$SHA256" = 'a3f9254673118986e9e088e43d33955c46a8653b65595113d3ba82f3966a44c7'
+          test "$SHA256" = 'eaaf9f58cff06309189d9ce4ad177557817642129c0ae3da6a455d70e276140f'
 
       - name: Commit Transfer publication
         shell: bash
@@ -91,7 +91,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add transfer/files/NextSigner/1.1/NextSigner-1.1.tipa transfer/index.json
-          git commit -m 'Publish Next Signer 1.1 to Transfer' || true
+          git add transfer/files/NextSigner/1.1.1/NextSigner-1.1.1.tipa transfer/index.json
+          git commit -m 'Publish Next Signer 1.1.1 crash fix to Transfer' || true
           git pull --rebase origin main
           git push origin HEAD:main
