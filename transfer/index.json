@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17T19:20:35Z",
+  "updatedAt": "2026-08-18T13:08:10Z",
   "files": [
+    {
+      "id": "nextpost-1.0.0",
+      "name": "Next Post 1.0.0",
+      "fileName": "NextPost-1.0.0.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.0",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.0/NextPost-1.0.0.tipa",
+      "sha256": "4528883265f078671e56d009da0bc3b17ed1ddcbed7fa89476cdd77925276e8c",
+      "notes": "Next Solution X post generator. Pulls automated articles from nextsolution.cc, generates non-repeating X-ready posts with article link, SEO-focused descriptions and hashtags, supports copy, Open in X, source article access, and persistent generated-post counters."
+    },
     {
       "id": "nextlock-1.1.4-roothide",
       "name": "NextLock 1.1.4 RootHide",
