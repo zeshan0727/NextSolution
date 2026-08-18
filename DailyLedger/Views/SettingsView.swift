@@ -126,7 +126,7 @@ struct SettingsView: View {
                 } header: {
                     Label("Backup & Sync", systemImage: "icloud.fill")
                 } footer: {
-                    Text("iCloud backup uses your private iCloud Drive container. Google Drive backup uses the iOS Files picker and requires you to choose the destination yourself.")
+                    Text("iCloud backup uses your private iCloud Drive container. File-provider backups use Apple's system file picker and only access locations you choose.")
                 }
 
                 Section {
@@ -153,7 +153,7 @@ struct SettingsView: View {
                 } header: {
                     Label("Shortcuts", systemImage: "wand.and.stars")
                 } footer: {
-                    Text("Next Ledger exposes supported actions to Apple's Shortcuts app. It does not read Messages or SMS data.")
+                    Text("Next Ledger exposes supported actions to Apple's Shortcuts app for user-initiated data entry.")
                 }
 
                 Section {
@@ -216,13 +216,13 @@ struct SettingsView: View {
                     Link(destination: URL(string: "https://nextsolution.cc/next-ledger-privacy.html")!) {
                         Label("Privacy Policy", systemImage: "hand.raised.fill")
                     }
-                    Link(destination: URL(string: "https://nextsolution.cc/")!) {
+                    Link(destination: URL(string: "https://nextsolution.cc/next-ledger-support.html")!) {
                         Label("Support Website", systemImage: "safari.fill")
                     }
                 } header: {
                     Label("Privacy & Support", systemImage: "lock.shield.fill")
                 } footer: {
-                    Text("Next Ledger does not include SMS capture, bank-message reading, advertising SDKs, analytics SDKs, or third-party AI services in the App Store build.")
+                    Text("Your ledger records stay under your control. Review the Privacy Policy for details about local storage, exports, and optional iCloud backup.")
                 }
 
                 Section {
@@ -278,7 +278,7 @@ struct SettingsView: View {
     }
 
     private var appVersion: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
         return "\(version) (\(build))"
     }
