@@ -17,7 +17,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 
 enum AppVisualTheme: String, CaseIterable, Identifiable {
     case native = "Native Classic"
-    case glass = "iOS 26 Glass Style"
+    case glass = "Glass Style"
     var id: String { rawValue }
 }
 
