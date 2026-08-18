@@ -67,8 +67,8 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.1-LevelPlay-Test.tipa
-          shasum -a 256 NextPost-1.0.1-LevelPlay-Test.tipa > NextPost-1.0.1-LevelPlay-Test.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.2-LevelPlay-Diagnostic.tipa
+          shasum -a 256 NextPost-1.0.2-LevelPlay-Diagnostic.tipa > NextPost-1.0.2-LevelPlay-Diagnostic.sha256
 
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
@@ -78,28 +78,28 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextPost-1.0.1-LevelPlay-Test
+          name: NextPost-1.0.2-LevelPlay-Diagnostic
           path: |
-            NextPost-1.0.1-LevelPlay-Test.tipa
-            NextPost-1.0.1-LevelPlay-Test.sha256
+            NextPost-1.0.2-LevelPlay-Diagnostic.tipa
+            NextPost-1.0.2-LevelPlay-Diagnostic.sha256
           if-no-files-found: error
 
       - name: Publish TIPA to repository
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p applications
-          cp NextPost-1.0.1-LevelPlay-Test.tipa applications/NextPost-1.0.1-LevelPlay-Test.tipa
-          cp NextPost-1.0.1-LevelPlay-Test.sha256 applications/NextPost-1.0.1-LevelPlay-Test.sha256
+          cp NextPost-1.0.2-LevelPlay-Diagnostic.tipa applications/NextPost-1.0.2-LevelPlay-Diagnostic.tipa
+          cp NextPost-1.0.2-LevelPlay-Diagnostic.sha256 applications/NextPost-1.0.2-LevelPlay-Diagnostic.sha256
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add applications/NextPost-1.0.1-LevelPlay-Test.tipa applications/NextPost-1.0.1-LevelPlay-Test.sha256
+          git add applications/NextPost-1.0.2-LevelPlay-Diagnostic.tipa applications/NextPost-1.0.2-LevelPlay-Diagnostic.sha256
 
           if git diff --cached --quiet; then
-            echo "Next Post LevelPlay test build is already published."
+            echo "Next Post LevelPlay diagnostic build is already published."
             exit 0
           fi
 
-          git commit -m "Publish Next Post 1.0.1 LevelPlay test TIPA"
+          git commit -m "Publish Next Post 1.0.2 LevelPlay diagnostic TIPA"
           git pull --rebase origin main
           git push origin HEAD:main
