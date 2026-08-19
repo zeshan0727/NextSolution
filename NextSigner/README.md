@@ -10,21 +10,45 @@ After one-time setup, publishing an app is:
 2. Choose an IPA from Files.
 3. Confirm the app name and a `com.nextsolution.*` bundle identifier.
 4. Tap **Sign & Publish**.
-5. The GitHub workflow signs the IPA and updates `https://nextsolution.cc/install/` automatically.
+5. The GitHub workflow signs the IPA, publishes the signed build, creates the OTA manifest, and updates `https://nextsolution.cc/install/` automatically.
 
 No IPA needs to be sent through ChatGPT and no third-party signing app is required.
 
+## Storage architecture
+
+Next Signer deliberately separates the catalog from large binaries:
+
+- GitHub repository: source, website, icons, OTA manifests, and `install/apps.json`.
+- GitHub draft release `nextsigner-inbox`: temporary unsigned IPA staging from the iPhone to the signing workflow. Release assets avoid the normal repository/browser file-size limit.
+- Cloudflare R2 bucket `next-signer-apps`: preferred storage for signed IPA files.
+- Public R2 hostname: `https://files.nextsolution.cc`.
+- GitHub Releases: automatic fallback if the R2 Actions secrets are not configured.
+
+New R2-published builds use immutable versioned object keys such as:
+
+`apps/ipa/<bundle-slug>/<version>/<bundle-slug>-<version>-<build>.ipa`
+
+The workflow verifies the published URL before updating the OTA manifest. It also records the SHA-256 digest, byte size, download URL, and storage backend in the catalog entry.
+
 ## Security model
 
-Next Signer does **not** keep the Apple Distribution P12, P12 password, or provisioning profile on the iPhone. Those are stored once as encrypted GitHub Actions secrets. The iPhone stores only a repository-scoped GitHub token in the iOS Keychain.
+Next Signer does **not** keep the Apple Distribution P12, P12 password, provisioning profile, or Cloudflare R2 secret key on the iPhone. Apple signing material and R2 credentials are stored as encrypted GitHub Actions secrets. The iPhone stores only a repository-scoped GitHub token in the iOS Keychain.
 
-Required Actions secrets on `zeshan0727/NextSolution`:
+Required signing Actions secrets on `zeshan0727/NextSolution`:
 
 - `NEXTSIGNER_P12_BASE64`
 - `NEXTSIGNER_P12_PASSWORD`
 - `NEXTSIGNER_MOBILEPROVISION_BASE64`
 
-Create the base64 values locally. On macOS:
+Required R2 Actions secrets for direct Cloudflare publishing:
+
+- `CLOUDFLARE_R2_ACCOUNT_ID`
+- `CLOUDFLARE_R2_ACCESS_KEY_ID`
+- `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
+
+The R2 credentials should be scoped only to the `next-signer-apps` bucket with object read/write permission. Do not commit or paste those credentials into app source, website JavaScript, catalog JSON, manifests, issues, or logs.
+
+Create the Apple signing base64 values locally. On macOS:
 
 ```bash
 base64 -i Distribution.p12 | pbcopy
@@ -38,7 +62,7 @@ On Windows PowerShell:
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("NS_3.mobileprovision")) | Set-Clipboard
 ```
 
-Never commit the P12, its password, or the raw provisioning profile to the repository.
+Never commit the P12, its password, the raw provisioning profile, or R2 credentials to the repository.
 
 ## GitHub token for the app
 
@@ -57,13 +81,30 @@ The backend workflow uses the MIT-licensed `zhlynn/zsign` project pinned to comm
 
 The workflow:
 
-- receives an IPA in a draft release inbox;
+- receives an IPA in the draft GitHub release inbox;
 - signs it with the configured P12 and Ad Hoc provisioning profile;
 - rewrites the requested main bundle identifier and app name;
-- publishes the signed IPA as a GitHub Release asset;
+- calculates SHA-256 and file size;
+- publishes the signed IPA to Cloudflare R2 when R2 secrets are configured;
+- falls back to the `private-apps` GitHub Release if R2 is not configured;
+- verifies the public download URL;
 - creates the OTA manifest;
 - updates `install/apps.json`;
 - removes the unsigned staging asset after a successful publish.
+
+## R2 public download layout
+
+Production signed IPA downloads use:
+
+`https://files.nextsolution.cc/apps/ipa/<bundle-slug>/<version>/<filename>.ipa`
+
+Keep manually uploaded test packages separated by type when practical, for example:
+
+- `apps/ipa/`
+- `apps/tipa/`
+- `apps/deb/`
+
+The R2 custom domain is public. Do not upload private certificates, provisioning profiles, API tokens, passwords, or other secrets to the public bucket.
 
 ## Important compatibility note
 
