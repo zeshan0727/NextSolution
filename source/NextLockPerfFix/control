@@ -1,0 +1,9 @@
+Package: com.nextsolution.nextlock.perffix
+Name: NextLock 1.1.4 CPU Fix Test
+Version: 1.1.5~test1
+Architecture: iphoneos-arm64
+Description: Feature-preserving NextLock 1.1.4 CPU fix. Caches the exact transparent-photo/sticker classification result so repeated Lock Screen layouts do not rerasterize and rescan unchanged images.
+Maintainer: Next Solution - Zeeshan Barvi
+Author: Next Solution - Zeeshan Barvi
+Section: Tweaks
+Depends: firmware (>= 15.0), mobilesubstrate, com.nextsolution.lockglyphtime (= 1.1.4)
