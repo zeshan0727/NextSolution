@@ -213,7 +213,7 @@ struct PublishLogMiniView: View {
                                 Text(entry.stage + ":")
                                     .fontWeight(.semibold)
                                 Text(entry.message)
-                                    .foregroundStyle(entry.kind == .failure ? .red : .primary)
+                                    .foregroundColor(entry.kind == .failure ? .red : .primary)
                                     .textSelection(.enabled)
                             }
                             .font(.system(size: 10, design: .monospaced))
@@ -244,8 +244,8 @@ struct PublishLogMiniView: View {
     @ViewBuilder
     private var statusIcon: some View {
         if center.isRunning {
-            Image(systemName: "arrow.triangle.2.circlepath")
-                .symbolEffect(.pulse)
+            ProgressView()
+                .controlSize(.small)
         } else if center.headline.contains("Failed") {
             Image(systemName: "xmark.octagon.fill")
                 .foregroundStyle(.red)
