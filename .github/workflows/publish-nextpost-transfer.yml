@@ -1,6 +1,6 @@
 name: Publish Next Post to Transfer
 
-# 1.0.8 Unity Ads mediation publication trigger
+# 1.0.8 Unity Ads mediation publication trigger (forced after successful build)
 on:
   workflow_dispatch:
   push:
