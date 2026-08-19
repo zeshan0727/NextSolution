@@ -1,0 +1,126 @@
+name: Test NextLock 1.1.5 CPU Fix
+
+on:
+  push:
+    branches: [fix/nextlock-1.1.5-cpu]
+    paths:
+      - "DailyTweaks/LockGlyphTime/**"
+      - ".github/workflows/test-nextlock-115-cpu.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextlock-115-cpu-test
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Generate 1.1.5 source and validate hot-path fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          cd "$P"
+          python3 prefs/generate_root.py
+          python3 patch_v023.py
+          python3 patch_v024.py
+          python3 patch_v025.py
+          python3 patch_v026.py
+          python3 patch_v027.py
+          python3 patch_v028.py
+          python3 patch_v029.py
+          python3 patch_v030.py
+          python3 patch_v031.py
+          python3 patch_v032.py
+          python3 patch_v033.py
+
+          grep -q '^Version: 1.1.5$' control
+          grep -q 'gPhotoSlotIsSticker\[4\]' RuntimeV023.xm
+          grep -q 'gPhotoSlotDisplayImage\[4\]' RuntimeV023.xm
+          grep -q 'BOOL sticker=gPhotoSlotIsSticker\[i\]' RuntimeV023.xm
+          grep -q 'if(photoView.image != displayImage) photoView.image=displayImage' RuntimeV023.xm
+
+          # The expensive alpha probe is allowed during preference/photo load,
+          # but it must not appear inside LGTApplyPhotoFrames anymore.
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('RuntimeV023.xm').read_text()
+          start=s.index('static void LGTApplyPhotoFrames(')
+          end=s.index('static void LGTResetContainerBeforeAppleLayout', start)
+          body=s[start:end]
+          assert 'LGTImageHasVisibleTransparency(' not in body, body
+          assert 'gPhotoSlotIsSticker[i]' in body
+          print('PASS: no transparency bitmap scan in photo-frame layout path')
+          PY
+
+      - name: Build Rootless
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-115"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          export THEOS="$RUNNER_TEMP/theos-rootless" THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.5_Rootless.deb"
+
+      - name: Build RootHide
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/LockGlyphTime"
+          OUT="$RUNNER_TEMP/nextlock-115"
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$RUNNER_TEMP/theos-roothide" THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          DEB="$(find "$P/packages" -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "$OUT/NextLock_1.1.5_RootHide.deb"
+
+      - name: Validate packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/nextlock-115"
+          for deb in "$OUT"/*.deb; do
+            test "$(dpkg-deb -f "$deb" Version)" = 1.1.5
+            x="$(mktemp -d)"
+            dpkg-deb -x "$deb" "$x"
+            dylib="$(find "$x" -name LockGlyphTime.dylib -print -quit)"
+            test -n "$dylib"
+            strings -a "$dylib" | grep -q 'LGTImageHasVisibleTransparency'
+            strings -a "$dylib" | grep -q 'gPhotoSlotIsSticker'
+            rm -rf "$x"
+          done
+          shasum -a 256 "$OUT"/*.deb | tee "$OUT/SHA256SUMS.txt"
+
+      - name: Upload test packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.5-CPU-Fix-DEBs
+          path: |
+            ${{ runner.temp }}/nextlock-115/NextLock_1.1.5_Rootless.deb
+            ${{ runner.temp }}/nextlock-115/NextLock_1.1.5_RootHide.deb
+            ${{ runner.temp }}/nextlock-115/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
