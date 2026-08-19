@@ -103,6 +103,20 @@ class DopamineClusterTests(unittest.TestCase):
         issues = validate_article(article, facts)
         self.assertTrue(any("unsupported OS version" in issue for issue in issues))
 
+    def test_quality_accepts_source_backed_major_version_wording(self) -> None:
+        topic = self.cluster["topics"][0]
+        facts = {
+            "common_facts": self.cluster["common_facts"],
+            "topic_facts": topic["facts"],
+        }
+        article = self.fixture_article()
+        article["sections"][0]["paragraphs"][0] += (
+            " Dopamine 3 reaches into the iOS 18 family only for the documented categories, "
+            "while iOS 26 wording must remain limited to the documented A12 and A13 range."
+        )
+        issues = validate_article(article, facts)
+        self.assertFalse(any("unsupported OS version" in issue for issue in issues))
+
     def test_render_uses_existing_real_dopamine_visual_and_related_link(self) -> None:
         topic = self.cluster["topics"][0]
         rendered = render_article(
