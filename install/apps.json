@@ -1,6 +1,26 @@
 {
   "apps": [
     {
+      "id": "com-nextsolution-tiktok",
+      "name": "TikTuk",
+      "version": "46.2.0",
+      "build": "462034",
+      "platform": "iPhone",
+      "minimumOS": "iOS 14.0+",
+      "bundleId": "com.nextsolution.Tiktok",
+      "icon": "/install/icons/com-nextsolution-tiktok-11157ca78549.png",
+      "manifest": "/install/com-nextsolution-tiktok.plist",
+      "available": true,
+      "status": "Ready to install",
+      "downloadURL": "https://files.nextsolution.cc/apps/ipa/com-nextsolution-tiktok/46.2.0/com-nextsolution-tiktok-46.2.0-462034.ipa",
+      "sha256": "11157ca785493ba83df154558a1a7dd7842246475de3dc7aeb2a788d6e3828a5",
+      "sizeBytes": 935062735,
+      "storage": "Cloudflare R2",
+      "duplicateSigned": false,
+      "tweakCount": 0,
+      "customIcon": false
+    },
+    {
       "available": true,
       "build": "1032792803",
       "bundleId": "com.nextsolution.watusi",
