@@ -1,0 +1,47 @@
+name: Temporary Next Signer 1.3.1 Publisher
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+jobs:
+  publish:
+    if: github.event.issue.title == '[NEXTSIGNER-1.3.1-PUBLISH]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Dispatch production publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          BEFORE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow publish-nextsigner-transfer.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run publish-nextsigner-transfer.yml --repo "$GITHUB_REPOSITORY" --ref main -f version=1.3.1
+          RUN_ID=''
+          for attempt in $(seq 1 20); do
+            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow publish-nextsigner-transfer.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [ "$candidate" != "0" ] && [ "$candidate" != "$BEFORE" ]; then
+              RUN_ID="$candidate"
+              break
+            fi
+            sleep 3
+          done
+          test -n "$RUN_ID" || { echo 'Could not locate Next Signer 1.3.1 publisher run'; exit 1; }
+          echo "PUBLISH_RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
+          gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_PUBLISH_STARTED run=$RUN_ID"
+
+      - name: Watch production publisher
+        run: gh run watch "$PUBLISH_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 8
+
+      - name: Report success
+        if: success()
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_PUBLISHED run=$PUBLISH_RUN_ID"
+
+      - name: Report failure
+        if: failure()
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_PUBLISH_FAILED run=${PUBLISH_RUN_ID:-unknown}"
