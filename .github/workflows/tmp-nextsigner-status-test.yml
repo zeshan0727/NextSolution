@@ -1,0 +1,53 @@
+name: Temporary Next Signer Status Transport Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'NextSigner/status-test-trigger.txt'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INBOX_TAG: nextsigner-inbox
+      REPORT_ISSUE: '203'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Write status through production helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          export REQUEST_ID="status-test-${GITHUB_RUN_ID}"
+          echo "REQUEST_ID=$REQUEST_ID" >> "$GITHUB_ENV"
+          bash .github/scripts/nextsigner-publish-status.sh running Test "Live status transport test."
+
+      - name: Verify status asset contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_ID="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[] | select(.tag_name=="nextsigner-inbox") | .id' | head -n1)"
+          test -n "$RELEASE_ID"
+          ASSETS="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?per_page=100")"
+          ASSET_ID="$(printf '%s' "$ASSETS" | jq -r --arg name "status-$REQUEST_ID.json" '.[] | select(.name==$name) | .id' | head -n1)"
+          test -n "$ASSET_ID" && test "$ASSET_ID" != null
+          gh api -H 'Accept: application/octet-stream' "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET_ID" > "$RUNNER_TEMP/status.json"
+          jq -e --arg request "$REQUEST_ID" '.request_id==$request and .stage=="Test" and .state=="running"' "$RUNNER_TEMP/status.json" >/dev/null
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET_ID"
+
+      - name: Report success
+        if: success()
+        run: gh issue comment "$REPORT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_STATUS_CHANNEL_OK run=${{ github.run_id }}"
+
+      - name: Report failure
+        if: failure()
+        run: gh issue comment "$REPORT_ISSUE" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_STATUS_CHANNEL_FAILED run=${{ github.run_id }}"
