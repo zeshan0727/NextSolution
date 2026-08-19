@@ -94,10 +94,10 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_DIRECT_DISPATCH_FIX_OK'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_DIRECT_DISPATCH_FIX_OK run=${{ github.run_id }}"
 
       - name: Report failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_DIRECT_DISPATCH_FIX_FAILED'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_DIRECT_DISPATCH_FIX_FAILED run=${{ github.run_id }}"
