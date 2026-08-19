@@ -1,0 +1,103 @@
+name: Temporary Next Signer Direct Dispatch Fix
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  patch:
+    if: github.event.issue.title == '[NEXTSIGNER-DIRECT-DISPATCH-FIX]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Make signing workflow reusable
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/nextsigner-sign-publish.yml')
+          text = path.read_text()
+          if '  workflow_call:\n' not in text:
+              start = text.index('  workflow_dispatch:\n')
+              end = text.index('\n\npermissions:', start)
+              dispatch_block = text[start:end]
+              call_block = dispatch_block.replace('  workflow_dispatch:\n', '  workflow_call:\n', 1)
+              text = text[:start] + call_block + '\n' + dispatch_block + text[end:]
+              path.write_text(text)
+          PY
+
+      - name: Replace PAT bridge with reusable workflow call
+        shell: bash
+        run: |
+          cat > .github/workflows/nextsigner-sign-dispatch-bridge.yml <<'YAML'
+          name: Next Signer - PAT Safe Sign Dispatch
+
+          on:
+            repository_dispatch:
+              types: [nextsigner_sign_publish]
+
+          permissions:
+            contents: write
+
+          concurrency:
+            group: nextsigner-sign-dispatch-bridge
+            cancel-in-progress: false
+
+          jobs:
+            sign-and-publish:
+              uses: ./.github/workflows/nextsigner-sign-publish.yml
+              with:
+                staging_asset: ${{ github.event.client_payload.staging_asset }}
+                requested_name: ${{ github.event.client_payload.requested_name }}
+                requested_bundle_id: ${{ github.event.client_payload.requested_bundle_id }}
+                custom_icon_asset: ${{ github.event.client_payload.custom_icon_asset }}
+                tweak_assets_json: ${{ github.event.client_payload.tweak_assets_json }}
+                duplicate_signing: ${{ github.event.client_payload.duplicate_signing }}
+                inject_extensions: ${{ github.event.client_payload.inject_extensions }}
+                weak_injection: ${{ github.event.client_payload.weak_injection }}
+              secrets: inherit
+          YAML
+
+      - name: Validate patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '^  workflow_call:' .github/workflows/nextsigner-sign-publish.yml
+          grep -q 'uses: ./.github/workflows/nextsigner-sign-publish.yml' .github/workflows/nextsigner-sign-dispatch-bridge.yml
+          if grep -q 'gh workflow run nextsigner-sign-publish.yml' .github/workflows/nextsigner-sign-dispatch-bridge.yml; then
+            echo 'Old second-dispatch path still present'
+            exit 1
+          fi
+
+      - name: Commit production fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/nextsigner-sign-publish.yml .github/workflows/nextsigner-sign-dispatch-bridge.yml
+          git commit -m 'Fix Next Signer publish dispatch chain'
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Report success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_DIRECT_DISPATCH_FIX_OK'
+
+      - name: Report failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_DIRECT_DISPATCH_FIX_FAILED'
