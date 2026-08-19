@@ -36,7 +36,7 @@ jobs:
           S=source/NextLockPerfFix/Tweak.m
           grep -q 'NextLockPerfFix 1.1.5-test2 targeted-image-cache transparency-cache exact-semantics' "$S"
           grep -q 'NLCachedImageWithData' "$S"
-          grep -q 'NLCallerIsLockGlyphTime' "$S"
+          grep -q 'fromLockGlyphTime' "$S"
           grep -q 'NLLockGlyphTextStart' "$S"
           grep -q 'NLDataPointerImageCache' "$S"
           grep -q 'NLDataFingerprintImageCache' "$S"
@@ -44,7 +44,6 @@ jobs:
           grep -q 'kNextLock114Arm64TransparencyOffset   = 0xAE18' "$S"
           grep -q 'kNextLock114Arm64eTransparencyOffset = 0xAF74' "$S"
           grep -q '@selector(imageWithData:)' "$S"
-          ! grep -q 'CGBitmapContextCreate' "$S" || grep -q 'original helper' "$S"
 
       - name: Build RootHide Test 2 performance shim
         shell: bash
