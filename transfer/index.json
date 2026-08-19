@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T07:48:10Z",
+  "updatedAt": "2026-08-19T08:53:51Z",
   "files": [
+    {
+      "id": "nextlock-1.1.5-cpufix-test1-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 1 RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test1_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.5-test1",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test1/NextLock_1.1.5_CPUFix_Test1_RootHide.deb",
+      "sha256": "1a9422f8b02d568c4f5f61f9e81f2cea7c97401a0fda40d1cc8cc6f535f3563e",
+      "notes": "NextLock 1.1.4 feature-preserving CPU-fix test. Keeps the original LockGlyphTime 1.1.4 runtime and all clock/date, four-frame photo/sticker, sizing, positioning, fonts, colors and shadow features, while adding an exact-result transparency cache to stop repeated full-image CoreGraphics/vImage alpha scans during layout."
+    },
     {
       "id": "nextpost-1.0.7-levelplay-guide-complete",
       "name": "Next Post 1.0.7 LevelPlay Guide Complete",
