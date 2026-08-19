@@ -1,0 +1,111 @@
+name: Build NextLock 1.1.4 CPU Fix Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - debug/nextlock-1.1.4-cpu-fix
+    paths:
+      - 'source/NextLockPerfFix/**'
+      - '.github/workflows/build-nextlock-1.1.4-cpu-fix-test.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextlock-1.1.4-cpu-fix-test
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install packaging tools
+        run: brew install dpkg ldid
+
+      - name: Audit fix invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          S=source/NextLockPerfFix/Tweak.m
+          grep -q 'C7EBC4D1-EAD4-3320-A27F-34E86C25F776' "$S" || true
+          grep -q 'kNextLock114Arm64TransparencyOffset  = 0xAE18' "$S"
+          grep -q 'kNextLock114Arm64eTransparencyOffset = 0xAF74' "$S"
+          grep -q 'NLOriginalHasRealTransparency(image)' "$S"
+          grep -q 'NSPointerFunctionsObjectPointerPersonality' "$S"
+          grep -q '_dyld_register_func_for_add_image' "$S"
+          ! grep -q 'CGBitmapContextCreate' "$S"
+          ! grep -q 'CGContextDrawImage' "$S"
+          plutil -lint source/NextLockPerfFix/NextLockPerfFix.plist
+
+      - name: Build Rootless test package
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/source/NextLockPerfFix"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos"
+          export THEOS="$RUNNER_TEMP/theos"
+          export THEOS_PACKAGE_SCHEME=rootless
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          cp "$D" "$OUT/NextLock_1.1.4_CPUFix_Test1_Rootless.deb"
+
+      - name: Build RootHide test package
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/source/NextLockPerfFix"
+          OUT="$RUNNER_TEMP/out"
+          git checkout -- "$P/control"
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          cp "$D" "$OUT/NextLock_1.1.4_CPUFix_Test1_RootHide.deb"
+
+      - name: Validate binaries and package metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/out"
+          for D in "$OUT"/*.deb; do
+            test "$(dpkg-deb -f "$D" Package)" = 'com.nextsolution.nextlock.perffix'
+            test "$(dpkg-deb -f "$D" Version)" = '1.1.5~test1'
+            dpkg-deb -f "$D" Depends | grep -q 'com.nextsolution.lockglyphtime (= 1.1.4)'
+            X=$(mktemp -d)
+            dpkg-deb -x "$D" "$X"
+            DYLIB=$(find "$X" -name NextLockPerfFix.dylib -print -quit)
+            PLIST=$(find "$X" -name NextLockPerfFix.plist -print -quit)
+            test -n "$DYLIB"
+            test -n "$PLIST"
+            strings -a "$DYLIB" | grep -q 'NextLockPerfFix 1.1.5-test transparency-cache exact-semantics'
+            plutil -p "$PLIST" | grep -q 'com.apple.springboard'
+            lipo -info "$DYLIB" | grep -q 'arm64'
+            rm -rf "$X"
+          done
+          shasum -a 256 "$OUT"/*.deb
+
+      - name: Upload test packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.4-CPUFix-Test1
+          path: ${{ runner.temp }}/out/*.deb
+          if-no-files-found: error
+          retention-days: 14
