@@ -25,10 +25,11 @@ extern void MSHookMessageEx(Class cls, SEL sel, IMP imp, IMP *result);
 // cache even though the image content itself is unchanged.
 //
 // Test 2 keeps every NextLock feature and the exact original transparency
-// decision, but also memoizes +[UIImage imageWithData:] ONLY when the caller is
-// inside the verified LockGlyphTime 1.1.4 __TEXT range. Repeated layouts then
-// reuse the same immutable UIImage, so the original expensive alpha scan runs
-// once per distinct photo/sticker content instead of once per layout.
+// decision, but also memoizes +[UIImage imageWithData:] ONLY when the direct
+// caller is inside the verified LockGlyphTime 1.1.4 __TEXT range. Repeated
+// layouts then reuse the same immutable UIImage, so the original expensive
+// alpha scan runs once per distinct photo/sticker content instead of once per
+// layout pass.
 
 static const uint8_t kNextLock114Arm64UUID[16] = {
     0xC7, 0xEB, 0xC4, 0xD1, 0xEA, 0xD4, 0x33, 0x20,
@@ -79,7 +80,6 @@ static void NLEnsureCaches(void) {
             capacity:8];
 
         // Fallback when LockGlyphTime reconstructs an equivalent NSData object.
-        // Count limit prevents preference-image changes from growing memory.
         NLDataFingerprintImageCache = [[NSCache alloc] init];
         NLDataFingerprintImageCache.countLimit = 12;
     });
@@ -111,21 +111,6 @@ static BOOL NLCachedHasRealTransparency(UIImage *image) {
     return result;
 }
 
-static uintptr_t NLReturnAddress(void) {
-    void *ra = __builtin_return_address(0);
-#if defined(__arm64e__) && __has_include(<ptrauth.h>)
-    ra = ptrauth_strip(ra, ptrauth_key_return_address);
-#endif
-    return (uintptr_t)ra;
-}
-
-static BOOL NLCallerIsLockGlyphTime(void) {
-    const uintptr_t ra = NLReturnAddress();
-    return NLLockGlyphTextStart != 0 &&
-           ra >= NLLockGlyphTextStart &&
-           ra < NLLockGlyphTextEnd;
-}
-
 // Cheap, stable content fingerprint. It deliberately avoids hashing every byte
 // on every layout. Length plus samples from the beginning/middle/end makes a
 // collision between user-selected photos/stickers practically impossible while
@@ -133,7 +118,7 @@ static BOOL NLCallerIsLockGlyphTime(void) {
 static uint64_t NLFingerprintBytes(NSData *data) {
     const NSUInteger len = data.length;
     const uint8_t *bytes = (const uint8_t *)data.bytes;
-    uint64_t h = 1469598103934665603ULL; // FNV-1a offset basis
+    uint64_t h = 1469598103934665603ULL;
 
     #define NL_FNV_BYTE(v) do { h ^= (uint64_t)(v); h *= 1099511628211ULL; } while (0)
 
@@ -170,14 +155,25 @@ static NSString *NLDataKey(NSData *data) {
 }
 
 static UIImage *NLCachedImageWithData(id cls, SEL cmd, NSData *data) {
-    if (NLOriginalImageWithData == NULL || data == nil || !NLCallerIsLockGlyphTime()) {
+    // IMPORTANT: take the return address directly in this replacement. A helper
+    // function would see NextLockPerfFix as its caller and would defeat the
+    // module-range gate. objc_msgSend tail-calls the IMP, so LR still points to
+    // the LockGlyphTime call site here.
+    void *rawRA = __builtin_return_address(0);
+#if defined(__arm64e__) && __has_include(<ptrauth.h>)
+    rawRA = ptrauth_strip(rawRA, ptrauth_key_return_address);
+#endif
+    const uintptr_t ra = (uintptr_t)rawRA;
+    const BOOL fromLockGlyphTime = NLLockGlyphTextStart != 0 &&
+                                   ra >= NLLockGlyphTextStart &&
+                                   ra < NLLockGlyphTextEnd;
+
+    if (NLOriginalImageWithData == NULL || data == nil || !fromLockGlyphTime) {
         return NLOriginalImageWithData ? NLOriginalImageWithData(cls, cmd, data) : nil;
     }
 
     NLEnsureCaches();
 
-    // First try object identity: this is effectively free and covers the normal
-    // preferences path where the same NSData instance survives between layouts.
     os_unfair_lock_lock(&NLImageCacheLock);
     UIImage *image = [NLDataPointerImageCache objectForKey:data];
     os_unfair_lock_unlock(&NLImageCacheLock);
@@ -322,7 +318,6 @@ static void NLImageAdded(const struct mach_header *mh, intptr_t vmaddrSlide) {
         return;
     }
 
-    // Avoid patching while executing in dyld's add-image callback.
     dispatch_async(dispatch_get_main_queue(), ^{
         NLInstallHooks(mh, helperOffset, textStart, textEnd, matchedArch);
     });
