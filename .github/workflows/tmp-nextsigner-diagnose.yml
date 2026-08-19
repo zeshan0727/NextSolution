@@ -1,0 +1,32 @@
+name: Temporary Next Signer Publish Diagnostics
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  diagnose:
+    if: github.event.issue.title == '[NEXTSIGNER-DIAGNOSE-PUBLISH]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Report latest runs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRIDGE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow nextsigner-sign-dispatch-bridge.yml --limit 5 --json databaseId,status,conclusion,createdAt,event,url --jq '.')"
+          SIGNER="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow nextsigner-sign-publish.yml --limit 5 --json databaseId,status,conclusion,createdAt,event,url --jq '.')"
+          {
+            echo 'NEXTSIGNER_DIAGNOSTICS'
+            echo 'BRIDGE:'
+            echo "$BRIDGE"
+            echo 'SIGNER:'
+            echo "$SIGNER"
+          } > "$RUNNER_TEMP/report.txt"
+          gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/report.txt"
