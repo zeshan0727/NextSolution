@@ -1,0 +1,11 @@
+name: Legacy Module Glass 1.0.7 Publisher Disabled
+
+on:
+  workflow_dispatch:
+
+jobs:
+  disabled:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Module Glass 1.0.7 publisher is disabled; 1.0.8 is the active publisher."

@@ -1,0 +1,1 @@
+NextAura normal notification presentation update for the user's own jailbroken iPhone. The replacement is local-only UI customization: it does not transmit, log, or export notification content.

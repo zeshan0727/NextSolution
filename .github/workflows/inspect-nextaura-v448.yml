@@ -1,0 +1,49 @@
+name: Inspect NextAura 4.4.8 Package
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: github.head_ref == 'agent/nextaura-4.4.9-notification-island'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dpkg
+        run: brew install dpkg
+      - name: Inspect package
+        shell: bash
+        run: |
+          set -euo pipefail
+          D=debfiles/NextAura_4.4.8_RootHide_iOS16.deb
+          test -f "$D"
+          OUT="$RUNNER_TEMP/nextaura-inspect"
+          mkdir -p "$OUT/root"
+          dpkg-deb -x "$D" "$OUT/root"
+          dpkg-deb -e "$D" "$OUT/control"
+          echo '=== CONTROL ===' | tee "$OUT/report.txt"
+          cat "$OUT/control/control" | tee -a "$OUT/report.txt"
+          echo '=== FILES ===' | tee -a "$OUT/report.txt"
+          find "$OUT/root" -type f -o -type l | sort | tee -a "$OUT/report.txt"
+          echo '=== PREFERENCE PLISTS ===' | tee -a "$OUT/report.txt"
+          find "$OUT/root" \( -name '*.plist' -o -name '*.json' \) -type f -print0 | while IFS= read -r -d '' f; do
+            echo "--- $f" | tee -a "$OUT/report.txt"
+            plutil -p "$f" 2>/dev/null | tee -a "$OUT/report.txt" || strings -a "$f" | head -300 | tee -a "$OUT/report.txt"
+          done
+          echo '=== DYLIBS ===' | tee -a "$OUT/report.txt"
+          find "$OUT/root" -name '*.dylib' -type f -print0 | while IFS= read -r -d '' f; do
+            echo "--- $f" | tee -a "$OUT/report.txt"
+            file "$f" | tee -a "$OUT/report.txt"
+            echo '--- dynamic/island/notification strings' | tee -a "$OUT/report.txt"
+            strings -a "$f" | grep -Ei 'dynamic|island|aperture|banner|bulletin|notification|NCNotification|BBServer|sectionIdentifier|unlockvibrate' | head -500 | tee -a "$OUT/report.txt" || true
+          done
+      - name: Upload inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextAura-4.4.8-Inspection
+          path: ${{ runner.temp }}/nextaura-inspect/report.txt

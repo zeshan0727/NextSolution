@@ -1,0 +1,124 @@
+name: Build NextAura 4.5.3 Notification Island
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.head_ref == 'agent/nextaura-4.5.0-notification-island-controls' || github.head_ref == 'agent/nextaura-4.4.9-notification-island'
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid xz
+
+      - name: Validate elegant settings
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-13-NextAuraNotificationIsland"
+          plutil -lint "$P/DynamicIslandV450.plist"
+          plutil -lint "$P/NextAuraNotificationIsland.plist"
+          grep -q 'NotificationIslandDismissTime' "$P/DynamicIslandV450.plist"
+          grep -q 'Background Style' "$P/DynamicIslandV450.plist"
+          grep -q 'Blur Strength' "$P/DynamicIslandV450.plist"
+          grep -q 'PSSegmentCell' "$P/DynamicIslandV450.plist"
+          if grep -q 'PSSliderCell' "$P/DynamicIslandV450.plist"; then
+            echo 'Raw slider found in settings' >&2
+            exit 1
+          fi
+          python3 - "$P/DynamicIslandV450.plist" <<'PY'
+          import plistlib, sys
+          with open(sys.argv[1], 'rb') as f:
+              data = plistlib.load(f)
+          controls = [x for x in data.get('items', []) if x.get('cell') != 'PSGroupCell']
+          missing = [x.get('label','?') for x in controls if not x.get('description')]
+          if missing:
+              raise SystemExit('Controls missing one-line descriptions: ' + ', '.join(missing))
+          print(f'Validated {len(controls)} narrated controls')
+          PY
+
+      - name: Prepare 4.5.3 source
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-13-NextAuraNotificationIsland"
+          python3 "$P/compile-fix.py"
+          python3 "$P/layout-date.py"
+          python3 "$P/prepare-v450.py"
+          python3 "$P/prepare-v453.py"
+          cp "$P/DynamicIslandV450.plist" "$P/DynamicIsland.plist"
+          grep -q '_applicationIconImageForBundleIdentifier:format:scale:' "$P/NotificationIsland.xm"
+          grep -q 'NotificationIslandAppearanceMode' "$P/NotificationIsland.xm"
+          grep -q 'NotificationIslandDismissTime' "$P/NotificationIsland.xm"
+          grep -q 'NANRestoreShortLook' "$P/NotificationIsland.xm"
+          grep -q 'ghost-row restore' "$P/NotificationIsland.xm"
+          grep -q 'Persistent Test Notification' "$P/NotificationIsland.xm"
+
+      - name: Build replacement module
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-13-NextAuraNotificationIsland"
+          git init "$RUNNER_TEMP/theos-rh"
+          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$P" clean all FINALPACKAGE=1 2>&1 | tee nextaura-v453-build.log
+          D="$(find "$P/.theos" -type f -name 'NextAuraNotificationIsland.dylib' -print | sort | tail -1)"
+          test -n "$D"
+          ldid -S "$D"
+          mkdir -p "$RUNNER_TEMP/module"
+          cp "$D" "$RUNNER_TEMP/module/NextAuraNotificationIsland.dylib"
+
+      - name: Assemble NextAura 4.5.3
+        run: |
+          set -euo pipefail
+          BASE="$GITHUB_WORKSPACE/debfiles/NextAura_4.4.8_RootHide_iOS16.deb"
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-13-NextAuraNotificationIsland"
+          STAGE="$RUNNER_TEMP/stage"; OUT="$RUNNER_TEMP/out"
+          mkdir -p "$STAGE" "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          DYLIBS="$STAGE/Library/MobileSubstrate/DynamicLibraries"
+          PREFS="$STAGE/Library/PreferenceBundles/UnlockVibratePrefs.bundle"
+          rm -f "$DYLIBS/DynamicIslandSuite.dylib" "$DYLIBS/DynamicIslandSuite.plist"
+          cp "$RUNNER_TEMP/module/NextAuraNotificationIsland.dylib" "$DYLIBS/NextAuraNotificationIsland.dylib"
+          cp "$P/NextAuraNotificationIsland.plist" "$DYLIBS/NextAuraNotificationIsland.plist"
+          cp "$P/DynamicIsland.plist" "$PREFS/DynamicIsland.plist"
+          sed -i '' 's/^Version: .*/Version: 4.5.3/' "$STAGE/DEBIAN/control"
+          dpkg-deb -Zxz -b "$STAGE" "$OUT/NextAura_4.5.3_RootHide_iOS16.deb"
+
+          test "$(dpkg-deb -f "$OUT/NextAura_4.5.3_RootHide_iOS16.deb" Version)" = 4.5.3
+          X="$(mktemp -d)"
+          dpkg-deb -x "$OUT/NextAura_4.5.3_RootHide_iOS16.deb" "$X"
+          test ! -e "$X/Library/MobileSubstrate/DynamicLibraries/DynamicIslandSuite.dylib"
+          test ! -e "$X/Library/MobileSubstrate/DynamicLibraries/DynamicIslandSuite.plist"
+          test -e "$X/Library/MobileSubstrate/DynamicLibraries/NextAuraNotificationIsland.dylib"
+          test -e "$X/Library/PreferenceBundles/UnlockVibratePrefs.bundle/DynamicIsland.plist"
+          ! grep -q 'PSSliderCell' "$X/Library/PreferenceBundles/UnlockVibratePrefs.bundle/DynamicIsland.plist"
+
+          STRINGS="$RUNNER_TEMP/notification-island-v453-strings.txt"
+          strings -a "$X/Library/MobileSubstrate/DynamicLibraries/NextAuraNotificationIsland.dylib" > "$STRINGS"
+          grep -q 'ghost-row restore' "$STRINGS"
+          grep -q 'NotificationIslandDismissTime' "$STRINGS"
+          grep -q '_applicationIconImageForBundleIdentifier:format:scale:' "$STRINGS"
+
+          shasum -a 256 "$OUT/NextAura_4.5.3_RootHide_iOS16.deb" > "$OUT/NextAura_4.5.3_RootHide_iOS16-SHA256.txt"
+          ditto -c -k --sequesterRsrc --keepParent "$P" "$OUT/NextAura_4.5.3_NotificationIsland_Source.zip"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextAura-4.5.3-NotificationIsland
+          path: |
+            ${{ runner.temp }}/out/NextAura_4.5.3_RootHide_iOS16.deb
+            ${{ runner.temp }}/out/NextAura_4.5.3_RootHide_iOS16-SHA256.txt
+            ${{ runner.temp }}/out/NextAura_4.5.3_NotificationIsland_Source.zip
+            nextaura-v453-build.log

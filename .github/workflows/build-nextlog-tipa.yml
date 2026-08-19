@@ -1,0 +1,103 @@
+name: Build Next Log 1.1.0 TIPA
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - "NextLog/**"
+      - ".github/workflows/build-nextlog-tipa.yml"
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          brew install xcodegen ldid
+          python3 -m pip install --user --break-system-packages pillow
+
+      - name: Generate Next Log icon artwork
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          root=Path('NextLog/Assets.xcassets/AppIcon.appiconset')
+          root.mkdir(parents=True, exist_ok=True)
+          specs={'icon-40.png':40,'icon-60.png':60,'icon-58.png':58,'icon-87.png':87,'icon-80.png':80,'icon-120.png':120,'icon-120-home.png':120,'icon-180.png':180,'icon-1024.png':1024}
+          for name,size in specs.items():
+              img=Image.new('RGB',(size,size),(18,20,28))
+              d=ImageDraw.Draw(img)
+              pad=size*0.16
+              d.rounded_rectangle((pad,pad,size-pad,size-pad),radius=size*0.18,fill=(58,76,255))
+              left=size*0.27
+              ys=[0.36,0.50,0.64]
+              widths=[0.34,0.46,0.28]
+              for y,w in zip(ys,widths):
+                  yy=size*y
+                  d.rounded_rectangle((left,yy-size*0.025,left+size*w,yy+size*0.025),radius=size*0.025,fill=(255,255,255))
+              d.ellipse((size*0.20,size*0.45,size*0.30,size*0.55),fill=(114,240,196))
+              img.save(root/name,'PNG')
+          PY
+
+      - name: Generate Xcode project
+        run: |
+          cd NextLog
+          xcodegen generate --spec project.yml
+
+      - name: Build unsigned iPhone app
+        run: |
+          xcodebuild \
+            -project NextLog/NextLog.xcodeproj \
+            -scheme NextLog \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build-nextlog \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build | tee nextlog-build.log
+
+      - name: Apply TrollStore entitlements and package TIPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build-nextlog/Build/Products/Release-iphoneos -maxdepth 1 -name 'NextLog.app' -print -quit)"
+          test -n "$APP_PATH"
+          test -f "$APP_PATH/NextLog"
+          ldid -SNextLog/NextLog.entitlements "$APP_PATH/NextLog"
+          ldid -e "$APP_PATH/NextLog" > NextLog-entitlements.plist
+          grep -q 'platform-application' NextLog-entitlements.plist
+          grep -q 'com.apple.private.security.no-container' NextLog-entitlements.plist
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NextLog-1.1.0.tipa
+          shasum -a 256 NextLog-1.1.0.tipa > NextLog-1.1.0.sha256
+
+      - name: Verify repo-wide diagnostic protocol strings
+        run: |
+          APP_PATH="$(find build-nextlog/Build/Products/Release-iphoneos -maxdepth 1 -name 'NextLog.app' -print -quit)"
+          strings -a "$APP_PATH/NextLog" | grep -q 'com.nextsolution.nextlog/control.changed'
+          strings -a "$APP_PATH/NextLog" | grep -q '/var/mobile/Library/Logs/NextSolution'
+          strings -a "$APP_PATH/NextLog" | grep -q 'com.nextsolution.nextdiagnostics.manifest.plist'
+          strings -a "$APP_PATH/NextLog" | grep -q 'Reload Repo Tweak List'
+          strings -a "$APP_PATH/NextLog" | grep -q 'Next Diagnostics Runtime'
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Info.plist" | grep -qx '1.1.0'
+
+      - name: Upload Next Log
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLog-1.1.0-TrollStore
+          path: |
+            NextLog-1.1.0.tipa
+            NextLog-1.1.0.sha256
+            NextLog-entitlements.plist
+            nextlog-build.log
+          if-no-files-found: error

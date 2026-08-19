@@ -1,0 +1,19 @@
+name: Legacy Module Glass 1.0.6 Publisher Disabled
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/publish-moduleglass-v106.yml"
+
+concurrency:
+  group: publish-moduleglass-v106
+  cancel-in-progress: true
+
+jobs:
+  disabled:
+    if: ${{ false }}
+    runs-on: macos-15
+    steps:
+      - run: echo "Module Glass 1.0.6 publisher retired; use the newest Module Glass workflow."

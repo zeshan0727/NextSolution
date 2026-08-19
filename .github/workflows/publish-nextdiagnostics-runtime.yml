@@ -1,0 +1,154 @@
+name: Build and Publish Next Diagnostics Runtime 1.0.1
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - "DailyTweaks/2026-08-16-NextDiagnosticsRuntime/**"
+      - ".github/workflows/publish-nextdiagnostics-runtime.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextdiagnostics-runtime
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    if: github.head_ref == 'agent/nextaura-4.4.9-notification-island'
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout diagnostics source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Prepare RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          THEOS_COMMIT="88506b2c22e9e07dd4ed055f23c9e398a117a2c7"
+          git init "$RUNNER_TEMP/theos-rh"
+          git -C "$RUNNER_TEMP/theos-rh" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-rh" fetch --depth 1 origin "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos-rh" checkout --detach "$THEOS_COMMIT"
+          git -C "$RUNNER_TEMP/theos-rh" submodule update --init --recursive --depth 1
+
+      - name: Build optimized diagnostics dylib
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-16-NextDiagnosticsRuntime"
+          export THEOS="$RUNNER_TEMP/theos-rh" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$P" clean all FINALPACKAGE=1 2>&1 | tee nextdiagnostics-build.log
+          DYLIB="$(find "$P/.theos" -type f -name 'NextDiagnosticsRuntime.dylib' -print | sort | tail -1)"
+          test -n "$DYLIB"
+          ldid -S "$DYLIB"
+          mkdir -p "$RUNNER_TEMP/nextdiag-built"
+          cp "$DYLIB" "$RUNNER_TEMP/nextdiag-built/NextDiagnosticsRuntime.dylib"
+
+      - name: Scan live repo and package 1.0.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          MAIN="$RUNNER_TEMP/nextdiag-main"
+          git worktree add --detach "$MAIN" origin/main
+          O="$RUNNER_TEMP/nextdiag-output"
+          python3 DailyTweaks/2026-08-16-NextDiagnosticsRuntime/build_package.py \
+            --repo-main "$MAIN" \
+            --dylib "$RUNNER_TEMP/nextdiag-built/NextDiagnosticsRuntime.dylib" \
+            --version 1.0.1 \
+            --output "$O"
+
+      - name: Verify all-repo diagnostic coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          O="$RUNNER_TEMP/nextdiag-output"
+          DEB="$O/NextDiagnosticsRuntime_1.0.1_RootHide.deb"
+          test "$(dpkg-deb -f "$DEB" Package)" = "com.nextsolution.nextdiagnostics.runtime"
+          test "$(dpkg-deb -f "$DEB" Version)" = "1.0.1"
+          V="$RUNNER_TEMP/nextdiag-verify"
+          mkdir -p "$V"
+          dpkg-deb -x "$DEB" "$V"
+          B="$V/Library/MobileSubstrate/DynamicLibraries/NextDiagnosticsBundles.dylib"
+          test -f "$B"
+          strings -a "$B" | grep -q 'runtime=1.0.1'
+          strings -a "$B" | grep -q 'NEXTDIAG'
+          strings -a "$B" | grep -q 'com.nextsolution.nextlog/control.changed'
+          strings -a "$B" | grep -q 'loadedMatches='
+          python3 - "$O/NextDiagnostics-manifest.plist" <<'PY'
+          import plistlib,sys
+          p=plistlib.load(open(sys.argv[1],'rb'))
+          assert p['runtimeVersion']=='1.0.1'
+          assert p['tweakCount']==len(p['tweaks'])
+          assert p['tweakCount'] >= 30, p['tweakCount']
+          rows={x['packageID']:x for x in p['tweaks']}
+          mg=rows['com.nextsolution.nextaura.cc-module-backgrounds']
+          assert mg['version']=='1.0.7', mg
+          assert mg['logFile']=='module-glass.log'
+          assert 'com.nextsolution.nextmessage' in rows
+          assert 'com.zeshan.phoneaura' in rows
+          print('Verified repo diagnostic profiles:',p['tweakCount'])
+          print('Module Glass profile:',mg)
+          PY
+
+      - name: Upload runtime and repo manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextDiagnosticsRuntime-1.0.1-RootHide
+          path: |
+            ${{ runner.temp }}/nextdiag-output/*
+            nextdiagnostics-build.log
+          if-no-files-found: error
+
+      - name: Publish Next Diagnostics Runtime 1.0.1 to nextsolution.cc
+        shell: bash
+        run: |
+          set -euo pipefail
+          O="$RUNNER_TEMP/nextdiag-output"
+          SAVED="$RUNNER_TEMP/nextdiag-publish"
+          mkdir -p "$SAVED"
+          cp "$O/NextDiagnosticsRuntime_1.0.1_RootHide.deb" "$SAVED/"
+
+          git config user.name "Next Solution Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p debfiles
+          cp "$SAVED/NextDiagnosticsRuntime_1.0.1_RootHide.deb" debfiles/
+
+          SCAN="$RUNNER_TEMP/nextdiag-scan"
+          mkdir -p "$SCAN"
+          cp "$SAVED/NextDiagnosticsRuntime_1.0.1_RootHide.deb" "$SCAN/"
+          dpkg-scanpackages -m "$SCAN" /dev/null > "$RUNNER_TEMP/nextdiag-stanza"
+          sed -i '' 's|^Filename: .*/nextdiag-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/nextdiag-stanza"
+          python3 - "$RUNNER_TEMP/nextdiag-stanza" <<'PY'
+          from pathlib import Path
+          import re,sys
+          packages=Path('Packages')
+          existing=packages.read_text() if packages.exists() else ''
+          new=Path(sys.argv[1]).read_text().strip()
+          pid='com.nextsolution.nextdiagnostics.runtime'
+          kept=[]
+          for s in [x.strip() for x in re.split(r'\n\s*\n',existing) if x.strip()]:
+              m=re.search(r'^Package: (.+)$',s,re.M)
+              if m and m.group(1).strip()==pid: continue
+              kept.append(s)
+          packages.write_text('\n\n'.join(kept+[new])+'\n')
+          PY
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9e -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+          git add debfiles Packages Packages.gz Packages.bz2 Packages.xz Packages.zst
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Publish Next Diagnostics Runtime 1.0.1"
+          git push origin HEAD:main
