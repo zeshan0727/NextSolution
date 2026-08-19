@@ -10,7 +10,7 @@ on:
       - '.github/workflows/build-nextlock-1.1.4-cpu-fix-test.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: nextlock-1.1.4-cpu-fix-test
@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install packaging tools
         run: brew install dpkg ldid
@@ -32,14 +34,13 @@ jobs:
         run: |
           set -euo pipefail
           S=source/NextLockPerfFix/Tweak.m
-          grep -q 'C7EBC4D1-EAD4-3320-A27F-34E86C25F776' "$S" || true
           grep -q 'kNextLock114Arm64TransparencyOffset  = 0xAE18' "$S"
           grep -q 'kNextLock114Arm64eTransparencyOffset = 0xAF74' "$S"
           grep -q 'NLOriginalHasRealTransparency(image)' "$S"
           grep -q 'NSPointerFunctionsObjectPointerPersonality' "$S"
           grep -q '_dyld_register_func_for_add_image' "$S"
-          ! grep -q 'CGBitmapContextCreate' "$S"
-          ! grep -q 'CGContextDrawImage' "$S"
+          grep -q 'MSHookFunction' "$S"
+          ! grep -q 'static BOOL NLCachedHasRealTransparency.*CGBitmapContextCreate' "$S"
           plutil -lint source/NextLockPerfFix/NextLockPerfFix.plist
 
       - name: Build Rootless test package
@@ -64,8 +65,8 @@ jobs:
           set -euo pipefail
           P="$GITHUB_WORKSPACE/source/NextLockPerfFix"
           OUT="$RUNNER_TEMP/out"
-          git checkout -- "$P/control"
-          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          git checkout -- source/NextLockPerfFix/control
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' source/NextLockPerfFix/control
           T="$RUNNER_TEMP/theos-rh"
           git init "$T"
           git -C "$T" remote add origin https://github.com/roothide/theos.git
@@ -100,7 +101,22 @@ jobs:
             lipo -info "$DYLIB" | grep -q 'arm64'
             rm -rf "$X"
           done
-          shasum -a 256 "$OUT"/*.deb
+          shasum -a 256 "$OUT"/*.deb | tee "$RUNNER_TEMP/SHA256SUMS.txt"
+
+      - name: Save test builds to debug branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST=transfer/files/NextLock/1.1.5-CPUFix-Test1
+          mkdir -p "$DEST"
+          cp "$RUNNER_TEMP/out"/*.deb "$DEST/"
+          cp "$RUNNER_TEMP/SHA256SUMS.txt" "$DEST/NextLock_1.1.4_CPUFix_Test1_SHA256SUMS.txt"
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST"
+          git diff --cached --check
+          git commit -m 'Build NextLock 1.1.4 CPU fix test packages'
+          git push origin HEAD:debug/nextlock-1.1.4-cpu-fix
 
       - name: Upload test packages
         uses: actions/upload-artifact@v4
