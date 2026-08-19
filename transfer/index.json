@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T07:19:29Z",
+  "updatedAt": "2026-08-19T07:32:28Z",
   "files": [
+    {
+      "id": "nextpost-1.0.6-test-device-id",
+      "name": "Next Post 1.0.6 Test Device ID",
+      "fileName": "NextPost-1.0.6-Test-Device-ID.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.6",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.6/NextPost-1.0.6-Test-Device-ID.tipa",
+      "sha256": "4a9f7ba8926573b0c6c1765c0b5627e06c5e1667335fa6bedc144647072e857f",
+      "notes": "Adds an in-app LevelPlay test-device helper. Tap Test ID, grant Apple tracking permission, copy the iPhone Advertising ID (IDFA), and paste it into LevelPlay Setup > Test devices. Keeps the corrected banner ID and native LevelPlay integration."
+    },
     {
       "id": "nextpost-1.0.5-banner-id-fix",
       "name": "Next Post 1.0.5 Banner ID Fix",
