@@ -22,7 +22,10 @@
     <string>$(CURRENT_PROJECT_VERSION)</string>
 
     <key>NSUserTrackingUsageDescription</key>
-    <string>Next Post uses the device advertising identifier to support and test advertising delivery.</string>
+    <string>Next Post uses the device advertising identifier to support advertising delivery and measurement.</string>
+
+    <key>NSAdvertisingAttributionReportEndpoint</key>
+    <string>https://postbacks-is.com/</string>
 
     <key>NSAppTransportSecurity</key>
     <dict>
