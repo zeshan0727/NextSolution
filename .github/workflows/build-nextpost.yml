@@ -67,8 +67,8 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.4-LevelPlay-Proper.tipa
-          shasum -a 256 NextPost-1.0.4-LevelPlay-Proper.tipa > NextPost-1.0.4-LevelPlay-Proper.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.5-Banner-ID-Fix.tipa
+          shasum -a 256 NextPost-1.0.5-Banner-ID-Fix.tipa > NextPost-1.0.5-Banner-ID-Fix.sha256
 
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
@@ -80,28 +80,28 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextPost-1.0.4-LevelPlay-Proper
+          name: NextPost-1.0.5-Banner-ID-Fix
           path: |
-            NextPost-1.0.4-LevelPlay-Proper.tipa
-            NextPost-1.0.4-LevelPlay-Proper.sha256
+            NextPost-1.0.5-Banner-ID-Fix.tipa
+            NextPost-1.0.5-Banner-ID-Fix.sha256
           if-no-files-found: error
 
       - name: Publish TIPA to repository
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p applications
-          cp NextPost-1.0.4-LevelPlay-Proper.tipa applications/NextPost-1.0.4-LevelPlay-Proper.tipa
-          cp NextPost-1.0.4-LevelPlay-Proper.sha256 applications/NextPost-1.0.4-LevelPlay-Proper.sha256
+          cp NextPost-1.0.5-Banner-ID-Fix.tipa applications/NextPost-1.0.5-Banner-ID-Fix.tipa
+          cp NextPost-1.0.5-Banner-ID-Fix.sha256 applications/NextPost-1.0.5-Banner-ID-Fix.sha256
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add applications/NextPost-1.0.4-LevelPlay-Proper.tipa applications/NextPost-1.0.4-LevelPlay-Proper.sha256
+          git add applications/NextPost-1.0.5-Banner-ID-Fix.tipa applications/NextPost-1.0.5-Banner-ID-Fix.sha256
 
           if git diff --cached --quiet; then
-            echo "Next Post 1.0.4 LevelPlay build is already published."
+            echo "Next Post 1.0.5 banner ID fix is already published."
             exit 0
           fi
 
-          git commit -m "Publish Next Post 1.0.4 LevelPlay proper TIPA"
+          git commit -m "Publish Next Post 1.0.5 banner ID fix TIPA"
           git pull --rebase origin main
           git push origin HEAD:main
