@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T06:56:04Z",
+  "updatedAt": "2026-08-19T07:19:29Z",
   "files": [
+    {
+      "id": "nextpost-1.0.5-banner-id-fix",
+      "name": "Next Post 1.0.5 Banner ID Fix",
+      "fileName": "NextPost-1.0.5-Banner-ID-Fix.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.5",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.5/NextPost-1.0.5-Banner-ID-Fix.tipa",
+      "sha256": "67331de1932944638d62c4eb53a537450db5481ec8da8ce0afe02f5325aa2df7",
+      "notes": "Fixes the LevelPlay banner Ad Unit ID transcription error. The verified dashboard Banner ID is 3enr810rqws9op9z (digit 1), not 3enr8l0rqws9op9z (letter l). Keeps the verified interstitial ID y23pc99ate029uga and the full native LevelPlay SDK integration from 1.0.4."
+    },
     {
       "id": "nextpost-1.0.4-levelplay-proper",
       "name": "Next Post 1.0.4 LevelPlay Proper",
