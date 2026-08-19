@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'applications/NextPost-1.0.3-Article-Preview-Fix.tipa'
+      - 'applications/NextPost-1.0.4-LevelPlay-Proper.tipa'
       - '.github/workflows/publish-nextpost-transfer.yml'
 
 permissions:
@@ -28,9 +28,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SRC='applications/NextPost-1.0.3-Article-Preview-Fix.tipa'
-          DEST_DIR='transfer/files/NextPost/1.0.3'
-          DEST="$DEST_DIR/NextPost-1.0.3-Article-Preview-Fix.tipa"
+          SRC='applications/NextPost-1.0.4-LevelPlay-Proper.tipa'
+          DEST_DIR='transfer/files/NextPost/1.0.4'
+          DEST="$DEST_DIR/NextPost-1.0.4-LevelPlay-Proper.tipa"
           INDEX='transfer/index.json'
 
           test -s "$SRC"
@@ -49,18 +49,18 @@ jobs:
           index_path = Path('transfer/index.json')
           data = json.loads(index_path.read_text())
           files = data.get('files', [])
-          entry_id = 'nextpost-1.0.3-article-preview-fix'
+          entry_id = 'nextpost-1.0.4-levelplay-proper'
           files = [item for item in files if item.get('id') != entry_id]
           entry = {
               'id': entry_id,
-              'name': 'Next Post 1.0.3 Article Preview Fix',
-              'fileName': 'NextPost-1.0.3-Article-Preview-Fix.tipa',
+              'name': 'Next Post 1.0.4 LevelPlay Proper',
+              'fileName': 'NextPost-1.0.4-LevelPlay-Proper.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
-              'version': '1.0.3',
-              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.3/NextPost-1.0.3-Article-Preview-Fix.tipa',
+              'version': '1.0.4',
+              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.4/NextPost-1.0.4-LevelPlay-Proper.tipa',
               'sha256': os.environ['SHA256'],
-              'notes': 'Fixes X/Twitter link cards so generated posts request the article-specific preview instead of the generic Next Solution image. Uses a cache-busting social share URL while keeping the clean canonical article route. Ads are not included in this build.'
+              'notes': 'Proper native Unity LevelPlay integration using the official Swift Package. Includes the configured Next Post app key, adaptive bottom banner, frequency-limited interstitial after five successful generations, ATS/SKAdNetwork/privacy configuration, adapter debug logging for device testing, and retains the article-specific X preview fix. Live ads still depend on LevelPlay account approval; configure this iPhone as a LevelPlay test device to force test inventory while approval is pending.'
           }
           data['files'] = [entry] + files
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -68,7 +68,7 @@ jobs:
           PY
 
           python3 -m json.tool "$INDEX" >/dev/null
-          grep -q 'nextpost-1.0.3-article-preview-fix' "$INDEX"
+          grep -q 'nextpost-1.0.4-levelplay-proper' "$INDEX"
           grep -q "$SHA256" "$INDEX"
           test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
 
@@ -78,7 +78,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add transfer/files/NextPost/1.0.3/NextPost-1.0.3-Article-Preview-Fix.tipa transfer/index.json
-          git commit -m 'Publish Next Post 1.0.3 article preview fix to Transfer' || true
+          git add transfer/files/NextPost/1.0.4/NextPost-1.0.4-LevelPlay-Proper.tipa transfer/index.json
+          git commit -m 'Publish Next Post 1.0.4 LevelPlay proper to Transfer' || true
           git pull --rebase origin main
           git push origin HEAD:main

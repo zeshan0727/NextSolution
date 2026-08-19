@@ -30,6 +30,9 @@ struct ContentView: View {
                 .padding(.bottom, 30)
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            adBanner
+        }
         .task {
             await store.refreshStats()
         }
@@ -232,6 +235,20 @@ struct ContentView: View {
         }
         .buttonStyle(.plain)
         .opacity(store.generatedPost.isEmpty ? 0.55 : 1)
+    }
+
+    private var adBanner: some View {
+        VStack(spacing: 2) {
+            Text("ADVERTISEMENT")
+                .font(.system(size: 8, weight: .medium))
+                .foregroundStyle(.tertiary)
+
+            LevelPlayBannerView()
+                .frame(maxWidth: .infinity)
+                .frame(height: 58)
+        }
+        .padding(.top, 3)
+        .background(Color.black.opacity(0.96))
     }
 
     private var sourceFooter: some View {
