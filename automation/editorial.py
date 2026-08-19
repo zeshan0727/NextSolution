@@ -71,7 +71,8 @@ def classify_category(candidate: dict[str, Any], config: dict[str, Any]) -> dict
     return {"id": str(chosen["id"]), "label": str(chosen["label"])}
 
 
-def _candidate_score(candidate: dict[str, Any]) -> int:
+def _base_candidate_score(candidate: dict[str, Any]) -> int:
+    """Score factual release quality before audience-interest weighting."""
     score = 0
     if candidate.get("change_type") == "updated":
         score += 50
@@ -89,6 +90,68 @@ def _candidate_score(candidate: dict[str, Any]) -> int:
     if candidate.get("source_id") == "bigboss":
         score -= 10
     return score
+
+
+def _normalized_priority_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode()
+    normalized = re.sub(r"[^a-z0-9]+", " ", normalized.lower())
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _contains_priority_term(haystack: str, term: str) -> bool:
+    needle = _normalized_priority_text(term)
+    if not needle:
+        return False
+    return f" {needle} " in f" {haystack} "
+
+
+def _priority_weights(value: Any, *, field: str) -> dict[str, int]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError(f"traffic_ranking.{field} must be an object")
+    result: dict[str, int] = {}
+    for keyword, weight in value.items():
+        if not isinstance(keyword, str) or not keyword.strip():
+            raise ValueError(f"traffic_ranking.{field} contains an invalid keyword")
+        if not isinstance(weight, int) or weight < 0:
+            raise ValueError(f"traffic_ranking.{field}.{keyword} must be a non-negative integer")
+        result[keyword] = weight
+    return result
+
+
+def _audience_priority_score(candidate: dict[str, Any], site: dict[str, Any]) -> int:
+    """Apply transparent editorial priorities without claiming search-volume data."""
+    config = site.get("traffic_ranking", {})
+    if not isinstance(config, dict):
+        raise ValueError("site traffic_ranking must be an object")
+    if config.get("enabled") is not True:
+        return 0
+
+    max_bonus = config.get("max_bonus", 80)
+    max_penalty = config.get("max_penalty", 40)
+    if not isinstance(max_bonus, int) or max_bonus < 0:
+        raise ValueError("traffic_ranking.max_bonus must be a non-negative integer")
+    if not isinstance(max_penalty, int) or max_penalty < 0:
+        raise ValueError("traffic_ranking.max_penalty must be a non-negative integer")
+
+    boosts = _priority_weights(config.get("boost_keywords"), field="boost_keywords")
+    penalties = _priority_weights(
+        config.get("deprioritize_keywords"), field="deprioritize_keywords"
+    )
+    haystack = _normalized_priority_text(
+        " ".join(
+            str(candidate.get(key, ""))
+            for key in ("name", "package", "description", "section", "tags")
+        )
+    )
+    bonus = sum(
+        weight for keyword, weight in boosts.items() if _contains_priority_term(haystack, keyword)
+    )
+    penalty = sum(
+        weight for keyword, weight in penalties.items() if _contains_priority_term(haystack, keyword)
+    )
+    return min(bonus, max_bonus) - min(penalty, max_penalty)
 
 
 def _best_variant(values: list[dict[str, Any]]) -> dict[str, Any]:
@@ -161,7 +224,9 @@ def build_candidates(
         if not base_slug.endswith("tweak"):
             base_slug += "-tweak"
         primary["slug"] = base_slug
-        primary["score"] = _candidate_score(primary)
+        primary["base_score"] = _base_candidate_score(primary)
+        primary["audience_score"] = _audience_priority_score(primary, site)
+        primary["score"] = int(primary["base_score"]) + int(primary["audience_score"])
         candidates.append(primary)
 
     candidates.sort(
