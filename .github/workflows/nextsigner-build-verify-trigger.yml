@@ -5,61 +5,63 @@ on:
     types: [opened]
 
 permissions:
-  actions: write
   contents: read
   issues: write
 
 jobs:
   verify:
     if: github.event.issue.title == '[NEXTSIGNER-1.3-BUILD-VERIFY]'
-    runs-on: ubuntu-latest
+    runs-on: macos-15
+    timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Validate workflow is dispatchable
-        shell: bash
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate app icon
+        run: python3 NextSigner/generate_app_icon.py
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: NextSigner
+        run: xcodegen generate
+
+      - name: Compile Next Signer 1.3
+        working-directory: NextSigner
         run: |
           set -euo pipefail
-          if ! output="$(gh workflow view build-nextsigner-tipa.yml --repo "$GITHUB_REPOSITORY" 2>&1)"; then
-            gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_WORKFLOW_VIEW_FAILED: $output"
-            exit 1
-          fi
-          echo "$output"
+          xcodebuild \
+            -project NextSigner.xcodeproj \
+            -scheme NextSigner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/NextSignerVerify" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
 
-      - name: Dispatch build
-        shell: bash
+      - name: Verify icon and package
         run: |
           set -euo pipefail
-          if ! output="$(gh workflow run build-nextsigner-tipa.yml --repo "$GITHUB_REPOSITORY" --ref main 2>&1)"; then
-            gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_DISPATCH_FAILED: $output"
-            exit 1
-          fi
-          echo "$output"
-
-      - name: Wait for dispatched run to appear
-        shell: bash
-        run: |
-          set -euo pipefail
-          RUN_ID=''
-          for attempt in $(seq 1 18); do
-            RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-nextsigner-tipa.yml --branch main --event workflow_dispatch --limit 1 --json databaseId,createdAt --jq '.[0].databaseId // empty')"
-            if [ -n "$RUN_ID" ]; then break; fi
-            sleep 5
-          done
-          if [ -z "$RUN_ID" ]; then
-            gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_DISPATCHED_BUT_RUN_NOT_FOUND'
-            exit 1
-          fi
-          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
-          echo "Watching run $RUN_ID"
-
-      - name: Watch build
-        run: gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 10
+          APP_PATH="$(find "$RUNNER_TEMP/NextSignerVerify/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' | head -n1)"
+          test -n "$APP_PATH" || { echo 'Built .app not found'; exit 1; }
+          test -f "$APP_PATH/Assets.car" || { echo 'Compiled asset catalog missing'; exit 1; }
+          rm -rf "$RUNNER_TEMP/package"
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
+          cd "$RUNNER_TEMP/package"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.3.0.tipa" Payload
+          unzip -t "$RUNNER_TEMP/NextSigner-1.3.0.tipa" >/dev/null
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.3.0.tipa"
 
       - name: Report success
         if: success()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_BUILD_OK run=$RUN_ID"
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_BUILD_OK'
 
       - name: Report failure
         if: failure()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_BUILD_FAILED run=${RUN_ID:-unknown}"
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_BUILD_FAILED_DIRECT_MACOS'
