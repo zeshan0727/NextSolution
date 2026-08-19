@@ -100,9 +100,8 @@ actor GitHubService {
         return dispatch
     }
 
-    /// Library management deliberately uses repository_dispatch instead of the Actions
-    /// workflow-dispatch endpoint. Fine-grained PATs only need Contents: write for this
-    /// endpoint, avoiding 403 "Resource not accessible by personal access token" errors.
+    /// Library management uses repository_dispatch instead of the Actions workflow
+    /// dispatch endpoint so a fine-grained PAT does not need Actions: write access.
     func dispatchLibraryAction(appID: String, action: LibraryAction) async throws {
         guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
         let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/dispatches")
@@ -174,6 +173,9 @@ actor GitHubService {
         }
     }
 
+    /// Signing also uses repository_dispatch. A tiny bridge workflow receives this
+    /// event and starts the existing signing workflow using GitHub's own GITHUB_TOKEN.
+    /// This avoids the fine-grained PAT 403 from /actions/workflows/.../dispatches.
     private func dispatchSigningWorkflow(
         assetName: String,
         appName: String,
@@ -184,11 +186,10 @@ actor GitHubService {
         injectExtensions: Bool,
         weakInjection: Bool
     ) async throws -> DispatchResponse? {
-        let workflow = configuration.workflowFile.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? configuration.workflowFile
-        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/actions/workflows/\(workflow)/dispatches")
+        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/dispatches")
         let body: [String: Any] = [
-            "ref": configuration.branch,
-            "inputs": [
+            "event_type": "nextsigner_sign_publish",
+            "client_payload": [
                 "staging_asset": assetName,
                 "requested_name": appName,
                 "requested_bundle_id": bundleID,
@@ -201,9 +202,8 @@ actor GitHubService {
         ]
         let encoded = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await session.data(for: request(url: url, method: "POST", body: encoded))
-        try validate(response: response, data: data, accepted: [200, 204])
-        guard !data.isEmpty else { return nil }
-        return try? JSONDecoder().decode(DispatchResponse.self, from: data)
+        try validate(response: response, data: data, accepted: [204])
+        return nil
     }
 
     private func request(url: URL, method: String = "GET", body: Data? = nil) -> URLRequest {
