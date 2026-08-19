@@ -1,6 +1,6 @@
 name: Publish Next Post to Transfer
 
-# 1.0.6 LevelPlay test-device ID helper publication trigger
+# 1.0.6 LevelPlay test-device ID helper publication trigger (forced after build)
 on:
   workflow_dispatch:
   push:
