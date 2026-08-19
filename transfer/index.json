@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T08:53:51Z",
+  "updatedAt": "2026-08-19T09:05:55Z",
   "files": [
+    {
+      "id": "nextpost-1.0.8-unityads-mediation",
+      "name": "Next Post 1.0.8 Unity Ads Mediation",
+      "fileName": "NextPost-1.0.8-UnityAds-Mediation.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.8",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.8/NextPost-1.0.8-UnityAds-Mediation.tipa",
+      "sha256": "39c6ac9f3c946668c4b2d4a0886acc48bd356cd44b8cbb89fbbd1fcdd7ad0ffa",
+      "notes": "Adds the official Unity Ads SDK and LevelPlay Unity Ads adapter to Next Post. Includes Unity Ads SKAdNetwork support and keeps the existing ironSource LevelPlay banner/interstitial integration. Configure the Unity Ads bidder/instance for Next Post in LevelPlay using the Unity Ads Game ID and Banner/Interstitial placement IDs."
+    },
     {
       "id": "nextlock-1.1.5-cpufix-test1-roothide",
       "name": "NextLock 1.1.5 CPU Fix Test 1 RootHide",
