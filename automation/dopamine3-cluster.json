@@ -1,9 +1,19 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "cluster_id": "dopamine-3",
   "cluster_name": "Dopamine 3 Jailbreak",
   "strategy": "Build distinct, source-verified pages around the Dopamine 3 ecosystem. Never create near-duplicate firmware pages when one compatibility page can satisfy the same intent.",
-  "primary_source": "https://github.com/opa334/Dopamine/tree/3.x",
+  "primary_source": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+  "common_facts": [
+    "The official Dopamine 3.x README describes Dopamine as a rootless semi-untethered jailbreak.",
+    "The official Dopamine 3.x README lists iOS 15.0 through 17.3.1 for arm64e.",
+    "The official Dopamine 3.x README separately lists iOS 15.0 through 18.7.1 plus iOS 26.0 through 26.0.1 for A12 and A13 devices.",
+    "The official Dopamine 3.x README lists iOS 15.0 through 18.7.1 for arm64.",
+    "The Dopamine 3.x README points to https://ellekit.space/dopamine/ as the official website and download location.",
+    "The official Dopamine website describes Dopamine as rootless and identifies Sileo and Zebra as package managers associated with Dopamine; its displayed compatibility text may lag the newer 3.x README, so the 3.x README is the authority for current version ranges.",
+    "The official Dopamine website explains that rootless jailbreaks only allow writes to certain parts of the filesystem and that tweaks may need to be updated or recompiled for rootless support.",
+    "The existing Next Solution Dopamine 3 iOS 17.6.1 guide is at dopamine-3-jailbreak-ios-17-6-1.html and includes a real Next Solution test-device visual."
+  ],
   "existing_pages": [
     {
       "path": "dopamine-3-jailbreak-ios-17-6-1.html",
@@ -17,130 +27,204 @@
       "id": "dopamine3-master-compatibility",
       "priority": 100,
       "type": "evergreen-hub",
+      "automation_ready": true,
       "target_path": "dopamine-3-jailbreak.html",
       "intent": "Dopamine 3 supported iOS versions and devices",
       "sources": [
-        "https://github.com/opa334/Dopamine/tree/3.x"
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+        "https://ellekit.space/dopamine/"
       ],
-      "internal_links_to": [
-        "dopamine-3-jailbreak-ios-17-6-1.html"
+      "facts": [
+        "This page should be the central compatibility hub and should link readers to narrower guides rather than duplicating every installation tutorial.",
+        "For current version ranges, use the 3.x README facts in common_facts rather than the older compatibility text still visible on the official website."
       ]
     },
     {
       "id": "dopamine3-ios26-a12-a13",
-      "priority": 96,
+      "priority": 98,
       "type": "compatibility-guide",
+      "automation_ready": true,
       "target_path": "dopamine-3-ios-26-jailbreak-a12-a13.html",
       "intent": "Dopamine 3 iOS 26.0 and 26.0.1 jailbreak compatibility for A12 and A13",
       "sources": [
-        "https://github.com/opa334/Dopamine/tree/3.x"
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md"
+      ],
+      "facts": [
+        "The Dopamine 3.x README explicitly lists iOS 26.0 through 26.0.1 for A12 and A13 devices.",
+        "The same README does not state iOS 26 support for the general arm64e range or for arm64; do not extend the iOS 26 claim beyond A12 and A13."
       ]
     },
     {
       "id": "dopamine3-ios18-a12-a13",
-      "priority": 94,
+      "priority": 96,
       "type": "compatibility-guide",
+      "automation_ready": true,
       "target_path": "dopamine-3-ios-18-jailbreak-a12-a13.html",
       "intent": "Dopamine 3 iOS 18 compatibility for A12 and A13 devices",
       "sources": [
-        "https://github.com/opa334/Dopamine/tree/3.x"
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md"
+      ],
+      "facts": [
+        "The Dopamine 3.x README lists A12 and A13 support through iOS 18.7.1 before the separate iOS 26.0 through 26.0.1 range.",
+        "The general arm64e range in the same README stops at iOS 17.3.1, so this page must not imply that all arm64e devices share the A12/A13 iOS 18 range."
       ]
     },
     {
       "id": "dopamine3-darksword",
-      "priority": 92,
+      "priority": 94,
       "type": "project-explainer",
+      "automation_ready": true,
       "target_path": "darksword-dopamine-3-jailbreak.html",
-      "intent": "What DarkSword is and how it relates to Dopamine jailbreak support",
+      "intent": "What DarkSword is and how it relates to Dopamine jailbreak development",
       "sources": [
         "https://github.com/opa334/darksword-kexploit",
-        "https://github.com/opa334/Dopamine"
+        "https://github.com/opa334/Dopamine/releases"
+      ],
+      "facts": [
+        "opa334 describes darksword-kexploit as an iOS <=26.0.1 DarkSword kernel exploit reimplemented in Objective-C.",
+        "An official Dopamine 2.5 beta release note added the DarkSword kernel exploit as an option, establishing a documented relationship between DarkSword and Dopamine development.",
+        "Do not claim that historical beta limitations or known issues still apply to the current Dopamine 3.x branch unless a current official source explicitly confirms them."
+      ]
+    },
+    {
+      "id": "dopamine3-sileo",
+      "priority": 92,
+      "type": "setup-explainer",
+      "automation_ready": true,
+      "target_path": "sileo-dopamine-3-jailbreak-guide.html",
+      "intent": "Sileo and Dopamine 3: package manager role, repositories and rootless package checks",
+      "sources": [
+        "https://github.com/Sileo/Sileo",
+        "https://ellekit.space/dopamine/",
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md"
+      ],
+      "facts": [
+        "The official Sileo repository describes Sileo as a modern APT package manager frontend and its repository description says it is a modern package manager for iOS 11 and higher.",
+        "The official Dopamine website identifies Sileo and Zebra as package managers associated with Dopamine.",
+        "The official Dopamine website advises users to check that tweaks are compatible and properly compiled for the rootless environment rather than assuming every tweak works out of the box."
+      ]
+    },
+    {
+      "id": "dopamine3-vs-dopamine2",
+      "priority": 90,
+      "type": "comparison",
+      "automation_ready": true,
+      "target_path": "dopamine-3-vs-dopamine-2.html",
+      "intent": "Dopamine 3 vs Dopamine 2 compatibility ranges and what changed at a high level",
+      "sources": [
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+        "https://github.com/opa334/Dopamine/tree/2.x"
+      ],
+      "facts": [
+        "The Dopamine 2.x README describes Dopamine as a rootless semi-untethered jailbreak for iOS 15.0 through 16.5.1 on arm64e and iOS 15.0 through 15.8.6 / 16.0 through 16.6.1 on arm64.",
+        "The Dopamine 3.x README expands the documented ranges to iOS 15.0 through 17.3.1 for arm64e, iOS 15.0 through 18.7.1 plus 26.0 through 26.0.1 for A12/A13, and iOS 15.0 through 18.7.1 for arm64.",
+        "Do not invent feature differences beyond these documented compatibility and project-description facts."
+      ]
+    },
+    {
+      "id": "dopamine3-trollstore",
+      "priority": 88,
+      "type": "comparison",
+      "automation_ready": true,
+      "target_path": "dopamine-3-vs-trollstore.html",
+      "intent": "Dopamine 3 vs TrollStore: jailbreak versus permanent IPA installation and supported versions",
+      "sources": [
+        "https://github.com/opa334/TrollStore",
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md"
+      ],
+      "facts": [
+        "The official TrollStore README describes TrollStore as a permasigned jailed app that can permanently install IPAs opened in it.",
+        "The TrollStore README lists supported versions as 14.0 beta 2 through 16.6.1, 16.7 RC (20H18), and 17.0.",
+        "The TrollStore README states that 16.7.x other than 16.7 RC and 17.0.1+ will never be supported unless another CoreTrust bug is discovered.",
+        "The Dopamine 3.x README describes Dopamine as a rootless semi-untethered jailbreak with the current version ranges provided in common_facts.",
+        "TrollStore and Dopamine therefore serve different primary purposes; do not describe TrollStore itself as a jailbreak."
+      ]
+    },
+    {
+      "id": "dopamine3-rootless-explained",
+      "priority": 86,
+      "type": "concept-guide",
+      "automation_ready": true,
+      "target_path": "dopamine-3-rootless-jailbreak-explained.html",
+      "intent": "What rootless means in Dopamine 3 and why tweak compatibility must be checked",
+      "sources": [
+        "https://ellekit.space/dopamine/",
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md"
+      ],
+      "facts": [
+        "The official Dopamine website says rootless jailbreaks do not provide full access to the operating system because only certain parts of the filesystem can be written to.",
+        "The same official page says modifications may need to be done differently and tweaks may need updates to properly support rootless.",
+        "The official page advises users to check tweak compatibility and whether tweaks are properly compiled before installing them."
+      ]
+    },
+    {
+      "id": "dopamine3-arm64-a8-a11",
+      "priority": 84,
+      "type": "compatibility-guide",
+      "automation_ready": true,
+      "target_path": "dopamine-3-arm64-a8-a11-guide.html",
+      "intent": "Dopamine 3 arm64 support range for older A8 through A11 class devices",
+      "sources": [
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+        "https://ellekit.space/dopamine/"
+      ],
+      "facts": [
+        "The Dopamine 3.x README lists iOS 15.0 through 18.7.1 for arm64.",
+        "The official Dopamine website identifies arm64 with A8 through A11 in its architecture explanation, although its displayed firmware compatibility text is older than the 3.x README.",
+        "Use the current 3.x README for the firmware range and the official website only for the arm64 A8-through-A11 architecture explanation."
+      ]
+    },
+    {
+      "id": "dopamine3-official-download",
+      "priority": 82,
+      "type": "safety-guide",
+      "automation_ready": true,
+      "target_path": "dopamine-3-official-download-guide.html",
+      "intent": "Where to get Dopamine 3 from the official project and how to avoid confusing unofficial download pages",
+      "sources": [
+        "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+        "https://ellekit.space/dopamine/"
+      ],
+      "facts": [
+        "The Dopamine 3.x README explicitly points to https://ellekit.space/dopamine/ as the official website and download location.",
+        "The project itself is open source on the opa334/Dopamine GitHub repository.",
+        "This article must direct readers to the verified official project pages and must not mirror, rehost, or invent a binary download link."
       ]
     },
     {
       "id": "dopamine3-best-tweaks",
-      "priority": 90,
+      "priority": 80,
       "type": "living-roundup",
+      "automation_ready": false,
       "target_path": "best-dopamine-3-jailbreak-tweaks.html",
       "intent": "Best source-verified tweaks for Dopamine 3 and modern rootless jailbreaks",
-      "sources": [
-        "verified-apt-feeds"
-      ],
+      "sources": ["verified-apt-feeds"],
+      "facts": ["Requires dynamic verified package metadata before unattended publication."],
       "rules": [
         "Only include packages whose current verified metadata supports the relevant architecture/environment.",
         "Update the existing page instead of creating monthly near-duplicates."
       ]
     },
     {
-      "id": "dopamine3-sileo",
-      "priority": 86,
-      "type": "setup-guide",
-      "target_path": "sileo-dopamine-3-jailbreak-guide.html",
-      "intent": "Using Sileo with Dopamine 3: repositories, packages and safe update workflow",
-      "sources": [
-        "https://github.com/Sileo/Sileo",
-        "https://github.com/opa334/Dopamine/tree/3.x"
-      ]
-    },
-    {
-      "id": "dopamine3-vs-dopamine2",
-      "priority": 82,
-      "type": "comparison",
-      "target_path": "dopamine-3-vs-dopamine-2.html",
-      "intent": "Dopamine 3 vs Dopamine 2 compatibility and practical differences",
-      "sources": [
-        "https://github.com/opa334/Dopamine",
-        "https://github.com/opa334/Dopamine/tree/3.x"
-      ]
-    },
-    {
-      "id": "dopamine3-trollstore",
-      "priority": 80,
-      "type": "comparison",
-      "target_path": "dopamine-3-vs-trollstore.html",
-      "intent": "Dopamine 3 vs TrollStore: jailbreak versus permanent IPA installation and supported versions",
-      "sources": [
-        "https://github.com/opa334/TrollStore",
-        "https://github.com/opa334/Dopamine/tree/3.x"
-      ]
-    },
-    {
-      "id": "dopamine3-rootless-tweaks",
-      "priority": 78,
-      "type": "living-guide",
-      "target_path": "dopamine-3-rootless-tweaks-guide.html",
-      "intent": "How to identify rootless tweaks suitable for a Dopamine 3 setup",
-      "sources": [
-        "verified-apt-feeds",
-        "https://github.com/opa334/Dopamine/tree/3.x"
-      ],
-      "rules": [
-        "Do not claim compatibility from the word rootless alone.",
-        "Link to the package's verified source for current requirements."
-      ]
-    },
-    {
       "id": "dopamine3-update-guide",
       "priority": 76,
       "type": "living-guide",
+      "automation_ready": false,
       "target_path": "how-to-update-dopamine-3.html",
       "intent": "How to safely update Dopamine 3 when a new official release is published",
-      "sources": [
-        "https://github.com/opa334/Dopamine"
-      ],
-      "rules": [
-        "Refresh this URL for new versions rather than publishing one page per point release."
-      ]
+      "sources": ["https://github.com/opa334/Dopamine"],
+      "facts": ["Requires current release-specific update instructions before unattended publication."],
+      "rules": ["Refresh this URL for new versions rather than publishing one page per point release."]
     },
     {
       "id": "dopamine3-troubleshooting",
       "priority": 72,
       "type": "living-troubleshooting",
+      "automation_ready": false,
       "target_path": "dopamine-3-jailbreak-troubleshooting.html",
       "intent": "Dopamine 3 common jailbreak failures and source-backed troubleshooting",
-      "sources": [
-        "https://github.com/opa334/Dopamine"
-      ],
+      "sources": ["https://github.com/opa334/Dopamine"],
+      "facts": ["Requires current source-backed issue and fix data before unattended publication."],
       "rules": [
         "Only include a failure or fix when it is documented by the official project, release notes, or a maintainer response.",
         "Do not generalize one user's issue into a universal fix."
