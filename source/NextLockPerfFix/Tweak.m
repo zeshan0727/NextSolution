@@ -1,8 +1,10 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <dispatch/dispatch.h>
 #import <mach-o/dyld.h>
 #import <mach-o/loader.h>
 #import <os/lock.h>
+#include <string.h>
 
 extern void MSHookFunction(void *symbol, void *replace, void **result);
 
@@ -14,7 +16,7 @@ extern void MSHookFunction(void *symbol, void *replace, void **result);
 //
 // The helper performs the full-pixel transparency test used to preserve the
 // distinction between transparent stickers (AspectFit / no crop) and normal
-// photos (AspectFill / corner clipping).  We do NOT change that algorithm.
+// photos (AspectFill / corner clipping). We do NOT change that algorithm.
 // We only memoize its exact result for each immutable UIImage instance so
 // repeated layoutSubviews passes do not redraw and rescan the same bitmap.
 
@@ -134,15 +136,9 @@ static BOOL NLFindUUIDAndOffset(const struct mach_header *mh,
     return NO;
 }
 
-static void NLImageAdded(const struct mach_header *mh, intptr_t vmaddrSlide) {
-    (void)vmaddrSlide;
-
-    uintptr_t helperOffset = 0;
-    const char *matchedArch = NULL;
-    if (!NLFindUUIDAndOffset(mh, &helperOffset, &matchedArch)) {
-        return;
-    }
-
+static void NLInstallHook(const struct mach_header *mh,
+                          uintptr_t helperOffset,
+                          const char *matchedArch) {
     os_unfair_lock_lock(&NLInstallLock);
     if (NLHookInstalled) {
         os_unfair_lock_unlock(&NLInstallLock);
@@ -163,6 +159,23 @@ static void NLImageAdded(const struct mach_header *mh, intptr_t vmaddrSlide) {
               (unsigned long)helperOffset);
     }
     os_unfair_lock_unlock(&NLInstallLock);
+}
+
+static void NLImageAdded(const struct mach_header *mh, intptr_t vmaddrSlide) {
+    (void)vmaddrSlide;
+
+    uintptr_t helperOffset = 0;
+    const char *matchedArch = NULL;
+    if (!NLFindUUIDAndOffset(mh, &helperOffset, &matchedArch)) {
+        return;
+    }
+
+    // Do not patch code while executing inside dyld's add-image callback.
+    // The image remains loaded, so scheduling the actual Substrate hook onto
+    // SpringBoard's main queue is safe and removes loader-lock/reentrancy risk.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NLInstallHook(mh, helperOffset, matchedArch);
+    });
 }
 
 __attribute__((constructor))
