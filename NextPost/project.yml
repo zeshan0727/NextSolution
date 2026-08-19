@@ -9,6 +9,9 @@ packages:
   LevelPlay:
     url: https://github.com/ironsource-mobile/LevelPlay-Swift-Package
     branch: main
+  UnityAdsAdapter:
+    url: https://github.com/ironsource-mobile/LevelPlay-UnityAds-Adapter-Swift-Package
+    branch: main
 
 settings:
   base:
@@ -17,8 +20,8 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     SUPPORTS_MACCATALYST: "NO"
     CODE_SIGN_STYLE: Manual
-    MARKETING_VERSION: "1.0.7"
-    CURRENT_PROJECT_VERSION: "7"
+    MARKETING_VERSION: "1.0.8"
+    CURRENT_PROJECT_VERSION: "8"
     OTHER_LDFLAGS: "$(inherited) -ObjC -lz -lsqlite3 -framework JavaScriptCore -framework WebKit -framework AdSupport -framework SystemConfiguration"
 
 targets:
@@ -34,6 +37,8 @@ targets:
     dependencies:
       - package: LevelPlay
         product: UnityMediationSDK
+      - package: UnityAdsAdapter
+        product: UnityAdsAdapter
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.nextpost
