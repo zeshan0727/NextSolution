@@ -1,12 +1,12 @@
 name: Publish Next Post to Transfer
 
-# 1.0.5 banner ad unit ID fix publication trigger
+# 1.0.6 LevelPlay test-device ID helper publication trigger
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - 'applications/NextPost-1.0.5-Banner-ID-Fix.tipa'
+      - 'applications/NextPost-1.0.6-Test-Device-ID.tipa'
       - '.github/workflows/publish-nextpost-transfer.yml'
 
 permissions:
@@ -29,9 +29,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SRC='applications/NextPost-1.0.5-Banner-ID-Fix.tipa'
-          DEST_DIR='transfer/files/NextPost/1.0.5'
-          DEST="$DEST_DIR/NextPost-1.0.5-Banner-ID-Fix.tipa"
+          SRC='applications/NextPost-1.0.6-Test-Device-ID.tipa'
+          DEST_DIR='transfer/files/NextPost/1.0.6'
+          DEST="$DEST_DIR/NextPost-1.0.6-Test-Device-ID.tipa"
           INDEX='transfer/index.json'
 
           test -s "$SRC"
@@ -50,18 +50,18 @@ jobs:
           index_path = Path('transfer/index.json')
           data = json.loads(index_path.read_text())
           files = data.get('files', [])
-          entry_id = 'nextpost-1.0.5-banner-id-fix'
+          entry_id = 'nextpost-1.0.6-test-device-id'
           files = [item for item in files if item.get('id') != entry_id]
           entry = {
               'id': entry_id,
-              'name': 'Next Post 1.0.5 Banner ID Fix',
-              'fileName': 'NextPost-1.0.5-Banner-ID-Fix.tipa',
+              'name': 'Next Post 1.0.6 Test Device ID',
+              'fileName': 'NextPost-1.0.6-Test-Device-ID.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
-              'version': '1.0.5',
-              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.5/NextPost-1.0.5-Banner-ID-Fix.tipa',
+              'version': '1.0.6',
+              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.6/NextPost-1.0.6-Test-Device-ID.tipa',
               'sha256': os.environ['SHA256'],
-              'notes': 'Fixes the LevelPlay banner Ad Unit ID transcription error. The verified dashboard Banner ID is 3enr810rqws9op9z (digit 1), not 3enr8l0rqws9op9z (letter l). Keeps the verified interstitial ID y23pc99ate029uga and the full native LevelPlay SDK integration from 1.0.4.'
+              'notes': 'Adds an in-app LevelPlay test-device helper. Tap Test ID, grant Apple tracking permission, copy the iPhone Advertising ID (IDFA), and paste it into LevelPlay Setup > Test devices. Keeps the corrected banner ID and native LevelPlay integration.'
           }
           data['files'] = [entry] + files
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -69,7 +69,7 @@ jobs:
           PY
 
           python3 -m json.tool "$INDEX" >/dev/null
-          grep -q 'nextpost-1.0.5-banner-id-fix' "$INDEX"
+          grep -q 'nextpost-1.0.6-test-device-id' "$INDEX"
           grep -q "$SHA256" "$INDEX"
           test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
 
@@ -79,7 +79,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add transfer/files/NextPost/1.0.5/NextPost-1.0.5-Banner-ID-Fix.tipa transfer/index.json
-          git commit -m 'Publish Next Post 1.0.5 banner ID fix to Transfer' || true
+          git add transfer/files/NextPost/1.0.6/NextPost-1.0.6-Test-Device-ID.tipa transfer/index.json
+          git commit -m 'Publish Next Post 1.0.6 test device helper to Transfer' || true
           git pull --rebase origin main
           git push origin HEAD:main
