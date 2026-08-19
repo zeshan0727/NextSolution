@@ -1,0 +1,39 @@
+name: Generate Next Post Xcode Project
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/generate-nextpost-xcodeproj.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate persistent Xcode project
+        run: |
+          cd NextPost
+          xcodegen generate
+          test -f NextPost.xcodeproj/project.pbxproj
+          test -f NextPost.xcodeproj/xcshareddata/xcschemes/NextPost.xcscheme
+
+      - name: Commit Xcode project for Xcode Cloud
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add NextPost/NextPost.xcodeproj
+          git commit -m 'Commit Next Post Xcode project for Xcode Cloud' || true
+          git pull --rebase origin main
+          git push origin HEAD:main
