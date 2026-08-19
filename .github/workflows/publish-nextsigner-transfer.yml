@@ -6,10 +6,13 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/publish-nextsigner-transfer.yml'
+  issues:
+    types: [opened]
 
 permissions:
   actions: read
   contents: write
+  issues: write
 
 concurrency:
   group: publish-nextsigner-transfer
@@ -17,20 +20,34 @@ concurrency:
 
 jobs:
   publish:
+    if: github.event_name != 'issues' || github.event.issue.title == '[NEXTSIGNER-R2-PUBLISH-ONCE]'
     runs-on: ubuntu-latest
     env:
       ARTIFACT_ID: '9327289693'
       VERSION: '1.1.2'
+      R2_BUCKET: next-signer-apps
+      R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
+      R2_PUBLIC_BASE: https://files.nextsolution.cc
+      AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_EC2_METADATA_DISABLED: 'true'
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Validate R2 credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID" || { echo 'CLOUDFLARE_R2_ACCESS_KEY_ID is missing'; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo 'CLOUDFLARE_R2_SECRET_ACCESS_KEY is missing'; exit 1; }
+
       - name: Download built Next Signer artifact
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > "$RUNNER_TEMP/nextsigner-artifact.zip"
@@ -38,29 +55,52 @@ jobs:
           unzip -q "$RUNNER_TEMP/nextsigner-artifact.zip" -d "$RUNNER_TEMP/nextsigner-artifact"
           test -s "$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.2.tipa"
 
-      - name: Publish Next Signer and update Transfer manifest
+      - name: Install AWS CLI
         shell: bash
         run: |
           set -euo pipefail
+          python3 -m pip install --user --quiet awscli
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Publish Next Signer binary to R2
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$PATH"
           SRC="$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.2.tipa"
-          DEST_DIR='transfer/files/NextSigner/1.1.2'
-          DEST="$DEST_DIR/NextSigner-1.1.2.tipa"
-          INDEX='transfer/index.json'
+          OBJECT_KEY='apps/tipa/NextSigner/1.1.2/NextSigner-1.1.2.tipa'
+          PUBLIC_URL="$R2_PUBLIC_BASE/$OBJECT_KEY"
 
           test -s "$SRC"
-          test -s "$INDEX"
-          mkdir -p "$DEST_DIR"
-          cp "$SRC" "$DEST"
+          SHA256=$(sha256sum "$SRC" | awk '{print $1}')
+          test "$SHA256" = '829e6f349efbd59e19782efc8681ce3dd1d92314d3c3e3ad812ba0ab0aefa118'
 
-          SHA256=$(sha256sum "$DEST" | awk '{print $1}')
-          export SHA256
+          aws s3 cp "$SRC" "s3://$R2_BUCKET/$OBJECT_KEY" \
+            --endpoint-url "https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com" \
+            --content-type 'application/octet-stream' \
+            --cache-control 'public, max-age=31536000, immutable' \
+            --only-show-errors
+
+          curl --fail --silent --show-error --location --head \
+            --retry 8 --retry-delay 3 --retry-all-errors "$PUBLIC_URL" >/dev/null
+
+          echo "NEXTSIGNER_R2_URL=$PUBLIC_URL" >> "$GITHUB_ENV"
+          echo "NEXTSIGNER_SHA256=$SHA256" >> "$GITHUB_ENV"
+
+      - name: Update Transfer manifest for R2
+        shell: bash
+        run: |
+          set -euo pipefail
+          INDEX='transfer/index.json'
+          test -s "$INDEX"
+          export INDEX
 
           python3 - <<'PY'
           import json, os
           from pathlib import Path
           from datetime import datetime, timezone
 
-          index_path = Path('transfer/index.json')
+          index_path = Path(os.environ['INDEX'])
           data = json.loads(index_path.read_text())
           files = data.get('files', [])
           entry_id = 'nextsigner-1.1.2'
@@ -72,8 +112,9 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
               'version': '1.1.2',
-              'url': 'https://nextsolution.cc/transfer/files/NextSigner/1.1.2/NextSigner-1.1.2.tipa',
-              'sha256': os.environ['SHA256'],
+              'url': os.environ['NEXTSIGNER_R2_URL'],
+              'sha256': os.environ['NEXTSIGNER_SHA256'],
+              'storage': 'Cloudflare R2',
               'notes': 'Fixes false signing failure on apps such as Ksign. Uses Zsign signing success plus signed-bundle validation instead of the unreliable Zsign Mach-O checkSigned result. Keeps local P12 + mobileprovision signing, export, and publish-after-sign flow.'
           }
           data['files'] = [entry] + files
@@ -82,8 +123,12 @@ jobs:
           PY
 
           python3 -m json.tool "$INDEX" >/dev/null
-          test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
-          test "$SHA256" = '829e6f349efbd59e19782efc8681ce3dd1d92314d3c3e3ad812ba0ab0aefa118'
+
+      - name: Remove legacy repository binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f --ignore-unmatch transfer/files/NextSigner/1.1.2/NextSigner-1.1.2.tipa
 
       - name: Commit Transfer publication
         shell: bash
@@ -91,7 +136,21 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add transfer/files/NextSigner/1.1.2/NextSigner-1.1.2.tipa transfer/index.json
-          git commit -m 'Publish Next Signer 1.1.2 signing verification fix to Transfer' || true
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git add transfer/index.json
+          if git diff --cached --quiet; then
+            echo 'No Transfer changes to commit'
+          else
+            git commit -m 'Move Next Signer 1.1.2 Transfer binary to Cloudflare R2'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Report one-time trigger success
+        if: success() && github.event_name == 'issues'
+        shell: bash
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_R2_PUBLISH_OK\n\n$NEXTSIGNER_R2_URL"
+
+      - name: Report one-time trigger failure
+        if: failure() && github.event_name == 'issues'
+        shell: bash
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_R2_PUBLISH_FAILED'
