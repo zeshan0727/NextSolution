@@ -60,18 +60,18 @@ final class AdsManager: NSObject {
         generationsSinceInterstitial += 1
 
         guard generationsSinceInterstitial >= 5 else { return }
-        guard let interstitialAd, interstitialAd.isAdReady() else {
+        guard let readyInterstitial = interstitialAd, readyInterstitial.isAdReady() else {
             if interstitialAd == nil {
                 configureInterstitial()
             } else {
-                interstitialAd.loadAd()
+                interstitialAd?.loadAd()
             }
             return
         }
         guard let presenter = Self.topViewController() else { return }
 
         generationsSinceInterstitial = 0
-        interstitialAd.showAd(viewController: presenter, placementName: nil)
+        readyInterstitial.showAd(viewController: presenter, placementName: nil)
     }
 
     private func configureInterstitial() {
