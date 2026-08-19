@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import PhotosUI
 
 struct NextSignerRootView: View {
     @StateObject private var store = SignerStore()
@@ -32,6 +33,7 @@ private enum PickerTarget: Int, Identifiable {
 private struct NextSignerSignView: View {
     @ObservedObject var store: SignerStore
     @State private var pickerTarget: PickerTarget?
+    @State private var selectedPhotoIcon: PhotosPickerItem?
 
     var body: some View {
         NavigationStack {
@@ -73,7 +75,7 @@ private struct NextSignerSignView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Sign. Customize. Publish.", systemImage: "checkmark.seal.fill")
                 .font(.title2.bold())
-            Text("Sign IPA/TIPA files, create duplicate installs, replace the app icon, attach tweak dylibs or DEB packages, then publish the finished build through Cloudflare R2.")
+            Text("Sign IPA/TIPA files, create duplicate installs, replace icons from Photos or Files, attach tweak dylibs or DEBs, then publish through Cloudflare R2.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -98,9 +100,7 @@ private struct NextSignerSignView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-
                         Spacer()
-
                         Button(role: .destructive) { store.clearSelectedIPA() } label: {
                             Image(systemName: "trash")
                         }
@@ -109,8 +109,7 @@ private struct NextSignerSignView: View {
                     VStack(spacing: 10) {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 34))
-                        Text("No IPA selected")
-                            .font(.headline)
+                        Text("No IPA selected").font(.headline)
                         Text("Choose an IPA or TIPA from Files.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -166,7 +165,7 @@ private struct NextSignerSignView: View {
                     get: { store.request.duplicateSigning },
                     set: { store.setDuplicateSigning($0) }
                 ))
-                Text("Generates a unique bundle ID so the signed copy can install alongside another copy of the app.")
+                Text("Creates a unique bundle ID so the signed copy can install beside the original.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -185,8 +184,13 @@ private struct NextSignerSignView: View {
                 }
 
                 HStack {
+                    PhotosPicker(selection: $selectedPhotoIcon, matching: .images) {
+                        Label("Photos", systemImage: "photo.on.rectangle")
+                    }
+                    .buttonStyle(.borderedProminent)
+
                     Button { pickerTarget = .icon } label: {
-                        Label(store.request.customIconURL == nil ? "Choose Icon" : "Change Icon", systemImage: "photo")
+                        Label("Files", systemImage: "folder")
                     }
                     .buttonStyle(.bordered)
 
@@ -195,6 +199,27 @@ private struct NextSignerSignView: View {
                             .buttonStyle(.bordered)
                     }
                 }
+                .onChange(of: selectedPhotoIcon) { item in
+                    guard let item else { return }
+                    Task { @MainActor in
+                        defer { selectedPhotoIcon = nil }
+                        do {
+                            guard let data = try await item.loadTransferable(type: Data.self),
+                                  let image = UIImage(data: data),
+                                  let pngData = image.pngData() else {
+                                store.errorMessage = "The selected photo could not be converted to PNG."
+                                return
+                            }
+                            store.importCustomIconPNGData(pngData)
+                        } catch {
+                            store.errorMessage = "Unable to load the selected photo: \(error.localizedDescription)"
+                        }
+                    }
+                }
+
+                Text("Photos uses Apple’s native photo picker. Files still accepts PNG, JPG and JPEG.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
 
                 Divider()
 
@@ -236,7 +261,7 @@ private struct NextSignerSignView: View {
                 if !store.request.tweakURLs.isEmpty {
                     Toggle("Inject into app extensions", isOn: $store.request.injectTweaksIntoExtensions)
                     Toggle("Weak dylib injection", isOn: $store.request.weakTweakInjection)
-                    Text("Only inject tweaks you trust and that are compatible with the target app. DEB support extracts and injects dylib payloads; packages that require extra frameworks or jailbreak-only services may not work in a sideloaded app.")
+                    Text("Only inject tweaks you trust and that are compatible with the target app. DEB support extracts dylibs; packages needing extra jailbreak services may not work in a sideloaded app.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -427,7 +452,7 @@ private struct NextSignerLibraryView: View {
                 }
             } message: { operation in
                 if operation.action == .deleteApp {
-                    Text("This removes \(operation.app.name) from the site and deletes all R2 versions stored for this published app when an R2 path is available.")
+                    Text("This removes \(operation.app.name) from the site and deletes all managed R2 versions for this app.")
                 } else {
                     Text("This keeps the current \(operation.app.version) build and deletes older R2 versions for \(operation.app.name).")
                 }
@@ -646,8 +671,8 @@ private struct NextSignerSettingsView: View {
 
                 Section("Required token permissions") {
                     Label("Contents: Read and write", systemImage: "doc.badge.gearshape")
-                    Label("Actions: Read and write", systemImage: "bolt.horizontal.circle")
-                    Text("These permissions cover signing, publishing and Library storage management. Scope the token only to the NextSolution repository. The token is saved in the iOS Keychain.")
+                    Label("Actions: Read and write (signing workflow)", systemImage: "bolt.horizontal.circle")
+                    Text("Library deletion now uses repository dispatch, so it no longer depends on the Actions API. Scope the token only to the NextSolution repository.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
