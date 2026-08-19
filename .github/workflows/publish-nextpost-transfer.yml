@@ -1,6 +1,7 @@
 name: Publish Next Post to Transfer
 
 # 1.0.7 LevelPlay guide-complete publication trigger
+# forced after main build publication
 on:
   workflow_dispatch:
   push:
