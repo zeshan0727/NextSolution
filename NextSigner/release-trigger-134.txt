@@ -1,1 +1,0 @@
-Build and publish Next Signer 1.3.4 live-log reliability update.
