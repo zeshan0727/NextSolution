@@ -23,7 +23,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Check out source
@@ -67,39 +67,41 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.3-Article-Preview-Fix.tipa
-          shasum -a 256 NextPost-1.0.3-Article-Preview-Fix.tipa > NextPost-1.0.3-Article-Preview-Fix.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.4-LevelPlay-Proper.tipa
+          shasum -a 256 NextPost-1.0.4-LevelPlay-Proper.tipa > NextPost-1.0.4-LevelPlay-Proper.sha256
 
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :SKAdNetworkItems:0:SKAdNetworkIdentifier" "$APP_PATH/Info.plist"
+          test -f "$APP_PATH/PrivacyInfo.xcprivacy"
           file "$APP_PATH/Next Post"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextPost-1.0.3-Article-Preview-Fix
+          name: NextPost-1.0.4-LevelPlay-Proper
           path: |
-            NextPost-1.0.3-Article-Preview-Fix.tipa
-            NextPost-1.0.3-Article-Preview-Fix.sha256
+            NextPost-1.0.4-LevelPlay-Proper.tipa
+            NextPost-1.0.4-LevelPlay-Proper.sha256
           if-no-files-found: error
 
       - name: Publish TIPA to repository
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p applications
-          cp NextPost-1.0.3-Article-Preview-Fix.tipa applications/NextPost-1.0.3-Article-Preview-Fix.tipa
-          cp NextPost-1.0.3-Article-Preview-Fix.sha256 applications/NextPost-1.0.3-Article-Preview-Fix.sha256
+          cp NextPost-1.0.4-LevelPlay-Proper.tipa applications/NextPost-1.0.4-LevelPlay-Proper.tipa
+          cp NextPost-1.0.4-LevelPlay-Proper.sha256 applications/NextPost-1.0.4-LevelPlay-Proper.sha256
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add applications/NextPost-1.0.3-Article-Preview-Fix.tipa applications/NextPost-1.0.3-Article-Preview-Fix.sha256
+          git add applications/NextPost-1.0.4-LevelPlay-Proper.tipa applications/NextPost-1.0.4-LevelPlay-Proper.sha256
 
           if git diff --cached --quiet; then
-            echo "Next Post 1.0.3 preview-fix build is already published."
+            echo "Next Post 1.0.4 LevelPlay build is already published."
             exit 0
           fi
 
-          git commit -m "Publish Next Post 1.0.3 article preview fix TIPA"
+          git commit -m "Publish Next Post 1.0.4 LevelPlay proper TIPA"
           git pull --rebase origin main
           git push origin HEAD:main
