@@ -6,13 +6,18 @@ on:
     paths:
       - "DailyTweaks/LockGlyphTime/**"
       - ".github/workflows/test-nextlock-115-cpu.yml"
+  pull_request:
+    branches: [agent/lockglyphtime]
+    paths:
+      - "DailyTweaks/LockGlyphTime/**"
+      - ".github/workflows/test-nextlock-115-cpu.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: nextlock-115-cpu-test
+  group: nextlock-115-cpu-test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -50,8 +55,6 @@ jobs:
           grep -q 'BOOL sticker=gPhotoSlotIsSticker\[i\]' RuntimeV023.xm
           grep -q 'if(photoView.image != displayImage) photoView.image=displayImage' RuntimeV023.xm
 
-          # The expensive alpha probe is allowed during preference/photo load,
-          # but it must not appear inside LGTApplyPhotoFrames anymore.
           python3 - <<'PY'
           from pathlib import Path
           s=Path('RuntimeV023.xm').read_text()
