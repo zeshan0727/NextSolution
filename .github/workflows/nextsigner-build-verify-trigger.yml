@@ -16,6 +16,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Report start
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_ARTIFACT_STARTED run=${{ github.run_id }}"
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -71,8 +74,8 @@ jobs:
 
       - name: Report success
         if: success()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_ARTIFACT_OK'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_ARTIFACT_OK run=${{ github.run_id }}"
 
       - name: Report failure
         if: failure()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_ARTIFACT_FAILED'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_ARTIFACT_FAILED run=${{ github.run_id }}"
