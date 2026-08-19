@@ -30,6 +30,11 @@ actor GitHubService {
         }
     }
 
+    private struct RepositoryContentFile: Decodable {
+        let content: String
+        let encoding: String
+    }
+
     private let session: URLSession
     private let token: String
     private let configuration: GitHubConfiguration
@@ -95,20 +100,37 @@ actor GitHubService {
         return dispatch
     }
 
+    /// Library management deliberately uses repository_dispatch instead of the Actions
+    /// workflow-dispatch endpoint. Fine-grained PATs only need Contents: write for this
+    /// endpoint, avoiding 403 "Resource not accessible by personal access token" errors.
     func dispatchLibraryAction(appID: String, action: LibraryAction) async throws {
         guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
-        let workflow = "nextsigner-library-manage.yml".addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "nextsigner-library-manage.yml"
-        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/actions/workflows/\(workflow)/dispatches")
+        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/dispatches")
         let body: [String: Any] = [
-            "ref": configuration.branch,
-            "inputs": [
+            "event_type": "nextsigner_library_manage",
+            "client_payload": [
                 "app_id": appID,
                 "mode": action.rawValue
             ]
         ]
         let encoded = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await session.data(for: request(url: url, method: "POST", body: encoded))
-        try validate(response: response, data: data, accepted: [200, 204])
+        try validate(response: response, data: data, accepted: [204])
+    }
+
+    /// Reads the catalog from the repository itself instead of GitHub Pages/CDN so
+    /// deletion can be verified immediately after the management workflow commits.
+    func fetchPublishedCatalog() async throws -> PublishedCatalog {
+        guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
+        let ref = configuration.branch.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? configuration.branch
+        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/contents/install/apps.json?ref=\(ref)")
+        let (data, response) = try await session.data(for: request(url: url))
+        try validate(response: response, data: data)
+        let file = try JSONDecoder().decode(RepositoryContentFile.self, from: data)
+        guard file.encoding.lowercased() == "base64" else { throw NextSignerError.libraryUnavailable }
+        let compact = file.content.filter { !$0.isWhitespace }
+        guard let decoded = Data(base64Encoded: compact) else { throw NextSignerError.libraryUnavailable }
+        return try JSONDecoder().decode(PublishedCatalog.self, from: decoded)
     }
 
     private func ensureStagingRelease() async throws -> Release {
