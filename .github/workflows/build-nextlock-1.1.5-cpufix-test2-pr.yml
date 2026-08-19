@@ -1,10 +1,10 @@
-name: Build NextLock 1.1.5 CPU Fix Test 3 PR
+name: Build NextLock 1.1.5 CPU Fix Test 4 PR
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - 'transfer/build-triggers/nextlock-test3.txt'
+      - 'transfer/build-triggers/nextlock-test4.txt'
       - '.github/workflows/build-nextlock-1.1.5-cpufix-test2-pr.yml'
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
       - name: Install tools
         run: brew install dpkg ldid
 
-      - name: Fetch verified Test 3 source
+      - name: Fetch verified Test 4 source
         shell: bash
         run: |
           set -euo pipefail
@@ -31,12 +31,13 @@ jobs:
           git worktree add "$RUNNER_TEMP/nextlock-debug" FETCH_HEAD
           S="$RUNNER_TEMP/nextlock-debug/source/NextLockPerfFix/Tweak.m"
           test -f "$S"
-          grep -q 'NextLockPerfFix 1.1.5-test3 remove-duplicate-deferred-render exact-transparency-cache' "$S"
-          grep -q 'kArm64DeferredBlockOffset = 0x998C' "$S"
-          grep -q 'kArm64eDeferredBlockOffset = 0x9A7C' "$S"
-          grep -q 'NLSuppressDuplicateDeferredRender' "$S"
+          grep -q 'NextLockPerfFix 1.1.5-test4 cap-hot-refresh-10hz duplicate-deferred-off exact-transparency-cache' "$S"
+          grep -q 'kArm64eUpdateAOffset = 0x8388' "$S"
+          grep -q 'kArm64eUpdateBOffset = 0x86B8' "$S"
+          grep -q 'kArm64ePhotosOffset  = 0x8A58' "$S"
+          grep -q '100000000ULL' "$S"
 
-      - name: Build RootHide Test 3 shim
+      - name: Build RootHide Test 4 shim
         shell: bash
         run: |
           set -euo pipefail
@@ -84,12 +85,12 @@ jobs:
           from pathlib import Path
           import re,sys
           p=Path(sys.argv[1]); t=p.read_text()
-          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu3', t, flags=re.M)
-          desc='Description: NextLock 1.1.5 CPU-fix Test 3. Keeps all 1.1.4 features while removing the redundant deferred duplicate full-render pass queued by the layout hook and caching the exact transparent-photo/sticker classification.'
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu4', t, flags=re.M)
+          desc='Description: NextLock 1.1.5 CPU-fix Test 4. Keeps all 1.1.4 features while capping the live-proven 60/120 Hz expensive update/render storm to 10 Hz, suppressing the redundant deferred render, and caching exact transparency classification.'
           t=re.sub(r'^Description: .*$', desc, t, flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
           p.write_text(t)
           PY
-          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test3_RootHide.deb"
+          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test4_RootHide.deb"
           dpkg-deb -b "$STAGE" "$OUTDEB"
           echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
           echo "ORIGINAL_LOCK_SHA=$BEFORE" >> "$GITHUB_ENV"
@@ -99,7 +100,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
-          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu3'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu4'
           X=$(mktemp -d)
           dpkg-deb -x "$OUTDEB" "$X"
           LOCK=$(find "$X" -name LockGlyphTime.dylib -print -quit)
@@ -107,17 +108,17 @@ jobs:
           PLIST=$(find "$X" -name NextLockPerfFix.plist -print -quit)
           test -n "$LOCK"; test -n "$FIX"; test -n "$PLIST"
           test "$(shasum -a 256 "$LOCK" | awk '{print $1}')" = "$ORIGINAL_LOCK_SHA"
-          strings -a "$FIX" | grep -q 'NextLockPerfFix 1.1.5-test3 remove-duplicate-deferred-render exact-transparency-cache'
+          strings -a "$FIX" | grep -q 'NextLockPerfFix 1.1.5-test4 cap-hot-refresh-10hz duplicate-deferred-off exact-transparency-cache'
           plutil -p "$PLIST" | grep -q 'com.apple.springboard'
           lipo -info "$FIX" | grep -q 'arm64e'
-          shasum -a 256 "$OUTDEB" | tee "$RUNNER_TEMP/NextLock_1.1.5_CPUFix_Test3_SHA256SUMS.txt"
+          shasum -a 256 "$OUTDEB" | tee "$RUNNER_TEMP/NextLock_1.1.5_CPUFix_Test4_SHA256SUMS.txt"
 
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
-          name: NextLock-1.1.5-CPUFix-Test3-RootHide
+          name: NextLock-1.1.5-CPUFix-Test4-RootHide
           path: |
             ${{ env.OUTDEB }}
-            ${{ runner.temp }}/NextLock_1.1.5_CPUFix_Test3_SHA256SUMS.txt
+            ${{ runner.temp }}/NextLock_1.1.5_CPUFix_Test4_SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
