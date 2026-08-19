@@ -11,31 +11,72 @@ permissions:
 
 jobs:
   release:
-    if: github.event.issue.title == '[NEXTSIGNER-1.3.2-RELEASE]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    if: github.event.issue.title == '[NEXTSIGNER-1.3.2-RELEASE-DIRECT]'
+    runs-on: macos-15
+    timeout-minutes: 50
     env:
       GH_TOKEN: ${{ github.token }}
       VERSION: '1.3.2'
     steps:
-      - name: Start verified build
+      - name: Report start
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_DIRECT_STARTED controller=${{ github.run_id }}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Generate project
         shell: bash
         run: |
           set -euo pipefail
-          BEFORE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-nextsigner-tipa.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
-          gh workflow run build-nextsigner-tipa.yml --repo "$GITHUB_REPOSITORY" --ref main
-          RUN_ID=''
-          for attempt in $(seq 1 30); do
-            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-nextsigner-tipa.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
-            if [ "$candidate" != "0" ] && [ "$candidate" != "$BEFORE" ]; then RUN_ID="$candidate"; break; fi
-            sleep 2
-          done
-          test -n "$RUN_ID" || { echo 'Could not locate build run'; exit 1; }
-          echo "BUILD_RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
-          gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_BUILD_STARTED run=$RUN_ID"
+          python3 NextSigner/generate_app_icon.py
+          brew install xcodegen
+          cd NextSigner
+          xcodegen generate
 
-      - name: Wait for build
-        run: gh run watch "$BUILD_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 8
+      - name: Compile Next Signer 1.3.2
+        working-directory: NextSigner
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project NextSigner.xcodeproj \
+            -scheme NextSigner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/NextSigner132" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package TIPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextSigner132/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' | head -n1)"
+          test -n "$APP_PATH" || { echo 'Built app not found'; exit 1; }
+          test -f "$APP_PATH/Assets.car" || { echo 'Compiled AppIcon asset catalog missing'; exit 1; }
+          rm -rf "$RUNNER_TEMP/package"
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
+          cd "$RUNNER_TEMP/package"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-${VERSION}.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-${VERSION}.ipa" "$RUNNER_TEMP/NextSigner-${VERSION}.tipa"
+          unzip -t "$RUNNER_TEMP/NextSigner-${VERSION}.tipa" >/dev/null
+          echo "SHA256=$(shasum -a 256 "$RUNNER_TEMP/NextSigner-${VERSION}.tipa" | awk '{print $1}')" >> "$GITHUB_ENV"
+
+      - name: Upload verified artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextSigner-1.3.2-TIPA
+          path: |
+            ${{ runner.temp }}/NextSigner-1.3.2.tipa
+            ${{ runner.temp }}/NextSigner-1.3.2.ipa
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Start production publisher
         shell: bash
@@ -51,15 +92,15 @@ jobs:
           done
           test -n "$RUN_ID" || { echo 'Could not locate publisher run'; exit 1; }
           echo "PUBLISH_RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
-          gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_PUBLISH_STARTED run=$RUN_ID"
+          gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_PUBLISH_STARTED run=$RUN_ID sha256=$SHA256"
 
       - name: Wait for publisher
         run: gh run watch "$PUBLISH_RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 8
 
       - name: Report success
         if: success()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_PUBLISHED build=$BUILD_RUN_ID publish=$PUBLISH_RUN_ID"
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_PUBLISHED controller=${{ github.run_id }} publish=$PUBLISH_RUN_ID sha256=$SHA256"
 
       - name: Report failure
         if: failure()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_FAILED build=${BUILD_RUN_ID:-unknown} publish=${PUBLISH_RUN_ID:-unknown}"
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_2_FAILED controller=${{ github.run_id }} publish=${PUBLISH_RUN_ID:-unknown}"
