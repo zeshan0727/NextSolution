@@ -6,7 +6,7 @@ on:
 
 permissions:
   actions: write
-  contents: read
+  contents: write
 
 concurrency:
   group: nextsigner-sign-dispatch-bridge
@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
+      INBOX_TAG: nextsigner-inbox
+      REQUEST_ID: ${{ github.event.client_payload.request_id }}
       STAGING_ASSET: ${{ github.event.client_payload.staging_asset }}
       REQUESTED_NAME: ${{ github.event.client_payload.requested_name }}
       REQUESTED_BUNDLE_ID: ${{ github.event.client_payload.requested_bundle_id }}
@@ -27,10 +29,19 @@ jobs:
       INJECT_EXTENSIONS: ${{ github.event.client_payload.inject_extensions }}
       WEAK_INJECTION: ${{ github.event.client_payload.weak_injection }}
     steps:
+      - name: Check out status helper
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
       - name: Validate request
         shell: bash
         run: |
           set -euo pipefail
+          test -n "$REQUEST_ID" || { echo 'request_id is required'; exit 1; }
           test -n "$STAGING_ASSET" || { echo 'staging_asset is required'; exit 1; }
           test -n "$REQUESTED_NAME" || { echo 'requested_name is required'; exit 1; }
           test -n "$REQUESTED_BUNDLE_ID" || { echo 'requested_bundle_id is required'; exit 1; }
@@ -39,6 +50,11 @@ jobs:
           case "${INJECT_EXTENSIONS:-false}" in true|false) ;; *) echo 'inject_extensions must be true/false'; exit 1;; esac
           case "${WEAK_INJECTION:-false}" in true|false) ;; *) echo 'weak_injection must be true/false'; exit 1;; esac
 
+      - name: Report request received
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Received "GitHub received the publish request."
+
       - name: Start signing and publishing workflow
         shell: bash
         run: |
@@ -46,6 +62,7 @@ jobs:
           gh workflow run nextsigner-sign-publish.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
+            -f request_id="$REQUEST_ID" \
             -f staging_asset="$STAGING_ASSET" \
             -f requested_name="$REQUESTED_NAME" \
             -f requested_bundle_id="$REQUESTED_BUNDLE_ID" \
@@ -55,11 +72,23 @@ jobs:
             -f inject_extensions="${INJECT_EXTENSIONS:-false}" \
             -f weak_injection="${WEAK_INJECTION:-false}"
 
+      - name: Report signer queued
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Bridge "Signing runner queued successfully."
+
+      - name: Report bridge failure
+        if: failure()
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh failed Bridge "Could not start the signing workflow."
+
       - name: Summary
         run: |
           {
             echo '## Next Signer PAT-safe dispatch'
             echo
+            echo "Request: $REQUEST_ID"
             echo "App: $REQUESTED_NAME"
             echo "Bundle ID: $REQUESTED_BUNDLE_ID"
             echo 'Status: signing/publishing workflow dispatched with GitHub Actions token'
