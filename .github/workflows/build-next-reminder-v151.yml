@@ -1,0 +1,69 @@
+name: Build Next Reminder 1.3.21 Email Schedule Visibility
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+
+      - name: Validate 1.3.21 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          P=NextReminderApp
+          grep -q 'New Scheduled Email' "$P/ci/patch_v151.py"
+          grep -q 'emailSchedulesSummary' "$P/ci/patch_v151.py"
+          grep -q 'database.changed' "$P/ci/patch_v151.py"
+          grep -q '1.3.21' "$P/ci/adjust_build_v151.py"
+          grep -q "grep -qx '31'" "$P/ci/adjust_build_v151.py"
+
+      - name: Build Next Reminder 1.3.21
+        shell: bash
+        run: |
+          set -o pipefail
+          chmod +x NextReminderApp/ci/build-v151.sh
+          NextReminderApp/ci/build-v151.sh 2>&1 | tee v151-app-build.log
+
+      - name: Verify app package
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=NextReminderApp/build/NextReminder.app
+          TIPA=NextReminderApp/NextReminder-v1.3.21-unsigned.tipa
+          test -f "$TIPA"
+          unzip -t "$TIPA" >/dev/null
+          plutil -extract CFBundleShortVersionString raw "$APP/Info.plist" | grep -qx '1.3.21'
+          plutil -extract CFBundleVersion raw "$APP/Info.plist" | grep -qx '31'
+          EXT="$APP/PlugIns/NextReminderLiveActivity.appex"
+          test -d "$EXT"
+          plutil -extract CFBundleShortVersionString raw "$EXT/Info.plist" | grep -qx '1.3.21'
+          grep -q 'New Scheduled Email' NextReminderApp/NextReminder/Sources/RootReminders.swift
+          grep -q 'Email Schedules' NextReminderApp/NextReminder/Sources/RootReminders.swift
+          grep -q 'com.nextsolution.nextreminder.database.changed' NextReminderApp/NextReminder/Sources/Services.swift
+          mkdir -p "$RUNNER_TEMP/next-reminder-v151"
+          cp "$TIPA" "$RUNNER_TEMP/next-reminder-v151/NextReminder-v1.3.21-EmailScheduleVisibility.tipa"
+          cp NextReminderApp/NextReminder-v1.3.21-unsigned.tipa.sha256 "$RUNNER_TEMP/next-reminder-v151/NextReminder-v1.3.21-SHA256.txt"
+          ditto -c -k --sequesterRsrc --keepParent NextReminderApp "$RUNNER_TEMP/next-reminder-v151/NextReminder-v1.3.21-Source.zip"
+
+      - name: Upload final package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextReminder-v1.3.21-EmailScheduleVisibility
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/next-reminder-v151/NextReminder-v1.3.21-EmailScheduleVisibility.tipa
+            ${{ runner.temp }}/next-reminder-v151/NextReminder-v1.3.21-SHA256.txt
+            ${{ runner.temp }}/next-reminder-v151/NextReminder-v1.3.21-Source.zip
+            v151-app-build.log
+            NextReminderApp/xcodebuild.log

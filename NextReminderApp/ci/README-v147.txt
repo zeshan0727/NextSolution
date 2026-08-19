@@ -1,0 +1,1 @@
+Next Reminder 1.3.17 enables the iPhone ProMotion frame-rate range through CADisableMinimumFrameDurationOnPhone, reduces reminder-card shadow overdraw, and smooths pressed-button transitions while preserving the existing design and features.
