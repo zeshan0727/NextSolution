@@ -89,6 +89,26 @@ final class SignerStore: ObservableObject {
         }
     }
 
+    func importCustomIconPNGData(_ data: Data) {
+        guard !data.isEmpty else {
+            errorMessage = "The selected photo could not be converted into an app icon."
+            return
+        }
+        do {
+            if let old = request.customIconURL { try? FileManager.default.removeItem(at: old) }
+            let folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("NextSignerInbox", isDirectory: true)
+                .appendingPathComponent("Icons", isDirectory: true)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let destination = folder.appendingPathComponent("photo-icon-\(UUID().uuidString).png")
+            try data.write(to: destination, options: .atomic)
+            request.customIconURL = destination
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to use the selected photo as an icon: \(error.localizedDescription)"
+        }
+    }
+
     func clearCustomIcon() {
         if let url = request.customIconURL { try? FileManager.default.removeItem(at: url) }
         request.customIconURL = nil
@@ -221,18 +241,23 @@ final class SignerStore: ObservableObject {
         libraryErrorMessage = nil
         defer { libraryIsLoading = false }
         do {
-            var components = URLComponents(string: "https://nextsolution.cc/install/apps.json")!
-            components.queryItems = [URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970)))]
-            guard let url = components.url else { throw NextSignerError.libraryUnavailable }
-            var request = URLRequest(url: url)
-            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-            request.timeoutInterval = 30
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                throw NextSignerError.libraryUnavailable
+            let currentToken = KeychainStore.load(account: tokenAccount) ?? token.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !currentToken.isEmpty && configuration.isValid {
+                let service = GitHubService(token: currentToken, configuration: configuration)
+                libraryApps = try await service.fetchPublishedCatalog().apps
+            } else {
+                var components = URLComponents(string: "https://nextsolution.cc/install/apps.json")!
+                components.queryItems = [URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970)))]
+                guard let url = components.url else { throw NextSignerError.libraryUnavailable }
+                var webRequest = URLRequest(url: url)
+                webRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+                webRequest.timeoutInterval = 30
+                let (data, response) = try await URLSession.shared.data(for: webRequest)
+                guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                    throw NextSignerError.libraryUnavailable
+                }
+                libraryApps = try JSONDecoder().decode(PublishedCatalog.self, from: data).apps
             }
-            let catalog = try JSONDecoder().decode(PublishedCatalog.self, from: data)
-            libraryApps = catalog.apps
         } catch {
             libraryErrorMessage = error.localizedDescription
         }
@@ -258,14 +283,41 @@ final class SignerStore: ObservableObject {
         do {
             let service = GitHubService(token: currentToken, configuration: configuration)
             try await service.dispatchLibraryAction(appID: app.id, action: action)
+
             switch action {
             case .cleanOldVersions:
-                libraryMessage = "Cleanup queued for \(app.name). The current version will be kept; older R2 files will be removed."
+                libraryMessage = "Cleanup requested for \(app.name). GitHub will keep the current build and remove older R2 versions."
             case .deleteApp:
-                libraryMessage = "Deletion queued for \(app.name). Its site entry, manifest/icon and stored R2 versions will be removed."
+                // Remove immediately from the visible list, then verify against the repository
+                // catalog until the background workflow has committed the deletion.
+                libraryApps.removeAll { $0.id == app.id }
+                libraryMessage = "Deleting \(app.name)… waiting for GitHub and Cloudflare R2."
+
+                var verified = false
+                for _ in 0..<45 {
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                    let catalog = try await service.fetchPublishedCatalog()
+                    if !catalog.apps.contains(where: { $0.id == app.id }) {
+                        libraryApps = catalog.apps
+                        verified = true
+                        break
+                    }
+                }
+
+                if verified {
+                    libraryMessage = "Deleted \(app.name) from the site and Cloudflare R2."
+                } else {
+                    await refreshLibrary()
+                    throw NSError(
+                        domain: "NextSigner",
+                        code: 2001,
+                        userInfo: [NSLocalizedDescriptionKey: "Deletion was accepted by GitHub but did not finish within 90 seconds. Pull to refresh or check the repository Actions log."]
+                    )
+                }
             }
         } catch {
             libraryErrorMessage = error.localizedDescription
+            await refreshLibrary()
         }
     }
 
