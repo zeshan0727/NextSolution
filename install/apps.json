@@ -2,6 +2,19 @@
   "apps" : [
     {
       "available" : true,
+      "build" : "1032792803",
+      "bundleId" : "com.nextsolution.watusi",
+      "icon" : "/logo.png",
+      "id" : "whatsapp",
+      "manifest" : "/install/manifests/whatsapp.plist",
+      "minimumOS" : "iOS 15.1+",
+      "name" : "Whatsapp",
+      "platform" : "iPhone",
+      "status" : "Ready to install",
+      "version" : "26.30.78"
+    },
+    {
+      "available" : true,
       "build" : "6",
       "bundleId" : "com.nextsolution.aspire",
       "icon" : "/logo.png",
