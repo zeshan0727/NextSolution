@@ -13,6 +13,12 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function stripPtr(p) { try { return p.strip(); } catch (_) { return p; } }
 function modFor(p) { try { return Process.findModuleByAddress(stripPtr(p)); } catch (_) { return null; } }
 function symFor(p) { try { return DebugSymbol.fromAddress(stripPtr(p)); } catch (_) { return null; } }
+function sampleNumber(sampler) {
+  // Frida 17 may return BigInt from UserTimeSampler.sample(). Convert at the
+  // boundary so sorting, subtraction, comparisons, and JSON/string output use
+  // ordinary Numbers consistently.
+  try { return Number(sampler.sample()); } catch (_) { return 0; }
+}
 function fmtFrame(p) {
   const q = stripPtr(p), m = modFor(q), s = symFor(q);
   const off = m ? q.sub(m.base) : null;
@@ -35,14 +41,12 @@ async function rankThreads() {
     if (t.id === agentTid) continue;
     try { samplers.push({tid:t.id, sampler:new UserTimeSampler(t.id), before:0}); } catch (_) {}
   }
-  for (const x of samplers) { try { x.before = x.sampler.sample(); } catch (_) { x.before = 0; } }
+  for (const x of samplers) x.before = sampleNumber(x.sampler);
   await sleep(RANK_MS);
   const rows = [];
   for (const x of samplers) {
-    try {
-      const after = x.sampler.sample();
-      rows.push({tid:x.tid, delta:after-x.before});
-    } catch (_) {}
+    const after = sampleNumber(x.sampler);
+    rows.push({tid:x.tid, delta:Math.max(0, after - x.before)});
   }
   rows.sort((a,b)=>b.delta-a.delta);
   return rows;
@@ -65,7 +69,7 @@ async function main() {
   console.log(`[*] Watching hottest TID 0x${tid.toString(16).toUpperCase()} for ${WATCH_MS/1000}s and capturing only CPU bursts...`);
   let sampler;
   try { sampler = new UserTimeSampler(tid); } catch (e) { console.log('[!] sampler failed: ' + e); return; }
-  let last = sampler.sample();
+  let last = sampleNumber(sampler);
   const stacks = new Map();
   const modules = new Map();
   const lockOffsets = new Map();
@@ -75,9 +79,8 @@ async function main() {
 
   while (Date.now() - start < WATCH_MS) {
     await sleep(POLL_MS);
-    let now;
-    try { now = sampler.sample(); } catch (_) { continue; }
-    const d = now - last;
+    const now = sampleNumber(sampler);
+    const d = Math.max(0, now - last);
     last = now;
     if (d <= 0) continue;
     totalCpuDelta += d;
