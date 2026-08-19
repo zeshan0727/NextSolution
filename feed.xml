@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Solution guides.</description>
     <language>en</language>
     <item>
+      <title>Dopamine 3 Compatibility: Supported iOS Versions by Device Category</title>
+      <link>https://nextsolution.cc/dopamine-3-jailbreak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-jailbreak.html</guid>
+      <pubDate>Wed, 19 Aug 2026 15:46:56 GMT</pubDate>
+      <description>Review the documented Dopamine 3 compatibility ranges for arm64e, A12/A13, and arm64 devices, including the separate A12/A13 iOS 26 range.</description>
+      <category>Jailbreak</category>
+    </item>
+    <item>
       <title>iFetch 6.0.0: System Diagnostics and CLI Fetch for iOS 14–17 Jailbreak Devices</title>
       <link>https://nextsolution.cc/ifetch-tweak.html</link>
       <guid isPermaLink="true">https://nextsolution.cc/ifetch-tweak.html</guid>

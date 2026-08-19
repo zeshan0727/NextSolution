@@ -1,5 +1,84 @@
 {
-  "schema_version": 1,
-  "published": {},
-  "events": []
+  "events": [
+    {
+      "path": "dopamine-3-jailbreak.html",
+      "published_at": "2026-08-19T15:46:56+00:00",
+      "topic_id": "dopamine3-master-compatibility"
+    }
+  ],
+  "published": {
+    "dopamine3-master-compatibility": {
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_001bae3a36bed520016a85d006f4b08190825d5941275a247b",
+          "usage": {
+            "input_tokens": 3921,
+            "input_tokens_details": {
+              "cache_write_tokens": 3918,
+              "cached_tokens": 0
+            },
+            "output_tokens": 494,
+            "output_tokens_details": {
+              "reasoning_tokens": 392
+            },
+            "total_tokens": 4415
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_010d996e20788726016a85d00cc0708190821a1dc79379ad82",
+          "usage": {
+            "input_tokens": 3961,
+            "input_tokens_details": {
+              "cache_write_tokens": 3958,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2287,
+            "output_tokens_details": {
+              "reasoning_tokens": 118
+            },
+            "total_tokens": 6248
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_01ca9245b5ea1d75016a85d019dd1487d183fa5dfadb713cca",
+          "usage": {
+            "input_tokens": 3343,
+            "input_tokens_details": {
+              "cache_write_tokens": 3340,
+              "cached_tokens": 0
+            },
+            "output_tokens": 446,
+            "output_tokens_details": {
+              "reasoning_tokens": 348
+            },
+            "total_tokens": 3789
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0ce1bf2e28124a72016a85cff06b5c8196b2a2329336d285e7",
+          "usage": {
+            "input_tokens": 1296,
+            "input_tokens_details": {
+              "cache_write_tokens": 1293,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2801,
+            "output_tokens_details": {
+              "reasoning_tokens": 54
+            },
+            "total_tokens": 4097
+          }
+        }
+      },
+      "fingerprint": "7b3f95e19165cb138c38f57fd31bf194b8aade7035040cc785c07b6b66b6205a",
+      "path": "dopamine-3-jailbreak.html",
+      "published_at": "2026-08-19T15:46:56+00:00",
+      "title": "Dopamine 3 Compatibility: Supported iOS Versions by Device Category"
+    }
+  },
+  "schema_version": 1
 }

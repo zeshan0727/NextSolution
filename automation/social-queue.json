@@ -1,4 +1,13 @@
 {
-  "schema_version": 1,
-  "items": []
+  "items": [
+    {
+      "created_at": "2026-08-19T15:46:56+00:00",
+      "post": "Dopamine 3 compatibility is split by device category: arm64e covers iOS 15.0–17.3.1, A12/A13 cover iOS 15.0–18.7.1 plus a separate iOS 26.0–26.0.1 range, and arm64 covers iOS 15.0–18.7.1. Check the exact category and iOS https://nextsolution.cc/dopamine-3-jailbreak.html",
+      "status": "pending",
+      "title": "Dopamine 3 Compatibility: Supported iOS Versions by Device Category",
+      "topic_id": "dopamine3-master-compatibility",
+      "url": "https://nextsolution.cc/dopamine-3-jailbreak.html"
+    }
+  ],
+  "schema_version": 1
 }
