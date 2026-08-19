@@ -18,23 +18,27 @@ runtime = runtime_path.read_text()
 # Preserve the exact visual behavior, but classify each decoded image ONCE
 # when preferences/photo data are loaded. Runtime layout then performs only a
 # cached boolean lookup and reuses a cached AlwaysOriginal UIImage.
+#
+# Keep this patch idempotent because CI may generate sources once for static
+# validation and Makefile's before-all target generates them again.
 # ---------------------------------------------------------------------------
 
-globals_anchor = 'static UIImage *gPhotoSlotImage[4] = {nil,nil,nil,nil};'
-globals_new = globals_anchor + r'''
+if 'static BOOL gPhotoSlotIsSticker[4]' not in runtime:
+    globals_anchor = 'static UIImage *gPhotoSlotImage[4] = {nil,nil,nil,nil};'
+    globals_new = globals_anchor + r'''
 static UIImage *gPhotoSlotDisplayImage[4] = {nil,nil,nil,nil};
 static BOOL gPhotoSlotIsSticker[4] = {NO,NO,NO,NO};'''
-if globals_anchor not in runtime:
-    raise SystemExit('1.1.4 photo slot globals anchor not found')
-runtime = runtime.replace(globals_anchor, globals_new, 1)
+    if globals_anchor not in runtime:
+        raise SystemExit('1.1.4 photo slot globals anchor not found')
+    runtime = runtime.replace(globals_anchor, globals_new, 1)
 
-load_anchor = r'''    for(NSInteger i=1;i<4;i++) {
+    load_anchor = r'''    for(NSInteger i=1;i<4;i++) {
         NSString *dataKey=[NSString stringWithFormat:@"customPhotoData%ld",(long)(i+1)];
         id slotData=[prefs objectForKey:dataKey];
         gPhotoSlotData[i]=[slotData isKindOfClass:NSData.class]?slotData:nil;
         gPhotoSlotImage[i]=gPhotoSlotData[i].length?[UIImage imageWithData:gPhotoSlotData[i]]:nil;
     }'''
-load_new = load_anchor + r'''
+    load_new = load_anchor + r'''
 
     // EXPENSIVE IMAGE CLASSIFICATION MUST NEVER RUN FROM layoutSubviews.
     // A 32x32 alpha probe still uses CoreGraphics/vImage internally, so do it
@@ -49,31 +53,35 @@ load_new = load_anchor + r'''
             gPhotoSlotDisplayImage[i]=nil;
         }
     }'''
-if load_anchor not in runtime:
-    raise SystemExit('1.1.4 photo decode block not found')
-runtime = runtime.replace(load_anchor, load_new, 1)
+    if load_anchor not in runtime:
+        raise SystemExit('1.1.4 photo decode block not found')
+    runtime = runtime.replace(load_anchor, load_new, 1)
 
-hot_old = r'''        UIImageView *photoView=host.imageView;
+    hot_old = r'''        UIImageView *photoView=host.imageView;
         BOOL sticker=LGTImageHasVisibleTransparency(image);
         photoView.image=[image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];'''
-hot_new = r'''        UIImageView *photoView=host.imageView;
+    hot_new = r'''        UIImageView *photoView=host.imageView;
         BOOL sticker=gPhotoSlotIsSticker[i];
         UIImage *displayImage=gPhotoSlotDisplayImage[i]?:image;
         if(photoView.image != displayImage) photoView.image=displayImage;'''
-if hot_old not in runtime:
-    raise SystemExit('1.1.4 per-layout transparency probe not found')
-runtime = runtime.replace(hot_old, hot_new, 1)
+    if hot_old not in runtime:
+        raise SystemExit('1.1.4 per-layout transparency probe not found')
+    runtime = runtime.replace(hot_old, hot_new, 1)
 
-runtime_path.write_text(runtime)
+    runtime_path.write_text(runtime)
+else:
+    print('NextLock 1.1.5 runtime CPU fix already applied; skipping duplicate runtime patch')
 
 # ---------------------------------------------------------------------------
 # Metadata: 1.1.5 is a feature-preserving performance/stability release.
 # ---------------------------------------------------------------------------
 control_path = ROOT / 'control'
 control = control_path.read_text()
-if 'Version: 1.1.4' not in control:
-    raise SystemExit('expected 1.1.4 control version not found')
-control = control.replace('Version: 1.1.4', 'Version: 1.1.5', 1)
+if 'Version: 1.1.4' in control:
+    control = control.replace('Version: 1.1.4', 'Version: 1.1.5', 1)
+elif 'Version: 1.1.5' not in control:
+    raise SystemExit('expected 1.1.4 or 1.1.5 control version not found')
+
 lines = control.splitlines()
 for i, line in enumerate(lines):
     if line.startswith('Description:'):
