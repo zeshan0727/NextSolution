@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T09:05:55Z",
+  "updatedAt": "2026-08-19T11:29:33Z",
   "files": [
+    {
+      "id": "nextsigner-1.1.2",
+      "name": "Next Signer 1.1.2",
+      "fileName": "NextSigner-1.1.2.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.1.2",
+      "url": "https://files.nextsolution.cc/apps/tipa/NextSigner/1.1.2/NextSigner-1.1.2.tipa",
+      "sha256": "829e6f349efbd59e19782efc8681ce3dd1d92314d3c3e3ad812ba0ab0aefa118",
+      "storage": "Cloudflare R2",
+      "notes": "Fixes false signing failure on apps such as Ksign. Uses Zsign signing success plus signed-bundle validation instead of the unreliable Zsign Mach-O checkSigned result. Keeps local P12 + mobileprovision signing, export, and publish-after-sign flow."
+    },
     {
       "id": "nextpost-1.0.8-unityads-mediation",
       "name": "Next Post 1.0.8 Unity Ads Mediation",
@@ -100,17 +112,6 @@
       "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.2/NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "sha256": "ee35fd00462b5b5fafdfc3b307594d6bf7d8577855e7707404c3c1efc1c8a9c0",
       "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval."
-    },
-    {
-      "id": "nextsigner-1.1.2",
-      "name": "Next Signer 1.1.2",
-      "fileName": "NextSigner-1.1.2.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / iOS 16+",
-      "version": "1.1.2",
-      "url": "https://nextsolution.cc/transfer/files/NextSigner/1.1.2/NextSigner-1.1.2.tipa",
-      "sha256": "829e6f349efbd59e19782efc8681ce3dd1d92314d3c3e3ad812ba0ab0aefa118",
-      "notes": "Fixes false signing failure on apps such as Ksign. Uses Zsign signing success plus signed-bundle validation instead of the unreliable Zsign Mach-O checkSigned result. Keeps local P12 + mobileprovision signing, export, and publish-after-sign flow."
     },
     {
       "id": "nextpost-1.0.1-levelplay-test",
