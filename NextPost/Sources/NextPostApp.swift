@@ -10,6 +10,11 @@ struct NextPostApp: App {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.dark)
+                .overlay(alignment: .topTrailing) {
+                    AdTestDeviceButton()
+                        .padding(.top, 8)
+                        .padding(.trailing, 12)
+                }
         }
     }
 }
