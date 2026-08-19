@@ -3,6 +3,11 @@ name: Next Signer - Sign and Publish
 on:
   workflow_dispatch:
     inputs:
+      request_id:
+        description: Optional Next Signer request ID used for live status reporting
+        required: false
+        default: ''
+        type: string
       staging_asset:
         description: IPA/TIPA asset in the Next Signer inbox release
         required: true
@@ -53,6 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
+      GH_TOKEN: ${{ github.token }}
+      REQUEST_ID: ${{ inputs.request_id }}
       ZSIGN_COMMIT: e803f870dc686e6161d00d9b22c425b8acdfacee
       INBOX_TAG: nextsigner-inbox
       PUBLISH_TAG: private-apps
@@ -77,6 +84,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Log • validate signing material
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Validate "Validating Apple certificate, P12 password and provisioning profile."
+
       - name: Validate signing secrets and options
         shell: bash
         env:
@@ -94,10 +106,14 @@ jobs:
           case "$INJECT_EXTENSIONS" in true|false) ;; *) echo 'inject_extensions must be true/false'; exit 1;; esac
           case "$WEAK_INJECTION" in true|false) ;; *) echo 'weak_injection must be true/false'; exit 1;; esac
 
+      - name: Log • download staged files
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Download "Downloading the staged IPA and selected customization files."
+
       - name: Download staged app and customization assets
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
           STAGING_ASSET: ${{ inputs.staging_asset }}
         run: |
           set -euo pipefail
@@ -135,6 +151,11 @@ jobs:
           echo "INBOX_RELEASE_ID=$RELEASE_ID" >> "$GITHUB_ENV"
           echo "INBOX_ASSET_ID=$APP_ASSET_ID" >> "$GITHUB_ENV"
 
+      - name: Log • build zsign
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running zsign "Building the pinned zsign signing engine."
+
       - name: Build pinned zsign
         shell: bash
         run: |
@@ -146,6 +167,11 @@ jobs:
           make -C "$RUNNER_TEMP/zsign/build/linux" clean
           make -C "$RUNNER_TEMP/zsign/build/linux" -j"$(nproc)"
           "$RUNNER_TEMP/zsign/bin/zsign" --version
+
+      - name: Log • prepare customization
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Customize "Preparing custom icon and tweak injection options."
 
       - name: Prepare custom icon
         if: inputs.custom_icon_asset != ''
@@ -203,6 +229,11 @@ jobs:
           fi
           echo "TWEAK_DYLIB_COUNT=$dylib_count" >> "$GITHUB_ENV"
 
+      - name: Log • sign IPA
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Sign "Signing the IPA with the requested bundle ID, name, icon and tweaks."
+
       - name: Sign IPA with requested options
         shell: bash
         env:
@@ -240,6 +271,11 @@ jobs:
           "$RUNNER_TEMP/zsign/bin/zsign" "${args[@]}"
           test -s "$RUNNER_TEMP/signed.ipa"
           unzip -t "$RUNNER_TEMP/signed.ipa" >/dev/null
+
+      - name: Log • read metadata
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Metadata "Reading the signed app version, build, bundle ID and minimum iOS version."
 
       - name: Read signed app metadata
         shell: bash
@@ -289,10 +325,13 @@ jobs:
           echo "SIGNED_SHA256=$(sha256sum "$RUNNER_TEMP/signed.ipa" | awk '{print $1}')" >> "$GITHUB_ENV"
           echo "SIGNED_SIZE=$(stat -c '%s' "$RUNNER_TEMP/signed.ipa")" >> "$GITHUB_ENV"
 
+      - name: Log • upload signed IPA
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running "R2 Upload" "Uploading the signed IPA to Cloudflare R2."
+
       - name: Publish signed IPA
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           cp "$RUNNER_TEMP/signed.ipa" "$RUNNER_TEMP/$SIGNED_FILENAME"
@@ -319,6 +358,11 @@ jobs:
             echo 'SIGNED_BACKEND=GitHub Releases' >> "$GITHUB_ENV"
           fi
 
+      - name: Log • verify published IPA
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running "R2 Verify" "Verifying the public signed IPA URL before publishing the site entry."
+
       - name: Verify published IPA
         shell: bash
         run: |
@@ -327,6 +371,11 @@ jobs:
           curl --fail --silent --show-error --location --head \
             --retry 8 --retry-delay 3 --retry-all-errors "$SIGNED_URL" >/dev/null
           echo "Verified $SIGNED_URL"
+
+      - name: Log • extract app icon
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Icon "Extracting and normalizing the app icon for the installer."
 
       - name: Extract published app icon
         shell: bash
@@ -448,6 +497,11 @@ jobs:
           echo "ICON_URL=$ICON_URL" >> "$GITHUB_ENV"
           echo "ICON_SOURCE=$ICON_SOURCE" >> "$GITHUB_ENV"
 
+      - name: Log • generate manifest
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Manifest "Generating the OTA manifest and installer catalog entry."
+
       - name: Publish manifest and catalog entry
         shell: bash
         run: |
@@ -505,6 +559,11 @@ jobs:
               plistlib.dump(manifest, f, fmt=plistlib.FMT_XML, sort_keys=False)
           PY
 
+      - name: Log • commit site catalog
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh running Site "Committing the app, manifest and icon to the Next Solution installer."
+
       - name: Commit catalog update
         shell: bash
         run: |
@@ -525,7 +584,6 @@ jobs:
         continue-on-error: true
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
           STAGING_ASSET: ${{ inputs.staging_asset }}
         run: |
           set -u
@@ -543,6 +601,18 @@ jobs:
           delete_name "$CUSTOM_ICON_ASSET"
           printf '%s' "$TWEAK_ASSETS_JSON" | jq -r '.[]' | while IFS= read -r asset; do delete_name "$asset"; done
 
+      - name: Report publish success
+        if: success()
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh success Complete "Signed IPA uploaded, verified and added to the Next Solution site."
+
+      - name: Report publish failure
+        if: failure()
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh failed "${CURRENT_STAGE:-Unknown}" "Publish failed during ${CURRENT_STAGE:-an unknown stage}. Tap the GitHub run button or copy this log for diagnosis."
+
       - name: Signing summary
         if: always()
         shell: bash
@@ -550,6 +620,7 @@ jobs:
           {
             echo '## Next Signer'
             echo
+            echo "Request: ${REQUEST_ID:-manual}"
             echo "App: ${APP_NAME:-${{ inputs.requested_name }}}"
             echo "Bundle ID: ${APP_BUNDLE_ID:-${{ inputs.requested_bundle_id }}}"
             echo "Duplicate signing: $DUPLICATE_SIGNING"
