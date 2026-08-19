@@ -13,8 +13,16 @@ final class SignerStore: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
 
+    @Published var libraryApps: [PublishedApp] = []
+    @Published var libraryIsLoading = false
+    @Published var libraryErrorMessage: String?
+    @Published var libraryMessage: String?
+    @Published var libraryManagingAppID: String?
+
     private let defaults = UserDefaults.standard
     private let tokenAccount = "github-token"
+    private var duplicateBaseBundleID: String?
+    private var duplicateBaseName: String?
 
     init() {
         configuration = GitHubConfiguration(
@@ -54,14 +62,11 @@ final class SignerStore: ObservableObject {
 
     func importIPA(from pickedURL: URL) {
         do {
-            let localURL = try copyIntoPrivateStaging(pickedURL)
+            clearSelectedIPA(removeMessage: false)
+            let localURL = try copyIntoPrivateStaging(pickedURL, subfolder: "Apps")
             request.ipaURL = localURL
-            if request.appName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                request.appName = suggestedAppName(from: localURL.lastPathComponent)
-            }
-            if request.bundleID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                request.bundleID = suggestedBundleID(from: request.appName)
-            }
+            request.appName = suggestedAppName(from: localURL.lastPathComponent)
+            request.bundleID = suggestedBundleID(from: request.appName)
             errorMessage = nil
             successMessage = nil
         } catch {
@@ -69,13 +74,78 @@ final class SignerStore: ObservableObject {
         }
     }
 
-    func clearSelectedIPA() {
-        if let url = request.ipaURL {
-            try? FileManager.default.removeItem(at: url)
+    func importCustomIcon(from pickedURL: URL) {
+        let ext = pickedURL.pathExtension.lowercased()
+        guard ["png", "jpg", "jpeg"].contains(ext) else {
+            errorMessage = "Choose a PNG, JPG or JPEG image for the custom app icon."
+            return
         }
-        request.ipaURL = nil
+        do {
+            if let old = request.customIconURL { try? FileManager.default.removeItem(at: old) }
+            request.customIconURL = try copyIntoPrivateStaging(pickedURL, subfolder: "Icons")
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to import the custom icon: \(error.localizedDescription)"
+        }
+    }
+
+    func clearCustomIcon() {
+        if let url = request.customIconURL { try? FileManager.default.removeItem(at: url) }
+        request.customIconURL = nil
+    }
+
+    func importTweaks(from pickedURLs: [URL]) {
+        let accepted = pickedURLs.filter { ["dylib", "deb"].contains($0.pathExtension.lowercased()) }
+        guard !accepted.isEmpty else {
+            errorMessage = "Choose one or more .dylib files or .deb tweak packages containing dylibs."
+            return
+        }
+        do {
+            for url in accepted {
+                let local = try copyIntoPrivateStaging(url, subfolder: "Tweaks")
+                request.tweakURLs.append(local)
+            }
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to import tweak files: \(error.localizedDescription)"
+        }
+    }
+
+    func removeTweak(_ url: URL) {
+        try? FileManager.default.removeItem(at: url)
+        request.tweakURLs.removeAll { $0 == url }
+    }
+
+    func setDuplicateSigning(_ enabled: Bool) {
+        guard enabled != request.duplicateSigning else { return }
+        if enabled {
+            duplicateBaseBundleID = request.bundleID
+            duplicateBaseName = request.appName
+            let base = request.bundleID.trimmingCharacters(in: .whitespacesAndNewlines)
+            let suffix = String(Int(Date().timeIntervalSince1970) % 100000)
+            request.bundleID = "\(base.isEmpty ? "com.nextsolution.signedapp" : base).copy\(suffix)"
+            if !request.appName.hasSuffix(" Copy") {
+                request.appName += " Copy"
+            }
+        } else {
+            if let duplicateBaseBundleID { request.bundleID = duplicateBaseBundleID }
+            if let duplicateBaseName { request.appName = duplicateBaseName }
+            duplicateBaseBundleID = nil
+            duplicateBaseName = nil
+        }
+        request.duplicateSigning = enabled
+    }
+
+    func clearSelectedIPA(removeMessage: Bool = true) {
+        if let url = request.ipaURL { try? FileManager.default.removeItem(at: url) }
+        if let url = request.customIconURL { try? FileManager.default.removeItem(at: url) }
+        for url in request.tweakURLs { try? FileManager.default.removeItem(at: url) }
+        request = SignRequest()
+        duplicateBaseBundleID = nil
+        duplicateBaseName = nil
         activeJob = nil
         progress = 0
+        if removeMessage { successMessage = nil }
     }
 
     func signAndPublish() {
@@ -105,34 +175,37 @@ final class SignerStore: ObservableObject {
             requestedBundleID: request.bundleID,
             requestedAppName: request.appName,
             stage: .preparing,
-            detail: "Preparing secure upload"
+            detail: "Preparing app and signing options"
         )
 
         let service = GitHubService(token: currentToken, configuration: configuration)
-        let appName = request.appName
-        let bundleID = request.bundleID
+        let snapshot = request
 
         Task {
             do {
                 activeJob?.stage = .uploading
-                activeJob?.detail = "Uploading IPA to the private signing inbox"
+                let extras = snapshot.tweakURLs.count + (snapshot.customIconURL == nil ? 0 : 1)
+                activeJob?.detail = extras == 0 ? "Uploading IPA to the private signing inbox" : "Uploading IPA and \(extras) customization file(s)"
                 let response = try await service.uploadAndDispatch(
                     ipaURL: ipaURL,
-                    appName: appName,
-                    bundleID: bundleID,
+                    appName: snapshot.appName,
+                    bundleID: snapshot.bundleID,
+                    customIconURL: snapshot.customIconURL,
+                    tweakURLs: snapshot.tweakURLs,
+                    duplicateSigning: snapshot.duplicateSigning,
+                    injectExtensions: snapshot.injectTweaksIntoExtensions,
+                    weakInjection: snapshot.weakTweakInjection,
                     progress: { value in
-                        await MainActor.run {
-                            self.progress = value
-                        }
+                        await MainActor.run { self.progress = value }
                     }
                 )
                 activeJob?.stage = .queued
                 if let runURL = response?.htmlURL, !runURL.isEmpty {
-                    activeJob?.detail = "Signing and publishing started: \(runURL)"
+                    activeJob?.detail = "Advanced signing and publishing started: \(runURL)"
                 } else {
-                    activeJob?.detail = "Signing and publishing workflow queued"
+                    activeJob?.detail = "Advanced signing and publishing workflow queued"
                 }
-                successMessage = "Uploaded successfully. GitHub is now signing the IPA and publishing it to your private app page."
+                successMessage = "Uploaded successfully. Next Signer is applying your options, signing the IPA and publishing it through Cloudflare R2."
                 progress = 1
             } catch {
                 activeJob?.stage = .failed
@@ -143,14 +216,66 @@ final class SignerStore: ObservableObject {
         }
     }
 
-    private func copyIntoPrivateStaging(_ source: URL) throws -> URL {
-        let accessed = source.startAccessingSecurityScopedResource()
-        defer {
-            if accessed { source.stopAccessingSecurityScopedResource() }
+    func refreshLibrary() async {
+        libraryIsLoading = true
+        libraryErrorMessage = nil
+        defer { libraryIsLoading = false }
+        do {
+            var components = URLComponents(string: "https://nextsolution.cc/install/apps.json")!
+            components.queryItems = [URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970)))]
+            guard let url = components.url else { throw NextSignerError.libraryUnavailable }
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+            request.timeoutInterval = 30
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                throw NextSignerError.libraryUnavailable
+            }
+            let catalog = try JSONDecoder().decode(PublishedCatalog.self, from: data)
+            libraryApps = catalog.apps
+        } catch {
+            libraryErrorMessage = error.localizedDescription
         }
+    }
+
+    func manageLibrary(app: PublishedApp, action: LibraryAction) async {
+        guard libraryManagingAppID == nil else { return }
+        guard configuration.isValid else {
+            libraryErrorMessage = NextSignerError.invalidConfiguration.localizedDescription
+            return
+        }
+        let currentToken = KeychainStore.load(account: tokenAccount) ?? token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !currentToken.isEmpty else {
+            libraryErrorMessage = NextSignerError.missingToken.localizedDescription
+            return
+        }
+
+        libraryManagingAppID = app.id
+        libraryMessage = nil
+        libraryErrorMessage = nil
+        defer { libraryManagingAppID = nil }
+
+        do {
+            let service = GitHubService(token: currentToken, configuration: configuration)
+            try await service.dispatchLibraryAction(appID: app.id, action: action)
+            switch action {
+            case .cleanOldVersions:
+                libraryMessage = "Cleanup queued for \(app.name). The current version will be kept; older R2 files will be removed."
+            case .deleteApp:
+                libraryMessage = "Deletion queued for \(app.name). Its site entry, manifest/icon and stored R2 versions will be removed."
+            }
+        } catch {
+            libraryErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func copyIntoPrivateStaging(_ source: URL, subfolder: String) throws -> URL {
+        let accessed = source.startAccessingSecurityScopedResource()
+        defer { if accessed { source.stopAccessingSecurityScopedResource() } }
 
         let folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("NextSignerInbox", isDirectory: true)
+            .appendingPathComponent(subfolder, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
         let sanitized = source.lastPathComponent.replacingOccurrences(of: "/", with: "-")
