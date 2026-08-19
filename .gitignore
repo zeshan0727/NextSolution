@@ -2,3 +2,6 @@ automation/out/
 automation/runtime-state/
 __pycache__/
 *.py[cod]
+
+# Next Signer release binaries live in Cloudflare R2; GitHub keeps metadata only.
+transfer/files/NextSigner/
