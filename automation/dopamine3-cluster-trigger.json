@@ -1,4 +1,5 @@
 {
-  "reason": "initial Dopamine 3 traffic cluster launch",
-  "requested_by": "Next Solution automation"
+  "reason": "retry initial Dopamine 3 traffic cluster launch with persistent diagnostics",
+  "requested_by": "Next Solution automation",
+  "attempt": 2
 }
