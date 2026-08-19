@@ -3,10 +3,15 @@
 #import <dispatch/dispatch.h>
 #import <mach-o/dyld.h>
 #import <mach-o/loader.h>
+#import <objc/runtime.h>
 #import <os/lock.h>
 #include <string.h>
+#if defined(__arm64e__) && __has_include(<ptrauth.h>)
+#include <ptrauth.h>
+#endif
 
 extern void MSHookFunction(void *symbol, void *replace, void **result);
+extern void MSHookMessageEx(Class cls, SEL sel, IMP imp, IMP *result);
 
 // NextLock 1.1.4 LockGlyphTime.dylib UUIDs and helper offsets, verified from
 // the exact live binary captured from the affected device.
@@ -14,11 +19,16 @@ extern void MSHookFunction(void *symbol, void *replace, void **result);
 // arm64 : C7EBC4D1-EAD4-3320-A27F-34E86C25F776  helper +0xAE18
 // arm64e: 7BE1428A-C4B0-38F8-8120-7BACBF220731  helper +0xAF74
 //
-// The helper performs the full-pixel transparency test used to preserve the
-// distinction between transparent stickers (AspectFit / no crop) and normal
-// photos (AspectFill / corner clipping). We do NOT change that algorithm.
-// We only memoize its exact result for each immutable UIImage instance so
-// repeated layoutSubviews passes do not redraw and rescan the same bitmap.
+// Test 1 proved the transparency helper hook was active, but SpringBoard CPU
+// still rose because LockGlyphTime can create fresh UIImage objects from the
+// same NSData during repeated layout passes. That defeats an object-pointer
+// cache even though the image content itself is unchanged.
+//
+// Test 2 keeps every NextLock feature and the exact original transparency
+// decision, but also memoizes +[UIImage imageWithData:] ONLY when the caller is
+// inside the verified LockGlyphTime 1.1.4 __TEXT range. Repeated layouts then
+// reuse the same immutable UIImage, so the original expensive alpha scan runs
+// once per distinct photo/sticker content instead of once per layout.
 
 static const uint8_t kNextLock114Arm64UUID[16] = {
     0xC7, 0xEB, 0xC4, 0xD1, 0xEA, 0xD4, 0x33, 0x20,
@@ -30,30 +40,48 @@ static const uint8_t kNextLock114Arm64eUUID[16] = {
     0x81, 0x20, 0x7B, 0xAC, 0xBF, 0x22, 0x07, 0x31
 };
 
-static const uintptr_t kNextLock114Arm64TransparencyOffset  = 0xAE18;
+static const uintptr_t kNextLock114Arm64TransparencyOffset   = 0xAE18;
 static const uintptr_t kNextLock114Arm64eTransparencyOffset = 0xAF74;
 
 static BOOL (*NLOriginalHasRealTransparency)(UIImage *image) = NULL;
+static UIImage *(*NLOriginalImageWithData)(id, SEL, NSData *) = NULL;
+
 static NSMapTable<UIImage *, NSNumber *> *NLTransparencyCache = nil;
-static os_unfair_lock NLCacheLock = OS_UNFAIR_LOCK_INIT;
+static NSMapTable<NSData *, UIImage *> *NLDataPointerImageCache = nil;
+static NSCache<NSString *, UIImage *> *NLDataFingerprintImageCache = nil;
+
+static os_unfair_lock NLTransparencyLock = OS_UNFAIR_LOCK_INIT;
+static os_unfair_lock NLImageCacheLock = OS_UNFAIR_LOCK_INIT;
 static os_unfair_lock NLInstallLock = OS_UNFAIR_LOCK_INIT;
-static BOOL NLHookInstalled = NO;
 
-// Kept as a binary marker so the test package can be audited with `strings`.
+static BOOL NLTransparencyHookInstalled = NO;
+static BOOL NLImageHookInstalled = NO;
+static uintptr_t NLLockGlyphTextStart = 0;
+static uintptr_t NLLockGlyphTextEnd = 0;
+
 __attribute__((used)) static const char *NLPerfFixMarker =
-    "NextLockPerfFix 1.1.5-test transparency-cache exact-semantics";
+    "NextLockPerfFix 1.1.5-test2 targeted-image-cache transparency-cache exact-semantics";
 
-static void NLEnsureCache(void) {
+static void NLEnsureCaches(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        // Pointer personality is deliberate: UIImage is immutable for our use,
-        // and a newly loaded preference image gets a new object and therefore a
-        // new cache entry. Weak keys prevent retaining old custom photos.
         NLTransparencyCache = [[NSMapTable alloc]
             initWithKeyOptions:(NSPointerFunctionsWeakMemory |
                                 NSPointerFunctionsObjectPointerPersonality)
             valueOptions:NSPointerFunctionsStrongMemory
             capacity:8];
+
+        // Fast path when LockGlyphTime reuses the same NSData object.
+        NLDataPointerImageCache = [[NSMapTable alloc]
+            initWithKeyOptions:(NSPointerFunctionsWeakMemory |
+                                NSPointerFunctionsObjectPointerPersonality)
+            valueOptions:NSPointerFunctionsStrongMemory
+            capacity:8];
+
+        // Fallback when LockGlyphTime reconstructs an equivalent NSData object.
+        // Count limit prevents preference-image changes from growing memory.
+        NLDataFingerprintImageCache = [[NSCache alloc] init];
+        NLDataFingerprintImageCache.countLimit = 12;
     });
 }
 
@@ -62,38 +90,140 @@ static BOOL NLCachedHasRealTransparency(UIImage *image) {
         return NO;
     }
 
-    NLEnsureCache();
+    NLEnsureCaches();
 
-    os_unfair_lock_lock(&NLCacheLock);
+    os_unfair_lock_lock(&NLTransparencyLock);
     NSNumber *cached = [NLTransparencyCache objectForKey:image];
-    os_unfair_lock_unlock(&NLCacheLock);
+    os_unfair_lock_unlock(&NLTransparencyLock);
 
     if (cached != nil) {
         return cached.boolValue;
     }
 
-    // Preserve the original 1.1.4 behavior exactly on the first encounter.
-    // This is the only call that performs CGBitmapContextCreate + DrawImage +
-    // alpha-byte scanning for this UIImage instance.
+    // Preserve the exact 1.1.4 decision on first encounter. The original helper
+    // performs CGBitmapContextCreate + DrawImage + alpha-byte scanning.
     BOOL result = NLOriginalHasRealTransparency(image);
 
-    os_unfair_lock_lock(&NLCacheLock);
+    os_unfair_lock_lock(&NLTransparencyLock);
     [NLTransparencyCache setObject:@(result) forKey:image];
-    os_unfair_lock_unlock(&NLCacheLock);
+    os_unfair_lock_unlock(&NLTransparencyLock);
 
     return result;
 }
 
-static BOOL NLFindUUIDAndOffset(const struct mach_header *mh,
-                                uintptr_t *offsetOut,
-                                const char **archOut) {
-    if (mh == NULL || offsetOut == NULL) {
-        return NO;
+static uintptr_t NLReturnAddress(void) {
+    void *ra = __builtin_return_address(0);
+#if defined(__arm64e__) && __has_include(<ptrauth.h>)
+    ra = ptrauth_strip(ra, ptrauth_key_return_address);
+#endif
+    return (uintptr_t)ra;
+}
+
+static BOOL NLCallerIsLockGlyphTime(void) {
+    const uintptr_t ra = NLReturnAddress();
+    return NLLockGlyphTextStart != 0 &&
+           ra >= NLLockGlyphTextStart &&
+           ra < NLLockGlyphTextEnd;
+}
+
+// Cheap, stable content fingerprint. It deliberately avoids hashing every byte
+// on every layout. Length plus samples from the beginning/middle/end makes a
+// collision between user-selected photos/stickers practically impossible while
+// touching at most 288 bytes even for multi-megabyte images.
+static uint64_t NLFingerprintBytes(NSData *data) {
+    const NSUInteger len = data.length;
+    const uint8_t *bytes = (const uint8_t *)data.bytes;
+    uint64_t h = 1469598103934665603ULL; // FNV-1a offset basis
+
+    #define NL_FNV_BYTE(v) do { h ^= (uint64_t)(v); h *= 1099511628211ULL; } while (0)
+
+    for (unsigned shift = 0; shift < sizeof(NSUInteger) * 8; shift += 8) {
+        NL_FNV_BYTE((len >> shift) & 0xff);
     }
+
+    if (bytes != NULL && len > 0) {
+        const NSUInteger window = MIN((NSUInteger)96, len);
+        for (NSUInteger i = 0; i < window; i++) NL_FNV_BYTE(bytes[i]);
+
+        if (len > window) {
+            NSUInteger mid = len / 2;
+            NSUInteger start = (mid > window / 2) ? mid - window / 2 : 0;
+            if (start + window > len) start = len - window;
+            for (NSUInteger i = 0; i < window; i++) NL_FNV_BYTE(bytes[start + i]);
+        }
+
+        if (len > window * 2) {
+            NSUInteger start = len - window;
+            for (NSUInteger i = 0; i < window; i++) NL_FNV_BYTE(bytes[start + i]);
+        }
+    }
+
+    #undef NL_FNV_BYTE
+    return h;
+}
+
+static NSString *NLDataKey(NSData *data) {
+    uint64_t fp = NLFingerprintBytes(data);
+    return [NSString stringWithFormat:@"%llu-%016llx",
+            (unsigned long long)data.length,
+            (unsigned long long)fp];
+}
+
+static UIImage *NLCachedImageWithData(id cls, SEL cmd, NSData *data) {
+    if (NLOriginalImageWithData == NULL || data == nil || !NLCallerIsLockGlyphTime()) {
+        return NLOriginalImageWithData ? NLOriginalImageWithData(cls, cmd, data) : nil;
+    }
+
+    NLEnsureCaches();
+
+    // First try object identity: this is effectively free and covers the normal
+    // preferences path where the same NSData instance survives between layouts.
+    os_unfair_lock_lock(&NLImageCacheLock);
+    UIImage *image = [NLDataPointerImageCache objectForKey:data];
+    os_unfair_lock_unlock(&NLImageCacheLock);
+    if (image != nil) {
+        return image;
+    }
+
+    NSString *key = NLDataKey(data);
+
+    os_unfair_lock_lock(&NLImageCacheLock);
+    image = [NLDataFingerprintImageCache objectForKey:key];
+    os_unfair_lock_unlock(&NLImageCacheLock);
+    if (image != nil) {
+        os_unfair_lock_lock(&NLImageCacheLock);
+        [NLDataPointerImageCache setObject:image forKey:data];
+        os_unfair_lock_unlock(&NLImageCacheLock);
+        return image;
+    }
+
+    // First decode for this distinct content. Preserve UIImage's original API
+    // semantics; only the resulting immutable object is retained for reuse.
+    image = NLOriginalImageWithData(cls, cmd, data);
+    if (image == nil) {
+        return nil;
+    }
+
+    os_unfair_lock_lock(&NLImageCacheLock);
+    [NLDataPointerImageCache setObject:image forKey:data];
+    [NLDataFingerprintImageCache setObject:image forKey:key];
+    os_unfair_lock_unlock(&NLImageCacheLock);
+
+    return image;
+}
+
+static BOOL NLFindUUIDTextAndOffset(const struct mach_header *mh,
+                                    uintptr_t *offsetOut,
+                                    uintptr_t *textStartOut,
+                                    uintptr_t *textEndOut,
+                                    const char **archOut) {
+    if (mh == NULL || offsetOut == NULL) return NO;
 
     const uint8_t *uuid = NULL;
     uint32_t ncmds = 0;
     const uint8_t *cursor = NULL;
+    uint64_t textVMAddr = 0;
+    uint64_t textVMSize = 0;
 
     if (mh->magic == MH_MAGIC_64) {
         const struct mach_header_64 *h64 = (const struct mach_header_64 *)mh;
@@ -105,59 +235,79 @@ static BOOL NLFindUUIDAndOffset(const struct mach_header *mh,
 
     for (uint32_t i = 0; i < ncmds; i++) {
         const struct load_command *lc = (const struct load_command *)cursor;
-        if (lc->cmdsize < sizeof(struct load_command)) {
-            return NO;
-        }
+        if (lc->cmdsize < sizeof(struct load_command)) return NO;
 
         if (lc->cmd == LC_UUID && lc->cmdsize >= sizeof(struct uuid_command)) {
-            const struct uuid_command *uc = (const struct uuid_command *)lc;
-            uuid = uc->uuid;
-            break;
+            uuid = ((const struct uuid_command *)lc)->uuid;
+        } else if (lc->cmd == LC_SEGMENT_64 && lc->cmdsize >= sizeof(struct segment_command_64)) {
+            const struct segment_command_64 *seg = (const struct segment_command_64 *)lc;
+            if (strncmp(seg->segname, "__TEXT", sizeof(seg->segname)) == 0) {
+                textVMAddr = seg->vmaddr;
+                textVMSize = seg->vmsize;
+            }
         }
         cursor += lc->cmdsize;
     }
 
-    if (uuid == NULL) {
-        return NO;
-    }
+    if (uuid == NULL || textVMSize == 0) return NO;
 
     if (memcmp(uuid, kNextLock114Arm64UUID, sizeof(kNextLock114Arm64UUID)) == 0) {
         *offsetOut = kNextLock114Arm64TransparencyOffset;
         if (archOut) *archOut = "arm64";
-        return YES;
-    }
-
-    if (memcmp(uuid, kNextLock114Arm64eUUID, sizeof(kNextLock114Arm64eUUID)) == 0) {
+    } else if (memcmp(uuid, kNextLock114Arm64eUUID, sizeof(kNextLock114Arm64eUUID)) == 0) {
         *offsetOut = kNextLock114Arm64eTransparencyOffset;
         if (archOut) *archOut = "arm64e";
-        return YES;
+    } else {
+        return NO;
     }
 
-    return NO;
+    uintptr_t slide = (uintptr_t)mh - (uintptr_t)textVMAddr;
+    if (textStartOut) *textStartOut = slide + (uintptr_t)textVMAddr;
+    if (textEndOut) *textEndOut = slide + (uintptr_t)textVMAddr + (uintptr_t)textVMSize;
+    return YES;
 }
 
-static void NLInstallHook(const struct mach_header *mh,
-                          uintptr_t helperOffset,
-                          const char *matchedArch) {
+static void NLInstallHooks(const struct mach_header *mh,
+                           uintptr_t helperOffset,
+                           uintptr_t textStart,
+                           uintptr_t textEnd,
+                           const char *matchedArch) {
     os_unfair_lock_lock(&NLInstallLock);
-    if (NLHookInstalled) {
-        os_unfair_lock_unlock(&NLInstallLock);
-        return;
+
+    NLLockGlyphTextStart = textStart;
+    NLLockGlyphTextEnd = textEnd;
+
+    if (!NLTransparencyHookInstalled) {
+        void *target = (void *)((uintptr_t)mh + helperOffset);
+        MSHookFunction(target,
+                       (void *)&NLCachedHasRealTransparency,
+                       (void **)&NLOriginalHasRealTransparency);
+        if (NLOriginalHasRealTransparency != NULL) {
+            NLTransparencyHookInstalled = YES;
+        }
     }
 
-    // LockGlyphTime's __TEXT vmaddr is zero, so the loaded Mach header is the
-    // image base and the verified helper offset can be added directly.
-    void *target = (void *)((uintptr_t)mh + helperOffset);
-    MSHookFunction(target,
-                   (void *)&NLCachedHasRealTransparency,
-                   (void **)&NLOriginalHasRealTransparency);
+    if (!NLImageHookInstalled) {
+        Class meta = object_getClass([UIImage class]);
+        if (meta != Nil) {
+            MSHookMessageEx(meta,
+                            @selector(imageWithData:),
+                            (IMP)&NLCachedImageWithData,
+                            (IMP *)&NLOriginalImageWithData);
+            if (NLOriginalImageWithData != NULL) {
+                NLImageHookInstalled = YES;
+            }
+        }
+    }
 
-    if (NLOriginalHasRealTransparency != NULL) {
-        NLHookInstalled = YES;
-        NSLog(@"[NextLockPerfFix] exact transparency cache installed (%s, +0x%lx)",
+    if (NLTransparencyHookInstalled && NLImageHookInstalled) {
+        NSLog(@"[NextLockPerfFix] Test2 installed (%s, +0x%lx, text=%p-%p)",
               matchedArch ?: "unknown",
-              (unsigned long)helperOffset);
+              (unsigned long)helperOffset,
+              (void *)textStart,
+              (void *)textEnd);
     }
+
     os_unfair_lock_unlock(&NLInstallLock);
 }
 
@@ -165,25 +315,22 @@ static void NLImageAdded(const struct mach_header *mh, intptr_t vmaddrSlide) {
     (void)vmaddrSlide;
 
     uintptr_t helperOffset = 0;
+    uintptr_t textStart = 0;
+    uintptr_t textEnd = 0;
     const char *matchedArch = NULL;
-    if (!NLFindUUIDAndOffset(mh, &helperOffset, &matchedArch)) {
+    if (!NLFindUUIDTextAndOffset(mh, &helperOffset, &textStart, &textEnd, &matchedArch)) {
         return;
     }
 
-    // Do not patch code while executing inside dyld's add-image callback.
-    // The image remains loaded, so scheduling the actual Substrate hook onto
-    // SpringBoard's main queue is safe and removes loader-lock/reentrancy risk.
+    // Avoid patching while executing in dyld's add-image callback.
     dispatch_async(dispatch_get_main_queue(), ^{
-        NLInstallHook(mh, helperOffset, matchedArch);
+        NLInstallHooks(mh, helperOffset, textStart, textEnd, matchedArch);
     });
 }
 
 __attribute__((constructor))
 static void NLPerfFixInit(void) {
     @autoreleasepool {
-        // dyld immediately reports already-loaded images and also calls us if
-        // LockGlyphTime loads after this companion dylib, eliminating load-order
-        // dependence without touching any SpringBoard/UI methods.
         _dyld_register_func_for_add_image(NLImageAdded);
     }
 }
