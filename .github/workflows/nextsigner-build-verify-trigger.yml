@@ -54,14 +54,25 @@ jobs:
           mkdir -p "$RUNNER_TEMP/package/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
           cd "$RUNNER_TEMP/package"
-          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.3.0.tipa" Payload
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.3.0.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-1.3.0.ipa" "$RUNNER_TEMP/NextSigner-1.3.0.tipa"
           unzip -t "$RUNNER_TEMP/NextSigner-1.3.0.tipa" >/dev/null
-          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.3.0.tipa"
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.3.0.ipa" "$RUNNER_TEMP/NextSigner-1.3.0.tipa"
+
+      - name: Upload verified artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextSigner-1.3.0-TIPA
+          path: |
+            ${{ runner.temp }}/NextSigner-1.3.0.tipa
+            ${{ runner.temp }}/NextSigner-1.3.0.ipa
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Report success
         if: success()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_BUILD_OK'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_ARTIFACT_OK'
 
       - name: Report failure
         if: failure()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_BUILD_FAILED_DIRECT_MACOS'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_ARTIFACT_FAILED'
