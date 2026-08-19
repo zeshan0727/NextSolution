@@ -60,44 +60,95 @@ actor GitHubService {
     ) async throws -> DispatchResponse? {
         guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
 
-        let release = try await ensureStagingRelease()
-        let stamp = Int(Date().timeIntervalSince1970)
-        let ipaAsset = makeStagingAssetName(original: ipaURL.lastPathComponent, stamp: stamp, role: "app")
-
-        await progress(0.08)
-        try await uploadAsset(fileURL: ipaURL, name: ipaAsset, release: release)
-        await progress(0.55)
-
-        var iconAsset = ""
-        if let customIconURL {
-            iconAsset = makeStagingAssetName(original: customIconURL.lastPathComponent, stamp: stamp, role: "icon")
-            try await uploadAsset(fileURL: customIconURL, name: iconAsset, release: release)
-        }
-        await progress(0.65)
-
-        var tweakAssets: [String] = []
-        for (index, url) in tweakURLs.enumerated() {
-            let assetName = makeStagingAssetName(original: url.lastPathComponent, stamp: stamp, role: "tweak\(index + 1)")
-            try await uploadAsset(fileURL: url, name: assetName, release: release)
-            tweakAssets.append(assetName)
-            let fraction = Double(index + 1) / Double(max(tweakURLs.count, 1))
-            await progress(0.65 + (0.20 * fraction))
+        let requestID = UUID().uuidString.lowercased()
+        await MainActor.run {
+            PublishLogCenter.shared.begin(appName: appName, requestID: requestID)
         }
 
-        let tweakJSONData = try JSONSerialization.data(withJSONObject: tweakAssets)
-        let tweakJSON = String(data: tweakJSONData, encoding: .utf8) ?? "[]"
-        let dispatch = try await dispatchSigningWorkflow(
-            assetName: ipaAsset,
-            appName: appName,
-            bundleID: bundleID,
-            customIconAsset: iconAsset,
-            tweakAssetsJSON: tweakJSON,
-            duplicateSigning: duplicateSigning,
-            injectExtensions: injectExtensions,
-            weakInjection: weakInjection
-        )
-        await progress(1.0)
-        return dispatch
+        do {
+            await MainActor.run {
+                PublishLogCenter.shared.append(stage: "GitHub", message: "Opening private signing inbox…")
+            }
+            let release = try await ensureStagingRelease()
+            let stamp = Int(Date().timeIntervalSince1970)
+            let ipaAsset = makeStagingAssetName(original: ipaURL.lastPathComponent, stamp: stamp, role: "app")
+
+            await progress(0.08)
+            await MainActor.run {
+                PublishLogCenter.shared.append(stage: "Upload", message: "Uploading IPA/TIPA to the private inbox.")
+            }
+            try await uploadAsset(fileURL: ipaURL, name: ipaAsset, release: release)
+            await progress(0.55)
+            await MainActor.run {
+                PublishLogCenter.shared.append(stage: "Upload", message: "Main app uploaded successfully.", kind: .success)
+            }
+
+            var iconAsset = ""
+            if let customIconURL {
+                await MainActor.run {
+                    PublishLogCenter.shared.append(stage: "Icon", message: "Uploading selected custom icon.")
+                }
+                iconAsset = makeStagingAssetName(original: customIconURL.lastPathComponent, stamp: stamp, role: "icon")
+                try await uploadAsset(fileURL: customIconURL, name: iconAsset, release: release)
+                await MainActor.run {
+                    PublishLogCenter.shared.append(stage: "Icon", message: "Custom icon uploaded.", kind: .success)
+                }
+            }
+            await progress(0.65)
+
+            var tweakAssets: [String] = []
+            for (index, url) in tweakURLs.enumerated() {
+                await MainActor.run {
+                    PublishLogCenter.shared.append(stage: "Tweaks", message: "Uploading \(url.lastPathComponent).")
+                }
+                let assetName = makeStagingAssetName(original: url.lastPathComponent, stamp: stamp, role: "tweak\(index + 1)")
+                try await uploadAsset(fileURL: url, name: assetName, release: release)
+                tweakAssets.append(assetName)
+                let fraction = Double(index + 1) / Double(max(tweakURLs.count, 1))
+                await progress(0.65 + (0.20 * fraction))
+            }
+            if !tweakAssets.isEmpty {
+                await MainActor.run {
+                    PublishLogCenter.shared.append(stage: "Tweaks", message: "All tweak attachments uploaded.", kind: .success)
+                }
+            }
+
+            let tweakJSONData = try JSONSerialization.data(withJSONObject: tweakAssets)
+            let tweakJSON = String(data: tweakJSONData, encoding: .utf8) ?? "[]"
+            await MainActor.run {
+                PublishLogCenter.shared.append(stage: "Queue", message: "Sending publish request to GitHub Actions.")
+            }
+            let dispatch = try await dispatchSigningWorkflow(
+                requestID: requestID,
+                assetName: ipaAsset,
+                appName: appName,
+                bundleID: bundleID,
+                customIconAsset: iconAsset,
+                tweakAssetsJSON: tweakJSON,
+                duplicateSigning: duplicateSigning,
+                injectExtensions: injectExtensions,
+                weakInjection: weakInjection
+            )
+            await progress(0.86)
+            await MainActor.run {
+                PublishLogCenter.shared.append(stage: "Queue", message: "GitHub accepted the request. Waiting for backend signing…", kind: .success)
+            }
+
+            try await waitForPublishStatus(
+                requestID: requestID,
+                releaseID: release.id,
+                progress: progress
+            )
+            await progress(1.0)
+            return dispatch
+        } catch {
+            await MainActor.run {
+                if PublishLogCenter.shared.isRunning {
+                    PublishLogCenter.shared.fail(error.localizedDescription)
+                }
+            }
+            throw error
+        }
     }
 
     /// Library management uses repository_dispatch instead of the Actions workflow
@@ -173,10 +224,10 @@ actor GitHubService {
         }
     }
 
-    /// Signing also uses repository_dispatch. A tiny bridge workflow receives this
-    /// event and starts the existing signing workflow using GitHub's own GITHUB_TOKEN.
-    /// This avoids the fine-grained PAT 403 from /actions/workflows/.../dispatches.
+    /// Signing uses repository_dispatch so the fine-grained PAT never needs to call
+    /// the Actions workflow-dispatch endpoint directly.
     private func dispatchSigningWorkflow(
+        requestID: String,
         assetName: String,
         appName: String,
         bundleID: String,
@@ -190,6 +241,7 @@ actor GitHubService {
         let body: [String: Any] = [
             "event_type": "nextsigner_sign_publish",
             "client_payload": [
+                "request_id": requestID,
                 "staging_asset": assetName,
                 "requested_name": appName,
                 "requested_bundle_id": bundleID,
@@ -204,6 +256,90 @@ actor GitHubService {
         let (data, response) = try await session.data(for: request(url: url, method: "POST", body: encoded))
         try validate(response: response, data: data, accepted: [204])
         return nil
+    }
+
+    private func waitForPublishStatus(
+        requestID: String,
+        releaseID: Int,
+        progress: @Sendable (Double) async -> Void
+    ) async throws {
+        let statusName = "status-\(requestID).json"
+        let deadline = Date().addingTimeInterval(35 * 60)
+        let started = Date()
+        var waitingMessageShown = false
+
+        while Date() < deadline {
+            if let status = try await fetchPublishStatus(releaseID: releaseID, assetName: statusName) {
+                await MainActor.run {
+                    PublishLogCenter.shared.apply(status)
+                }
+                await progress(progressValue(for: status.stage, state: status.state))
+
+                switch status.state.lowercased() {
+                case "success":
+                    return
+                case "failed", "failure":
+                    let detail = status.runURL.map { "\(status.message) Run: \($0)" } ?? status.message
+                    throw NSError(
+                        domain: "NextSigner.Publish",
+                        code: 3001,
+                        userInfo: [NSLocalizedDescriptionKey: "\(status.stage): \(detail)"]
+                    )
+                default:
+                    break
+                }
+            } else if !waitingMessageShown && Date().timeIntervalSince(started) > 15 {
+                waitingMessageShown = true
+                await MainActor.run {
+                    PublishLogCenter.shared.append(stage: "Queue", message: "GitHub runner is starting. This can take a little while.")
+                }
+            }
+
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+        }
+
+        throw NSError(
+            domain: "NextSigner.Publish",
+            code: 3002,
+            userInfo: [NSLocalizedDescriptionKey: "Timed out waiting for the GitHub signing workflow after 35 minutes."]
+        )
+    }
+
+    private func fetchPublishStatus(releaseID: Int, assetName: String) async throws -> PublishStatusPayload? {
+        let assetsURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/\(releaseID)/assets?per_page=100")
+        let (assetsData, assetsResponse) = try await session.data(for: request(url: assetsURL))
+        try validate(response: assetsResponse, data: assetsData)
+        let assets = try JSONDecoder().decode([Asset].self, from: assetsData)
+        guard let asset = assets.first(where: { $0.name == assetName }) else { return nil }
+
+        let assetURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/assets/\(asset.id)")
+        var statusRequest = request(url: assetURL)
+        statusRequest.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
+        statusRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        let (data, response) = try await session.data(for: statusRequest)
+        try validate(response: response, data: data)
+        return try JSONDecoder().decode(PublishStatusPayload.self, from: data)
+    }
+
+    private func progressValue(for stage: String, state: String) -> Double {
+        if ["success", "failed", "failure"].contains(state.lowercased()) {
+            return state.lowercased() == "success" ? 1.0 : 0.99
+        }
+        switch stage.lowercased() {
+        case "received", "bridge": return 0.87
+        case "validate": return 0.89
+        case "download": return 0.90
+        case "zsign": return 0.92
+        case "customize": return 0.93
+        case "sign": return 0.95
+        case "metadata": return 0.96
+        case "r2 upload": return 0.97
+        case "r2 verify": return 0.98
+        case "icon": return 0.985
+        case "manifest": return 0.99
+        case "site": return 0.995
+        default: return 0.90
+        }
     }
 
     private func request(url: URL, method: String = "GET", body: Data? = nil) -> URLRequest {
