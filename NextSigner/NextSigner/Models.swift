@@ -4,6 +4,11 @@ struct SignRequest: Equatable {
     var ipaURL: URL?
     var appName: String = ""
     var bundleID: String = ""
+    var customIconURL: URL?
+    var tweakURLs: [URL] = []
+    var duplicateSigning = false
+    var injectTweaksIntoExtensions = false
+    var weakTweakInjection = false
 
     var isReady: Bool {
         ipaURL != nil && !appName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && isValidBundleID
@@ -47,6 +52,38 @@ struct SigningJob: Identifiable, Equatable {
     }
 }
 
+struct PublishedCatalog: Decodable {
+    let apps: [PublishedApp]
+}
+
+struct PublishedApp: Identifiable, Decodable, Equatable {
+    let id: String
+    let name: String
+    let version: String
+    let build: String
+    let platform: String
+    let minimumOS: String
+    let bundleId: String
+    let icon: String?
+    let manifest: String?
+    let available: Bool?
+    let status: String?
+    let downloadURL: String?
+    let sha256: String?
+    let sizeBytes: Int64?
+    let storage: String?
+
+    var isR2Backed: Bool {
+        guard let downloadURL else { return false }
+        return downloadURL.hasPrefix("https://files.nextsolution.cc/apps/ipa/")
+    }
+}
+
+enum LibraryAction: String {
+    case cleanOldVersions = "cleanup"
+    case deleteApp = "delete"
+}
+
 enum NextSignerError: LocalizedError {
     case missingToken
     case invalidConfiguration
@@ -54,6 +91,8 @@ enum NextSignerError: LocalizedError {
     case http(Int, String)
     case uploadFailed
     case malformedURL
+    case invalidAttachment(String)
+    case libraryUnavailable
 
     var errorDescription: String? {
         switch self {
@@ -66,9 +105,13 @@ enum NextSignerError: LocalizedError {
         case let .http(code, message):
             return "GitHub error \(code): \(message)"
         case .uploadFailed:
-            return "The IPA could not be uploaded."
+            return "A signing file could not be uploaded."
         case .malformedURL:
-            return "A GitHub API URL could not be created."
+            return "A required URL could not be created."
+        case let .invalidAttachment(message):
+            return message
+        case .libraryUnavailable:
+            return "The published app library could not be loaded."
         }
     }
 }
