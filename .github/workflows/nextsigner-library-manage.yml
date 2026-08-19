@@ -14,6 +14,8 @@ on:
         options:
           - cleanup
           - delete
+  repository_dispatch:
+    types: [nextsigner_library_manage]
 
 permissions:
   contents: write
@@ -27,8 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      APP_ID: ${{ inputs.app_id }}
-      MODE: ${{ inputs.mode }}
+      APP_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.app_id || inputs.app_id }}
+      MODE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.mode || inputs.mode }}
       R2_BUCKET: next-signer-apps
       R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
       R2_PUBLIC_BASE: https://files.nextsolution.cc
@@ -47,6 +49,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -n "$APP_ID" || { echo 'app_id is required'; exit 1; }
           test "$MODE" = cleanup -o "$MODE" = delete || { echo "Unsupported mode: $MODE"; exit 1; }
           python3 - <<'PY'
           import json, os
@@ -93,7 +96,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Clean old R2 versions
-        if: inputs.mode == 'cleanup' && env.APP_R2_PREFIX != ''
+        if: env.MODE == 'cleanup' && env.APP_R2_PREFIX != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -116,11 +119,11 @@ jobs:
           done
 
       - name: Report no managed R2 history
-        if: inputs.mode == 'cleanup' && env.APP_R2_PREFIX == ''
+        if: env.MODE == 'cleanup' && env.APP_R2_PREFIX == ''
         run: echo 'This catalog entry has no managed Cloudflare R2 IPA prefix; there are no R2 versions to clean.'
 
       - name: Delete all R2 versions for app
-        if: inputs.mode == 'delete' && env.APP_R2_PREFIX != ''
+        if: env.MODE == 'delete' && env.APP_R2_PREFIX != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -131,7 +134,7 @@ jobs:
             --only-show-errors
 
       - name: Remove app from site catalog
-        if: inputs.mode == 'delete'
+        if: env.MODE == 'delete'
         shell: bash
         run: |
           set -euo pipefail
