@@ -1,0 +1,28 @@
+name: Temporary Next Signer Inbox Count
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  count:
+    if: github.event.issue.title == '[NEXTSIGNER-INBOX-COUNT]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Count inbox assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_ID="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[] | select(.tag_name=="nextsigner-inbox") | .id' | head -n1)"
+          test -n "$RELEASE_ID"
+          ALL="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?per_page=100" --slurp)"
+          COUNT="$(printf '%s' "$ALL" | jq '[.[][]] | length')"
+          STATUS_COUNT="$(printf '%s' "$ALL" | jq '[.[][] | select(.name|startswith("status-"))] | length')"
+          FIRST100_STATUS="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?per_page=100" --jq '[.[] | select(.name|startswith("status-"))] | length')"
+          gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "INBOX_ASSETS=$COUNT STATUS_ASSETS=$STATUS_COUNT STATUS_IN_FIRST_100=$FIRST100_STATUS"
