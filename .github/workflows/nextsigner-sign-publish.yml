@@ -32,6 +32,13 @@ jobs:
       INBOX_TAG: nextsigner-inbox
       PUBLISH_TAG: private-apps
       P12_PASSWORD: ${{ secrets.NEXTSIGNER_P12_PASSWORD }}
+      R2_BUCKET: next-signer-apps
+      R2_PUBLIC_BASE: https://files.nextsolution.cc
+      R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_EC2_METADATA_DISABLED: "true"
     steps:
       - name: Check out website
         uses: actions/checkout@v4
@@ -111,7 +118,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, os, plistlib, re, zipfile
+          import os, plistlib, re, zipfile
           ipa = os.path.join(os.environ['RUNNER_TEMP'], 'signed.ipa')
           with zipfile.ZipFile(ipa) as z:
               infos = [n for n in z.namelist() if re.fullmatch(r'Payload/[^/]+\.app/Info\.plist', n)]
@@ -124,6 +131,9 @@ jobs:
           build = str(info.get('CFBundleVersion') or '1')
           minimum = str(info.get('MinimumOSVersion') or 'Unknown')
           slug = re.sub(r'[^a-z0-9]+', '-', bundle_id.lower()).strip('-')[-70:] or 'signed-app'
+          version_slug = re.sub(r'[^A-Za-z0-9._-]+', '-', version).strip('-') or '1.0'
+          build_slug = re.sub(r'[^A-Za-z0-9._-]+', '-', build).strip('-') or '1'
+          signed_filename = f'{slug}-{version_slug}-{build_slug}.ipa'
           values = {
               'APP_NAME': name,
               'APP_BUNDLE_ID': bundle_id,
@@ -131,25 +141,62 @@ jobs:
               'APP_BUILD': build,
               'APP_MINIMUM_OS': minimum,
               'APP_SLUG': slug,
-              'SIGNED_FILENAME': f'{slug}.ipa',
+              'APP_VERSION_SLUG': version_slug,
+              'SIGNED_FILENAME': signed_filename,
+              'R2_OBJECT_KEY': f'apps/ipa/{slug}/{version_slug}/{signed_filename}',
           }
           with open(os.environ['GITHUB_ENV'], 'a') as f:
               for k, v in values.items():
                   print(f'{k}={v}', file=f)
           PY
 
-      - name: Publish signed IPA release asset
+      - name: Record signed IPA integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "SIGNED_SHA256=$(sha256sum "$RUNNER_TEMP/signed.ipa" | awk '{print $1}')" >> "$GITHUB_ENV"
+          echo "SIGNED_SIZE=$(stat -c '%s' "$RUNNER_TEMP/signed.ipa")" >> "$GITHUB_ENV"
+
+      - name: Publish signed IPA
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if ! gh release view "$PUBLISH_TAG" >/dev/null 2>&1; then
-            gh release create "$PUBLISH_TAG" --title "Next Solution Private Apps" --notes "Signed builds published by Next Signer." --latest=false
-          fi
           cp "$RUNNER_TEMP/signed.ipa" "$RUNNER_TEMP/$SIGNED_FILENAME"
-          gh release upload "$PUBLISH_TAG" "$RUNNER_TEMP/$SIGNED_FILENAME" --clobber
-          echo "SIGNED_URL=https://github.com/$GITHUB_REPOSITORY/releases/download/$PUBLISH_TAG/$SIGNED_FILENAME" >> "$GITHUB_ENV"
+
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+            echo "Cloudflare R2 credentials found; publishing to R2."
+            python3 -m pip install --user --quiet awscli
+            export PATH="$HOME/.local/bin:$PATH"
+            aws s3 cp \
+              "$RUNNER_TEMP/$SIGNED_FILENAME" \
+              "s3://$R2_BUCKET/$R2_OBJECT_KEY" \
+              --endpoint-url "https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com" \
+              --content-type "application/octet-stream" \
+              --cache-control "public, max-age=31536000, immutable" \
+              --only-show-errors
+            echo "SIGNED_URL=$R2_PUBLIC_BASE/$R2_OBJECT_KEY" >> "$GITHUB_ENV"
+            echo "SIGNED_BACKEND=Cloudflare R2" >> "$GITHUB_ENV"
+          else
+            echo "R2 secrets are not configured; using GitHub Releases fallback."
+            if ! gh release view "$PUBLISH_TAG" >/dev/null 2>&1; then
+              gh release create "$PUBLISH_TAG" --title "Next Solution Private Apps" --notes "Signed builds published by Next Signer." --latest=false
+            fi
+            gh release upload "$PUBLISH_TAG" "$RUNNER_TEMP/$SIGNED_FILENAME" --clobber
+            echo "SIGNED_URL=https://github.com/$GITHUB_REPOSITORY/releases/download/$PUBLISH_TAG/$SIGNED_FILENAME" >> "$GITHUB_ENV"
+            echo "SIGNED_BACKEND=GitHub Releases" >> "$GITHUB_ENV"
+          fi
+
+      - name: Verify published IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SIGNED_URL:-}" || { echo "SIGNED_URL was not produced"; exit 1; }
+          curl --fail --silent --show-error --location --head \
+            --retry 8 --retry-delay 3 --retry-all-errors \
+            "$SIGNED_URL" >/dev/null
+          echo "Verified $SIGNED_URL"
 
       - name: Publish icon, manifest and catalog entry
         shell: bash
@@ -182,7 +229,11 @@ jobs:
               'icon': os.environ['ICON_URL'],
               'manifest': f"/install/{os.environ['APP_SLUG']}.plist",
               'available': True,
-              'status': 'Ready to install'
+              'status': 'Ready to install',
+              'downloadURL': os.environ['SIGNED_URL'],
+              'sha256': os.environ['SIGNED_SHA256'],
+              'sizeBytes': int(os.environ['SIGNED_SIZE']),
+              'storage': os.environ.get('SIGNED_BACKEND', 'Unknown')
           }
           catalog_path = root / 'apps.json'
           if catalog_path.exists():
@@ -196,7 +247,8 @@ jobs:
           catalog['updated'] = date.today().isoformat()
           catalog_path.write_text(json.dumps(catalog, indent=2) + '\n')
 
-          icon_absolute = 'https://nextsolution.cc' + os.environ['ICON_URL']
+          icon_value = os.environ['ICON_URL']
+          icon_absolute = icon_value if icon_value.startswith(('https://', 'http://')) else 'https://nextsolution.cc' + icon_value
           manifest = {
               'items': [{
                   'assets': [
@@ -250,6 +302,8 @@ jobs:
             echo "Bundle ID: ${APP_BUNDLE_ID:-${{ inputs.requested_bundle_id }}}"
             if [ "${{ job.status }}" = "success" ]; then
               echo "Status: Signed and published"
+              echo "Storage: ${SIGNED_BACKEND:-Unknown}"
+              echo "Download: ${SIGNED_URL:-Unavailable}"
               echo "Installer: https://nextsolution.cc/install/"
             else
               echo "Status: Failed — inspect the signing log above"
