@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T11:29:33Z",
+  "updatedAt": "2026-08-19T12:21:59Z",
   "files": [
+    {
+      "id": "nextlock-1.1.5-cpufix-test3-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 3 RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test3_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.5-test3",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test3/NextLock_1.1.5_CPUFix_Test3_RootHide.deb",
+      "sha256": "23d6ad4eab9725a3723450287226d3b664bfa769442bc995bb38da7381874da8",
+      "notes": "Feature-preserving Test 3 for the verified NextLock 1.1.4 SpringBoard CPU issue. Suppresses only the redundant deferred second full-render pass while leaving the synchronous renderer, clock/date styling, timers, preference reloads and all four photo/sticker frames intact; also retains exact transparency-result caching."
+    },
     {
       "id": "nextsigner-1.1.2",
       "name": "Next Signer 1.1.2",
@@ -24,17 +35,6 @@
       "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.8/NextPost-1.0.8-UnityAds-Mediation.tipa",
       "sha256": "39c6ac9f3c946668c4b2d4a0886acc48bd356cd44b8cbb89fbbd1fcdd7ad0ffa",
       "notes": "Adds the official Unity Ads SDK and LevelPlay Unity Ads adapter to Next Post. Includes Unity Ads SKAdNetwork support and keeps the existing ironSource LevelPlay banner/interstitial integration. Configure the Unity Ads bidder/instance for Next Post in LevelPlay using the Unity Ads Game ID and Banner/Interstitial placement IDs."
-    },
-    {
-      "id": "nextlock-1.1.5-cpufix-test1-roothide",
-      "name": "NextLock 1.1.5 CPU Fix Test 1 RootHide",
-      "fileName": "NextLock_1.1.5_CPUFix_Test1_RootHide.deb",
-      "type": "deb",
-      "platform": "RootHide",
-      "version": "1.1.5-test1",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test1/NextLock_1.1.5_CPUFix_Test1_RootHide.deb",
-      "sha256": "1a9422f8b02d568c4f5f61f9e81f2cea7c97401a0fda40d1cc8cc6f535f3563e",
-      "notes": "NextLock 1.1.4 feature-preserving CPU-fix test. Keeps the original LockGlyphTime 1.1.4 runtime and all clock/date, four-frame photo/sticker, sizing, positioning, fonts, colors and shadow features, while adding an exact-result transparency cache to stop repeated full-image CoreGraphics/vImage alpha scans during layout."
     },
     {
       "id": "nextpost-1.0.7-levelplay-guide-complete",
