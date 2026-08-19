@@ -23,8 +23,8 @@ jobs:
     if: github.event_name != 'issues' || github.event.issue.title == '[NEXTSIGNER-R2-PUBLISH-ONCE]'
     runs-on: ubuntu-latest
     env:
-      ARTIFACT_ID: '9327289693'
-      VERSION: '1.1.2'
+      VERSION: '1.2.1'
+      ARTIFACT_NAME: 'NextSigner-1.2.1-TIPA'
       R2_BUCKET: next-signer-apps
       R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
       R2_PUBLIC_BASE: https://files.nextsolution.cc
@@ -43,22 +43,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo 'LAST_STAGE=validate-r2-secrets' >> "$GITHUB_ENV"
           test -n "$AWS_ACCESS_KEY_ID" || { echo 'CLOUDFLARE_R2_ACCESS_KEY_ID is missing'; exit 1; }
           test -n "$AWS_SECRET_ACCESS_KEY" || { echo 'CLOUDFLARE_R2_SECRET_ACCESS_KEY is missing'; exit 1; }
 
-      - name: Download built Next Signer artifact
+      - name: Find latest Next Signer artifact
         shell: bash
         run: |
           set -euo pipefail
+          echo 'LAST_STAGE=find-actions-artifact' >> "$GITHUB_ENV"
+          ARTIFACT_ID="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${ARTIFACT_NAME}&per_page=100" --jq '.artifacts | map(select(.expired == false)) | sort_by(.created_at) | reverse | .[0].id // empty')"
+          test -n "$ARTIFACT_ID" || { echo "No non-expired artifact named $ARTIFACT_NAME was found"; exit 1; }
+          echo "ARTIFACT_ID=$ARTIFACT_ID" >> "$GITHUB_ENV"
+          echo "Using artifact ID $ARTIFACT_ID"
+
+      - name: Download latest Next Signer artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'LAST_STAGE=download-actions-artifact' >> "$GITHUB_ENV"
           gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > "$RUNNER_TEMP/nextsigner-artifact.zip"
           mkdir -p "$RUNNER_TEMP/nextsigner-artifact"
           unzip -q "$RUNNER_TEMP/nextsigner-artifact.zip" -d "$RUNNER_TEMP/nextsigner-artifact"
-          test -s "$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.2.tipa"
+          SRC="$(find "$RUNNER_TEMP/nextsigner-artifact" -type f -name "NextSigner-${VERSION}.tipa" | head -n1)"
+          test -n "$SRC" && test -s "$SRC" || { echo "NextSigner-${VERSION}.tipa not found in artifact"; exit 1; }
+          cp "$SRC" "$RUNNER_TEMP/NextSigner-${VERSION}.tipa"
 
       - name: Install AWS CLI
         shell: bash
         run: |
           set -euo pipefail
+          echo 'LAST_STAGE=install-aws-cli' >> "$GITHUB_ENV"
           python3 -m pip install --user --quiet awscli
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -66,14 +81,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo 'LAST_STAGE=upload-r2' >> "$GITHUB_ENV"
           export PATH="$HOME/.local/bin:$PATH"
-          SRC="$RUNNER_TEMP/nextsigner-artifact/NextSigner-1.1.2.tipa"
-          OBJECT_KEY='apps/tipa/NextSigner/1.1.2/NextSigner-1.1.2.tipa'
+          SRC="$RUNNER_TEMP/NextSigner-${VERSION}.tipa"
+          OBJECT_KEY="apps/tipa/NextSigner/${VERSION}/NextSigner-${VERSION}.tipa"
           PUBLIC_URL="$R2_PUBLIC_BASE/$OBJECT_KEY"
-
-          test -s "$SRC"
           SHA256=$(sha256sum "$SRC" | awk '{print $1}')
-          test "$SHA256" = '829e6f349efbd59e19782efc8681ce3dd1d92314d3c3e3ad812ba0ab0aefa118'
+          SIZE_BYTES=$(stat -c '%s' "$SRC")
 
           aws s3 cp "$SRC" "s3://$R2_BUCKET/$OBJECT_KEY" \
             --endpoint-url "https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com" \
@@ -81,16 +95,19 @@ jobs:
             --cache-control 'public, max-age=31536000, immutable' \
             --only-show-errors
 
+          echo 'LAST_STAGE=verify-r2-public-url' >> "$GITHUB_ENV"
           curl --fail --silent --show-error --location --head \
             --retry 8 --retry-delay 3 --retry-all-errors "$PUBLIC_URL" >/dev/null
 
           echo "NEXTSIGNER_R2_URL=$PUBLIC_URL" >> "$GITHUB_ENV"
           echo "NEXTSIGNER_SHA256=$SHA256" >> "$GITHUB_ENV"
+          echo "NEXTSIGNER_SIZE_BYTES=$SIZE_BYTES" >> "$GITHUB_ENV"
 
       - name: Update Transfer manifest for R2
         shell: bash
         run: |
           set -euo pipefail
+          echo 'LAST_STAGE=update-transfer-index' >> "$GITHUB_ENV"
           INDEX='transfer/index.json'
           test -s "$INDEX"
           export INDEX
@@ -103,19 +120,21 @@ jobs:
           index_path = Path(os.environ['INDEX'])
           data = json.loads(index_path.read_text())
           files = data.get('files', [])
-          entry_id = 'nextsigner-1.1.2'
-          files = [item for item in files if item.get('id') not in {entry_id, 'nextsigner-1.1.1', 'nextsigner-1.1'}]
+          entry_id = 'nextsigner-1.2.1'
+          old_ids = {'nextsigner-1.1.2', 'nextsigner-1.1.1', 'nextsigner-1.1'}
+          files = [item for item in files if item.get('id') != entry_id and item.get('id') not in old_ids]
           entry = {
               'id': entry_id,
-              'name': 'Next Signer 1.1.2',
-              'fileName': 'NextSigner-1.1.2.tipa',
+              'name': 'Next Signer 1.2.1',
+              'fileName': 'NextSigner-1.2.1.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
-              'version': '1.1.2',
+              'version': '1.2.1',
               'url': os.environ['NEXTSIGNER_R2_URL'],
               'sha256': os.environ['NEXTSIGNER_SHA256'],
+              'sizeBytes': int(os.environ['NEXTSIGNER_SIZE_BYTES']),
               'storage': 'Cloudflare R2',
-              'notes': 'Fixes false signing failure on apps such as Ksign. Uses Zsign signing success plus signed-bundle validation instead of the unreliable Zsign Mach-O checkSigned result. Keeps local P12 + mobileprovision signing, export, and publish-after-sign flow.'
+              'notes': 'Next Signer 1.2.1 build published through Cloudflare R2. Large app binaries are kept out of the GitHub repository while the Transfer catalog remains on nextsolution.cc.'
           }
           data['files'] = [entry] + files
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -124,23 +143,26 @@ jobs:
 
           python3 -m json.tool "$INDEX" >/dev/null
 
-      - name: Remove legacy repository binary
+      - name: Remove legacy repository binaries
         shell: bash
         run: |
           set -euo pipefail
+          echo 'LAST_STAGE=remove-legacy-repo-binaries' >> "$GITHUB_ENV"
           git rm -f --ignore-unmatch transfer/files/NextSigner/1.1.2/NextSigner-1.1.2.tipa
+          git rm -f --ignore-unmatch transfer/files/NextSigner/1.2.1/NextSigner-1.2.1.tipa
 
       - name: Commit Transfer publication
         shell: bash
         run: |
           set -euo pipefail
+          echo 'LAST_STAGE=commit-transfer-index' >> "$GITHUB_ENV"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add transfer/index.json
           if git diff --cached --quiet; then
             echo 'No Transfer changes to commit'
           else
-            git commit -m 'Move Next Signer 1.1.2 Transfer binary to Cloudflare R2'
+            git commit -m 'Publish Next Signer 1.2.1 Transfer binary through Cloudflare R2'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
@@ -153,4 +175,4 @@ jobs:
       - name: Report one-time trigger failure
         if: failure() && github.event_name == 'issues'
         shell: bash
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_R2_PUBLISH_FAILED'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_R2_PUBLISH_FAILED\n\nStage: ${LAST_STAGE:-unknown}"
