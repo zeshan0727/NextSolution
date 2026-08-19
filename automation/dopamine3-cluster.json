@@ -34,14 +34,18 @@
       "type": "evergreen-hub",
       "automation_ready": true,
       "target_path": "dopamine-3-jailbreak.html",
-      "intent": "Dopamine 3 supported iOS versions and devices",
+      "intent": "Complete Dopamine 3 compatibility hub covering arm64e iOS 15.0–17.3.1, A12/A13 iOS 15.0–18.7.1 plus the separate iOS 26.0–26.0.1 range, and arm64 iOS 15.0–18.7.1",
       "sources": [
         "https://github.com/opa334/Dopamine/blob/3.x/README.md",
         "https://ellekit.space/dopamine/"
       ],
       "facts": [
-        "This page should be the central compatibility hub and should link readers to narrower guides rather than duplicating every installation tutorial.",
-        "For current version ranges, use the 3.x README facts in common_facts rather than the older compatibility text still visible on the official website."
+        "This page is the central compatibility hub and must distinguish the three official compatibility lines instead of collapsing them into one range.",
+        "The complete compatibility summary for the hub is: arm64e is documented from iOS 15.0 through iOS 17.3.1; A12 and A13 are documented from iOS 15.0 through iOS 18.7.1 plus a separate iOS 26.0 through iOS 26.0.1 range; arm64 is documented from iOS 15.0 through iOS 18.7.1.",
+        "Whenever the hub summarizes A12/A13 support, it must mention the additional separate iOS 26.0 through iOS 26.0.1 range and must not describe iOS 18.7.1 as the final A12/A13 endpoint.",
+        "The A12/A13 ranges are separate: the source does not state that versions after iOS 18.7.1 and before iOS 26.0 are supported. Do not turn the two documented ranges into one continuous iOS 15.0 through iOS 26.0.1 claim.",
+        "For current version ranges, use the 3.x README facts in common_facts rather than the older compatibility text still visible on the official website.",
+        "Link readers to narrower guides instead of duplicating every installation tutorial on the hub page."
       ]
     },
     {
