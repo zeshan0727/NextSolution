@@ -42,11 +42,10 @@ Required signing Actions secrets on `zeshan0727/NextSolution`:
 
 Required R2 Actions secrets for direct Cloudflare publishing:
 
-- `CLOUDFLARE_R2_ACCOUNT_ID`
 - `CLOUDFLARE_R2_ACCESS_KEY_ID`
 - `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
 
-The R2 credentials should be scoped only to the `next-signer-apps` bucket with object read/write permission. Do not commit or paste those credentials into app source, website JavaScript, catalog JSON, manifests, issues, or logs.
+The R2 Account ID and S3 endpoint are configured directly in the workflow for this Cloudflare account. The R2 credentials should be scoped only to the `next-signer-apps` bucket with object read/write permission. Do not commit or paste those credentials into app source, website JavaScript, catalog JSON, manifests, issues, or logs.
 
 Create the Apple signing base64 values locally. On macOS:
 
@@ -105,6 +104,10 @@ Keep manually uploaded test packages separated by type when practical, for examp
 - `apps/deb/`
 
 The R2 custom domain is public. Do not upload private certificates, provisioning profiles, API tokens, passwords, or other secrets to the public bucket.
+
+## Existing app migration
+
+The repository includes `.github/workflows/migrate-private-apps-to-r2.yml`. After the two R2 repository secrets are configured, run that workflow manually and enter `MIGRATE`. It copies existing GitHub-hosted IPA binaries into R2, verifies each public R2 URL, rewrites the OTA manifests and catalog entries, and intentionally leaves the original GitHub Release assets in place as rollback copies.
 
 ## Important compatibility note
 
