@@ -126,6 +126,9 @@ jobs:
         run: |
           git config user.name "nextsolution-publisher[bot]"
           git config user.email "nextsolution-publisher[bot]@users.noreply.github.com"
+          if [ -f automation/dopamine3-last-run.json ]; then
+            git rm -f -- automation/dopamine3-last-run.json
+          fi
           git add -- \
             "$TARGET_PATH" \
             index.html \
@@ -141,6 +144,7 @@ jobs:
           echo "- Topic: **$TOPIC_ID**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Page: https://nextsolution.cc/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
           echo "- Social post queued: **yes**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Stale failure diagnostic cleared: **yes**" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Persist publisher error diagnostic
         if: steps.api.outputs.enabled == 'true' && steps.cluster.outputs.reason == 'publisher-error'
