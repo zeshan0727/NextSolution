@@ -16,26 +16,50 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Validate workflow is dispatchable
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! output="$(gh workflow view build-nextsigner-tipa.yml --repo "$GITHUB_REPOSITORY" 2>&1)"; then
+            gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_WORKFLOW_VIEW_FAILED: $output"
+            exit 1
+          fi
+          echo "$output"
+
       - name: Dispatch build
-        run: gh workflow run build-nextsigner-tipa.yml --repo "$GITHUB_REPOSITORY" --ref main
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! output="$(gh workflow run build-nextsigner-tipa.yml --repo "$GITHUB_REPOSITORY" --ref main 2>&1)"; then
+            gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_DISPATCH_FAILED: $output"
+            exit 1
+          fi
+          echo "$output"
+
       - name: Wait for dispatched run to appear
+        shell: bash
         run: |
           set -euo pipefail
           RUN_ID=''
-          for attempt in $(seq 1 12); do
-            RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-nextsigner-tipa.yml --branch main --event workflow_dispatch --limit 1 --json databaseId,status --jq '.[0].databaseId // empty')"
+          for attempt in $(seq 1 18); do
+            RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-nextsigner-tipa.yml --branch main --event workflow_dispatch --limit 1 --json databaseId,createdAt --jq '.[0].databaseId // empty')"
             if [ -n "$RUN_ID" ]; then break; fi
             sleep 5
           done
-          test -n "$RUN_ID" || { echo 'Could not locate dispatched build run'; exit 1; }
+          if [ -z "$RUN_ID" ]; then
+            gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_DISPATCHED_BUT_RUN_NOT_FOUND'
+            exit 1
+          fi
           echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
           echo "Watching run $RUN_ID"
+
       - name: Watch build
         run: gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 10
+
       - name: Report success
         if: success()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body 'NEXTSIGNER_1_3_BUILD_OK'
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_BUILD_OK run=$RUN_ID"
+
       - name: Report failure
         if: failure()
-        run: |
-          gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_BUILD_FAILED run=$RUN_ID"
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_BUILD_FAILED run=${RUN_ID:-unknown}"
