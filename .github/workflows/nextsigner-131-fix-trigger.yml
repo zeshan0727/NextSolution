@@ -1,21 +1,24 @@
 name: Temporary Next Signer 1.3.1 Fix Verifier
 
 on:
-  issues:
-    types: [opened]
+  push:
+    branches: [main]
+    paths:
+      - 'nextsigner-131-trigger.txt'
 
 permissions:
-  actions: write
   contents: write
-  issues: write
 
 jobs:
-  fix-build-publish:
-    if: github.event.issue.title == '[NEXTSIGNER-1.3.1-FIX]'
+  build-publish:
     runs-on: macos-15
     timeout-minutes: 35
     env:
-      GH_TOKEN: ${{ github.token }}
+      R2_BUCKET: next-signer-apps
+      R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
+      R2_PUBLIC_BASE: https://files.nextsolution.cc
+      AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,289 +26,23 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Patch deletion flow and Photos icon picker
+      - name: Add Photos icon picker and bump 1.3.1
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
 
-          # GitHub service: wait for library workflow completion and read the catalog
-          # directly from GitHub so the app is not held up by Pages/CDN propagation.
-          path = Path('NextSigner/NextSigner/GitHubService.swift')
-          s = path.read_text()
-
-          marker = '''    struct DispatchResponse: Decodable {
-              let workflowRunID: Int?
-              let htmlURL: String?
-
-              enum CodingKeys: String, CodingKey {
-                  case workflowRunID = "workflow_run_id"
-                  case htmlURL = "html_url"
-              }
-          }
-'''
-          insert = marker + '''
-    private struct WorkflowRunsResponse: Decodable {
-        let workflowRuns: [WorkflowRun]
-        enum CodingKeys: String, CodingKey { case workflowRuns = "workflow_runs" }
-    }
-
-    private struct WorkflowRun: Decodable {
-        let id: Int
-        let status: String
-        let conclusion: String?
-        let htmlURL: String
-        let createdAt: String
-        enum CodingKeys: String, CodingKey {
-            case id, status, conclusion
-            case htmlURL = "html_url"
-            case createdAt = "created_at"
-        }
-    }
-
-    private struct RepositoryContentFile: Decodable {
-        let content: String
-        let encoding: String
-    }
-'''
-          if marker not in s:
-              raise SystemExit('GitHubService DispatchResponse marker not found')
-          s = s.replace(marker, insert, 1)
-
-          old = '''    func dispatchLibraryAction(appID: String, action: LibraryAction) async throws {
-        guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
-        let workflow = "nextsigner-library-manage.yml".addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "nextsigner-library-manage.yml"
-        let url = try apiURL("/repos/\\(configuration.owner)/\\(configuration.repository)/actions/workflows/\\(workflow)/dispatches")
-        let body: [String: Any] = [
-            "ref": configuration.branch,
-            "inputs": [
-                "app_id": appID,
-                "mode": action.rawValue
-            ]
-        ]
-        let encoded = try JSONSerialization.data(withJSONObject: body)
-        let (data, response) = try await session.data(for: request(url: url, method: "POST", body: encoded))
-        try validate(response: response, data: data, accepted: [200, 204])
-    }
-'''
-          new = '''    func dispatchLibraryAction(appID: String, action: LibraryAction) async throws -> String {
-        guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
-        let workflowName = "nextsigner-library-manage.yml"
-        let workflow = workflowName.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? workflowName
-        let url = try apiURL("/repos/\\(configuration.owner)/\\(configuration.repository)/actions/workflows/\\(workflow)/dispatches")
-        let body: [String: Any] = [
-            "ref": configuration.branch,
-            "inputs": [
-                "app_id": appID,
-                "mode": action.rawValue
-            ]
-        ]
-        let dispatchedAt = Date().addingTimeInterval(-3)
-        let encoded = try JSONSerialization.data(withJSONObject: body)
-        let (data, response) = try await session.data(for: request(url: url, method: "POST", body: encoded))
-        try validate(response: response, data: data, accepted: [200, 204])
-
-        let run = try await waitForNewWorkflowRun(workflow: workflow, createdAfter: dispatchedAt)
-        return try await waitForWorkflowCompletion(runID: run.id, initialURL: run.htmlURL)
-    }
-
-    func fetchPublishedCatalog() async throws -> PublishedCatalog {
-        guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
-        let branch = configuration.branch.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? configuration.branch
-        let url = try apiURL("/repos/\\(configuration.owner)/\\(configuration.repository)/contents/install/apps.json?ref=\\(branch)")
-        let (data, response) = try await session.data(for: request(url: url))
-        try validate(response: response, data: data)
-        let file = try JSONDecoder().decode(RepositoryContentFile.self, from: data)
-        guard file.encoding.lowercased() == "base64" else { throw NextSignerError.libraryUnavailable }
-        let compact = file.content.filter { !$0.isWhitespace }
-        guard let decoded = Data(base64Encoded: compact) else { throw NextSignerError.libraryUnavailable }
-        return try JSONDecoder().decode(PublishedCatalog.self, from: decoded)
-    }
-
-    private func waitForNewWorkflowRun(workflow: String, createdAfter: Date) async throws -> WorkflowRun {
-        let formatter = ISO8601DateFormatter()
-        for _ in 0..<30 {
-            var components = URLComponents(string: "https://api.github.com/repos/\\(configuration.owner)/\\(configuration.repository)/actions/workflows/\\(workflow)/runs")!
-            components.queryItems = [
-                URLQueryItem(name: "event", value: "workflow_dispatch"),
-                URLQueryItem(name: "branch", value: configuration.branch),
-                URLQueryItem(name: "per_page", value: "10")
-            ]
-            guard let url = components.url else { throw NextSignerError.malformedURL }
-            let (data, response) = try await session.data(for: request(url: url))
-            try validate(response: response, data: data)
-            let runs = try JSONDecoder().decode(WorkflowRunsResponse.self, from: data).workflowRuns
-            if let run = runs.first(where: { item in
-                guard let created = formatter.date(from: item.createdAt) else { return false }
-                return created >= createdAfter
-            }) {
-                return run
-            }
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-        }
-        throw NSError(domain: "NextSigner", code: 1001, userInfo: [NSLocalizedDescriptionKey: "The Library management job was queued, but Next Signer could not locate its GitHub Actions run."])
-    }
-
-    private func waitForWorkflowCompletion(runID: Int, initialURL: String) async throws -> String {
-        var lastURL = initialURL
-        for _ in 0..<120 {
-            let url = try apiURL("/repos/\\(configuration.owner)/\\(configuration.repository)/actions/runs/\\(runID)")
-            let (data, response) = try await session.data(for: request(url: url))
-            try validate(response: response, data: data)
-            let run = try JSONDecoder().decode(WorkflowRun.self, from: data)
-            lastURL = run.htmlURL
-            if run.status == "completed" {
-                if run.conclusion == "success" { return run.htmlURL }
-                throw NSError(domain: "NextSigner", code: 1002, userInfo: [NSLocalizedDescriptionKey: "Library management failed in GitHub Actions. Open the run for details: \\(run.htmlURL)"])
-            }
-            try await Task.sleep(nanoseconds: 2_000_000_000)
-        }
-        throw NSError(domain: "NextSigner", code: 1003, userInfo: [NSLocalizedDescriptionKey: "Library management is still running. Check the GitHub Actions run: \\(lastURL)"])
-    }
-'''
-          if old not in s:
-              raise SystemExit('GitHubService library action block not found')
-          s = s.replace(old, new, 1)
-          path.write_text(s)
-
-          # Store: support Photos data and refresh from GitHub after a completed delete.
-          path = Path('NextSigner/NextSigner/SignerStore.swift')
-          s = path.read_text()
-          marker = '''    func clearCustomIcon() {
-        if let url = request.customIconURL { try? FileManager.default.removeItem(at: url) }
-        request.customIconURL = nil
-    }
-'''
-          insert = '''    func importCustomIconPNGData(_ data: Data) {
-        guard !data.isEmpty else {
-            errorMessage = "The selected photo could not be converted into an app icon."
-            return
-        }
-        do {
-            if let old = request.customIconURL { try? FileManager.default.removeItem(at: old) }
-            let folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("NextSignerInbox", isDirectory: true)
-                .appendingPathComponent("Icons", isDirectory: true)
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            let destination = folder.appendingPathComponent("photo-icon-\\(UUID().uuidString).png")
-            try data.write(to: destination, options: .atomic)
-            request.customIconURL = destination
-            errorMessage = nil
-        } catch {
-            errorMessage = "Unable to use the selected photo as an icon: \\(error.localizedDescription)"
-        }
-    }
-
-''' + marker
-          if marker not in s:
-              raise SystemExit('SignerStore clearCustomIcon marker not found')
-          s = s.replace(marker, insert, 1)
-
-          old = '''    func refreshLibrary() async {
-        libraryIsLoading = true
-        libraryErrorMessage = nil
-        defer { libraryIsLoading = false }
-        do {
-            var components = URLComponents(string: "https://nextsolution.cc/install/apps.json")!
-            components.queryItems = [URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970)))]
-            guard let url = components.url else { throw NextSignerError.libraryUnavailable }
-            var request = URLRequest(url: url)
-            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-            request.timeoutInterval = 30
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                throw NextSignerError.libraryUnavailable
-            }
-            let catalog = try JSONDecoder().decode(PublishedCatalog.self, from: data)
-            libraryApps = catalog.apps
-        } catch {
-            libraryErrorMessage = error.localizedDescription
-        }
-    }
-'''
-          new = '''    func refreshLibrary() async {
-        libraryIsLoading = true
-        libraryErrorMessage = nil
-        defer { libraryIsLoading = false }
-        do {
-            let currentToken = KeychainStore.load(account: tokenAccount) ?? token.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !currentToken.isEmpty && configuration.isValid {
-                let service = GitHubService(token: currentToken, configuration: configuration)
-                libraryApps = try await service.fetchPublishedCatalog().apps
-            } else {
-                var components = URLComponents(string: "https://nextsolution.cc/install/apps.json")!
-                components.queryItems = [URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970)))]
-                guard let url = components.url else { throw NextSignerError.libraryUnavailable }
-                var webRequest = URLRequest(url: url)
-                webRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-                webRequest.timeoutInterval = 30
-                let (data, response) = try await URLSession.shared.data(for: webRequest)
-                guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                    throw NextSignerError.libraryUnavailable
-                }
-                libraryApps = try JSONDecoder().decode(PublishedCatalog.self, from: data).apps
-            }
-        } catch {
-            libraryErrorMessage = error.localizedDescription
-        }
-    }
-'''
-          if old not in s:
-              raise SystemExit('SignerStore refreshLibrary block not found')
-          s = s.replace(old, new, 1)
-
-          old = '''        do {
-            let service = GitHubService(token: currentToken, configuration: configuration)
-            try await service.dispatchLibraryAction(appID: app.id, action: action)
-            switch action {
-            case .cleanOldVersions:
-                libraryMessage = "Cleanup queued for \\(app.name). The current version will be kept; older R2 files will be removed."
-            case .deleteApp:
-                libraryMessage = "Deletion queued for \\(app.name). Its site entry, manifest/icon and stored R2 versions will be removed."
-            }
-        } catch {
-            libraryErrorMessage = error.localizedDescription
-        }
-'''
-          new = '''        do {
-            let service = GitHubService(token: currentToken, configuration: configuration)
-            libraryMessage = action == .deleteApp
-                ? "Deleting \\(app.name)… waiting for GitHub and R2 to finish."
-                : "Cleaning old versions of \\(app.name)…"
-            let runURL = try await service.dispatchLibraryAction(appID: app.id, action: action)
-
-            if action == .deleteApp {
-                libraryApps.removeAll { $0.id == app.id }
-            }
-            await refreshLibrary()
-
-            switch action {
-            case .cleanOldVersions:
-                libraryMessage = "Cleanup complete for \\(app.name). The current version was kept and old R2 files were removed."
-            case .deleteApp:
-                if libraryApps.contains(where: { $0.id == app.id }) {
-                    libraryErrorMessage = "GitHub reported success, but \\(app.name) is still present in the catalog. Run: \\(runURL)"
-                } else {
-                    libraryMessage = "Deleted \\(app.name) from the site and Cloudflare R2."
-                }
-            }
-        } catch {
-            libraryErrorMessage = error.localizedDescription
-            await refreshLibrary()
-        }
-'''
-          if old not in s:
-              raise SystemExit('SignerStore manageLibrary block not found')
-          s = s.replace(old, new, 1)
-          path.write_text(s)
-
-          # SwiftUI: PhotosPicker alongside Files for custom app icons.
           path = Path('NextSigner/NextSigner/NextSignerRootView.swift')
           s = path.read_text()
           if 'import PhotosUI' not in s:
               s = s.replace('import UIKit\n', 'import UIKit\nimport PhotosUI\n', 1)
-          s = s.replace('''    @State private var pickerTarget: PickerTarget?\n''', '''    @State private var pickerTarget: PickerTarget?\n    @State private var selectedPhotoIcon: PhotosPickerItem?\n''', 1)
+          if '@State private var selectedPhotoIcon: PhotosPickerItem?' not in s:
+              s = s.replace(
+                  '    @State private var pickerTarget: PickerTarget?\n',
+                  '    @State private var pickerTarget: PickerTarget?\n    @State private var selectedPhotoIcon: PhotosPickerItem?\n',
+                  1
+              )
 
           old = '''                HStack {
                     Button { pickerTarget = .icon } label: {
@@ -348,19 +85,20 @@ jobs:
                             }
                             store.importCustomIconPNGData(pngData)
                         } catch {
-                            store.errorMessage = "Unable to load the selected photo: \\(error.localizedDescription)"
+                            store.errorMessage = "Unable to load the selected photo: \(error.localizedDescription)"
                         }
                     }
                 }
 '''
           if old not in s:
-              raise SystemExit('RootView icon picker block not found')
+              raise SystemExit('Custom icon picker block not found')
           s = s.replace(old, new, 1)
           path.write_text(s)
 
-          # Version bump and build artifact version.
           path = Path('NextSigner/project.yml')
-          s = path.read_text().replace('MARKETING_VERSION: "1.3.0"', 'MARKETING_VERSION: "1.3.1"').replace('CURRENT_PROJECT_VERSION: "13"', 'CURRENT_PROJECT_VERSION: "14"')
+          s = path.read_text()
+          s = s.replace('MARKETING_VERSION: "1.3.0"', 'MARKETING_VERSION: "1.3.1"')
+          s = s.replace('CURRENT_PROJECT_VERSION: "13"', 'CURRENT_PROJECT_VERSION: "14"')
           path.write_text(s)
 
           path = Path('.github/workflows/build-nextsigner-tipa.yml')
@@ -368,7 +106,7 @@ jobs:
           path.write_text(s)
           PY
 
-      - name: Generate icon and Xcode project
+      - name: Generate app icon and project
         shell: bash
         run: |
           set -euo pipefail
@@ -393,7 +131,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Package 1.3.1 artifact
+      - name: Package TIPA
         shell: bash
         run: |
           set -euo pipefail
@@ -407,18 +145,8 @@ jobs:
           /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.3.1.ipa" Payload
           cp "$RUNNER_TEMP/NextSigner-1.3.1.ipa" "$RUNNER_TEMP/NextSigner-1.3.1.tipa"
           unzip -t "$RUNNER_TEMP/NextSigner-1.3.1.tipa" >/dev/null
-          shasum -a 256 "$RUNNER_TEMP/NextSigner-1.3.1.tipa"
-
-      - name: Commit verified fixes
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add NextSigner/NextSigner/GitHubService.swift NextSigner/NextSigner/SignerStore.swift NextSigner/NextSigner/NextSignerRootView.swift NextSigner/project.yml .github/workflows/build-nextsigner-tipa.yml
-          git commit -m 'Fix Next Signer Library deletion and add Photos icon picker'
-          git pull --rebase origin main
-          git push origin HEAD:main
+          echo "NEXTSIGNER_SHA256=$(shasum -a 256 "$RUNNER_TEMP/NextSigner-1.3.1.tipa" | awk '{print $1}')" >> "$GITHUB_ENV"
+          echo "NEXTSIGNER_SIZE_BYTES=$(stat -f '%z' "$RUNNER_TEMP/NextSigner-1.3.1.tipa")" >> "$GITHUB_ENV"
 
       - name: Upload verified artifact
         uses: actions/upload-artifact@v4
@@ -430,26 +158,80 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish 1.3.1 through Transfer/R2
+      - name: Publish TIPA to Cloudflare R2
         shell: bash
         run: |
           set -euo pipefail
-          BEFORE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow publish-nextsigner-transfer.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
-          gh workflow run publish-nextsigner-transfer.yml --repo "$GITHUB_REPOSITORY" --ref main -f version=1.3.1
-          RUN_ID=''
-          for attempt in $(seq 1 20); do
-            candidate="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow publish-nextsigner-transfer.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
-            if [ "$candidate" != "0" ] && [ "$candidate" != "$BEFORE" ]; then RUN_ID="$candidate"; break; fi
-            sleep 3
-          done
-          test -n "$RUN_ID" || { echo 'Could not locate 1.3.1 publisher run'; exit 1; }
-          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 8
-          echo "PUBLISH_RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
+          test -n "$AWS_ACCESS_KEY_ID" || { echo 'R2 access key missing'; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo 'R2 secret key missing'; exit 1; }
+          python3 -m pip install --quiet boto3
+          python3 - <<'PY'
+          import boto3, os
+          from botocore.config import Config
+          endpoint = f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"
+          client = boto3.client(
+              's3', endpoint_url=endpoint,
+              aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+              aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+              region_name='auto', config=Config(signature_version='s3v4')
+          )
+          client.upload_file(
+              os.path.join(os.environ['RUNNER_TEMP'], 'NextSigner-1.3.1.tipa'),
+              os.environ['R2_BUCKET'],
+              'apps/tipa/NextSigner/1.3.1/NextSigner-1.3.1.tipa',
+              ExtraArgs={'ContentType': 'application/octet-stream', 'CacheControl': 'public, max-age=31536000, immutable'}
+          )
+          PY
+          PUBLIC_URL="$R2_PUBLIC_BASE/apps/tipa/NextSigner/1.3.1/NextSigner-1.3.1.tipa"
+          curl --fail --silent --show-error --location --head --retry 8 --retry-delay 3 --retry-all-errors "$PUBLIC_URL" >/dev/null
+          echo "NEXTSIGNER_R2_URL=$PUBLIC_URL" >> "$GITHUB_ENV"
 
-      - name: Report success
-        if: success()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_OK publish_run=${PUBLISH_RUN_ID:-unknown}"
+      - name: Update Transfer metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from datetime import datetime, timezone
+          path = Path('transfer/index.json')
+          data = json.loads(path.read_text())
+          files = [x for x in data.get('files', []) if not str(x.get('id', '')).startswith('nextsigner-')]
+          entry = {
+              'id': 'nextsigner-1.3.1',
+              'name': 'Next Signer 1.3.1',
+              'fileName': 'NextSigner-1.3.1.tipa',
+              'type': 'tipa',
+              'platform': 'TrollStore / iOS 16+',
+              'version': '1.3.1',
+              'url': os.environ['NEXTSIGNER_R2_URL'],
+              'sha256': os.environ['NEXTSIGNER_SHA256'],
+              'sizeBytes': int(os.environ['NEXTSIGNER_SIZE_BYTES']),
+              'storage': 'Cloudflare R2',
+              'notes': 'Fixes Library deletion 403 by using PAT-safe repository dispatch and immediate repository-catalog verification. Adds native Photos and Files selection for custom signing icons.'
+          }
+          data['files'] = [entry] + files
+          data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
 
-      - name: Report failure
-        if: failure()
-        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_FAILED run=${{ github.run_id }}"
+      - name: Commit verified 1.3.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add NextSigner/NextSigner/NextSignerRootView.swift NextSigner/project.yml .github/workflows/build-nextsigner-tipa.yml transfer/index.json
+          git commit -m 'Release Next Signer 1.3.1 deletion and Photos fixes'
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Summary
+        run: |
+          {
+            echo '## Next Signer 1.3.1'
+            echo
+            echo 'Status: build verified and published'
+            echo "URL: $NEXTSIGNER_R2_URL"
+            echo "SHA-256: $NEXTSIGNER_SHA256"
+          } >> "$GITHUB_STEP_SUMMARY"
