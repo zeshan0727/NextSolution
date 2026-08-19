@@ -1,13 +1,12 @@
 name: Publish Next Post to Transfer
 
-# 1.0.7 LevelPlay guide-complete publication trigger
-# forced after main build publication
+# 1.0.8 Unity Ads mediation publication trigger
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - 'applications/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa'
+      - 'applications/NextPost-1.0.8-UnityAds-Mediation.tipa'
       - '.github/workflows/publish-nextpost-transfer.yml'
 
 permissions:
@@ -30,9 +29,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SRC='applications/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa'
-          DEST_DIR='transfer/files/NextPost/1.0.7'
-          DEST="$DEST_DIR/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa"
+          SRC='applications/NextPost-1.0.8-UnityAds-Mediation.tipa'
+          DEST_DIR='transfer/files/NextPost/1.0.8'
+          DEST="$DEST_DIR/NextPost-1.0.8-UnityAds-Mediation.tipa"
           INDEX='transfer/index.json'
 
           test -s "$SRC"
@@ -51,18 +50,18 @@ jobs:
           index_path = Path('transfer/index.json')
           data = json.loads(index_path.read_text())
           files = data.get('files', [])
-          entry_id = 'nextpost-1.0.7-levelplay-guide-complete'
+          entry_id = 'nextpost-1.0.8-unityads-mediation'
           files = [item for item in files if item.get('id') != entry_id]
           entry = {
               'id': entry_id,
-              'name': 'Next Post 1.0.7 LevelPlay Guide Complete',
-              'fileName': 'NextPost-1.0.7-LevelPlay-Guide-Complete.tipa',
+              'name': 'Next Post 1.0.8 Unity Ads Mediation',
+              'fileName': 'NextPost-1.0.8-UnityAds-Mediation.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
-              'version': '1.0.7',
-              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.7/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa',
+              'version': '1.0.8',
+              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.8/NextPost-1.0.8-UnityAds-Mediation.tipa',
               'sha256': os.environ['SHA256'],
-              'notes': 'Aligns Next Post with Unity LevelPlay iOS setup guidance: official Swift Package integration, -ObjC, z/sqlite3 and required Apple frameworks, ironSource SKAdNetwork ID, Universal SKAN postback endpoint, ATS settings, corrected banner/interstitial IDs, and existing native LevelPlay initialization.'
+              'notes': 'Adds the official Unity Ads SDK and LevelPlay Unity Ads adapter to Next Post. Includes Unity Ads SKAdNetwork support and keeps the existing ironSource LevelPlay banner/interstitial integration. Configure the Unity Ads bidder/instance for Next Post in LevelPlay using the Unity Ads Game ID and Banner/Interstitial placement IDs.'
           }
           data['files'] = [entry] + files
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -70,7 +69,7 @@ jobs:
           PY
 
           python3 -m json.tool "$INDEX" >/dev/null
-          grep -q 'nextpost-1.0.7-levelplay-guide-complete' "$INDEX"
+          grep -q 'nextpost-1.0.8-unityads-mediation' "$INDEX"
           grep -q "$SHA256" "$INDEX"
           test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
 
@@ -80,7 +79,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add transfer/files/NextPost/1.0.7/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa transfer/index.json
-          git commit -m 'Publish Next Post 1.0.7 LevelPlay guide complete to Transfer' || true
+          git add transfer/files/NextPost/1.0.8/NextPost-1.0.8-UnityAds-Mediation.tipa transfer/index.json
+          git commit -m 'Publish Next Post 1.0.8 Unity Ads mediation to Transfer' || true
           git pull --rebase origin main
           git push origin HEAD:main
