@@ -46,23 +46,69 @@ actor GitHubService {
         ipaURL: URL,
         appName: String,
         bundleID: String,
+        customIconURL: URL?,
+        tweakURLs: [URL],
+        duplicateSigning: Bool,
+        injectExtensions: Bool,
+        weakInjection: Bool,
         progress: @Sendable (Double) async -> Void
     ) async throws -> DispatchResponse? {
         guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
 
         let release = try await ensureStagingRelease()
-        let safeName = makeStagingAssetName(original: ipaURL.lastPathComponent)
-        try await deleteExistingAsset(named: safeName, from: release)
-        await progress(0.15)
-        try await uploadAsset(fileURL: ipaURL, name: safeName, release: release)
-        await progress(0.85)
+        let stamp = Int(Date().timeIntervalSince1970)
+        let ipaAsset = makeStagingAssetName(original: ipaURL.lastPathComponent, stamp: stamp, role: "app")
+
+        await progress(0.08)
+        try await uploadAsset(fileURL: ipaURL, name: ipaAsset, release: release)
+        await progress(0.55)
+
+        var iconAsset = ""
+        if let customIconURL {
+            iconAsset = makeStagingAssetName(original: customIconURL.lastPathComponent, stamp: stamp, role: "icon")
+            try await uploadAsset(fileURL: customIconURL, name: iconAsset, release: release)
+        }
+        await progress(0.65)
+
+        var tweakAssets: [String] = []
+        for (index, url) in tweakURLs.enumerated() {
+            let assetName = makeStagingAssetName(original: url.lastPathComponent, stamp: stamp, role: "tweak\(index + 1)")
+            try await uploadAsset(fileURL: url, name: assetName, release: release)
+            tweakAssets.append(assetName)
+            let fraction = Double(index + 1) / Double(max(tweakURLs.count, 1))
+            await progress(0.65 + (0.20 * fraction))
+        }
+
+        let tweakJSONData = try JSONSerialization.data(withJSONObject: tweakAssets)
+        let tweakJSON = String(data: tweakJSONData, encoding: .utf8) ?? "[]"
         let dispatch = try await dispatchSigningWorkflow(
-            assetName: safeName,
+            assetName: ipaAsset,
             appName: appName,
-            bundleID: bundleID
+            bundleID: bundleID,
+            customIconAsset: iconAsset,
+            tweakAssetsJSON: tweakJSON,
+            duplicateSigning: duplicateSigning,
+            injectExtensions: injectExtensions,
+            weakInjection: weakInjection
         )
         await progress(1.0)
         return dispatch
+    }
+
+    func dispatchLibraryAction(appID: String, action: LibraryAction) async throws {
+        guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
+        let workflow = "nextsigner-library-manage.yml".addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "nextsigner-library-manage.yml"
+        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/actions/workflows/\(workflow)/dispatches")
+        let body: [String: Any] = [
+            "ref": configuration.branch,
+            "inputs": [
+                "app_id": appID,
+                "mode": action.rawValue
+            ]
+        ]
+        let encoded = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await session.data(for: request(url: url, method: "POST", body: encoded))
+        try validate(response: response, data: data, accepted: [200, 204])
     }
 
     private func ensureStagingRelease() async throws -> Release {
@@ -91,13 +137,6 @@ actor GitHubService {
         return try JSONDecoder().decode(Release.self, from: createData)
     }
 
-    private func deleteExistingAsset(named name: String, from release: Release) async throws {
-        guard let asset = release.assets.first(where: { $0.name == name }) else { return }
-        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/assets/\(asset.id)")
-        let (data, response) = try await session.data(for: request(url: url, method: "DELETE"))
-        try validate(response: response, data: data, accepted: [204])
-    }
-
     private func uploadAsset(fileURL: URL, name: String, release: Release) async throws {
         guard var components = URLComponents(string: release.uploadURL.components(separatedBy: "{").first ?? release.uploadURL) else {
             throw NextSignerError.malformedURL
@@ -113,7 +152,16 @@ actor GitHubService {
         }
     }
 
-    private func dispatchSigningWorkflow(assetName: String, appName: String, bundleID: String) async throws -> DispatchResponse? {
+    private func dispatchSigningWorkflow(
+        assetName: String,
+        appName: String,
+        bundleID: String,
+        customIconAsset: String,
+        tweakAssetsJSON: String,
+        duplicateSigning: Bool,
+        injectExtensions: Bool,
+        weakInjection: Bool
+    ) async throws -> DispatchResponse? {
         let workflow = configuration.workflowFile.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? configuration.workflowFile
         let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/actions/workflows/\(workflow)/dispatches")
         let body: [String: Any] = [
@@ -121,7 +169,12 @@ actor GitHubService {
             "inputs": [
                 "staging_asset": assetName,
                 "requested_name": appName,
-                "requested_bundle_id": bundleID
+                "requested_bundle_id": bundleID,
+                "custom_icon_asset": customIconAsset,
+                "tweak_assets_json": tweakAssetsJSON,
+                "duplicate_signing": duplicateSigning ? "true" : "false",
+                "inject_extensions": injectExtensions ? "true" : "false",
+                "weak_injection": weakInjection ? "true" : "false"
             ]
         ]
         let encoded = try JSONSerialization.data(withJSONObject: body)
@@ -141,7 +194,7 @@ actor GitHubService {
         if body != nil {
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
-        req.timeoutInterval = 120
+        req.timeoutInterval = 180
         return req
     }
 
@@ -167,9 +220,10 @@ actor GitHubService {
         }
     }
 
-    private func makeStagingAssetName(original: String) -> String {
-        let base = original.replacingOccurrences(of: " ", with: "-")
-        let stamp = Int(Date().timeIntervalSince1970)
-        return "\(stamp)-\(base.hasSuffix(".ipa") ? base : base + ".ipa")"
+    private func makeStagingAssetName(original: String, stamp: Int, role: String) -> String {
+        let safe = original
+            .replacingOccurrences(of: " ", with: "-")
+            .replacingOccurrences(of: "/", with: "-")
+        return "\(stamp)-\(role)-\(safe)"
     }
 }
