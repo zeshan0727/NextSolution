@@ -1,4 +1,4 @@
-name: Build Integrated NextLock 1.1.5 CPU Fix Test
+name: Build Integrated NextLock 1.1.5 CPU Fix Test 2
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: nextlock-1.1.5-cpu-fix-integrated-test
+  group: nextlock-1.1.5-cpu-fix-integrated-test2
   cancel-in-progress: true
 
 jobs:
@@ -29,7 +29,24 @@ jobs:
       - name: Install packaging tools
         run: brew install dpkg ldid
 
-      - name: Build RootHide performance shim
+      - name: Audit Test 2 source invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          S=source/NextLockPerfFix/Tweak.m
+          grep -q 'NextLockPerfFix 1.1.5-test2 targeted-image-cache transparency-cache exact-semantics' "$S"
+          grep -q 'NLCachedImageWithData' "$S"
+          grep -q 'NLCallerIsLockGlyphTime' "$S"
+          grep -q 'NLLockGlyphTextStart' "$S"
+          grep -q 'NLDataPointerImageCache' "$S"
+          grep -q 'NLDataFingerprintImageCache' "$S"
+          grep -q 'NLOriginalHasRealTransparency(image)' "$S"
+          grep -q 'kNextLock114Arm64TransparencyOffset   = 0xAE18' "$S"
+          grep -q 'kNextLock114Arm64eTransparencyOffset = 0xAF74' "$S"
+          grep -q '@selector(imageWithData:)' "$S"
+          ! grep -q 'CGBitmapContextCreate' "$S" || grep -q 'original helper' "$S"
+
+      - name: Build RootHide Test 2 performance shim
         shell: bash
         run: |
           set -euo pipefail
@@ -49,7 +66,7 @@ jobs:
           test -n "$D"
           echo "FIX_DEB=$D" >> "$GITHUB_ENV"
 
-      - name: Inject shim into original NextLock 1.1.4 package
+      - name: Inject Test 2 shim into original NextLock 1.1.4 package
         shell: bash
         run: |
           set -euo pipefail
@@ -69,10 +86,11 @@ jobs:
           test -n "$FIX"
           test -n "$FIXPLIST"
 
-          # UUID gate must match the exact affected 1.1.4 binary captured live.
           dwarfdump --uuid "$LOCK" | tee "$RUNNER_TEMP/lock-uuids.txt"
           grep -qi 'C7EBC4D1-EAD4-3320-A27F-34E86C25F776' "$RUNNER_TEMP/lock-uuids.txt"
           grep -qi '7BE1428A-C4B0-38F8-8120-7BACBF220731' "$RUNNER_TEMP/lock-uuids.txt"
+          strings -a "$LOCK" | grep -q 'imageWithData:'
+          strings -a "$LOCK" | grep -q 'CGBitmapContextCreate'
 
           BEFORE=$(shasum -a 256 "$LOCK" | awk '{print $1}')
           DYNDIR=$(dirname "$LOCK")
@@ -86,8 +104,8 @@ jobs:
           import re,sys
           p=Path(sys.argv[1])
           t=p.read_text()
-          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu1', t, flags=re.M)
-          desc='Description: NextLock 1.1.5 CPU-fix test. Keeps the complete 1.1.4 feature binary unchanged and adds exact-result caching for the expensive transparent-photo/sticker pixel scan.'
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu2', t, flags=re.M)
+          desc='Description: NextLock 1.1.5 CPU-fix Test 2. Keeps the complete 1.1.4 feature binary unchanged, reuses immutable custom-photo UIImage decodes only for LockGlyphTime callers, and caches the exact transparency decision to prevent repeated CoreGraphics/vImage work during layout.'
           if re.search(r'^Description: .*$', t, flags=re.M):
               t=re.sub(r'^Description: .*$', desc, t, flags=re.M)
           else:
@@ -95,17 +113,17 @@ jobs:
           p.write_text(t)
           PY
 
-          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test1_RootHide.deb"
+          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test2_RootHide.deb"
           dpkg-deb -b "$STAGE" "$OUTDEB"
           echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
           echo "ORIGINAL_LOCK_SHA=$BEFORE" >> "$GITHUB_ENV"
 
-      - name: Validate integrated package
+      - name: Validate integrated Test 2 package
         shell: bash
         run: |
           set -euo pipefail
           test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
-          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu1'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu2'
           X=$(mktemp -d)
           dpkg-deb -x "$OUTDEB" "$X"
           LOCK=$(find "$X" -name LockGlyphTime.dylib -print -quit)
@@ -115,30 +133,32 @@ jobs:
           test -n "$FIX"
           test -n "$PLIST"
           test "$(shasum -a 256 "$LOCK" | awk '{print $1}')" = "$ORIGINAL_LOCK_SHA"
-          strings -a "$FIX" | grep -q 'NextLockPerfFix 1.1.5-test transparency-cache exact-semantics'
+          strings -a "$FIX" | grep -q 'NextLockPerfFix 1.1.5-test2 targeted-image-cache transparency-cache exact-semantics'
+          strings -a "$FIX" | grep -q 'imageWithData:'
           plutil -p "$PLIST" | grep -q 'com.apple.springboard'
           lipo -info "$FIX" | grep -q 'arm64e'
           shasum -a 256 "$OUTDEB" | tee "$RUNNER_TEMP/integrated-sha.txt"
 
-      - name: Save integrated test build to debug branch only
+      - name: Save integrated Test 2 build to debug branch only
         shell: bash
         run: |
           set -euo pipefail
-          DEST=transfer/files/NextLock/1.1.5-CPUFix-Integrated-Test1
+          DEST=transfer/files/NextLock/1.1.5-CPUFix-Integrated-Test2
           mkdir -p "$DEST"
           cp "$OUTDEB" "$DEST/"
-          cp "$RUNNER_TEMP/integrated-sha.txt" "$DEST/NextLock_1.1.5_CPUFix_Test1_SHA256SUMS.txt"
+          cp "$RUNNER_TEMP/integrated-sha.txt" "$DEST/NextLock_1.1.5_CPUFix_Test2_SHA256SUMS.txt"
           git config user.name 'Next Solution Build Bot'
           git config user.email 'actions@users.noreply.github.com'
+          git pull --rebase origin debug/nextlock-1.1.4-cpu-fix
           git add "$DEST"
           git diff --cached --check
-          git commit -m 'Build integrated NextLock 1.1.5 CPU fix test'
+          git commit -m 'Build integrated NextLock 1.1.5 CPU fix Test 2'
           git push origin HEAD:debug/nextlock-1.1.4-cpu-fix
 
-      - name: Upload integrated test package
+      - name: Upload integrated Test 2 package
         uses: actions/upload-artifact@v4
         with:
-          name: NextLock-1.1.5-CPUFix-Integrated-Test1
+          name: NextLock-1.1.5-CPUFix-Integrated-Test2
           path: ${{ env.OUTDEB }}
           if-no-files-found: error
           retention-days: 14
