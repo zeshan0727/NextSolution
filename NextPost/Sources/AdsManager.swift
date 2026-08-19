@@ -7,7 +7,7 @@ final class AdsManager: NSObject {
     static let shared = AdsManager()
 
     static let appKey = "27ad6d08d"
-    static let bannerAdUnitID = "3enr8l0rqws9op9z"
+    static let bannerAdUnitID = "3enr810rqws9op9z"
     static let interstitialAdUnitID = "y23pc99ate029uga"
 
     private(set) var isInitialized = false
