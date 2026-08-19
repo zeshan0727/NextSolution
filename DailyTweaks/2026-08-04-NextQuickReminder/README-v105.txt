@@ -1,0 +1,1 @@
+Next Quick Reminder 1.0.5 adds independent Status-Bar, Volume Up hold, Volume Down hold, Shake, and Lock Screen triggers. It also adds an in-panel Quick Access settings sheet so configuration remains available even when PreferenceLoader is unavailable on RootHide, and links the Preference bundle directly against the Preferences private framework for better compatibility.
