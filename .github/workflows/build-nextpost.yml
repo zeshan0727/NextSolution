@@ -67,42 +67,43 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.7-LevelPlay-Guide-Complete.tipa
-          shasum -a 256 NextPost-1.0.7-LevelPlay-Guide-Complete.tipa > NextPost-1.0.7-LevelPlay-Guide-Complete.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.8-UnityAds-Mediation.tipa
+          shasum -a 256 NextPost-1.0.8-UnityAds-Mediation.tipa > NextPost-1.0.8-UnityAds-Mediation.sha256
 
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Print :NSAdvertisingAttributionReportEndpoint" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :SKAdNetworkItems:0:SKAdNetworkIdentifier" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :SKAdNetworkItems:1:SKAdNetworkIdentifier" "$APP_PATH/Info.plist"
           test -f "$APP_PATH/PrivacyInfo.xcprivacy"
+          find "$APP_PATH" -iname '*UnityAds*' -o -iname '*IronSource*'
           file "$APP_PATH/Next Post"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextPost-1.0.7-LevelPlay-Guide-Complete
+          name: NextPost-1.0.8-UnityAds-Mediation
           path: |
-            NextPost-1.0.7-LevelPlay-Guide-Complete.tipa
-            NextPost-1.0.7-LevelPlay-Guide-Complete.sha256
+            NextPost-1.0.8-UnityAds-Mediation.tipa
+            NextPost-1.0.8-UnityAds-Mediation.sha256
           if-no-files-found: error
 
       - name: Publish TIPA to repository
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p applications
-          cp NextPost-1.0.7-LevelPlay-Guide-Complete.tipa applications/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa
-          cp NextPost-1.0.7-LevelPlay-Guide-Complete.sha256 applications/NextPost-1.0.7-LevelPlay-Guide-Complete.sha256
+          cp NextPost-1.0.8-UnityAds-Mediation.tipa applications/NextPost-1.0.8-UnityAds-Mediation.tipa
+          cp NextPost-1.0.8-UnityAds-Mediation.sha256 applications/NextPost-1.0.8-UnityAds-Mediation.sha256
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add applications/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa applications/NextPost-1.0.7-LevelPlay-Guide-Complete.sha256
+          git add applications/NextPost-1.0.8-UnityAds-Mediation.tipa applications/NextPost-1.0.8-UnityAds-Mediation.sha256
 
           if git diff --cached --quiet; then
-            echo "Next Post 1.0.7 LevelPlay guide-complete build is already published."
+            echo "Next Post 1.0.8 Unity Ads build is already published."
             exit 0
           fi
 
-          git commit -m "Publish Next Post 1.0.7 LevelPlay guide complete TIPA"
+          git commit -m "Publish Next Post 1.0.8 Unity Ads mediation TIPA"
           git pull --rebase origin main
           git push origin HEAD:main
