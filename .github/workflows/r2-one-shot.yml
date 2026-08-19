@@ -1,0 +1,20 @@
+name: One-time R2 migration trigger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/r2-one-shot.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch migration workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run migrate-private-apps-to-r2.yml --repo "$GITHUB_REPOSITORY" --ref main -f confirm=MIGRATE
