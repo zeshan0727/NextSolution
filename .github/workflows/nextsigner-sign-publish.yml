@@ -83,7 +83,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y g++ pkg-config libssl-dev jq
+          sudo apt-get install -y g++ pkg-config libssl-dev jq pngcrush
           git clone --filter=blob:none https://github.com/zhlynn/zsign.git "$RUNNER_TEMP/zsign"
           git -C "$RUNNER_TEMP/zsign" checkout "$ZSIGN_COMMIT"
           make -C "$RUNNER_TEMP/zsign/build/linux" clean
@@ -142,6 +142,7 @@ jobs:
               'APP_MINIMUM_OS': minimum,
               'APP_SLUG': slug,
               'APP_VERSION_SLUG': version_slug,
+              'APP_BUILD_SLUG': build_slug,
               'SIGNED_FILENAME': signed_filename,
               'R2_OBJECT_KEY': f'apps/ipa/{slug}/{version_slug}/{signed_filename}',
           }
@@ -198,23 +199,161 @@ jobs:
             "$SIGNED_URL" >/dev/null
           echo "Verified $SIGNED_URL"
 
-      - name: Publish icon, manifest and catalog entry
+      - name: Extract original app icon
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p install/icons
-          ICON_PATH=""
-          while IFS= read -r -d '' candidate; do
-            ICON_PATH="$candidate"
-            break
-          done < <(find "$RUNNER_TEMP/metadata" -type f -iname '*.png' -print0)
-          if [ -n "$ICON_PATH" ]; then
-            cp "$ICON_PATH" "install/icons/$APP_SLUG.png"
-            ICON_URL="/install/icons/$APP_SLUG.png"
-          else
-            ICON_URL="/apple-touch-icon.png"
+          mkdir -p "$RUNNER_TEMP/icon-extract" install/icons
+          RAW_ICON="$RUNNER_TEMP/icon-extract/original-icon.png"
+          rm -f "$RAW_ICON"
+
+          python3 - <<'PY'
+          import os, pathlib, plistlib, re, struct, zipfile
+
+          ipa = pathlib.Path(os.environ['RUNNER_TEMP']) / 'signed.ipa'
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'icon-extract' / 'original-icon.png'
+
+          def png_dimensions(data):
+              if not data.startswith(b'\x89PNG\r\n\x1a\n'):
+                  return (0, 0)
+              pos = 8
+              while pos + 12 <= len(data):
+                  length = struct.unpack('>I', data[pos:pos+4])[0]
+                  chunk_type = data[pos+4:pos+8]
+                  if chunk_type == b'IHDR' and pos + 16 <= len(data):
+                      return struct.unpack('>II', data[pos+8:pos+16])
+                  pos += 12 + length
+              return (0, 0)
+
+          def normalize_icon_name(value):
+              name = pathlib.PurePosixPath(str(value)).name
+              if name.lower().endswith('.png'):
+                  name = name[:-4]
+              name = re.sub(r'@[123]x$', '', name, flags=re.I)
+              name = re.sub(r'~ipad$', '', name, flags=re.I)
+              return name.lower()
+
+          with zipfile.ZipFile(ipa) as z:
+              infos = [n for n in z.namelist() if re.fullmatch(r'Payload/[^/]+\.app/Info\.plist', n)]
+              if not infos:
+                  raise SystemExit('Main app Info.plist not found while extracting icon')
+              info_path = infos[0]
+              info = plistlib.loads(z.read(info_path))
+              app_root = info_path.rsplit('/', 1)[0] + '/'
+
+              declared = []
+              def collect(value):
+                  if isinstance(value, str) and value.strip():
+                      declared.append(value.strip())
+                  elif isinstance(value, (list, tuple)):
+                      for item in value:
+                          collect(item)
+
+              collect(info.get('CFBundleIconFile'))
+              collect(info.get('CFBundleIconFiles'))
+              for key in ('CFBundleIcons', 'CFBundleIcons~ipad'):
+                  icons = info.get(key)
+                  if isinstance(icons, dict):
+                      primary = icons.get('CFBundlePrimaryIcon')
+                      if isinstance(primary, dict):
+                          collect(primary.get('CFBundleIconFiles'))
+                          collect(primary.get('CFBundleIconName'))
+
+              declared_norm = [normalize_icon_name(x) for x in declared]
+              candidates = []
+              for member in z.namelist():
+                  if not member.startswith(app_root) or member.endswith('/'):
+                      continue
+                  relative = member[len(app_root):]
+                  if '/' in relative or not relative.lower().endswith('.png'):
+                      continue
+
+                  stem = pathlib.PurePosixPath(relative).stem
+                  actual_norm = normalize_icon_name(relative)
+                  declared_match = any(
+                      actual_norm == d or actual_norm.startswith(d) or d.startswith(actual_norm)
+                      for d in declared_norm if d
+                  )
+                  heuristic_match = bool(re.search(r'appicon|(?:^|[-_])icon', stem, flags=re.I))
+                  if not declared_match and not heuristic_match:
+                      continue
+
+                  data = z.read(member)
+                  width, height = png_dimensions(data)
+                  lower = stem.lower()
+                  score = (
+                      1 if declared_match else 0,
+                      1 if 'appicon' in lower else 0,
+                      1 if '@3x' in lower else 0,
+                      min(width, height),
+                      width * height,
+                      len(data),
+                  )
+                  candidates.append((score, member, data, width, height))
+
+              if candidates:
+                  score, member, data, width, height = max(candidates, key=lambda item: item[0])
+                  out.write_bytes(data)
+                  print(f'Extracted original icon: {member} ({width}x{height})')
+              else:
+                  print('No standalone icon PNG found in IPA; will try metadata/existing icon fallback')
+          PY
+
+          if [ ! -s "$RAW_ICON" ]; then
+            while IFS= read -r -d '' candidate; do
+              cp "$candidate" "$RAW_ICON"
+              echo "Using zsign metadata PNG fallback: $candidate"
+              break
+            done < <(find "$RUNNER_TEMP/metadata" -type f -iname '*.png' -print0)
           fi
-          export ICON_URL
+
+          if [ -s "$RAW_ICON" ]; then
+            ICON_FILE="${APP_SLUG}-${SIGNED_SHA256:0:12}.png"
+            FINAL_ICON="install/icons/$ICON_FILE"
+            NORMALIZED="$RUNNER_TEMP/icon-extract/normalized.png"
+            rm -f "$NORMALIZED"
+            if pngcrush -revert-iphone-optimizations -q "$RAW_ICON" "$NORMALIZED" >/dev/null 2>&1 && [ -s "$NORMALIZED" ]; then
+              ICON_SOURCE='IPA original icon (normalized)'
+            else
+              cp "$RAW_ICON" "$NORMALIZED"
+              ICON_SOURCE='IPA original icon'
+            fi
+            rm -f install/icons/${APP_SLUG}-*.png
+            mv "$NORMALIZED" "$FINAL_ICON"
+            ICON_URL="/install/icons/$ICON_FILE"
+          else
+            ICON_URL="$(python3 - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('install/apps.json')
+          if path.exists():
+              try:
+                  data = json.loads(path.read_text())
+                  for app in data.get('apps', []):
+                      if app.get('id') == os.environ['APP_SLUG']:
+                          icon = str(app.get('icon') or '')
+                          if icon and icon not in {'/apple-touch-icon.png', '/logo.png'}:
+                              print(icon)
+                              break
+              except Exception:
+                  pass
+          PY
+          )"
+            if [ -n "$ICON_URL" ]; then
+              ICON_SOURCE='existing catalog icon'
+            else
+              ICON_URL="/apple-touch-icon.png"
+              ICON_SOURCE='Next Solution fallback icon'
+            fi
+          fi
+
+          echo "ICON_URL=$ICON_URL" >> "$GITHUB_ENV"
+          echo "ICON_SOURCE=$ICON_SOURCE" >> "$GITHUB_ENV"
+          echo "Icon source: $ICON_SOURCE -> $ICON_URL"
+
+      - name: Publish manifest and catalog entry
+        shell: bash
+        run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json, os, pathlib, plistlib
           root = pathlib.Path('install')
@@ -303,6 +442,7 @@ jobs:
             if [ "${{ job.status }}" = "success" ]; then
               echo "Status: Signed and published"
               echo "Storage: ${SIGNED_BACKEND:-Unknown}"
+              echo "Icon: ${ICON_SOURCE:-Unknown}"
               echo "Download: ${SIGNED_URL:-Unavailable}"
               echo "Installer: https://nextsolution.cc/install/"
             else
