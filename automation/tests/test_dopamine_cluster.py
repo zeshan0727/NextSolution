@@ -113,7 +113,7 @@ class DopamineClusterTests(unittest.TestCase):
             self.empty_state(),
             NOW,
         )
-        self.assertIn("dopamine-3-ios-17-6-1.html", rendered)
+        self.assertIn("dopamine-3-jailbreak-ios-17-6-1.html", rendered)
         self.assertIn("dopamine-3-ios-17-6-1-hero.jpg", rendered)
         self.assertIn("https://nextsolution.cc/dopamine-3-jailbreak.html", rendered)
 
