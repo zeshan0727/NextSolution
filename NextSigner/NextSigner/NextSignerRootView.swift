@@ -9,6 +9,9 @@ struct NextSignerRootView: View {
             NextSignerSignView(store: store)
                 .tabItem { Label("Sign", systemImage: "signature") }
 
+            NextSignerLibraryView(store: store)
+                .tabItem { Label("Library", systemImage: "square.stack.3d.up.fill") }
+
             NextSignerActivityView(store: store)
                 .tabItem { Label("Activity", systemImage: "clock.arrow.circlepath") }
 
@@ -19,9 +22,16 @@ struct NextSignerRootView: View {
     }
 }
 
+private enum PickerTarget: Int, Identifiable {
+    case app
+    case icon
+    case tweaks
+    var id: Int { rawValue }
+}
+
 private struct NextSignerSignView: View {
     @ObservedObject var store: SignerStore
-    @State private var showsPicker = false
+    @State private var pickerTarget: PickerTarget?
 
     var body: some View {
         NavigationStack {
@@ -30,25 +40,21 @@ private struct NextSignerSignView: View {
                     header
                     appCard
                     detailsCard
+                    advancedCard
                     publishCard
                 }
                 .padding()
             }
             .navigationTitle("Next Signer")
-            .sheet(isPresented: $showsPicker) {
+            .sheet(item: $pickerTarget) { target in
                 UIKitDocumentPicker(
-                    onPick: { url in
-                        showsPicker = false
-                        let name = url.lastPathComponent.lowercased()
-                        guard name.hasSuffix(".ipa") || name.hasSuffix(".tipa") else {
-                            store.errorMessage = "Please choose an .ipa or .tipa file."
-                            return
-                        }
-                        store.importIPA(from: url)
+                    documentTypes: documentTypes(for: target),
+                    allowsMultipleSelection: target == .tweaks,
+                    onPick: { urls in
+                        pickerTarget = nil
+                        handlePickedFiles(urls, for: target)
                     },
-                    onCancel: {
-                        showsPicker = false
-                    }
+                    onCancel: { pickerTarget = nil }
                 )
                 .ignoresSafeArea()
             }
@@ -65,9 +71,9 @@ private struct NextSignerSignView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Pick. Sign. Publish.", systemImage: "checkmark.seal.fill")
+            Label("Sign. Customize. Publish.", systemImage: "checkmark.seal.fill")
                 .font(.title2.bold())
-            Text("Choose an IPA or TIPA from Files. After setup, one tap sends it to your private signing workflow and publishes the signed build to nextsolution.cc/install/.")
+            Text("Sign IPA/TIPA files, create duplicate installs, replace the app icon, attach tweak dylibs or DEB packages, then publish the finished build through Cloudflare R2.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -95,9 +101,7 @@ private struct NextSignerSignView: View {
 
                         Spacer()
 
-                        Button(role: .destructive) {
-                            store.clearSelectedIPA()
-                        } label: {
+                        Button(role: .destructive) { store.clearSelectedIPA() } label: {
                             Image(systemName: "trash")
                         }
                     }
@@ -107,18 +111,15 @@ private struct NextSignerSignView: View {
                             .font(.system(size: 34))
                         Text("No IPA selected")
                             .font(.headline)
-                        Text("Uses the native iOS document picker in unrestricted file mode.")
+                        Text("Choose an IPA or TIPA from Files.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                 }
 
-                Button {
-                    showsPicker = true
-                } label: {
+                Button { pickerTarget = .app } label: {
                     Label(store.request.ipaURL == nil ? "Choose IPA / TIPA" : "Choose Another IPA / TIPA", systemImage: "folder")
                         .frame(maxWidth: .infinity)
                 }
@@ -158,6 +159,109 @@ private struct NextSignerSignView: View {
         }
     }
 
+    private var advancedCard: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 14) {
+                Toggle("Install as duplicate app", isOn: Binding(
+                    get: { store.request.duplicateSigning },
+                    set: { store.setDuplicateSigning($0) }
+                ))
+                Text("Generates a unique bundle ID so the signed copy can install alongside another copy of the app.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Divider()
+
+                HStack(spacing: 12) {
+                    customIconPreview
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Custom app icon").font(.headline)
+                        Text(store.request.customIconURL?.lastPathComponent ?? "Keep the original IPA icon")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    Spacer()
+                }
+
+                HStack {
+                    Button { pickerTarget = .icon } label: {
+                        Label(store.request.customIconURL == nil ? "Choose Icon" : "Change Icon", systemImage: "photo")
+                    }
+                    .buttonStyle(.bordered)
+
+                    if store.request.customIconURL != nil {
+                        Button("Remove", role: .destructive) { store.clearCustomIcon() }
+                            .buttonStyle(.bordered)
+                    }
+                }
+
+                Divider()
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Tweak injection").font(.headline)
+                        Text("Attach .dylib files or .deb packages containing dylibs.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text("\(store.request.tweakURLs.count)")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .background(.thinMaterial, in: Capsule())
+                }
+
+                ForEach(store.request.tweakURLs, id: \.self) { url in
+                    HStack {
+                        Image(systemName: url.pathExtension.lowercased() == "deb" ? "shippingbox" : "puzzlepiece.extension")
+                        Text(url.lastPathComponent)
+                            .font(.caption)
+                            .lineLimit(1)
+                        Spacer()
+                        Button(role: .destructive) { store.removeTweak(url) } label: {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                Button { pickerTarget = .tweaks } label: {
+                    Label("Attach Tweaks", systemImage: "plus.circle")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
+                if !store.request.tweakURLs.isEmpty {
+                    Toggle("Inject into app extensions", isOn: $store.request.injectTweaksIntoExtensions)
+                    Toggle("Weak dylib injection", isOn: $store.request.weakTweakInjection)
+                    Text("Only inject tweaks you trust and that are compatible with the target app. DEB support extracts and injects dylib payloads; packages that require extra frameworks or jailbreak-only services may not work in a sideloaded app.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } label: {
+            Label("Advanced signing", systemImage: "slider.horizontal.3")
+        }
+    }
+
+    @ViewBuilder
+    private var customIconPreview: some View {
+        if let url = store.request.customIconURL, let image = UIImage(contentsOfFile: url.path) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 54, height: 54)
+                .clipShape(RoundedRectangle(cornerRadius: 13))
+        } else {
+            Image(systemName: "app.fill")
+                .font(.title2)
+                .frame(width: 54, height: 54)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 13))
+        }
+    }
+
     private var publishCard: some View {
         GroupBox {
             VStack(spacing: 12) {
@@ -176,9 +280,7 @@ private struct NextSignerSignView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                Button {
-                    store.signAndPublish()
-                } label: {
+                Button { store.signAndPublish() } label: {
                     Label(store.isWorking ? "Signing & Publishing…" : "Sign & Publish", systemImage: "paperplane.fill")
                         .frame(maxWidth: .infinity)
                 }
@@ -197,10 +299,247 @@ private struct NextSignerSignView: View {
         }
     }
 
+    private func documentTypes(for target: PickerTarget) -> [String] {
+        switch target {
+        case .app:
+            return ["public.item", "public.data", "public.archive", "com.apple.itunes.ipa"]
+        case .icon:
+            return ["public.image", "public.png", "public.jpeg"]
+        case .tweaks:
+            return ["public.item", "public.data", "public.archive"]
+        }
+    }
+
+    private func handlePickedFiles(_ urls: [URL], for target: PickerTarget) {
+        switch target {
+        case .app:
+            guard let url = urls.first else { return }
+            let ext = url.pathExtension.lowercased()
+            guard ext == "ipa" || ext == "tipa" else {
+                store.errorMessage = "Please choose an .ipa or .tipa file."
+                return
+            }
+            store.importIPA(from: url)
+        case .icon:
+            if let url = urls.first { store.importCustomIcon(from: url) }
+        case .tweaks:
+            store.importTweaks(from: urls)
+        }
+    }
+
     private func fileSizeText(_ url: URL) -> String {
         guard let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
               let bytes = values.fileSize else { return "IPA / TIPA" }
         return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+}
+
+private struct PendingLibraryOperation: Identifiable {
+    let id = UUID()
+    let app: PublishedApp
+    let action: LibraryAction
+}
+
+private struct NextSignerLibraryView: View {
+    @ObservedObject var store: SignerStore
+    @State private var searchText = ""
+    @State private var pendingOperation: PendingLibraryOperation?
+
+    private var filteredApps: [PublishedApp] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return store.libraryApps }
+        return store.libraryApps.filter {
+            $0.name.localizedCaseInsensitiveContains(query) ||
+            $0.bundleId.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if let message = store.libraryMessage {
+                    Section {
+                        Label(message, systemImage: "checkmark.circle.fill")
+                            .font(.footnote)
+                            .foregroundColor(.green)
+                    }
+                }
+
+                if let error = store.libraryErrorMessage {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote)
+                            .foregroundColor(.orange)
+                    }
+                }
+
+                if store.libraryIsLoading && store.libraryApps.isEmpty {
+                    Section {
+                        HStack { Spacer(); ProgressView("Loading library…"); Spacer() }
+                            .padding(.vertical, 24)
+                    }
+                } else if filteredApps.isEmpty {
+                    Section {
+                        VStack(spacing: 10) {
+                            Image(systemName: "square.stack.3d.up.slash")
+                                .font(.system(size: 34))
+                                .foregroundStyle(.secondary)
+                            Text(searchText.isEmpty ? "No published apps" : "No matching apps")
+                                .font(.headline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                    }
+                } else {
+                    Section("Published apps") {
+                        ForEach(filteredApps) { app in
+                            publishedAppRow(app)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Library")
+            .searchable(text: $searchText, prompt: "Search apps")
+            .refreshable { await store.refreshLibrary() }
+            .task {
+                if store.libraryApps.isEmpty { await store.refreshLibrary() }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { Task { await store.refreshLibrary() } } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .disabled(store.libraryIsLoading)
+                }
+            }
+            .alert(
+                pendingOperation?.action == .deleteApp ? "Delete app and stored files?" : "Clean old versions?",
+                isPresented: Binding(
+                    get: { pendingOperation != nil },
+                    set: { if !$0 { pendingOperation = nil } }
+                ),
+                presenting: pendingOperation
+            ) { operation in
+                Button("Cancel", role: .cancel) { pendingOperation = nil }
+                Button(operation.action == .deleteApp ? "Delete" : "Clean", role: .destructive) {
+                    pendingOperation = nil
+                    Task { await store.manageLibrary(app: operation.app, action: operation.action) }
+                }
+            } message: { operation in
+                if operation.action == .deleteApp {
+                    Text("This removes \(operation.app.name) from the site and deletes all R2 versions stored for this published app when an R2 path is available.")
+                } else {
+                    Text("This keeps the current \(operation.app.version) build and deletes older R2 versions for \(operation.app.name).")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func publishedAppRow(_ app: PublishedApp) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                libraryIcon(app)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(app.name).font(.headline)
+                    Text("v\(app.version) · build \(app.build)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(app.bundleId)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+                if store.libraryManagingAppID == app.id {
+                    ProgressView()
+                }
+            }
+
+            HStack(spacing: 10) {
+                if app.available ?? false, app.manifest != nil {
+                    Button { install(app) } label: {
+                        Label("Install", systemImage: "arrow.down.app.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
+                Menu {
+                    if let download = app.downloadURL, let url = URL(string: download) {
+                        Link(destination: url) {
+                            Label("Open Download", systemImage: "arrow.down.circle")
+                        }
+                    }
+                    if app.isR2Backed {
+                        Button {
+                            pendingOperation = PendingLibraryOperation(app: app, action: .cleanOldVersions)
+                        } label: {
+                            Label("Clean Old Versions", systemImage: "externaldrive.badge.minus")
+                        }
+                    }
+                    Button(role: .destructive) {
+                        pendingOperation = PendingLibraryOperation(app: app, action: .deleteApp)
+                    } label: {
+                        Label("Delete from Site & Storage", systemImage: "trash")
+                    }
+                } label: {
+                    Label("Manage", systemImage: "ellipsis.circle")
+                }
+                .buttonStyle(.bordered)
+                .disabled(store.libraryManagingAppID != nil)
+            }
+
+            HStack(spacing: 8) {
+                if let storage = app.storage {
+                    Label(storage, systemImage: "externaldrive.fill")
+                }
+                if let bytes = app.sizeBytes {
+                    Text(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))
+                }
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 5)
+    }
+
+    @ViewBuilder
+    private func libraryIcon(_ app: PublishedApp) -> some View {
+        if let url = absoluteURL(app.icon) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                case .failure:
+                    Image(systemName: "app.fill").resizable().scaledToFit().padding(11)
+                case .empty:
+                    ProgressView()
+                @unknown default:
+                    Image(systemName: "app.fill").resizable().scaledToFit().padding(11)
+                }
+            }
+            .frame(width: 58, height: 58)
+            .background(.thinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        } else {
+            Image(systemName: "app.fill")
+                .font(.title2)
+                .frame(width: 58, height: 58)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
+    }
+
+    private func install(_ app: PublishedApp) {
+        guard let manifest = absoluteURL(app.manifest) else { return }
+        let encoded = manifest.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? manifest.absoluteString
+        guard let installURL = URL(string: "itms-services://?action=download-manifest&url=\(encoded)") else { return }
+        UIApplication.shared.open(installURL)
+    }
+
+    private func absoluteURL(_ value: String?) -> URL? {
+        guard let value, !value.isEmpty else { return nil }
+        if let absolute = URL(string: value), absolute.scheme != nil { return absolute }
+        return URL(string: value, relativeTo: URL(string: "https://nextsolution.cc")!)?.absoluteURL
     }
 }
 
@@ -231,8 +570,7 @@ private struct NextSignerActivityView: View {
                             Image(systemName: "signature")
                                 .font(.system(size: 34))
                                 .foregroundStyle(.secondary)
-                            Text("No signing jobs yet")
-                                .font(.headline)
+                            Text("No signing jobs yet").font(.headline)
                             Text("Your latest Sign & Publish job will appear here.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -243,10 +581,13 @@ private struct NextSignerActivityView: View {
                     }
                 }
 
-                Section("Installer") {
+                Section("Private apps") {
                     Link(destination: URL(string: "https://nextsolution.cc/install/")!) {
-                        Label("Open Next Solution Private Apps", systemImage: "safari")
+                        Label("Open Web Library", systemImage: "safari")
                     }
+                    Text("Use the Library tab for native browsing, installation and storage cleanup.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Activity")
@@ -306,13 +647,13 @@ private struct NextSignerSettingsView: View {
                 Section("Required token permissions") {
                     Label("Contents: Read and write", systemImage: "doc.badge.gearshape")
                     Label("Actions: Read and write", systemImage: "bolt.horizontal.circle")
-                    Text("Scope the token only to the NextSolution repository. The token is saved in the iOS Keychain, not UserDefaults.")
+                    Text("These permissions cover signing, publishing and Library storage management. Scope the token only to the NextSolution repository. The token is saved in the iOS Keychain.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Signing certificate") {
-                    Text("The P12 certificate, password and provisioning profile stay in encrypted GitHub Actions secrets. After setup, Sign & Publish needs only the IPA.")
+                Section("Signing security") {
+                    Text("The P12 certificate, password, provisioning profile and Cloudflare R2 keys remain in encrypted GitHub Actions secrets. They are never stored inside Next Signer.")
                         .font(.footnote)
                 }
             }
@@ -323,22 +664,17 @@ private struct NextSignerSettingsView: View {
 }
 
 private struct UIKitDocumentPicker: UIViewControllerRepresentable {
-    let onPick: (URL) -> Void
+    let documentTypes: [String]
+    let allowsMultipleSelection: Bool
+    let onPick: ([URL]) -> Void
     let onCancel: () -> Void
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(parent: self)
-    }
+    func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        // Use the legacy UTI-based initializer deliberately. It is the most permissive
-        // option on iOS 16 and works with IPA/TIPA files exposed by third-party file providers.
-        let picker = UIDocumentPickerViewController(
-            documentTypes: ["public.item", "public.data", "public.archive", "com.apple.itunes.ipa"],
-            in: .import
-        )
+        let picker = UIDocumentPickerViewController(documentTypes: documentTypes, in: .import)
         picker.delegate = context.coordinator
-        picker.allowsMultipleSelection = false
+        picker.allowsMultipleSelection = allowsMultipleSelection
         picker.shouldShowFileExtensions = true
         return picker
     }
@@ -347,17 +683,11 @@ private struct UIKitDocumentPicker: UIViewControllerRepresentable {
 
     final class Coordinator: NSObject, UIDocumentPickerDelegate {
         let parent: UIKitDocumentPicker
-
-        init(parent: UIKitDocumentPicker) {
-            self.parent = parent
-        }
+        init(parent: UIKitDocumentPicker) { self.parent = parent }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else {
-                parent.onCancel()
-                return
-            }
-            parent.onPick(url)
+            guard !urls.isEmpty else { parent.onCancel(); return }
+            parent.onPick(urls)
         }
 
         func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
