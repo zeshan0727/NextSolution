@@ -90,19 +90,6 @@
       "platform": "iPhone",
       "status": "Re-sign once with NS 2 profile",
       "version": "382.0.0"
-    },
-    {
-      "available": true,
-      "build": "1",
-      "bundleId": "com.nextsolution.nextledgernn",
-      "icon": "/DailyLedger/Assets.xcassets/AppIcon.appiconset/icon-180.png",
-      "id": "next-ledger",
-      "manifest": "/install/next-ledger.plist",
-      "minimumOS": "iOS 16+",
-      "name": "Next Ledger",
-      "platform": "iPhone",
-      "status": "Ready to install",
-      "version": "1.0"
     }
   ],
   "catalog": "Next Solution Private Apps",
