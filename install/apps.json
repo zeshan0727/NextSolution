@@ -87,19 +87,6 @@
     },
     {
       "available": false,
-      "build": "1",
-      "bundleId": "com.opa334.Dopamine",
-      "icon": "/logo.png",
-      "id": "dopamine-3",
-      "manifest": "/install/dopamine-3.plist",
-      "minimumOS": "iOS 10+",
-      "name": "Dopamine",
-      "platform": "iPhone",
-      "status": "Re-sign once for registered-device OTA",
-      "version": "3.0.7"
-    },
-    {
-      "available": false,
       "build": "738721990",
       "bundleId": "com.nextsolution.instaregram",
       "icon": "/install/icons/insta-regram.png",
