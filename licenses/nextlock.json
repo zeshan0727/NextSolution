@@ -1,19 +1,14 @@
 {
   "active" : [
-    "dcf9322d10d03fc0d229563c9115536cb2c27c8a41291799d5fcaf5fff3ff153",
     "e8224f44f79f558722ecdf9bf7d83913703123e91001e702bbe25686506b0378"
   ],
   "currency" : "USD",
   "devices" : [
-    {
-      "activatedAt" : "2026-08-17T19:38:27Z",
-      "maskedDeviceID" : "NS-9475-••••-••••-4348",
-      "token" : "dcf9322d10d03fc0d229563c9115536cb2c27c8a41291799d5fcaf5fff3ff153"
-    }
+
   ],
   "package" : "com.nextsolution.lockglyphtime",
   "price" : "1.00",
   "product" : "NextLock",
   "schema" : 1,
-  "updatedAt" : "2026-08-17T19:38:27Z"
+  "updatedAt" : "2026-08-19T09:27:55Z"
 }
