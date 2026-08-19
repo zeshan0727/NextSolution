@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextlock.perffix
-Name: NextLock 1.1.5 CPU Fix Test 2
-Version: 1.1.5~test2
+Name: NextLock 1.1.5 CPU Fix Test 3
+Version: 1.1.5~test3
 Architecture: iphoneos-arm64
-Description: Feature-preserving NextLock 1.1.4 CPU fix Test 2. Reuses immutable UIImage objects for repeated LockGlyphTime imageWithData calls and caches the exact transparent-photo/sticker classification result so repeated Lock Screen layouts do not re-decode, rerasterize, or rescan unchanged images.
+Description: Feature-preserving NextLock 1.1.4 CPU fix Test 3. Removes the redundant deferred duplicate full-render pass queued by the 1.1.4 layout hook while retaining the synchronous renderer and exact transparent-photo/sticker classification cache.
 Maintainer: Next Solution - Zeeshan Barvi
 Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
