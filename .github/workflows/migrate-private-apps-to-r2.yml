@@ -22,7 +22,7 @@ jobs:
     env:
       R2_BUCKET: next-signer-apps
       R2_PUBLIC_BASE: https://files.nextsolution.cc
-      R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+      R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
       AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
@@ -44,7 +44,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${R2_ACCOUNT_ID:-}" || { echo "CLOUDFLARE_R2_ACCOUNT_ID is missing"; exit 1; }
           test -n "${AWS_ACCESS_KEY_ID:-}" || { echo "CLOUDFLARE_R2_ACCESS_KEY_ID is missing"; exit 1; }
           test -n "${AWS_SECRET_ACCESS_KEY:-}" || { echo "CLOUDFLARE_R2_SECRET_ACCESS_KEY is missing"; exit 1; }
 
