@@ -134,3 +134,39 @@ struct AdTestDeviceSetupView: View {
         )
     }
 }
+
+struct AdTestDeviceButton: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        Button {
+            isPresented = true
+        } label: {
+            Label("Test ID", systemImage: "testtube.2")
+                .font(.caption.weight(.semibold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $isPresented) {
+            NavigationStack {
+                ScrollView {
+                    AdTestDeviceSetupView()
+                        .padding(18)
+                }
+                .navigationTitle("Ad Test Device")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") {
+                            isPresented = false
+                        }
+                    }
+                }
+            }
+            .preferredColorScheme(.dark)
+        }
+    }
+}
