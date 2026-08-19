@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T07:32:28Z",
+  "updatedAt": "2026-08-19T07:48:10Z",
   "files": [
+    {
+      "id": "nextpost-1.0.7-levelplay-guide-complete",
+      "name": "Next Post 1.0.7 LevelPlay Guide Complete",
+      "fileName": "NextPost-1.0.7-LevelPlay-Guide-Complete.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.7",
+      "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.7/NextPost-1.0.7-LevelPlay-Guide-Complete.tipa",
+      "sha256": "dcbcc9e422c6ee4e4bcb4ccc9d83bb98e019c81e0793345d74f18deb9bf9072b",
+      "notes": "Aligns Next Post with Unity LevelPlay iOS setup guidance: official Swift Package integration, -ObjC, z/sqlite3 and required Apple frameworks, ironSource SKAdNetwork ID, Universal SKAN postback endpoint, ATS settings, corrected banner/interstitial IDs, and existing native LevelPlay initialization."
+    },
     {
       "id": "nextpost-1.0.6-test-device-id",
       "name": "Next Post 1.0.6 Test Device ID",
