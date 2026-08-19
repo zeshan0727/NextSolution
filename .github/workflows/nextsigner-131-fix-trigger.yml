@@ -1,110 +1,35 @@
 name: Temporary Next Signer 1.3.1 Fix Verifier
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'nextsigner-131-trigger.txt'
+  issues:
+    types: [opened]
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   build-publish:
+    if: github.event.issue.title == '[NEXTSIGNER-1.3.1-VERIFY]'
     runs-on: macos-15
     timeout-minutes: 35
     env:
+      GH_TOKEN: ${{ github.token }}
+      NEXTSIGNER_VERSION: '1.3.1'
       R2_BUCKET: next-signer-apps
       R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
       R2_PUBLIC_BASE: https://files.nextsolution.cc
       AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
     steps:
+      - name: Report start
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_STARTED run=${{ github.run_id }}"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-
-      - name: Add Photos icon picker and bump 1.3.1
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('NextSigner/NextSigner/NextSignerRootView.swift')
-          s = path.read_text()
-          if 'import PhotosUI' not in s:
-              s = s.replace('import UIKit\n', 'import UIKit\nimport PhotosUI\n', 1)
-          if '@State private var selectedPhotoIcon: PhotosPickerItem?' not in s:
-              s = s.replace(
-                  '    @State private var pickerTarget: PickerTarget?\n',
-                  '    @State private var pickerTarget: PickerTarget?\n    @State private var selectedPhotoIcon: PhotosPickerItem?\n',
-                  1
-              )
-
-          old = '''                HStack {
-                    Button { pickerTarget = .icon } label: {
-                        Label(store.request.customIconURL == nil ? "Choose Icon" : "Change Icon", systemImage: "photo")
-                    }
-                    .buttonStyle(.bordered)
-
-                    if store.request.customIconURL != nil {
-                        Button("Remove", role: .destructive) { store.clearCustomIcon() }
-                            .buttonStyle(.bordered)
-                    }
-                }
-'''
-          new = '''                HStack {
-                    PhotosPicker(selection: $selectedPhotoIcon, matching: .images) {
-                        Label("Photos", systemImage: "photo.on.rectangle")
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    Button { pickerTarget = .icon } label: {
-                        Label("Files", systemImage: "folder")
-                    }
-                    .buttonStyle(.bordered)
-
-                    if store.request.customIconURL != nil {
-                        Button("Remove", role: .destructive) { store.clearCustomIcon() }
-                            .buttonStyle(.bordered)
-                    }
-                }
-                .onChange(of: selectedPhotoIcon) { item in
-                    guard let item else { return }
-                    Task { @MainActor in
-                        defer { selectedPhotoIcon = nil }
-                        do {
-                            guard let data = try await item.loadTransferable(type: Data.self),
-                                  let image = UIImage(data: data),
-                                  let pngData = image.pngData() else {
-                                store.errorMessage = "The selected photo could not be converted to PNG."
-                                return
-                            }
-                            store.importCustomIconPNGData(pngData)
-                        } catch {
-                            store.errorMessage = "Unable to load the selected photo: \(error.localizedDescription)"
-                        }
-                    }
-                }
-'''
-          if old not in s:
-              raise SystemExit('Custom icon picker block not found')
-          s = s.replace(old, new, 1)
-          path.write_text(s)
-
-          path = Path('NextSigner/project.yml')
-          s = path.read_text()
-          s = s.replace('MARKETING_VERSION: "1.3.0"', 'MARKETING_VERSION: "1.3.1"')
-          s = s.replace('CURRENT_PROJECT_VERSION: "13"', 'CURRENT_PROJECT_VERSION: "14"')
-          path.write_text(s)
-
-          path = Path('.github/workflows/build-nextsigner-tipa.yml')
-          s = path.read_text().replace('NextSigner-1.3.0', 'NextSigner-1.3.1')
-          path.write_text(s)
-          PY
 
       - name: Generate app icon and project
         shell: bash
@@ -142,11 +67,11 @@ jobs:
           mkdir -p "$RUNNER_TEMP/package/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
           cd "$RUNNER_TEMP/package"
-          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-1.3.1.ipa" Payload
-          cp "$RUNNER_TEMP/NextSigner-1.3.1.ipa" "$RUNNER_TEMP/NextSigner-1.3.1.tipa"
-          unzip -t "$RUNNER_TEMP/NextSigner-1.3.1.tipa" >/dev/null
-          echo "NEXTSIGNER_SHA256=$(shasum -a 256 "$RUNNER_TEMP/NextSigner-1.3.1.tipa" | awk '{print $1}')" >> "$GITHUB_ENV"
-          echo "NEXTSIGNER_SIZE_BYTES=$(stat -f '%z' "$RUNNER_TEMP/NextSigner-1.3.1.tipa")" >> "$GITHUB_ENV"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.ipa" "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.tipa"
+          unzip -t "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.tipa" >/dev/null
+          echo "NEXTSIGNER_SHA256=$(shasum -a 256 "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.tipa" | awk '{print $1}')" >> "$GITHUB_ENV"
+          echo "NEXTSIGNER_SIZE_BYTES=$(stat -f '%z' "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.tipa")" >> "$GITHUB_ENV"
 
       - name: Upload verified artifact
         uses: actions/upload-artifact@v4
@@ -168,25 +93,27 @@ jobs:
           python3 - <<'PY'
           import boto3, os
           from botocore.config import Config
-          endpoint = f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"
+          version = os.environ['NEXTSIGNER_VERSION']
+          source = os.path.join(os.environ['RUNNER_TEMP'], f'NextSigner-{version}.tipa')
+          key = f'apps/tipa/NextSigner/{version}/NextSigner-{version}.tipa'
           client = boto3.client(
-              's3', endpoint_url=endpoint,
+              's3',
+              endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
               aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
               aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-              region_name='auto', config=Config(signature_version='s3v4')
+              region_name='auto',
+              config=Config(signature_version='s3v4')
           )
-          client.upload_file(
-              os.path.join(os.environ['RUNNER_TEMP'], 'NextSigner-1.3.1.tipa'),
-              os.environ['R2_BUCKET'],
-              'apps/tipa/NextSigner/1.3.1/NextSigner-1.3.1.tipa',
-              ExtraArgs={'ContentType': 'application/octet-stream', 'CacheControl': 'public, max-age=31536000, immutable'}
-          )
+          client.upload_file(source, os.environ['R2_BUCKET'], key, ExtraArgs={
+              'ContentType': 'application/octet-stream',
+              'CacheControl': 'public, max-age=31536000, immutable'
+          })
           PY
-          PUBLIC_URL="$R2_PUBLIC_BASE/apps/tipa/NextSigner/1.3.1/NextSigner-1.3.1.tipa"
+          PUBLIC_URL="$R2_PUBLIC_BASE/apps/tipa/NextSigner/$NEXTSIGNER_VERSION/NextSigner-$NEXTSIGNER_VERSION.tipa"
           curl --fail --silent --show-error --location --head --retry 8 --retry-delay 3 --retry-all-errors "$PUBLIC_URL" >/dev/null
           echo "NEXTSIGNER_R2_URL=$PUBLIC_URL" >> "$GITHUB_ENV"
 
-      - name: Update Transfer metadata
+      - name: Update Transfer metadata and build status
         shell: bash
         run: |
           set -euo pipefail
@@ -194,44 +121,53 @@ jobs:
           import json, os
           from pathlib import Path
           from datetime import datetime, timezone
+
+          version = os.environ['NEXTSIGNER_VERSION']
+          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
           path = Path('transfer/index.json')
           data = json.loads(path.read_text())
           files = [x for x in data.get('files', []) if not str(x.get('id', '')).startswith('nextsigner-')]
           entry = {
-              'id': 'nextsigner-1.3.1',
-              'name': 'Next Signer 1.3.1',
-              'fileName': 'NextSigner-1.3.1.tipa',
+              'id': f'nextsigner-{version}',
+              'name': f'Next Signer {version}',
+              'fileName': f'NextSigner-{version}.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
-              'version': '1.3.1',
+              'version': version,
               'url': os.environ['NEXTSIGNER_R2_URL'],
               'sha256': os.environ['NEXTSIGNER_SHA256'],
               'sizeBytes': int(os.environ['NEXTSIGNER_SIZE_BYTES']),
               'storage': 'Cloudflare R2',
-              'notes': 'Fixes Library deletion 403 by using PAT-safe repository dispatch and immediate repository-catalog verification. Adds native Photos and Files selection for custom signing icons.'
+              'notes': 'Fixes Library deletion 403 using PAT-safe repository dispatch and direct repository catalog verification. Custom signing icons can now be selected from Photos or Files.'
           }
           data['files'] = [entry] + files
-          data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          data['updatedAt'] = now
           path.write_text(json.dumps(data, indent=2) + '\n')
+
+          status_dir = Path('build-status')
+          status_dir.mkdir(exist_ok=True)
+          (status_dir / 'nextsigner.json').write_text(json.dumps({
+              'version': version,
+              'status': 'success',
+              'url': os.environ['NEXTSIGNER_R2_URL'],
+              'sha256': os.environ['NEXTSIGNER_SHA256'],
+              'sizeBytes': int(os.environ['NEXTSIGNER_SIZE_BYTES']),
+              'run': os.environ['GITHUB_RUN_ID'],
+              'updatedAt': now
+          }, indent=2) + '\n')
           PY
 
-      - name: Commit verified 1.3.1
-        shell: bash
-        run: |
-          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add NextSigner/NextSigner/NextSignerRootView.swift NextSigner/project.yml .github/workflows/build-nextsigner-tipa.yml transfer/index.json
-          git commit -m 'Release Next Signer 1.3.1 deletion and Photos fixes'
+          git add transfer/index.json build-status/nextsigner.json
+          git commit -m "Publish Next Signer ${NEXTSIGNER_VERSION} through Cloudflare R2"
           git pull --rebase origin main
           git push origin HEAD:main
 
-      - name: Summary
-        run: |
-          {
-            echo '## Next Signer 1.3.1'
-            echo
-            echo 'Status: build verified and published'
-            echo "URL: $NEXTSIGNER_R2_URL"
-            echo "SHA-256: $NEXTSIGNER_SHA256"
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Report success
+        if: success()
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_OK run=${{ github.run_id }} url=$NEXTSIGNER_R2_URL"
+
+      - name: Report failure
+        if: failure()
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_1_FAILED run=${{ github.run_id }}"
