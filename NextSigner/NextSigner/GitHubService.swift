@@ -306,15 +306,36 @@ actor GitHubService {
     }
 
     private func fetchPublishStatus(releaseID: Int, assetName: String) async throws -> PublishStatusPayload? {
-        let assetsURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/\(releaseID)/assets?per_page=100")
-        let (assetsData, assetsResponse) = try await session.data(for: request(url: assetsURL))
-        try validate(response: assetsResponse, data: assetsData)
-        let assets = try JSONDecoder().decode([Asset].self, from: assetsData)
-        guard let asset = assets.first(where: { $0.name == assetName }) else { return nil }
+        var matchedAsset: Asset?
+
+        // Always bypass caches and paginate the private inbox. The status asset can
+        // be created after the first poll, and the inbox may contain more than 100
+        // assets after failed or queued signing jobs.
+        for page in 1...5 {
+            let assetsURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/\(releaseID)/assets?per_page=100&page=\(page)")
+            var assetsRequest = request(url: assetsURL)
+            assetsRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+            assetsRequest.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
+            assetsRequest.setValue("no-cache", forHTTPHeaderField: "Pragma")
+
+            let (assetsData, assetsResponse) = try await session.data(for: assetsRequest)
+            try validate(response: assetsResponse, data: assetsData)
+            let assets = try JSONDecoder().decode([Asset].self, from: assetsData)
+
+            if let asset = assets.first(where: { $0.name == assetName }) {
+                matchedAsset = asset
+                break
+            }
+            if assets.count < 100 { break }
+        }
+
+        guard let asset = matchedAsset else { return nil }
 
         let assetURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/assets/\(asset.id)")
         var statusRequest = request(url: assetURL)
         statusRequest.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
+        statusRequest.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
+        statusRequest.setValue("no-cache", forHTTPHeaderField: "Pragma")
         statusRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         let (data, response) = try await session.data(for: statusRequest)
         try validate(response: response, data: data)

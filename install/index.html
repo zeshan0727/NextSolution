@@ -35,7 +35,7 @@
     async function loadCatalog(){
       const root=document.getElementById('catalog');
       try{
-        const response=await fetch('/install/apps.json',{cache:'no-store'});
+        const response=await fetch('/install/apps.json?v='+Date.now(),{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
         if(!response.ok) throw new Error('Catalog unavailable');
         const data=await response.json();
         root.innerHTML='';
@@ -68,6 +68,7 @@
     function escapeHTML(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
     function escapeAttr(value){return escapeHTML(value);}
     loadCatalog();
+    setInterval(loadCatalog,30000);
   </script>
   <script defer src="/assets/adsterra.js" data-nextsolution-ads="adsterra"></script>
 </body>
