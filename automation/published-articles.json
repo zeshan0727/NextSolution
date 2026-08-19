@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "c88a51130635b913537153c6e7e9e4c867517ad32bc51ec61e51ffc1c90cb894",
+      "candidate_fingerprint": "9e52f49cd015bfc767e00e867ec83f0d1f60d0dc5d3195809d2f20a40260be09",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Explore iFetch 6.0.0, an iPhoneOS arm64 package offering system diagnostics, process monitoring, and CLI fetch for supported rootless and RootHide jailbreak devices.",
+      "href": "ifetch-tweak.html",
+      "image": "https://media.havoc.app/6a6a10430d3b1e34bf146506",
+      "media_credit": "iFetch official package listing",
+      "media_source_url": "https://havoc.app/package/ifetch",
+      "modified_at": "2026-08-19T03:42:29+00:00",
+      "name": "iFetch",
+      "package": "com.wee1ka.ifetch",
+      "published_at": "2026-08-19T03:42:29+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/ifetch",
+      "source_url": "https://havoc.app/",
+      "title": "iFetch 6.0.0: System Diagnostics and CLI Fetch for iOS 14–17 Jailbreak Devices",
+      "version": "6.0.0"
+    },
+    {
       "article_sha256": "fb6d1420127bf32a51a96e7a1cafe84173631b4baa033ec50a69825258907193",
       "candidate_fingerprint": "f0590ad3de4e2cddfe04344a6dbf31f2e66b781ff56b682bd042bf4331521a7d",
       "category": {
@@ -548,8 +571,17 @@
       "published_at": "2026-08-18T03:40:24+00:00",
       "run_id": "32096249272",
       "version": "1.3.18-2"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "9e52f49cd015bfc767e00e867ec83f0d1f60d0dc5d3195809d2f20a40260be09",
+      "href": "ifetch-tweak.html",
+      "package": "com.wee1ka.ifetch",
+      "published_at": "2026-08-19T03:42:29+00:00",
+      "run_id": "32213039776",
+      "version": "6.0.0"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-18T03:40:24+00:00"
+  "updated_at": "2026-08-19T03:42:29+00:00"
 }
