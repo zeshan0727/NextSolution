@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextlock.perffix
-Name: NextLock 1.1.5 CPU Fix Test 3
-Version: 1.1.5~test3
+Name: NextLock 1.1.5 CPU Fix Test 4
+Version: 1.1.5~test4
 Architecture: iphoneos-arm64
-Description: Feature-preserving NextLock 1.1.4 CPU fix Test 3. Removes the redundant deferred duplicate full-render pass queued by the 1.1.4 layout hook while retaining the synchronous renderer and exact transparent-photo/sticker classification cache.
+Description: Feature-preserving NextLock 1.1.4 CPU fix Test 4. Caps the verified 60/120 Hz update/render storm to 10 Hz per expensive function while retaining native UIKit layout, all clock/date styling, all four photo/sticker frames, duplicate-render suppression and exact transparency caching.
 Maintainer: Next Solution - Zeeshan Barvi
 Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
