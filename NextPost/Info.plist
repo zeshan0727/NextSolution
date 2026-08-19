@@ -21,6 +21,9 @@
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
 
+    <key>NSUserTrackingUsageDescription</key>
+    <string>Next Post uses the device advertising identifier to support and test advertising delivery.</string>
+
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>

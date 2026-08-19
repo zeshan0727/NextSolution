@@ -67,12 +67,13 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.5-Banner-ID-Fix.tipa
-          shasum -a 256 NextPost-1.0.5-Banner-ID-Fix.tipa > NextPost-1.0.5-Banner-ID-Fix.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload NextPost-1.0.6-Test-Device-ID.tipa
+          shasum -a 256 NextPost-1.0.6-Test-Device-ID.tipa > NextPost-1.0.6-Test-Device-ID.sha256
 
           /usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSUserTrackingUsageDescription" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :SKAdNetworkItems:0:SKAdNetworkIdentifier" "$APP_PATH/Info.plist"
           test -f "$APP_PATH/PrivacyInfo.xcprivacy"
           file "$APP_PATH/Next Post"
@@ -80,28 +81,28 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NextPost-1.0.5-Banner-ID-Fix
+          name: NextPost-1.0.6-Test-Device-ID
           path: |
-            NextPost-1.0.5-Banner-ID-Fix.tipa
-            NextPost-1.0.5-Banner-ID-Fix.sha256
+            NextPost-1.0.6-Test-Device-ID.tipa
+            NextPost-1.0.6-Test-Device-ID.sha256
           if-no-files-found: error
 
       - name: Publish TIPA to repository
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p applications
-          cp NextPost-1.0.5-Banner-ID-Fix.tipa applications/NextPost-1.0.5-Banner-ID-Fix.tipa
-          cp NextPost-1.0.5-Banner-ID-Fix.sha256 applications/NextPost-1.0.5-Banner-ID-Fix.sha256
+          cp NextPost-1.0.6-Test-Device-ID.tipa applications/NextPost-1.0.6-Test-Device-ID.tipa
+          cp NextPost-1.0.6-Test-Device-ID.sha256 applications/NextPost-1.0.6-Test-Device-ID.sha256
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add applications/NextPost-1.0.5-Banner-ID-Fix.tipa applications/NextPost-1.0.5-Banner-ID-Fix.sha256
+          git add applications/NextPost-1.0.6-Test-Device-ID.tipa applications/NextPost-1.0.6-Test-Device-ID.sha256
 
           if git diff --cached --quiet; then
-            echo "Next Post 1.0.5 banner ID fix is already published."
+            echo "Next Post 1.0.6 test device helper is already published."
             exit 0
           fi
 
-          git commit -m "Publish Next Post 1.0.5 banner ID fix TIPA"
+          git commit -m "Publish Next Post 1.0.6 test device helper TIPA"
           git pull --rebase origin main
           git push origin HEAD:main
