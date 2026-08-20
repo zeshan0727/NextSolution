@@ -22,10 +22,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dpkg
-        run: brew install dpkg
+      - name: Install tools
+        run: brew install dpkg llvm
 
-      - name: Extract package resources
+      - name: Extract package resources and inspect picker binary
         shell: bash
         run: |
           set -euo pipefail
@@ -48,8 +48,40 @@ jobs:
             esac
           done < <(find "$STAGE" -type f)
 
-          # Make preference-related filenames easy to spot.
           grep -Ei 'pref|preference|specifier|bundle|plist|lock|glyph|next' "$OUT/file-list.txt" > "$OUT/preference-candidates.txt" || true
+
+          PREFBIN="$STAGE/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/LockGlyphTimePrefs"
+          BINOUT="$OUT/prefs-binary"
+          mkdir -p "$BINOUT"
+          test -f "$PREFBIN"
+
+          file "$PREFBIN" > "$BINOUT/file.txt"
+          lipo -info "$PREFBIN" > "$BINOUT/lipo.txt" 2>&1 || true
+          dwarfdump --uuid "$PREFBIN" > "$BINOUT/uuids.txt" 2>&1 || true
+          strings -a -n 4 "$PREFBIN" > "$BINOUT/strings.txt"
+          strings -a -n 4 "$PREFBIN" | grep -Ein 'crop|photo|picker|image|frame|aspect|zoom|scroll|use photo|edit photo|customPhoto|openCustom' > "$BINOUT/photo-picker-strings.txt" || true
+          nm -nm "$PREFBIN" > "$BINOUT/nm.txt" 2>&1 || true
+          otool -ov "$PREFBIN" > "$BINOUT/objc.txt" 2>&1 || true
+          /opt/homebrew/opt/llvm/bin/llvm-objdump --macho --objc-meta-data "$PREFBIN" > "$BINOUT/objc-llvm.txt" 2>&1 || true
+          /opt/homebrew/opt/llvm/bin/llvm-objdump --macho --disassemble "$PREFBIN" > "$BINOUT/disassembly.txt" 2>&1 || true
+
+          # Focused neighborhoods around picker/crop-related selectors and classes.
+          python3 - "$BINOUT/strings.txt" "$BINOUT/photo-picker-context.txt" <<'PY'
+          import sys,re
+          src=open(sys.argv[1],errors='replace').read().splitlines()
+          pats=re.compile(r'crop|photo|picker|image|zoom|scroll|customPhoto|openCustom|Use Photo',re.I)
+          hits=[i for i,s in enumerate(src) if pats.search(s)]
+          out=[]
+          seen=set()
+          for i in hits:
+              a=max(0,i-8); b=min(len(src),i+9)
+              key=(a,b)
+              if key in seen: continue
+              seen.add(key)
+              out.append(f'--- strings {a+1}-{b} ---')
+              out.extend(f'{j+1}: {src[j]}' for j in range(a,b))
+          open(sys.argv[2],'w').write('\n'.join(out)+'\n')
+          PY
 
       - name: Commit inspection text
         shell: bash
@@ -60,6 +92,6 @@ jobs:
           git add analysis/nextlock-1.1.4/package-inspection
           git diff --cached --check
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Inspect NextLock 1.1.4 preference resources'
+          git commit -m 'Inspect NextLock 1.1.4 preference picker binary'
           git pull --rebase --autostash origin main
           git push origin HEAD:main
