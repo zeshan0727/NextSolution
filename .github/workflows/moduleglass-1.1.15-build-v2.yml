@@ -1,4 +1,4 @@
-name: Build Module Glass 1.1.16 Settings Restored
+name: Build Module Glass 1.1.17 Self-Contained Preferences
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: moduleglass-1.1.16-settings-restored
+  group: moduleglass-1.1.17-self-contained-preferences
   cancel-in-progress: true
 
 jobs:
@@ -53,26 +53,69 @@ jobs:
           grep -Fq 'connectivity-native-toggle-state' buildsrc/Runtime/Tweak.m
           grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' buildsrc/Runtime/Tweak.m
 
-      - name: Add Settings pane to the same Module Glass package
+      - name: Embed dedicated Module Glass preference bundle
         shell: bash
         run: |
           set -euo pipefail
           P=buildsrc/Runtime
+          PREFDEB=debfiles/NextAura_Runtime_preferences_1.0.5_RootHide.deb
+          test -f "$PREFDEB"
+
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('buildsrc/Runtime/control')
           t=p.read_text()
-          t=t.replace('Version: 1.1.15','Version: 1.1.16')
-          t=t.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.15)','Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.16)')
-          t=t.replace('<= 1.1.14','<= 1.1.15')
+          t=t.replace('Version: 1.1.15','Version: 1.1.17')
+          t=t.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.15)','Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.17)')
+          t=t.replace('<= 1.1.14','<= 1.1.16')
+          t=re.sub(r',\s*com\.nextsolution\.nextaura\.runtime\.preferences \(>= 1\.0\.5\)', '', t)
           old='Description: RootHide Module Glass 1.1.15 expansion-isolation test. Volume/Brightness custom images are hosted outside Apple slider internals and Connectivity keeps native toggle colors so expandable Apple-owned views are not mutated.'
-          new='Description: Module Glass 1.1.16 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and restores its Settings preference entry inside the same package.'
+          new='Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds its complete Settings preference bundle directly in the same package.'
           t=t.replace(old,new)
           p.write_text(t)
           PY
           grep -q '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' "$P/control"
-          grep -q '^Version: 1.1.16$' "$P/control"
-          grep -q 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.5)' "$P/control"
+          grep -q '^Version: 1.1.17$' "$P/control"
+          ! grep -q 'com.nextsolution.nextaura.runtime.preferences' "$P/control"
+          grep -q 'preferenceloader' "$P/control"
+
+          rm -rf /tmp/moduleglass-prefs-runtime
+          mkdir -p /tmp/moduleglass-prefs-runtime
+          dpkg-deb -x "$PREFDEB" /tmp/moduleglass-prefs-runtime
+          SRC_BUNDLE="$(find /tmp/moduleglass-prefs-runtime -type d -name 'UnlockVibratePrefs.bundle' -print -quit)"
+          test -n "$SRC_BUNDLE"
+          test -f "$SRC_BUNDLE/UnlockVibratePrefs"
+          test -f "$SRC_BUNDLE/Info.plist"
+          test -f "$SRC_BUNDLE/CCModuleBackgrounds.plist"
+          test -f "$SRC_BUNDLE/NextAura-cc-module-backgrounds.png"
+
+          DEST="$P/layout/Library/PreferenceBundles/ModuleGlassPrefs.bundle"
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp "$SRC_BUNDLE/UnlockVibratePrefs" "$DEST/UnlockVibratePrefs"
+          cp "$SRC_BUNDLE/Info.plist" "$DEST/Info.plist"
+          cp "$SRC_BUNDLE/CCModuleBackgrounds.plist" "$DEST/CCModuleBackgrounds.plist"
+          cp "$SRC_BUNDLE/NextAura-cc-module-backgrounds.png" "$DEST/NextAura-cc-module-backgrounds.png"
+          chmod 0755 "$DEST/UnlockVibratePrefs"
+
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.nextsolution.moduleglass.preferences' "$DEST/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleName Module Glass' "$DEST/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString 1.1.17' "$DEST/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleVersion 1.1.17' "$DEST/Info.plist"
+          plutil -lint "$DEST/Info.plist"
+          plutil -lint "$DEST/CCModuleBackgrounds.plist"
+
+          # If 1.0.5 supplies the native Volume color action extension, include a
+          # renamed private copy so Module Glass stays self-contained without
+          # owning the same filesystem path as the shared preferences runtime.
+          EXT_DYLIB="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.dylib' -print -quit || true)"
+          EXT_PLIST="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.plist' -print -quit || true)"
+          if [[ -n "$EXT_DYLIB" && -n "$EXT_PLIST" ]]; then
+            mkdir -p "$P/layout/Library/MobileSubstrate/DynamicLibraries"
+            cp "$EXT_DYLIB" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib"
+            cp "$EXT_PLIST" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist"
+          fi
 
           mkdir -p "$P/layout/Library/PreferenceLoader/Preferences"
           cat > "$P/layout/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist" <<'PLIST'
@@ -83,7 +126,7 @@ jobs:
               <key>entry</key>
               <dict>
                   <key>bundle</key>
-                  <string>UnlockVibratePrefs</string>
+                  <string>ModuleGlassPrefs</string>
                   <key>cell</key>
                   <string>PSLinkCell</string>
                   <key>detail</key>
@@ -102,8 +145,8 @@ jobs:
           PLIST
           plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist"
 
-          cp -R "$P" output/source-stage/ModuleGlass-1.1.16-Complete-Source
-          ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.16-Complete-Source output/ModuleGlass_1.1.16_Complete_Source.zip
+          cp -R "$P" output/source-stage/ModuleGlass-1.1.17-Complete-Source
+          ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.17-Complete-Source output/ModuleGlass_1.1.17_Complete_Source.zip
 
       - name: Install RootHide build tools
         shell: bash
@@ -130,7 +173,6 @@ jobs:
           RAW="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
           test -n "$RAW"
 
-          # Repack only to add a reliable post-install Settings/SpringBoard refresh.
           STAGE="${{ github.workspace }}/output/package-stage"
           rm -rf "$STAGE"
           dpkg-deb -R "$RAW" "$STAGE"
@@ -141,40 +183,61 @@ jobs:
           exit 0
           SH
           chmod 0755 "$STAGE/DEBIAN/postinst"
-          dpkg-deb -b "$STAGE" "${{ github.workspace }}/output/ModuleGlass_1.1.16_SettingsRestored_RootHide.deb"
+          dpkg-deb -b "$STAGE" "${{ github.workspace }}/output/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb"
 
-      - name: Verify same-package upgrade and preferences payload
+      - name: Verify full self-contained package
         shell: bash
         run: |
           set -euo pipefail
-          DEB=output/ModuleGlass_1.1.16_SettingsRestored_RootHide.deb
+          DEB=output/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb
           test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
-          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.16'
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.17'
           test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
-          dpkg-deb -f "$DEB" Depends | grep -Fq 'com.nextsolution.nextaura.runtime.preferences (>= 1.0.5)'
+          ! dpkg-deb -f "$DEB" Depends | grep -q 'com.nextsolution.nextaura.runtime.preferences'
+          dpkg-deb -f "$DEB" Depends | grep -q 'preferenceloader'
+
           rm -rf verify && mkdir verify
           dpkg-deb -x "$DEB" verify
-          test -f verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
-          plutil -lint verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
-          grep -Fq '<string>Module Glass</string>' verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
-          grep -Fq '<string>UnlockVibratePrefs</string>' verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
-          grep -Fq '<string>CCModuleBackgrounds</string>' verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
+          LOADER=verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
+          BUNDLE=verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle
+          test -f "$LOADER"
+          test -f "$BUNDLE/UnlockVibratePrefs"
+          test -f "$BUNDLE/Info.plist"
+          test -f "$BUNDLE/CCModuleBackgrounds.plist"
+          test -f "$BUNDLE/NextAura-cc-module-backgrounds.png"
+          plutil -lint "$LOADER"
+          plutil -lint "$BUNDLE/Info.plist"
+          plutil -lint "$BUNDLE/CCModuleBackgrounds.plist"
+          grep -Fq '<string>ModuleGlassPrefs</string>' "$LOADER"
+          grep -Fq '<string>UVSubListController</string>' "$LOADER"
+          grep -Fq '<string>CCModuleBackgrounds</string>' "$LOADER"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUNDLE/Info.plist" | grep -Fxq 'com.nextsolution.moduleglass.preferences'
+
+          PREF_ARCHS="$(lipo -archs "$BUNDLE/UnlockVibratePrefs")"
+          [[ " $PREF_ARCHS " == *' arm64 '* && " $PREF_ARCHS " == *' arm64e '* ]]
+
           DYLIB="$(find verify -type f -name CCModuleBackgrounds.dylib -print -quit)"
+          test -n "$DYLIB"
           ARCHS="$(lipo -archs "$DYLIB")"
           [[ " $ARCHS " == *' arm64 '* && " $ARCHS " == *' arm64e '* ]]
           otool -L "$DYLIB" | grep -Fq '@loader_path/.jbroot/'
           strings "$DYLIB" > output/dylib.strings
           grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' output/dylib.strings
-          shasum -a 256 "$DEB" output/ModuleGlass_1.1.16_Complete_Source.zip | tee output/SHA256SUMS.txt
+
+          echo '=== MODULE GLASS 1.1.17 PACKAGE CONTENTS ==='
           dpkg-deb -c "$DEB" | tee output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/PreferenceBundles/ModuleGlassPrefs.bundle/UnlockVibratePrefs' output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist' output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib' output/PACKAGE-CONTENTS.txt
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.17_Complete_Source.zip | tee output/SHA256SUMS.txt
 
       - name: Upload verified artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ModuleGlass-1.1.16-Settings-Restored-RootHide
+          name: ModuleGlass-1.1.17-Self-Contained-Preferences-RootHide
           path: |
-            output/ModuleGlass_1.1.16_SettingsRestored_RootHide.deb
-            output/ModuleGlass_1.1.16_Complete_Source.zip
+            output/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb
+            output/ModuleGlass_1.1.17_Complete_Source.zip
             output/SHA256SUMS.txt
             output/PACKAGE-CONTENTS.txt
           if-no-files-found: error
