@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextlock.perffix
-Name: NextLock 1.1.5 CPU Fix Test 5
-Version: 1.1.5~test5
+Name: NextLock 1.1.5 CPU Fix Test 7
+Version: 1.1.5~test7
 Architecture: iphoneos-arm64
-Description: Feature-preserving NextLock 1.1.4 CPU fix Test 5. Suppresses only the live-proven 120 Hz callback/update block while leaving normal layoutSubviews-driven time/date/photo positioning and styling fully unthrottled. Retains duplicate deferred-render suppression and exact transparency caching.
+Description: Refined NextLock 1.1.4 CPU/photo fix. Keeps the proven targeted 120 Hz callback suppression, preserves live time/date/photo positioning, stores the complete selected photo at up to 2048 px long edge instead of square-cropping to 512x512, and provides Auto, Stretch, Full Photo and Cut/Crop display modes.
 Maintainer: Next Solution - Zeeshan Barvi
 Author: Next Solution - Zeeshan Barvi
 Section: Tweaks
