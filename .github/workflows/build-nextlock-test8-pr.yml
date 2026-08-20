@@ -36,6 +36,8 @@ jobs:
           import sys
           p=Path(sys.argv[1]); t=p.read_text()
           t=t.replace('NextLockPerfFix 1.1.5-test7 refined-full-photo 2048px test5-cpu auto-stretch-full-cutcrop','NextLockPerfFix 1.1.5-test8 preserve-all-style skip-callback-photo refined-full-picker')
+          t=t.replace('static const uintptr_t kArm64CallbackBlockOffset   = 0xBC30;\n','')
+          t=t.replace('static const uintptr_t kArm64eCallbackBlockOffset  = 0xBDD4;\n','')
           t=t.replace('static void (*NLOriginalHotCallbackBlock)(void *blockObject) = NULL;\n','')
           t=t.replace('static void NLSuppressHotCallback(void *blockObject) {\n    (void)blockObject;\n}\n\n','')
           t=t.replace('static BOOL NLInstalled = NO;\n','static BOOL NLInstalled = NO;\nstatic volatile uint8_t *NLHotCallbackFlag = NULL; // arm64e +0x18EF4\n',1)
