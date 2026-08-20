@@ -1,0 +1,78 @@
+=== NextLock Test 15 diagnostic ===
+Thu Aug 20 12:16:55 UTC 2026
+14:    "NextLockHideElements 1.1.5-test15 designer-direct-safe-hooks";
+360:            NLHookIfAvailable(@"CSQuickActionsViewController", @"hasCamera",
+362:            NLHookIfAvailable(@"CSQuickActionsViewController", @"hasFlashlight",
+364:            NLHookIfAvailable(@"CSTeachableMomentsContainerView", @"controlCenterGrabberView",
+366:            NLHookIfAvailable(@"CSTeachableMomentsContainerView", @"homeAffordanceView",
+368:            NLHookIfAvailable(@"CSTeachableMomentsContainerView", @"homeAffordanceContainerView",
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+Initialized empty Git repository in /Users/runner/work/_temp/theos-rh/.git/
+From https://github.com/roothide/theos
+ * branch            88506b2c22e9e07dd4ed055f23c9e398a117a2c7 -> FETCH_HEAD
+HEAD is now at 88506b2 Add rootless.h compatibility to support building roothide packages
+Submodule 'vendor/dm.pl' (https://github.com/theos/dm.pl.git) registered for path 'vendor/dm.pl'
+Submodule 'vendor/include' (https://github.com/roothide/headers.git) registered for path 'vendor/include'
+Submodule 'vendor/lib' (https://github.com/roothide/lib.git) registered for path 'vendor/lib'
+Submodule 'vendor/logos' (https://github.com/theos/logos.git) registered for path 'vendor/logos'
+Submodule 'vendor/nic' (https://github.com/theos/nic.git) registered for path 'vendor/nic'
+Submodule 'vendor/orion' (https://github.com/theos/orion.git) registered for path 'vendor/orion'
+Submodule 'vendor/swift-support' (https://github.com/theos/swift-support.git) registered for path 'vendor/swift-support'
+Submodule 'vendor/templates' (https://github.com/theos/templates.git) registered for path 'vendor/templates'
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/dm.pl'...
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/include'...
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/lib'...
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/logos'...
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/nic'...
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/orion'...
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/swift-support'...
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/templates'...
+Submodule path 'vendor/dm.pl': checked out 'd9a3b72e274226dd2823c0a7c1d6d05099f4f51c'
+Submodule path 'vendor/include': checked out 'ac1c4fd21214548d6d308fcb835d30df1e43953d'
+Submodule path 'vendor/lib': checked out '85e9b5b8aff11bbefc59525c64c8f55149926e56'
+From https://github.com/theos/logos
+ * branch            a62370066a97e36d59b200a9fa10c5091f5e8972 -> FETCH_HEAD
+Submodule path 'vendor/logos': checked out 'a62370066a97e36d59b200a9fa10c5091f5e8972'
+Submodule path 'vendor/nic': checked out '4e7adcbeac2e4636b91e2f76341adfe4c4d0ceec'
+Submodule path 'vendor/orion': checked out 'c0ed879ecaae16f3c8d06a6c36302f6c78d1f7e4'
+Submodule 'fishhook' (https://github.com/facebook/fishhook.git) registered for path 'vendor/orion/fishhook'
+Cloning into '/Users/runner/work/_temp/theos-rh/vendor/orion/fishhook'...
+Submodule path 'vendor/orion/fishhook': checked out 'aadc161ac3b80db07a9908851839a17ba63a9eb1'
+Submodule path 'vendor/swift-support': checked out '4cf59ff04cdb2ceb27ea2228753e0497297b6182'
+Submodule path 'vendor/templates': checked out '6c3944e281c4726f1383755d0fbb642840312d28'
+[0;36m==> [1;39mCleaning…[m
+[0;36m==> [1;36mNotice:[m Build may be slow as Theos isn’t using all available CPU cores on this computer. Consider upgrading GNU Make: https://theos.dev/docs/parallel-building
+[1;31m> [1;3;39mMaking all for tweak NextLockHideElements…[m
+[0;32m==> [1;39mCompiling Tweak.m (arm64e)…[m
+[0;33m==> [1;39mLinking tweak NextLockHideElements (arm64e)…[m
+ld: warning: -multiply_defined is obsolete
+[0;34m==> [1;39mGenerating debug symbols for NextLockHideElements…[m
+[0;34m==> [1;39mStripping NextLockHideElements (arm64e)…[m
+[0;34m==> [1;39mSigning NextLockHideElements…[m
+[1;31m> [1;3;39mMaking stage for tweak NextLockHideElements…[m
+dm.pl: building package `com.nextsolution.nextlockhideelements:iphoneos-arm64e' in `./packages/com.nextsolution.nextlockhideelements_1.1.5~test14_iphoneos-arm64e.deb'
+RUNTIME_BUILD_RC=0
+RUNTIME_DEB=/Users/runner/work/NextSolution/NextSolution/source/NextLockHideElements/packages/com.nextsolution.nextlockhideelements_1.1.5~test14_iphoneos-arm64e.deb
+RUNTIME_DYLIB=/var/folders/_5/zjnzxgh147qcg3bb5cg2wvqw0000gn/T/tmp.TPofH13YcM/Library/MobileSubstrate/DynamicLibraries/NextLockHideElements.dylib
+NextLockHideElements 1.1.5-test15 designer-direct-safe-hooks
+Non-fat file: /var/folders/_5/zjnzxgh147qcg3bb5cg2wvqw0000gn/T/tmp.TPofH13YcM/Library/MobileSubstrate/DynamicLibraries/NextLockHideElements.dylib is architecture: arm64e
+BASE_SHA=1aeb2311d935a4e4e4bd5e9b9ff8ee7111196bf914dc3400d4d3b0fb0d3d6e19
+dpkg-deb: warning: root directory /Users/runner/work/_temp/test15-stage has unusual owner or group 501:20
+dpkg-deb: hint: you might need to pass --root-owner-group, see <https://wiki.debian.org/Teams/Dpkg/RootlessBuilds> for further details
+dpkg-deb: warning: ignoring 1 warning about the control file(s)
+dpkg-deb: building package 'com.nextsolution.lockglyphtime' in 'test-builds/NextLock/Test15/NextLock_1.1.5_Test15_DesignerDirect_RootHide.deb'.
+FINAL_SHA=b75c374affb167d65e67829f0ee6926bac5ead8297127b8285235b343d06575d
+BUILD_OK=1
+FINAL_RC=0
