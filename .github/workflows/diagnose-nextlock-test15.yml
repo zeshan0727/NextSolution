@@ -1,0 +1,111 @@
+name: Diagnose NextLock Test 15
+
+on:
+  push:
+    branches: [nextlock-test15-build]
+    paths:
+      - '.github/workflows/diagnose-nextlock-test15.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Build and capture result
+        shell: bash
+        run: |
+          set +e
+          mkdir -p test-builds/NextLock/Test15
+          LOG='test-builds/NextLock/Test15/build.log'
+          : > "$LOG"
+          {
+            echo '=== NextLock Test 15 diagnostic ==='
+            date -u
+            SRC='source/NextLockHideElements/Tweak.m'
+            grep -n '1.1.5-test15 designer-direct-safe-hooks' "$SRC"
+            grep -n 'CSQuickActionsViewController' "$SRC"
+            grep -n 'CSTeachableMomentsContainerView' "$SRC"
+            if grep -q 'NLDescendants\|UIApplication.sharedApplication.windows\|dispatch_source_create' "$SRC"; then
+              echo 'UNSAFE_SCAN_MARKER_FOUND'
+              exit 90
+            fi
+
+            P="$GITHUB_WORKSPACE/source/NextLockHideElements"
+            T="$RUNNER_TEMP/theos-rh"
+            git init "$T"
+            git -C "$T" remote add origin https://github.com/roothide/theos.git
+            git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+            git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+            git -C "$T" submodule update --init --recursive --depth 1
+            export THEOS="$T"
+            export THEOS_PACKAGE_SCHEME=roothide
+            rm -rf "$P/.theos" "$P/packages"
+            make -C "$P" clean package FINALPACKAGE=1
+            RC=$?
+            echo "RUNTIME_BUILD_RC=$RC"
+            [ "$RC" -eq 0 ] || exit "$RC"
+
+            D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+            echo "RUNTIME_DEB=$D"
+            X=$(mktemp -d)
+            dpkg-deb -x "$D" "$X"
+            F=$(find "$X" -name NextLockHideElements.dylib -print -quit)
+            echo "RUNTIME_DYLIB=$F"
+            strings -a "$F" | grep '1.1.5-test15 designer-direct-safe-hooks'
+            lipo -info "$F"
+
+            BASE='transfer/files/NextLock/1.1.5-Test14-HideItems/NextLock_1.1.5_Test14_HideItems_RootHide.deb'
+            BASE_SHA=$(shasum -a 256 "$BASE" | awk '{print $1}')
+            echo "BASE_SHA=$BASE_SHA"
+
+            STAGE="$RUNNER_TEMP/test15-stage"
+            HIDE="$RUNNER_TEMP/test15-hide"
+            dpkg-deb -R "$BASE" "$STAGE"
+            dpkg-deb -x "$D" "$HIDE"
+            OLDHIDE=$(find "$STAGE" -name NextLockHideElements.dylib -print -quit)
+            NEW=$(find "$HIDE" -name NextLockHideElements.dylib -print -quit)
+            NEWPLIST=$(find "$HIDE" -name NextLockHideElements.plist -print -quit)
+            cp "$NEW" "$OLDHIDE"
+            cp "$NEWPLIST" "$(dirname "$OLDHIDE")/NextLockHideElements.plist"
+
+            python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import re,sys
+          c=Path(sys.argv[1])/'DEBIAN/control'
+          t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu15', t, flags=re.M)
+          c.write_text(t)
+          PY
+
+            OUT='test-builds/NextLock/Test15/NextLock_1.1.5_Test15_DesignerDirect_RootHide.deb'
+            dpkg-deb -b "$STAGE" "$OUT"
+            SHA=$(shasum -a 256 "$OUT" | awk '{print $1}')
+            printf '%s  %s\n' "$SHA" "$(basename "$OUT")" > test-builds/NextLock/Test15/SHA256.txt
+            echo "FINAL_SHA=$SHA"
+            echo 'BUILD_OK=1'
+          } >> "$LOG" 2>&1
+          RC=$?
+          echo "FINAL_RC=$RC" >> "$LOG"
+          exit 0
+
+      - name: Commit diagnostic output
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -- test-builds/NextLock/Test15
+          git diff --cached --check || true
+          if ! git diff --cached --quiet; then
+            git commit -m 'Record NextLock Test 15 diagnostic build'
+            git push origin HEAD:nextlock-test15-build
+          fi
