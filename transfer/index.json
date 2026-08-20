@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T09:48:02Z",
+  "updatedAt": "2026-08-20T09:48:58Z",
   "files": [
     {
       "id": "nextlock-1.1.5-cpufix-test11-livefeatures-roothide",
@@ -10,7 +10,7 @@
       "platform": "RootHide",
       "version": "1.1.5-test11",
       "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test11-LiveFeatures/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb",
-      "sha256": "cf480d7c22ee272f7e1cb04a1dc0e4415858dac54bd53a3511db365e5d75d2cf",
+      "sha256": "56c1d19eea2c8bda507951590f1b8ae9a0d4d355fcc630cd964c6af7621178de",
       "notes": "Test 11 keeps the validated CPU/photo fixes and independent Time/Date font controls. It adds a direct post-render runtime fix for both Time and Date position, color and shadow/glow, and adds visible function labels above every Time/Date movement slider."
     },
     {
