@@ -1,4 +1,5 @@
 name: Build and Publish Next Mockup Live 3D v0.4
+# retrigger publication after workflow registration
 
 on:
   workflow_dispatch:
