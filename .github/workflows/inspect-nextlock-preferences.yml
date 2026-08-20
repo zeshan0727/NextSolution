@@ -1,0 +1,65 @@
+name: Inspect NextLock 1.1.4 Preferences Resources
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-nextlock-preferences.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: inspect-nextlock-preferences
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dpkg
+        run: brew install dpkg
+
+      - name: Extract package resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb'
+          STAGE="$RUNNER_TEMP/nextlock"
+          OUT='analysis/nextlock-1.1.4/package-inspection'
+          rm -rf "$STAGE" "$OUT"
+          mkdir -p "$STAGE" "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          find "$STAGE" -type f | sed "s#^$STAGE/##" | sort > "$OUT/file-list.txt"
+
+          # Copy only human-readable preference/config resources; never copy binaries.
+          while IFS= read -r f; do
+            case "$f" in
+              *.plist|*.strings|*.json|*.xml)
+                rel="${f#$STAGE/}"
+                mkdir -p "$OUT/$(dirname "$rel")"
+                if plutil -convert xml1 -o "$OUT/$rel" "$f" >/dev/null 2>&1; then :; else cp "$f" "$OUT/$rel"; fi
+                ;;
+            esac
+          done < <(find "$STAGE" -type f)
+
+          # Make preference-related filenames easy to spot.
+          grep -Ei 'pref|preference|specifier|bundle|plist|lock|glyph|next' "$OUT/file-list.txt" > "$OUT/preference-candidates.txt" || true
+
+      - name: Commit inspection text
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add analysis/nextlock-1.1.4/package-inspection
+          git diff --cached --check
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Inspect NextLock 1.1.4 preference resources'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
