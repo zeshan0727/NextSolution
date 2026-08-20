@@ -33,7 +33,11 @@ static BOOL MGLicenseIsActive(void) {
     BOOL active = NO;
     if (value) {
         if (CFGetTypeID(value) == CFBooleanGetTypeID()) active = CFBooleanGetValue((CFBooleanRef)value);
-        else if (CFGetTypeID(value) == CFNumberGetTypeID()) CFNumberGetValue((CFNumberRef)value, kCFNumberCharType, &active);
+        else if (CFGetTypeID(value) == CFNumberGetTypeID()) {
+            int numeric = 0;
+            CFNumberGetValue((CFNumberRef)value, kCFNumberIntType, &numeric);
+            active = numeric != 0;
+        }
         CFRelease(value);
     }
     return active;
@@ -48,6 +52,8 @@ static CFPropertyListRef MGCFPreferencesCopyAppValue(CFStringRef key, CFStringRe
 
 __attribute__((constructor)) static void ModuleGlassLicenseGateInit(void) {
     @autoreleasepool {
+        NSString *bundleID = NSBundle.mainBundle.bundleIdentifier ?: @"";
+        if (![bundleID isEqualToString:@"com.apple.springboard"]) return;
         void *symbol = dlsym(RTLD_DEFAULT, "CFPreferencesCopyAppValue");
         if (symbol) MSHookFunction(symbol, (void *)&MGCFPreferencesCopyAppValue, (void **)&MGOrigCFPreferencesCopyAppValue);
     }
