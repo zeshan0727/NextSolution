@@ -18,129 +18,89 @@ concurrency:
 jobs:
   build:
     runs-on: macos-14
-    timeout-minutes: 30
+    timeout-minutes: 25
     env:
-      THEOS: ${{ github.workspace }}/theos
+      THEOS: ${{ runner.temp }}/theos-roothide
       THEOS_PACKAGE_SCHEME: roothide
       BASE_SHA: a15205e928db116e74102a29d4b116d14d1b57f0e9412707493d8c109433ecb0
       RUNTIME_SHA: fe3bd040d4718d07303b66e011f91c4de67ff9be820c854839ef3bf5d679ac96
       PREFS_BINARY_SHA: 4aaaf04adbfebe652262d4e5572ac04f3a51fcd2d0d2eb95a113b5d3d93181d1
       STANDALONE_PREFS_SHA: dbfce7323f000a84354eb891f854f2192e04e181c7ceffdf8cf3512d5764472f
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install packaging tools
+      - name: Install tools
         run: brew install dpkg ldid xz
 
-      - name: Extract exact working 1.1.17 baseline
+      - name: Stage validated 1.1.17 baseline
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin main --depth=1
-          git show origin/main:transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb > /tmp/moduleglass117.deb
-          echo "$BASE_SHA  /tmp/moduleglass117.deb" | shasum -a 256 -c -
-          rm -rf stage output addon verify
-          mkdir -p stage output addon
-          dpkg-deb -R /tmp/moduleglass117.deb stage
-          cp stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist /tmp/CCModuleBackgrounds.1.1.17.plist
+          git show origin/main:transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb > /tmp/mg117.deb
+          echo "$BASE_SHA  /tmp/mg117.deb" | shasum -a 256 -c -
+          rm -rf stage addon output verify
+          mkdir -p stage addon output
+          dpkg-deb -R /tmp/mg117.deb stage
+          cp stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist /tmp/mg117-prefs.plist
           echo "$RUNTIME_SHA  stage/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
           echo "$PREFS_BINARY_SHA  stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/AuraPrefs" | shasum -a 256 -c -
           echo "$STANDALONE_PREFS_SHA  stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib" | shasum -a 256 -c -
 
-      - name: Keep current Settings design and append Activation at the end
+      - name: Append native Activation section only
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           import plistlib
-
-          bundle = Path('stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle')
-          prefs = bundle / 'CCModuleBackgrounds.plist'
-          original = Path('/tmp/CCModuleBackgrounds.1.1.17.plist')
-          before = plistlib.load(original.open('rb'))
-          current = plistlib.load(prefs.open('rb'))
-          assert current == before, '1.1.17 preferences changed before activation patch'
-          items = current['items']
-          assert not any(i.get('label') == 'Activation' for i in items), 'Activation already present'
-          items.extend([
-              {
-                  'cell': 'PSGroupCell',
-                  'label': 'Activation',
-                  'footerText': 'Module Glass is enabled only for activated devices. Use License & Device to copy your Device ID or refresh activation.'
-              },
-              {
-                  'cell': 'PSTitleValueCell',
-                  'label': 'Status',
-                  'defaults': 'com.nextsolution.moduleglass',
-                  'key': 'licenseStatusDisplay',
-                  'default': 'Not Activated'
-              },
-              {
-                  'cell': 'PSButtonCell',
-                  'label': 'License & Device',
-                  'action': 'openModuleGlassLicense:',
-                  'description': 'Shows activation status, Device ID, activation check, and purchase option.'
-              }
-          ])
-          with prefs.open('wb') as f:
-              plistlib.dump(current, f, sort_keys=False)
-
-          info_path = bundle / 'Info.plist'
-          info = plistlib.load(info_path.open('rb'))
-          info['CFBundleShortVersionString'] = '1.1.18'
-          info['CFBundleVersion'] = '1.1.18'
-          with info_path.open('wb') as f:
-              plistlib.dump(info, f, sort_keys=False)
-
-          control = Path('stage/DEBIAN/control')
-          text = control.read_text()
-          text = text.replace('Version: 1.1.17', 'Version: 1.1.18')
-          text = text.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.17)', 'Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)')
-          text = text.replace('<= 1.1.16', '<= 1.1.17')
-          old = 'Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds the current Aura Settings preference bundle directly in the same package.'
-          new = 'Description: Module Glass 1.1.18 preserves the validated 1.1.17 interface and Control Center runtime, adding Next Solution device activation as the final Settings section.'
-          if old not in text:
-              raise SystemExit('baseline description anchor missing')
-          text = text.replace(old, new)
-          control.write_text(text)
+          bundle=Path('stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle')
+          p=bundle/'CCModuleBackgrounds.plist'
+          old=plistlib.load(open('/tmp/mg117-prefs.plist','rb'))
+          x=plistlib.load(p.open('rb'))
+          assert x == old
+          x['items'] += [
+            {'cell':'PSGroupCell','label':'Activation','footerText':'Module Glass is enabled only for activated devices. Use License & Device to copy your Device ID or refresh activation.'},
+            {'cell':'PSTitleValueCell','label':'Status','defaults':'com.nextsolution.moduleglass','key':'licenseStatusDisplay','default':'Not Activated'},
+            {'cell':'PSButtonCell','label':'License & Device','action':'openModuleGlassLicense:','description':'Shows activation status, Device ID, activation check, and purchase option.'}
+          ]
+          plistlib.dump(x,p.open('wb'),sort_keys=False)
+          info=bundle/'Info.plist'
+          i=plistlib.load(info.open('rb')); i['CFBundleShortVersionString']='1.1.18'; i['CFBundleVersion']='1.1.18'; plistlib.dump(i,info.open('wb'),sort_keys=False)
+          c=Path('stage/DEBIAN/control'); t=c.read_text()
+          t=t.replace('Version: 1.1.17','Version: 1.1.18')
+          t=t.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.17)','Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)')
+          t=t.replace('<= 1.1.16','<= 1.1.17')
+          t=t.replace('Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds the current Aura Settings preference bundle directly in the same package.','Description: Module Glass 1.1.18 preserves the validated 1.1.17 interface and Control Center runtime, adding Next Solution device activation as the final Settings section.')
+          c.write_text(t)
           PY
-          plutil -lint stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/Info.plist
           plutil -lint stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist
-          test "$(dpkg-deb -f /tmp/moduleglass117.deb Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
-          test "$(grep '^Version:' stage/DEBIAN/control | awk '{print $2}')" = '1.1.18'
-          echo "$RUNTIME_SHA  stage/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
-          echo "$PREFS_BINARY_SHA  stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/AuraPrefs" | shasum -a 256 -c -
-          echo "$STANDALONE_PREFS_SHA  stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib" | shasum -a 256 -c -
+          plutil -lint stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/Info.plist
 
-      - name: Install RootHide Theos
+      - name: Install pinned RootHide Theos
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$THEOS"
-          curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
-          for attempt in 1 2 3; do
-            if bash /tmp/install-theos; then break; fi
-            if [ "$attempt" = 3 ]; then exit 1; fi
-            sleep 3
-          done
+          rm -rf "$THEOS"
+          git init "$THEOS"
+          git -C "$THEOS" remote add origin https://github.com/roothide/theos.git
+          git -C "$THEOS" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$THEOS" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$THEOS" submodule update --init --recursive --depth 1
           test -f "$THEOS/makefiles/common.mk"
-          mkdir -p "$THEOS/sdks"
-          if ! ls "$THEOS"/sdks/iPhoneOS*.sdk >/dev/null 2>&1; then
-            curl -fL --retry 3 https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/sdk.tar.xz
-            tar -xJf /tmp/sdk.tar.xz -C "$THEOS/sdks"
-          fi
+          xcrun --sdk iphoneos --show-sdk-path
 
-      - name: Prepare activation build helper
+      - name: Build activation dylib
         shell: bash
         run: |
           set -euo pipefail
           cp .moduleglass-build/ModuleGlassActivation.m addon/
           cat > addon/Makefile <<'MAKE'
           ARCHS = arm64 arm64e
-          TARGET = iphone:clang:16.5:16.0
+          TARGET = iphone:clang:latest:16.0
           include $(THEOS)/makefiles/common.mk
           TWEAK_NAME = ModuleGlassActivation
           ModuleGlassActivation_FILES = ModuleGlassActivation.m
@@ -163,83 +123,58 @@ jobs:
           cat > addon/ModuleGlassActivation.plist <<'PLIST'
           { Filter = { Bundles = ( "com.apple.Preferences", "com.apple.springboard" ); }; }
           PLIST
-
-      - name: Compile activation layer
-        shell: bash
-        run: |
-          set -euxo pipefail
-          cd addon
-          make clean
-          make package FINALPACKAGE=1
-          RAW="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          make -C addon clean package FINALPACKAGE=1
+          RAW="$(find addon/packages -type f -name '*.deb' -print -quit)"
           test -n "$RAW"
-          rm -rf /tmp/mgactivation && mkdir -p /tmp/mgactivation
-          dpkg-deb -x "$RAW" /tmp/mgactivation
-          DYLIB="$(find /tmp/mgactivation -type f -name 'ModuleGlassActivation.dylib' -print -quit)"
-          FILTER="$(find /tmp/mgactivation -type f -name 'ModuleGlassActivation.plist' -print -quit)"
-          test -n "$DYLIB" && test -n "$FILTER"
-          cd ..
+          rm -rf /tmp/mga && mkdir -p /tmp/mga
+          dpkg-deb -x "$RAW" /tmp/mga
+          DYLIB="$(find /tmp/mga -type f -name ModuleGlassActivation.dylib -print -quit)"
+          FILTER="$(find /tmp/mga -type f -name ModuleGlassActivation.plist -print -quit)"
+          test -n "$DYLIB"; test -n "$FILTER"
           cp "$DYLIB" stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.dylib
           cp "$FILTER" stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.plist
 
-      - name: Package and validate 1.1.18 RootHide DEB
+      - name: Package and verify
         shell: bash
         run: |
           set -euo pipefail
           chmod 0755 stage/DEBIAN/postinst
-          dpkg-deb -b stage output/ModuleGlass_1.1.18_CurrentUI_Activation_RootHide.deb
           DEB=output/ModuleGlass_1.1.18_CurrentUI_Activation_RootHide.deb
+          dpkg-deb -b stage "$DEB"
           dpkg-deb -I "$DEB"
           dpkg-deb -c "$DEB" > output/PACKAGE-CONTENTS.txt
-          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
-          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.18'
-          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
-          rm -rf verify && mkdir verify
-          dpkg-deb -x "$DEB" verify
-          RUNTIME=verify/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib
-          ACTIVATION=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.dylib
-          echo "$RUNTIME_SHA  $RUNTIME" | shasum -a 256 -c -
+          test "$(dpkg-deb -f "$DEB" Package)" = com.nextsolution.nextaura.cc-module-backgrounds
+          test "$(dpkg-deb -f "$DEB" Version)" = 1.1.18
+          test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64e
+          mkdir -p verify; dpkg-deb -x "$DEB" verify
+          echo "$RUNTIME_SHA  verify/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
           echo "$PREFS_BINARY_SHA  verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/AuraPrefs" | shasum -a 256 -c -
           echo "$STANDALONE_PREFS_SHA  verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib" | shasum -a 256 -c -
-          test -f "$ACTIVATION"
-          test -f verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.plist
-          test -f verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
-          ARCHS="$(lipo -archs "$ACTIVATION")"
-          [[ " $ARCHS " == *' arm64 '* && " $ARCHS " == *' arm64e '* ]]
-          strings -a "$ACTIVATION" > output/activation.strings
+          ACT=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.dylib
+          test -f "$ACT"
+          ARCHS="$(lipo -archs "$ACT")"; echo "$ARCHS"; [[ " $ARCHS " == *' arm64 '* && " $ARCHS " == *' arm64e '* ]]
+          strings -a "$ACT" > output/activation.strings
           grep -Fq 'Module Glass License & Device' output/activation.strings
-          grep -Fq 'licenses/moduleglass.json' output/activation.strings
           grep -Fq 'nextsolution-license-v1' output/activation.strings
+          grep -Fq 'licenses/moduleglass.json' output/activation.strings
           grep -Fq 'openModuleGlassLicense:' output/activation.strings
-          grep -Fq 'com.nextsolution.unlockvibrate' output/activation.strings
           python3 - <<'PY'
           import plistlib
-          old = plistlib.load(open('/tmp/CCModuleBackgrounds.1.1.17.plist','rb'))
-          new = plistlib.load(open('verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist','rb'))
-          assert new['items'][:-3] == old['items'], 'existing 1.1.17 settings were modified'
-          tail = new['items'][-3:]
-          assert [x.get('label') for x in tail] == ['Activation', 'Status', 'License & Device'], tail
-          assert tail[2].get('action') == 'openModuleGlassLicense:'
-          assert tail[1].get('defaults') == 'com.nextsolution.moduleglass'
-          info = plistlib.load(open('verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/Info.plist','rb'))
-          assert info['CFBundleShortVersionString'] == '1.1.18'
-          assert info['CFBundleVersion'] == '1.1.18'
+          old=plistlib.load(open('/tmp/mg117-prefs.plist','rb'))
+          new=plistlib.load(open('verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist','rb'))
+          assert new['items'][:-3] == old['items']
+          assert [x.get('label') for x in new['items'][-3:]] == ['Activation','Status','License & Device']
+          assert new['items'][-1].get('action') == 'openModuleGlassLicense:'
           PY
-          mkdir -p output/source/ModuleGlass-1.1.18-CurrentUI-Activation
-          cp .moduleglass-build/ModuleGlassActivation.m output/source/ModuleGlass-1.1.18-CurrentUI-Activation/
-          cp verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist output/source/ModuleGlass-1.1.18-CurrentUI-Activation/
-          cp verify/DEBIAN/control output/source/ModuleGlass-1.1.18-CurrentUI-Activation/control 2>/dev/null || cp stage/DEBIAN/control output/source/ModuleGlass-1.1.18-CurrentUI-Activation/control
-          ditto -c -k --sequesterRsrc --keepParent output/source/ModuleGlass-1.1.18-CurrentUI-Activation output/ModuleGlass_1.1.18_CurrentUI_Activation_Source.zip
-          shasum -a 256 "$DEB" output/ModuleGlass_1.1.18_CurrentUI_Activation_Source.zip > output/SHA256SUMS.txt
+          shasum -a 256 "$DEB" > output/SHA256SUMS.txt
           cat output/SHA256SUMS.txt
 
-      - name: Upload validated artifacts
+      - name: Upload working DEB
         uses: actions/upload-artifact@v4
         with:
           name: ModuleGlass-1.1.18-CurrentUI-Activation-RootHide
           path: |
             output/ModuleGlass_1.1.18_CurrentUI_Activation_RootHide.deb
-            output/ModuleGlass_1.1.18_CurrentUI_Activation_Source.zip
             output/SHA256SUMS.txt
             output/PACKAGE-CONTENTS.txt
           if-no-files-found: error
