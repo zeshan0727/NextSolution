@@ -1,10 +1,21 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T06:52:00Z",
+  "updatedAt": "2026-08-20T07:21:15Z",
   "files": [
     {
+      "id": "nextlock-1.1.5-cpufix-test5-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 5 RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test5_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.5-test5",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test5/NextLock_1.1.5_CPUFix_Test5_RootHide.deb",
+      "sha256": "55dfa7253e8b8f1eae758d171568ad6d8fef079f4c75f757354370dcabfa6e38",
+      "notes": "Feature-preserving replacement for Test 4. Test 4 fixed CPU but broke time/date position because it throttled the actual render/update functions. Test 5 restores those functions fully and suppresses only the live-proven 120 Hz callback block (+0xBDD4 arm64e / +0xBC30 arm64), while retaining duplicate deferred-render suppression and exact transparency caching."
+    },
+    {
       "id": "nextmockupstudio-0.4-live3d",
-      "name": "Next Mockup Studio 0.4 — Live 3D iPhone Test",
+      "name": "Next Mockup Studio 0.4 \u2014 Live 3D iPhone Test",
       "fileName": "NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
@@ -35,17 +46,6 @@
       "type": "tipa",
       "name": "Next Signer 1.3.4",
       "url": "https://files.nextsolution.cc/apps/tipa/NextSigner/1.3.4/NextSigner-1.3.4.tipa"
-    },
-    {
-      "sha256": "b237b41fd9c407ee2a92709dce676e2cbfb33d59ec7ec55fe727c085a5f2d206",
-      "id": "nextlock-1.1.5-cpufix-test4-roothide",
-      "fileName": "NextLock_1.1.5_CPUFix_Test4_RootHide.deb",
-      "platform": "RootHide",
-      "notes": "Test 4 targets the live-proven cause: NextLock updateA/photos were executing about 180 times/sec and updateB about 60 times/sec from callback and layout paths. This build caps each expensive internal update to 10 Hz while leaving UIKit layout, clock/date customization, all four photo/sticker frames, preferences, and the original 1.1.4 feature binary intact. It also retains duplicate-render suppression and exact transparency caching.",
-      "version": "1.1.5-test4",
-      "type": "deb",
-      "name": "NextLock 1.1.5 CPU Fix Test 4 RootHide",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test4/NextLock_1.1.5_CPUFix_Test4_RootHide.deb"
     },
     {
       "sha256": "39c6ac9f3c946668c4b2d4a0886acc48bd356cd44b8cbb89fbbd1fcdd7ad0ffa",
@@ -129,7 +129,7 @@
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "platform": "TrollStore / iOS 16+",
-      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
+      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
       "version": "1.0.2",
       "type": "tipa",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
