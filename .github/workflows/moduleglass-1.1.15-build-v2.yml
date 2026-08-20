@@ -7,24 +7,32 @@ on:
     paths:
       - '.github/workflows/moduleglass-1.1.15-build-v2.yml'
       - '.moduleglass-build/mg115_patch.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/moduleglass-1.1.15-build-v2.yml'
+      - '.moduleglass-build/mg115_patch.py'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: moduleglass-1.1.17-self-contained-preferences
+  group: moduleglass-1.1.17-self-contained-preferences-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: macos-14
-    timeout-minutes: 25
+    timeout-minutes: 30
     env:
       THEOS: ${{ github.workspace }}/theos
       THEOS_PACKAGE_SCHEME: roothide
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install packaging tools
+        run: brew install dpkg ldid xz
 
       - name: Reconstruct and verify exact 1.1.15 isolation source
         shell: bash
@@ -53,7 +61,7 @@ jobs:
           grep -Fq 'connectivity-native-toggle-state' buildsrc/Runtime/Tweak.m
           grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' buildsrc/Runtime/Tweak.m
 
-      - name: Embed dedicated Module Glass preference bundle
+      - name: Embed current Aura preferences directly into Module Glass
         shell: bash
         run: |
           set -euo pipefail
@@ -71,7 +79,7 @@ jobs:
           t=t.replace('<= 1.1.14','<= 1.1.16')
           t=re.sub(r',\s*com\.nextsolution\.nextaura\.runtime\.preferences \(>= 1\.0\.5\)', '', t)
           old='Description: RootHide Module Glass 1.1.15 expansion-isolation test. Volume/Brightness custom images are hosted outside Apple slider internals and Connectivity keeps native toggle colors so expandable Apple-owned views are not mutated.'
-          new='Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds its complete Settings preference bundle directly in the same package.'
+          new='Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds the current Aura Settings preference bundle directly in the same package.'
           t=t.replace(old,new)
           p.write_text(t)
           PY
@@ -83,22 +91,23 @@ jobs:
           rm -rf /tmp/moduleglass-prefs-runtime
           mkdir -p /tmp/moduleglass-prefs-runtime
           dpkg-deb -x "$PREFDEB" /tmp/moduleglass-prefs-runtime
-          SRC_BUNDLE="$(find /tmp/moduleglass-prefs-runtime -type d -name 'UnlockVibratePrefs.bundle' -print -quit)"
+
+          SRC_BUNDLE="$(find /tmp/moduleglass-prefs-runtime -type d -name 'AuraPrefs.bundle' -print -quit)"
           test -n "$SRC_BUNDLE"
-          test -f "$SRC_BUNDLE/UnlockVibratePrefs"
           test -f "$SRC_BUNDLE/Info.plist"
           test -f "$SRC_BUNDLE/CCModuleBackgrounds.plist"
-          test -f "$SRC_BUNDLE/NextAura-cc-module-backgrounds.png"
+          grep -q 'CCModuleVolumeIconColorEnabled' "$SRC_BUNDLE/CCModuleBackgrounds.plist"
+          grep -q 'chooseVolumeIconColor:' "$SRC_BUNDLE/CCModuleBackgrounds.plist"
+
+          EXEC_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$SRC_BUNDLE/Info.plist")"
+          test -n "$EXEC_NAME"
+          test -f "$SRC_BUNDLE/$EXEC_NAME"
+          strings -a "$SRC_BUNDLE/$EXEC_NAME" | grep -q 'AuraCategoryListController'
 
           DEST="$P/layout/Library/PreferenceBundles/ModuleGlassPrefs.bundle"
           rm -rf "$DEST"
-          mkdir -p "$DEST"
-          cp "$SRC_BUNDLE/UnlockVibratePrefs" "$DEST/UnlockVibratePrefs"
-          cp "$SRC_BUNDLE/Info.plist" "$DEST/Info.plist"
-          cp "$SRC_BUNDLE/CCModuleBackgrounds.plist" "$DEST/CCModuleBackgrounds.plist"
-          cp "$SRC_BUNDLE/NextAura-cc-module-backgrounds.png" "$DEST/NextAura-cc-module-backgrounds.png"
-          chmod 0755 "$DEST/UnlockVibratePrefs"
-
+          mkdir -p "$(dirname "$DEST")"
+          cp -R "$SRC_BUNDLE" "$DEST"
           /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.nextsolution.moduleglass.preferences' "$DEST/Info.plist"
           /usr/libexec/PlistBuddy -c 'Set :CFBundleName Module Glass' "$DEST/Info.plist"
           /usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString 1.1.17' "$DEST/Info.plist"
@@ -106,16 +115,14 @@ jobs:
           plutil -lint "$DEST/Info.plist"
           plutil -lint "$DEST/CCModuleBackgrounds.plist"
 
-          # If 1.0.5 supplies the native Volume color action extension, include a
-          # renamed private copy so Module Glass stays self-contained without
-          # owning the same filesystem path as the shared preferences runtime.
-          EXT_DYLIB="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.dylib' -print -quit || true)"
-          EXT_PLIST="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.plist' -print -quit || true)"
-          if [[ -n "$EXT_DYLIB" && -n "$EXT_PLIST" ]]; then
-            mkdir -p "$P/layout/Library/MobileSubstrate/DynamicLibraries"
-            cp "$EXT_DYLIB" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib"
-            cp "$EXT_PLIST" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist"
-          fi
+          # Include Module Glass' native Volume color picker extension privately.
+          EXT_DYLIB="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.dylib' -print -quit)"
+          EXT_PLIST="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.plist' -print -quit)"
+          test -n "$EXT_DYLIB"
+          test -n "$EXT_PLIST"
+          mkdir -p "$P/layout/Library/MobileSubstrate/DynamicLibraries"
+          cp "$EXT_DYLIB" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib"
+          cp "$EXT_PLIST" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist"
 
           mkdir -p "$P/layout/Library/PreferenceLoader/Preferences"
           cat > "$P/layout/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist" <<'PLIST'
@@ -130,7 +137,7 @@ jobs:
                   <key>cell</key>
                   <string>PSLinkCell</string>
                   <key>detail</key>
-                  <string>UVSubListController</string>
+                  <string>AuraCategoryListController</string>
                   <key>isController</key>
                   <true/>
                   <key>icon</key>
@@ -148,11 +155,10 @@ jobs:
           cp -R "$P" output/source-stage/ModuleGlass-1.1.17-Complete-Source
           ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.17-Complete-Source output/ModuleGlass_1.1.17_Complete_Source.zip
 
-      - name: Install RootHide build tools
+      - name: Install RootHide Theos
         shell: bash
         run: |
           set -euo pipefail
-          brew install dpkg ldid xz
           mkdir -p "$THEOS"
           curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
           bash /tmp/install-theos
@@ -201,20 +207,33 @@ jobs:
           LOADER=verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
           BUNDLE=verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle
           test -f "$LOADER"
-          test -f "$BUNDLE/UnlockVibratePrefs"
+          test -d "$BUNDLE"
           test -f "$BUNDLE/Info.plist"
           test -f "$BUNDLE/CCModuleBackgrounds.plist"
-          test -f "$BUNDLE/NextAura-cc-module-backgrounds.png"
+          grep -q 'CCModuleVolumeIconColorEnabled' "$BUNDLE/CCModuleBackgrounds.plist"
+          grep -q 'chooseVolumeIconColor:' "$BUNDLE/CCModuleBackgrounds.plist"
           plutil -lint "$LOADER"
           plutil -lint "$BUNDLE/Info.plist"
           plutil -lint "$BUNDLE/CCModuleBackgrounds.plist"
           grep -Fq '<string>ModuleGlassPrefs</string>' "$LOADER"
-          grep -Fq '<string>UVSubListController</string>' "$LOADER"
+          grep -Fq '<string>AuraCategoryListController</string>' "$LOADER"
           grep -Fq '<string>CCModuleBackgrounds</string>' "$LOADER"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUNDLE/Info.plist" | grep -Fxq 'com.nextsolution.moduleglass.preferences'
 
-          PREF_ARCHS="$(lipo -archs "$BUNDLE/UnlockVibratePrefs")"
+          PREF_EXEC="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$BUNDLE/Info.plist")"
+          test -f "$BUNDLE/$PREF_EXEC"
+          PREF_ARCHS="$(lipo -archs "$BUNDLE/$PREF_EXEC")"
           [[ " $PREF_ARCHS " == *' arm64 '* && " $PREF_ARCHS " == *' arm64e '* ]]
+          strings -a "$BUNDLE/$PREF_EXEC" | grep -q 'AuraCategoryListController'
+
+          PREF_EXT=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib
+          PREF_EXT_FILTER=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist
+          test -f "$PREF_EXT"
+          test -f "$PREF_EXT_FILTER"
+          EXT_ARCHS="$(lipo -archs "$PREF_EXT")"
+          [[ " $EXT_ARCHS " == *' arm64 '* && " $EXT_ARCHS " == *' arm64e '* ]]
+          strings -a "$PREF_EXT" | grep -q 'chooseVolumeIconColor:'
+          strings -a "$PREF_EXT" | grep -q 'UIColorPickerViewController'
 
           DYLIB="$(find verify -type f -name CCModuleBackgrounds.dylib -print -quit)"
           test -n "$DYLIB"
@@ -226,9 +245,10 @@ jobs:
 
           echo '=== MODULE GLASS 1.1.17 PACKAGE CONTENTS ==='
           dpkg-deb -c "$DEB" | tee output/PACKAGE-CONTENTS.txt
-          grep -Fq './Library/PreferenceBundles/ModuleGlassPrefs.bundle/UnlockVibratePrefs' output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/PreferenceBundles/ModuleGlassPrefs.bundle/' output/PACKAGE-CONTENTS.txt
           grep -Fq './Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist' output/PACKAGE-CONTENTS.txt
           grep -Fq './Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib' output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib' output/PACKAGE-CONTENTS.txt
           shasum -a 256 "$DEB" output/ModuleGlass_1.1.17_Complete_Source.zip | tee output/SHA256SUMS.txt
 
       - name: Upload verified artifacts
