@@ -1,0 +1,73 @@
+name: Build AppsDump DarkSword iOS17
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - name: Checkout build host repo
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install build tools
+        run: |
+          brew install ldid
+          gem install xcpretty --no-document || true
+
+      - name: Fetch DarkSword app-decrypt reference source
+        run: |
+          git clone --depth 1 https://github.com/rooootdev/lara.git lara
+
+      - name: Build DarkSword backend
+        working-directory: lara
+        run: |
+          chmod +x scripts/build_ipa.sh
+          ./scripts/build_ipa.sh
+
+      - name: Rebrand test build as AppsDump3 DarkSword
+        run: |
+          set -e
+          cd lara/build
+          rm -rf Repack
+          mkdir -p Repack/Payload
+          cp -R Payload/lara.app Repack/Payload/AppsDump3.app
+          APP="Repack/Payload/AppsDump3.app"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName AppsDump3" "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName AppsDump3" "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier cn.gblw.AppsDump" "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 4.1.0-DS" "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 3" "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion 17.0" "$APP/Info.plist" || true
+          cat > "$APP/DARKSWORD_PORT.txt" <<'EOF'
+          AppsDump3 DarkSword iOS 17 experimental port
+          Backend: LARA DarkSword + App Decrypt implementation
+          Target: iOS/iPadOS 17.x within DarkSword-supported hardware range
+          This is a test build focused on app enumeration/decryption/export.
+          EOF
+          ldid -S../Config/lara.entitlements "$APP/lara"
+          cd Repack
+          /usr/bin/zip -qry ../AppsDump3-DarkSword-iOS17-Test.tipa Payload
+
+      - name: Verify package
+        run: |
+          unzip -l lara/build/AppsDump3-DarkSword-iOS17-Test.tipa | head -80
+          file lara/build/Repack/Payload/AppsDump3.app/lara
+          plutil -p lara/build/Repack/Payload/AppsDump3.app/Info.plist | head -80
+
+      - name: Upload TIPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppsDump3-DarkSword-iOS17-Test
+          path: lara/build/AppsDump3-DarkSword-iOS17-Test.tipa
+          if-no-files-found: error
