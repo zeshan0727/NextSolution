@@ -40,7 +40,9 @@ jobs:
           git submodule update --init --recursive || true
 
       - name: Apply AppsDump iOS 17 frontend patches
-        run: python3 AppsDumpDarkSword/patch_lara.py
+        run: |
+          python3 AppsDumpDarkSword/patch_lara.py
+          python3 AppsDumpDarkSword/compat_xcode16.py
 
       - name: Build unsigned iPhone IPA
         working-directory: lara-src
