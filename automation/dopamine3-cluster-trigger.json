@@ -1,5 +1,5 @@
 {
-  "reason": "retry initial Dopamine 3 traffic cluster after complete hub coverage fix",
+  "reason": "manual health-check trigger after missed 09:00 Qatar cluster publication",
   "requested_by": "Next Solution automation",
-  "attempt": 4
+  "attempt": 5
 }
