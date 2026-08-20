@@ -1,1 +1,1 @@
-build NextLock Test 8
+build NextLock Test 8 retry 2
