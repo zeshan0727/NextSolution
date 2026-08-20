@@ -9,6 +9,7 @@ static NSString * const MGLicenseSalt = @"nextsolution-license-v1";
 static NSString * const MGLicenseRegistryURL = @"https://nextsolution.cc/licenses/moduleglass.json";
 static NSString * const MGLicenseCheckoutBase = @"https://nextsolution.cc/license/moduleglass/";
 static NSString * const MGLicenseDefaultsSuite = @"com.nextsolution.moduleglass.license";
+static NSString * const MGLicenseScreenMarker = @"Module Glass License & Device";
 
 static NSString *MGSHA256(NSString *input) {
     NSData *data = [input dataUsingEncoding:NSUTF8StringEncoding];
@@ -76,6 +77,7 @@ static NSString *MGDeviceIDFromRaw(NSString *raw) {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        (void)MGLicenseScreenMarker;
         NSUserDefaults *d = [[NSUserDefaults alloc] initWithSuiteName:MGLicenseDefaultsSuite];
         NSString *stored = [d stringForKey:@"deviceID"];
         _deviceID = stored.length ? stored : MGDeviceIDFromRaw(MGRawHardwareIdentity());
