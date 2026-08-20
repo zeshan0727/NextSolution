@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T11:40:24Z",
+  "updatedAt": "2026-08-20T12:10:49Z",
   "files": [
     {
       "id": "nextlock-1.1.5-test14-hideitems-roothide",
@@ -10,7 +10,7 @@
       "platform": "RootHide",
       "version": "1.1.5-test14",
       "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test14-HideItems/NextLock_1.1.5_Test14_HideItems_RootHide.deb",
-      "sha256": "1aeb2311d935a4e4e4bd5e9b9ff8ee7111196bf914dc3400d4d3b0fb0d3d6e19",
+      "sha256": "d2993c36bc2312071d3208e26efb9b04fdd53e05596af46b5382e945abac6143",
       "notes": "Test 14 replaces the non-functional visibility controls with one Hide Items section. Time/Date, Flashlight, Camera, Status Bar, other Lock Screen text and CC/gesture bars are handled by the new direct runtime while Test 12 custom clock, refined photo modes and low-CPU fixes remain intact."
     },
     {
