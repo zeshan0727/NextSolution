@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T13:00:43Z",
+  "updatedAt": "2026-08-20T13:29:07Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-test16-system-time-date-roothide",
-      "name": "NextLock 1.1.5 Test 16 System Time Date RootHide",
-      "fileName": "NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb",
+      "id": "nextlock-1.1.5-test17-date-fix-roothide",
+      "name": "NextLock 1.1.5 Test 17 Date Fix RootHide",
+      "fileName": "NextLock_1.1.5_Test17_DateFix_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test16",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test16-SystemTimeDate/NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb",
-      "sha256": "96f298ec2ffb783a14626e37f5f038b329a7292a92870f8a5a54010a45971d35",
-      "notes": "Test 16 keeps the validated Test 15 direct hooks. Time and Date switches now hide the original Apple iOS 16 CSProminentTimeView and CSProminentSubtitleDateView only; NextLock custom Test 12 time/date remain visible."
+      "version": "1.1.5-test17",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test17-DateFix/NextLock_1.1.5_Test17_DateFix_RootHide.deb",
+      "sha256": "e0f747c6fd6c4da59add1f240fb88ece65267cc96423db4eb714b1e8f2c09719",
+      "notes": "Test 17 keeps every Test 16 runtime unchanged and adds a date-only native iOS 16 fix. Hide Date now targets CSProminentSubtitleView, which owns the normal and compact Apple date views, while the custom NextLock date remains untouched."
     },
     {
       "id": "moduleglass-1.1.17-self-contained-prefs-roothide",
