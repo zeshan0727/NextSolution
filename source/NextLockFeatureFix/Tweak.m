@@ -96,11 +96,6 @@ static UIColor *NLCopyColor(CFStringRef key) {
     UIColor *out = nil;
     if (CFGetTypeID(v) == CFStringGetTypeID()) {
         out = NLColorFromString((__bridge NSString *)v);
-    } else if (CFGetTypeID(v) == CFDataGetTypeID()) {
-        @try {
-            id obj = [NSKeyedUnarchiver unarchiveObjectWithData:(__bridge NSData *)v];
-            if ([obj isKindOfClass:[UIColor class]]) out = obj;
-        } @catch (__unused NSException *e) {}
     }
     CFRelease(v);
     return out;
@@ -233,7 +228,8 @@ static BOOL NLReadUUID(const struct mach_header *mh, const uint8_t **uuidOut) {
     return NO;
 }
 
-static void NLInstallForImage(const struct mach_header *mh) {
+static void NLInstallForImage(const struct mach_header *mh, intptr_t vmaddr_slide) {
+    (void)vmaddr_slide;
     const uint8_t *uuid=NULL;
     if (!NLReadUUID(mh,&uuid) || memcmp(uuid,kNextLock114Arm64eUUID,16)!=0) return;
 
