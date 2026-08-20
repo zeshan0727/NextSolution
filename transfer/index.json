@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T13:29:07Z",
+  "updatedAt": "2026-08-20T14:07:36Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-test17-date-fix-roothide",
-      "name": "NextLock 1.1.5 Test 17 Date Fix RootHide",
-      "fileName": "NextLock_1.1.5_Test17_DateFix_RootHide.deb",
+      "id": "nextlock-1.1.5-test18-battery-fullphoto-roothide",
+      "name": "NextLock 1.1.5 Test 18 Battery + Full Photo RootHide",
+      "fileName": "NextLock_1.1.5_Test18_BatteryFullPhoto_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test17",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test17-DateFix/NextLock_1.1.5_Test17_DateFix_RootHide.deb",
-      "sha256": "e0f747c6fd6c4da59add1f240fb88ece65267cc96423db4eb714b1e8f2c09719",
-      "notes": "Test 17 keeps every Test 16 runtime unchanged and adds a date-only native iOS 16 fix. Hide Date now targets CSProminentSubtitleView, which owns the normal and compact Apple date views, while the custom NextLock date remains untouched."
+      "version": "1.1.5-test18",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test18-BatteryFullPhoto/NextLock_1.1.5_Test18_BatteryFullPhoto_RootHide.deb",
+      "sha256": "af12049c7d0e720bc4f64a894fb315595b60927976d81fee228919faf7b0a32b",
+      "notes": "Test 18 keeps working Test 17 hide/date behavior, restores the validated Test 9 full-photo no-crop picker and free photo positioning, migrates existing frames once to Full Photo while retaining Cut/Crop, keeps exactly one HIDE ITEMS section, and adds independent movable Battery Percentage and Battery Icon items with full-screen X/Y controls."
     },
     {
       "id": "moduleglass-1.1.17-self-contained-prefs-roothide",
