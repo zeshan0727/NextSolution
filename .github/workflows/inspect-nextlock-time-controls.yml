@@ -1,0 +1,46 @@
+name: Inspect NextLock Time Controls
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dpkg
+        run: brew install dpkg
+
+      - name: Inspect original NextLock 1.1.4 clock runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb"
+          test -f "$BASE"
+          STAGE="$RUNNER_TEMP/nextlock114"
+          dpkg-deb -x "$BASE" "$STAGE"
+          LOCK=$(find "$STAGE" -name 'LockGlyphTime.dylib' -print -quit)
+          PREF=$(find "$STAGE" -path '*LockGlyphTimePrefs.bundle/LockGlyphTimePrefs' -print -quit)
+          TIME=$(find "$STAGE" -path '*LockGlyphTimePrefs.bundle/Time.plist' -print -quit)
+          test -n "$LOCK"; test -n "$TIME"
+
+          echo '=== TIME PLIST ==='
+          plutil -p "$TIME"
+          echo '=== LOCK RELEVANT STRINGS ==='
+          strings -a "$LOCK" > "$RUNNER_TEMP/lock.strings"
+          grep -Ei 'customTime|time(Color|Shadow|Offset|Scale|Font|Style|Weight|Alignment)|glow|shadow|SBFLockScreen|DateView|UILegibility|clock|UILabel' "$RUNNER_TEMP/lock.strings" || true
+          echo '=== LOCK OBJC METADATA ==='
+          otool -ov "$LOCK" > "$RUNNER_TEMP/lock.otool" || true
+          grep -Ei 'SBFLockScreen|DateView|UILegibility|UILabel|time|clock|shadow|font|color' "$RUNNER_TEMP/lock.otool" | head -n 700 || true
+          if [ -n "$PREF" ]; then
+            echo '=== PREF BINARY RELEVANT STRINGS ==='
+            strings -a "$PREF" > "$RUNNER_TEMP/pref.strings"
+            grep -Ei 'time(Color|Shadow|Offset|Scale|Font|Style|Weight|Alignment)|customTime|openTime|UIColor|hex|color' "$RUNNER_TEMP/pref.strings" || true
+          fi
+          echo '=== SYMBOL HINTS ==='
+          nm -m "$LOCK" 2>/dev/null | grep -Ei 'time|date|clock|label|font|shadow|color' | head -n 400 || true
