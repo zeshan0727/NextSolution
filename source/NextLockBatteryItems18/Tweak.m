@@ -210,7 +210,7 @@ static void NLUpdateBatteryData(void) {
     UIDevice *device = UIDevice.currentDevice;
     CGFloat level = device.batteryLevel;
     if (level < 0.0 || level > 1.0) level = 0.0;
-    NSInteger percent = (NSInteger)lrint(level * 100.0);
+    NSInteger percent = (NSInteger)(level * 100.0 + 0.5);
     UIDeviceBatteryState state = device.batteryState;
     BOOL charging = (state == UIDeviceBatteryStateCharging || state == UIDeviceBatteryStateFull);
 
