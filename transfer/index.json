@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T12:10:49Z",
+  "updatedAt": "2026-08-20T13:00:43Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-test14-hideitems-roothide",
-      "name": "NextLock 1.1.5 Test 14 Hide Items RootHide",
-      "fileName": "NextLock_1.1.5_Test14_HideItems_RootHide.deb",
+      "id": "nextlock-1.1.5-test16-system-time-date-roothide",
+      "name": "NextLock 1.1.5 Test 16 System Time Date RootHide",
+      "fileName": "NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test14",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test14-HideItems/NextLock_1.1.5_Test14_HideItems_RootHide.deb",
-      "sha256": "d2993c36bc2312071d3208e26efb9b04fdd53e05596af46b5382e945abac6143",
-      "notes": "Test 14 replaces the non-functional visibility controls with one Hide Items section. Time/Date, Flashlight, Camera, Status Bar, other Lock Screen text and CC/gesture bars are handled by the new direct runtime while Test 12 custom clock, refined photo modes and low-CPU fixes remain intact."
+      "version": "1.1.5-test16",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test16-SystemTimeDate/NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb",
+      "sha256": "96f298ec2ffb783a14626e37f5f038b329a7292a92870f8a5a54010a45971d35",
+      "notes": "Test 16 keeps the validated Test 15 direct hooks. Time and Date switches now hide the original Apple iOS 16 CSProminentTimeView and CSProminentSubtitleDateView only; NextLock custom Test 12 time/date remain visible."
     },
     {
       "id": "moduleglass-1.1.17-self-contained-prefs-roothide",

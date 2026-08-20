@@ -1,0 +1,9 @@
+Package: com.nextsolution.nextlockhideelements
+Name: NextLock Hide Items Test 14 Runtime
+Version: 1.1.5~test16
+Architecture: iphoneos-arm64
+Description: Runtime companion for NextLock Test 14 functional Hide Items controls.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Depends: mobilesubstrate
