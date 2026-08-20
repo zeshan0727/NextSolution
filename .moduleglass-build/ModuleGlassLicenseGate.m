@@ -51,7 +51,11 @@ static NSString *MGDeviceIDFromRaw(NSString *raw) {
             [hex substringWithRange:NSMakeRange(12,4)]];
 }
 
-@interface MGLicenseManager : NSObject
+@interface MGLicenseManager : NSObject {
+    NSString *_deviceID;
+    BOOL _active;
+    NSDate *_lastCheck;
+}
 @property (nonatomic, readonly) NSString *deviceID;
 @property (nonatomic, readonly, getter=isActive) BOOL active;
 @property (nonatomic, readonly) NSDate *lastCheck;
@@ -60,11 +64,7 @@ static NSString *MGDeviceIDFromRaw(NSString *raw) {
 - (NSURL *)checkoutURL;
 @end
 
-@implementation MGLicenseManager {
-    NSString *_deviceID;
-    BOOL _active;
-    NSDate *_lastCheck;
-}
+@implementation MGLicenseManager
 
 + (instancetype)shared {
     static MGLicenseManager *m;
@@ -105,6 +105,7 @@ static NSString *MGDeviceIDFromRaw(NSString *raw) {
     [d setDouble:_lastCheck.timeIntervalSince1970 forKey:@"licenseLastCheck"];
     [d synchronize];
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.nextsolution.moduleglass/license.changed"), NULL, NULL, true);
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.nextsolution.unlockvibrate/preferences.changed"), NULL, NULL, true);
 }
 
 - (void)refreshWithCompletion:(void (^)(BOOL))completion {
