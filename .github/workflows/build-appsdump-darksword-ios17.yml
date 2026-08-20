@@ -8,6 +8,12 @@ on:
     paths:
       - 'AppsDumpDarkSword/**'
       - '.github/workflows/build-appsdump-darksword-ios17.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'AppsDumpDarkSword/**'
+      - '.github/workflows/build-appsdump-darksword-ios17.yml'
 
 permissions:
   contents: read
