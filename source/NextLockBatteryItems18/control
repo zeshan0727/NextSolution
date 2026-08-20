@@ -1,0 +1,9 @@
+Package: com.nextsolution.lockglyphtime.batteryitems18
+Name: NextLock Battery Items 18
+Version: 1.1.5~cpu18
+Architecture: iphoneos-arm64e
+Description: NextLock Test 18 companion runtime for movable lock-screen battery percentage and battery icon plus one-time full-photo migration.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Depends: mobilesubstrate
