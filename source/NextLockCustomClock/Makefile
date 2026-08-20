@@ -6,7 +6,7 @@ INSTALL_TARGET_PROCESSES = SpringBoard
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = NextLockCustomClock
-NextLockCustomClock_FILES = Tweak.m
+NextLockCustomClock_FILES = TweakPatched.m
 NextLockCustomClock_CFLAGS = -fobjc-arc
 NextLockCustomClock_FRAMEWORKS = Foundation UIKit QuartzCore CoreFoundation
 NextLockCustomClock_LIBRARIES = substrate
