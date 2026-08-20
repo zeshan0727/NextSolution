@@ -1,0 +1,125 @@
+name: Export NextLock Test 15 DEB
+
+on:
+  push:
+    branches: [nextlock-test15-build]
+    paths:
+      - '.github/workflows/build-nextlock-test15-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Build direct-hook runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC='source/NextLockHideElements/Tweak.m'
+          grep -q '1.1.5-test15 designer-direct-safe-hooks' "$SRC"
+          ! grep -q 'NLDescendants' "$SRC"
+          ! grep -q 'UIApplication.sharedApplication.windows' "$SRC"
+          ! grep -q 'dispatch_source_create' "$SRC"
+
+          P="$GITHUB_WORKSPACE/source/NextLockHideElements"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          X=$(mktemp -d)
+          dpkg-deb -x "$D" "$X"
+          F=$(find "$X" -name NextLockHideElements.dylib -print -quit)
+          test -n "$F"
+          strings -a "$F" | grep -q '1.1.5-test15 designer-direct-safe-hooks'
+          strings -a "$F" | grep -q 'CSQuickActionsViewController'
+          strings -a "$F" | grep -q 'hasCamera'
+          strings -a "$F" | grep -q 'hasFlashlight'
+          strings -a "$F" | grep -q 'CSTeachableMomentsContainerView'
+          strings -a "$F" | grep -q 'controlCenterGrabberView'
+          strings -a "$F" | grep -q 'homeAffordanceView'
+          strings -a "$F" | grep -q 'homeAffordanceContainerView'
+          lipo -info "$F" | grep -q arm64e
+          echo "HIDE_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Rebuild exact Test 14 base as Test 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.5-Test14-HideItems/NextLock_1.1.5_Test14_HideItems_RootHide.deb'
+          test "$(shasum -a 256 "$BASE" | awk '{print $1}')" = '1aeb2311d935a4e4e4bd5e9b9ff8ee7111196bf914dc3400d4d3b0fb0d3d6e19'
+
+          STAGE="$RUNNER_TEMP/test15-stage"
+          HIDE="$RUNNER_TEMP/test15-hide"
+          dpkg-deb -R "$BASE" "$STAGE"
+          dpkg-deb -x "$HIDE_DEB" "$HIDE"
+
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          PERF=$(find "$STAGE" -name NextLockPerfFix.dylib -print -quit)
+          CLOCK=$(find "$STAGE" -name NextLockCustomClock.dylib -print -quit)
+          OLDHIDE=$(find "$STAGE" -name NextLockHideElements.dylib -print -quit)
+          NEW=$(find "$HIDE" -name NextLockHideElements.dylib -print -quit)
+          NEWPLIST=$(find "$HIDE" -name NextLockHideElements.plist -print -quit)
+          test -n "$LOCK"; test -n "$PERF"; test -n "$CLOCK"; test -n "$OLDHIDE"; test -n "$NEW"; test -n "$NEWPLIST"
+
+          LOCK_SHA=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          PERF_SHA=$(shasum -a 256 "$PERF" | awk '{print $1}')
+          CLOCK_SHA=$(shasum -a 256 "$CLOCK" | awk '{print $1}')
+
+          cp "$NEW" "$OLDHIDE"
+          cp "$NEWPLIST" "$(dirname "$OLDHIDE")/NextLockHideElements.plist"
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import re,sys
+          c=Path(sys.argv[1])/'DEBIAN/control'
+          t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu15', t, flags=re.M)
+          desc='Description: NextLock 1.1.5 Test 15. Safe direct iOS 16 hide hooks based on Designer reference paths; removes Test 14 global view scanning and recurring timer while preserving the Test 12 custom clock, photo modes and low-CPU fixes.'
+          t=re.sub(r'^Description: .*$', desc, t, flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
+          c.write_text(t)
+          PY
+
+          mkdir -p test-builds/NextLock/Test15
+          OUT='test-builds/NextLock/Test15/NextLock_1.1.5_Test15_DesignerDirect_RootHide.deb'
+          dpkg-deb -b "$STAGE" "$OUT"
+          test "$(dpkg-deb -f "$OUT" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUT" Version)" = '1.1.5~cpu15'
+
+          X=$(mktemp -d)
+          dpkg-deb -x "$OUT" "$X"
+          test "$(shasum -a 256 "$(find "$X" -name LockGlyphTime.dylib -print -quit)" | awk '{print $1}')" = "$LOCK_SHA"
+          test "$(shasum -a 256 "$(find "$X" -name NextLockPerfFix.dylib -print -quit)" | awk '{print $1}')" = "$PERF_SHA"
+          test "$(shasum -a 256 "$(find "$X" -name NextLockCustomClock.dylib -print -quit)" | awk '{print $1}')" = "$CLOCK_SHA"
+          HIDE2=$(find "$X" -name NextLockHideElements.dylib -print -quit)
+          strings -a "$HIDE2" | grep -q '1.1.5-test15 designer-direct-safe-hooks'
+
+          SHA=$(shasum -a 256 "$OUT" | awk '{print $1}')
+          printf '%s  %s\n' "$SHA" "$(basename "$OUT")" > test-builds/NextLock/Test15/SHA256.txt
+
+      - name: Commit isolated build result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -- test-builds/NextLock/Test15/NextLock_1.1.5_Test15_DesignerDirect_RootHide.deb test-builds/NextLock/Test15/SHA256.txt
+          git diff --cached --check
+          git commit -m 'Store isolated NextLock Test 15 build'
+          git push origin HEAD:nextlock-test15-build
