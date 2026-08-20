@@ -1,3 +1,4 @@
+# Test 10 publisher: time/date independent movement + styling controls
 name: Build and Publish NextLock 1.1.5 CPU Fix Test 10
 
 on:
