@@ -89,129 +89,128 @@ static void NLSetSuppressed(UIView *view, BOOL suppress, BOOL disableInteraction
     }
 }
 
-static NSString *NLLower(NSString *s) {
-    return [s isKindOfClass:[NSString class]] ? s.lowercaseString : @""];
+static NSString *NLLower(NSString *value) {
+    if (![value isKindOfClass:[NSString class]]) return @"";
+    return value.lowercaseString;
 }
 
-static BOOL NLStringHasAny(NSString *s, NSArray<NSString *> *tokens) {
-    NSString *lower = NLLower(s);
+static BOOL NLContainsAny(NSString *value, NSArray *tokens) {
+    NSString *lower = NLLower(value);
     for (NSString *token in tokens) {
         if ([lower containsString:token]) return YES;
     }
     return NO;
 }
 
-static BOOL NLViewHasToken(UIView *view, NSArray<NSString *> *tokens) {
+static BOOL NLViewMatches(UIView *view, NSArray *tokens) {
     if (!view) return NO;
-    NSString *className = NSStringFromClass(view.class);
-    NSString *identifier = view.accessibilityIdentifier;
-    NSString *label = view.accessibilityLabel;
-    return NLStringHasAny(className, tokens) || NLStringHasAny(identifier, tokens) || NLStringHasAny(label, tokens);
+    if (NLContainsAny(NSStringFromClass(view.class), tokens)) return YES;
+    if (NLContainsAny(view.accessibilityIdentifier, tokens)) return YES;
+    if (NLContainsAny(view.accessibilityLabel, tokens)) return YES;
+    return NO;
 }
 
-static NSArray<UIView *> *NLDescendants(UIView *root, NSUInteger limit) {
+static NSArray *NLDescendants(UIView *root, NSUInteger maxCount) {
     if (!root) return @[];
-    NSMutableArray<UIView *> *result = [NSMutableArray array];
-    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:root];
-    NSUInteger index = 0;
-    while (index < queue.count && result.count < limit) {
-        UIView *view = queue[index++];
+    NSMutableArray *result = [NSMutableArray array];
+    NSMutableArray *queue = [NSMutableArray arrayWithObject:root];
+    NSUInteger cursor = 0;
+    while (cursor < queue.count && result.count < maxCount) {
+        UIView *view = queue[cursor++];
         [result addObject:view];
         for (UIView *child in view.subviews) {
-            if (result.count + queue.count >= limit * 2) break;
+            if (queue.count >= maxCount) break;
             [queue addObject:child];
         }
     }
     return result;
 }
 
-static UIView *NLTopLockRootFromDateView(UIView *dateView) {
-    if (!dateView.window) return nil;
+static UIView *NLFindLockRoot(UIView *dateView) {
+    if (!dateView || !dateView.window) return nil;
     UIView *current = dateView;
     UIView *best = dateView;
-    for (NSInteger i = 0; i < 14 && current.superview && current.superview != dateView.window; i++) {
+    for (NSInteger i = 0; i < 16 && current.superview && current.superview != dateView.window; i++) {
         current = current.superview;
         best = current;
         NSString *name = NLLower(NSStringFromClass(current.class));
-        if ([name containsString:@"coversheet"] || [name containsString:@"lockscreen"]) {
-            best = current;
-        }
+        if ([name containsString:@"coversheet"] || [name containsString:@"lockscreen"]) best = current;
     }
     return best;
 }
 
 static void NLApplyCustomClockVisibility(UIView *root) {
-    if (!root || (!NLHideTime && !NLHideDate)) {
-        // Still restore any previously suppressed NextLock labels if switches were turned off.
-    }
-
     UIView *overlay = nil;
-    NSArray<UIView *> *all = NLDescendants(root, 700);
-    for (UIView *view in all) {
-        if (fabs(view.layer.zPosition - 900.0) < 0.75 && !view.userInteractionEnabled) {
-            NSUInteger labels = 0;
-            for (UIView *child in view.subviews) if ([child isKindOfClass:[UILabel class]]) labels++;
-            if (labels >= 2) { overlay = view; break; }
+    for (UIView *view in NLDescendants(root, 700)) {
+        CGFloat z = view.layer.zPosition;
+        if (z >= 899.0 && z <= 901.0 && !view.userInteractionEnabled) {
+            NSUInteger labelCount = 0;
+            for (UIView *child in view.subviews) {
+                if ([child isKindOfClass:[UILabel class]]) labelCount++;
+            }
+            if (labelCount >= 2) {
+                overlay = view;
+                break;
+            }
         }
     }
     if (!overlay) return;
 
-    NSMutableArray<UILabel *> *labels = [NSMutableArray array];
+    NSMutableArray *labels = [NSMutableArray array];
     for (UIView *view in NLDescendants(overlay, 40)) {
-        if ([view isKindOfClass:[UILabel class]]) [labels addObject:(UILabel *)view];
+        if ([view isKindOfClass:[UILabel class]]) [labels addObject:view];
     }
     if (labels.count < 2) return;
 
     [labels sortUsingComparator:^NSComparisonResult(UILabel *a, UILabel *b) {
-        CGFloat pa = a.font.pointSize, pb = b.font.pointSize;
-        if (pa > pb) return NSOrderedAscending;
-        if (pa < pb) return NSOrderedDescending;
+        if (a.font.pointSize > b.font.pointSize) return NSOrderedAscending;
+        if (a.font.pointSize < b.font.pointSize) return NSOrderedDescending;
         return NSOrderedSame;
     }];
 
-    UILabel *timeLabel = labels.firstObject;
-    UILabel *dateLabel = labels.count > 1 ? labels[1] : nil;
+    UILabel *timeLabel = labels[0];
+    UILabel *dateLabel = labels[1];
     NLSetSuppressed(timeLabel, NLHideTime, NO);
     NLSetSuppressed(dateLabel, NLHideDate, NO);
 }
 
-static NSArray<UIControl *> *NLQuickActionControls(UIView *quickView) {
-    NSMutableArray<UIControl *> *controls = [NSMutableArray array];
-    for (UIView *view in NLDescendants(quickView, 100)) {
+static NSArray *NLQuickControls(UIView *quickView) {
+    NSMutableArray *controls = [NSMutableArray array];
+    for (UIView *view in NLDescendants(quickView, 120)) {
         if (![view isKindOfClass:[UIControl class]]) continue;
-        CGRect b = view.bounds;
-        if (b.size.width < 24 || b.size.height < 24) continue;
-        [controls addObject:(UIControl *)view];
+        if (view.bounds.size.width < 24.0 || view.bounds.size.height < 24.0) continue;
+        [controls addObject:view];
     }
     return controls;
 }
 
 static void NLApplyQuickActions(UIView *quickView) {
-    if (!quickView) return;
-    NSArray<NSString *> *cameraTokens = @[@"camera"];
-    NSArray<NSString *> *flashTokens = @[@"flashlight", @"torch", @"flash"];
-    NSArray<UIControl *> *controls = NLQuickActionControls(quickView);
+    NSArray *controls = NLQuickControls(quickView);
+    if (controls.count == 0) return;
+
     UIControl *camera = nil;
-    UIControl *flash = nil;
+    UIControl *flashlight = nil;
+    NSArray *cameraTokens = @[@"camera"];
+    NSArray *flashTokens = @[@"flashlight", @"torch", @"flash"];
 
     for (UIControl *control in controls) {
-        if (!camera && NLViewHasToken(control, cameraTokens)) camera = control;
-        if (!flash && NLViewHasToken(control, flashTokens)) flash = control;
+        if (!camera && NLViewMatches(control, cameraTokens)) camera = control;
+        if (!flashlight && NLViewMatches(control, flashTokens)) flashlight = control;
     }
 
-    if ((!camera || !flash) && controls.count >= 2) {
-        NSArray<UIControl *> *sorted = [controls sortedArrayUsingComparator:^NSComparisonResult(UIControl *a, UIControl *b) {
-            CGPoint ca = [a.superview convertPoint:a.center toView:quickView];
-            CGPoint cb = [b.superview convertPoint:b.center toView:quickView];
-            if (ca.x < cb.x) return NSOrderedAscending;
-            if (ca.x > cb.x) return NSOrderedDescending;
+    if ((!camera || !flashlight) && controls.count >= 2) {
+        NSArray *sorted = [controls sortedArrayUsingComparator:^NSComparisonResult(UIControl *a, UIControl *b) {
+            CGPoint ap = [a.superview convertPoint:a.center toView:quickView];
+            CGPoint bp = [b.superview convertPoint:b.center toView:quickView];
+            if (ap.x < bp.x) return NSOrderedAscending;
+            if (ap.x > bp.x) return NSOrderedDescending;
             return NSOrderedSame;
         }];
-        if (!flash) flash = sorted.firstObject;
+        if (!flashlight) flashlight = sorted.firstObject;
         if (!camera) camera = sorted.lastObject;
     }
 
-    NLSetSuppressed(flash, NLHideFlashlight, YES);
+    NLSetSuppressed(flashlight, NLHideFlashlight, YES);
     NLSetSuppressed(camera, NLHideCamera, YES);
 }
 
@@ -221,13 +220,8 @@ static void NLApplyElementVisibility(void) {
 
     NLApplyCustomClockVisibility(root);
 
-    NSArray<NSString *> *otherTextTokens = @[
-        @"calltoaction", @"teachable", @"instruction", @"hintlabel",
-        @"unlocklabel", @"charginglabel", @"chargingtext"
-    ];
-    NSArray<NSString *> *barTokens = @[
-        @"homeaffordance", @"controlcentergrabber", @"controlcenterindicator", @"grabber"
-    ];
+    NSArray *otherTextTokens = @[@"calltoaction", @"teachable", @"instruction", @"hintlabel", @"unlocklabel", @"charginglabel", @"chargingtext"];
+    NSArray *barTokens = @[@"homeaffordance", @"controlcentergrabber", @"controlcenterindicator", @"grabber"];
 
     for (UIView *view in NLDescendants(root, 900)) {
         NSString *name = NLLower(NSStringFromClass(view.class));
@@ -236,21 +230,18 @@ static void NLApplyElementVisibility(void) {
             NLApplyQuickActions(view);
         }
 
-        BOOL isLockStatusBar = [name containsString:@"statusbar"] &&
+        BOOL lockStatusBar = [name containsString:@"statusbar"] &&
             ([name hasPrefix:@"cs"] || [name containsString:@"lockscreen"] || [name containsString:@"coversheet"]);
-        if (isLockStatusBar) NLSetSuppressed(view, NLHideStatusBar, NO);
+        if (lockStatusBar) NLSetSuppressed(view, NLHideStatusBar, NO);
 
-        if (NLStringHasAny(name, otherTextTokens)) {
-            // Do not touch the native date container/subtitle here; Test 12 manages those separately.
-            if (![name containsString:@"date"] && ![name containsString:@"time"]) {
-                NLSetSuppressed(view, NLHideOtherText, NO);
-            }
+        if (NLContainsAny(name, otherTextTokens) && ![name containsString:@"date"] && ![name containsString:@"time"]) {
+            NLSetSuppressed(view, NLHideOtherText, NO);
         }
 
-        BOOL barMatch = NLStringHasAny(name, barTokens);
+        BOOL barMatch = NLContainsAny(name, barTokens);
         if (!barMatch && [name containsString:@"lumadodgepill"]) {
             CGRect b = view.bounds;
-            barMatch = b.size.width > 70 && b.size.width > b.size.height * 2.5;
+            barMatch = b.size.width > 70.0 && b.size.width > b.size.height * 2.5;
         }
         if (barMatch) NLSetSuppressed(view, NLHideBars, NO);
     }
@@ -260,7 +251,7 @@ static void NLDateDidMove(UIView *self, SEL _cmd) {
     if (NLOrigDateDidMove) NLOrigDateDidMove(self, _cmd);
     NLDateView = self;
     if (self.window) {
-        NLLockRoot = NLTopLockRootFromDateView(self);
+        NLLockRoot = NLFindLockRoot(self);
         dispatch_async(dispatch_get_main_queue(), ^{ NLApplyElementVisibility(); });
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
             NLApplyElementVisibility();
@@ -275,12 +266,12 @@ static void NLPrefsChanged(CFNotificationCenterRef center, void *observer, CFStr
     (void)center; (void)observer; (void)name; (void)object; (void)userInfo;
     NLReloadPrefs();
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (NLDateView.window) NLLockRoot = NLTopLockRootFromDateView(NLDateView);
+        if (NLDateView.window) NLLockRoot = NLFindLockRoot(NLDateView);
         NLApplyElementVisibility();
     });
 }
 
-static void NLStartHideTimer(void) {
+static void NLStartTimer(void) {
     if (NLHideTimer) return;
     NLHideTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
     dispatch_source_set_timer(NLHideTimer,
@@ -305,7 +296,7 @@ __attribute__((constructor)) static void NLHideInit(void) {
                 MSHookMessageEx(dateView, @selector(didMoveToWindow), (IMP)NLDateDidMove,
                                 (IMP *)&NLOrigDateDidMove);
             }
-            NLStartHideTimer();
+            NLStartTimer();
             NSLog(@"[NextLockHideElements] Test13 loaded: independent hide controls ready");
         });
     }
