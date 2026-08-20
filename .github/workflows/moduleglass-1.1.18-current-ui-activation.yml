@@ -1,6 +1,12 @@
 name: Module Glass 1.1.18 Current UI Activation Build
 
 on:
+  push:
+    branches:
+      - feature/moduleglass-1.1.18-current-ui-activation
+    paths:
+      - '.moduleglass-build/ModuleGlassActivation.m'
+      - '.github/workflows/moduleglass-1.1.18-current-ui-activation.yml'
   pull_request:
     branches: [main]
     paths:
