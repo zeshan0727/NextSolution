@@ -1,10 +1,10 @@
-name: Validate NextLock Test 13 PR
+name: Validate NextLock Test 14 PR
 
 on:
   pull_request:
     paths:
       - 'source/NextLockHideElements/**'
-      - 'transfer/build-triggers/nextlock-test13.txt'
+      - 'transfer/build-triggers/nextlock-test14.txt'
       - '.github/workflows/validate-nextlock-test13.yml'
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - run: brew install dpkg ldid
-      - name: Build hide-elements runtime
+      - name: Build Hide Items runtime
         shell: bash
         run: |
           set -euo pipefail
@@ -33,8 +33,9 @@ jobs:
           test -n "$D"
           X=$(mktemp -d); dpkg-deb -x "$D" "$X"
           F=$(find "$X" -name NextLockHideElements.dylib -print -quit)
-          strings -a "$F" | grep -q '1.1.5-test13 independent-lockscreen-hide-controls'
+          strings -a "$F" | grep -q '1.1.5-test14 direct-functional-hide-items'
+          strings -a "$F" | grep -q 'CSQuickActionsView'
           lipo -info "$F" | grep -q arm64e
-      - name: Validate Test 12 base
+      - name: Validate Test 13 base
         run: |
-          test -f transfer/files/NextLock/1.1.5-Test12-CustomClock/NextLock_1.1.5_Test12_CustomClock_RootHide.deb
+          test -f transfer/files/NextLock/1.1.5-Test13-HideElements/NextLock_1.1.5_Test13_HideElements_RootHide.deb
