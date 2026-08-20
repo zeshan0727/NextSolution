@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Module Glass 1.1.18 modern grouped settings layout.
 import plistlib, sys
 from pathlib import Path
 
