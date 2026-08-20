@@ -259,6 +259,7 @@ jobs:
           cat output/SHA256SUMS.txt
 
       - name: Upload verified artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ModuleGlass-1.1.17-Self-Contained-Preferences-RootHide
