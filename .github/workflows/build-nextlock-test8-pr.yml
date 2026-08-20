@@ -1,138 +1,37 @@
-name: Build NextLock Test 8 PR
+name: Build NextLock Test 8/9 PR
 
 on:
   pull_request:
     branches: [main]
     paths:
       - 'transfer/build-triggers/nextlock-test8.txt'
+      - 'transfer/build-triggers/nextlock-test9.txt'
       - '.github/workflows/build-nextlock-test8-pr.yml'
+      - 'scripts/build_nextlock_test9_ci.sh'
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  build-test9:
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - name: Checkout PR
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Install tools
         run: brew install dpkg ldid
-
-      - name: Prepare Test 8 source
+      - name: Build and validate Test 9
         shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin feature/nextlock-photo-content-modes
-          git worktree add "$RUNNER_TEMP/nextlock-feature" FETCH_HEAD
-          P="$RUNNER_TEMP/nextlock-feature/source/NextLockPerfFix"
-          cp "$P/TweakTest7.m" "$P/TweakTest8.m"
-          python3 - "$P/TweakTest8.m" <<'PY'
-          from pathlib import Path
-          import sys
-          p=Path(sys.argv[1]); t=p.read_text()
-          t=t.replace('NextLockPerfFix 1.1.5-test7 refined-full-photo 2048px test5-cpu auto-stretch-full-cutcrop','NextLockPerfFix 1.1.5-test8 preserve-all-style skip-callback-photo refined-full-picker')
-          t=t.replace('static const uintptr_t kArm64CallbackBlockOffset   = 0xBC30;\n','')
-          t=t.replace('static const uintptr_t kArm64eCallbackBlockOffset  = 0xBDD4;\n','')
-          t=t.replace('static void (*NLOriginalHotCallbackBlock)(void *blockObject) = NULL;\n','')
-          t=t.replace('static void NLSuppressHotCallback(void *blockObject) {\n    (void)blockObject;\n}\n\n','')
-          t=t.replace('static BOOL NLInstalled = NO;\n','static BOOL NLInstalled = NO;\nstatic volatile uint8_t *NLHotCallbackFlag = NULL; // arm64e +0x18EF4\n',1)
-          needle='static void NLPhotosWithContentModes(id host) {\n    if (NLOriginalPhotos == NULL) return;\n'
-          repl=needle+'\n    // Preserve the callback styling pass, but skip only its redundant photo render.\n    if (NLHotCallbackFlag != NULL && *NLHotCallbackFlag != 0) return;\n'
-          if needle not in t: raise SystemExit('photos anchor missing')
-          t=t.replace(needle,repl,1)
-          t=t.replace('    uintptr_t callbackOffset = isArm64e ? kArm64eCallbackBlockOffset : kArm64CallbackBlockOffset;\n','')
-          hook='    MSHookFunction((void *)((uintptr_t)mh + callbackOffset),\n                   (void *)&NLSuppressHotCallback,\n                   (void **)&NLOriginalHotCallbackBlock);\n'
-          if hook not in t: raise SystemExit('callback hook missing')
-          t=t.replace(hook,'')
-          anchor='    uintptr_t contentModeStub = isArm64e ? kArm64eSetContentModeStub : kArm64SetContentModeStub;\n'
-          if anchor not in t: raise SystemExit('content anchor missing')
-          t=t.replace(anchor,anchor+'\n    if (isArm64e) NLHotCallbackFlag = (volatile uint8_t *)((uintptr_t)mh + 0x18EF4);\n',1)
-          t=t.replace('        NLOriginalHotCallbackBlock != NULL &&\n','')
-          t=t.replace('Test7 SpringBoard hooks installed (%s): Test5 CPU fix + refined photo modes','Test8 SpringBoard hooks installed (%s): styling callback preserved; callback photo duplicate skipped')
-          t=t.replace('Test7 refined full-photo picker installed','Test8 full-photo no-crop picker installed')
-          if 'NLSuppressHotCallback' in t or 'NLOriginalHotCallbackBlock' in t: raise SystemExit('old callback suppression remains')
-          p.write_text(t)
-          PY
-          sed -i '' 's/NextLockPerfFix_FILES = TweakTest7.m/NextLockPerfFix_FILES = TweakTest8.m/' "$P/Makefile"
-          grep -q 'SpringBoard Preferences' "$P/Makefile"
-          grep -q 'com.apple.Preferences' "$P/NextLockPerfFix.plist"
-          grep -q 'preserve-all-style skip-callback-photo refined-full-picker' "$P/TweakTest8.m"
-
-      - name: Build RootHide shim
-        shell: bash
-        run: |
-          set -euo pipefail
-          P="$RUNNER_TEMP/nextlock-feature/source/NextLockPerfFix"
-          T="$RUNNER_TEMP/theos-rh"
-          git init "$T"
-          git -C "$T" remote add origin https://github.com/roothide/theos.git
-          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
-          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
-          git -C "$T" submodule update --init --recursive --depth 1
-          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
-          export THEOS="$T"
-          export THEOS_PACKAGE_SCHEME=roothide
-          rm -rf "$P/.theos" "$P/packages"
-          make -C "$P" clean package FINALPACKAGE=1
-          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
-          test -n "$D"
-          echo "FIX_DEB=$D" >> "$GITHUB_ENV"
-
-      - name: Integrate and validate Test 8
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE='transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb'
-          STAGE="$RUNNER_TEMP/stage"; FIXSTAGE="$RUNNER_TEMP/fix"; OUT="$RUNNER_TEMP/out"
-          mkdir -p "$OUT"
-          dpkg-deb -R "$BASE" "$STAGE"
-          dpkg-deb -x "$FIX_DEB" "$FIXSTAGE"
-          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
-          FIX=$(find "$FIXSTAGE" -name NextLockPerfFix.dylib -print -quit)
-          FIXPLIST=$(find "$FIXSTAGE" -name NextLockPerfFix.plist -print -quit)
-          BEFORE=$(shasum -a 256 "$LOCK" | awk '{print $1}')
-          cp "$FIX" "$(dirname "$LOCK")/NextLockPerfFix.dylib"
-          cp "$FIXPLIST" "$(dirname "$LOCK")/NextLockPerfFix.plist"
-          test "$BEFORE" = "$(shasum -a 256 "$LOCK" | awk '{print $1}')"
-
-          python3 - "$STAGE" <<'PY'
-          from pathlib import Path
-          import plistlib,sys,re
-          stage=Path(sys.argv[1]); bundle=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
-          for i in range(1,5):
-              p=bundle/f'PhotoFrame{i}.plist'
-              with p.open('rb') as f: d=plistlib.load(f)
-              items=[x for x in d['items'] if x.get('key') != f'photoFrame{i}ContentMode']
-              items.insert(4,{'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs','cell':'PSLinkListCell','default':0,'defaults':'com.nextsolution.lockglyphtime','detail':'PSListItemsController','key':f'photoFrame{i}ContentMode','label':'Photo Display','validTitles':['Auto (Recommended)','Stretch','Full Photo','Cut / Crop'],'validValues':[0,1,2,3]})
-              d['items']=items
-              with p.open('wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
-          c=stage/'DEBIAN/control'; t=c.read_text(); t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu8', t, flags=re.M); c.write_text(t)
-          PY
-
-          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb"
-          dpkg-deb -b "$STAGE" "$OUTDEB"
-          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu8'
-          X=$(mktemp -d); dpkg-deb -x "$OUTDEB" "$X"
-          FIX2=$(find "$X" -name NextLockPerfFix.dylib -print -quit); PLIST=$(find "$X" -name NextLockPerfFix.plist -print -quit)
-          strings -a "$FIX2" | grep -q 'preserve-all-style skip-callback-photo refined-full-picker'
-          strings -a "$FIX2" | grep -q 'Test8 full-photo no-crop picker installed'
-          plutil -p "$PLIST" | grep -q 'com.apple.Preferences'
-          plutil -p "$PLIST" | grep -q 'com.apple.springboard'
-          lipo -info "$FIX2" | grep -q 'arm64e'
-          shasum -a 256 "$OUTDEB" > "$RUNNER_TEMP/SHA256SUMS.txt"
-          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
-
-      - name: Upload package
+        run: bash scripts/build_nextlock_test9_ci.sh
+      - name: Upload Test 9
         uses: actions/upload-artifact@v4
         with:
-          name: NextLock-Test8-FullFeatures-RootHide
+          name: NextLock-Test9-FreePosition-RootHide
           path: |
             ${{ env.OUTDEB }}
-            ${{ runner.temp }}/SHA256SUMS.txt
+            ${{ env.SHA_FILE }}
           if-no-files-found: error
           retention-days: 14
