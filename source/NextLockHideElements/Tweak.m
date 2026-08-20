@@ -3,6 +3,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <objc/runtime.h>
+#import <objc/message.h>
 
 extern void MSHookMessageEx(Class cls, SEL sel, IMP imp, IMP *result);
 
@@ -10,7 +11,7 @@ static NSString * const NLPrefsDomain = @"com.nextsolution.lockglyphtime";
 static const CFStringRef NLPrefsChangedName = CFSTR("com.nextsolution.lockglyphtime/ReloadPrefs");
 
 __attribute__((used)) static const char *NLHideMarker =
-    "NextLockHideElements 1.1.5-test14 direct-functional-hide-items";
+    "NextLockHideElements 1.1.5-test15 designer-direct-safe-hooks";
 
 static BOOL NLHideTime = NO;
 static BOOL NLHideDate = NO;
@@ -19,21 +20,41 @@ static BOOL NLHideFlashlight = NO;
 static BOOL NLHideStatusBar = NO;
 static BOOL NLHideOtherText = NO;
 static BOOL NLHideBars = NO;
+static BOOL NLLastKnownLocked = NO;
 
-static __weak UIView *NLDateView = nil;
-static __weak UIWindow *NLLockWindow = nil;
-static BOOL NLLockScreenActive = NO;
-static dispatch_source_t NLHideTimer = nil;
-static CFTimeInterval NLLastFullApply = 0;
+static __weak UIView *NLCustomTimeLabel = nil;
+static __weak UIView *NLCustomDateLabel = nil;
+static __weak UIView *NLCCGrabberView = nil;
+static __weak UIView *NLHomeAffordanceView = nil;
+static __weak UIView *NLHomeAffordanceContainerView = nil;
+static __weak UIView *NLStatusBarView = nil;
+static __weak UIView *NLStatusLegibilityView = nil;
+static __weak UIView *NLCallToActionView = nil;
+static __weak UIView *NLFocusActivityView = nil;
+static __weak UIView *NLFixedFooterView = nil;
 
-static void (*NLOrigDateDidMove)(UIView *, SEL) = NULL;
-static void (*NLOrigDateLayout)(UIView *, SEL) = NULL;
-static void (*NLOrigQuickDidMove)(UIView *, SEL) = NULL;
-static void (*NLOrigQuickLayout)(UIView *, SEL) = NULL;
-
-static char NLOriginalAlphaKey;
 static char NLOriginalHiddenKey;
-static char NLOriginalInteractionKey;
+static char NLOriginalAlphaKey;
+
+static BOOL (*NLOrigHasCamera)(id, SEL) = NULL;
+static BOOL (*NLOrigHasFlashlight)(id, SEL) = NULL;
+static UIView *(*NLOrigControlCenterGrabberView)(id, SEL) = NULL;
+static UIView *(*NLOrigHomeAffordanceView)(id, SEL) = NULL;
+static UIView *(*NLOrigHomeAffordanceContainerView)(id, SEL) = NULL;
+static BOOL (*NLOrigIsUILocked)(id, SEL) = NULL;
+
+static void (*NLOrigDateLayout)(UIView *, SEL) = NULL;
+static void (*NLOrigDateDidMove)(UIView *, SEL) = NULL;
+static void (*NLOrigStatusLayout)(UIView *, SEL) = NULL;
+static void (*NLOrigStatusDidMove)(UIView *, SEL) = NULL;
+static void (*NLOrigLegibilityLayout)(UIView *, SEL) = NULL;
+static void (*NLOrigLegibilityDidMove)(UIView *, SEL) = NULL;
+static void (*NLOrigCallLayout)(UIView *, SEL) = NULL;
+static void (*NLOrigCallDidMove)(UIView *, SEL) = NULL;
+static void (*NLOrigFocusLayout)(UIView *, SEL) = NULL;
+static void (*NLOrigFocusDidMove)(UIView *, SEL) = NULL;
+static void (*NLOrigFooterLayout)(UIView *, SEL) = NULL;
+static void (*NLOrigFooterDidMove)(UIView *, SEL) = NULL;
 
 #pragma mark - Preferences
 
@@ -67,298 +88,251 @@ static void NLReloadPrefs(void) {
     NLHideBars = NLCopyBool(CFSTR("hideLockScreenBars"), NO);
 }
 
-static BOOL NLAnyHideEnabled(void) {
-    return NLHideTime || NLHideDate || NLHideCamera || NLHideFlashlight ||
-           NLHideStatusBar || NLHideOtherText || NLHideBars;
-}
+#pragma mark - Safe state helpers
 
-#pragma mark - View helpers
-
-static void NLSetSuppressed(UIView *view, BOOL suppress, BOOL disableInteraction) {
+static void NLSetSuppressed(UIView *view, BOOL suppress) {
     if (!view) return;
 
-    NSNumber *storedAlpha = objc_getAssociatedObject(view, &NLOriginalAlphaKey);
-    NSNumber *storedHidden = objc_getAssociatedObject(view, &NLOriginalHiddenKey);
-    NSNumber *storedInteraction = objc_getAssociatedObject(view, &NLOriginalInteractionKey);
+    NSNumber *oldHidden = objc_getAssociatedObject(view, &NLOriginalHiddenKey);
+    NSNumber *oldAlpha = objc_getAssociatedObject(view, &NLOriginalAlphaKey);
 
     if (suppress) {
-        if (!storedAlpha) {
-            objc_setAssociatedObject(view, &NLOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        }
-        if (!storedHidden) {
+        if (!oldHidden) {
             objc_setAssociatedObject(view, &NLOriginalHiddenKey, @(view.hidden), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
-        if (disableInteraction && !storedInteraction) {
-            objc_setAssociatedObject(view, &NLOriginalInteractionKey, @(view.userInteractionEnabled), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        if (!oldAlpha) {
+            objc_setAssociatedObject(view, &NLOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
-        view.alpha = 0.0;
-        view.hidden = YES;
-        if (disableInteraction) view.userInteractionEnabled = NO;
+        if (!view.hidden) view.hidden = YES;
+        if (view.alpha != 0.0) view.alpha = 0.0;
     } else {
-        if (storedAlpha) {
-            view.alpha = storedAlpha.doubleValue;
-            objc_setAssociatedObject(view, &NLOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        }
-        if (storedHidden) {
-            view.hidden = storedHidden.boolValue;
+        if (oldHidden) {
+            BOOL value = oldHidden.boolValue;
             objc_setAssociatedObject(view, &NLOriginalHiddenKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            if (view.hidden != value) view.hidden = value;
         }
-        if (storedInteraction) {
-            view.userInteractionEnabled = storedInteraction.boolValue;
-            objc_setAssociatedObject(view, &NLOriginalInteractionKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        }
-    }
-}
-
-static NSString *NLLower(NSString *value) {
-    if (![value isKindOfClass:[NSString class]]) return @"";
-    return value.lowercaseString;
-}
-
-static BOOL NLContainsAny(NSString *value, NSArray<NSString *> *tokens) {
-    NSString *lower = NLLower(value);
-    for (NSString *token in tokens) {
-        if ([lower containsString:token]) return YES;
-    }
-    return NO;
-}
-
-static BOOL NLViewMatches(UIView *view, NSArray<NSString *> *tokens) {
-    if (!view) return NO;
-    if (NLContainsAny(NSStringFromClass(view.class), tokens)) return YES;
-    if (NLContainsAny(view.accessibilityIdentifier, tokens)) return YES;
-    if (NLContainsAny(view.accessibilityLabel, tokens)) return YES;
-    return NO;
-}
-
-static NSArray<UIView *> *NLDescendants(UIView *root, NSUInteger maxCount) {
-    if (!root) return @[];
-    NSMutableArray<UIView *> *result = [NSMutableArray array];
-    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:root];
-    NSUInteger cursor = 0;
-    while (cursor < queue.count && result.count < maxCount) {
-        UIView *view = queue[cursor++];
-        [result addObject:view];
-        for (UIView *child in view.subviews) {
-            if (queue.count >= maxCount) break;
-            [queue addObject:child];
-        }
-    }
-    return result;
-}
-
-static NSArray<UIWindow *> *NLAllWindows(void) {
-    NSMutableArray<UIWindow *> *windows = [NSMutableArray array];
-    for (UIWindow *window in UIApplication.sharedApplication.windows) {
-        if ([window isKindOfClass:[UIWindow class]]) [windows addObject:window];
-    }
-    return windows;
-}
-
-static void NLRestoreSuppressedViews(void) {
-    for (UIWindow *window in NLAllWindows()) {
-        for (UIView *view in NLDescendants(window, 2600)) {
-            if (objc_getAssociatedObject(view, &NLOriginalAlphaKey) ||
-                objc_getAssociatedObject(view, &NLOriginalHiddenKey) ||
-                objc_getAssociatedObject(view, &NLOriginalInteractionKey)) {
-                NLSetSuppressed(view, NO, NO);
-            }
+        if (oldAlpha) {
+            CGFloat value = oldAlpha.doubleValue;
+            objc_setAssociatedObject(view, &NLOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            if (view.alpha != value) view.alpha = value;
         }
     }
 }
 
-#pragma mark - Time / Date
-
-static UIView *NLFindCustomClockOverlay(UIWindow *window) {
-    if (!window) return nil;
-    for (UIView *view in NLDescendants(window, 2200)) {
-        CGFloat z = view.layer.zPosition;
-        if (z < 899.0 || z > 901.0 || view.userInteractionEnabled) continue;
-        NSUInteger labelCount = 0;
-        for (UIView *child in view.subviews) {
-            if ([child isKindOfClass:[UILabel class]]) labelCount++;
-        }
-        if (labelCount >= 2) return view;
-    }
-    return nil;
+static id NLSendId(id object, NSString *selectorName) {
+    if (!object) return nil;
+    SEL sel = NSSelectorFromString(selectorName);
+    if (![object respondsToSelector:sel]) return nil;
+    return ((id (*)(id, SEL))objc_msgSend)(object, sel);
 }
 
-static void NLApplyTimeDate(void) {
-    UIWindow *window = NLLockWindow;
-    if (!window) return;
-    UIView *overlay = NLFindCustomClockOverlay(window);
+static BOOL NLQueryLockedDirect(void) {
+    Class cls = NSClassFromString(@"SBLockScreenManager");
+    if (!cls) return NO;
+    id manager = NLSendId(cls, @"sharedInstance");
+    if (!manager) manager = NLSendId(cls, @"sharedInstanceIfExists");
+    if (!manager) return NO;
+    SEL sel = NSSelectorFromString(@"isUILocked");
+    if (![manager respondsToSelector:sel]) return NO;
+    return ((BOOL (*)(id, SEL))objc_msgSend)(manager, sel);
+}
+
+static BOOL NLShouldHideStatus(void) {
+    return NLHideStatusBar && NLQueryLockedDirect();
+}
+
+static BOOL NLShouldHideOtherText(void) {
+    return NLHideOtherText && NLQueryLockedDirect();
+}
+
+#pragma mark - Test 12 custom Time / Date overlay
+
+static void NLApplyCustomClockVisibility(UIView *dateView) {
+    UIView *parent = dateView.superview;
+    if (!parent) return;
+
+    UIView *overlay = nil;
+    for (UIView *candidate in parent.subviews) {
+        if (candidate == dateView) continue;
+        CGFloat z = candidate.layer.zPosition;
+        if (z < 899.5 || z > 900.5) continue;
+        if (candidate.userInteractionEnabled) continue;
+        NSUInteger directLabels = 0;
+        for (UIView *child in candidate.subviews) {
+            if ([child isKindOfClass:[UILabel class]]) directLabels++;
+        }
+        if (directLabels >= 2) {
+            overlay = candidate;
+            break;
+        }
+    }
     if (!overlay) return;
 
-    NSMutableArray<UILabel *> *labels = [NSMutableArray array];
-    for (UIView *view in NLDescendants(overlay, 50)) {
-        if ([view isKindOfClass:[UILabel class]]) [labels addObject:(UILabel *)view];
+    NSMutableArray<UILabel *> *labels = [NSMutableArray arrayWithCapacity:2];
+    for (UIView *child in overlay.subviews) {
+        if ([child isKindOfClass:[UILabel class]]) [labels addObject:(UILabel *)child];
     }
     if (labels.count < 2) return;
 
-    [labels sortUsingComparator:^NSComparisonResult(UILabel *a, UILabel *b) {
-        if (a.font.pointSize > b.font.pointSize) return NSOrderedAscending;
-        if (a.font.pointSize < b.font.pointSize) return NSOrderedDescending;
-        return NSOrderedSame;
-    }];
-
-    NLSetSuppressed(labels[0], NLHideTime, NO);
-    NLSetSuppressed(labels[1], NLHideDate, NO);
-}
-
-#pragma mark - Camera / Flashlight
-
-static UIView *NLValueView(id object, NSArray<NSString *> *keys) {
-    for (NSString *key in keys) {
-        @try {
-            id value = [object valueForKey:key];
-            if ([value isKindOfClass:[UIView class]]) return value;
-        } @catch (__unused NSException *exception) {}
-    }
-    return nil;
-}
-
-static NSArray<UIControl *> *NLQuickControls(UIView *quickView) {
-    NSMutableArray<UIControl *> *controls = [NSMutableArray array];
-    for (UIView *view in NLDescendants(quickView, 180)) {
-        if (![view isKindOfClass:[UIControl class]]) continue;
-        if (view.bounds.size.width < 24.0 || view.bounds.size.height < 24.0) continue;
-        [controls addObject:(UIControl *)view];
-    }
-    return controls;
-}
-
-static void NLApplyQuickActions(UIView *quickView) {
-    if (!quickView) return;
-
-    UIView *camera = NLValueView(quickView, @[@"_cameraButton", @"cameraButton", @"_cameraQuickActionButton", @"cameraQuickActionButton"]);
-    UIView *flashlight = NLValueView(quickView, @[@"_flashlightButton", @"flashlightButton", @"_torchButton", @"torchButton", @"_flashlightQuickActionButton", @"flashlightQuickActionButton"]);
-
-    NSArray<UIControl *> *controls = NLQuickControls(quickView);
-    NSArray *cameraTokens = @[@"camera"];
-    NSArray *flashTokens = @[@"flashlight", @"torch", @"flash"];
-
-    for (UIControl *control in controls) {
-        if (!camera && NLViewMatches(control, cameraTokens)) camera = control;
-        if (!flashlight && NLViewMatches(control, flashTokens)) flashlight = control;
-    }
-
-    if ((!camera || !flashlight) && controls.count >= 2) {
-        NSArray<UIControl *> *sorted = [controls sortedArrayUsingComparator:^NSComparisonResult(UIControl *a, UIControl *b) {
-            CGPoint ap = [a.superview convertPoint:a.center toView:quickView];
-            CGPoint bp = [b.superview convertPoint:b.center toView:quickView];
-            if (ap.x < bp.x) return NSOrderedAscending;
-            if (ap.x > bp.x) return NSOrderedDescending;
-            return NSOrderedSame;
-        }];
-        if (!flashlight) flashlight = sorted.firstObject;
-        if (!camera) camera = sorted.lastObject;
-    }
-
-    NLSetSuppressed(flashlight, NLLockScreenActive && NLHideFlashlight, YES);
-    NLSetSuppressed(camera, NLLockScreenActive && NLHideCamera, YES);
-}
-
-#pragma mark - Status bar / text / bars
-
-static BOOL NLIsStatusBarView(UIView *view) {
-    NSString *name = NLLower(NSStringFromClass(view.class));
-    NSString *identifier = NLLower(view.accessibilityIdentifier);
-    if ([name containsString:@"statusbar"] || [identifier containsString:@"statusbar"]) return YES;
-    return NO;
-}
-
-static BOOL NLIsOtherLockText(UIView *view) {
-    if (![view isKindOfClass:[UILabel class]] && ![NLLower(NSStringFromClass(view.class)) containsString:@"label"]) return NO;
-    NSArray *tokens = @[@"calltoaction", @"teachable", @"instruction", @"hint", @"unlock", @"swipe", @"charging", @"face id", @"faceid"];
-    return NLViewMatches(view, tokens);
-}
-
-static BOOL NLIsBarView(UIView *view, UIWindow *window) {
-    NSArray *tokens = @[@"homeaffordance", @"homeindicator", @"controlcentergrabber", @"controlcenterindicator", @"grabber", @"lumadodgepill"];
-    if (NLViewMatches(view, tokens)) return YES;
-
-    CGRect rect = [view convertRect:view.bounds toView:window];
-    CGFloat width = CGRectGetWidth(rect);
-    CGFloat height = CGRectGetHeight(rect);
-    CGFloat maxY = CGRectGetMaxY(window.bounds);
-    BOOL pillShape = width >= 70.0 && height > 0.5 && height <= 12.0 && width >= height * 6.0;
-    BOOL edgePosition = CGRectGetMinY(rect) <= 55.0 || CGRectGetMaxY(rect) >= maxY - 40.0;
-    return pillShape && edgePosition;
-}
-
-static void NLApplyWindowElements(void) {
-    if (!NLLockScreenActive) return;
-    UIWindow *lockWindow = NLLockWindow;
-    if (!lockWindow) return;
-
-    for (UIWindow *window in NLAllWindows()) {
-        for (UIView *view in NLDescendants(window, 2600)) {
-            if (NLIsStatusBarView(view)) {
-                NLSetSuppressed(view, NLHideStatusBar, NO);
-            }
-        }
-    }
-
-    for (UIView *view in NLDescendants(lockWindow, 2600)) {
-        NSString *name = NLLower(NSStringFromClass(view.class));
-        if ([name containsString:@"quickactionsview"]) NLApplyQuickActions(view);
-        if (NLIsOtherLockText(view)) NLSetSuppressed(view, NLHideOtherText, NO);
-        if (NLIsBarView(view, lockWindow)) NLSetSuppressed(view, NLHideBars, NO);
-    }
-}
-
-static void NLApplyAll(void) {
-    if (!NLLockScreenActive || !NLLockWindow) {
-        NLRestoreSuppressedViews();
-        return;
-    }
-    NLApplyTimeDate();
-    NLApplyWindowElements();
-}
-
-#pragma mark - Hooks
-
-static void NLDateDidMove(UIView *self, SEL _cmd) {
-    if (NLOrigDateDidMove) NLOrigDateDidMove(self, _cmd);
-    NLDateView = self;
-    NLLockScreenActive = self.window != nil;
-    NLLockWindow = self.window;
-
-    if (NLLockScreenActive) {
-        dispatch_async(dispatch_get_main_queue(), ^{ NLApplyAll(); });
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 250 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{ NLApplyAll(); });
-    } else {
-        NLRestoreSuppressedViews();
-        NLLockWindow = nil;
-    }
+    // Test 12 creates the labels in this exact order: Time, then Date.
+    NLCustomTimeLabel = labels[0];
+    NLCustomDateLabel = labels[1];
+    NLSetSuppressed(NLCustomTimeLabel, NLHideTime);
+    NLSetSuppressed(NLCustomDateLabel, NLHideDate);
 }
 
 static void NLDateLayout(UIView *self, SEL _cmd) {
     if (NLOrigDateLayout) NLOrigDateLayout(self, _cmd);
-    if (!self.window) return;
-    NLDateView = self;
-    NLLockScreenActive = YES;
-    NLLockWindow = self.window;
-
-    NLApplyTimeDate();
-    CFTimeInterval now = CACurrentMediaTime();
-    if (now - NLLastFullApply >= 0.5) {
-        NLLastFullApply = now;
-        NLApplyWindowElements();
-    }
+    NLApplyCustomClockVisibility(self);
 }
 
-static void NLQuickDidMove(UIView *self, SEL _cmd) {
-    if (NLOrigQuickDidMove) NLOrigQuickDidMove(self, _cmd);
-    if (self.window && NLLockScreenActive) NLApplyQuickActions(self);
-    else {
-        for (UIControl *control in NLQuickControls(self)) NLSetSuppressed(control, NO, NO);
+static void NLDateDidMove(UIView *self, SEL _cmd) {
+    if (NLOrigDateDidMove) NLOrigDateDidMove(self, _cmd);
+    if (!self.window) {
+        NLSetSuppressed(NLCustomTimeLabel, NO);
+        NLSetSuppressed(NLCustomDateLabel, NO);
+        NLCustomTimeLabel = nil;
+        NLCustomDateLabel = nil;
+        return;
     }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NLApplyCustomClockVisibility(self);
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 100 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        if (self.window) NLApplyCustomClockVisibility(self);
+    });
 }
 
-static void NLQuickLayout(UIView *self, SEL _cmd) {
-    if (NLOrigQuickLayout) NLOrigQuickLayout(self, _cmd);
-    if (self.window && NLLockScreenActive) NLApplyQuickActions(self);
+#pragma mark - Camera / Flashlight
+
+static BOOL NLHasCamera(id self, SEL _cmd) {
+    if (NLHideCamera) return NO;
+    return NLOrigHasCamera ? NLOrigHasCamera(self, _cmd) : YES;
+}
+
+static BOOL NLHasFlashlight(id self, SEL _cmd) {
+    if (NLHideFlashlight) return NO;
+    return NLOrigHasFlashlight ? NLOrigHasFlashlight(self, _cmd) : YES;
+}
+
+#pragma mark - CC / Home bars
+
+static UIView *NLControlCenterGrabberView(id self, SEL _cmd) {
+    UIView *view = NLOrigControlCenterGrabberView ? NLOrigControlCenterGrabberView(self, _cmd) : nil;
+    NLCCGrabberView = view;
+    NLSetSuppressed(view, NLHideBars);
+    return view;
+}
+
+static UIView *NLHomeAffordanceViewGetter(id self, SEL _cmd) {
+    UIView *view = NLOrigHomeAffordanceView ? NLOrigHomeAffordanceView(self, _cmd) : nil;
+    NLHomeAffordanceView = view;
+    NLSetSuppressed(view, NLHideBars);
+    return view;
+}
+
+static UIView *NLHomeAffordanceContainerViewGetter(id self, SEL _cmd) {
+    UIView *view = NLOrigHomeAffordanceContainerView ? NLOrigHomeAffordanceContainerView(self, _cmd) : nil;
+    NLHomeAffordanceContainerView = view;
+    NLSetSuppressed(view, NLHideBars);
+    return view;
+}
+
+#pragma mark - Lock-state aware Status Bar / Other Text
+
+static void NLApplyStateBoundViews(void) {
+    BOOL status = NLShouldHideStatus();
+    BOOL text = NLShouldHideOtherText();
+    NLSetSuppressed(NLStatusBarView, status);
+    NLSetSuppressed(NLStatusLegibilityView, status);
+    NLSetSuppressed(NLCallToActionView, text);
+    NLSetSuppressed(NLFocusActivityView, text);
+    NLSetSuppressed(NLFixedFooterView, text);
+    NLSetSuppressed(NLCCGrabberView, NLHideBars);
+    NLSetSuppressed(NLHomeAffordanceView, NLHideBars);
+    NLSetSuppressed(NLHomeAffordanceContainerView, NLHideBars);
+    NLSetSuppressed(NLCustomTimeLabel, NLHideTime);
+    NLSetSuppressed(NLCustomDateLabel, NLHideDate);
+}
+
+static BOOL NLIsUILockedHook(id self, SEL _cmd) {
+    BOOL locked = NLOrigIsUILocked ? NLOrigIsUILocked(self, _cmd) : NO;
+    if (locked != NLLastKnownLocked) {
+        NLLastKnownLocked = locked;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NLApplyStateBoundViews();
+        });
+    }
+    return locked;
+}
+
+static void NLStatusLayout(UIView *self, SEL _cmd) {
+    if (NLOrigStatusLayout) NLOrigStatusLayout(self, _cmd);
+    NLStatusBarView = self;
+    NLSetSuppressed(self, NLShouldHideStatus());
+}
+
+static void NLStatusDidMove(UIView *self, SEL _cmd) {
+    if (NLOrigStatusDidMove) NLOrigStatusDidMove(self, _cmd);
+    NLStatusBarView = self.window ? self : nil;
+    NLSetSuppressed(self, self.window && NLShouldHideStatus());
+}
+
+static void NLLegibilityLayout(UIView *self, SEL _cmd) {
+    if (NLOrigLegibilityLayout) NLOrigLegibilityLayout(self, _cmd);
+    NLStatusLegibilityView = self;
+    NLSetSuppressed(self, NLShouldHideStatus());
+}
+
+static void NLLegibilityDidMove(UIView *self, SEL _cmd) {
+    if (NLOrigLegibilityDidMove) NLOrigLegibilityDidMove(self, _cmd);
+    NLStatusLegibilityView = self.window ? self : nil;
+    NLSetSuppressed(self, self.window && NLShouldHideStatus());
+}
+
+static void NLCallLayout(UIView *self, SEL _cmd) {
+    if (NLOrigCallLayout) NLOrigCallLayout(self, _cmd);
+    NLCallToActionView = self;
+    NLSetSuppressed(self, NLShouldHideOtherText());
+}
+
+static void NLCallDidMove(UIView *self, SEL _cmd) {
+    if (NLOrigCallDidMove) NLOrigCallDidMove(self, _cmd);
+    NLCallToActionView = self.window ? self : nil;
+    NLSetSuppressed(self, self.window && NLShouldHideOtherText());
+}
+
+static void NLFocusLayout(UIView *self, SEL _cmd) {
+    if (NLOrigFocusLayout) NLOrigFocusLayout(self, _cmd);
+    NLFocusActivityView = self;
+    NLSetSuppressed(self, NLShouldHideOtherText());
+}
+
+static void NLFocusDidMove(UIView *self, SEL _cmd) {
+    if (NLOrigFocusDidMove) NLOrigFocusDidMove(self, _cmd);
+    NLFocusActivityView = self.window ? self : nil;
+    NLSetSuppressed(self, self.window && NLShouldHideOtherText());
+}
+
+static void NLFooterLayout(UIView *self, SEL _cmd) {
+    if (NLOrigFooterLayout) NLOrigFooterLayout(self, _cmd);
+    NLFixedFooterView = self;
+    NLSetSuppressed(self, NLShouldHideOtherText());
+}
+
+static void NLFooterDidMove(UIView *self, SEL _cmd) {
+    if (NLOrigFooterDidMove) NLOrigFooterDidMove(self, _cmd);
+    NLFixedFooterView = self.window ? self : nil;
+    NLSetSuppressed(self, self.window && NLShouldHideOtherText());
+}
+
+#pragma mark - Hook installation
+
+static void NLHookIfAvailable(NSString *className, NSString *selectorName, IMP replacement, IMP *original) {
+    Class cls = NSClassFromString(className);
+    SEL sel = NSSelectorFromString(selectorName);
+    if (!cls || !class_getInstanceMethod(cls, sel)) return;
+    MSHookMessageEx(cls, sel, replacement, original);
 }
 
 static void NLPrefsChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
@@ -366,28 +340,8 @@ static void NLPrefsChanged(CFNotificationCenterRef center, void *observer, CFStr
     (void)center; (void)observer; (void)name; (void)object; (void)userInfo;
     NLReloadPrefs();
     dispatch_async(dispatch_get_main_queue(), ^{
-        NLApplyAll();
+        NLApplyStateBoundViews();
     });
-}
-
-static void NLStartTimer(void) {
-    if (NLHideTimer) return;
-    NLHideTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
-    dispatch_source_set_timer(NLHideTimer,
-                              dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC),
-                              NSEC_PER_SEC,
-                              250 * NSEC_PER_MSEC);
-    dispatch_source_set_event_handler(NLHideTimer, ^{
-        if (NLLockScreenActive && NLAnyHideEnabled()) NLApplyAll();
-    });
-    dispatch_resume(NLHideTimer);
-}
-
-static void NLHookClassIfAvailable(NSString *className, SEL selector, IMP replacement, IMP *original) {
-    Class cls = NSClassFromString(className);
-    if (cls && class_getInstanceMethod(cls, selector)) {
-        MSHookMessageEx(cls, selector, replacement, original);
-    }
 }
 
 __attribute__((constructor)) static void NLHideInit(void) {
@@ -396,17 +350,50 @@ __attribute__((constructor)) static void NLHideInit(void) {
         CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL,
                                         NLPrefsChanged, NLPrefsChangedName, NULL,
                                         CFNotificationSuspensionBehaviorDeliverImmediately);
+
         dispatch_async(dispatch_get_main_queue(), ^{
-            NLHookClassIfAvailable(@"SBFLockScreenDateView", @selector(didMoveToWindow),
-                                   (IMP)NLDateDidMove, (IMP *)&NLOrigDateDidMove);
-            NLHookClassIfAvailable(@"SBFLockScreenDateView", @selector(layoutSubviews),
-                                   (IMP)NLDateLayout, (IMP *)&NLOrigDateLayout);
-            NLHookClassIfAvailable(@"CSQuickActionsView", @selector(didMoveToWindow),
-                                   (IMP)NLQuickDidMove, (IMP *)&NLOrigQuickDidMove);
-            NLHookClassIfAvailable(@"CSQuickActionsView", @selector(layoutSubviews),
-                                   (IMP)NLQuickLayout, (IMP *)&NLOrigQuickLayout);
-            NLStartTimer();
-            NSLog(@"[NextLockHideElements] Test14 loaded: Hide Items direct controls active");
+            NLHookIfAvailable(@"SBFLockScreenDateView", @"layoutSubviews",
+                              (IMP)NLDateLayout, (IMP *)&NLOrigDateLayout);
+            NLHookIfAvailable(@"SBFLockScreenDateView", @"didMoveToWindow",
+                              (IMP)NLDateDidMove, (IMP *)&NLOrigDateDidMove);
+
+            NLHookIfAvailable(@"CSQuickActionsViewController", @"hasCamera",
+                              (IMP)NLHasCamera, (IMP *)&NLOrigHasCamera);
+            NLHookIfAvailable(@"CSQuickActionsViewController", @"hasFlashlight",
+                              (IMP)NLHasFlashlight, (IMP *)&NLOrigHasFlashlight);
+            NLHookIfAvailable(@"CSTeachableMomentsContainerView", @"controlCenterGrabberView",
+                              (IMP)NLControlCenterGrabberView, (IMP *)&NLOrigControlCenterGrabberView);
+            NLHookIfAvailable(@"CSTeachableMomentsContainerView", @"homeAffordanceView",
+                              (IMP)NLHomeAffordanceViewGetter, (IMP *)&NLOrigHomeAffordanceView);
+            NLHookIfAvailable(@"CSTeachableMomentsContainerView", @"homeAffordanceContainerView",
+                              (IMP)NLHomeAffordanceContainerViewGetter, (IMP *)&NLOrigHomeAffordanceContainerView);
+
+            NLHookIfAvailable(@"SBLockScreenManager", @"isUILocked",
+                              (IMP)NLIsUILockedHook, (IMP *)&NLOrigIsUILocked);
+            NLHookIfAvailable(@"_UIStatusBar", @"layoutSubviews",
+                              (IMP)NLStatusLayout, (IMP *)&NLOrigStatusLayout);
+            NLHookIfAvailable(@"_UIStatusBar", @"didMoveToWindow",
+                              (IMP)NLStatusDidMove, (IMP *)&NLOrigStatusDidMove);
+            NLHookIfAvailable(@"SBFStatusBarLegibilityView", @"layoutSubviews",
+                              (IMP)NLLegibilityLayout, (IMP *)&NLOrigLegibilityLayout);
+            NLHookIfAvailable(@"SBFStatusBarLegibilityView", @"didMoveToWindow",
+                              (IMP)NLLegibilityDidMove, (IMP *)&NLOrigLegibilityDidMove);
+            NLHookIfAvailable(@"SBUICallToActionLabel", @"layoutSubviews",
+                              (IMP)NLCallLayout, (IMP *)&NLOrigCallLayout);
+            NLHookIfAvailable(@"SBUICallToActionLabel", @"didMoveToWindow",
+                              (IMP)NLCallDidMove, (IMP *)&NLOrigCallDidMove);
+            NLHookIfAvailable(@"CSFocusActivityView", @"layoutSubviews",
+                              (IMP)NLFocusLayout, (IMP *)&NLOrigFocusLayout);
+            NLHookIfAvailable(@"CSFocusActivityView", @"didMoveToWindow",
+                              (IMP)NLFocusDidMove, (IMP *)&NLOrigFocusDidMove);
+            NLHookIfAvailable(@"CSFixedFooterView", @"layoutSubviews",
+                              (IMP)NLFooterLayout, (IMP *)&NLOrigFooterLayout);
+            NLHookIfAvailable(@"CSFixedFooterView", @"didMoveToWindow",
+                              (IMP)NLFooterDidMove, (IMP *)&NLOrigFooterDidMove);
+
+            NLLastKnownLocked = NLQueryLockedDirect();
+            NLApplyStateBoundViews();
+            NSLog(@"[NextLockHideElements] Test15 loaded: Designer direct safe hooks active");
         });
     }
 }
