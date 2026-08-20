@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-19T16:46:15Z",
+  "updatedAt": "2026-08-20T06:45:21Z",
   "files": [
+    {
+      "id": "moduleglass-1.1.15-preferences-fix-patch-roothide",
+      "name": "Module Glass 1.1.15 Preferences Fix",
+      "fileName": "ModuleGlass_1.1.15_PreferencesFix_Patch_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.15.1",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.15-PrefsFix/ModuleGlass_1.1.15_PreferencesFix_Patch_RootHide.deb",
+      "sha256": "a84ee5dce0a3356714d41649f3e4165e9931c44299aa28dd54b789aaa17ceb61",
+      "notes": "Install over Module Glass 1.1.15. Restores the missing Settings / PreferenceLoader entry without replacing or changing the working Control Center runtime."
+    },
     {
       "id": "nextsigner-1.3.4",
       "name": "Next Signer 1.3.4",
@@ -112,7 +123,7 @@
       "version": "1.0.2",
       "url": "https://nextsolution.cc/transfer/files/NextPost/1.0.2/NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "sha256": "ee35fd00462b5b5fafdfc3b307594d6bf7d8577855e7707404c3c1efc1c8a9c0",
-      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval."
+      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval."
     },
     {
       "id": "nextpost-1.0.1-levelplay-test",
