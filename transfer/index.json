@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T07:33:31Z",
+  "updatedAt": "2026-08-20T08:11:53Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-cpufix-test6-photomodes-roothide",
-      "name": "NextLock 1.1.5 CPU Fix Test 6 + Photo Modes RootHide",
-      "fileName": "NextLock_1.1.5_CPUFix_Test6_PhotoModes_RootHide.deb",
+      "id": "nextlock-1.1.5-cpufix-test7-refinedphoto-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 7 Refined Photo RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test7_RefinedPhoto_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test6",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test6-PhotoModes/NextLock_1.1.5_CPUFix_Test6_PhotoModes_RootHide.deb",
-      "sha256": "050e2a40c17cc6bc8fb61d5e26c4d08c9054b9b0720d36b7dbf548d22d495335",
-      "notes": "Test 6 replaces Test 4 global 10 Hz throttling with a targeted suppression of only the proven 120 Hz redundant callback so time/date/photo position controls remain fully live. Adds Photo Display to each of Frames 1-4: Auto (original transparent/opaque behavior), Stretch (fill exact frame), Full Photo (show entire image), and Cut/Crop (aspect-fill and crop). Retains duplicate deferred-render suppression and exact transparency caching."
+      "version": "1.1.5-test7",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test7-RefinedPhoto/NextLock_1.1.5_CPUFix_Test7_RefinedPhoto_RootHide.deb",
+      "sha256": "a037fee6be603751b3e083d5bf75605ebea84d5c57a0aeb1e6b9420fbfcf5aa9",
+      "notes": "Refined photo build. Fixes the old selector pipeline that square-cropped every chosen image and rendered it to 512x512 before saving. Test 7 shows the whole selected photo, preserves its aspect ratio and detail at up to 2048 px on the long edge, and keeps Auto, Stretch, Full Photo and Cut/Crop per frame. Retains the proven targeted 120 Hz callback suppression so time/date/photo position controls remain fully live without the previous SpringBoard CPU drain."
     },
     {
       "id": "nextmockupstudio-0.4-live3d",
