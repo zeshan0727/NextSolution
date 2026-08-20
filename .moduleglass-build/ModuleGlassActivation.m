@@ -1,3 +1,4 @@
+// Module Glass 1.1.18: preserve the current UI and append activation only.
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
