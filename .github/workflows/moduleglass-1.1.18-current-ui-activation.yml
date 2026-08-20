@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -41,11 +41,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p output
           git fetch origin main --depth=1
           git show origin/main:transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb > /tmp/mg117.deb
           echo "$BASE_SHA  /tmp/mg117.deb" | shasum -a 256 -c -
-          rm -rf stage addon output verify
-          mkdir -p stage addon output
+          rm -rf stage addon verify
+          mkdir -p stage addon
           dpkg-deb -R /tmp/mg117.deb stage
           cp stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist /tmp/mg117-prefs.plist
           echo "$RUNTIME_SHA  stage/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
@@ -125,7 +126,7 @@ jobs:
           cat > addon/ModuleGlassActivation.plist <<'PLIST'
           { Filter = { Bundles = ( "com.apple.Preferences", "com.apple.springboard" ); }; }
           PLIST
-          make -C addon clean package FINALPACKAGE=1
+          (make -C addon clean package FINALPACKAGE=1) 2>&1 | tee output/activation-build.log
           RAW="$(find addon/packages -type f -name '*.deb' -print -quit)"
           test -n "$RAW"
           mkdir -p /tmp/mga
@@ -172,6 +173,7 @@ jobs:
           cat output/SHA256SUMS.txt
 
       - name: Upload working DEB
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ModuleGlass-1.1.18-CurrentUI-Activation-RootHide
@@ -181,3 +183,24 @@ jobs:
             output/PACKAGE-CONTENTS.txt
           if-no-files-found: error
           retention-days: 7
+
+      - name: Publish branch build result
+        if: always() && github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST=transfer/builds/ModuleGlass/1.1.18-current-ui-activation
+          mkdir -p "$DEST"
+          rm -f "$DEST"/*
+          cp output/activation-build.log "$DEST"/activation-build.log 2>/dev/null || true
+          cp output/PACKAGE-CONTENTS.txt "$DEST"/PACKAGE-CONTENTS.txt 2>/dev/null || true
+          cp output/SHA256SUMS.txt "$DEST"/SHA256SUMS.txt 2>/dev/null || true
+          cp output/ModuleGlass_1.1.18_CurrentUI_Activation_RootHide.deb "$DEST"/ 2>/dev/null || true
+          echo "${{ job.status }}" > "$DEST"/STATUS.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "$DEST"
+          if ! git diff --cached --quiet; then
+            git commit -m 'ci: publish Module Glass 1.1.18 activation build result'
+            git push origin HEAD:feature/moduleglass-1.1.18-current-ui-activation
+          fi
