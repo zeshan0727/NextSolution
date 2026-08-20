@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T14:07:36Z",
+  "updatedAt": "2026-08-20T15:46:09Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-test18-battery-fullphoto-roothide",
-      "name": "NextLock 1.1.5 Test 18 Battery + Full Photo RootHide",
-      "fileName": "NextLock_1.1.5_Test18_BatteryFullPhoto_RootHide.deb",
+      "id": "nextlock-1.1.5-test19-preferences-sections-roothide",
+      "name": "NextLock 1.1.5 Test 19 Preferences Sections RootHide",
+      "fileName": "NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test18",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test18-BatteryFullPhoto/NextLock_1.1.5_Test18_BatteryFullPhoto_RootHide.deb",
-      "sha256": "af12049c7d0e720bc4f64a894fb315595b60927976d81fee228919faf7b0a32b",
-      "notes": "Test 18 keeps working Test 17 hide/date behavior, restores the validated Test 9 full-photo no-crop picker and free photo positioning, migrates existing frames once to Full Photo while retaining Cut/Crop, keeps exactly one HIDE ITEMS section, and adds independent movable Battery Percentage and Battery Icon items with full-screen X/Y controls."
+      "version": "1.1.5-test19",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test19-PreferencesSections/NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb",
+      "sha256": "6576749920df4746009910ff3ba0a8da9ac061f4cb205a906555ae3a3904ed62",
+      "notes": "Preferences-only Test 19. Keeps every Test 18 runtime unchanged, separates Hide Options and Battery into clear sections, and adds visible section labels above every battery horizontal/vertical/size slider so no slider is unlabeled."
     },
     {
       "id": "moduleglass-1.1.17-self-contained-prefs-roothide",
