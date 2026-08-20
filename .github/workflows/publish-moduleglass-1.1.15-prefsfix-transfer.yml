@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/publish-moduleglass-1.1.15-prefsfix-transfer.yml'
+      - '.transfer-staging/moduleglass-1.1.15-prefsfix/trigger'
 
 permissions:
   contents: write
