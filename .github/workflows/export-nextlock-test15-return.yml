@@ -1,0 +1,42 @@
+name: Export NextLock Test 15 Return Artifact
+
+on:
+  push:
+    branches: [nextlock-test15-build]
+    paths:
+      - '.github/workflows/export-nextlock-test15-return.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Test 15 file
+        run: |
+          set -euo pipefail
+          FILE='test-builds/NextLock/Test15/NextLock_1.1.5_Test15_DesignerDirect_RootHide.deb'
+          test -f "$FILE"
+          sha256sum "$FILE"
+
+      - name: Upload return artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test15-Return
+          path: test-builds/NextLock/Test15/NextLock_1.1.5_Test15_DesignerDirect_RootHide.deb
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Record run id
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$GITHUB_RUN_ID" > test-builds/NextLock/Test15/RUN_ID.txt
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -- test-builds/NextLock/Test15/RUN_ID.txt
+          git commit -m 'Record Test 15 return artifact run'
+          git push origin HEAD:nextlock-test15-build
