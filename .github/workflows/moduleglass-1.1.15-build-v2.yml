@@ -102,7 +102,8 @@ jobs:
           EXEC_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$SRC_BUNDLE/Info.plist")"
           test -n "$EXEC_NAME"
           test -f "$SRC_BUNDLE/$EXEC_NAME"
-          strings -a "$SRC_BUNDLE/$EXEC_NAME" | grep -q 'AuraCategoryListController'
+          strings -a "$SRC_BUNDLE/$EXEC_NAME" > /tmp/moduleglass-pref-exec.strings
+          grep -Fq 'AuraCategoryListController' /tmp/moduleglass-pref-exec.strings
 
           DEST="$P/layout/Library/PreferenceBundles/ModuleGlassPrefs.bundle"
           rm -rf "$DEST"
@@ -115,7 +116,6 @@ jobs:
           plutil -lint "$DEST/Info.plist"
           plutil -lint "$DEST/CCModuleBackgrounds.plist"
 
-          # Include Module Glass' native Volume color picker extension privately.
           EXT_DYLIB="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.dylib' -print -quit)"
           EXT_PLIST="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.plist' -print -quit)"
           test -n "$EXT_DYLIB"
@@ -199,8 +199,9 @@ jobs:
           test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
           test "$(dpkg-deb -f "$DEB" Version)" = '1.1.17'
           test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
-          ! dpkg-deb -f "$DEB" Depends | grep -q 'com.nextsolution.nextaura.runtime.preferences'
-          dpkg-deb -f "$DEB" Depends | grep -q 'preferenceloader'
+          DEPENDS="$(dpkg-deb -f "$DEB" Depends)"
+          [[ "$DEPENDS" != *'com.nextsolution.nextaura.runtime.preferences'* ]]
+          [[ "$DEPENDS" == *'preferenceloader'* ]]
 
           rm -rf verify && mkdir verify
           dpkg-deb -x "$DEB" verify
@@ -210,21 +211,23 @@ jobs:
           test -d "$BUNDLE"
           test -f "$BUNDLE/Info.plist"
           test -f "$BUNDLE/CCModuleBackgrounds.plist"
-          grep -q 'CCModuleVolumeIconColorEnabled' "$BUNDLE/CCModuleBackgrounds.plist"
-          grep -q 'chooseVolumeIconColor:' "$BUNDLE/CCModuleBackgrounds.plist"
+          grep -Fq 'CCModuleVolumeIconColorEnabled' "$BUNDLE/CCModuleBackgrounds.plist"
+          grep -Fq 'chooseVolumeIconColor:' "$BUNDLE/CCModuleBackgrounds.plist"
           plutil -lint "$LOADER"
           plutil -lint "$BUNDLE/Info.plist"
           plutil -lint "$BUNDLE/CCModuleBackgrounds.plist"
           grep -Fq '<string>ModuleGlassPrefs</string>' "$LOADER"
           grep -Fq '<string>AuraCategoryListController</string>' "$LOADER"
           grep -Fq '<string>CCModuleBackgrounds</string>' "$LOADER"
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUNDLE/Info.plist" | grep -Fxq 'com.nextsolution.moduleglass.preferences'
+          PREF_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUNDLE/Info.plist")"
+          test "$PREF_ID" = 'com.nextsolution.moduleglass.preferences'
 
           PREF_EXEC="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$BUNDLE/Info.plist")"
           test -f "$BUNDLE/$PREF_EXEC"
           PREF_ARCHS="$(lipo -archs "$BUNDLE/$PREF_EXEC")"
           [[ " $PREF_ARCHS " == *' arm64 '* && " $PREF_ARCHS " == *' arm64e '* ]]
-          strings -a "$BUNDLE/$PREF_EXEC" | grep -q 'AuraCategoryListController'
+          strings -a "$BUNDLE/$PREF_EXEC" > output/pref-exec.strings
+          grep -Fq 'AuraCategoryListController' output/pref-exec.strings
 
           PREF_EXT=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib
           PREF_EXT_FILTER=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist
@@ -232,24 +235,28 @@ jobs:
           test -f "$PREF_EXT_FILTER"
           EXT_ARCHS="$(lipo -archs "$PREF_EXT")"
           [[ " $EXT_ARCHS " == *' arm64 '* && " $EXT_ARCHS " == *' arm64e '* ]]
-          strings -a "$PREF_EXT" | grep -q 'chooseVolumeIconColor:'
-          strings -a "$PREF_EXT" | grep -q 'UIColorPickerViewController'
+          strings -a "$PREF_EXT" > output/pref-ext.strings
+          grep -Fq 'chooseVolumeIconColor:' output/pref-ext.strings
+          grep -Fq 'UIColorPickerViewController' output/pref-ext.strings
 
           DYLIB="$(find verify -type f -name CCModuleBackgrounds.dylib -print -quit)"
           test -n "$DYLIB"
           ARCHS="$(lipo -archs "$DYLIB")"
           [[ " $ARCHS " == *' arm64 '* && " $ARCHS " == *' arm64e '* ]]
-          otool -L "$DYLIB" | grep -Fq '@loader_path/.jbroot/'
+          otool -L "$DYLIB" > output/runtime.otool
+          grep -Fq '@loader_path/.jbroot/' output/runtime.otool
           strings "$DYLIB" > output/dylib.strings
           grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' output/dylib.strings
 
           echo '=== MODULE GLASS 1.1.17 PACKAGE CONTENTS ==='
-          dpkg-deb -c "$DEB" | tee output/PACKAGE-CONTENTS.txt
+          dpkg-deb -c "$DEB" > output/PACKAGE-CONTENTS.txt
+          cat output/PACKAGE-CONTENTS.txt
           grep -Fq './Library/PreferenceBundles/ModuleGlassPrefs.bundle/' output/PACKAGE-CONTENTS.txt
           grep -Fq './Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist' output/PACKAGE-CONTENTS.txt
           grep -Fq './Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib' output/PACKAGE-CONTENTS.txt
           grep -Fq './Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib' output/PACKAGE-CONTENTS.txt
-          shasum -a 256 "$DEB" output/ModuleGlass_1.1.17_Complete_Source.zip | tee output/SHA256SUMS.txt
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.17_Complete_Source.zip > output/SHA256SUMS.txt
+          cat output/SHA256SUMS.txt
 
       - name: Upload verified artifacts
         uses: actions/upload-artifact@v4
