@@ -274,3 +274,5 @@ __attribute__((constructor)) static void ModuleGlassActivationInit(void) {
         }
     }
 }
+
+// CI trigger: final old-UI activation build.
