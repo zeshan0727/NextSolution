@@ -1,0 +1,168 @@
+name: NextLock 1.1.4 Binary Analysis
+
+on:
+  push:
+    branches:
+      - debug/nextlock-1.1.4-cpu-fix
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout debug branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install analysis tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm python3-pip xz-utils binutils file jq
+          python3 -m pip install --user lief
+
+      - name: Extract NextLock 1.1.3 and 1.1.4 RootHide packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/nextlock-analysis
+          mkdir -p /tmp/nextlock-analysis/{1.1.3,1.1.4}
+
+          extract_deb() {
+            ver="$1"
+            deb="transfer/files/NextLock/${ver}/NextLock_${ver}_RootHide.deb"
+            out="/tmp/nextlock-analysis/${ver}"
+            test -f "$deb"
+            dpkg-deb -x "$deb" "$out/root"
+            dpkg-deb -e "$deb" "$out/control"
+          }
+
+          extract_deb 1.1.3
+          extract_deb 1.1.4
+          find /tmp/nextlock-analysis -type f -print | sort
+
+      - name: Analyze binaries and package payloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="analysis/nextlock-1.1.4/generated"
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+
+          analyze_one() {
+            ver="$1"
+            ROOT="/tmp/nextlock-analysis/${ver}/root"
+            DEST="$OUT/${ver}"
+            mkdir -p "$DEST"
+
+            DYLIB="$(find "$ROOT" -type f -name 'LockGlyphTime.dylib' -print -quit)"
+            if [ -z "$DYLIB" ]; then
+              echo "LockGlyphTime.dylib not found for ${ver}" >&2
+              exit 1
+            fi
+
+            echo "$DYLIB" > "$DEST/dylib-path.txt"
+            cp "/tmp/nextlock-analysis/${ver}/control/control" "$DEST/control.txt"
+            find "$ROOT" -type f -printf '%P\n' | sort > "$DEST/package-files.txt"
+            file "$DYLIB" > "$DEST/file.txt"
+            sha256sum "$DYLIB" > "$DEST/sha256.txt"
+            strings -a -t x "$DYLIB" > "$DEST/strings-with-offsets.txt"
+            strings -a "$DYLIB" | sort -u > "$DEST/strings-sorted.txt"
+
+            llvm-nm -a -n "$DYLIB" > "$DEST/llvm-nm-all.txt" 2>&1 || true
+            llvm-nm -m -n "$DYLIB" > "$DEST/llvm-nm-macho.txt" 2>&1 || true
+            llvm-readobj --file-headers --sections --symbols --relocations --needed-libs "$DYLIB" > "$DEST/llvm-readobj.txt" 2>&1 || true
+            llvm-objdump --macho --syms "$DYLIB" > "$DEST/llvm-objdump-syms.txt" 2>&1 || true
+            llvm-objdump --macho --private-headers "$DYLIB" > "$DEST/llvm-objdump-headers.txt" 2>&1 || true
+            llvm-objdump --macho --objc-meta-data "$DYLIB" > "$DEST/llvm-objc-metadata.txt" 2>&1 || true
+            llvm-objdump --macho --disassemble --no-show-raw-insn "$DYLIB" > "$DEST/disassembly.txt" 2>&1 || true
+
+            python3 - "$DYLIB" "$DEST" <<'PY'
+import json, os, re, sys
+import lief
+
+path, dest = sys.argv[1], sys.argv[2]
+b = lief.parse(path)
+summary = {
+    "path": path,
+    "format": str(getattr(b, "format", "")),
+    "entrypoint": int(getattr(b, "entrypoint", 0) or 0),
+    "imagebase": int(getattr(b, "imagebase", 0) or 0),
+    "libraries": [str(x) for x in getattr(b, "libraries", [])],
+    "sections": [],
+    "symbols": [],
+    "functions": [],
+}
+for s in getattr(b, "sections", []):
+    summary["sections"].append({
+        "name": str(s.name),
+        "virtual_address": int(s.virtual_address),
+        "size": int(s.size),
+        "offset": int(s.offset),
+    })
+for s in getattr(b, "symbols", []):
+    name = str(getattr(s, "name", ""))
+    if name:
+        summary["symbols"].append({"name": name, "value": int(getattr(s, "value", 0) or 0)})
+try:
+    for f in b.functions:
+        summary["functions"].append({"name": str(f.name), "address": int(f.address), "size": int(f.size)})
+except Exception:
+    pass
+with open(os.path.join(dest, "lief-summary.json"), "w") as fp:
+    json.dump(summary, fp, indent=2)
+
+with open(path, "rb") as fp:
+    data = fp.read()
+raw = re.findall(rb"[ -~]{4,}", data)
+strings = [x.decode("utf-8", "replace") for x in raw]
+patterns = re.compile(r"(Lock|Glyph|Time|Date|Photo|Frame|Image|UIImage|CGImage|render|draw|layout|timer|NSTimer|display|update|refresh|pref|CFPreference|width|height|anchor|offset|crop|corner|alpha|PNG|JPEG|layer|view)", re.I)
+interesting = sorted(set(s for s in strings if patterns.search(s)))
+with open(os.path.join(dest, "interesting-strings.txt"), "w") as fp:
+    fp.write("\n".join(interesting) + "\n")
+PY
+          }
+
+          analyze_one 1.1.3
+          analyze_one 1.1.4
+
+          comm -13 "$OUT/1.1.3/strings-sorted.txt" "$OUT/1.1.4/strings-sorted.txt" > "$OUT/strings-added-in-1.1.4.txt" || true
+          comm -23 "$OUT/1.1.3/strings-sorted.txt" "$OUT/1.1.4/strings-sorted.txt" > "$OUT/strings-removed-in-1.1.4.txt" || true
+          diff -u "$OUT/1.1.3/interesting-strings.txt" "$OUT/1.1.4/interesting-strings.txt" > "$OUT/interesting-strings.diff" || true
+          diff -u "$OUT/1.1.3/llvm-nm-all.txt" "$OUT/1.1.4/llvm-nm-all.txt" > "$OUT/symbols.diff" || true
+
+          cat > "$OUT/README.md" <<'EOF'
+          # NextLock 1.1.4 CPU investigation
+
+          Binary-analysis output for the confirmed SpringBoard CPU regression in `LockGlyphTime.dylib`.
+
+          The device-side Frida trace showed the hot SpringBoard thread repeatedly entering CoreGraphics/vImage bitmap conversion and the injected caller chain contained `LockGlyphTime.dylib`. Disabling only that dylib returned SpringBoard CPU to normal.
+
+          This directory compares the 1.1.3 and 1.1.4 RootHide binaries so the 1.1.4 multi-frame photo implementation can be fixed without removing its features.
+          EOF
+
+      - name: Persist analysis to debug branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add analysis/nextlock-1.1.4/generated
+          if git diff --cached --quiet; then
+            echo "No analysis changes to commit."
+            exit 0
+          fi
+          git commit -m "Add NextLock 1.1.4 binary analysis [skip ci]"
+          git push origin HEAD:debug/nextlock-1.1.4-cpu-fix
+
+      - name: Upload NextLock analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextlock-1.1.4-binary-analysis
+          path: analysis/nextlock-1.1.4/generated
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,9 @@
+Package: com.nextsolution.nextlock.perffix
+Name: NextLock 1.1.5 CPU Fix Test 5
+Version: 1.1.5~test5
+Architecture: iphoneos-arm64
+Description: Feature-preserving NextLock 1.1.4 CPU fix Test 5. Suppresses only the live-proven 120 Hz callback/update block while leaving normal layoutSubviews-driven time/date/photo positioning and styling fully unthrottled. Retains duplicate deferred-render suppression and exact transparency caching.
+Maintainer: Next Solution - Zeeshan Barvi
+Author: Next Solution - Zeeshan Barvi
+Section: Tweaks
+Depends: firmware (>= 15.0), mobilesubstrate, com.nextsolution.lockglyphtime (= 1.1.4)

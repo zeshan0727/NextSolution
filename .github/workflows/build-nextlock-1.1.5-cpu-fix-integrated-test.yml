@@ -1,0 +1,163 @@
+name: Build Integrated NextLock 1.1.5 CPU Fix Test 2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - debug/nextlock-1.1.4-cpu-fix
+    paths:
+      - 'source/NextLockPerfFix/**'
+      - '.github/workflows/build-nextlock-1.1.5-cpu-fix-integrated-test.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextlock-1.1.5-cpu-fix-integrated-test2
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install packaging tools
+        run: brew install dpkg ldid
+
+      - name: Audit Test 2 source invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          S=source/NextLockPerfFix/Tweak.m
+          grep -q 'NextLockPerfFix 1.1.5-test2 targeted-image-cache transparency-cache exact-semantics' "$S"
+          grep -q 'NLCachedImageWithData' "$S"
+          grep -q 'fromLockGlyphTime' "$S"
+          grep -q 'NLLockGlyphTextStart' "$S"
+          grep -q 'NLDataPointerImageCache' "$S"
+          grep -q 'NLDataFingerprintImageCache' "$S"
+          grep -q 'NLOriginalHasRealTransparency(image)' "$S"
+          grep -q 'kNextLock114Arm64TransparencyOffset   = 0xAE18' "$S"
+          grep -q 'kNextLock114Arm64eTransparencyOffset = 0xAF74' "$S"
+          grep -q '@selector(imageWithData:)' "$S"
+
+      - name: Build RootHide Test 2 performance shim
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/source/NextLockPerfFix"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' source/NextLockPerfFix/control
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          echo "FIX_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Inject Test 2 shim into original NextLock 1.1.4 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb
+          test -f "$BASE"
+          STAGE="$RUNNER_TEMP/nextlock-stage"
+          FIXSTAGE="$RUNNER_TEMP/fix-stage"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          dpkg-deb -x "$FIX_DEB" "$FIXSTAGE"
+
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          FIX=$(find "$FIXSTAGE" -name NextLockPerfFix.dylib -print -quit)
+          FIXPLIST=$(find "$FIXSTAGE" -name NextLockPerfFix.plist -print -quit)
+          test -n "$LOCK"
+          test -n "$FIX"
+          test -n "$FIXPLIST"
+
+          dwarfdump --uuid "$LOCK" | tee "$RUNNER_TEMP/lock-uuids.txt"
+          grep -qi 'C7EBC4D1-EAD4-3320-A27F-34E86C25F776' "$RUNNER_TEMP/lock-uuids.txt"
+          grep -qi '7BE1428A-C4B0-38F8-8120-7BACBF220731' "$RUNNER_TEMP/lock-uuids.txt"
+          strings -a "$LOCK" | grep -q 'imageWithData:'
+          strings -a "$LOCK" | grep -q 'CGBitmapContextCreate'
+
+          BEFORE=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          DYNDIR=$(dirname "$LOCK")
+          cp "$FIX" "$DYNDIR/NextLockPerfFix.dylib"
+          cp "$FIXPLIST" "$DYNDIR/NextLockPerfFix.plist"
+          AFTER=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          test "$BEFORE" = "$AFTER"
+
+          python3 - "$STAGE/DEBIAN/control" <<'PY'
+          from pathlib import Path
+          import re,sys
+          p=Path(sys.argv[1])
+          t=p.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu2', t, flags=re.M)
+          desc='Description: NextLock 1.1.5 CPU-fix Test 2. Keeps the complete 1.1.4 feature binary unchanged, reuses immutable custom-photo UIImage decodes only for LockGlyphTime callers, and caches the exact transparency decision to prevent repeated CoreGraphics/vImage work during layout.'
+          if re.search(r'^Description: .*$', t, flags=re.M):
+              t=re.sub(r'^Description: .*$', desc, t, flags=re.M)
+          else:
+              t += '\n'+desc+'\n'
+          p.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test2_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "ORIGINAL_LOCK_SHA=$BEFORE" >> "$GITHUB_ENV"
+
+      - name: Validate integrated Test 2 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu2'
+          X=$(mktemp -d)
+          dpkg-deb -x "$OUTDEB" "$X"
+          LOCK=$(find "$X" -name LockGlyphTime.dylib -print -quit)
+          FIX=$(find "$X" -name NextLockPerfFix.dylib -print -quit)
+          PLIST=$(find "$X" -name NextLockPerfFix.plist -print -quit)
+          test -n "$LOCK"
+          test -n "$FIX"
+          test -n "$PLIST"
+          test "$(shasum -a 256 "$LOCK" | awk '{print $1}')" = "$ORIGINAL_LOCK_SHA"
+          strings -a "$FIX" | grep -q 'NextLockPerfFix 1.1.5-test2 targeted-image-cache transparency-cache exact-semantics'
+          strings -a "$FIX" | grep -q 'imageWithData:'
+          plutil -p "$PLIST" | grep -q 'com.apple.springboard'
+          lipo -info "$FIX" | grep -q 'arm64e'
+          shasum -a 256 "$OUTDEB" | tee "$RUNNER_TEMP/integrated-sha.txt"
+
+      - name: Save integrated Test 2 build to debug branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST=transfer/files/NextLock/1.1.5-CPUFix-Integrated-Test2
+          mkdir -p "$DEST"
+          cp "$OUTDEB" "$DEST/"
+          cp "$RUNNER_TEMP/integrated-sha.txt" "$DEST/NextLock_1.1.5_CPUFix_Test2_SHA256SUMS.txt"
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git pull --rebase origin debug/nextlock-1.1.4-cpu-fix
+          git add "$DEST"
+          git diff --cached --check
+          git commit -m 'Build integrated NextLock 1.1.5 CPU fix Test 2'
+          git push origin HEAD:debug/nextlock-1.1.4-cpu-fix
+
+      - name: Upload integrated Test 2 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.5-CPUFix-Integrated-Test2
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14
