@@ -1,6 +1,8 @@
 name: Build AppsDump DarkSword iOS17
 
 on:
+  push:
+    branches: [ agent/appsdump-darksword-ios17 ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
