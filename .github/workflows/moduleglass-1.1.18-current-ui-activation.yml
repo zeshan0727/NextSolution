@@ -204,3 +204,5 @@ jobs:
             git commit -m 'ci: publish Module Glass 1.1.18 activation build result'
             git push origin HEAD:feature/moduleglass-1.1.18-current-ui-activation
           fi
+
+# manual trigger 2026-08-20T16:29+03:00
