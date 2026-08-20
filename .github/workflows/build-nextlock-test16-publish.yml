@@ -1,0 +1,169 @@
+name: Build and Publish NextLock 1.1.5 Test 16 Native Time Date
+
+on:
+  push:
+    branches: [nextlock-test15-build]
+    paths:
+      - '.github/workflows/build-nextlock-test16-publish.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - name: Checkout Test 15 branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Prepare Test 16 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/NextLockHideElementsTest16"
+          cp -R source/NextLockHideElements "$P"
+          python3 - "$P/Tweak.m" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1]); s=p.read_text()
+          s=s.replace('NextLockHideElements 1.1.5-test15 designer-direct-safe-hooks','NextLockHideElements 1.1.5-test16 native-system-time-date-hooks')
+          s=s.replace('static __weak UIView *NLCustomTimeLabel = nil;\nstatic __weak UIView *NLCustomDateLabel = nil;','static __weak UIView *NLNativeTimeView = nil;\nstatic __weak UIView *NLNativeDateView = nil;')
+          s=s.replace('static void (*NLOrigDateLayout)(UIView *, SEL) = NULL;\nstatic void (*NLOrigDateDidMove)(UIView *, SEL) = NULL;','static void (*NLOrigNativeTimeLayout)(UIView *, SEL) = NULL;\nstatic void (*NLOrigNativeTimeDidMove)(UIView *, SEL) = NULL;\nstatic void (*NLOrigNativeDateLayout)(UIView *, SEL) = NULL;\nstatic void (*NLOrigNativeDateDidMove)(UIView *, SEL) = NULL;')
+          a=s.index('#pragma mark - Test 12 custom Time / Date overlay')
+          b=s.index('#pragma mark - Camera / Flashlight')
+          native='''#pragma mark - Native Apple Time / Date (iOS 16)\n\n// Designer 1.5.5 hides Apple\'s original date/time hierarchy after layout.\n// Test 16 targets the concrete iOS 16 child views independently so the\n// NextLock Test 12 custom time/date overlay is never touched.\nstatic void NLNativeTimeLayout(UIView *self, SEL _cmd) {\n    if (NLOrigNativeTimeLayout) NLOrigNativeTimeLayout(self, _cmd);\n    NLNativeTimeView = self;\n    NLSetSuppressed(self, NLHideTime);\n}\nstatic void NLNativeTimeDidMove(UIView *self, SEL _cmd) {\n    if (NLOrigNativeTimeDidMove) NLOrigNativeTimeDidMove(self, _cmd);\n    NLNativeTimeView = self.window ? self : nil;\n    NLSetSuppressed(self, self.window && NLHideTime);\n}\nstatic void NLNativeDateLayout(UIView *self, SEL _cmd) {\n    if (NLOrigNativeDateLayout) NLOrigNativeDateLayout(self, _cmd);\n    NLNativeDateView = self;\n    NLSetSuppressed(self, NLHideDate);\n}\nstatic void NLNativeDateDidMove(UIView *self, SEL _cmd) {\n    if (NLOrigNativeDateDidMove) NLOrigNativeDateDidMove(self, _cmd);\n    NLNativeDateView = self.window ? self : nil;\n    NLSetSuppressed(self, self.window && NLHideDate);\n}\n\n'''
+          s=s[:a]+native+s[b:]
+          s=s.replace('NLSetSuppressed(NLCustomTimeLabel, NLHideTime);\n    NLSetSuppressed(NLCustomDateLabel, NLHideDate);','NLSetSuppressed(NLNativeTimeView, NLHideTime);\n    NLSetSuppressed(NLNativeDateView, NLHideDate);')
+          old='''            NLHookIfAvailable(@"SBFLockScreenDateView", @"layoutSubviews",\n                              (IMP)NLDateLayout, (IMP *)&NLOrigDateLayout);\n            NLHookIfAvailable(@"SBFLockScreenDateView", @"didMoveToWindow",\n                              (IMP)NLDateDidMove, (IMP *)&NLOrigDateDidMove);\n\n'''
+          new='''            // Native Apple iOS 16 clock/date. Designer's combined hide uses\n            // SBFLockScreenDateView/CSProminentDisplayView layoutSubviews; these\n            // concrete child views keep NextLock's Time and Date switches independent.\n            NLHookIfAvailable(@"CSProminentTimeView", @"layoutSubviews",\n                              (IMP)NLNativeTimeLayout, (IMP *)&NLOrigNativeTimeLayout);\n            NLHookIfAvailable(@"CSProminentTimeView", @"didMoveToWindow",\n                              (IMP)NLNativeTimeDidMove, (IMP *)&NLOrigNativeTimeDidMove);\n            NLHookIfAvailable(@"CSProminentSubtitleDateView", @"layoutSubviews",\n                              (IMP)NLNativeDateLayout, (IMP *)&NLOrigNativeDateLayout);\n            NLHookIfAvailable(@"CSProminentSubtitleDateView", @"didMoveToWindow",\n                              (IMP)NLNativeDateDidMove, (IMP *)&NLOrigNativeDateDidMove);\n\n'''
+          if old not in s: raise SystemExit('Test15 date hook block not found')
+          s=s.replace(old,new)
+          s=s.replace('[NextLockHideElements] Test15 loaded: Designer direct safe hooks active','[NextLockHideElements] Test16 loaded: native Apple time/date + Designer direct hooks active')
+          p.write_text(s)
+          c=p.parent/'control'
+          t=c.read_text().replace('Version: 1.1.5~test14','Version: 1.1.5~test16')
+          c.write_text(t)
+          PY
+          SRC="$P/Tweak.m"
+          grep -q '1.1.5-test16 native-system-time-date-hooks' "$SRC"
+          grep -q 'CSProminentTimeView' "$SRC"
+          grep -q 'CSProminentSubtitleDateView' "$SRC"
+          ! grep -q 'NLCustomTimeLabel' "$SRC"
+          ! grep -q 'NLCustomDateLabel' "$SRC"
+          ! grep -q 'NLApplyCustomClockVisibility' "$SRC"
+          ! grep -q 'NLDescendants' "$SRC"
+          ! grep -q 'UIApplication.sharedApplication.windows' "$SRC"
+          echo "SRC_DIR=$P" >> "$GITHUB_ENV"
+
+      - name: Build RootHide Test 16 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          make -C "$SRC_DIR" clean package FINALPACKAGE=1
+          D=$(find "$SRC_DIR/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          X=$(mktemp -d); dpkg-deb -x "$D" "$X"
+          F=$(find "$X" -name NextLockHideElements.dylib -print -quit)
+          test -n "$F"
+          strings -a "$F" | grep -q '1.1.5-test16 native-system-time-date-hooks'
+          strings -a "$F" | grep -q 'CSProminentTimeView'
+          strings -a "$F" | grep -q 'CSProminentSubtitleDateView'
+          strings -a "$F" | grep -q 'CSQuickActionsViewController'
+          strings -a "$F" | grep -q 'CSTeachableMomentsContainerView'
+          lipo -info "$F" | grep -q arm64e
+          echo "HIDE_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Integrate into validated Test 15 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='test-builds/NextLock/Test15/NextLock_1.1.5_Test15_DesignerDirect_RootHide.deb'
+          test "$(shasum -a 256 "$BASE" | awk '{print $1}')" = 'b75c374affb167d65e67829f0ee6926bac5ead8297127b8285235b343d06575d'
+          STAGE="$RUNNER_TEMP/test16-stage"; HIDE="$RUNNER_TEMP/test16-hide"
+          dpkg-deb -R "$BASE" "$STAGE"; dpkg-deb -x "$HIDE_DEB" "$HIDE"
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          PERF=$(find "$STAGE" -name NextLockPerfFix.dylib -print -quit)
+          CLOCK=$(find "$STAGE" -name NextLockCustomClock.dylib -print -quit)
+          OLD=$(find "$STAGE" -name NextLockHideElements.dylib -print -quit)
+          NEW=$(find "$HIDE" -name NextLockHideElements.dylib -print -quit)
+          PL=$(find "$HIDE" -name NextLockHideElements.plist -print -quit)
+          LOCK_SHA=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          PERF_SHA=$(shasum -a 256 "$PERF" | awk '{print $1}')
+          CLOCK_SHA=$(shasum -a 256 "$CLOCK" | awk '{print $1}')
+          cp "$NEW" "$OLD"; cp "$PL" "$(dirname "$OLD")/NextLockHideElements.plist"
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import re,sys
+          c=Path(sys.argv[1])/'DEBIAN/control'; t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu16', t, flags=re.M)
+          d='Description: NextLock 1.1.5 Test 16. Keeps all validated Test 15 direct hide hooks, but Time and Date now target the original Apple iOS 16 CSProminentTimeView and CSProminentSubtitleDateView. The NextLock Test 12 custom time/date overlay is left untouched.'
+          t=re.sub(r'^Description: .*$',d,t,flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+d+'\n'
+          c.write_text(t)
+          PY
+          OUT="$RUNNER_TEMP/NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUT"
+          test "$(dpkg-deb -f "$OUT" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUT" Version)" = '1.1.5~cpu16'
+          X=$(mktemp -d); dpkg-deb -x "$OUT" "$X"
+          test "$(shasum -a 256 "$(find "$X" -name LockGlyphTime.dylib -print -quit)" | awk '{print $1}')" = "$LOCK_SHA"
+          test "$(shasum -a 256 "$(find "$X" -name NextLockPerfFix.dylib -print -quit)" | awk '{print $1}')" = "$PERF_SHA"
+          test "$(shasum -a 256 "$(find "$X" -name NextLockCustomClock.dylib -print -quit)" | awk '{print $1}')" = "$CLOCK_SHA"
+          H=$(find "$X" -name NextLockHideElements.dylib -print -quit)
+          strings -a "$H" | grep -q '1.1.5-test16 native-system-time-date-hooks'
+          strings -a "$H" | grep -q 'CSProminentTimeView'
+          strings -a "$H" | grep -q 'CSProminentSubtitleDateView'
+          SHA=$(shasum -a 256 "$OUT" | awk '{print $1}')
+          echo "OUTDEB=$OUT" >> "$GITHUB_ENV"; echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+
+      - name: Publish Test 16 to NS Transfer main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          M="$RUNNER_TEMP/main-publish"
+          git worktree add "$M" origin/main
+          DESTDIR="$M/transfer/files/NextLock/1.1.5-Test16-SystemTimeDate"
+          mkdir -p "$DESTDIR" "$M/source/NextLockHideElementsTest16"
+          cp "$OUTDEB" "$DESTDIR/NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb"
+          for F in Makefile NextLockHideElements.plist Tweak.m control; do cp "$SRC_DIR/$F" "$M/source/NextLockHideElementsTest16/$F"; done
+          export OUT_SHA
+          python3 - "$M/transfer/index.json" <<'PY'
+          import json,os,sys
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path(sys.argv[1]); d=json.loads(p.read_text())
+          files=[x for x in d.get('files',[]) if not x.get('id','').startswith(('nextlock-1.1.5-test14','nextlock-1.1.5-test15','nextlock-1.1.5-test16'))]
+          e={'id':'nextlock-1.1.5-test16-system-time-date-roothide','name':'NextLock 1.1.5 Test 16 System Time Date RootHide','fileName':'NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb','type':'deb','platform':'RootHide','version':'1.1.5-test16','url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test16-SystemTimeDate/NextLock_1.1.5_Test16_SystemTimeDate_RootHide.deb','sha256':os.environ['OUT_SHA'],'notes':'Test 16 keeps the validated Test 15 direct hooks. Time and Date switches now hide the original Apple iOS 16 CSProminentTimeView and CSProminentSubtitleDateView only; NextLock custom Test 12 time/date remain visible.'}
+          d['files']=[e]+files; d['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(d,indent=2)+'\n')
+          PY
+          cd "$M"
+          git config user.name 'Next Solution Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add transfer/index.json transfer/files/NextLock/1.1.5-Test16-SystemTimeDate source/NextLockHideElementsTest16
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 Test 16 system time date hooks'
+          git push origin HEAD:main
+
+      - name: Upload Test 16 DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test16-SystemTimeDate-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14
