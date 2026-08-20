@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T08:42:02Z",
+  "updatedAt": "2026-08-20T08:48:59Z",
   "files": [
+    {
+      "id": "moduleglass-1.1.17-self-contained-prefs-roothide",
+      "name": "Module Glass 1.1.17",
+      "fileName": "ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.17",
+      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb",
+      "sha256": "a15205e928db116e74102a29d4b116d14d1b57f0e9412707493d8c109433ecb0",
+      "notes": "Full self-contained Module Glass package. Preserves the validated 1.1.15 External Host Isolation Control Center runtime and embeds the current Aura 1.0.5 Module Glass preferences, PreferenceLoader entry, image controls, glow controls and native Volume icon color picker directly in the same DEB."
+    },
     {
       "id": "nextlock-1.1.5-cpufix-test8-fullfeatures-roothide",
       "name": "NextLock 1.1.5 CPU Fix Test 8 Full Features RootHide",
@@ -15,7 +26,7 @@
     },
     {
       "id": "nextmockupstudio-0.4-live3d",
-      "name": "Next Mockup Studio 0.4 \u2014 Live 3D iPhone Test",
+      "name": "Next Mockup Studio 0.4 — Live 3D iPhone Test",
       "fileName": "NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
@@ -24,17 +35,6 @@
       "sha256": "6730ae6e3d2fec8ffdcf050ef98699ed6ffb9f741b4143e356eadc0f2221d895",
       "sizeBytes": 21455,
       "notes": "Live SceneKit 3D proof build: drag to rotate, pinch to zoom, import a screenshot as the screen texture, switch Silver/Cosmic Orange/Deep Blue materials, and export PNG including transparent-background mode."
-    },
-    {
-      "sha256": "a84ee5dce0a3356714d41649f3e4165e9931c44299aa28dd54b789aaa17ceb61",
-      "id": "moduleglass-1.1.15-preferences-fix-patch-roothide",
-      "fileName": "ModuleGlass_1.1.15_PreferencesFix_Patch_RootHide.deb",
-      "platform": "RootHide",
-      "notes": "Install over Module Glass 1.1.15. Restores the missing Settings / PreferenceLoader entry without replacing or changing the working Control Center runtime.",
-      "version": "1.1.15.1",
-      "type": "deb",
-      "name": "Module Glass 1.1.15 Preferences Fix",
-      "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.15-PrefsFix/ModuleGlass_1.1.15_PreferencesFix_Patch_RootHide.deb"
     },
     {
       "sha256": "5f061686cb068c4f9a88286f987c9a03e0265ead48c5c7505665c54adaa1bf47",
@@ -129,7 +129,7 @@
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "platform": "TrollStore / iOS 16+",
-      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
+      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
       "version": "1.0.2",
       "type": "tipa",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
