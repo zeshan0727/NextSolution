@@ -1,4 +1,4 @@
-// Module Glass 1.1.18: preserve the current UI and append activation only.
+// Module Glass 1.1.18 — 1.1.17 UI preserved; activation is a separate final pane.
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
@@ -94,9 +94,19 @@ static void MGPostLicenseChange(void) {
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.nextsolution.unlockvibrate/preferences.changed"), NULL, NULL, true);
 }
 
+static void MGPrepareDisplayValues(void) {
+    NSUserDefaults *d = MGLicenseDefaults();
+    [d setObject:MGDeviceID() forKey:@"deviceIDDisplay"];
+    if (![d stringForKey:@"licenseStatusDisplay"]) {
+        [d setObject:(MGStoredActive() ? @"Activated" : @"Not Activated") forKey:@"licenseStatusDisplay"];
+    }
+    [d synchronize];
+}
+
 static void MGStoreActivation(BOOL active) {
     NSUserDefaults *d = MGLicenseDefaults();
     [d setObject:MGDeviceID() forKey:@"licenseDeviceID"];
+    [d setObject:MGDeviceID() forKey:@"deviceIDDisplay"];
     [d setObject:(active ? @"Activated" : @"Not Activated") forKey:@"licenseStatusDisplay"];
     [d setBool:active forKey:@"licenseActivated"];
     [d setDouble:NSDate.date.timeIntervalSince1970 forKey:@"licenseLastCheck"];
@@ -150,6 +160,11 @@ static void MGOpenURL(NSURL *url) {
     UIApplication *app = UIApplication.sharedApplication;
     if ([app respondsToSelector:@selector(openURL:options:completionHandler:)]) {
         [app openURL:url options:@{} completionHandler:nil];
+    } else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        [app openURL:url];
+#pragma clang diagnostic pop
     }
 }
 
@@ -166,53 +181,59 @@ static UIViewController *MGPresenter(id controller) {
     return root;
 }
 
-static void MGShowResult(UIViewController *presenter, NSString *message) {
+static void MGShowResult(id controller, NSString *message) {
+    UIViewController *presenter = MGPresenter(controller);
     if (!presenter) return;
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Module Glass Activation" message:message preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
     [presenter presentViewController:alert animated:YES completion:nil];
 }
 
-static void MGOpenModuleGlassLicense(id controller, SEL _cmd, id specifier) {
-    UIViewController *presenter = MGPresenter(controller);
-    if (!presenter) return;
-    NSUserDefaults *d = MGLicenseDefaults();
-    NSString *status = [d stringForKey:@"licenseStatusDisplay"] ?: (MGStoredActive() ? @"Activated" : @"Not Activated");
-    NSString *message = [NSString stringWithFormat:@"Status: %@\nDevice ID: %@\nLicense: %@ lifetime", status, MGDeviceID(), MGPrice];
-    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:@"Module Glass License & Device" message:message preferredStyle:UIAlertControllerStyleActionSheet];
-    [sheet addAction:[UIAlertAction actionWithTitle:@"Copy Device ID" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) {
-        UIPasteboard.generalPasteboard.string = MGDeviceID();
-    }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:@"Check Activation" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) {
-        MGCheckActivation(^(BOOL active, NSError *error) {
-            MGReloadSpecifiers(controller);
-            if (error) MGShowResult(presenter, [NSString stringWithFormat:@"Could not check activation.\n%@", error.localizedDescription]);
-            else MGShowResult(presenter, active ? @"This device is activated. Module Glass is enabled." : @"This device is not activated yet. Copy the Device ID and activate it first.");
-        });
-    }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"Buy / Activate — %@", MGPrice] style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) {
-        MGOpenURL(MGCheckoutURL());
-    }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
-    UIPopoverPresentationController *popover = sheet.popoverPresentationController;
-    if (popover) {
-        popover.sourceView = presenter.view;
-        popover.sourceRect = CGRectMake(CGRectGetMidX(presenter.view.bounds), CGRectGetMaxY(presenter.view.bounds) - 20.0, 1.0, 1.0);
-    }
-    [presenter presentViewController:sheet animated:YES completion:nil];
+static void MGCopyDeviceIDAction(id controller, SEL _cmd, id specifier) {
+    UIPasteboard.generalPasteboard.string = MGDeviceID();
+    MGShowResult(controller, @"Device ID copied.");
 }
 
-static void MGInstallPreferenceAction(NSUInteger attempt) {
+static void MGBuyActivationAction(id controller, SEL _cmd, id specifier) {
+    MGOpenURL(MGCheckoutURL());
+}
+
+static void MGCheckActivationAction(id controller, SEL _cmd, id specifier) {
+    MGCheckActivation(^(BOOL active, NSError *error) {
+        MGReloadSpecifiers(controller);
+        if (error) MGShowResult(controller, [NSString stringWithFormat:@"Could not check activation.\n%@", error.localizedDescription]);
+        else MGShowResult(controller, active ? @"This device is activated. Module Glass is enabled." : @"This device is not activated yet.");
+    });
+}
+
+static void MGRestoreActivationAction(id controller, SEL _cmd, id specifier) {
+    MGCheckActivation(^(BOOL active, NSError *error) {
+        MGReloadSpecifiers(controller);
+        if (error) MGShowResult(controller, [NSString stringWithFormat:@"Could not restore activation.\n%@", error.localizedDescription]);
+        else MGShowResult(controller, active ? @"Activation restored for this device." : @"No activation was found for this Device ID.");
+    });
+}
+
+static void MGInstallPreferenceActions(NSUInteger attempt) {
     Class cls = objc_getClass("PSListController");
-    SEL sel = NSSelectorFromString(@"openModuleGlassLicense:");
     if (cls) {
-        if (!class_getInstanceMethod(cls, sel)) class_addMethod(cls, sel, (IMP)MGOpenModuleGlassLicense, "v@:@");
+        struct { const char *name; IMP imp; } actions[] = {
+            {"moduleGlassCopyDeviceID:", (IMP)MGCopyDeviceIDAction},
+            {"moduleGlassBuyActivation:", (IMP)MGBuyActivationAction},
+            {"moduleGlassCheckActivation:", (IMP)MGCheckActivationAction},
+            {"moduleGlassRestoreActivation:", (IMP)MGRestoreActivationAction},
+        };
+        for (NSUInteger i = 0; i < sizeof(actions) / sizeof(actions[0]); i++) {
+            SEL sel = sel_registerName(actions[i].name);
+            if (!class_getInstanceMethod(cls, sel)) class_addMethod(cls, sel, actions[i].imp, "v@:@");
+        }
+        MGPrepareDisplayValues();
         NSUserDefaults *d = MGLicenseDefaults();
         NSTimeInterval last = [d doubleForKey:@"licenseLastCheck"];
         if (NSDate.date.timeIntervalSince1970 - last > 60.0) MGCheckActivation(nil);
         return;
     }
-    if (attempt < 20) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ MGInstallPreferenceAction(attempt + 1); });
+    if (attempt < 20) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ MGInstallPreferenceActions(attempt + 1); });
 }
 
 static BOOL MGStringEqual(CFStringRef a, CFStringRef b) {
@@ -266,7 +287,7 @@ __attribute__((constructor)) static void ModuleGlassActivationInit(void) {
     @autoreleasepool {
         NSString *bundleID = NSBundle.mainBundle.bundleIdentifier ?: @"";
         if ([bundleID isEqualToString:@"com.apple.Preferences"]) {
-            dispatch_async(dispatch_get_main_queue(), ^{ MGInstallPreferenceAction(0); });
+            dispatch_async(dispatch_get_main_queue(), ^{ MGInstallPreferenceActions(0); });
         } else if ([bundleID isEqualToString:@"com.apple.springboard"]) {
             void *symbol = dlsym(RTLD_DEFAULT, "CFPreferencesCopyAppValue");
             if (symbol) MSHookFunction(symbol, (void *)&MGCFPreferencesCopyAppValue, (void **)&MGOrigCFPreferencesCopyAppValue);
@@ -274,5 +295,3 @@ __attribute__((constructor)) static void ModuleGlassActivationInit(void) {
         }
     }
 }
-
-// CI trigger: final old-UI activation build.
