@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Lock Screen, your way.
+Version 1.1.4 • by Next Solution</string>
+			<key>label</key>
+			<string>NEXTLOCK</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>openWebsite</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Website — nextsolution.cc</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>openYouTube</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>YouTube — Next Solution</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Independent time/date styling • 27 fonts • colors • alignment • position • shadows • date formats • 30+ symbols • transparent sticker photos • rounded photo icons.</string>
+			<key>label</key>
+			<string>FEATURES</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>© 2026 Next Solution</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>About</string>
+</dict>
+</plist>

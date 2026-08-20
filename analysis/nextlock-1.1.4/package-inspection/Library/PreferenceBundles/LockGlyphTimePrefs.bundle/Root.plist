@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>NextLock gives you precise control over your Lock Screen while keeping Apple's native layout as the safe baseline.</string>
+			<key>label</key>
+			<string>GENERAL</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.nextsolution.lockglyphtime/ReloadPrefs</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.nextsolution.lockglyphtime</string>
+			<key>key</key>
+			<string>enabled</string>
+			<key>label</key>
+			<string>Enable NextLock</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>applyNow</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Apply Changes</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>CUSTOMIZE</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTTimeController</string>
+			<key>label</key>
+			<string>Time</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTDateController</string>
+			<key>label</key>
+			<string>Date</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTIconController</string>
+			<key>label</key>
+			<string>Icon</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTPhotoController</string>
+			<key>label</key>
+			<string>Custom Photo</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>MORE</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTAdvancedController</string>
+			<key>label</key>
+			<string>Advanced</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTAboutController</string>
+			<key>label</key>
+			<string>About NextLock</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Crafted with care by Next Solution • nextsolution.cc</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>NextLock requires a $1 USD lifetime license for this generated Next Solution Device ID. Activation and revocation use the live Next Solution license registry.</string>
+			<key>label</key>
+			<string>ACTIVATION</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSTitleValueCell</string>
+			<key>default</key>
+			<string>Unactivated</string>
+			<key>defaults</key>
+			<string>com.nextsolution.lockglyphtime</string>
+			<key>key</key>
+			<string>licenseStatusDisplay</string>
+			<key>label</key>
+			<string>Status</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSTitleValueCell</string>
+			<key>default</key>
+			<string>Generating…</string>
+			<key>defaults</key>
+			<string>com.nextsolution.lockglyphtime</string>
+			<key>key</key>
+			<string>licenseDeviceID</string>
+			<key>label</key>
+			<string>Device ID</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>copyLicenseDeviceID</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Copy Device ID</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>buyLicense</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Buy / Activate — $1.00</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>checkActivation</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Check Activation</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>NextLock</string>
+</dict>
+</plist>

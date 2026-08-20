@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Use up to four photos or transparent stickers at the same time. Every frame has completely independent width, height, anchor, placement and X/Y position.</string>
+			<key>label</key>
+			<string>PHOTO FRAMES</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTPhotoFrame1Controller</string>
+			<key>label</key>
+			<string>Frame 1</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTPhotoFrame2Controller</string>
+			<key>label</key>
+			<string>Frame 2</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTPhotoFrame3Controller</string>
+			<key>label</key>
+			<string>Frame 3</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>detail</key>
+			<string>LGTPhotoFrame4Controller</string>
+			<key>label</key>
+			<string>Frame 4</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Frame 1 preserves the existing custom photo on upgrade. Frames 2–4 start disabled. Transparent PNGs stay sticker-style; opaque photos use rounded rectangular frames.</string>
+			<key>label</key>
+			<string>TIP</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Custom Photo</string>
+</dict>
+</plist>

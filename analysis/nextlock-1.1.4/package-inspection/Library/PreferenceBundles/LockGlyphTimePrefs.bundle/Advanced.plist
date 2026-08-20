@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Changes reload live. Use Apply Changes if SpringBoard needs an immediate refresh.</string>
+			<key>label</key>
+			<string>TOOLS</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>applyNow</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Apply Changes</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>RESET</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>resetTime</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Reset Time Settings</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>resetDate</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Reset Date Settings</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>resetIcon</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Reset Icon Settings</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>resetAll</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Reset All Settings</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Built for iOS 15+ jailbreak environments with separate Rootless and RootHide packages. Positioning is applied after Apple's lock-screen layout to avoid cumulative movement.</string>
+			<key>label</key>
+			<string>COMPATIBILITY</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Advanced</string>
+</dict>
+</plist>
