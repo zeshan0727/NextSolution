@@ -7,7 +7,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = NextLockHideElements
 NextLockHideElements_FILES = Tweak.m
-NextLockHideElements_CFLAGS = -fobjc-arc
+NextLockHideElements_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
 NextLockHideElements_FRAMEWORKS = Foundation UIKit QuartzCore CoreFoundation
 NextLockHideElements_LIBRARIES = substrate
 
