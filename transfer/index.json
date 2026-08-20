@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T09:09:02Z",
+  "updatedAt": "2026-08-20T09:26:59Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-cpufix-test9-freeposition-roothide",
-      "name": "NextLock 1.1.5 CPU Fix Test 9 Free Position RootHide",
-      "fileName": "NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb",
+      "id": "nextlock-1.1.5-cpufix-test10-timedate-sliders-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 10 Time Date Sliders RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test9",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test9-FreePosition/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb",
-      "sha256": "7f5c3ae6cf3d67da513eadad62690fc5e76a2491b5632eb7d3075af182e2e7a8",
-      "notes": "Test 9 keeps Test 8 full time/date styling, targeted low-CPU callback-photo suppression and uncropped full-photo picker. Photo Frames 1-4 are no longer anchored to Time or Date: Anchor To and Placement are removed and replaced with independent whole-screen Horizontal/Vertical Position sliders (0-100%)."
+      "version": "1.1.5-test10",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb",
+      "sha256": "13cbe74651bed06a0f4b408b2f7b6ca4995896d2ff36499e254b4858ee5d1882",
+      "notes": "Test 10 keeps Test 9 CPU fix, free photo positioning and full-photo picker. Time and Date now use clearly labeled independent horizontal/vertical movement sliders (-300 to +300); fixed Alignment controls are removed. Time Font/Weight/Style/Size and Date Font/Weight/Style/Size are explicitly separate controls."
     },
     {
       "id": "moduleglass-1.1.17-self-contained-prefs-roothide",
