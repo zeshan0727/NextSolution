@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T09:28:08Z",
+  "updatedAt": "2026-08-20T09:48:02Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-cpufix-test10-timedate-sliders-roothide",
-      "name": "NextLock 1.1.5 CPU Fix Test 10 Time Date Sliders RootHide",
-      "fileName": "NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb",
+      "id": "nextlock-1.1.5-cpufix-test11-livefeatures-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 11 Live Features RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test10",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb",
-      "sha256": "e94603bcd0787221c52b6a432f844993cc277378171b8352f6d64a86bc476214",
-      "notes": "Test 10 keeps Test 9 CPU fix, free photo positioning and full-photo picker. Time and Date now use clearly labeled independent horizontal/vertical movement sliders (-300 to +300); fixed Alignment controls are removed. Time Font/Weight/Style/Size and Date Font/Weight/Style/Size are explicitly separate controls."
+      "version": "1.1.5-test11",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test11-LiveFeatures/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb",
+      "sha256": "cf480d7c22ee272f7e1cb04a1dc0e4415858dac54bd53a3511db365e5d75d2cf",
+      "notes": "Test 11 keeps the validated CPU/photo fixes and independent Time/Date font controls. It adds a direct post-render runtime fix for both Time and Date position, color and shadow/glow, and adds visible function labels above every Time/Date movement slider."
     },
     {
       "id": "moduleglass-1.1.17-self-contained-prefs-roothide",
