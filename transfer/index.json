@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T08:48:59Z",
+  "updatedAt": "2026-08-20T09:09:02Z",
   "files": [
+    {
+      "id": "nextlock-1.1.5-cpufix-test9-freeposition-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 9 Free Position RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.5-test9",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test9-FreePosition/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb",
+      "sha256": "7f5c3ae6cf3d67da513eadad62690fc5e76a2491b5632eb7d3075af182e2e7a8",
+      "notes": "Test 9 keeps Test 8 full time/date styling, targeted low-CPU callback-photo suppression and uncropped full-photo picker. Photo Frames 1-4 are no longer anchored to Time or Date: Anchor To and Placement are removed and replaced with independent whole-screen Horizontal/Vertical Position sliders (0-100%)."
+    },
     {
       "id": "moduleglass-1.1.17-self-contained-prefs-roothide",
       "name": "Module Glass 1.1.17",
@@ -14,19 +25,8 @@
       "notes": "Full self-contained Module Glass package. Preserves the validated 1.1.15 External Host Isolation Control Center runtime and embeds the current Aura 1.0.5 Module Glass preferences, PreferenceLoader entry, image controls, glow controls and native Volume icon color picker directly in the same DEB."
     },
     {
-      "id": "nextlock-1.1.5-cpufix-test8-fullfeatures-roothide",
-      "name": "NextLock 1.1.5 CPU Fix Test 8 Full Features RootHide",
-      "fileName": "NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb",
-      "type": "deb",
-      "platform": "RootHide",
-      "version": "1.1.5-test8",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test8-FullFeatures/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb",
-      "sha256": "6659bfec0e4a6488500b97ccb4c3fceb5f7efa51e6743fb919c6d88f512a3058",
-      "notes": "Test 8 restores time/date position, color, font weight, style, glow and shadow by preserving the live styling callback. Only the redundant photo-render call inside that callback is skipped. The refined picker is injected into Settings so selection keeps the whole uncropped photo; Auto, Stretch, Full Photo and Cut/Crop are chosen later per frame."
-    },
-    {
       "id": "nextmockupstudio-0.4-live3d",
-      "name": "Next Mockup Studio 0.4 — Live 3D iPhone Test",
+      "name": "Next Mockup Studio 0.4 \u2014 Live 3D iPhone Test",
       "fileName": "NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
@@ -129,7 +129,7 @@
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "platform": "TrollStore / iOS 16+",
-      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
+      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
       "version": "1.0.2",
       "type": "tipa",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
