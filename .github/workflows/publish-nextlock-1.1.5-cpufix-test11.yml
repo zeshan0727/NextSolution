@@ -1,10 +1,15 @@
-# Retrigger after validated Test 11 build fixes
+# Test 11 publisher: validated live Time/Date runtime feature restoration
 name: Build and Publish NextLock 1.1.5 CPU Fix Test 11
 
 on:
   push:
     branches: [main]
     paths:
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-test11.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'transfer/build-triggers/nextlock-test11-publish.txt'
       - '.github/workflows/publish-nextlock-1.1.5-cpufix-test11.yml'
   workflow_dispatch:
 
@@ -20,7 +25,7 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 40
     steps:
-      - name: Checkout main
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -84,7 +89,7 @@ jobs:
                   key=obj.get('key')
                   if key in (xkey,ykey):
                       direction='LEFT / RIGHT' if key==xkey else 'UP / DOWN'
-                      title=f'{kind} POSITION — {direction}'
+                      title=f'{kind.upper()} POSITION — {direction}'
                       footer=(f'Moves only the {kind.lower()}. ' +
                               ('Negative = left, positive = right.' if key==xkey else 'Negative = up, positive = down.'))
                       out.append({'cell':'PSGroupCell','label':title,'footerText':footer})
@@ -130,6 +135,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin main
+          git checkout -B nextlock-test11-publish origin/main
           DEST_DIR='transfer/files/NextLock/1.1.5-CPUFix-Test11-LiveFeatures'
           DEST="$DEST_DIR/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb"
           mkdir -p "$DEST_DIR"
