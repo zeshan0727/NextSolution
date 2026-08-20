@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T08:11:53Z",
+  "updatedAt": "2026-08-20T08:42:02Z",
   "files": [
     {
-      "id": "nextlock-1.1.5-cpufix-test7-refinedphoto-roothide",
-      "name": "NextLock 1.1.5 CPU Fix Test 7 Refined Photo RootHide",
-      "fileName": "NextLock_1.1.5_CPUFix_Test7_RefinedPhoto_RootHide.deb",
+      "id": "nextlock-1.1.5-cpufix-test8-fullfeatures-roothide",
+      "name": "NextLock 1.1.5 CPU Fix Test 8 Full Features RootHide",
+      "fileName": "NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
-      "version": "1.1.5-test7",
-      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test7-RefinedPhoto/NextLock_1.1.5_CPUFix_Test7_RefinedPhoto_RootHide.deb",
-      "sha256": "a037fee6be603751b3e083d5bf75605ebea84d5c57a0aeb1e6b9420fbfcf5aa9",
-      "notes": "Refined photo build. Fixes the old selector pipeline that square-cropped every chosen image and rendered it to 512x512 before saving. Test 7 shows the whole selected photo, preserves its aspect ratio and detail at up to 2048 px on the long edge, and keeps Auto, Stretch, Full Photo and Cut/Crop per frame. Retains the proven targeted 120 Hz callback suppression so time/date/photo position controls remain fully live without the previous SpringBoard CPU drain."
+      "version": "1.1.5-test8",
+      "url": "https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test8-FullFeatures/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb",
+      "sha256": "6659bfec0e4a6488500b97ccb4c3fceb5f7efa51e6743fb919c6d88f512a3058",
+      "notes": "Test 8 restores time/date position, color, font weight, style, glow and shadow by preserving the live styling callback. Only the redundant photo-render call inside that callback is skipped. The refined picker is injected into Settings so selection keeps the whole uncropped photo; Auto, Stretch, Full Photo and Cut/Crop are chosen later per frame."
     },
     {
       "id": "nextmockupstudio-0.4-live3d",
