@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "414b800dc2ef772f25e954578e2e6ac33da22d15b69ada5e7fa1caac4fed71bb",
+      "candidate_fingerprint": "b83105d7d678077bb8568059e0f9509c3d832a4b5a45d217f1e716680c33f001",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Learn what the Dopamine 3.x README confirms about iOS 18 support for A12 and A13 devices, including the documented iOS 18.7.1 endpoint and arm64e limits.",
+      "entry_type": "cluster",
+      "href": "dopamine-3-ios-18-jailbreak-a12-a13.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Solution real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-21T15:26:54+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-ios18-a12-a13",
+      "published_at": "2026-08-21T15:26:54+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "source_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "title": "Dopamine 3 Jailbreak: iOS 18 Compatibility for A12 and A13 Devices",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "25b4380ab0a38a490b78fd03bccb8f440f59513c2b1935c94bba3ff6b70cffed",
       "candidate_fingerprint": "23540594d35d751599069638815d37ffb7a525c9a1f8e506ed0ff8b1d11810aa",
       "category": {
@@ -657,8 +681,18 @@
       "published_at": "2026-08-21T06:55:47+00:00",
       "run_id": "32456385122",
       "version": "3.x"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "b83105d7d678077bb8568059e0f9509c3d832a4b5a45d217f1e716680c33f001",
+      "channel": "dopamine-cluster",
+      "href": "dopamine-3-ios-18-jailbreak-a12-a13.html",
+      "package": "editorial.dopamine3.dopamine3-ios18-a12-a13",
+      "published_at": "2026-08-21T15:26:54+00:00",
+      "run_id": "32497553886",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-21T06:55:47+00:00"
+  "updated_at": "2026-08-21T15:26:54+00:00"
 }

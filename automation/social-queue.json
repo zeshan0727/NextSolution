@@ -15,6 +15,14 @@
       "title": "Dopamine 3 iOS 26 Jailbreak Compatibility for A12 and A13",
       "topic_id": "dopamine3-ios26-a12-a13",
       "url": "https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13.html"
+    },
+    {
+      "created_at": "2026-08-21T15:26:54+00:00",
+      "post": "Dopamine 3.x compatibility on iOS 18 is documented for A12 and A13 devices from iOS 15.0 through iOS 18.7.1. The general arm64e range ends at iOS 17.3.1, so iOS 18 support should not be generalized to every arm64e device https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13.html",
+      "status": "pending",
+      "title": "Dopamine 3 Jailbreak: iOS 18 Compatibility for A12 and A13 Devices",
+      "topic_id": "dopamine3-ios18-a12-a13",
+      "url": "https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13.html"
     }
   ],
   "schema_version": 1
