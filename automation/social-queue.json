@@ -7,6 +7,14 @@
       "title": "Dopamine 3 Compatibility: Supported iOS Versions by Device Category",
       "topic_id": "dopamine3-master-compatibility",
       "url": "https://nextsolution.cc/dopamine-3-jailbreak.html"
+    },
+    {
+      "created_at": "2026-08-21T06:55:47+00:00",
+      "post": "Dopamine 3 iOS 26 compatibility is documented specifically for A12 and A13 devices. Do not generalize that entry to every arm64e or arm64 device; check the device category and its separate README range. https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13.html",
+      "status": "pending",
+      "title": "Dopamine 3 iOS 26 Jailbreak Compatibility for A12 and A13",
+      "topic_id": "dopamine3-ios26-a12-a13",
+      "url": "https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13.html"
     }
   ],
   "schema_version": 1

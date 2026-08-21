@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "25b4380ab0a38a490b78fd03bccb8f440f59513c2b1935c94bba3ff6b70cffed",
+      "candidate_fingerprint": "23540594d35d751599069638815d37ffb7a525c9a1f8e506ed0ff8b1d11810aa",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Learn what the Dopamine 3.x README documents about iOS 26 compatibility, including the A12 and A13 limitation and separate arm64e and arm64 ranges.",
+      "entry_type": "cluster",
+      "href": "dopamine-3-ios-26-jailbreak-a12-a13.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Solution real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-21T06:55:47+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-ios26-a12-a13",
+      "published_at": "2026-08-21T06:55:47+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "source_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "title": "Dopamine 3 iOS 26 Jailbreak Compatibility for A12 and A13",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "407897f697feaed7417b2d5fff94983ebba34a1a44c929cd5c2491ee97946f2c",
       "candidate_fingerprint": "59260fdae77b2c1e0d27f14af19fb0cc0ff1397c3d84ea05a680003daf07203f",
       "category": {
@@ -623,8 +647,18 @@
       "published_at": "2026-08-21T03:47:10+00:00",
       "run_id": "32444516647",
       "version": "1.1.2"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "23540594d35d751599069638815d37ffb7a525c9a1f8e506ed0ff8b1d11810aa",
+      "channel": "dopamine-cluster",
+      "href": "dopamine-3-ios-26-jailbreak-a12-a13.html",
+      "package": "editorial.dopamine3.dopamine3-ios26-a12-a13",
+      "published_at": "2026-08-21T06:55:47+00:00",
+      "run_id": "32456385122",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-21T03:47:10+00:00"
+  "updated_at": "2026-08-21T06:55:47+00:00"
 }

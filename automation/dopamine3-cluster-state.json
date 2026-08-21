@@ -4,9 +4,86 @@
       "path": "dopamine-3-jailbreak.html",
       "published_at": "2026-08-19T15:46:56+00:00",
       "topic_id": "dopamine3-master-compatibility"
+    },
+    {
+      "path": "dopamine-3-ios-26-jailbreak-a12-a13.html",
+      "published_at": "2026-08-21T06:55:47+00:00",
+      "topic_id": "dopamine3-ios26-a12-a13"
     }
   ],
   "published": {
+    "dopamine3-ios26-a12-a13": {
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_09bb1f3b9d93f429016a87f689b5a087d1b4ef7c0aece9c3be",
+          "usage": {
+            "input_tokens": 3004,
+            "input_tokens_details": {
+              "cache_write_tokens": 3001,
+              "cached_tokens": 0
+            },
+            "output_tokens": 223,
+            "output_tokens_details": {
+              "reasoning_tokens": 129
+            },
+            "total_tokens": 3227
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0e6d02adec852ad8016a87f68da2e087d1baca32c7a1f43d44",
+          "usage": {
+            "input_tokens": 3065,
+            "input_tokens_details": {
+              "cache_write_tokens": 3062,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2034,
+            "output_tokens_details": {
+              "reasoning_tokens": 169
+            },
+            "total_tokens": 5099
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0b71623455988342016a87f69ecde887d194dcdc7400b8c69e",
+          "usage": {
+            "input_tokens": 2765,
+            "input_tokens_details": {
+              "cache_write_tokens": 2762,
+              "cached_tokens": 0
+            },
+            "output_tokens": 208,
+            "output_tokens_details": {
+              "reasoning_tokens": 110
+            },
+            "total_tokens": 2973
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0839215fae2dc225016a87f674c85487d19b9b202e5a12dba5",
+          "usage": {
+            "input_tokens": 1035,
+            "input_tokens_details": {
+              "cache_write_tokens": 1032,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2173,
+            "output_tokens_details": {
+              "reasoning_tokens": 70
+            },
+            "total_tokens": 3208
+          }
+        }
+      },
+      "fingerprint": "23540594d35d751599069638815d37ffb7a525c9a1f8e506ed0ff8b1d11810aa",
+      "path": "dopamine-3-ios-26-jailbreak-a12-a13.html",
+      "published_at": "2026-08-21T06:55:47+00:00",
+      "title": "Dopamine 3 iOS 26 Jailbreak Compatibility for A12 and A13"
+    },
     "dopamine3-master-compatibility": {
       "api": {
         "initial_verifier": {
