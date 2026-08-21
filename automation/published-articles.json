@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "407897f697feaed7417b2d5fff94983ebba34a1a44c929cd5c2491ee97946f2c",
+      "candidate_fingerprint": "59260fdae77b2c1e0d27f14af19fb0cc0ff1397c3d84ea05a680003daf07203f",
+      "category": {
+        "id": "media",
+        "label": "Media"
+      },
+      "description": "NextUp 3 v1.1.2 lists upcoming-track display and skip controls for Apple Music, Apple Podcasts, YouTube, YouTube Music, and Spotify across three now-playing UI areas",
+      "href": "nextup-3-tweak.html",
+      "image": "https://media.havoc.app/6a76e7680cb765625f224503",
+      "media_credit": "NextUp 3 official Havoc listing",
+      "media_source_url": "https://havoc.app/package/nextup3",
+      "modified_at": "2026-08-21T03:47:10+00:00",
+      "name": "NextUp 3",
+      "package": "com.yves.nextup3",
+      "published_at": "2026-08-14T04:26:01+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/nextup3",
+      "source_url": "https://havoc.app/",
+      "title": "NextUp 3 v1.1.2: Upcoming-Track Controls in the Now-Playing UI",
+      "version": "1.1.2"
+    },
+    {
       "article_sha256": "a3a833acf9e632f884f0be647be69b9235c84f05342e3f103f0e8731d7c18409",
       "candidate_fingerprint": "7b3f95e19165cb138c38f57fd31bf194b8aade7035040cc785c07b6b66b6205a",
       "category": {
@@ -184,29 +207,6 @@
       "source_url": "https://havoc.app/",
       "title": "Crescendo 1.1 Adds a Volume Slider to the Lock Screen and Dynamic Island",
       "version": "1.1"
-    },
-    {
-      "article_sha256": "d29b01b09bf3cdbeda762c239945a81a6067bf17aa3110962c214c11d9ad4959",
-      "candidate_fingerprint": "fa7bd78a1d8179e9ffeade3ffe65760ea6617686e79973089a1e841689fc2b65",
-      "category": {
-        "id": "media",
-        "label": "Media"
-      },
-      "description": "Learn what NextUp 3 version 1.1.1 adds to the now-playing UI, including upcoming-track controls for Apple Music, Podcasts, YouTube, YouTube Music, and Spotify.",
-      "href": "nextup-3-tweak.html",
-      "image": "https://media.havoc.app/6a76e7680cb765625f224503",
-      "media_credit": "NextUp 3 official Havoc listing",
-      "media_source_url": "https://havoc.app/package/nextup3",
-      "modified_at": "2026-08-15T07:39:08+00:00",
-      "name": "NextUp 3",
-      "package": "com.yves.nextup3",
-      "published_at": "2026-08-14T04:26:01+00:00",
-      "selection_pool": "pending",
-      "source_name": "Havoc",
-      "source_page_url": "https://havoc.app/package/nextup3",
-      "source_url": "https://havoc.app/",
-      "title": "NextUp 3 1.1.1 Adds Upcoming-Track Controls to the Now-Playing Interface",
-      "version": "1.1.1"
     },
     {
       "article_sha256": "34c08151e1a81a7254615ac97c05d969a9800a99d1c2c81aac3bebb3fda0325f",
@@ -614,8 +614,17 @@
       "published_at": "2026-08-19T15:46:56+00:00",
       "run_id": "32271661002",
       "version": "3.x"
+    },
+    {
+      "action": "update",
+      "candidate_fingerprint": "59260fdae77b2c1e0d27f14af19fb0cc0ff1397c3d84ea05a680003daf07203f",
+      "href": "nextup-3-tweak.html",
+      "package": "com.yves.nextup3",
+      "published_at": "2026-08-21T03:47:10+00:00",
+      "run_id": "32444516647",
+      "version": "1.1.2"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-19T15:46:56+00:00"
+  "updated_at": "2026-08-21T03:47:10+00:00"
 }
