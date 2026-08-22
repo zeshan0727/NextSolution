@@ -14,9 +14,86 @@
       "path": "dopamine-3-ios-18-jailbreak-a12-a13.html",
       "published_at": "2026-08-21T15:26:54+00:00",
       "topic_id": "dopamine3-ios18-a12-a13"
+    },
+    {
+      "path": "darksword-dopamine-3-jailbreak.html",
+      "published_at": "2026-08-22T06:48:41+00:00",
+      "topic_id": "dopamine3-darksword"
     }
   ],
   "published": {
+    "dopamine3-darksword": {
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_00bc7a206da5dedf016a89465d38ec87d18606534268c7bea3",
+          "usage": {
+            "input_tokens": 3143,
+            "input_tokens_details": {
+              "cache_write_tokens": 3140,
+              "cached_tokens": 0
+            },
+            "output_tokens": 673,
+            "output_tokens_details": {
+              "reasoning_tokens": 431
+            },
+            "total_tokens": 3816
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0709f81ad6ae44a0016a8946642d8487d193ba068de0d194f2",
+          "usage": {
+            "input_tokens": 3367,
+            "input_tokens_details": {
+              "cache_write_tokens": 3364,
+              "cached_tokens": 0
+            },
+            "output_tokens": 1677,
+            "output_tokens_details": {
+              "reasoning_tokens": 38
+            },
+            "total_tokens": 5044
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_09fff4424a21b917016a89466fa46c87d1ad0a7c37d278cba0",
+          "usage": {
+            "input_tokens": 2542,
+            "input_tokens_details": {
+              "cache_write_tokens": 2539,
+              "cached_tokens": 0
+            },
+            "output_tokens": 390,
+            "output_tokens_details": {
+              "reasoning_tokens": 273
+            },
+            "total_tokens": 2932
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_08f32b1fb55e8b9f016a89464ab78087d1a1de27f3266a1e89",
+          "usage": {
+            "input_tokens": 1046,
+            "input_tokens_details": {
+              "cache_write_tokens": 1043,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2312,
+            "output_tokens_details": {
+              "reasoning_tokens": 84
+            },
+            "total_tokens": 3358
+          }
+        }
+      },
+      "fingerprint": "a719f32d290036c5e310017a47e00424602f0dbe0024c30f908bacda2b079c3b",
+      "path": "darksword-dopamine-3-jailbreak.html",
+      "published_at": "2026-08-22T06:48:41+00:00",
+      "title": "DarkSword and Dopamine: What the Documented Connection Means"
+    },
     "dopamine3-ios18-a12-a13": {
       "api": {
         "initial_verifier": {

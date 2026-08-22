@@ -23,6 +23,14 @@
       "title": "Dopamine 3 Jailbreak: iOS 18 Compatibility for A12 and A13 Devices",
       "topic_id": "dopamine3-ios18-a12-a13",
       "url": "https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13.html"
+    },
+    {
+      "created_at": "2026-08-22T06:48:41+00:00",
+      "post": "DarkSword is described as a kernel exploit reimplemented in Objective-C. An official Dopamine 2.5 beta note added it as an option, while current Dopamine 3.x compatibility depends on the device category and exact iOS 版本. https://nextsolution.cc/darksword-dopamine-3-jailbreak.html",
+      "status": "pending",
+      "title": "DarkSword and Dopamine: What the Documented Connection Means",
+      "topic_id": "dopamine3-darksword",
+      "url": "https://nextsolution.cc/darksword-dopamine-3-jailbreak.html"
     }
   ],
   "schema_version": 1

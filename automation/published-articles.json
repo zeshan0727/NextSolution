@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "f92134fb0379c07ad1621457bbe21a3d76f5599e681beb9c0eef30723e6d6dd0",
+      "candidate_fingerprint": "a719f32d290036c5e310017a47e00424602f0dbe0024c30f908bacda2b079c3b",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Learn what DarkSword is, how an official Dopamine 2.5 beta note connects it to Dopamine development, and where to find documented Dopamine 3.x compatibility details.",
+      "entry_type": "cluster",
+      "href": "darksword-dopamine-3-jailbreak.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Solution real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-22T06:48:41+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-darksword",
+      "published_at": "2026-08-22T06:48:41+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://github.com/opa334/darksword-kexploit",
+      "source_url": "https://github.com/opa334/darksword-kexploit",
+      "title": "DarkSword and Dopamine: What the Documented Connection Means",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "a29d37f9d057bb8c44dece9f7b5298125e57a438bce44b542674392710a4be83",
       "candidate_fingerprint": "4876a9b27d53833990f1156de577d3b62d9abfb7226d1c1a204102017481ba70",
       "category": {
@@ -723,8 +747,18 @@
       "published_at": "2026-08-22T03:38:46+00:00",
       "run_id": "32549476482",
       "version": "1.9.16"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "a719f32d290036c5e310017a47e00424602f0dbe0024c30f908bacda2b079c3b",
+      "channel": "dopamine-cluster",
+      "href": "darksword-dopamine-3-jailbreak.html",
+      "package": "editorial.dopamine3.dopamine3-darksword",
+      "published_at": "2026-08-22T06:48:41+00:00",
+      "run_id": "32557914395",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-22T03:38:46+00:00"
+  "updated_at": "2026-08-22T06:48:41+00:00"
 }
