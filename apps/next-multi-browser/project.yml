@@ -6,7 +6,7 @@ options:
 packages:
   TunnelKit:
     url: https://github.com/partout-io/tunnelkit.git
-    exactVersion: 6.3.2
+    revision: f2c0fb079e2a318a4717d5fb8daa8f149174dadd
 targets:
   NextMultiBrowser:
     type: application
