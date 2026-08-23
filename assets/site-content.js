@@ -8,8 +8,6 @@
   if (!isHome && !isTutorials) return;
 
   var HOME_FALLBACK_IMAGE = '/assets/brand/next-solution-hero.svg';
-  var HOME_START = 'AUTO_ARTICLES_HOME_START';
-  var HOME_END = 'AUTO_ARTICLES_HOME_END';
   var TWEAKS_START = 'AUTO_ARTICLES_TUTORIALS_START';
   var TWEAKS_END = 'AUTO_ARTICLES_TUTORIALS_END';
   var JAILBREAK_START = 'AUTO_ARTICLES_JAILBREAK_START';
@@ -138,6 +136,15 @@
     });
   }
 
+  function updateCategoryLabels() {
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-links a, .category-rail a, .category-list a'), function (link) {
+      var label = link.textContent.trim();
+      if (label === 'Cydia Tweaks' || label === 'Latest tweaks') link.textContent = 'Tweaks';
+      if (label === 'Latest tweak information') link.textContent = 'Tweaks & tweak articles';
+      if (label === 'Jailbreak tutorials' || label === 'Jailbreak guides') link.textContent = 'Jailbreak news & guides';
+    });
+  }
+
   function renderHome(entries) {
     var feed = document.querySelector('#latest .news-feed');
     if (!feed) return;
@@ -175,18 +182,12 @@
       removeRuntimeCards(jailbreakGrid);
       removeMarkerBlock(jailbreakGrid, JAILBREAK_START, JAILBREAK_END);
       var firstStatic = jailbreakGrid.firstElementChild;
-      jailbreakEntries.slice().reverse().forEach(function (entry) {
+      jailbreakEntries.forEach(function (entry) {
         var card = createCard(entry, false);
         if (firstStatic) jailbreakGrid.insertBefore(card, firstStatic);
         else jailbreakGrid.appendChild(card);
       });
     }
-
-    Array.prototype.forEach.call(document.querySelectorAll('.nav-links a, .category-rail a'), function (link) {
-      var label = link.textContent.trim();
-      if (label === 'Cydia Tweaks' || label === 'Latest tweak information') link.textContent = label === 'Cydia Tweaks' ? 'Tweaks' : 'Tweaks & tweak articles';
-      if (label === 'Jailbreak tutorials') link.textContent = 'Jailbreak news & guides';
-    });
 
     var tweakHeading = document.querySelector('#verified-articles h2');
     if (tweakHeading) tweakHeading.textContent = 'Tweaks & tweak articles';
@@ -195,6 +196,7 @@
   }
 
   function init() {
+    updateCategoryLabels();
     fetch('/automation/published-articles.json?ts=' + Date.now(), { cache: 'no-store' })
       .then(function (response) {
         if (!response.ok) throw new Error('article index request failed');
