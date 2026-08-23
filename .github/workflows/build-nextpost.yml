@@ -1,5 +1,6 @@
 name: Build Next Post TIPA
 
+# 1.0.9 X preview fix publication trigger
 on:
   workflow_dispatch:
   pull_request:
