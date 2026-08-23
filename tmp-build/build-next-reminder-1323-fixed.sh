@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+# Final 1.3.23 / 1.0.13 test build
 python3 - <<'PY'
 from pathlib import Path
 p=Path('tmp-build/build-next-reminder-1322.sh')
