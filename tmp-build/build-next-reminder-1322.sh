@@ -38,7 +38,8 @@ APP=$(find "$R/DD/Build/Products/Release-iphoneos" -maxdepth 1 -name NextReminde
 test -n "$APP"
 test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = 1.3.22
 test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = 32
-grep -R -q 'nextreminder://send-report' "$P/NextReminder/Sources"
+grep -R -q 'send-report' "$P/NextReminder/Sources/EmailAutomationCore.swift"
+grep -R -q 'sendPendingReminderReport' "$P/NextReminder/Sources/EmailAutomationCore.swift"
 mkdir -p "$R/out/Payload"; cp -R "$APP" "$R/out/Payload/"
 (cd "$R/out" && zip -qry NextReminder_1.3.22_Unsigned.tipa Payload)
 rm -rf "$R/out/Payload"
