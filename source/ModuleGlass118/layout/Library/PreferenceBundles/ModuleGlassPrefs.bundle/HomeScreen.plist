@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Home Screen &amp; Icons</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Home Screen &amp; Icons</string>
+			<key>footerText</key>
+			<string>Original and advanced Home Screen controls in one group.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide App Labels</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideHomeLabels</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes app names from normal Home Screen icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Widget Labels</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideWidgetLabels</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the labels shown beneath Home Screen widgets.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide App Badges</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideBadges</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Completely hides notification-number badges on app icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Page Dots</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HidePageDots</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the Home Screen page indicator dots.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Search Pill</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideSearchPill</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the iOS 16 Search button above the Dock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Home Icon Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HomeIconScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.85</real>
+				<real>1.0</real>
+				<real>1.15</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes the size of normal Home Screen app icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Disable App Library Swipe</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>DisableAppLibrarySwipe</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Stops the final Home Screen swipe from opening App Library.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Home Icon Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HomeIconOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the transparency of normal Home Screen icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Dock Icon Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>DockIconOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the transparency of icons placed in the Dock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Folder Icon Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>FolderIconOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the transparency of folder icons on the Home Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Badge Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>BadgeOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts badge transparency without fully hiding badges.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Badge Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>BadgeScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.8</real>
+				<real>1.0</real>
+				<real>1.2</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes notification badges smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Icon Shadows</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideIconShadows</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes shadows drawn around Home Screen icon images.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Wiggle Delete Buttons</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideWiggleDeleteButtons</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides minus or delete buttons while editing the Home Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Wiggle Done Button</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideWiggleDoneButton</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the Done button displayed during Home Screen editing.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide App Library Labels</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideAppLibraryLabels</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes app-name labels from icons inside App Library.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide App Library Categories</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideAppLibraryCategories</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes category headings from the App Library view.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Advanced Controls</string>
+			<key>footerText</key>
+			<string>Changed options activate automatically after Apply Changes.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Home Page Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHomePageOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the transparency of Home Screen icon pages.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Home Wallpaper Dim</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHomeWallpaperDim</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>0.75</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Dims only the Home Screen wallpaper.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Home Label Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHomeLabelFontScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.85</real>
+				<real>1.0</real>
+				<real>1.2</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes Home Screen icon labels smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Home Label Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHomeLabelOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the transparency of Home Screen icon labels.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Home Label Shadow</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideHomeLabelShadow</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the shadow behind Home Screen icon labels.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Widget Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabWidgetOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts transparency of Home Screen widgets.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Widget Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabWidgetScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.88</real>
+				<real>1.0</real>
+				<real>1.12</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes Home Screen widgets slightly smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Widget Corner Radius</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabWidgetCornerRadius</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Stock</string>
+				<string>Rounded</string>
+				<string>Rounder</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.0</real>
+				<real>18.0</real>
+				<real>30.0</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes the corner radius used by Home Screen widgets.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Widget Background</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideWidgetBackground</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes compatible Home Screen widget backgrounds.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>App Icon Corner Radius</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabAppIconCornerRadius</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Stock</string>
+				<string>Rounded</string>
+				<string>Rounder</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.0</real>
+				<real>16.0</real>
+				<real>24.0</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes the clipping radius of Home Screen app icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>App Icon Border Width</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabAppIconBorderWidth</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>None</string>
+				<string>Thin</string>
+				<string>Thick</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.0</real>
+				<real>1.0</real>
+				<real>2.5</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adds an adjustable border around Home Screen app icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>App Icon Border Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabAppIconBorderOpacity</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Off</string>
+				<string>Soft</string>
+				<string>Solid</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.0</real>
+				<real>0.5</real>
+				<real>1.0</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the opacity of the optional app icon border.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Cloud Download Badge</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideCloudDownloadBadge</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the cloud download badge on offloaded app icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Recently Downloaded Dot</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideRecentlyDownloadedDot</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the dot shown beside recently downloaded apps.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Editing Background</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideHomeEditingBackground</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides compatible Home Screen editing overlays.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

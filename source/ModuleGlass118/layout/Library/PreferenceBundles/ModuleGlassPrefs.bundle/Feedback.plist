@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Vibration Feedback</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Vibration Feedback</string>
+			<key>footerText</key>
+			<string>Haptic confirmations for important phone events.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Vibrate After Unlock</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>Enabled</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Gives one vibration after the phone is successfully unlocked.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Vibrate When Call Connects</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CallConnectedEnabled</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Gives one vibration when an incoming or outgoing call connects.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

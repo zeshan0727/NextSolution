@@ -1,0 +1,213 @@
+name: Build Module Glass 1.1.18 Final Release
+
+on:
+  push:
+    branches:
+      - release/moduleglass-1.1.18-final
+    paths:
+      - 'source/ModuleGlass118/**'
+      - '.github/workflows/moduleglass-1.1.18-final-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: moduleglass-1.1.18-final-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install package tools
+        run: brew install dpkg ldid xz zstd
+
+      - name: Install standard rootless Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+          test -f "$RUNNER_TEMP/theos-rootless/makefiles/common.mk"
+          xcrun --sdk iphoneos --show-sdk-path
+
+      - name: Install pinned RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/theos-roothide"
+          git -C "$RUNNER_TEMP/theos-roothide" remote add origin https://github.com/roothide/theos.git
+          git -C "$RUNNER_TEMP/theos-roothide" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$RUNNER_TEMP/theos-roothide" submodule update --init --recursive --depth 1
+          test -f "$RUNNER_TEMP/theos-roothide/makefiles/common.mk"
+
+      - name: Build standard rootless package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          PROJECT="$RUNNER_TEMP/moduleglass-rootless"
+          rsync -a --exclude='.theos' --exclude='packages' source/ModuleGlass118/ "$PROJECT/"
+          python3 "$PROJECT/prepare_release.py" "$PROJECT" iphoneos-arm64
+          export THEOS="$RUNNER_TEMP/theos-rootless"
+          export THEOS_PACKAGE_SCHEME=rootless
+          make -C "$PROJECT" clean
+          make -C "$PROJECT" package FINALPACKAGE=1 2>&1 | tee output/rootless-build.log
+          DEB="$(find "$PROJECT/packages" -maxdepth 1 -type f -name '*_iphoneos-arm64.deb' -print -quit)"
+          test -s "$DEB"
+          cp "$DEB" output/ModuleGlass_1.1.18_Rootless.deb
+
+      - name: Build RootHide package
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$RUNNER_TEMP/moduleglass-roothide"
+          rsync -a --exclude='.theos' --exclude='packages' source/ModuleGlass118/ "$PROJECT/"
+          python3 "$PROJECT/prepare_release.py" "$PROJECT" iphoneos-arm64e
+          export THEOS="$RUNNER_TEMP/theos-roothide"
+          export THEOS_PACKAGE_SCHEME=roothide
+          make -C "$PROJECT" clean
+          make -C "$PROJECT" package FINALPACKAGE=1 2>&1 | tee output/roothide-build.log
+          DEB="$(find "$PROJECT/packages" -maxdepth 1 -type f -name '*_iphoneos-arm64e.deb' -print -quit)"
+          test -s "$DEB"
+          cp "$DEB" output/ModuleGlass_1.1.18_RootHide.deb
+
+      - name: Validate both release packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          for spec in "Rootless iphoneos-arm64" "RootHide iphoneos-arm64e"; do
+            set -- $spec
+            variant="$1"
+            architecture="$2"
+            deb="output/ModuleGlass_1.1.18_${variant}.deb"
+            stage="$RUNNER_TEMP/verify-${variant}"
+            test -s "$deb"
+            test "$(dpkg-deb -f "$deb" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+            test "$(dpkg-deb -f "$deb" Version)" = '1.1.18'
+            test "$(dpkg-deb -f "$deb" Architecture)" = "$architecture"
+            if dpkg-deb -f "$deb" Description | grep -qi 'test'; then
+              echo "Release description still contains test text" >&2
+              exit 1
+            fi
+            mkdir -p "$stage"
+            dpkg-deb -x "$deb" "$stage"
+
+            runtime="$(find "$stage" -type f -name CCModuleBackgrounds.dylib -print -quit)"
+            activation="$(find "$stage" -type f -name ModuleGlassActivation.dylib -print -quit)"
+            color_picker="$(find "$stage" -type f -name ModuleGlassStandalonePrefsExtension.dylib -print -quit)"
+            prefs_binary="$(find "$stage" -type f -path '*ModuleGlassPrefs.bundle/AuraPrefs' -print -quit)"
+            root_plist="$(find "$stage" -type f -path '*ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist' -print -quit)"
+            info_plist="$(find "$stage" -type f -path '*ModuleGlassPrefs.bundle/Info.plist' -print -quit)"
+            test -s "$runtime"; test -s "$activation"; test -s "$color_picker"; test -s "$prefs_binary"
+            test -s "$root_plist"; test -s "$info_plist"
+
+            for binary in "$runtime" "$activation" "$color_picker" "$prefs_binary"; do
+              slices="$(lipo -archs "$binary")"
+              echo "$variant $(basename "$binary") architectures: $slices"
+              [[ " $slices " == *' arm64 '* && " $slices " == *' arm64e '* ]]
+            done
+
+            strings -a "$runtime" > "$stage/runtime.strings"
+            strings -a "$activation" > "$stage/activation.strings"
+            strings -a "$color_picker" > "$stage/color-picker.strings"
+            strings -a "$prefs_binary" > "$stage/preferences.strings"
+            otool -L "$activation" > "$stage/activation.links"
+            otool -L "$color_picker" > "$stage/color-picker.links"
+            grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' "$stage/runtime.strings"
+            grep -Fq 'com.nextsolution.moduleglass/license.changed' "$stage/runtime.strings"
+            grep -Fq 'copyLicenseDeviceID' "$stage/activation.strings"
+            grep -Fq 'buyLicense' "$stage/activation.strings"
+            grep -Fq 'checkActivation' "$stage/activation.strings"
+            grep -Fq 'licenses/moduleglass.json' "$stage/activation.strings"
+            grep -Fq 'nextsolution-license-v1' "$stage/activation.strings"
+            grep -Fq 'chooseVolumeIconColor:' "$stage/color-picker.strings"
+            grep -Fq 'configureCCModuleBackground:' "$stage/preferences.strings"
+            grep -Fq 'respringDevice:' "$stage/preferences.strings"
+
+            if [ "$variant" = Rootless ]; then
+              if grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/activation.links" || grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/color-picker.links"; then
+                echo 'Rootless package contains RootHide-linked binaries' >&2
+                exit 1
+              fi
+            else
+              grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/activation.links"
+              grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/color-picker.links"
+            fi
+
+            ROOT_PLIST="$root_plist" INFO_PLIST="$info_plist" python3 - <<'PY'
+          import os, plistlib
+          with open(os.environ['ROOT_PLIST'], 'rb') as stream:
+              root = plistlib.load(stream)
+          with open(os.environ['INFO_PLIST'], 'rb') as stream:
+              info = plistlib.load(stream)
+          items = root['items']
+          assert len(items) == 37, len(items)
+          assert items[30].get('label') == 'Respring'
+          expected = [
+              ('PSGroupCell', 'ACTIVATION', None, None),
+              ('PSTitleValueCell', 'Status', 'licenseStatusDisplay', None),
+              ('PSTitleValueCell', 'Device ID', 'licenseDeviceID', None),
+              ('PSButtonCell', 'Copy Device ID', None, 'copyLicenseDeviceID'),
+              ('PSButtonCell', 'Buy / Activate — $1.00', None, 'buyLicense'),
+              ('PSButtonCell', 'Check Activation', None, 'checkActivation'),
+          ]
+          actual = [(x.get('cell'), x.get('label'), x.get('key'), x.get('action')) for x in items[-6:]]
+          assert actual == expected, actual
+          assert not any(x.get('cell') == 'PSLinkCell' and str(x.get('label', '')).lower() == 'activation' for x in items)
+          assert info['CFBundleShortVersionString'] == '1.1.18'
+          assert info['CFBundleVersion'] == '1.1.18'
+          PY
+
+            dpkg-deb -c "$deb" > "output/${variant}-PACKAGE-CONTENTS.txt"
+          done
+
+          ditto -c -k --sequesterRsrc --keepParent source/ModuleGlass118 output/ModuleGlass_1.1.18_Source.zip
+          shasum -a 256 output/ModuleGlass_1.1.18_Rootless.deb output/ModuleGlass_1.1.18_RootHide.deb output/ModuleGlass_1.1.18_Source.zip > output/SHA256SUMS.txt
+          cat output/SHA256SUMS.txt
+
+      - name: Upload validated release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.18-Final-RootHide-Rootless
+          path: |
+            output/ModuleGlass_1.1.18_Rootless.deb
+            output/ModuleGlass_1.1.18_RootHide.deb
+            output/ModuleGlass_1.1.18_Source.zip
+            output/SHA256SUMS.txt
+            output/Rootless-PACKAGE-CONTENTS.txt
+            output/RootHide-PACKAGE-CONTENTS.txt
+            output/rootless-build.log
+            output/roothide-build.log
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish branch build result
+        if: always() && github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST=transfer/builds/ModuleGlass/1.1.18-final
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp output/ModuleGlass_1.1.18_Rootless.deb "$DEST"/ 2>/dev/null || true
+          cp output/ModuleGlass_1.1.18_RootHide.deb "$DEST"/ 2>/dev/null || true
+          cp output/ModuleGlass_1.1.18_Source.zip "$DEST"/ 2>/dev/null || true
+          cp output/SHA256SUMS.txt "$DEST"/ 2>/dev/null || true
+          cp output/Rootless-PACKAGE-CONTENTS.txt "$DEST"/ 2>/dev/null || true
+          cp output/RootHide-PACKAGE-CONTENTS.txt "$DEST"/ 2>/dev/null || true
+          cp output/rootless-build.log "$DEST"/ 2>/dev/null || true
+          cp output/roothide-build.log "$DEST"/ 2>/dev/null || true
+          echo "${{ job.status }}" > "$DEST/STATUS.txt"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "$DEST"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ci: publish Module Glass 1.1.18 release build result'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

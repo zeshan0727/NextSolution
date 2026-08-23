@@ -1,0 +1,591 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Lock Screen</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Lock Screen</string>
+			<key>footerText</key>
+			<string>Original and advanced Lock Screen controls in one group.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Screen Clock &amp; Date</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideLockDate</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Completely removes the Lock Screen clock and date view.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Glyph</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideLockGlyph</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the locked or unlocked padlock symbol.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Flashlight Button</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideFlashlight</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the flashlight quick-action button.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Camera Button</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideCamera</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the camera quick-action button.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Control Center Grabber</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideControlCenterGrabber</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the Control Center teaching grabber from the Lock Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Swipe-Up Hint</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideSwipeHint</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the text that asks you to swipe up to unlock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Clock Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LockClockOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts Lock Screen clock and date transparency.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Clock Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LockClockScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.85</real>
+				<real>1.0</real>
+				<real>1.15</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes the Lock Screen clock smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Quick Actions Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>QuickActionsOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts flashlight and camera button transparency.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Quick Actions Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>QuickActionsScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.85</real>
+				<real>1.0</real>
+				<real>1.15</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes the Lock Screen quick-action buttons smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Quick Action Backgrounds</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideQuickActionBackgrounds</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the circular background behind quick-action icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Charging Text</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideChargingText</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes charging-status text from the Lock Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Face ID Animation</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideFaceIDAnimation</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the Face ID coaching and scanning animation.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Screen Home Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideLockHomeIndicator</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the bottom Home indicator from the Lock Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Advanced Controls</string>
+			<key>footerText</key>
+			<string>Changed options activate automatically after Apply Changes.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Lock Wallpaper Dim</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockWallpaperDim</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>0.75</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Dims only the Lock Screen wallpaper.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Clock Vertical Offset</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockClockVerticalOffset</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>-80.0</real>
+			<key>max</key>
+			<real>80.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Moves the Lock Screen clock upward or downward.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Clock Horizontal Offset</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockClockHorizontalOffset</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>-60.0</real>
+			<key>max</key>
+			<real>60.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Moves the Lock Screen clock left or right.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Clock Shadow</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideLockClockShadow</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the shadow behind the Lock Screen clock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Quick Action Horizontal Inset</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockQuickActionHorizontalInset</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>-35.0</real>
+			<key>max</key>
+			<real>35.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Moves the two quick-action buttons toward or away from center.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Quick Action Vertical Offset</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockQuickActionVerticalOffset</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>-50.0</real>
+			<key>max</key>
+			<real>50.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Moves Lock Screen quick actions upward or downward.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Quick Action Background Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockQuickActionBackgroundOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts transparency of quick-action button backgrounds.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Quick Action Icon Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockQuickActionIconScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.84</real>
+				<real>1.0</real>
+				<real>1.18</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes Lock Screen quick-action icons smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Notification List Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockNotificationListOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts transparency of the Lock Screen notification list.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Notification List Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabLockNotificationListScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Compact</string>
+				<string>Normal</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.9</real>
+				<real>1.0</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes the Lock Screen notification list slightly smaller.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Status Bar</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideLockStatusBar</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the status bar only while on the Lock Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Media Background</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideLockMediaBackground</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes compatible backgrounds behind Lock Screen media.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Focus Text</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideLockFocusText</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides compatible active Focus text on the Lock Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Alarm Text</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideLockAlarmText</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides compatible upcoming alarm text on the Lock Screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Lock Bottom Grabber</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideLockBottomGrabber</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the bottom Lock Screen grabber or Home indicator.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

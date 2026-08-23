@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Status Bar</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Status Bar</string>
+			<key>footerText</key>
+			<string>Original and advanced status-bar controls in one group.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Time</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarTime</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the time from the SpringBoard status bar.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Battery Icon</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarBatteryIcon</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the battery shape from the status bar.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Battery Percentage</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarBatteryPercent</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the numerical battery percentage.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Cellular Signal</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarCellular</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the mobile-network signal bars.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Wi-Fi</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarWiFi</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the Wi-Fi signal indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Location Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarLocation</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the active location-services indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Alarm Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarAlarm</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the status-bar alarm symbol.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide VPN Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarVPN</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the VPN connection indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Focus Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarFocus</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the active Focus or Do Not Disturb symbol.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Activity Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideStatusBarActivity</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the status-bar background activity indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Status Bar Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>StatusBarOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts transparency of the complete SpringBoard status bar.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Status Bar Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>StatusBarScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.88</real>
+				<real>1.0</real>
+				<real>1.12</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes the complete SpringBoard status bar smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Advanced Controls</string>
+			<key>footerText</key>
+			<string>Changed options activate automatically after Apply Changes.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Status Bar Vertical Offset</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabStatusBarVerticalOffset</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>-12.0</real>
+			<key>max</key>
+			<real>12.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Moves the SpringBoard status bar up or down.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Status Bar Horizontal Scale</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabStatusBarHorizontalScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Narrow</string>
+				<string>Normal</string>
+				<string>Wide</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.88</real>
+				<real>1.0</real>
+				<real>1.12</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes the complete status bar narrower or wider.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Status Bar Item Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabStatusBarItemScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.84</real>
+				<real>1.0</real>
+				<real>1.16</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes individual status-bar items smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Airplane Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideAirplaneIndicator</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the status-bar airplane mode indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Bluetooth Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideBluetoothIndicator</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the compatible Bluetooth status indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Hotspot Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideHotspotIndicator</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the Personal Hotspot status indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide CarPlay Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideCarPlayIndicator</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the compatible CarPlay status indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Recording Indicator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideRecordingIndicator</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the screen-recording status indicator.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Microphone Privacy Dot</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideMicrophonePrivacyDot</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the microphone privacy dot; use only if understood.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Camera Privacy Dot</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideCameraPrivacyDot</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides the camera privacy dot; use only if understood.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Notification Glow</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Notification Glow</string>
+			<key>footerText</key>
+			<string>Dynamic Island, screen-edge, and locked-screen OLED notification effects.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Enable Notification Glow</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowEnabled</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Enables visual effects when a new notification appears.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Unlocked Style</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowStyle</string>
+			<key>default</key>
+			<integer>0</integer>
+			<key>validTitles</key>
+			<array>
+				<string>Island</string>
+				<string>Edges</string>
+				<string>Full</string>
+				<string>Dot</string>
+				<string>Burning</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+				<integer>6</integer>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Chooses the main animation while the phone is in use.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Locked Style</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowLockStyle</string>
+			<key>default</key>
+			<integer>0</integer>
+			<key>validTitles</key>
+			<array>
+				<string>Dot</string>
+				<string>Icon</string>
+				<string>Edge</string>
+				<string>Burning</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>2</integer>
+				<integer>1</integer>
+				<integer>3</integer>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Chooses the compact effect used on the locked screen.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Animation Duration</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowDuration</string>
+			<key>default</key>
+			<real>3.0</real>
+			<key>min</key>
+			<real>0.8</real>
+			<key>max</key>
+			<real>10.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Sets how long unlocked notification effects remain visible.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Glow Brightness</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowIntensity</string>
+			<key>default</key>
+			<real>0.85</real>
+			<key>min</key>
+			<real>0.15</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the glow and shadow brightness.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Locked Display Duration</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowAODDuration</string>
+			<key>default</key>
+			<real>12.0</real>
+			<key>min</key>
+			<real>3.0</real>
+			<key>max</key>
+			<real>60.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Sets how long the locked-screen dot or icon remains.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Email Notifications</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowMail</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Shows a blue effect for Mail notifications.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Messages Notifications</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowMessages</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Shows a green effect for Messages notifications.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>WhatsApp Notifications</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowWhatsApp</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Shows a WhatsApp-green notification effect.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Other App Notifications</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowOtherApps</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Allows glow effects for every other notification app.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Locked-Screen Effects</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowLockEnabled</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Allows the OLED dot, icon, or edge effect while locked.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>OLED Burn-In Protection</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>NotificationGlowBurnIn</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Moves locked-screen indicators slightly over time.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Test Dynamic Island</string>
+			<key>action</key>
+			<string>testNotificationIsland:</string>
+			<key>description</key>
+			<string>Runs the Dynamic Island email animation immediately.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Test Full Screen</string>
+			<key>action</key>
+			<string>testNotificationScreen:</string>
+			<key>description</key>
+			<string>Runs the combined edge and island animation immediately.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Test Locked-Screen Dot</string>
+			<key>action</key>
+			<string>testNotificationAOD:</string>
+			<key>description</key>
+			<string>Previews the OLED notification dot without locking.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Test Burning Bezel</string>
+			<key>action</key>
+			<string>testNotificationBurning:</string>
+			<key>description</key>
+			<string>Previews only the four-edge fire animation on an OLED-black screen.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

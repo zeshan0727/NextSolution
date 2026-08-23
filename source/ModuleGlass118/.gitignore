@@ -1,0 +1,4 @@
+.theos/
+packages/
+layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib
+layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist

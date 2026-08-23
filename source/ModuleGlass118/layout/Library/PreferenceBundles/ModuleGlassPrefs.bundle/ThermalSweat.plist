@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Temperature &amp; Sweat</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Temperature &amp; Sweat</string>
+			<key>footerText</key>
+			<string>Battery-temperature visuals and the animated water effect.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Color Battery by Temperature</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>ThermalBatteryEnabled</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes the battery fill color according to live battery temperature.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Enable Sweat My Phone</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>SweatMyPhoneEnabled</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Shows falling sweat drops and collected water above the chosen temperature.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Sweat Trigger Temperature (°C)</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>SweatTriggerTemperature</string>
+			<key>default</key>
+			<real>37.0</real>
+			<key>min</key>
+			<real>30.0</real>
+			<key>max</key>
+			<real>50.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Sets the battery temperature that starts the sweat and water animation.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Fake Displayed Battery Percentage</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>FakeBatteryPercentageEnabled</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes only the visible SpringBoard percentage; real battery data stays untouched.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Displayed Battery Percentage</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>FakeBatteryPercentage</string>
+			<key>default</key>
+			<real>75.0</real>
+			<key>min</key>
+			<real>1.0</real>
+			<key>max</key>
+			<real>100.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Chooses the percentage shown while the display override is enabled.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Refresh Battery Reading</string>
+			<key>action</key>
+			<string>refreshBatteryReading:</string>
+			<key>description</key>
+			<string>Clears this tweak's temperature cache and rereads the battery sensor.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Test Sweat for 5 Seconds</string>
+			<key>action</key>
+			<string>testSweat:</string>
+			<key>description</key>
+			<string>Runs the complete sweat effect for five seconds without waiting for heat.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

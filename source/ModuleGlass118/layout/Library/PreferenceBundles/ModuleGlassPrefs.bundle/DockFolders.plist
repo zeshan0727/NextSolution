@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Dock &amp; Folders</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Dock &amp; Folders</string>
+			<key>footerText</key>
+			<string>Original and advanced Dock and folder controls in one group.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Dock Background</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideDockBackground</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the translucent background behind Dock icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Dock Icon Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>DockIconScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.85</real>
+				<real>1.0</real>
+				<real>1.15</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes the size of icons displayed inside the Dock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Labels Inside Folders</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideFolderLabels</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes app names while viewing an open folder.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Folder Icon Blur</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideFolderIconBackground</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the translucent background from closed folder icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Open Folder Background</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideFolderBackground</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the large blurred panel behind an open folder.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Open Folder Title</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>HideFolderTitle</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes the folder name shown above an open folder.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Advanced Controls</string>
+			<key>footerText</key>
+			<string>Changed options activate automatically after Apply Changes.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Dock Overall Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabDockOverallOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts transparency of the complete Dock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Dock Corner Radius</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabDockCornerRadius</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Stock</string>
+				<string>Rounded</string>
+				<string>Rounder</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.0</real>
+				<real>22.0</real>
+				<real>34.0</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes the outer corner radius of the Dock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Dock Height Scale</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabDockHeightScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Short</string>
+				<string>Stock</string>
+				<string>Tall</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.82</real>
+				<real>1.0</real>
+				<real>1.16</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes the Dock vertically shorter or taller.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Dock Vertical Offset</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabDockVerticalOffset</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>min</key>
+			<real>-30.0</real>
+			<key>max</key>
+			<real>30.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Moves the Dock slightly upward or downward.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Dock Separator</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideDockSeparator</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides compatible separator lines inside the Dock.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Folder Icon Corner Radius</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabFolderIconCornerRadius</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Stock</string>
+				<string>Rounded</string>
+				<string>Rounder</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.0</real>
+				<real>16.0</real>
+				<real>26.0</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Changes the corner radius of closed folder icons.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>label</key>
+			<string>Folder Icon Size</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabFolderIconScale</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>validTitles</key>
+			<array>
+				<string>Small</string>
+				<string>Normal</string>
+				<string>Large</string>
+			</array>
+			<key>validValues</key>
+			<array>
+				<real>0.86</real>
+				<real>1.0</real>
+				<real>1.14</real>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Makes closed folder icons smaller or larger.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Hide Folder Page Dots</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabHideFolderPageDots</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Hides page indicator dots inside open folders.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Folder Grid Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabFolderGridOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.2</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts transparency of icons inside an open folder.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Folder Background Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>LabFolderBackgroundOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.0</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts transparency of the open-folder background.</string>
+		</dict>
+	</array>
+</dict>
+</plist>
