@@ -118,6 +118,8 @@ jobs:
             strings -a "$activation" > "$stage/activation.strings"
             strings -a "$color_picker" > "$stage/color-picker.strings"
             strings -a "$prefs_binary" > "$stage/preferences.strings"
+            otool -L "$activation" > "$stage/activation.links"
+            otool -L "$color_picker" > "$stage/color-picker.links"
             grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' "$stage/runtime.strings"
             grep -Fq 'com.nextsolution.moduleglass/license.changed' "$stage/runtime.strings"
             grep -Fq 'copyLicenseDeviceID' "$stage/activation.strings"
@@ -130,12 +132,13 @@ jobs:
             grep -Fq 'respringDevice:' "$stage/preferences.strings"
 
             if [ "$variant" = Rootless ]; then
-              if grep -Fq '.jbroot' "$stage/activation.strings" || grep -Fq '.jbroot' "$stage/color-picker.strings"; then
+              if grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/activation.links" || grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/color-picker.links"; then
                 echo 'Rootless package contains RootHide-linked binaries' >&2
                 exit 1
               fi
             else
-              grep -Fq '.jbroot' "$stage/activation.strings" || grep -Fq '.jbroot' "$stage/color-picker.strings"
+              grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/activation.links"
+              grep -Fq '@loader_path/.jbroot/usr/lib/libsubstrate.dylib' "$stage/color-picker.links"
             fi
 
             ROOT_PLIST="$root_plist" INFO_PLIST="$info_plist" python3 - <<'PY'
