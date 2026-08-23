@@ -7,7 +7,7 @@
   var isTutorials = path === '/tutorials/' || path === '/tutorials' || path === '/tutorials.html';
   if (!isHome && !isTutorials) return;
 
-  var HOME_FALLBACK_IMAGE = '/assets/brand/next-solution-hero.svg';
+  var HOME_FALLBACK_IMAGE = '/nextsolution-iphone-customization-showcase.png';
   var TWEAKS_START = 'AUTO_ARTICLES_TUTORIALS_START';
   var TWEAKS_END = 'AUTO_ARTICLES_TUTORIALS_END';
   var JAILBREAK_START = 'AUTO_ARTICLES_JAILBREAK_START';
@@ -31,11 +31,15 @@
     return categoryId(entry) === 'jailbreak' || categoryLabel(entry).trim().toLowerCase() === 'jailbreak';
   }
 
+  /*
+   * IMPORTANT: published-articles.json stores the actual deployed path.
+   * Do not rewrite .html pages to directory-style URLs; many automated
+   * articles are intentionally published as root-level .html files.
+   */
   function cleanHref(value) {
     var href = text(value).trim();
     if (!href) return '/';
-    if (/^https?:\/\//i.test(href) || href.charAt(0) === '/') return href;
-    if (/\.html$/i.test(href)) return '/' + href.replace(/\.html$/i, '').replace(/^\/+|\/+$/g, '') + '/';
+    if (/^https?:\/\//i.test(href) || href.charAt(0) === '/' || href.charAt(0) === '#') return href;
     return '/' + href.replace(/^\/+/, '');
   }
 
@@ -56,6 +60,38 @@
     }).sort(function (a, b) {
       return timestamp(b) - timestamp(a);
     });
+  }
+
+  function installHomePolish() {
+    if (!isHome) return;
+
+    var hero = document.querySelector('.editorial-hero');
+    if (!hero) return;
+
+    /* Remove the old phone-shaped artwork completely. */
+    var stage = hero.querySelector('.hero-stage');
+    if (stage) stage.remove();
+    hero.classList.add('editorial-hero-clean');
+
+    if (!document.getElementById('ns-home-polish')) {
+      var style = document.createElement('style');
+      style.id = 'ns-home-polish';
+      style.textContent =
+        '.editorial-hero.editorial-hero-clean{' +
+          'min-height:0;' +
+          'grid-template-columns:minmax(0,1fr);' +
+          'padding:clamp(48px,7vw,86px);' +
+          'background:radial-gradient(circle at 88% 18%,rgba(255,255,255,.88),transparent 30%),linear-gradient(120deg,#f8faff 0%,#e8edff 54%,#eee5ff 100%);' +
+        '}' +
+        '.editorial-hero.editorial-hero-clean .hero-copy{max-width:930px;}' +
+        '.editorial-hero.editorial-hero-clean .hero-copy h1{max-width:900px;}' +
+        '.editorial-hero.editorial-hero-clean .hero-copy>p{max-width:760px;}' +
+        '@media(max-width:720px){' +
+          '.editorial-hero.editorial-hero-clean{padding:38px 24px;border-radius:24px;margin-top:18px;}' +
+          '.editorial-hero.editorial-hero-clean .hero-copy h1{font-size:clamp(2.65rem,13vw,4rem);}' +
+        '}';
+      document.head.appendChild(style);
+    }
   }
 
   function createCard(entry, eager) {
@@ -196,6 +232,7 @@
   }
 
   function init() {
+    installHomePolish();
     updateCategoryLabels();
     fetch('/automation/published-articles.json?ts=' + Date.now(), { cache: 'no-store' })
       .then(function (response) {
@@ -209,7 +246,7 @@
         if (isTutorials) renderTutorials(entries);
       })
       .catch(function () {
-        // Keep the static HTML untouched if the live article index is unavailable.
+        /* Keep the static HTML untouched if the live article index is unavailable. */
       });
   }
 
