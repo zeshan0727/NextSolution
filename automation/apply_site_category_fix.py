@@ -20,6 +20,7 @@ TWEAKS_START = "<!-- AUTO_ARTICLES_TUTORIALS_START -->"
 TWEAKS_END = "<!-- AUTO_ARTICLES_TUTORIALS_END -->"
 JAILBREAK_START = "<!-- AUTO_ARTICLES_JAILBREAK_START -->"
 JAILBREAK_END = "<!-- AUTO_ARTICLES_JAILBREAK_END -->"
+SITE_CONTENT_SCRIPT = '<script defer src="/assets/site-content.js" data-ns-site-content="1"></script>'
 
 
 def category_id(entry: dict) -> str:
@@ -38,18 +39,17 @@ def is_jailbreak(entry: dict) -> bool:
 
 
 def clean_href(value: object) -> str:
+    """Keep the exact deployed article path and only make it root-relative."""
     href = str(value or "").strip()
-    if href.startswith(("http://", "https://", "/")):
+    if href.startswith(("http://", "https://", "/", "#")):
         return href
-    if href.endswith(".html"):
-        return "/" + href[:-5].strip("/") + "/"
     return "/" + href.lstrip("/")
 
 
 def clean_image(value: object) -> str:
     image = str(value or "").strip()
     if not image:
-        return "/assets/brand/next-solution-hero.svg"
+        return "/assets/articles/dopamine-3-ios-17-6-1-hero.jpg"
     if image.startswith(("http://", "https://", "/")):
         return image
     return "/" + image.lstrip("/")
@@ -106,8 +106,37 @@ def replace_marker(text: str, start: str, end: str, body: str) -> str:
     return before + start + "\n" + body.rstrip() + "\n          " + end + after
 
 
+def ensure_site_content_script(text: str) -> str:
+    if SITE_CONTENT_SCRIPT in text:
+        return text
+    if "</body>" not in text:
+        raise RuntimeError("page is missing </body>")
+    return text.replace("</body>", f"  {SITE_CONTENT_SCRIPT}\n</body>", 1)
+
+
 def rebuild_home(entries: list[dict]) -> None:
     text = HOME.read_text(encoding="utf-8")
+
+    # Remove the old phone-shaped hero artwork permanently, not just at runtime.
+    text = text.replace(
+        '<section class="container editorial-hero" aria-labelledby="home-title">',
+        '<section class="container editorial-hero editorial-hero-clean" aria-labelledby="home-title" style="min-height:0;grid-template-columns:minmax(0,1fr)">',
+        1,
+    )
+    text = re.sub(
+        r'\n      <div class="hero-stage"\b.*?\n      </div>(?=\n    </section>)',
+        "",
+        text,
+        count=1,
+        flags=re.S,
+    )
+    text = re.sub(
+        r'\n  <link rel="preload" href="/assets/brand/next-solution-hero\.svg"[^>]*>',
+        "",
+        text,
+        count=1,
+    )
+
     start = '          <div class="news-feed">'
     end = '          </div>\n\n          <aside class="blog-sidebar"'
     if start not in text or end not in text:
@@ -129,6 +158,7 @@ def rebuild_home(entries: list[dict]) -> None:
     text = before + replacement + after
     text = text.replace('>Cydia Tweaks</a>', '>Tweaks</a>')
     text = text.replace('>Latest tweaks</a>', '>Tweaks</a>')
+    text = ensure_site_content_script(text)
     HOME.write_text(text, encoding="utf-8")
 
 
@@ -160,6 +190,7 @@ def rebuild_tutorial_page(path: Path, entries: list[dict]) -> None:
         )
         text = text.replace(anchor, block, 1)
 
+    text = ensure_site_content_script(text)
     path.write_text(text, encoding="utf-8")
 
 
@@ -179,6 +210,15 @@ def patch_publisher() -> None:
             raise RuntimeError("publisher marker constants were not found")
         text = text.replace(constants_old, constants_new, 1)
 
+    # All generated cards must use root-relative exact hrefs. Never turn .html into /folder/.
+    if "def _site_href(" not in text:
+        anchor = 'def _render_card(entry: dict[str, Any], *, indent: str) -> str:\n'
+        helper = '''def _site_href(entry: dict[str, Any]) -> str:\n    href = str(entry.get("href") or "").strip()\n    if href.startswith(("http://", "https://", "/", "#")):\n        return href\n    return "/" + href.lstrip("/")\n\n\n'''
+        if anchor not in text:
+            raise RuntimeError("publisher _render_card anchor was not found")
+        text = text.replace(anchor, helper + anchor, 1)
+    text = text.replace('esc(entry["href"])', 'esc(_site_href(entry))')
+
     function_pattern = re.compile(
         r'def _render_cards\(entries: list\[dict\[str, Any\]\], \*, limit: int, indent: str\) -> str:\n.*?\n\n\ndef _render_feed',
         re.S,
@@ -190,15 +230,17 @@ def patch_publisher() -> None:
 
     old_paths = '''    index_path = repository_root / "index.html"\n    tutorials_path = repository_root / "tutorials.html"\n    sitemap_path = repository_root / "sitemap.xml"\n    for required_path in (index_path, tutorials_path, sitemap_path):\n        if not required_path.exists():\n            raise PublishingError(f"required website file is missing: {required_path.name}")\n    next_index = _replace_marker_block(\n        index_path.read_text(encoding="utf-8"),\n        HOME_START,\n        HOME_END,\n        _render_cards(entries, limit=4, indent="          "),\n    )\n    next_tutorials = _replace_marker_block(\n        tutorials_path.read_text(encoding="utf-8"),\n        TUTORIALS_START,\n        TUTORIALS_END,\n        _render_cards(entries, limit=30, indent="          "),\n    )\n    next_feed = _render_feed(entries, site)\n'''
     new_paths = '''    index_path = repository_root / "index.html"\n    tutorials_paths = [\n        repository_root / "tutorials.html",\n        repository_root / "tutorials" / "index.html",\n    ]\n    sitemap_path = repository_root / "sitemap.xml"\n    for required_path in (index_path, *tutorials_paths, sitemap_path):\n        if not required_path.exists():\n            raise PublishingError(f"required website file is missing: {required_path}")\n    next_index = _replace_marker_block(\n        index_path.read_text(encoding="utf-8"),\n        HOME_START,\n        HOME_END,\n        _render_cards(entries, limit=5, indent="          "),\n    )\n    next_tutorials_pages: dict[Path, str] = {}\n    for tutorials_path in tutorials_paths:\n        next_tutorials = _replace_marker_block(\n            tutorials_path.read_text(encoding="utf-8"),\n            TUTORIALS_START,\n            TUTORIALS_END,\n            _render_cards(entries, limit=60, indent="          ", jailbreak=False),\n        )\n        next_tutorials = _replace_marker_block(\n            next_tutorials,\n            JAILBREAK_START,\n            JAILBREAK_END,\n            _render_cards(entries, limit=60, indent="          ", jailbreak=True),\n        )\n        next_tutorials_pages[tutorials_path] = next_tutorials\n    next_feed = _render_feed(entries, site)\n'''
-    if old_paths not in text:
+    if old_paths in text:
+        text = text.replace(old_paths, new_paths, 1)
+    elif "tutorials_paths = [" not in text:
         raise RuntimeError("publisher page update block was not found")
-    text = text.replace(old_paths, new_paths, 1)
 
     old_write = '''    target.write_text(rendered_article, encoding="utf-8")\n    index_path.write_text(next_index, encoding="utf-8")\n    tutorials_path.write_text(next_tutorials, encoding="utf-8")\n    (repository_root / "feed.xml").write_text(next_feed, encoding="utf-8")\n'''
     new_write = '''    target.write_text(rendered_article, encoding="utf-8")\n    index_path.write_text(next_index, encoding="utf-8")\n    for tutorials_path, next_tutorials in next_tutorials_pages.items():\n        tutorials_path.write_text(next_tutorials, encoding="utf-8")\n    (repository_root / "feed.xml").write_text(next_feed, encoding="utf-8")\n'''
-    if old_write not in text:
+    if old_write in text:
+        text = text.replace(old_write, new_write, 1)
+    elif "for tutorials_path, next_tutorials in next_tutorials_pages.items():" not in text:
         raise RuntimeError("publisher write block was not found")
-    text = text.replace(old_write, new_write, 1)
 
     PUBLISHER.write_text(text, encoding="utf-8")
 
@@ -207,22 +249,31 @@ def validate(entries: list[dict]) -> None:
     home = HOME.read_text(encoding="utf-8")
     if home.count('<article class="content-card has-visual">') < 5:
         raise RuntimeError("homepage does not contain five visual latest cards")
+    if "hero-stage" in home:
+        raise RuntimeError("old phone hero stage is still present")
+    if SITE_CONTENT_SCRIPT not in home:
+        raise RuntimeError("homepage is missing direct site-content.js loader")
     home_block = home.split(HOME_START, 1)[1].split(HOME_END, 1)[0]
     if home_block.count("<article ") != min(5, len(sorted_entries(entries))):
         raise RuntimeError("homepage latest block does not contain exactly the latest five entries")
+    for entry in sorted_entries(entries)[:5]:
+        if clean_href(entry.get("href")) not in home_block:
+            raise RuntimeError(f"homepage latest href mismatch: {entry.get('href')}")
     for path in TUTORIAL_PAGES:
         text = path.read_text(encoding="utf-8")
         tweak_block = text.split(TWEAKS_START, 1)[1].split(TWEAKS_END, 1)[0]
         jailbreak_block = text.split(JAILBREAK_START, 1)[1].split(JAILBREAK_END, 1)[0]
         if '<span class="tag">Jailbreak</span>' in tweak_block:
             raise RuntimeError(f"jailbreak article leaked into tweak section: {path}")
+        if SITE_CONTENT_SCRIPT not in text:
+            raise RuntimeError(f"direct site-content.js loader missing: {path}")
         expected_jailbreak = sum(1 for entry in entries if isinstance(entry, dict) and entry.get("href") and is_jailbreak(entry))
         if jailbreak_block.count("<article ") != min(60, expected_jailbreak):
             raise RuntimeError(f"jailbreak section count mismatch: {path}")
         if "AUTO_ARTICLES_JAILBREAK_START" not in text:
             raise RuntimeError(f"jailbreak automation marker missing: {path}")
     publisher = PUBLISHER.read_text(encoding="utf-8")
-    for required in ("JAILBREAK_START", "jailbreak=False", "jailbreak=True", "limit=5", 'repository_root / "tutorials" / "index.html"'):
+    for required in ("JAILBREAK_START", "jailbreak=False", "jailbreak=True", "limit=5", 'repository_root / "tutorials" / "index.html"', "def _site_href"):
         if required not in publisher:
             raise RuntimeError(f"publisher fix missing: {required}")
 
