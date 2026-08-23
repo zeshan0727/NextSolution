@@ -1,0 +1,286 @@
+name: Module Glass 1.1.18 Current UI Activation Build
+
+on:
+  push:
+    branches:
+      - feature/moduleglass-1.1.18-current-ui-activation
+    paths:
+      - '.moduleglass-build/ModuleGlassActivation.m'
+      - '.github/workflows/moduleglass-1.1.18-current-ui-activation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.moduleglass-build/ModuleGlassActivation.m'
+      - '.github/workflows/moduleglass-1.1.18-current-ui-activation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 25
+    env:
+      THEOS: ${{ runner.temp }}/theos-roothide
+      THEOS_PACKAGE_SCHEME: roothide
+      BASE_SHA: a15205e928db116e74102a29d4b116d14d1b57f0e9412707493d8c109433ecb0
+      RUNTIME_SHA: fe3bd040d4718d07303b66e011f91c4de67ff9be820c854839ef3bf5d679ac96
+      PREFS_BINARY_SHA: 4aaaf04adbfebe652262d4e5572ac04f3a51fcd2d0d2eb95a113b5d3d93181d1
+      STANDALONE_PREFS_SHA: dbfce7323f000a84354eb891f854f2192e04e181c7ceffdf8cf3512d5764472f
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz
+
+      - name: Stage validated 1.1.17 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          git fetch origin main --depth=1
+          git show origin/main:transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb > /tmp/mg117.deb
+          echo "$BASE_SHA  /tmp/mg117.deb" | shasum -a 256 -c -
+          rm -rf stage addon verify
+          mkdir -p stage addon
+          dpkg-deb -R /tmp/mg117.deb stage
+          cp stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist /tmp/mg117-prefs.plist
+          echo "$RUNTIME_SHA  stage/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
+          echo "$PREFS_BINARY_SHA  stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/AuraPrefs" | shasum -a 256 -c -
+          echo "$STANDALONE_PREFS_SHA  stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib" | shasum -a 256 -c -
+
+      - name: Keep 1.1.17 panes and append Activation pane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import plistlib
+
+          bundle = Path('stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle')
+          root_path = bundle / 'CCModuleBackgrounds.plist'
+          old = plistlib.load(open('/tmp/mg117-prefs.plist','rb'))
+          root = plistlib.load(root_path.open('rb'))
+          assert root == old
+
+          # Preserve every existing 1.1.17 pane/specifier and add one pane only.
+          root['items'].append({
+              'cell': 'PSLinkCell',
+              'label': 'Activation',
+              'detail': 'PSListController',
+              'file': 'ModuleGlassActivation'
+          })
+          plistlib.dump(root, root_path.open('wb'), sort_keys=False)
+
+          activation = {
+              'items': [
+                  {
+                      'cell': 'PSGroupCell',
+                      'label': 'Module Glass Activation',
+                      'footerText': 'One-time activation: $1.00. Activation is tied to this device.'
+                  },
+                  {
+                      'cell': 'PSTitleValueCell',
+                      'label': 'Status',
+                      'defaults': 'com.nextsolution.moduleglass',
+                      'key': 'licenseStatusDisplay',
+                      'default': 'Not Activated'
+                  },
+                  {
+                      'cell': 'PSTitleValueCell',
+                      'label': 'Device ID',
+                      'defaults': 'com.nextsolution.moduleglass',
+                      'key': 'deviceIDDisplay',
+                      'default': 'Loading…'
+                  },
+                  {
+                      'cell': 'PSButtonCell',
+                      'label': 'Copy Device ID',
+                      'action': 'moduleGlassCopyDeviceID:'
+                  },
+                  {
+                      'cell': 'PSButtonCell',
+                      'label': 'Buy Activation — $1.00',
+                      'action': 'moduleGlassBuyActivation:'
+                  },
+                  {
+                      'cell': 'PSButtonCell',
+                      'label': 'Check / Refresh Activation',
+                      'action': 'moduleGlassCheckActivation:'
+                  },
+                  {
+                      'cell': 'PSButtonCell',
+                      'label': 'Restore Activation',
+                      'action': 'moduleGlassRestoreActivation:'
+                  }
+              ]
+          }
+          plistlib.dump(activation, (bundle/'ModuleGlassActivation.plist').open('wb'), sort_keys=False)
+
+          info = bundle/'Info.plist'
+          i = plistlib.load(info.open('rb'))
+          i['CFBundleShortVersionString'] = '1.1.18'
+          i['CFBundleVersion'] = '1.1.18'
+          plistlib.dump(i, info.open('wb'), sort_keys=False)
+
+          control = Path('stage/DEBIAN/control')
+          text = control.read_text()
+          text = text.replace('Version: 1.1.17', 'Version: 1.1.18')
+          text = text.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.17)', 'Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)')
+          text = text.replace('<= 1.1.16', '<= 1.1.17')
+          if 'Description:' in text:
+              lines = text.splitlines()
+              lines = [
+                  'Description: Module Glass 1.1.18 preserves the validated 1.1.17 pane-based Settings UI and Control Center runtime, adding only a final Activation pane.'
+                  if line.startswith('Description:') else line
+                  for line in lines
+              ]
+              text = '\n'.join(lines) + '\n'
+          control.write_text(text)
+          PY
+          plutil -lint stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist
+          plutil -lint stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/ModuleGlassActivation.plist
+          plutil -lint stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/Info.plist
+
+      - name: Install pinned RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$THEOS"
+          git init "$THEOS"
+          git -C "$THEOS" remote add origin https://github.com/roothide/theos.git
+          git -C "$THEOS" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$THEOS" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$THEOS" submodule update --init --recursive --depth 1
+          test -f "$THEOS/makefiles/common.mk"
+          xcrun --sdk iphoneos --show-sdk-path
+
+      - name: Build activation dylib
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .moduleglass-build/ModuleGlassActivation.m addon/
+          cat > addon/Makefile <<'MAKE'
+          ARCHS = arm64 arm64e
+          TARGET = iphone:clang:latest:16.0
+          include $(THEOS)/makefiles/common.mk
+          TWEAK_NAME = ModuleGlassActivation
+          ModuleGlassActivation_FILES = ModuleGlassActivation.m
+          ModuleGlassActivation_FRAMEWORKS = UIKit Foundation CoreFoundation
+          ModuleGlassActivation_LIBRARIES = substrate
+          ModuleGlassActivation_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          MAKE
+          cat > addon/control <<'CONTROL'
+          Package: com.nextsolution.moduleglass.activation.build
+          Name: Module Glass Activation Build Helper
+          Version: 1.1.18
+          Architecture: iphoneos-arm64e
+          Description: Build helper only.
+          Maintainer: Next Solution
+          Author: Next Solution
+          Section: Tweaks
+          Depends: mobilesubstrate
+          CONTROL
+          cat > addon/ModuleGlassActivation.plist <<'PLIST'
+          { Filter = { Bundles = ( "com.apple.Preferences", "com.apple.springboard" ); }; }
+          PLIST
+          (make -C addon clean package FINALPACKAGE=1) 2>&1 | tee output/activation-build.log
+          RAW="$(find addon/packages -type f -name '*.deb' -print -quit)"
+          test -n "$RAW"
+          rm -rf /tmp/mga && mkdir -p /tmp/mga
+          dpkg-deb -x "$RAW" /tmp/mga
+          DYLIB="$(find /tmp/mga -type f -name ModuleGlassActivation.dylib -print -quit)"
+          FILTER="$(find /tmp/mga -type f -name ModuleGlassActivation.plist -print -quit)"
+          test -n "$DYLIB"; test -n "$FILTER"
+          cp "$DYLIB" stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.dylib
+          cp "$FILTER" stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.plist
+
+      - name: Package and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod 0755 stage/DEBIAN/postinst
+          DEB=output/ModuleGlass_1.1.18_Final_Activation_RootHide.deb
+          dpkg-deb -b stage "$DEB"
+          dpkg-deb -I "$DEB"
+          dpkg-deb -c "$DEB" > output/PACKAGE-CONTENTS.txt
+          test "$(dpkg-deb -f "$DEB" Package)" = com.nextsolution.nextaura.cc-module-backgrounds
+          test "$(dpkg-deb -f "$DEB" Version)" = 1.1.18
+          test "$(dpkg-deb -f "$DEB" Architecture)" = iphoneos-arm64e
+          mkdir -p verify
+          dpkg-deb -x "$DEB" verify
+
+          # Baseline runtime/UI binaries must remain byte-identical to 1.1.17.
+          echo "$RUNTIME_SHA  verify/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
+          echo "$PREFS_BINARY_SHA  verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/AuraPrefs" | shasum -a 256 -c -
+          echo "$STANDALONE_PREFS_SHA  verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib" | shasum -a 256 -c -
+
+          ACT=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassActivation.dylib
+          test -f "$ACT"
+          ARCHS="$(lipo -archs "$ACT")"
+          echo "Activation dylib architectures: $ARCHS"
+          [[ " $ARCHS " == *' arm64 '* && " $ARCHS " == *' arm64e '* ]]
+          strings -a "$ACT" > output/activation.strings
+          grep -Fq 'nextsolution-license-v1' output/activation.strings
+          grep -Fq 'licenses/moduleglass.json' output/activation.strings
+          grep -Fq 'moduleGlassCopyDeviceID:' output/activation.strings
+          grep -Fq 'moduleGlassBuyActivation:' output/activation.strings
+          grep -Fq 'moduleGlassCheckActivation:' output/activation.strings
+          grep -Fq 'moduleGlassRestoreActivation:' output/activation.strings
+
+          python3 - <<'PY'
+          import plistlib
+          old = plistlib.load(open('/tmp/mg117-prefs.plist','rb'))
+          new = plistlib.load(open('verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist','rb'))
+          assert new['items'][:-1] == old['items']
+          link = new['items'][-1]
+          assert link.get('cell') == 'PSLinkCell'
+          assert link.get('label') == 'Activation'
+          assert link.get('detail') == 'PSListController'
+          assert link.get('file') == 'ModuleGlassActivation'
+          child = plistlib.load(open('verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/ModuleGlassActivation.plist','rb'))
+          labels = [x.get('label') for x in child['items']]
+          for wanted in ['Status','Device ID','Copy Device ID','Buy Activation — $1.00','Check / Refresh Activation','Restore Activation']:
+              assert wanted in labels
+          PY
+
+          shasum -a 256 "$DEB" > output/SHA256SUMS.txt
+          cat output/SHA256SUMS.txt
+
+      - name: Upload working DEB
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.18-Final-Activation-RootHide
+          path: |
+            output/ModuleGlass_1.1.18_Final_Activation_RootHide.deb
+            output/SHA256SUMS.txt
+            output/PACKAGE-CONTENTS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Publish branch build result
+        if: always() && github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST=transfer/builds/ModuleGlass/1.1.18-current-ui-activation
+          mkdir -p "$DEST"
+          rm -f "$DEST"/*
+          cp output/activation-build.log "$DEST"/activation-build.log 2>/dev/null || true
+          cp output/PACKAGE-CONTENTS.txt "$DEST"/PACKAGE-CONTENTS.txt 2>/dev/null || true
+          cp output/SHA256SUMS.txt "$DEST"/SHA256SUMS.txt 2>/dev/null || true
+          cp output/ModuleGlass_1.1.18_Final_Activation_RootHide.deb "$DEST"/ 2>/dev/null || true
+          echo "${{ job.status }}" > "$DEST"/STATUS.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "$DEST"
+          if ! git diff --cached --quiet; then
+            git commit -m 'ci: publish Module Glass 1.1.18 activation build result'
+            git push origin HEAD:feature/moduleglass-1.1.18-current-ui-activation
+          fi
