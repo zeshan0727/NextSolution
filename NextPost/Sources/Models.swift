@@ -19,24 +19,34 @@ struct PublishedArticle: Decodable, Identifiable, Hashable {
 
     var id: String { cleanURL.absoluteString }
 
-    var cleanURL: URL {
+    /// The exact URL published by the website manifest/feed.
+    ///
+    /// Some newly published articles are available immediately at their
+    /// legacy `.html` route before a clean `/slug/` copy exists. Social
+    /// crawlers such as X must receive the URL that definitely serves the
+    /// article metadata, otherwise the link card can fail with a 404/no card.
+    var publishedURL: URL {
         if let absolute = URL(string: href), absolute.scheme != nil {
-            return Self.cleaned(url: absolute)
+            return absolute
         }
 
         let trimmed = href.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        let withoutHTML = trimmed.hasSuffix(".html") ? String(trimmed.dropLast(5)) : trimmed
-        return URL(string: "https://nextsolution.cc/\(withoutHTML)/")!
+        return URL(string: "https://nextsolution.cc/\(trimmed)")!
+    }
+
+    /// Clean canonical-style URL retained for deduplication/history.
+    var cleanURL: URL {
+        Self.cleaned(url: publishedURL)
     }
 
     /// Dedicated sharing URL for X/Twitter cards.
     ///
-    /// The article keeps its clean canonical route, while a small query string
-    /// gives X a fresh crawl target when a card image has previously been
-    /// cached. The website still declares the clean article URL as canonical.
+    /// Use the exact published route as the crawl target, then add a small
+    /// query string so X can refresh a previously cached card. This avoids
+    /// forcing a `/slug/` route that may not exist yet for brand-new articles.
     var socialShareURL: URL {
-        guard var components = URLComponents(url: cleanURL, resolvingAgainstBaseURL: false) else {
-            return cleanURL
+        guard var components = URLComponents(url: publishedURL, resolvingAgainstBaseURL: false) else {
+            return publishedURL
         }
 
         var items = components.queryItems ?? []
@@ -48,17 +58,25 @@ struct PublishedArticle: Decodable, Identifiable, Hashable {
             items.append(URLQueryItem(name: "v", value: version))
         }
         components.queryItems = items
-        return components.url ?? cleanURL
+        return components.url ?? publishedURL
     }
 
     private static func cleaned(url: URL) -> URL {
-        var value = url.absoluteString
-        if value.hasSuffix(".html") {
-            value = String(value.dropLast(5)) + "/"
-        } else if !value.hasSuffix("/") {
-            value += "/"
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return url
         }
-        return URL(string: value) ?? url
+
+        components.query = nil
+        components.fragment = nil
+
+        var path = components.path
+        if path.hasSuffix(".html") {
+            path = String(path.dropLast(5)) + "/"
+        } else if !path.hasSuffix("/") {
+            path += "/"
+        }
+        components.path = path
+        return components.url ?? url
     }
 
     static func == (lhs: PublishedArticle, rhs: PublishedArticle) -> Bool {
