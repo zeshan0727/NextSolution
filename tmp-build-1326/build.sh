@@ -33,7 +33,7 @@ patch -d "$R/appsrc" -p4 < "$R/app1325.patch"
 base64 -D < tmp-build-1326/app1326.patch.xz.b64 > "$R/app1326.patch.xz"
 echo 'd6eb26cdea30b5fbd9ced4877a06cf5af2e9039cc7389bf343c834ddfea443c3  '"$R/app1326.patch.xz" | shasum -a 256 -c -
 xz -dc "$R/app1326.patch.xz" > "$R/app1326.patch"
-patch -d "$R/appsrc" -p2 < "$R/app1326.patch"
+patch -d "$R/appsrc" -p1 < "$R/app1326.patch"
 
 P="$R/appsrc"
 ASSETS="$P/NextReminder/Resources/Assets.xcassets"
@@ -43,30 +43,25 @@ mkdir -p "$ICONSET" "$ASSETS/AccentColor.colorset" "$ASSETS/LaunchBackground.col
 # Generate a complete native Next Reminder icon set so future test builds cannot lose the icon.
 python3 -m pip install --quiet pillow
 python3 - <<'PYICON'
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from pathlib import Path
-import os, json, math
+import os, json
 root=Path(os.environ['RUNNER_TEMP'])/'appsrc/NextReminder/Resources/Assets.xcassets/AppIcon.appiconset'
 root.mkdir(parents=True,exist_ok=True)
 S=1024
 img=Image.new('RGB',(S,S),(18,18,22))
 d=ImageDraw.Draw(img)
-# warm orange radial-style layered background
 for r in range(720,0,-8):
     t=r/720
     col=(int(255-(45*t)), int(103-(45*t)), int(28-(12*t)))
     box=(S/2-r,S/2-r,S/2+r,S/2+r)
     d.ellipse(box,fill=col)
-# dark rounded reminder card
 card=(190,205,834,820)
 d.rounded_rectangle(card,radius=145,fill=(25,25,30),outline=(255,255,255),width=10)
-# bell/reminder glyph
-cx=512
 d.ellipse((410,330,614,534),fill=(255,255,255))
 d.rounded_rectangle((390,430,634,625),radius=80,fill=(255,255,255))
 d.rectangle((365,575,659,625),fill=(255,255,255))
 d.ellipse((474,630,550,706),fill=(255,255,255))
-# orange check badge
 d.ellipse((585,560,755,730),fill=(255,116,38),outline=(25,25,30),width=12)
 d.line((625,645,665,683),fill='white',width=22)
 d.line((665,683,724,616),fill='white',width=22)
@@ -88,7 +83,6 @@ contents={"images":[
 (root.parent/'Contents.json').write_text('{"info":{"author":"xcode","version":1}}\n')
 PYICON
 
-# Ensure Xcode uses the icon catalog and keep only harmless empty color sets.
 cat > "$ASSETS/AccentColor.colorset/Contents.json" <<'EOF'
 {"colors":[],"info":{"author":"xcode","version":1}}
 EOF
@@ -112,7 +106,6 @@ EXT="$APP/PlugIns/NextReminderLiveActivity.appex/Info.plist"
 test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$EXT")" = '36'
 test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$EXT")" = '1.3.26'
 test -f "$APP/Assets.car"
-# AppIcon names should be emitted into compiled Info.plist by actool.
 /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons' "$APP/Info.plist" >/dev/null
 
 mkdir -p "$R/out/Payload"
