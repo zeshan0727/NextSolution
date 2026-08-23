@@ -1,0 +1,1 @@
+Verify GitHub Actions secret permission diagnostics before release.
