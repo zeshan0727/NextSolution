@@ -13,6 +13,10 @@ on:
       - '.github/workflows/build-next-multi-browser.yml'
   workflow_dispatch:
 
+concurrency:
+  group: next-multi-browser-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-latest
