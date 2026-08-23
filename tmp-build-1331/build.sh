@@ -31,7 +31,7 @@ p.write_text(s.replace(old,new,1))
 p=root/'Tweak.xm'; s=p.read_text()
 if 'NQRStartPendingReportAutomationScheduler();' not in s: raise SystemExit('Old scheduler start call not found')
 s=s.replace('NQRStartPendingReportAutomationScheduler();','NQRStartPersistentReportScheduler();',1)
-insert='extern void NQRStartPersistentReportScheduler(void);\n'
+insert='extern "C" void NQRStartPersistentReportScheduler(void);\n'
 if insert not in s:
     first=s.find('\n')
     s=s[:first+1]+insert+s[first+1:]
@@ -41,6 +41,7 @@ PYMOD
 
 grep -q 'Version: 1.0.16' "$R/nqrsrc/control"
 grep -q 'PersistentReportScheduler.m' "$R/nqrsrc/Makefile"
+grep -q 'extern "C" void NQRStartPersistentReportScheduler' "$R/nqrsrc/Tweak.xm"
 grep -q 'NQRStartPersistentReportScheduler();' "$R/nqrsrc/Tweak.xm"
 ! grep -q 'NQRStartPendingReportAutomationScheduler();' "$R/nqrsrc/Tweak.xm"
 grep -q 'PCPersistentTimer' "$R/nqrsrc/PersistentReportScheduler.m"
