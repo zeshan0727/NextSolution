@@ -20,7 +20,7 @@ jobs:
           git checkout FETCH_HEAD -- tmp-build
       - name: Build and validate packages
         shell: bash
-        run: bash tmp-build-1325/build-fixed.sh
+        run: bash tmp-build-1325/build-final.sh
       - uses: actions/upload-artifact@v4
         with:
           name: NextReminder-1.3.25-Background-PDF-Test
