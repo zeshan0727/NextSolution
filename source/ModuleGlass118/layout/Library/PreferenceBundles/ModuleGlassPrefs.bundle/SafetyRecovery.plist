@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Safety &amp; Recovery</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Safety &amp; Recovery</string>
+			<key>footerText</key>
+			<string>Advanced controls activate only when changed and are protected by a startup guard.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Clear Crash Guard</string>
+			<key>action</key>
+			<string>clearSafeSuiteRecovery:</string>
+			<key>description</key>
+			<string>Clears startup recovery state without changing normal features.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Reset Advanced Visual Controls</string>
+			<key>action</key>
+			<string>resetSafeSuiteSettings:</string>
+			<key>description</key>
+			<string>Restores all advanced visual options to stock defaults.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

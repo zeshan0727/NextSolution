@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Module Backgrounds</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Module Backgrounds</string>
+			<key>footerText</key>
+			<string>Choose a separate local image for each Control Center module type.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Remove Module Blur</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleRemoveBlur</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Removes stock blur only from modules that have a custom image.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Enable Module Background Images</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleBackgroundsEnabled</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Shows the chosen image behind each matching Control Center module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Background Image Opacity</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleBackgroundOpacity</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>min</key>
+			<real>0.25</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the visibility of all custom module background images.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Glow Module Icons &amp; Labels</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleControlGlowEnabled</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adds safe illumination to leaf icons and text without changing control layout.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Control Glow Brightness</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleControlGlowIntensity</string>
+			<key>default</key>
+			<real>0.8</real>
+			<key>min</key>
+			<real>0.1</real>
+			<key>max</key>
+			<real>1.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts how prominently module icons and controls glow.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>label</key>
+			<string>Icon Glow Spread</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleControlGlowWidth</string>
+			<key>default</key>
+			<real>1.5</real>
+			<key>min</key>
+			<real>0.5</real>
+			<key>max</key>
+			<real>4.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Adjusts the soft glow around module icons and labels.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Connectivity</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>connectivity</string>
+			<key>moduleTitle</key>
+			<string>Connectivity</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the connectivity module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Now Playing</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>media</string>
+			<key>moduleTitle</key>
+			<string>Now Playing</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the now playing module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Brightness</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>brightness</string>
+			<key>moduleTitle</key>
+			<string>Brightness</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the brightness module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Volume</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>volume</string>
+			<key>moduleTitle</key>
+			<string>Volume</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the volume module.</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>description</key>
+			<string>Keeps the working Volume background unchanged and applies your chosen color only to the native speaker glyph.</string>
+			<key>key</key>
+			<string>CCModuleVolumeIconColorEnabled</string>
+			<key>label</key>
+			<string>Custom Volume Icon Color</string>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>chooseVolumeIconColor:</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>description</key>
+			<string>Opens the native iOS color picker. Choosing a color automatically enables the custom Volume icon color.</string>
+			<key>label</key>
+			<string>Volume Icon Color</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Screen Mirroring</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>screenmirroring</string>
+			<key>moduleTitle</key>
+			<string>Screen Mirroring</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the screen mirroring module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Focus</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>focus</string>
+			<key>moduleTitle</key>
+			<string>Focus</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the focus module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Flashlight</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>flashlight</string>
+			<key>moduleTitle</key>
+			<string>Flashlight</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the flashlight module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Timer</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>timer</string>
+			<key>moduleTitle</key>
+			<string>Timer</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the timer module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Calculator</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>calculator</string>
+			<key>moduleTitle</key>
+			<string>Calculator</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the calculator module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Camera</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>camera</string>
+			<key>moduleTitle</key>
+			<string>Camera</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the camera module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Orientation Lock</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>orientation</string>
+			<key>moduleTitle</key>
+			<string>Orientation Lock</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the orientation lock module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Screen Recording</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>screenrecording</string>
+			<key>moduleTitle</key>
+			<string>Screen Recording</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the screen recording module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Low Power Mode</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>lowpower</string>
+			<key>moduleTitle</key>
+			<string>Low Power Mode</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the low power mode module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Dark Mode</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>darkmode</string>
+			<key>moduleTitle</key>
+			<string>Dark Mode</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the dark mode module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Hearing</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>hearing</string>
+			<key>moduleTitle</key>
+			<string>Hearing</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the hearing module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Notes</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>notes</string>
+			<key>moduleTitle</key>
+			<string>Notes</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the notes module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Home</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>home</string>
+			<key>moduleTitle</key>
+			<string>Home</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the home module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose or Remove Other Modules</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>other</string>
+			<key>moduleTitle</key>
+			<string>Other Modules</string>
+			<key>description</key>
+			<string>Chooses or removes the image used behind the other modules module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Remove All Module Images</string>
+			<key>action</key>
+			<string>resetAllCCModuleBackgrounds:</string>
+			<key>description</key>
+			<string>Deletes every custom Control Center module background image.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Apply &amp; Restart</string>
+			<key>footerText</key>
+			<string>Apply refreshes Module Glass immediately. If Control Center is already cached, use Respring for a complete SpringBoard reload. Choosing a photo automatically enables module backgrounds.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Apply Module Glass</string>
+			<key>action</key>
+			<string>applyCCModuleBackgrounds:</string>
+			<key>description</key>
+			<string>Reloads Module Glass settings and selected images without changing your other tweaks.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Respring</string>
+			<key>action</key>
+			<string>respringDevice:</string>
+			<key>description</key>
+			<string>Restarts SpringBoard so Control Center recreates all module views and reloads their backgrounds.</string>
+		</dict>
+	</array>
+</dict>
+</plist>
