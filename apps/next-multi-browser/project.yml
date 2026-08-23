@@ -3,6 +3,10 @@ options:
   bundleIdPrefix: com.nextsolution
   deploymentTarget:
     iOS: '15.0'
+packages:
+  TunnelKit:
+    url: https://github.com/partout-io/tunnelkit.git
+    exactVersion: 6.3.2
 targets:
   NextMultiBrowser:
     type: application
@@ -13,8 +17,8 @@ targets:
       path: Info.plist
       properties:
         CFBundleDisplayName: Next Multi Browser
-        CFBundleShortVersionString: '1.0.2'
-        CFBundleVersion: '3'
+        CFBundleShortVersionString: '1.0.3'
+        CFBundleVersion: '4'
         UILaunchScreen: {}
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
@@ -34,9 +38,40 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser
         PRODUCT_NAME: Next Multi Browser
-        MARKETING_VERSION: 1.0.2
-        CURRENT_PROJECT_VERSION: 3
+        MARKETING_VERSION: 1.0.3
+        CURRENT_PROJECT_VERSION: 4
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: App.entitlements
         GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: NextMultiBrowserVPN
+        embed: true
+      - package: TunnelKit
+        product: TunnelKit
+      - package: TunnelKit
+        product: TunnelKitOpenVPN
+
+  NextMultiBrowserVPN:
+    type: app-extension
+    platform: iOS
+    sources:
+      - VPNExtension
+    info:
+      path: VPNExtension/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser.vpn
+        PRODUCT_NAME: NextMultiBrowserVPN
+        MARKETING_VERSION: 1.0.3
+        CURRENT_PROJECT_VERSION: 4
+        SWIFT_VERSION: 5.0
+        TARGETED_DEVICE_FAMILY: '1,2'
+        APPLICATION_EXTENSION_API_ONLY: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: VPNExtension/VPN.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - package: TunnelKit
+        product: TunnelKitOpenVPNAppExtension
