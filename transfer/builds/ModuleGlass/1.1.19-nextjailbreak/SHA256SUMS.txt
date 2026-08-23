@@ -1,0 +1,3 @@
+b076afc2abd35b550afee63fa6b10b620ea429acbae4515e74e6308ea7b43a45  output/ModuleGlass_1.1.19_Rootless.deb
+a8ab8e0c5ca0537f6aeae9702294c4cbb7a8757f8d42794b18d864f7172fa20d  output/ModuleGlass_1.1.19_RootHide.deb
+fd061d81f18983d28c369f973e7645d69af34a095064fb09acac2689656ed31e  output/ModuleGlass_1.1.19_Source.zip
