@@ -2,6 +2,15 @@
 (function () {
   'use strict';
 
+  // Keep the homepage/category renderer separate from ad logic while loading it site-wide.
+  if (!document.querySelector('script[data-ns-site-content]')) {
+    var contentScript = document.createElement('script');
+    contentScript.src = '/assets/site-content.js';
+    contentScript.defer = true;
+    contentScript.setAttribute('data-ns-site-content', '1');
+    document.head.appendChild(contentScript);
+  }
+
   var path = window.location.pathname || '/';
 
   // Do not monetize repository depictions, legal/support pages, or app-internal pages.
