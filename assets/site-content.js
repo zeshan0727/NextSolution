@@ -8,6 +8,9 @@
   if (!isHome && !isTutorials) return;
 
   var HOME_FALLBACK_IMAGE = '/nextsolution-iphone-customization-showcase.png';
+  var HOME_PAGE_SIZE = 5;
+  var homeEntries = [];
+  var homePage = 1;
   var TWEAKS_START = 'AUTO_ARTICLES_TUTORIALS_START';
   var TWEAKS_END = 'AUTO_ARTICLES_TUTORIALS_END';
   var JAILBREAK_START = 'AUTO_ARTICLES_JAILBREAK_START';
@@ -31,11 +34,7 @@
     return categoryId(entry) === 'jailbreak' || categoryLabel(entry).trim().toLowerCase() === 'jailbreak';
   }
 
-  /*
-   * IMPORTANT: published-articles.json stores the actual deployed path.
-   * Do not rewrite .html pages to directory-style URLs; many automated
-   * articles are intentionally published as root-level .html files.
-   */
+  /* published-articles.json stores the exact deployed path. */
   function cleanHref(value) {
     var href = text(value).trim();
     if (!href) return '/';
@@ -66,12 +65,11 @@
     if (!isHome) return;
 
     var hero = document.querySelector('.editorial-hero');
-    if (!hero) return;
-
-    /* Remove the old phone-shaped artwork completely. */
-    var stage = hero.querySelector('.hero-stage');
-    if (stage) stage.remove();
-    hero.classList.add('editorial-hero-clean');
+    if (hero) {
+      var stage = hero.querySelector('.hero-stage');
+      if (stage) stage.remove();
+      hero.classList.add('editorial-hero-clean');
+    }
 
     if (!document.getElementById('ns-home-polish')) {
       var style = document.createElement('style');
@@ -86,9 +84,25 @@
         '.editorial-hero.editorial-hero-clean .hero-copy{max-width:930px;}' +
         '.editorial-hero.editorial-hero-clean .hero-copy h1{max-width:900px;}' +
         '.editorial-hero.editorial-hero-clean .hero-copy>p{max-width:760px;}' +
+        '.ns-latest-pagination{' +
+          'display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;' +
+          'margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.82);' +
+        '}' +
+        '.ns-latest-pagination-label{width:100%;margin:0 0 4px;text-align:center;color:var(--muted);font-size:.78rem;font-weight:800;letter-spacing:.02em;}' +
+        '.ns-page-button{' +
+          'min-width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;padding:0 13px;' +
+          'border:1px solid var(--line-dark);border-radius:999px;background:#fff;color:var(--ink);' +
+          'font:800 .82rem/1 inherit;cursor:pointer;transition:transform .18s ease,background .18s ease,border-color .18s ease;' +
+        '}' +
+        '.ns-page-button:hover{transform:translateY(-1px);border-color:var(--ink);}' +
+        '.ns-page-button[aria-current="page"]{border-color:var(--ink);background:var(--ink);color:#fff;}' +
+        '.ns-page-button:disabled{opacity:.42;cursor:not-allowed;transform:none;}' +
+        '.ns-page-ellipsis{padding:0 3px;color:var(--quiet);font-weight:900;}' +
         '@media(max-width:720px){' +
           '.editorial-hero.editorial-hero-clean{padding:38px 24px;border-radius:24px;margin-top:18px;}' +
           '.editorial-hero.editorial-hero-clean .hero-copy h1{font-size:clamp(2.65rem,13vw,4rem);}' +
+          '.ns-latest-pagination{padding:15px 10px;gap:6px;}' +
+          '.ns-page-button{min-width:38px;height:38px;padding:0 10px;font-size:.76rem;}' +
         '}';
       document.head.appendChild(style);
     }
@@ -181,13 +195,86 @@
     });
   }
 
-  function renderHome(entries) {
+  function pageButton(label, page, currentPage, maxPage, disabled, ariaLabel) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ns-page-button';
+    button.textContent = label;
+    button.disabled = !!disabled;
+    if (ariaLabel) button.setAttribute('aria-label', ariaLabel);
+    if (page === currentPage && !disabled) button.setAttribute('aria-current', 'page');
+    if (!disabled) {
+      button.addEventListener('click', function () {
+        homePage = Math.max(1, Math.min(maxPage, page));
+        renderHome(homeEntries, homePage);
+        var latest = document.getElementById('latest');
+        if (latest) latest.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    return button;
+  }
+
+  function paginationPages(currentPage, maxPage) {
+    if (maxPage <= 7) {
+      var all = [];
+      for (var p = 1; p <= maxPage; p += 1) all.push(p);
+      return all;
+    }
+    var pages = [1];
+    var start = Math.max(2, currentPage - 1);
+    var end = Math.min(maxPage - 1, currentPage + 1);
+    if (start > 2) pages.push('ellipsis');
+    for (var i = start; i <= end; i += 1) pages.push(i);
+    if (end < maxPage - 1) pages.push('ellipsis');
+    pages.push(maxPage);
+    return pages;
+  }
+
+  function renderPagination(feed, currentPage, maxPage) {
+    if (maxPage <= 1) return;
+
+    var nav = document.createElement('nav');
+    nav.className = 'ns-latest-pagination';
+    nav.setAttribute('aria-label', 'Latest article pages');
+
+    var label = document.createElement('p');
+    label.className = 'ns-latest-pagination-label';
+    label.textContent = 'See more articles';
+    nav.appendChild(label);
+
+    nav.appendChild(pageButton('Previous', currentPage - 1, currentPage, maxPage, currentPage === 1, 'Previous article page'));
+
+    paginationPages(currentPage, maxPage).forEach(function (page) {
+      if (page === 'ellipsis') {
+        var ellipsis = document.createElement('span');
+        ellipsis.className = 'ns-page-ellipsis';
+        ellipsis.textContent = '…';
+        ellipsis.setAttribute('aria-hidden', 'true');
+        nav.appendChild(ellipsis);
+      } else {
+        nav.appendChild(pageButton(String(page), page, currentPage, maxPage, false, 'Article page ' + page));
+      }
+    });
+
+    nav.appendChild(pageButton('Next', currentPage + 1, currentPage, maxPage, currentPage === maxPage, 'Next article page'));
+    feed.appendChild(nav);
+  }
+
+  function renderHome(entries, requestedPage) {
     var feed = document.querySelector('#latest .news-feed');
     if (!feed) return;
+
+    homeEntries = orderedEntries(entries);
+    var maxPage = Math.max(1, Math.ceil(homeEntries.length / HOME_PAGE_SIZE));
+    homePage = Math.max(1, Math.min(maxPage, requestedPage || homePage || 1));
+    var start = (homePage - 1) * HOME_PAGE_SIZE;
+    var current = homeEntries.slice(start, start + HOME_PAGE_SIZE);
+
     feed.innerHTML = '';
-    orderedEntries(entries).slice(0, 5).forEach(function (entry, index) {
-      feed.appendChild(createCard(entry, index < 2));
+    current.forEach(function (entry, index) {
+      feed.appendChild(createCard(entry, homePage === 1 && index < 2));
     });
+    renderPagination(feed, homePage, maxPage);
   }
 
   function renderTutorials(entries) {
@@ -242,7 +329,7 @@
       .then(function (data) {
         var entries = data && Array.isArray(data.entries) ? data.entries : [];
         if (!entries.length) return;
-        if (isHome) renderHome(entries);
+        if (isHome) renderHome(entries, 1);
         if (isTutorials) renderTutorials(entries);
       })
       .catch(function () {
