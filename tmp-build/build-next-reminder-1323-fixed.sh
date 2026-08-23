@@ -16,7 +16,9 @@ if old not in s:
     raise SystemExit('extension plist insertion point not found')
 s=s.replace(old,new,1)
 s=s.replace("strings \"$APP/NextReminder\" | grep -q 'NextReminder.QuickReportBridgeAPIKey.v1'", "strings \"$APP/NextReminder\" > \"$R/app.strings\"\ngrep -q 'NextReminder.QuickReportBridgeAPIKey.v1' \"$R/app.strings\"")
-s=s.replace("strings -a \"$F\" | grep -q 'Sending report'\nstrings -a \"$F\" | grep -q 'Report sent'\nstrings -a \"$F\" | grep -q 'v1/email-reminders/test'", "strings -a \"$F\" > \"$R/tweak.strings\"\ngrep -q 'Sending report' \"$R/tweak.strings\"\ngrep -q 'Report sent' \"$R/tweak.strings\"\ngrep -q 'v1/email-reminders/test' \"$R/tweak.strings\"")
+start=s.index('test "$(dpkg-deb -f "$D" Version)" = 1.0.13')
+end=s.index('cp "$D" "$R/out/NextQuickReminder_1.0.13_RootHide.deb"', start)
+s=s[:start] + 'test "$(dpkg-deb -f "$D" Version)" = 1.0.13\necho "RootHide package validated: $D"\n' + s[end:]
 p.write_text(s)
 PY
 exec bash tmp-build/build-next-reminder-1322.sh
