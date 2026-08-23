@@ -1,0 +1,1 @@
+Build NextLock per-frame photo display modes validation package.
