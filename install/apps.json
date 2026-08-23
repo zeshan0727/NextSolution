@@ -84,21 +84,8 @@
       "platform": "iPhone",
       "status": "Ready to install",
       "version": "5.0.2"
-    },
-    {
-      "available": false,
-      "build": "738721990",
-      "bundleId": "com.nextsolution.instaregram",
-      "icon": "/install/icons/insta-regram.png",
-      "id": "insta-regram",
-      "manifest": "/install/insta-regram.plist",
-      "minimumOS": "iOS 10+",
-      "name": "Insta Regram",
-      "platform": "iPhone",
-      "status": "Re-sign once with NS 2 profile",
-      "version": "382.0.0"
     }
   ],
   "catalog": "Next Solution Private Apps",
-  "updated": "2026-08-19"
+  "updated": "2026-08-23"
 }
