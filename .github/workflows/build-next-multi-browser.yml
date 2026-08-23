@@ -59,10 +59,10 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.0.3_GlobalTimer_VPN_iPhone_Test.tipa Payload
+          zip -qry ../NextMultiBrowser_1.0.4_VPNRetry_AutoPlay_iPhone_Test.tipa Payload
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.0.3-GlobalTimer-VPN
-          path: apps/next-multi-browser/NextMultiBrowser_1.0.3_GlobalTimer_VPN_iPhone_Test.tipa
+          name: NextMultiBrowser-1.0.4-VPNRetry-AutoPlay
+          path: apps/next-multi-browser/NextMultiBrowser_1.0.4_VPNRetry_AutoPlay_iPhone_Test.tipa
           if-no-files-found: error
