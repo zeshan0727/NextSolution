@@ -7,8 +7,10 @@ struct SigningProfileView: View {
     @State private var p12Password = ""
     @State private var pickerTarget: ProfilePickerTarget?
     @State private var isSaving = false
+    @State private var isTestingAccess = false
     @State private var successMessage: String?
     @State private var errorMessage: String?
+    @State private var accessMessage: String?
 
     private enum ProfilePickerTarget: Int, Identifiable {
         case p12
@@ -27,6 +29,42 @@ struct SigningProfileView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                Section("GitHub Secret Access") {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Repository")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(store.configuration.owner)/\(store.configuration.repository)")
+                                .font(.footnote.monospaced())
+                        }
+                        Spacer()
+                    }
+
+                    Button {
+                        testGitHubAccess()
+                    } label: {
+                        HStack {
+                            if isTestingAccess {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "network.badge.shield.half.filled")
+                            }
+                            Text(isTestingAccess ? "Testing…" : "Test GitHub Secret Access")
+                        }
+                    }
+                    .disabled(isTestingAccess || isSaving || !store.tokenIsStored)
+
+                    if let accessMessage {
+                        Label(accessMessage, systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                            .font(.footnote)
+                            .textSelection(.enabled)
+                    }
+                } footer: {
+                    Text("This tests the exact saved PAT against the repository Actions-secrets public-key endpoint. It does not change any secret.")
+                }
+
                 Section("Certificate") {
                     Button {
                         pickerTarget = .p12
@@ -35,7 +73,7 @@ struct SigningProfileView: View {
                             Label("Choose P12", systemImage: "key.fill")
                             Spacer()
                             if let p12URL {
-                                Text(p12URL.lastPathComponent)
+                                Text(displayName(for: p12URL))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
@@ -57,7 +95,7 @@ struct SigningProfileView: View {
                             Label("Choose .mobileprovision", systemImage: "doc.badge.gearshape")
                             Spacer()
                             if let provisioningURL {
-                                Text(provisioningURL.lastPathComponent)
+                                Text(displayName(for: provisioningURL))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
@@ -85,20 +123,27 @@ struct SigningProfileView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.green)
-                    .disabled(isSaving || p12URL == nil || provisioningURL == nil || p12Password.isEmpty || !store.tokenIsStored)
+                    .disabled(isSaving || isTestingAccess || p12URL == nil || provisioningURL == nil || p12Password.isEmpty || !store.tokenIsStored)
 
                     if let successMessage {
                         Label(successMessage, systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                             .font(.footnote.bold())
+                            .textSelection(.enabled)
                     }
                     if let errorMessage {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
-                            .font(.footnote)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("GitHub signing-profile error", systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
+                                .font(.footnote.bold())
+                            Text(errorMessage)
+                                .foregroundStyle(.red)
+                                .font(.system(size: 11, design: .monospaced))
+                                .textSelection(.enabled)
+                        }
                     }
                 } footer: {
-                    Text("The saved GitHub PAT needs Secrets: Read and write permission for this repository to change signing material.")
+                    Text("If GitHub rejects the request, Next Signer now shows the exact endpoint, HTTP code, GitHub message and accepted-permissions header instead of assuming the cause.")
                 }
             }
             .navigationTitle("Signing Profile")
@@ -114,6 +159,36 @@ struct SigningProfileView: View {
                     }
                 )
                 .ignoresSafeArea()
+            }
+        }
+    }
+
+    private func testGitHubAccess() {
+        let token = store.token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else {
+            errorMessage = "Save your GitHub token in Settings first."
+            return
+        }
+
+        isTestingAccess = true
+        accessMessage = nil
+        successMessage = nil
+        errorMessage = nil
+        let configuration = store.configuration
+
+        Task {
+            do {
+                let service = SigningProfileService(token: token, configuration: configuration)
+                let message = try await service.testSigningSecretAccess()
+                await MainActor.run {
+                    isTestingAccess = false
+                    accessMessage = message
+                }
+            } catch {
+                await MainActor.run {
+                    isTestingAccess = false
+                    errorMessage = error.localizedDescription
+                }
             }
         }
     }
@@ -157,6 +232,14 @@ struct SigningProfileView: View {
         return destination
     }
 
+    private func displayName(for url: URL) -> String {
+        let name = url.lastPathComponent
+        guard let dash = name.firstIndex(of: "-") else { return name }
+        let prefix = name[..<dash]
+        if prefix.count == 36 { return String(name[name.index(after: dash)...]) }
+        return name
+    }
+
     private func removeLocalFileIfNeeded(_ url: URL?) {
         guard let url else { return }
         try? FileManager.default.removeItem(at: url)
@@ -171,6 +254,7 @@ struct SigningProfileView: View {
         }
 
         isSaving = true
+        accessMessage = nil
         successMessage = nil
         errorMessage = nil
         let password = p12Password
