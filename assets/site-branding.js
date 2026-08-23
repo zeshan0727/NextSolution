@@ -2,13 +2,19 @@
 (function () {
   'use strict';
 
+  var PERSONAL_NAME = /\b(?:Muhammad\s+)?Zeeshan(?:\s+Barvi)?\b/g;
+
+  function replaceName(value) {
+    return String(value || '').replace(PERSONAL_NAME, 'NextSolution');
+  }
+
   function replaceText(root) {
     if (!root) return;
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: function (node) {
         var parent = node.parentElement;
         if (!parent || /^(SCRIPT|STYLE|NOSCRIPT|CODE|PRE)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
-        return node.nodeValue && node.nodeValue.indexOf('Zeeshan Barvi') !== -1
+        return /\b(?:Muhammad\s+)?Zeeshan(?:\s+Barvi)?\b/.test(node.nodeValue || '')
           ? NodeFilter.FILTER_ACCEPT
           : NodeFilter.FILTER_REJECT;
       }
@@ -16,7 +22,7 @@
     var nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(function (node) {
-      node.nodeValue = node.nodeValue.replace(/Zeeshan Barvi/g, 'Next Solution');
+      node.nodeValue = replaceName(node.nodeValue);
     });
   }
 
@@ -30,10 +36,18 @@
 
     replaceText(document.body);
 
-    Array.prototype.forEach.call(document.querySelectorAll('[content]'), function (node) {
-      var value = node.getAttribute('content');
-      if (value && value.indexOf('Zeeshan Barvi') !== -1) {
-        node.setAttribute('content', value.replace(/Zeeshan Barvi/g, 'Next Solution'));
+    Array.prototype.forEach.call(document.querySelectorAll('[content], [title], [aria-label], [alt]'), function (node) {
+      ['content', 'title', 'aria-label', 'alt'].forEach(function (attr) {
+        var value = node.getAttribute(attr);
+        if (value && /\b(?:Muhammad\s+)?Zeeshan(?:\s+Barvi)?\b/.test(value)) {
+          node.setAttribute(attr, replaceName(value));
+        }
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('script[type="application/ld+json"]'), function (node) {
+      if (node.textContent && /\b(?:Muhammad\s+)?Zeeshan(?:\s+Barvi)?\b/.test(node.textContent)) {
+        node.textContent = replaceName(node.textContent);
       }
     });
   }
