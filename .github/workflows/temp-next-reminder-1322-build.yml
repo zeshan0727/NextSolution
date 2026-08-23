@@ -8,11 +8,16 @@ permissions:
   contents: read
 jobs:
   build:
-    if: github.head_ref == 'build-next-reminder-1322-working'
+    if: github.head_ref == 'build-next-reminder-1324-working'
     runs-on: macos-15
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Import build payload
+        shell: bash
+        run: |
+          git fetch --depth 1 origin build-next-reminder-1322-working
+          git checkout FETCH_HEAD -- tmp-build
       - name: Build and validate packages
         shell: bash
         run: bash tmp-build/build-next-reminder-1324.sh
