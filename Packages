@@ -1894,26 +1894,26 @@ Author: Next Jailbreak
 Name: Sweat My Phone (RootHide)
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
-Version: 1.0.18
+Version: 1.0.19
 Architecture: iphoneos-arm64e
-Maintainer: Next Jailbreak
-Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.14)
+Maintainer: Next Solution
+Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.15)
 Conflicts: com.nextsolution.unlockvibrate
-Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb
-Size: 1504
-MD5sum: 401656b86815362cdbe96629d24fb01e
-SHA1: b2b269f0183b372dbdb0a489ac37d08f344e5abe
-SHA256: 21cb0e2ce2489a2031a1056e06197b5173261ee876d6d4a5069a387d3e6f4a49
+Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.19_RootHide.deb
+Size: 1476
+MD5sum: 07d623d76f54df7b5e45c24ae0ef8f68
+SHA1: cf2d71d16b76bd6a15db135c8f3731552e9c19c9
+SHA256: 26a0c38ec576e72546ea8a4a346c1b846d8484e3df9afa72f597641f9a515fc3
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Rounded Volume-pattern Control Center backgrounds: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses its full fill hierarchy, and the validated Volume renderer remains unchanged.
-Author: Next Jailbreak - zeshan0727
+Description: Rounded Module Glass backgrounds with value-sized Volume artwork matching Brightness behavior and protected compact switch/glyph visibility; all other rendering remains unchanged.
+Author: Next Solution - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
-Version: 1.0.14
+Version: 1.0.15
 Architecture: iphoneos-arm64e
 Maintainer: Next Jailbreak
 Installed-Size: 240
@@ -1921,15 +1921,15 @@ Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
 Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
-Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb
-Size: 25868
-MD5sum: 8c541a74d37d49c3eb5f6f8d4e5b00a4
-SHA1: dd6c0dae918fc90ca76309926e7fea715c765d5d
-SHA256: 1f60c403b9ec4b75a1580b6e6fafcf45fb52893ad1ea1dea8620049d63233208
+Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.15_RootHide.deb
+Size: 27984
+MD5sum: 918bee7121f1f7d7bd7c0aac01008bfc
+SHA1: 45d2bd5fb1101e4ddb9225f70abb6dd82b49633a
+SHA256: 36e4a66845c65f1b2f997059e10746eace798d7e6c27a1579b9f037d2101235d
 Section: System
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Rounded Volume-pattern Module Glass runtime: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses fill from the full module hierarchy, and the validated Volume renderer remains unchanged.
+Description: Rounded Module Glass runtime with value-sized Volume artwork matching Brightness behavior and protected compact-module foreground switch/glyph visibility.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
