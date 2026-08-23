@@ -1,18 +1,30 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-23T11:20:06Z",
+  "updatedAt": "2026-08-23T11:41:28Z",
   "files": [
     {
-      "id": "nextreminder-1.3.29-manual-pending-reports",
-      "name": "Next Reminder 1.3.29 — Manual Pending Reports",
-      "fileName": "NextReminder_1.3.29_Unsigned.tipa",
+      "id": "nextreminder-1.3.30-automatic-pending-reports",
+      "name": "Next Reminder 1.3.30 — Automatic Pending Reports",
+      "fileName": "NextReminder_1.3.30_Unsigned.tipa",
       "type": "tipa",
       "platform": "Unsigned TIPA / iOS 16+",
-      "version": "1.3.29 (39)",
-      "url": "https://nextsolution.cc/transfer/files/NextReminder/1.3.29/NextReminder_1.3.29_Unsigned.tipa",
-      "sha256": "a6fb491eb972d050dccee32a7c075ce04354230f07bde857a72b4e70a34f35d7",
-      "sizeBytes": 2176106,
-      "notes": "Adds a standalone Pending Reports screen from Reminders while keeping the confirmed-stable 1.3.28 Files implementation byte-for-byte unchanged. Manually generate a PDF of all pending reminders, physically retain only the newest 3 reports, share any saved PDF, or manually send it to the preset default email using the existing Gmail/scheduler connection. Automatic/background sending is intentionally deferred to the next phase."
+      "version": "1.3.30 (40)",
+      "url": "https://nextsolution.cc/transfer/files/NextReminder/1.3.30/NextReminder_1.3.30_Unsigned.tipa",
+      "sha256": "de51f5b3c3390f09657afbe36516f1a46ee000aaa771b11d5db50cbac8c1944d",
+      "sizeBytes": 2197838,
+      "notes": "Adds Automatic Email controls to the standalone Pending Reports screen while keeping the confirmed-stable Files implementation byte-for-byte unchanged. Choose a preset time and any weekdays or Daily. Manual PDF generation, newest-3 retention, sharing, and manual email remain available."
+    },
+    {
+      "id": "nextquickreminder-1.0.15-automatic-reports-roothide",
+      "name": "Next Quick Reminder 1.0.15 — Automatic Reports RootHide",
+      "fileName": "NextQuickReminder_1.0.15_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.0.15",
+      "url": "https://nextsolution.cc/transfer/files/NextQuickReminder/1.0.15/NextQuickReminder_1.0.15_RootHide.deb",
+      "sha256": "e11fd1e8e9889673fa5ec73de67234ec3a69ead605fddf1aa84718d18d16133f",
+      "sizeBytes": 110284,
+      "notes": "Adds a SpringBoard background scheduler for daily or selected-day pending-reminder emails. At the configured time it reads the current Next Reminder database, generates a fresh PDF without opening the app, retains the newest 3 reports, and sends through the existing Gmail bridge. Prevents duplicate same-day sends and retries failures after 15 minutes. Manual Send PDF Report also generates a fresh report."
     },
     {
       "id": "ns-admin-1.0.5",
@@ -24,18 +36,6 @@
       "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa",
       "sha256": "4036ef5701dad452b988a6e80b8d5379e7fd54806c320d0718acffdde2bc6c27",
       "notes": "Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock."
-    },
-    {
-      "id": "nextquickreminder-1.0.14-background-pdf-roothide",
-      "name": "Next Quick Reminder 1.0.14 — Background PDF Send",
-      "fileName": "NextQuickReminder_1.0.14_RootHide.deb",
-      "type": "deb",
-      "platform": "RootHide",
-      "version": "1.0.14",
-      "url": "https://nextsolution.cc/transfer/files/NextQuickReminder/1.0.14/NextQuickReminder_1.0.14_RootHide.deb",
-      "sha256": "8f36071b0b49ccd7e6a0e052a2d0a51ff9df0b75cc8038dd9acd9b4070175daf",
-      "sizeBytes": 100224,
-      "notes": "Send PDF Report sends the newest locally saved Pending Reminder PDF in the background without opening Next Reminder. Uses the same proven v1/file-shares Gmail attachment route as the successful in-app send and preserves the saved Gmail connection on failures."
     },
     {
       "id": "nextlock-1.1.5-test19-preferences-sections-roothide",
