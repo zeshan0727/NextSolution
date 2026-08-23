@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "6a07f3d95020f227a0ee0a841bccfd908aee9edb8814fb009f773167889f6111",
+      "candidate_fingerprint": "6af09f39399d89f77499550db86101b3877073b4f8730bc7889bbe4d9779cd47",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Understand how Sileo relates to Dopamine 3, what the official compatibility ranges say, and why rootless tweak support must be checked.",
+      "entry_type": "cluster",
+      "href": "sileo-dopamine-3-jailbreak-guide.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Solution real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-23T06:49:41+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-sileo",
+      "published_at": "2026-08-23T06:49:41+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://github.com/Sileo/Sileo",
+      "source_url": "https://github.com/Sileo/Sileo",
+      "title": "Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "0f9dfcfe3c049aa2535591dbb47154d46828d1e60cac23b56ea95197ab38b0d0",
       "candidate_fingerprint": "0bfe6bbb12c8bfab1848ef371b3988933ac52b39968f51e9af04a2b831610797",
       "category": {
@@ -766,8 +790,18 @@
       "published_at": "2026-08-23T03:46:10+00:00",
       "run_id": "32616145014",
       "version": "1.9.19"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "6af09f39399d89f77499550db86101b3877073b4f8730bc7889bbe4d9779cd47",
+      "channel": "dopamine-cluster",
+      "href": "sileo-dopamine-3-jailbreak-guide.html",
+      "package": "editorial.dopamine3.dopamine3-sileo",
+      "published_at": "2026-08-23T06:49:41+00:00",
+      "run_id": "32623925196",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-23T03:46:10+00:00"
+  "updated_at": "2026-08-23T06:49:41+00:00"
 }

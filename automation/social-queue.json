@@ -31,6 +31,14 @@
       "title": "DarkSword and Dopamine: What the Documented Connection Means",
       "topic_id": "dopamine3-darksword",
       "url": "https://nextsolution.cc/darksword-dopamine-3-jailbreak.html"
+    },
+    {
+      "created_at": "2026-08-23T06:49:41+00:00",
+      "post": "Sileo is associated with Dopamine 3, but it is not the jailbreak itself. Check the official 3.x README for the correct device and iOS range, then verify that each tweak is compatible and properly compiled for the rootles https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide.html",
+      "status": "pending",
+      "title": "Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks",
+      "topic_id": "dopamine3-sileo",
+      "url": "https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide.html"
     }
   ],
   "schema_version": 1
