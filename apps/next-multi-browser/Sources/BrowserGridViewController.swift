@@ -23,7 +23,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
     private var progressObservation: NSKeyValueObservation?
     private var urlObservation: NSKeyValueObservation?
     private var autoRefreshTimer: Timer?
-    private var autoRefreshInterval: TimeInterval?
+    private(set) var autoRefreshInterval: TimeInterval?
     private var paneIsActive = true
 
     init(index: Int) {
@@ -182,6 +182,12 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         }
     }
 
+    func applyAutoRefresh(_ interval: TimeInterval?) {
+        autoRefreshInterval = interval
+        updateAutoRefreshMenu()
+        restartAutoRefreshTimer()
+    }
+
     private func updateAutoRefreshMenu() {
         let choices: [(String, TimeInterval?)] = [
             ("Off", nil),
@@ -194,10 +200,10 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 
         let actions = choices.map { title, interval in
             UIAction(title: title, state: intervalsMatch(interval, autoRefreshInterval) ? .on : .off) { [weak self] _ in
-                self?.setAutoRefresh(interval)
+                self?.applyAutoRefresh(interval)
             }
         }
-        autoRefreshButton.menu = UIMenu(title: "Auto Refresh", children: actions)
+        autoRefreshButton.menu = UIMenu(title: "This Browser Auto Refresh", children: actions)
         autoRefreshButton.accessibilityLabel = autoRefreshInterval == nil ? "Auto Refresh Off" : "Auto Refresh On"
     }
 
@@ -207,12 +213,6 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         case let (a?, b?): return abs(a - b) < 0.5
         default: return false
         }
-    }
-
-    private func setAutoRefresh(_ interval: TimeInterval?) {
-        autoRefreshInterval = interval
-        updateAutoRefreshMenu()
-        restartAutoRefreshTimer()
     }
 
     private func restartAutoRefreshTimer() {
@@ -267,11 +267,16 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
     private let scrollView = UIScrollView()
     private let rowsStack = UIStackView()
     private let countButton = UIButton(type: .system)
+    private let globalRefreshButton = UIButton(type: .system)
 
     private var panes: [BrowserPaneView] = []
     private var browserCount = 2
     private var focusedPane: BrowserPaneView?
     private var focusedConstraints: [NSLayoutConstraint] = []
+    private var globalRefreshInterval: TimeInterval? = {
+        let value = UserDefaults.standard.double(forKey: "NextMultiBrowser.globalRefreshSeconds")
+        return value > 0 ? value : nil
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -285,13 +290,35 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
     private func setupToolbar() {
         countButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
         countButton.showsMenuAsPrimaryAction = true
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: countButton)
+
+        globalRefreshButton.setImage(UIImage(systemName: "timer"), for: .normal)
+        globalRefreshButton.showsMenuAsPrimaryAction = true
+        globalRefreshButton.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        globalRefreshButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        updateGlobalRefreshMenu()
 
         navigationItem.leftBarButtonItems = [
             UIBarButtonItem(image: UIImage(systemName: "house"), style: .plain, target: self, action: #selector(homeAll)),
             UIBarButtonItem(image: UIImage(systemName: "arrow.clockwise.circle"), style: .plain, target: self, action: #selector(reloadAll)),
             UIBarButtonItem(image: UIImage(systemName: "square.on.square"), style: .plain, target: self, action: #selector(loadSameURL))
         ]
+        installNormalRightItems()
+    }
+
+    private func installNormalRightItems() {
+        let vpnItem = UIBarButtonItem(image: UIImage(systemName: "shield.lefthalf.filled"), style: .plain, target: self, action: #selector(openVPN))
+        vpnItem.accessibilityLabel = "Free VPN Servers"
+        navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(customView: countButton),
+            UIBarButtonItem(customView: globalRefreshButton),
+            vpnItem
+        ]
+    }
+
+    private func installFocusRightItems() {
+        let gridItem = UIBarButtonItem(title: "Grid", style: .done, target: self, action: #selector(exitFocus))
+        let vpnItem = UIBarButtonItem(image: UIImage(systemName: "shield.lefthalf.filled"), style: .plain, target: self, action: #selector(openVPN))
+        navigationItem.rightBarButtonItems = [gridItem, UIBarButtonItem(customView: globalRefreshButton), vpnItem]
     }
 
     private func makeCountMenu() -> UIMenu {
@@ -301,6 +328,49 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             }
         }
         return UIMenu(title: "Browser quantity", children: actions)
+    }
+
+    private func updateGlobalRefreshMenu() {
+        let choices: [(String, TimeInterval?)] = [
+            ("Off", nil),
+            ("1 minute", 60),
+            ("2 minutes", 120),
+            ("3 minutes", 180),
+            ("5 minutes", 300),
+            ("10 minutes", 600)
+        ]
+        let actions = choices.map { title, interval in
+            UIAction(title: title, state: intervalsMatch(interval, globalRefreshInterval) ? .on : .off) { [weak self] _ in
+                self?.setGlobalRefresh(interval)
+            }
+        }
+        let current = globalRefreshInterval.map { formatMinutes($0) } ?? "Off"
+        globalRefreshButton.menu = UIMenu(title: "All Browsers • \(current)", children: actions)
+        globalRefreshButton.accessibilityLabel = "Global Auto Refresh \(current)"
+    }
+
+    private func intervalsMatch(_ lhs: TimeInterval?, _ rhs: TimeInterval?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil): return true
+        case let (a?, b?): return abs(a - b) < 0.5
+        default: return false
+        }
+    }
+
+    private func formatMinutes(_ interval: TimeInterval) -> String {
+        let minutes = Int(interval / 60)
+        return "\(minutes)m"
+    }
+
+    private func setGlobalRefresh(_ interval: TimeInterval?) {
+        globalRefreshInterval = interval
+        if let interval {
+            UserDefaults.standard.set(interval, forKey: "NextMultiBrowser.globalRefreshSeconds")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "NextMultiBrowser.globalRefreshSeconds")
+        }
+        panes.forEach { $0.applyAutoRefresh(interval) }
+        updateGlobalRefreshMenu()
     }
 
     private func setupGrid() {
@@ -337,6 +407,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         while panes.count < browserCount {
             let pane = BrowserPaneView(index: panes.count + 1)
             pane.delegate = self
+            pane.applyAutoRefresh(globalRefreshInterval)
             panes.append(pane)
         }
 
@@ -436,7 +507,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             pane.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ]
         NSLayoutConstraint.activate(focusedConstraints)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Grid", style: .done, target: self, action: #selector(exitFocus))
+        installFocusRightItems()
     }
 
     @objc private func exitFocus() {
@@ -450,7 +521,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         pane.removeFromSuperview()
         focusedPane = nil
         scrollView.isHidden = false
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: countButton)
+        installNormalRightItems()
         rebuildRows()
     }
 
@@ -476,5 +547,12 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             self.panes.prefix(self.browserCount).forEach { $0.load(text) }
         })
         present(alert, animated: true)
+    }
+
+    @objc private func openVPN() {
+        let controller = VPNGateViewController()
+        let navigation = UINavigationController(rootViewController: controller)
+        navigation.modalPresentationStyle = .pageSheet
+        present(navigation, animated: true)
     }
 }
