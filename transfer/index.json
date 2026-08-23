@@ -1,7 +1,31 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-20T15:46:09Z",
+  "updatedAt": "2026-08-23T08:13:24Z",
   "files": [
+    {
+      "id": "nextreminder-1.3.24-pdf-report-test",
+      "name": "Next Reminder 1.3.24 — PDF Report Test",
+      "fileName": "NextReminder_1.3.24_Unsigned.tipa",
+      "type": "tipa",
+      "platform": "Unsigned TIPA / iOS 16+",
+      "version": "1.3.24 (34)",
+      "url": "https://nextsolution.cc/transfer/files/NextReminder/1.3.24/NextReminder_1.3.24_Unsigned.tipa",
+      "sha256": "84a63fad69bbc9bf2c1cdcaa813efad14e4519d048c6990a934f9f40fddf328d",
+      "sizeBytes": 1966626,
+      "notes": "App-first PDF report test. Files > Pending Reminders Report can generate a PDF, save it locally under Saved Reports, show the preset recipient, and send the saved PDF as an email attachment with visible sending/success/error status."
+    },
+    {
+      "id": "nextquickreminder-1.0.13-roothide",
+      "name": "Next Quick Reminder 1.0.13 RootHide",
+      "fileName": "NextQuickReminder_1.0.13_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.0.13",
+      "url": "https://nextsolution.cc/transfer/files/NextQuickReminder/1.0.13/NextQuickReminder_1.0.13_RootHide.deb",
+      "sha256": "de0f967c67391ee6474463499221fdb0c7dfa163b68edde669aed3e5996b00a7",
+      "sizeBytes": 100364,
+      "notes": "Existing 1.0.13 RootHide test build. No new tweak-side PDF-report integration in this round; included for convenient device installation alongside Next Reminder 1.3.24."
+    },
     {
       "id": "nextlock-1.1.5-test19-preferences-sections-roothide",
       "name": "NextLock 1.1.5 Test 19 Preferences Sections RootHide",
@@ -26,7 +50,7 @@
     },
     {
       "id": "nextmockupstudio-0.4-live3d",
-      "name": "Next Mockup Studio 0.4 \u2014 Live 3D iPhone Test",
+      "name": "Next Mockup Studio 0.4 — Live 3D iPhone Test",
       "fileName": "NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
@@ -129,7 +153,7 @@
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "platform": "TrollStore / iOS 16+",
-      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
+      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
       "version": "1.0.2",
       "type": "tipa",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
