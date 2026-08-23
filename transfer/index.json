@@ -1,10 +1,21 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-23T10:08:06Z",
+  "updatedAt": "2026-08-23T10:17:02Z",
   "files": [
     {
+      "id": "ns-admin-1.0.5",
+      "name": "NS Admin 1.0.5",
+      "fileName": "NS-Admin-1.0.5.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.5",
+      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa",
+      "sha256": "4036ef5701dad452b988a6e80b8d5379e7fd54806c320d0718acffdde2bc6c27",
+      "notes": "Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock."
+    },
+    {
       "id": "nextreminder-1.3.27-files-stability-fix",
-      "name": "Next Reminder 1.3.27 — Files Stability Fix",
+      "name": "Next Reminder 1.3.27 \u2014 Files Stability Fix",
       "fileName": "NextReminder_1.3.27_Unsigned.tipa",
       "type": "tipa",
       "platform": "Unsigned TIPA / iOS 16+",
@@ -16,7 +27,7 @@
     },
     {
       "id": "nextquickreminder-1.0.14-background-pdf-roothide",
-      "name": "Next Quick Reminder 1.0.14 — Background PDF Send",
+      "name": "Next Quick Reminder 1.0.14 \u2014 Background PDF Send",
       "fileName": "NextQuickReminder_1.0.14_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
@@ -50,7 +61,7 @@
     },
     {
       "id": "nextmockupstudio-0.4-live3d",
-      "name": "Next Mockup Studio 0.4 — Live 3D iPhone Test",
+      "name": "Next Mockup Studio 0.4 \u2014 Live 3D iPhone Test",
       "fileName": "NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
@@ -153,7 +164,7 @@
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "platform": "TrollStore / iOS 16+",
-      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
+      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
       "version": "1.0.2",
       "type": "tipa",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
@@ -224,17 +235,6 @@
       "type": "zip",
       "name": "Module Glass 1.1.12 Transition Recovery Source",
       "url": "https://nextsolution.cc/transfer/files/ModuleGlass/1.1.12/ModuleGlass_1.1.12_Complete_Source.zip"
-    },
-    {
-      "sha256": "f861072cf5cb8309a6af9fcdb519326ed208aa1d72f7d2c1b013670e37c77330",
-      "id": "ns-admin-1.0.4",
-      "fileName": "NS-Admin-1.0.4.tipa",
-      "platform": "TrollStore / iOS 16+",
-      "notes": "Fixes the missing Devices tab glyph on iOS 16 and adds device model + iOS version to activation requests and active-device cards. Keeps server-backed active device tracking, direct revoke, request handoff and TrollStore-safe token storage.",
-      "version": "1.0.4",
-      "type": "tipa",
-      "name": "NS Admin 1.0.4",
-      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.4/NS-Admin-1.0.4.tipa"
     },
     {
       "sha256": "bb51c02dfe0ab97cc7d8039941a982aa0cb1de79cd0a2068c34fd8e9121fa7a4",
