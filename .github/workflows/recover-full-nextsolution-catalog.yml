@@ -75,7 +75,7 @@ jobs:
           current_rows = stanzas(current)
 
           # Start with complete pre-wipe catalog. Remove historical Module Glass entries
-          # so only the explicitly pinned pair from current remains.
+          # so only the newest pair from current remains.
           merged = []
           seen = set()
           for row in base_rows:
@@ -86,25 +86,30 @@ jobs:
                   merged.append(row)
                   seen.add(k)
 
-          # Preserve every package added/updated after the wipe, except superseded
-          # Module Glass stanzas. Current main is already pinned to 1.0.18 / 1.0.14.
-          pinned = []
+          # Preserve every package added/updated after the wipe. For the two Module
+          # Glass package IDs, retain the newest version currently published on main.
+          pinned = {}
+          def version_key(row):
+              return tuple(int(part) for part in re.findall(r'\d+', field(row, 'Version')))
+
           for row in current_rows:
               pid = field(row, 'Package')
               if pid in module_ids:
-                  version = field(row, 'Version')
-                  if (pid == 'com.nextsolution.nextaura.cc-module-backgrounds' and version == '1.0.18') or \
-                     (pid == 'com.nextsolution.nextaura.runtime.ccbackgrounds' and version == '1.0.14'):
-                      pinned.append(row)
+                  previous = pinned.get(pid)
+                  if previous is None or version_key(row) > version_key(previous):
+                      pinned[pid] = row
                   continue
               k = key(row)
               if k not in seen:
                   merged.append(row)
                   seen.add(k)
 
-          if len(pinned) != 2:
-              raise SystemExit(f'Expected exactly 2 pinned Module Glass stanzas, got {len(pinned)}')
-          merged.extend(pinned)
+          if set(pinned) != module_ids:
+              raise SystemExit(
+                  f'Expected current Module Glass stanzas for {sorted(module_ids)}, '
+                  f'got {sorted(pinned)}'
+              )
+          merged.extend(pinned[pid] for pid in sorted(module_ids))
 
           # Historical package metadata still carries the former public brand.
           # Rebrand human-facing fields while preserving package identifiers,
@@ -132,6 +137,13 @@ jobs:
           )
           if old_brand.search(Path('Packages').read_text(errors='replace')):
               raise SystemExit('Former public brand remains in package metadata')
+          for pid in sorted(module_ids):
+              rows = [row for row in merged if field(row, 'Package') == pid]
+              if len(rows) != 1:
+                  raise SystemExit(f'Expected one current stanza for {pid}, got {len(rows)}')
+              payload = Path(field(rows[0], 'Filename').removeprefix('./'))
+              if not payload.is_file():
+                  raise SystemExit(f'Missing current Module Glass payload: {payload}')
           PY
 
           # Hard recovery checks for packages known to have been removed by the wipe.
@@ -143,10 +155,8 @@ jobs:
           grep -q '^Package: com.nextsolution.nextaura.home-screen$' Packages
           grep -q '^Package: com.nextsolution.nextaura.status-bar$' Packages
           grep -q '^Package: com.nextsolution.nextquickreminder$' Packages
-          grep -q '^Version: 1.0.18$' <(grep -A20 '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages)
-          grep -q '^Version: 1.0.14$' <(grep -A20 '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages)
-          grep -q '^Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb$' Packages
-          grep -q '^Filename: ./debfiles/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb$' Packages
+          grep -q '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages
+          grep -q '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages
 
           # Make sure key restored payloads really exist.
           test -f debfiles/NextLedger_1.3.42_iphoneos-arm64e.deb
