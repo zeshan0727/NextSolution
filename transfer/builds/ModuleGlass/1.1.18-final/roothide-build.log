@@ -41,4 +41,4 @@ ld: warning: -multiply_defined is obsolete
 [1;31m> [1;3;39mMaking stage for tweak CCModuleBackgrounds…[m
 [1;31m> [1;3;39mMaking stage for tweak ModuleGlassStandalonePrefsExtension…[m
 [1;31m> [1;3;39mMaking stage for tweak ModuleGlassActivation…[m
-dm.pl: building package `com.nextsolution.nextaura.cc-module-backgrounds:iphoneos-arm64' in `./packages/com.nextsolution.nextaura.cc-module-backgrounds_1.1.18_iphoneos-arm64.deb'
+dm.pl: building package `com.nextsolution.nextaura.cc-module-backgrounds:iphoneos-arm64e' in `./packages/com.nextsolution.nextaura.cc-module-backgrounds_1.1.18_iphoneos-arm64e.deb'
