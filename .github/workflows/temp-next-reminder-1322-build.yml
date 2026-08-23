@@ -22,7 +22,7 @@ jobs:
           git checkout FETCH_HEAD -- tmp-build-1325/patch
       - name: Build and validate app
         shell: bash
-        run: bash tmp-build-1326/build.sh
+        run: bash tmp-build-1326/build-venv.sh
       - uses: actions/upload-artifact@v4
         with:
           name: NextReminder-1.3.26-Files-Freeze-Icon-Fix
