@@ -18,6 +18,6 @@ ModuleGlassStandalonePrefsExtension_LIBRARIES = substrate
 ModuleGlassActivation_FILES = ModuleGlassActivation.m
 ModuleGlassActivation_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
 ModuleGlassActivation_FRAMEWORKS = Foundation UIKit CoreFoundation
-ModuleGlassActivation_LIBRARIES = substrate commonCrypto
+ModuleGlassActivation_LIBRARIES = substrate
 
 include $(THEOS_MAKE_PATH)/tweak.mk
