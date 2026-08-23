@@ -1,0 +1,53 @@
+name: Build Next Multi Browser TIPA
+
+on:
+  push:
+    branches: [next-multi-browser]
+    paths:
+      - 'apps/next-multi-browser/**'
+      - '.github/workflows/build-next-multi-browser.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/next-multi-browser/**'
+      - '.github/workflows/build-next-multi-browser.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: apps/next-multi-browser
+        run: xcodegen generate
+      - name: Build unsigned device app
+        working-directory: apps/next-multi-browser
+        run: |
+          xcodebuild \
+            -project NextMultiBrowser.xcodeproj \
+            -scheme NextMultiBrowser \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            build
+      - name: Package TIPA
+        working-directory: apps/next-multi-browser
+        run: |
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP_PATH"
+          mkdir -p package/Payload
+          cp -R "$APP_PATH" package/Payload/
+          cd package
+          zip -qry ../NextMultiBrowser_1.0.0_iPhone_Test.tipa Payload
+      - name: Upload TIPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMultiBrowser-1.0.0-iPhone-Test
+          path: apps/next-multi-browser/NextMultiBrowser_1.0.0_iPhone_Test.tipa
+          if-no-files-found: error
