@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Prepare one independently built Module Glass 1.1.18 package variant."""
+"""Prepare one independently built Module Glass 1.1.19 package variant."""
 
 from pathlib import Path
 import plistlib
 import re
 import sys
+
+from generate_preferences import CATEGORIES, EXPECTED_SLOTS, build_preferences
+
+
+VERSION = "1.1.19"
+RUNTIME_PACKAGE = "com.nextsolution.nextaura.runtime.ccbackgrounds"
 
 
 if len(sys.argv) != 3:
@@ -19,46 +25,48 @@ bundle = project / "layout/Library/PreferenceBundles/ModuleGlassPrefs.bundle"
 root_path = bundle / "CCModuleBackgrounds.plist"
 info_path = bundle / "Info.plist"
 control_path = project / "control"
-for required in (root_path, info_path, control_path):
+for required in (info_path, control_path):
     if not required.exists():
         raise SystemExit(f"missing release input: {required}")
 
+# Rebuild the native preference hierarchy so every package receives exactly the
+# same category structure, keys, and actions.
+build_preferences(bundle)
+
 with root_path.open("rb") as stream:
     root = plistlib.load(stream)
-items = list(root.get("items", []))
 
-license_keys = {"licenseStatusDisplay", "licenseDeviceID", "deviceIDDisplay"}
-license_actions = {
-    "copyLicenseDeviceID",
-    "buyLicense",
-    "checkActivation",
-    "moduleGlassCopyDeviceID:",
-    "moduleGlassBuyActivation:",
-    "moduleGlassCheckActivation:",
-    "moduleGlassRestoreActivation:",
-}
+base_items = list(root.get("items", []))
+category_links = [item for item in base_items if item.get("cell") == "PSLinkCell"]
+expected_links = [
+    ("Core Modules", "ModuleGlassCoreModules"),
+    ("Quick Controls", "ModuleGlassQuickControls"),
+    ("Display & System", "ModuleGlassDisplaySystem"),
+    ("Accessories & Apps", "ModuleGlassAccessoriesApps"),
+    ("Other & Reset", "ModuleGlassOtherReset"),
+]
+actual_links = [(item.get("label"), item.get("plist")) for item in category_links]
+if actual_links != expected_links:
+    raise SystemExit(f"category link mismatch: {actual_links}")
+if not base_items or base_items[-1].get("label") != "Respring":
+    raise SystemExit("activation must follow the final Respring control")
 
-cleaned = []
-for item in items:
-    label = str(item.get("label", "")).strip().upper()
-    if item.get("cell") == "PSLinkCell" and label in {"ACTIVATION", "LICENSE & DEVICE"}:
-        continue
-    if item.get("cell") == "PSGroupCell" and label in {"ACTIVATION", "MODULE GLASS ACTIVATION", "LICENSE & DEVICE"}:
-        continue
-    if item.get("key") in license_keys or item.get("action") in license_actions:
-        continue
-    cleaned.append(item)
-
-if len(cleaned) < 31:
-    raise SystemExit(f"expected the complete 1.1.17 settings list, found only {len(cleaned)} items")
-if cleaned[-1].get("label") != "Respring":
-    raise SystemExit("activation must follow the existing final Respring control")
+slots = []
+for filename in CATEGORIES:
+    path = bundle / filename
+    if not path.exists():
+        raise SystemExit(f"missing category plist: {filename}")
+    with path.open("rb") as stream:
+        category = plistlib.load(stream)
+    slots.extend(item["moduleSlot"] for item in category["items"] if "moduleSlot" in item)
+if len(slots) != len(set(slots)) or set(slots) != EXPECTED_SLOTS:
+    raise SystemExit(f"categorized module slot mismatch: {slots}")
 
 activation_items = [
     {
         "cell": "PSGroupCell",
         "label": "ACTIVATION",
-        "footerText": "Module Glass requires a $1 USD lifetime license for this generated Next Solution Device ID. Activation and revocation use the live Next Solution license registry.",
+        "footerText": "Module Glass requires a $1 USD lifetime license for this generated Next Jailbreak Device ID. Activation and revocation use the live Module Glass license registry.",
     },
     {
         "cell": "PSTitleValueCell",
@@ -78,31 +86,38 @@ activation_items = [
     {"cell": "PSButtonCell", "label": "Buy / Activate — $1.00", "action": "buyLicense"},
     {"cell": "PSButtonCell", "label": "Check Activation", "action": "checkActivation"},
 ]
-root["items"] = cleaned + activation_items
+root["items"] = base_items + activation_items
 with root_path.open("wb") as stream:
     plistlib.dump(root, stream, fmt=plistlib.FMT_XML, sort_keys=False)
 
 with info_path.open("rb") as stream:
     info = plistlib.load(stream)
-info["CFBundleShortVersionString"] = "1.1.18"
-info["CFBundleVersion"] = "1.1.18"
+info["CFBundleShortVersionString"] = VERSION
+info["CFBundleVersion"] = VERSION
 with info_path.open("wb") as stream:
     plistlib.dump(info, stream, fmt=plistlib.FMT_XML, sort_keys=False)
 
 control = control_path.read_text()
-control = re.sub(r"(?m)^Version:.*$", "Version: 1.1.18", control)
-control = re.sub(r"(?m)^Architecture:.*$", f"Architecture: {architecture}", control)
-control = re.sub(
-    r"(?m)^Description:.*$",
-    "Description: Customize Control Center modules with per-module images, blur, opacity, glow, and Volume icon color controls. Version 1.1.18 adds the functional $1 lifetime activation section used by NextLock while preserving the validated Module Glass renderer and settings.",
-    control,
-)
-control = re.sub(
-    r"(?m)^Provides:.*$",
-    "Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)",
-    control,
-)
-control = control.replace("<= 1.1.16", "<= 1.1.17")
+replacements = {
+    "Version": VERSION,
+    "Architecture": architecture,
+    "Description": (
+        "Premium Control Center styling with independently selected module images, blur, opacity, glow, "
+        "and Volume glyph color controls. Version 1.1.19 introduces categorized native settings and "
+        "Next Jailbreak branding while preserving the validated renderer and live $1 lifetime activation."
+    ),
+    "Maintainer": "Next Jailbreak",
+    "Author": "Next Jailbreak - Zeeshan Barvi",
+    "Provides": f"{RUNTIME_PACKAGE} (= {VERSION})",
+    "Conflicts": f"{RUNTIME_PACKAGE} (<= 1.1.18), com.nextsolution.unlockvibrate",
+    "Breaks": f"{RUNTIME_PACKAGE} (<= 1.1.18)",
+    "Replaces": f"{RUNTIME_PACKAGE} (<= 1.1.18)",
+}
+for field, value in replacements.items():
+    pattern = rf"(?m)^{re.escape(field)}:.*$"
+    if not re.search(pattern, control):
+        raise SystemExit(f"missing control field: {field}")
+    control = re.sub(pattern, f"{field}: {value}", control, count=1)
 control_path.write_text(control)
 
 # The color picker is rebuilt for each package scheme; never reuse the RootHide binary.
@@ -116,4 +131,8 @@ labels = [item.get("label") for item in root["items"][-6:]]
 expected = ["ACTIVATION", "Status", "Device ID", "Copy Device ID", "Buy / Activate — $1.00", "Check Activation"]
 if labels != expected:
     raise SystemExit(f"activation section order mismatch: {labels}")
-print(f"Prepared Module Glass 1.1.18 for {architecture} with activation after all {len(cleaned)} existing items")
+
+print(
+    f"Prepared Module Glass {VERSION} for {architecture}: "
+    f"{len(EXPECTED_SLOTS)} modules in {len(CATEGORIES)} categories, activation last"
+)

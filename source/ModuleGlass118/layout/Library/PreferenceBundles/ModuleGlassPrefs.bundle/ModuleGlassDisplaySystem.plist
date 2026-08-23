@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Display &amp; System</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>DISPLAY &amp; SYSTEM</string>
+			<key>footerText</key>
+			<string>Backgrounds for display, recording, focus, and system-state controls.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Screen Mirroring</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>screenmirroring</string>
+			<key>moduleTitle</key>
+			<string>Screen Mirroring</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the screen mirroring module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Focus</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>focus</string>
+			<key>moduleTitle</key>
+			<string>Focus</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the focus module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Orientation Lock</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>orientation</string>
+			<key>moduleTitle</key>
+			<string>Orientation Lock</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the orientation lock module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Screen Recording</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>screenrecording</string>
+			<key>moduleTitle</key>
+			<string>Screen Recording</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the screen recording module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Low Power Mode</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>lowpower</string>
+			<key>moduleTitle</key>
+			<string>Low Power Mode</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the low power mode module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Dark Mode</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>darkmode</string>
+			<key>moduleTitle</key>
+			<string>Dark Mode</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the dark mode module.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

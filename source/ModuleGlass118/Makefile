@@ -12,7 +12,7 @@ CCModuleBackgrounds_LIBRARIES = substrate
 
 ModuleGlassStandalonePrefsExtension_FILES = ModuleGlassPrefsExtension.m
 ModuleGlassStandalonePrefsExtension_CFLAGS = -fobjc-arc
-ModuleGlassStandalonePrefsExtension_FRAMEWORKS = Foundation UIKit CoreFoundation
+ModuleGlassStandalonePrefsExtension_FRAMEWORKS = Foundation UIKit CoreFoundation QuartzCore
 ModuleGlassStandalonePrefsExtension_LIBRARIES = substrate
 
 ModuleGlassActivation_FILES = ModuleGlassActivation.m

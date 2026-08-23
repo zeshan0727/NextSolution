@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Core Modules</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>CORE MODULES</string>
+			<key>footerText</key>
+			<string>Tap a module to choose or remove its background image.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Connectivity</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>connectivity</string>
+			<key>moduleTitle</key>
+			<string>Connectivity</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the connectivity module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Now Playing</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>media</string>
+			<key>moduleTitle</key>
+			<string>Now Playing</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the now playing module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Brightness</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>brightness</string>
+			<key>moduleTitle</key>
+			<string>Brightness</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the brightness module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Volume</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>volume</string>
+			<key>moduleTitle</key>
+			<string>Volume</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the volume module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>VOLUME APPEARANCE</string>
+			<key>footerText</key>
+			<string>Optionally recolor the native speaker glyph without changing the Volume background.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Custom Volume Glyph Color</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleVolumeIconColorEnabled</string>
+			<key>default</key>
+			<false/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Keeps the selected Volume background and recolors only the native speaker glyph.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Choose Volume Glyph Color</string>
+			<key>action</key>
+			<string>chooseVolumeIconColor:</string>
+			<key>description</key>
+			<string>Open the native iOS color picker. Selecting a color enables this option automatically.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

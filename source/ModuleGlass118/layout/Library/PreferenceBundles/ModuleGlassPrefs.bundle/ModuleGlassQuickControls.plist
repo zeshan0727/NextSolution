@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Quick Controls</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>QUICK CONTROLS</string>
+			<key>footerText</key>
+			<string>Personalize the compact controls you use most often.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Flashlight</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>flashlight</string>
+			<key>moduleTitle</key>
+			<string>Flashlight</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the flashlight module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Timer</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>timer</string>
+			<key>moduleTitle</key>
+			<string>Timer</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the timer module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Calculator</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>calculator</string>
+			<key>moduleTitle</key>
+			<string>Calculator</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the calculator module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Camera</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>camera</string>
+			<key>moduleTitle</key>
+			<string>Camera</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the camera module.</string>
+		</dict>
+	</array>
+</dict>
+</plist>
