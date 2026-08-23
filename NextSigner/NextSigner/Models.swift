@@ -9,9 +9,14 @@ struct SignRequest: Equatable {
     var duplicateSigning = false
     var injectTweaksIntoExtensions = false
     var weakTweakInjection = false
+    var signingEnabled = false
 
     var isReady: Bool {
-        ipaURL != nil && !appName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && isValidBundleID
+        guard ipaURL != nil else { return false }
+        if signingEnabled {
+            return !appName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && isValidBundleID
+        }
+        return true
     }
 
     var isValidBundleID: Bool {

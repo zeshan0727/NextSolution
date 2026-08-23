@@ -205,13 +205,18 @@ final class SignerStore: ObservableObject {
             do {
                 activeJob?.stage = .uploading
                 let extras = snapshot.tweakURLs.count + (snapshot.customIconURL == nil ? 0 : 1)
-                activeJob?.detail = extras == 0 ? "Uploading IPA to the private signing inbox" : "Uploading IPA and \(extras) customization file(s)"
+                if snapshot.signingEnabled {
+                    activeJob?.detail = extras == 0 ? "Uploading IPA to the private signing inbox" : "Uploading IPA and \(extras) customization file(s)"
+                } else {
+                    activeJob?.detail = "Uploading original IPA for Publish Only"
+                }
                 let response = try await service.uploadAndDispatch(
                     ipaURL: ipaURL,
                     appName: snapshot.appName,
                     bundleID: snapshot.bundleID,
                     customIconURL: snapshot.customIconURL,
                     tweakURLs: snapshot.tweakURLs,
+                    signingEnabled: snapshot.signingEnabled,
                     duplicateSigning: snapshot.duplicateSigning,
                     injectExtensions: snapshot.injectTweaksIntoExtensions,
                     weakInjection: snapshot.weakTweakInjection,
@@ -225,7 +230,9 @@ final class SignerStore: ObservableObject {
                 } else {
                     activeJob?.detail = "Advanced signing and publishing workflow queued"
                 }
-                successMessage = "Uploaded successfully. Next Signer is applying your options, signing the IPA and publishing it through Cloudflare R2."
+                successMessage = snapshot.signingEnabled
+                    ? "Signed and published successfully through Cloudflare R2."
+                    : "Published successfully without re-signing through Cloudflare R2."
                 progress = 1
             } catch {
                 activeJob?.stage = .failed

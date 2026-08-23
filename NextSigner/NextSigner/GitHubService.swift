@@ -53,6 +53,7 @@ actor GitHubService {
         bundleID: String,
         customIconURL: URL?,
         tweakURLs: [URL],
+        signingEnabled: Bool,
         duplicateSigning: Bool,
         injectExtensions: Bool,
         weakInjection: Bool,
@@ -125,6 +126,7 @@ actor GitHubService {
                 bundleID: bundleID,
                 customIconAsset: iconAsset,
                 tweakAssetsJSON: tweakJSON,
+                signingEnabled: signingEnabled,
                 duplicateSigning: duplicateSigning,
                 injectExtensions: injectExtensions,
                 weakInjection: weakInjection
@@ -233,6 +235,7 @@ actor GitHubService {
         bundleID: String,
         customIconAsset: String,
         tweakAssetsJSON: String,
+        signingEnabled: Bool,
         duplicateSigning: Bool,
         injectExtensions: Bool,
         weakInjection: Bool
@@ -245,6 +248,7 @@ actor GitHubService {
                 "staging_asset": assetName,
                 "requested_name": appName,
                 "requested_bundle_id": bundleID,
+                "sign_enabled": signingEnabled ? "true" : "false",
                 "custom_icon_asset": customIconAsset,
                 "tweak_assets_json": tweakAssetsJSON,
                 "duplicate_signing": duplicateSigning ? "true" : "false",
@@ -306,40 +310,57 @@ actor GitHubService {
     }
 
     private func fetchPublishStatus(releaseID: Int, assetName: String) async throws -> PublishStatusPayload? {
-        var matchedAsset: Asset?
+        // The workflow updates the same release asset with --clobber. GitHub briefly
+        // deletes the old backing blob before the replacement becomes readable.
+        // Treat 404/BlobNotFound as a transient refresh race instead of a publish error.
+        for attempt in 0..<8 {
+            var matchedAsset: Asset?
 
-        // Always bypass caches and paginate the private inbox. The status asset can
-        // be created after the first poll, and the inbox may contain more than 100
-        // assets after failed or queued signing jobs.
-        for page in 1...5 {
-            let assetsURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/\(releaseID)/assets?per_page=100&page=\(page)")
-            var assetsRequest = request(url: assetsURL)
-            assetsRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-            assetsRequest.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
-            assetsRequest.setValue("no-cache", forHTTPHeaderField: "Pragma")
+            for page in 1...8 {
+                let nonce = String(Int(Date().timeIntervalSince1970 * 1000))
+                let assetsURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/\(releaseID)/assets?per_page=100&page=\(page)&_ns=\(nonce)")
+                var assetsRequest = request(url: assetsURL)
+                assetsRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+                assetsRequest.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
+                assetsRequest.setValue("no-cache", forHTTPHeaderField: "Pragma")
 
-            let (assetsData, assetsResponse) = try await session.data(for: assetsRequest)
-            try validate(response: assetsResponse, data: assetsData)
-            let assets = try JSONDecoder().decode([Asset].self, from: assetsData)
-
-            if let asset = assets.first(where: { $0.name == assetName }) {
-                matchedAsset = asset
-                break
+                let (assetsData, assetsResponse) = try await session.data(for: assetsRequest)
+                try validate(response: assetsResponse, data: assetsData)
+                let assets = try JSONDecoder().decode([Asset].self, from: assetsData)
+                if let asset = assets.first(where: { $0.name == assetName }) {
+                    matchedAsset = asset
+                    break
+                }
+                if assets.count < 100 { break }
             }
-            if assets.count < 100 { break }
+
+            guard let asset = matchedAsset else {
+                if attempt < 7 { try await Task.sleep(nanoseconds: 300_000_000) }
+                continue
+            }
+
+            let assetURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/assets/\(asset.id)?_ns=\(UUID().uuidString)")
+            var statusRequest = request(url: assetURL)
+            statusRequest.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
+            statusRequest.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
+            statusRequest.setValue("no-cache", forHTTPHeaderField: "Pragma")
+            statusRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+            let (data, response) = try await session.data(for: statusRequest)
+
+            if let http = response as? HTTPURLResponse {
+                if (200...299).contains(http.statusCode) {
+                    return try JSONDecoder().decode(PublishStatusPayload.self, from: data)
+                }
+                let body = String(data: data, encoding: .utf8) ?? ""
+                if http.statusCode == 404 || body.localizedCaseInsensitiveContains("BlobNotFound") {
+                    if attempt < 7 { try await Task.sleep(nanoseconds: 300_000_000) }
+                    continue
+                }
+            }
+
+            try validate(response: response, data: data)
         }
-
-        guard let asset = matchedAsset else { return nil }
-
-        let assetURL = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/releases/assets/\(asset.id)")
-        var statusRequest = request(url: assetURL)
-        statusRequest.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
-        statusRequest.setValue("no-cache, no-store, max-age=0", forHTTPHeaderField: "Cache-Control")
-        statusRequest.setValue("no-cache", forHTTPHeaderField: "Pragma")
-        statusRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        let (data, response) = try await session.data(for: statusRequest)
-        try validate(response: response, data: data)
-        return try JSONDecoder().decode(PublishStatusPayload.self, from: data)
+        return nil
     }
 
     private func progressValue(for stage: String, state: String) -> Double {

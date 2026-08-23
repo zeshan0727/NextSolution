@@ -4,6 +4,10 @@ options:
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
+packages:
+  Sodium:
+    url: https://github.com/jedisct1/swift-sodium.git
+    exactVersion: 0.11.0
 settings:
   base:
     SWIFT_VERSION: "5.7"
@@ -11,14 +15,16 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     SUPPORTS_MACCATALYST: "NO"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "1.3.4"
-    CURRENT_PROJECT_VERSION: "17"
+    MARKETING_VERSION: "1.3.5"
+    CURRENT_PROJECT_VERSION: "18"
 targets:
   NextSigner:
     type: application
     platform: iOS
     sources:
       - path: NextSigner
+    dependencies:
+      - package: Sodium
     preBuildScripts:
       - name: Generate Next Signer App Icon
         basedOnDependencyAnalysis: false

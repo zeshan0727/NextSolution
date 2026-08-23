@@ -8,13 +8,16 @@ struct NextSignerRootView: View {
     var body: some View {
         TabView {
             NextSignerSignView(store: store)
-                .tabItem { Label("Sign", systemImage: "signature") }
+                .tabItem { Label("Publish", systemImage: "paperplane.fill") }
 
             NextSignerLibraryView(store: store)
                 .tabItem { Label("Library", systemImage: "square.stack.3d.up.fill") }
 
             NextSignerActivityView(store: store)
                 .tabItem { Label("Activity", systemImage: "clock.arrow.circlepath") }
+
+            SigningProfileView(store: store)
+                .tabItem { Label("Profiles", systemImage: "checkmark.seal.fill") }
 
             NextSignerSettingsView(store: store)
                 .tabItem { Label("Settings", systemImage: "gearshape") }
@@ -73,9 +76,9 @@ private struct NextSignerSignView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Sign. Customize. Publish.", systemImage: "checkmark.seal.fill")
+            Label("Publish. Sign when needed.", systemImage: "paperplane.circle.fill")
                 .font(.title2.bold())
-            Text("Sign IPA/TIPA files, create duplicate installs, replace icons from Photos or Files, attach tweak dylibs or DEBs, then publish through Cloudflare R2.")
+            Text("Publish an IPA exactly as selected, or enable signing for bundle changes, duplicate installs, custom icons and tweak injection before publishing through Cloudflare R2.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -161,6 +164,16 @@ private struct NextSignerSignView: View {
     private var advancedCard: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 14) {
+                Toggle("Enable signing", isOn: $store.request.signingEnabled)
+                    .fontWeight(.semibold)
+                Text(store.request.signingEnabled
+                     ? "Sign & Publish uses the saved P12 and provisioning profile."
+                     : "Publish Only uploads the IPA unchanged. It must already contain a usable signature if you want OTA installation to work.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Divider()
+
                 Toggle("Install as duplicate app", isOn: Binding(
                     get: { store.request.duplicateSigning },
                     set: { store.setDuplicateSigning($0) }
@@ -306,8 +319,13 @@ private struct NextSignerSignView: View {
                 }
 
                 Button { store.signAndPublish() } label: {
-                    Label(store.isWorking ? "Signing & Publishing…" : "Sign & Publish", systemImage: "paperplane.fill")
-                        .frame(maxWidth: .infinity)
+                    Label(
+                        store.isWorking
+                            ? (store.request.signingEnabled ? "Signing & Publishing…" : "Publishing…")
+                            : (store.request.signingEnabled ? "Sign & Publish" : "Publish"),
+                        systemImage: store.request.signingEnabled ? "signature" : "paperplane.fill"
+                    )
+                    .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
