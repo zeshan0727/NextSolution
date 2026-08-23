@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "0f9dfcfe3c049aa2535591dbb47154d46828d1e60cac23b56ea95197ab38b0d0",
+      "candidate_fingerprint": "0bfe6bbb12c8bfab1848ef371b3988933ac52b39968f51e9af04a2b831610797",
+      "category": {
+        "id": "home-screen",
+        "label": "Home Screen"
+      },
+      "description": "Physpringboard 1.9.19 is an iPhoneOS arm64 jailbreak tweak that lets users shake SpringBoard icons loose with configurable physics on rootless Dopamine.",
+      "href": "physpringboard-tweak.html",
+      "image": "https://media.havoc.app/6a82799dfd9eaa8115539d4f",
+      "media_credit": "Physpringboard official package listing",
+      "media_source_url": "https://havoc.app/package/physpringboard",
+      "modified_at": "2026-08-23T03:46:10+00:00",
+      "name": "Physpringboard",
+      "package": "com.chloe.physpringboard",
+      "published_at": "2026-08-22T03:38:46+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/physpringboard",
+      "source_url": "https://havoc.app/",
+      "title": "Physpringboard 1.9.19: Configurable Physics for SpringBoard Icons",
+      "version": "1.9.19"
+    },
+    {
       "article_sha256": "f92134fb0379c07ad1621457bbe21a3d76f5599e681beb9c0eef30723e6d6dd0",
       "candidate_fingerprint": "a719f32d290036c5e310017a47e00424602f0dbe0024c30f908bacda2b079c3b",
       "category": {
@@ -23,29 +46,6 @@
       "source_url": "https://github.com/opa334/darksword-kexploit",
       "title": "DarkSword and Dopamine: What the Documented Connection Means",
       "version": "3.x"
-    },
-    {
-      "article_sha256": "a29d37f9d057bb8c44dece9f7b5298125e57a438bce44b542674392710a4be83",
-      "candidate_fingerprint": "4876a9b27d53833990f1156de577d3b62d9abfb7226d1c1a204102017481ba70",
-      "category": {
-        "id": "home-screen",
-        "label": "Home Screen"
-      },
-      "description": "Review the supplied facts for Physpringboard 1.9.16, including its described icon effect, architecture, rootless Dopamine reference, and listed dependencies.",
-      "href": "physpringboard-tweak.html",
-      "image": "https://media.havoc.app/6a82799dfd9eaa8115539d4f",
-      "media_credit": "Physpringboard official package listing",
-      "media_source_url": "https://havoc.app/package/physpringboard",
-      "modified_at": "2026-08-22T03:38:46+00:00",
-      "name": "Physpringboard",
-      "package": "com.chloe.physpringboard",
-      "published_at": "2026-08-22T03:38:46+00:00",
-      "selection_pool": "pending",
-      "source_name": "Havoc",
-      "source_page_url": "https://havoc.app/package/physpringboard",
-      "source_url": "https://havoc.app/",
-      "title": "Physpringboard 1.9.16: Configurable Physics for SpringBoard Icons",
-      "version": "1.9.16"
     },
     {
       "article_sha256": "414b800dc2ef772f25e954578e2e6ac33da22d15b69ada5e7fa1caac4fed71bb",
@@ -757,8 +757,17 @@
       "published_at": "2026-08-22T06:48:41+00:00",
       "run_id": "32557914395",
       "version": "3.x"
+    },
+    {
+      "action": "update",
+      "candidate_fingerprint": "0bfe6bbb12c8bfab1848ef371b3988933ac52b39968f51e9af04a2b831610797",
+      "href": "physpringboard-tweak.html",
+      "package": "com.chloe.physpringboard",
+      "published_at": "2026-08-23T03:46:10+00:00",
+      "run_id": "32616145014",
+      "version": "1.9.19"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-22T06:48:41+00:00"
+  "updated_at": "2026-08-23T03:46:10+00:00"
 }
