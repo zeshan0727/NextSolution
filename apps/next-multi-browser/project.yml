@@ -5,8 +5,7 @@ options:
     iOS: '15.0'
 packages:
   TunnelKit:
-    url: https://github.com/partout-io/tunnelkit.git
-    revision: f2c0fb079e2a318a4717d5fb8daa8f149174dadd
+    path: Vendor/TunnelKit
 targets:
   NextMultiBrowser:
     type: application
