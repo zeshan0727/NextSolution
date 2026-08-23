@@ -1,16 +1,20 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct SigningProfileView: View {
     @ObservedObject var store: SignerStore
     @State private var p12URL: URL?
     @State private var provisioningURL: URL?
     @State private var p12Password = ""
-    @State private var showP12Picker = false
-    @State private var showProvisionPicker = false
+    @State private var pickerTarget: ProfilePickerTarget?
     @State private var isSaving = false
     @State private var successMessage: String?
     @State private var errorMessage: String?
+
+    private enum ProfilePickerTarget: Int, Identifiable {
+        case p12
+        case provision
+        var id: Int { rawValue }
+    }
 
     var body: some View {
         NavigationStack {
@@ -18,14 +22,14 @@ struct SigningProfileView: View {
                 Section {
                     Label("Apple Signing Profile", systemImage: "checkmark.seal.fill")
                         .font(.headline)
-                    Text("Replace the P12 certificate, provisioning profile and P12 password used by the GitHub signing runner. Values are encrypted on-device with GitHub’s repository public key before upload and are not stored by Next Signer.")
+                    Text("Replace the P12 certificate, provisioning profile and P12 password used by the GitHub signing runner. Values are encrypted on-device with GitHub’s repository public key before upload.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 Section("Certificate") {
                     Button {
-                        showP12Picker = true
+                        pickerTarget = .p12
                     } label: {
                         HStack {
                             Label("Choose P12", systemImage: "key.fill")
@@ -47,7 +51,7 @@ struct SigningProfileView: View {
 
                 Section("Provisioning Profile") {
                     Button {
-                        showProvisionPicker = true
+                        pickerTarget = .provision
                     } label: {
                         HStack {
                             Label("Choose .mobileprovision", systemImage: "doc.badge.gearshape")
@@ -98,33 +102,64 @@ struct SigningProfileView: View {
                 }
             }
             .navigationTitle("Signing Profile")
-            .fileImporter(isPresented: $showP12Picker, allowedContentTypes: [.data], allowsMultipleSelection: false) { result in
-                handle(result, expectedExtension: "p12", target: .p12)
-            }
-            .fileImporter(isPresented: $showProvisionPicker, allowedContentTypes: [.data], allowsMultipleSelection: false) { result in
-                handle(result, expectedExtension: "mobileprovision", target: .provision)
+            .sheet(item: $pickerTarget) { target in
+                ProfileDocumentPicker(
+                    onPick: { urls in
+                        pickerTarget = nil
+                        guard let url = urls.first else { return }
+                        importSelectedFile(url, target: target)
+                    },
+                    onCancel: {
+                        pickerTarget = nil
+                    }
+                )
+                .ignoresSafeArea()
             }
         }
     }
 
-    private enum Target { case p12, provision }
-
-    private func handle(_ result: Result<[URL], Error>, expectedExtension: String, target: Target) {
+    private func importSelectedFile(_ source: URL, target: ProfilePickerTarget) {
         successMessage = nil
         errorMessage = nil
+
+        let requiredExtension = target == .p12 ? "p12" : "mobileprovision"
+        guard source.pathExtension.lowercased() == requiredExtension else {
+            errorMessage = "Choose a .\(requiredExtension) file."
+            return
+        }
+
         do {
-            guard let url = try result.get().first else { return }
-            guard url.pathExtension.lowercased() == expectedExtension else {
-                errorMessage = "Choose a .\(expectedExtension) file."
-                return
-            }
+            let local = try copyToPrivateProfileStaging(source)
             switch target {
-            case .p12: p12URL = url
-            case .provision: provisioningURL = url
+            case .p12:
+                removeLocalFileIfNeeded(p12URL)
+                p12URL = local
+            case .provision:
+                removeLocalFileIfNeeded(provisioningURL)
+                provisioningURL = local
             }
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Unable to import \(source.lastPathComponent): \(error.localizedDescription)"
         }
+    }
+
+    private func copyToPrivateProfileStaging(_ source: URL) throws -> URL {
+        let accessed = source.startAccessingSecurityScopedResource()
+        defer { if accessed { source.stopAccessingSecurityScopedResource() } }
+
+        let folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("NextSignerProfiles", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+
+        let safeName = source.lastPathComponent.replacingOccurrences(of: "/", with: "-")
+        let destination = folder.appendingPathComponent("\(UUID().uuidString)-\(safeName)")
+        try FileManager.default.copyItem(at: source, to: destination)
+        return destination
+    }
+
+    private func removeLocalFileIfNeeded(_ url: URL?) {
+        guard let url else { return }
+        try? FileManager.default.removeItem(at: url)
     }
 
     private func saveProfile() {
@@ -149,6 +184,10 @@ struct SigningProfileView: View {
                     isSaving = false
                     p12Password = ""
                     successMessage = "Signing profile saved successfully."
+                    removeLocalFileIfNeeded(self.p12URL)
+                    removeLocalFileIfNeeded(self.provisioningURL)
+                    self.p12URL = nil
+                    self.provisioningURL = nil
                 }
             } catch {
                 await MainActor.run {
