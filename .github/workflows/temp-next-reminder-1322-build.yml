@@ -1,32 +1,32 @@
-name: Temp Next Reminder 1.3.24 Builder
+name: Temp Next Reminder 1.3.25 Builder
 on:
   pull_request:
     branches: [main]
     paths:
-      - 'tmp-build/**'
+      - 'tmp-build-1325/**'
 permissions:
   contents: read
 jobs:
   build:
-    if: github.head_ref == 'build-next-reminder-1324-working'
+    if: github.head_ref == 'build-next-reminder-1325-working'
     runs-on: macos-15
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Import build payload
+      - name: Import verified base source payload
         shell: bash
         run: |
           git fetch --depth 1 origin build-next-reminder-1322-working
           git checkout FETCH_HEAD -- tmp-build
       - name: Build and validate packages
         shell: bash
-        run: bash tmp-build/build-next-reminder-1324.sh
+        run: bash tmp-build-1325/build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: NextReminder-1.3.24-PDF-Report-Test
+          name: NextReminder-1.3.25-Background-PDF-Test
           path: |
-            ${{ runner.temp }}/out/NextReminder_1.3.24_Unsigned.tipa
-            ${{ runner.temp }}/out/NextQuickReminder_1.0.13_RootHide.deb
+            ${{ runner.temp }}/out/NextReminder_1.3.25_Unsigned.tipa
+            ${{ runner.temp }}/out/NextQuickReminder_1.0.14_RootHide.deb
             ${{ runner.temp }}/out/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
