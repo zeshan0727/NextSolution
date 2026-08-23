@@ -1,6 +1,6 @@
 Low Battery Haptic Alert rootless diagnostic
-Commit: 82fb84af3217c3031957763f8d346d601118c4d8
-Sun Aug  2 03:58:37 UTC 2026
+Commit: 3b6556d048e3932f06bfe538e2a54943fd2b5020
+Sun Aug 23 13:58:16 UTC 2026
 --- deterministic test ---
 deterministic_status=0
 --- Theos clone ---
