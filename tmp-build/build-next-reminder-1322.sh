@@ -2,6 +2,15 @@
 set -euo pipefail
 R="$RUNNER_TEMP"
 mkdir -p "$R/appsrc" "$R/nqrsrc" "$R/out"
+python3 - <<'PY'
+from pathlib import Path
+p=Path('tmp-build/nr1322xz/part-09')
+f=Path('tmp-build/appfix/part09-block6000.txt').read_bytes()
+b=bytearray(p.read_bytes())
+assert len(b)==10000 and len(f)==500
+b[6000:6500]=f
+p.write_bytes(b)
+PY
 cat tmp-build/nr1322xz/part-* > "$R/nr.b64"
 cat tmp-build/nqr1012/part-* > "$R/nqr.b64"
 python3 - <<'PY'
