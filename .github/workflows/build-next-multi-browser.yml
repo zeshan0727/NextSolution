@@ -27,6 +27,9 @@ jobs:
       - name: Prepare OpenVPN package
         working-directory: apps/next-multi-browser
         run: bash scripts/prepare-tunnelkit.sh
+      - name: Prepare bundled VPN Gate fallback
+        working-directory: apps/next-multi-browser
+        run: python3 scripts/fetch-vpngate-seed.py Resources/VPNGateSeed.csv
       - name: Generate Xcode project
         working-directory: apps/next-multi-browser
         run: xcodegen generate
