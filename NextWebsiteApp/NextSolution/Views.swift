@@ -72,7 +72,7 @@ struct HomeView: View {
         NavigationView {
             VStack(spacing: 0) {
                 NativeHeader(
-                    title: "Next Jailbreak",
+                    title: "Next Solution",
                     subtitle: "Native iPhone customization hub",
                     trailingIcon: "square.and.arrow.up",
                     trailingAction: { sharePayload = SharedPayload(items: [AppData.websiteURL]) }
@@ -242,7 +242,7 @@ struct HomeView: View {
 
     private var community: some View {
         VStack(spacing: 12) {
-            SectionTitle(title: "Community", subtitle: "Open the official Next Jailbreak channels.")
+            SectionTitle(title: "Community", subtitle: "Open the official Next Solution channels.")
             HStack(spacing: 10) {
                 socialButton("YouTube", "play.fill", AppData.youtubeURL)
                 socialButton("X", "bubble.left.and.bubble.right.fill", AppData.xURL)
@@ -915,7 +915,7 @@ struct FAQView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text("Still need help?")
                                     .font(.headline)
-                                Text("Contact Next Jailbreak or open the official community channels.")
+                                Text("Contact Next Solution or open the official community channels.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 HStack(spacing: 9) {
