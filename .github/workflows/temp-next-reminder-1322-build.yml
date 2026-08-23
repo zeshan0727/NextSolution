@@ -24,7 +24,7 @@ jobs:
           git checkout FETCH_HEAD -- tmp-build-1330/tweak1015.patch.xz.b64
       - name: Build and validate RootHide tweak
         shell: bash
-        run: bash tmp-build-1331/build.sh
+        run: bash -x tmp-build-1331/build.sh
       - uses: actions/upload-artifact@v4
         with:
           name: NextQuickReminder-1.0.16-Persistent-Wake-RootHide
