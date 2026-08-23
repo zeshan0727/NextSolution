@@ -17,10 +17,19 @@ FILES = {
     "Views.swift": ["Views.swift.zlib.b64.part1", "Views.swift.zlib.b64.part2"],
 }
 
+PUBLIC_REBRAND = {
+    b"Next Solution": b"Next Jailbreak",
+    b"https://youtube.com/@zeshan0727": b"https://youtube.com/@nextjailbreak",
+    b"https://x.com/nextsoluti0n": b"https://x.com/nextjailbreak",
+    b"https://instagram.com/nextsolut1on": b"https://instagram.com/nextjailbreak",
+}
+
 DESTINATION.mkdir(parents=True, exist_ok=True)
 for output_name, payload_names in FILES.items():
     encoded = "".join((PAYLOAD / name).read_text().strip() for name in payload_names)
     source = zlib.decompress(base64.b64decode(encoded))
+    for former, current in PUBLIC_REBRAND.items():
+        source = source.replace(former, current)
     destination = DESTINATION / output_name
     destination.write_bytes(source)
     print(f"Generated {destination.relative_to(ROOT)} ({len(source)} bytes)")
@@ -44,4 +53,6 @@ all_source = b"\n".join((DESTINATION / name).read_bytes() for name in FILES)
 assert b"WebKit" not in all_source, "The native app must not contain WebKit"
 assert b"WKWebView" not in all_source, "The native app must not contain WKWebView"
 assert b"module-glass-preview" in all_source, "Module Glass Preview must be present in Downloads"
+for former in PUBLIC_REBRAND:
+    assert former not in all_source, f"Former public branding remains in native source: {former!r}"
 print("Generated the fully native SwiftUI Next Jailbreak app.")
