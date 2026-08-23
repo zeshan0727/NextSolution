@@ -1,10 +1,18 @@
 {
-  "schema": 1,
-  "product": "Module Glass",
-  "package": "com.nextsolution.nextaura.cc-module-backgrounds",
-  "price": "1.00",
-  "currency": "USD",
-  "updatedAt": "2026-08-20T09:20:00Z",
-  "active": [],
-  "devices": []
+  "active" : [
+    "80c76456707c593acd6a77a17d42b61f7fde436e0c5abf51a2e348bd2d97121e"
+  ],
+  "currency" : "USD",
+  "devices" : [
+    {
+      "activatedAt" : "2026-08-23T11:01:39Z",
+      "maskedDeviceID" : "NS-464F-••••-••••-6114",
+      "token" : "80c76456707c593acd6a77a17d42b61f7fde436e0c5abf51a2e348bd2d97121e"
+    }
+  ],
+  "package" : "com.nextsolution.nextaura.cc-module-backgrounds",
+  "price" : "1.00",
+  "product" : "Module Glass",
+  "schema" : 1,
+  "updatedAt" : "2026-08-23T11:01:39Z"
 }
