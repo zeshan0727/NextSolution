@@ -1,4 +1,4 @@
-name: Recover Full NextSolution Catalog
+name: Recover Full Next Jailbreak Catalog
 
 on:
   push:
@@ -106,10 +106,32 @@ jobs:
               raise SystemExit(f'Expected exactly 2 pinned Module Glass stanzas, got {len(pinned)}')
           merged.extend(pinned)
 
+          # Historical package metadata still carries the former public brand.
+          # Rebrand human-facing fields while preserving package identifiers,
+          # dependency names, filenames, hashes, URLs and versions exactly.
+          human_fields = {'Maintainer', 'Author', 'Description', 'Name'}
+          normalized = []
+          for row in merged:
+              lines = []
+              for line in row.splitlines():
+                  field_name = line.partition(':')[0]
+                  if field_name in human_fields:
+                      line = line.replace('Next Solution', 'Next Jailbreak')
+                      line = line.replace('NextSolution', 'Next Jailbreak')
+                  lines.append(line)
+              normalized.append('\n'.join(lines))
+          merged = normalized
+
           Path('Packages').write_text('\n\n'.join(merged) + '\n')
           print(f'base stanzas={len(base_rows)} current stanzas={len(current_rows)} merged stanzas={len(merged)}')
           if len(merged) < len(base_rows):
               raise SystemExit('Merged catalog is smaller than the pre-wipe catalog')
+          old_brand = re.compile(
+              r'^(?:Maintainer|Author|Description|Name):.*Next ?Solution',
+              re.M,
+          )
+          if old_brand.search(Path('Packages').read_text(errors='replace')):
+              raise SystemExit('Former public brand remains in package metadata')
           PY
 
           # Hard recovery checks for packages known to have been removed by the wipe.
