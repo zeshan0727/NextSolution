@@ -1,1 +1,1 @@
-Build Next Signer 1.3.7 GitHub secret diagnostics now.
+Retry Next Signer 1.3.7 after SwiftUI build fix.
