@@ -59,6 +59,13 @@ targets:
       - VPNExtension
     info:
       path: VPNExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Next Multi Browser VPN
+        CFBundleShortVersionString: '1.0.3'
+        CFBundleVersion: '4'
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser.vpn
