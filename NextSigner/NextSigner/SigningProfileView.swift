@@ -29,7 +29,7 @@ struct SigningProfileView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Section("GitHub Secret Access") {
+                Section {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Repository")
@@ -61,6 +61,8 @@ struct SigningProfileView: View {
                             .font(.footnote)
                             .textSelection(.enabled)
                     }
+                } header: {
+                    Text("GitHub Secret Access")
                 } footer: {
                     Text("This tests the exact saved PAT against the repository Actions-secrets public-key endpoint. It does not change any secret.")
                 }
