@@ -34,7 +34,7 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 12)
         label.textColor = .secondaryLabel
-        label.text = "VPN Gate uses public volunteer-operated VPN relay servers. Server availability, logging, speed and privacy vary by operator. If the main feed is slow, this app automatically tries VPN Gate mirrors and then a cached last-good list."
+        label.text = "VPN Gate uses public volunteer-operated VPN relay servers. Server availability, logging, speed and privacy vary by operator. If live feeds are unavailable, the app can use its bundled recent server list."
         label.translatesAutoresizingMaskIntoConstraints = false
 
         let container = UIView()
@@ -83,12 +83,20 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
                     self.updateRightItems()
                 }
             } catch {
+                let bundled = VPNGateSeedLoader.load()
                 await MainActor.run {
                     self.isLoadingServers = false
                     self.spinner.stopAnimating()
-                    self.navigationItem.prompt = "Server list unavailable"
                     self.updateRightItems()
-                    if showFailureAlert { self.showError(error) }
+
+                    if !bundled.isEmpty {
+                        self.allServers = bundled
+                        self.rebuildSections(query: self.searchController.searchBar.text)
+                        self.navigationItem.prompt = "Bundled fallback servers • Refresh for live list"
+                    } else {
+                        self.navigationItem.prompt = "Server list unavailable"
+                        if showFailureAlert { self.showError(error) }
+                    }
                 }
             }
         }
