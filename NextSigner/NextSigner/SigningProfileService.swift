@@ -25,6 +25,15 @@ actor SigningProfileService {
         self.session = session
     }
 
+    func testSigningSecretAccess() async throws -> String {
+        guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
+        let trimmedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedToken.isEmpty else { throw NextSignerError.missingToken }
+
+        _ = try await fetchRepositoryPublicKey()
+        return "GitHub secret public-key access is working for \(configuration.owner)/\(configuration.repository)."
+    }
+
     func saveSigningProfile(p12URL: URL, provisioningURL: URL, password: String) async throws {
         guard configuration.isValid else { throw NextSignerError.invalidConfiguration }
         let trimmedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -72,9 +81,10 @@ actor SigningProfileService {
     }
 
     private func fetchRepositoryPublicKey() async throws -> RepositoryPublicKey {
-        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/actions/secrets/public-key")
+        let endpoint = "/repos/\(configuration.owner)/\(configuration.repository)/actions/secrets/public-key"
+        let url = try apiURL(endpoint)
         let (data, response) = try await session.data(for: request(url: url))
-        try validate(response: response, data: data)
+        try validate(response: response, data: data, operation: "GET Actions secrets public key", endpoint: endpoint)
         return try JSONDecoder().decode(RepositoryPublicKey.self, from: data)
     }
 
@@ -89,9 +99,10 @@ actor SigningProfileService {
             "key_id": publicKey.keyID
         ]
         let body = try JSONSerialization.data(withJSONObject: payload)
-        let url = try apiURL("/repos/\(configuration.owner)/\(configuration.repository)/actions/secrets/\(name)")
+        let endpoint = "/repos/\(configuration.owner)/\(configuration.repository)/actions/secrets/\(name)"
+        let url = try apiURL(endpoint)
         let (data, response) = try await session.data(for: request(url: url, method: "PUT", body: body))
-        try validate(response: response, data: data, accepted: [201, 204])
+        try validate(response: response, data: data, accepted: [201, 204], operation: "PUT Actions secret \(name)", endpoint: endpoint)
     }
 
     private func request(url: URL, method: String = "GET", body: Data? = nil) -> URLRequest {
@@ -99,7 +110,7 @@ actor SigningProfileService {
         request.httpMethod = method
         request.httpBody = body
         request.timeoutInterval = 120
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token.trimmingCharacters(in: .whitespacesAndNewlines))", forHTTPHeaderField: "Authorization")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue(apiVersion, forHTTPHeaderField: "X-GitHub-Api-Version")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
@@ -111,20 +122,50 @@ actor SigningProfileService {
         return url
     }
 
-    private func validate(response: URLResponse, data: Data, accepted: Set<Int>? = nil) throws {
+    private func validate(
+        response: URLResponse,
+        data: Data,
+        accepted: Set<Int>? = nil,
+        operation: String,
+        endpoint: String
+    ) throws {
         guard let http = response as? HTTPURLResponse else { throw NextSignerError.invalidResponse }
         let allowed = accepted ?? Set(200...299)
         guard allowed.contains(http.statusCode) else {
-            if http.statusCode == 403 {
-                throw NSError(domain: "NextSigner.Profile", code: 403, userInfo: [NSLocalizedDescriptionKey: "GitHub denied signing-profile updates. Edit the saved PAT and give this repository Secrets: Read and write permission, then try again."])
-            }
-            let message: String
-            if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let apiMessage = object["message"] as? String {
-                message = apiMessage
-            } else {
-                message = String(data: data, encoding: .utf8) ?? "Unknown GitHub error"
-            }
-            throw NextSignerError.http(http.statusCode, message)
+            let apiMessage: String = {
+                if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let value = object["message"] as? String,
+                   !value.isEmpty {
+                    return value
+                }
+                let raw = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                return raw.isEmpty ? "No response message" : String(raw.prefix(500))
+            }()
+
+            let acceptedPermissions = http.value(forHTTPHeaderField: "X-Accepted-GitHub-Permissions")
+                ?? http.value(forHTTPHeaderField: "x-accepted-github-permissions")
+                ?? "not returned"
+            let oauthScopes = http.value(forHTTPHeaderField: "X-OAuth-Scopes")
+                ?? http.value(forHTTPHeaderField: "x-oauth-scopes")
+                ?? "not returned"
+            let tokenSuffix = String(token.trimmingCharacters(in: .whitespacesAndNewlines).suffix(4))
+
+            let detail = """
+            GitHub HTTP \(http.statusCode)
+            Operation: \(operation)
+            Repository: \(configuration.owner)/\(configuration.repository)
+            Endpoint: \(endpoint)
+            GitHub message: \(apiMessage)
+            Accepted permissions: \(acceptedPermissions)
+            OAuth scopes: \(oauthScopes)
+            Saved token ending: ••••\(tokenSuffix)
+            """
+
+            throw NSError(
+                domain: "NextSigner.Profile",
+                code: http.statusCode,
+                userInfo: [NSLocalizedDescriptionKey: detail]
+            )
         }
     }
 }
