@@ -1,6 +1,13 @@
 import UIKit
 import WebKit
 
+private final class SharedBrowserSession {
+    static let shared = SharedBrowserSession()
+    let dataStore = WKWebsiteDataStore.default()
+    let processPool = WKProcessPool()
+    private init() {}
+}
+
 protocol BrowserPaneViewDelegate: AnyObject {
     func browserPaneRequestedFocus(_ pane: BrowserPaneView)
 }
@@ -11,15 +18,20 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 
     private let addressField = UITextField()
     private let progress = UIProgressView(progressViewStyle: .bar)
+    private let autoRefreshButton = UIButton(type: .system)
     private let index: Int
     private var progressObservation: NSKeyValueObservation?
     private var urlObservation: NSKeyValueObservation?
+    private var autoRefreshTimer: Timer?
+    private var autoRefreshInterval: TimeInterval?
+    private var paneIsActive = true
 
     init(index: Int) {
         self.index = index
 
         let config = WKWebViewConfiguration()
-        config.websiteDataStore = .default()
+        config.websiteDataStore = SharedBrowserSession.shared.dataStore
+        config.processPool = SharedBrowserSession.shared.processPool
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
@@ -37,6 +49,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
     }
 
     deinit {
+        autoRefreshTimer?.invalidate()
         progressObservation?.invalidate()
         urlObservation?.invalidate()
     }
@@ -45,7 +58,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: symbol), for: .normal)
         button.addTarget(self, action: action, for: .touchUpInside)
-        button.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 28).isActive = true
         button.heightAnchor.constraint(equalToConstant: 30).isActive = true
         return button
     }
@@ -73,9 +86,15 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         let reload = makeButton("arrow.clockwise", action: #selector(reloadPage))
         let focus = makeButton("arrow.up.left.and.arrow.down.right", action: #selector(focusPane))
 
-        let bar = UIStackView(arrangedSubviews: [back, forward, reload, addressField, focus])
+        autoRefreshButton.setImage(UIImage(systemName: "timer"), for: .normal)
+        autoRefreshButton.showsMenuAsPrimaryAction = true
+        autoRefreshButton.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        autoRefreshButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        updateAutoRefreshMenu()
+
+        let bar = UIStackView(arrangedSubviews: [back, forward, reload, autoRefreshButton, addressField, focus])
         bar.axis = .horizontal
-        bar.spacing = 3
+        bar.spacing = 2
         bar.alignment = .center
 
         [bar, progress, webView].forEach {
@@ -84,8 +103,8 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         }
 
         NSLayoutConstraint.activate([
-            bar.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 5),
-            bar.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5),
+            bar.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
+            bar.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
             bar.topAnchor.constraint(equalTo: topAnchor, constant: 5),
             bar.heightAnchor.constraint(equalToConstant: 34),
 
@@ -108,7 +127,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
     private func observeWebView() {
         progressObservation = webView.observe(\.estimatedProgress, options: [.initial, .new]) { [weak self] webView, _ in
             DispatchQueue.main.async {
-                guard let self = self else { return }
+                guard let self else { return }
                 self.progress.progress = Float(webView.estimatedProgress)
                 self.progress.isHidden = webView.estimatedProgress >= 1.0
             }
@@ -116,7 +135,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 
         urlObservation = webView.observe(\.url, options: [.new]) { [weak self] webView, _ in
             DispatchQueue.main.async {
-                guard let self = self else { return }
+                guard let self else { return }
                 if let value = webView.url?.absoluteString, !value.hasPrefix("about:") {
                     self.addressField.text = value
                 }
@@ -151,6 +170,62 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 
         guard let url = URL(string: candidate) else { return }
         webView.load(URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
+    }
+
+    func setPaneActive(_ active: Bool) {
+        paneIsActive = active
+        if active {
+            restartAutoRefreshTimer()
+        } else {
+            autoRefreshTimer?.invalidate()
+            autoRefreshTimer = nil
+        }
+    }
+
+    private func updateAutoRefreshMenu() {
+        let choices: [(String, TimeInterval?)] = [
+            ("Off", nil),
+            ("1 minute", 60),
+            ("2 minutes", 120),
+            ("3 minutes", 180),
+            ("5 minutes", 300),
+            ("10 minutes", 600)
+        ]
+
+        let actions = choices.map { title, interval in
+            UIAction(title: title, state: intervalsMatch(interval, autoRefreshInterval) ? .on : .off) { [weak self] _ in
+                self?.setAutoRefresh(interval)
+            }
+        }
+        autoRefreshButton.menu = UIMenu(title: "Auto Refresh", children: actions)
+        autoRefreshButton.accessibilityLabel = autoRefreshInterval == nil ? "Auto Refresh Off" : "Auto Refresh On"
+    }
+
+    private func intervalsMatch(_ lhs: TimeInterval?, _ rhs: TimeInterval?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil): return true
+        case let (a?, b?): return abs(a - b) < 0.5
+        default: return false
+        }
+    }
+
+    private func setAutoRefresh(_ interval: TimeInterval?) {
+        autoRefreshInterval = interval
+        updateAutoRefreshMenu()
+        restartAutoRefreshTimer()
+    }
+
+    private func restartAutoRefreshTimer() {
+        autoRefreshTimer?.invalidate()
+        autoRefreshTimer = nil
+        guard paneIsActive, let interval = autoRefreshInterval else { return }
+
+        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            guard let self, self.paneIsActive, self.webView.url != nil else { return }
+            self.webView.reload()
+        }
+        autoRefreshTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -265,6 +340,10 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             panes.append(pane)
         }
 
+        for (index, pane) in panes.enumerated() {
+            pane.setPaneActive(index < browserCount)
+        }
+
         rebuildRows()
         countButton.setTitle("\(browserCount) ▾", for: .normal)
         countButton.menu = makeCountMenu()
@@ -325,7 +404,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
-            guard let self = self, self.focusedPane == nil else { return }
+            guard let self, self.focusedPane == nil else { return }
             self.rebuildRows()
         }
     }
@@ -393,7 +472,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         }
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Load All", style: .default) { [weak self, weak alert] _ in
-            guard let self = self, let text = alert?.textFields?.first?.text else { return }
+            guard let self, let text = alert?.textFields?.first?.text else { return }
             self.panes.prefix(self.browserCount).forEach { $0.load(text) }
         })
         present(alert, animated: true)
