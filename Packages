@@ -238,44 +238,6 @@ Author: Next Solution
 Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
 Name: Low Power Mode Haptic
 
-Package: com.nextsolution.headphonedisconnecthaptic
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Solution
-Installed-Size: 348
-Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_RootHide.deb
-Size: 9178
-MD5sum: 895f378b94cff9a51ab10c6135b4a75d
-SHA1: 89d2636ba919591667ede2bd92238c25a7a037df
-SHA256: b5c3d830a1217e244862d9950c69cdf8db5d048d150c9790759f743524add5a9
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
-Author: Next Solution
-Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
-Name: Headphone Disconnect Haptic
-
-Package: com.nextsolution.headphonedisconnecthaptic
-Version: 1.0.0
-Architecture: iphoneos-arm64
-Maintainer: Next Solution
-Installed-Size: 348
-Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_Rootless.deb
-Size: 9260
-MD5sum: a1e99e44be00f51ddc90b1fe11d83644
-SHA1: ac63e73b94b9a093382510209d784ce395dc2620
-SHA256: 3393596944968c526b276aa2c836fc6364480c6160af7503fd3b8d6799b3b2ea
-Section: Tweaks
-Priority: optional
-Homepage: https://nextsolution.cc/
-Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
-Author: Next Solution
-Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
-Name: Headphone Disconnect Haptic
-
 Package: com.nextsolution.charge80haptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
@@ -1819,3 +1781,41 @@ Description: Plays one warning haptic when the iPhone newly enters a serious or 
 Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/thermalwarninghaptic.html
 Name: Thermal Warning Haptic
+
+Package: com.nextsolution.headphonedisconnecthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Jailbreak
+Installed-Size: 348
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_RootHide.deb
+Size: 9204
+MD5sum: 8cb76b7efdf3ac106fba54de13413e38
+SHA1: f2d65ffa457609d6cb645b99f70e40dc8c3e283d
+SHA256: 1c9ebdcbfc55ef178887f9e6401079e96bae12cb569878ef9123059ae107d86d
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
+Author: Next Jailbreak
+Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
+Name: Headphone Disconnect Haptic
+
+Package: com.nextsolution.headphonedisconnecthaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Jailbreak
+Installed-Size: 348
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_Rootless.deb
+Size: 9260
+MD5sum: 8a8fcd4f11953984dd97ffb7e14b4fd2
+SHA1: 6a3294e04afd8b4dd0a554741272d92cbc652354
+SHA256: ddf598244b46f4de1708c24b96d782babbe7281f53822d1099b64070c2ddedb5
+Section: Tweaks
+Priority: optional
+Homepage: https://nextsolution.cc/
+Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
+Author: Next Jailbreak
+Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
+Name: Headphone Disconnect Haptic
