@@ -20,6 +20,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Prepare OpenVPN package
+        working-directory: apps/next-multi-browser
+        run: bash scripts/prepare-tunnelkit.sh
       - name: Generate Xcode project
         working-directory: apps/next-multi-browser
         run: xcodegen generate
@@ -36,18 +39,30 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY='' \
             build
+      - name: Ad-hoc sign VPN extension and host
+        working-directory: apps/next-multi-browser
+        run: |
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP_PATH"
+          EXT_PATH="$APP_PATH/PlugIns/NextMultiBrowserVPN.appex"
+          test -d "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der --entitlements VPNExtension/VPN.entitlements "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der --entitlements App.entitlements "$APP_PATH"
+          /usr/bin/codesign -d --entitlements :- "$APP_PATH" || true
+          /usr/bin/codesign -d --entitlements :- "$EXT_PATH" || true
       - name: Package TIPA
         working-directory: apps/next-multi-browser
         run: |
           APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)
           test -n "$APP_PATH"
+          rm -rf package
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.0.0_iPhone_Test.tipa Payload
+          zip -qry ../NextMultiBrowser_1.0.3_GlobalTimer_VPN_iPhone_Test.tipa Payload
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.0.0-iPhone-Test
-          path: apps/next-multi-browser/NextMultiBrowser_1.0.0_iPhone_Test.tipa
+          name: NextMultiBrowser-1.0.3-GlobalTimer-VPN
+          path: apps/next-multi-browser/NextMultiBrowser_1.0.3_GlobalTimer_VPN_iPhone_Test.tipa
           if-no-files-found: error
