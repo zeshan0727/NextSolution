@@ -1,0 +1,45 @@
+name: Replace personal branding
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/replace-personal-branding.yml'
+      - 'automation/replace_personal_branding.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  replace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace personal name with NextSolution
+        run: |
+          python3 automation/replace_personal_branding.py
+
+      - name: Verify
+        run: |
+          git diff --check
+          if git grep -n -I -E 'Muhammad[[:space:]]+Zeeshan[[:space:]]+Barvi|Zeeshan[[:space:]]+Barvi' -- . ':!automation/replace_personal_branding.py' ':!assets/site-branding.js'; then
+            echo 'Personal-name references still remain.'
+            exit 1
+          fi
+
+      - name: Commit cleanup
+        run: |
+          if git diff --quiet; then
+            echo 'No changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Replace personal name with NextSolution site-wide'
+          git push origin HEAD:main
