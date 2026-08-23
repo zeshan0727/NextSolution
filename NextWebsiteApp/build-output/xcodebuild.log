@@ -9,7 +9,7 @@ Build settings from command line:
 
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
-{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:79d583b75da37b16ed88c65153a433b44a34bf6e, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:efe08e49ac455bc685d1a3543074716dc2b08d1b, name:My Mac }
 { platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
 note: Using codesigning identity override: 
 ComputePackagePrebuildTargetDependencyGraph
@@ -41,12 +41,8 @@ ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/X
 
 ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
 
-Build description signature: 8c0ec5fbd0c63fa86a4aaba58cc883b6
-Build description path: /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/XCBuildData/8c0ec5fbd0c63fa86a4aaba58cc883b6.xcbuilddata
-ClangStatCache /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
-    cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution.xcodeproj
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -o /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
-
+Build description signature: 0dad5c0ee5ca07b5fdd3bdf39e4c39cc
+Build description path: /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/XCBuildData/0dad5c0ee5ca07b5fdd3bdf39e4c39cc.xcbuilddata
 CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution.xcodeproj
     builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products
@@ -55,25 +51,29 @@ CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution.xcodeproj
     builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex
 
-WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution-9f591b3928c185b05945e5a46a9f8d16-VFS-iphoneos/all-product-headers.yaml
+ClangStatCache /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution.xcodeproj
-    write-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution-9f591b3928c185b05945e5a46a9f8d16-VFS-iphoneos/all-product-headers.yaml
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -o /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
 
 CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution.xcodeproj
     builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos
 
+WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution-9f591b3928c185b05945e5a46a9f8d16-VFS-iphoneos/all-product-headers.yaml
+    cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution.xcodeproj
+    write-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution-9f591b3928c185b05945e5a46a9f8d16-VFS-iphoneos/all-product-headers.yaml
+
 CreateBuildDirectory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution.xcodeproj
     builtin-create-build-directory /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
 
-WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution.SwiftFileList (in target 'NextSolution' from project 'NextSolution')
-    cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
-    write-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution.SwiftFileList
-
 WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution_const_extract_protocols.json (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
     write-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution.SwiftFileList (in target 'NextSolution' from project 'NextSolution')
+    cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
+    write-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution.SwiftFileList
 
 WriteAuxiliaryFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution.SwiftConstValuesFileList (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
@@ -123,13 +123,13 @@ MkDir /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Pr
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
     /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app
 
-MkDir /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/assetcatalog_output/thinned (in target 'NextSolution' from project 'NextSolution')
-    cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
-    /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/assetcatalog_output/thinned
-
 MkDir /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/assetcatalog_output/unthinned (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
     /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/assetcatalog_output/unthinned
+
+MkDir /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/assetcatalog_output/thinned (in target 'NextSolution' from project 'NextSolution')
+    cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
+    /bin/mkdir -p /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/assetcatalog_output/thinned
 
 GenerateAssetSymbols /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/NextSolution/Assets.xcassets (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
@@ -208,8 +208,8 @@ ProcessInfoPlistFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
 ExtractAppIntentsMetadata (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name NextSolution --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 15.0 --bundle-identifier com.nextsolution.website --output /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app --target-triple arm64-apple-ios15.0 --binary-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app/NextSolution --dependency-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution_dependency_info.dat --stringsdata-file /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution.SwiftFileList --metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/NextSolution.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/NextSolution.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/Objects-normal/arm64/NextSolution.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-08-23 13:58:49.802 appintentsmetadataprocessor[3977:14610] Starting appintentsmetadataprocessor export
-2026-08-23 13:58:49.809 appintentsmetadataprocessor[3977:14610] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-08-23 14:17:27.365 appintentsmetadataprocessor[28853:77501] Starting appintentsmetadataprocessor export
+2026-08-23 14:17:27.369 appintentsmetadataprocessor[28853:77501] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 CopySwiftLibs /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
@@ -223,8 +223,8 @@ GenerateDSYMFile /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/bui
 AppIntentsSSUTraining (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app/Info.plist --temp-dir-path /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/ssu --bundle-id com.nextsolution.website --product-path /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app --extracted-metadata-path /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app/Metadata.appintents --metadata-file-list /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Intermediates.noindex/NextSolution.build/Release-iphoneos/NextSolution.build/NextSolution.DependencyMetadataFileList --archive-ssu-assets
-2026-08-23 13:58:49.846 appintentsnltrainingprocessor[3979:14614] Parsing options for appintentsnltrainingprocessor
-2026-08-23 13:58:49.847 appintentsnltrainingprocessor[3979:14614] No AppShortcuts found - Skipping.
+2026-08-23 14:17:27.402 appintentsnltrainingprocessor[28855:77506] Parsing options for appintentsnltrainingprocessor
+2026-08-23 14:17:27.403 appintentsnltrainingprocessor[28855:77506] No AppShortcuts found - Skipping.
 
 RegisterExecutionPolicyException /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp/build/Build/Products/Release-iphoneos/NextSolution.app (in target 'NextSolution' from project 'NextSolution')
     cd /Users/runner/work/NextSolution/NextSolution/NextWebsiteApp
