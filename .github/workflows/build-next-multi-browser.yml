@@ -1,11 +1,6 @@
 name: Build Next Multi Browser TIPA
 
 on:
-  push:
-    branches: [next-multi-browser]
-    paths:
-      - 'apps/next-multi-browser/**'
-      - '.github/workflows/build-next-multi-browser.yml'
   pull_request:
     branches: [main]
     paths:
