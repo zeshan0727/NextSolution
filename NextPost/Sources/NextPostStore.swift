@@ -134,29 +134,38 @@ final class NextPostStore: ObservableObject {
     func openInX() {
         guard !generatedPost.isEmpty else { return }
 
-        let encoded = generatedPost.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        if let appURL = URL(string: "twitter://post?message=\(encoded)") {
-            UIApplication.shared.open(appURL, options: [:]) { success in
-                guard !success else { return }
-                Task { @MainActor in
-                    self.openXWebIntent()
-                }
-            }
-        } else {
-            openXWebIntent()
+        // Give X the article URL as an explicit Web Intent URL parameter rather
+        // than burying it only inside pre-filled text. That lets X recognize
+        // the link as the card target and avoids deep-link query parsing from
+        // splitting article URLs that themselves contain UTM parameters.
+        guard let article = selectedArticle else {
+            openXWebIntent(text: generatedPost, url: nil)
+            return
         }
+
+        let shareURL = article.socialShareURL
+        let linkedLine = "🔗 \(shareURL.absoluteString)\n"
+        let textOnly = generatedPost
+            .replacingOccurrences(of: linkedLine, with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        openXWebIntent(text: textOnly, url: shareURL)
     }
 
     func openArticle() {
-        guard let url = selectedArticle?.cleanURL else { return }
+        guard let url = selectedArticle?.publishedURL else { return }
         UIApplication.shared.open(url)
     }
 
-    private func openXWebIntent() {
+    private func openXWebIntent(text: String, url: URL?) {
         var components = URLComponents(string: "https://twitter.com/intent/tweet")
-        components?.queryItems = [URLQueryItem(name: "text", value: generatedPost)]
-        guard let url = components?.url else { return }
-        UIApplication.shared.open(url)
+        var items = [URLQueryItem(name: "text", value: text)]
+        if let url {
+            items.append(URLQueryItem(name: "url", value: url.absoluteString))
+        }
+        components?.queryItems = items
+        guard let intentURL = components?.url else { return }
+        UIApplication.shared.open(intentURL)
     }
 
     private func reconcileUsedLinks(with articles: [PublishedArticle]) {
@@ -175,6 +184,6 @@ final class NextPostStore: ObservableObject {
         defaults.set(cycleNumber, forKey: Key.cycleNumber)
         defaults.set(generatedPost, forKey: Key.generatedPost)
         defaults.set(selectedArticle?.title, forKey: Key.selectedTitle)
-        defaults.set(selectedArticle?.cleanURL.absoluteString, forKey: Key.selectedURL)
+        defaults.set(selectedArticle?.publishedURL.absoluteString, forKey: Key.selectedURL)
     }
 }
