@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-23T10:17:02Z",
+  "updatedAt": "2026-08-23T11:00:18Z",
   "files": [
+    {
+      "id": "nextreminder-1.3.28-stable-files-rollback",
+      "name": "Next Reminder 1.3.28 — Stable Files Rollback",
+      "fileName": "NextReminder_1.3.28_Unsigned.tipa",
+      "type": "tipa",
+      "platform": "Unsigned TIPA / iOS 16+",
+      "version": "1.3.28 (38)",
+      "url": "https://nextsolution.cc/transfer/files/NextReminder/1.3.28/NextReminder_1.3.28_Unsigned.tipa",
+      "sha256": "960f1199cbc5b32962f8077df0bdd48b0c3d6b3c3c0ca94ee1104882e607012b",
+      "sizeBytes": 2061731,
+      "notes": "Stability rollback for the persistent Files freeze. Restores the entire File Sharing implementation to the verified pre-report stable source instead of carrying any Pending Report/PDF/background-send UI code in the Files view. Keeps the current app data, other app updates, Live Activity version alignment, and compiled AppIcon fix. Pending Report generation is temporarily removed from the app while Files stability is verified."
+    },
     {
       "id": "ns-admin-1.0.5",
       "name": "NS Admin 1.0.5",
@@ -14,20 +26,8 @@
       "notes": "Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock."
     },
     {
-      "id": "nextreminder-1.3.27-files-stability-fix",
-      "name": "Next Reminder 1.3.27 \u2014 Files Stability Fix",
-      "fileName": "NextReminder_1.3.27_Unsigned.tipa",
-      "type": "tipa",
-      "platform": "Unsigned TIPA / iOS 16+",
-      "version": "1.3.27 (37)",
-      "url": "https://nextsolution.cc/transfer/files/NextReminder/1.3.27/NextReminder_1.3.27_Unsigned.tipa",
-      "sha256": "b0b5243a8d2d6f168ba5e4585beb511794a531df1f6903d4328a9b6b0b34f9c5",
-      "sizeBytes": 2188291,
-      "notes": "Stability-first Files fix. The Pending Reminders Report is isolated behind its own navigation screen, so opening Files no longer constructs the heavy report UI or scans saved PDFs. Report/PDF/background-send/Gmail-preservation functionality remains available after tapping Pending Reminders Report. Retains the compiled AppIcon fix from 1.3.26."
-    },
-    {
       "id": "nextquickreminder-1.0.14-background-pdf-roothide",
-      "name": "Next Quick Reminder 1.0.14 \u2014 Background PDF Send",
+      "name": "Next Quick Reminder 1.0.14 — Background PDF Send",
       "fileName": "NextQuickReminder_1.0.14_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
@@ -61,7 +61,7 @@
     },
     {
       "id": "nextmockupstudio-0.4-live3d",
-      "name": "Next Mockup Studio 0.4 \u2014 Live 3D iPhone Test",
+      "name": "Next Mockup Studio 0.4 — Live 3D iPhone Test",
       "fileName": "NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
@@ -164,7 +164,7 @@
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "platform": "TrollStore / iOS 16+",
-      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
+      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
       "version": "1.0.2",
       "type": "tipa",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
