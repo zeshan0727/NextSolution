@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-23T14:04:42Z",
+  "updatedAt": "2026-08-23T14:05:25Z",
   "files": [
+    {
+      "id": "ns-admin-1.0.5",
+      "name": "NS Admin 1.0.5",
+      "fileName": "NS-Admin-1.0.5.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.5",
+      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa",
+      "sha256": "20d648ccfbee5ede879bea08a98f0ff801eedef7ef6714ea2c6495515821360f",
+      "notes": "Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock."
+    },
     {
       "id": "nextlock-1.1.5-cpufix-test11-livefeatures-roothide",
       "name": "NextLock 1.1.5 CPU Fix Test 11 Live Features RootHide",
@@ -36,17 +47,6 @@
       "sha256": "de51f5b3c3390f09657afbe36516f1a46ee000aaa771b11d5db50cbac8c1944d",
       "sizeBytes": 2197838,
       "notes": "Adds Automatic Email controls to the standalone Pending Reports screen while keeping the confirmed-stable Files implementation byte-for-byte unchanged. Choose a preset time and any weekdays or Daily. Manual PDF generation, newest-3 retention, sharing, and manual email remain available."
-    },
-    {
-      "id": "ns-admin-1.0.5",
-      "name": "NS Admin 1.0.5",
-      "fileName": "NS-Admin-1.0.5.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / iOS 16+",
-      "version": "1.0.5",
-      "url": "https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa",
-      "sha256": "4036ef5701dad452b988a6e80b8d5379e7fd54806c320d0718acffdde2bc6c27",
-      "notes": "Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock."
     },
     {
       "id": "nextlock-1.1.5-test19-preferences-sections-roothide",
