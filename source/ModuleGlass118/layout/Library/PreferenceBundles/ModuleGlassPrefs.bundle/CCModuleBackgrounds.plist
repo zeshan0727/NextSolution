@@ -3,38 +3,22 @@
 <plist version="1.0">
 <dict>
 	<key>title</key>
-	<string>Module Backgrounds</string>
+	<string>Module Glass</string>
 	<key>items</key>
 	<array>
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Module Backgrounds</string>
+			<string>APPEARANCE</string>
 			<key>footerText</key>
-			<string>Choose a separate local image for each Control Center module type.</string>
+			<string>Premium Control Center styling by Next Jailbreak. Existing module behavior and gestures remain native.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSSwitchCell</string>
 			<key>label</key>
-			<string>Remove Module Blur</string>
-			<key>defaults</key>
-			<string>com.nextsolution.unlockvibrate</string>
-			<key>key</key>
-			<string>CCModuleRemoveBlur</string>
-			<key>default</key>
-			<true/>
-			<key>PostNotification</key>
-			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
-			<key>description</key>
-			<string>Removes stock blur only from modules that have a custom image.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSSwitchCell</string>
-			<key>label</key>
-			<string>Enable Module Background Images</string>
+			<string>Enable Module Backgrounds</string>
 			<key>defaults</key>
 			<string>com.nextsolution.unlockvibrate</string>
 			<key>key</key>
@@ -44,13 +28,29 @@
 			<key>PostNotification</key>
 			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
 			<key>description</key>
-			<string>Shows the chosen image behind each matching Control Center module.</string>
+			<string>Show the selected image behind each matching Control Center module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>label</key>
+			<string>Remove Stock Module Blur</string>
+			<key>defaults</key>
+			<string>com.nextsolution.unlockvibrate</string>
+			<key>key</key>
+			<string>CCModuleRemoveBlur</string>
+			<key>default</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
+			<key>description</key>
+			<string>Remove Apple's stock blur only from modules that use a custom image.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSSliderCell</string>
 			<key>label</key>
-			<string>Background Image Opacity</string>
+			<string>Image Opacity</string>
 			<key>defaults</key>
 			<string>com.nextsolution.unlockvibrate</string>
 			<key>key</key>
@@ -66,13 +66,13 @@
 			<key>PostNotification</key>
 			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
 			<key>description</key>
-			<string>Adjusts the visibility of all custom module background images.</string>
+			<string>Adjust the visibility of all selected module background images.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSSwitchCell</string>
 			<key>label</key>
-			<string>Glow Module Icons &amp; Labels</string>
+			<string>Glow Icons &amp; Labels</string>
 			<key>defaults</key>
 			<string>com.nextsolution.unlockvibrate</string>
 			<key>key</key>
@@ -82,13 +82,13 @@
 			<key>PostNotification</key>
 			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
 			<key>description</key>
-			<string>Adds safe illumination to leaf icons and text without changing control layout.</string>
+			<string>Add safe illumination to module icons and text without changing their layout.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSSliderCell</string>
 			<key>label</key>
-			<string>Control Glow Brightness</string>
+			<string>Glow Brightness</string>
 			<key>defaults</key>
 			<string>com.nextsolution.unlockvibrate</string>
 			<key>key</key>
@@ -104,13 +104,13 @@
 			<key>PostNotification</key>
 			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
 			<key>description</key>
-			<string>Adjusts how prominently module icons and controls glow.</string>
+			<string>Adjust how prominently module icons and labels glow.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSSliderCell</string>
 			<key>label</key>
-			<string>Icon Glow Spread</string>
+			<string>Glow Spread</string>
 			<key>defaults</key>
 			<string>com.nextsolution.unlockvibrate</string>
 			<key>key</key>
@@ -126,303 +126,83 @@
 			<key>PostNotification</key>
 			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
 			<key>description</key>
-			<string>Adjusts the soft glow around module icons and labels.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Connectivity</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>connectivity</string>
-			<key>moduleTitle</key>
-			<string>Connectivity</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the connectivity module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Now Playing</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>media</string>
-			<key>moduleTitle</key>
-			<string>Now Playing</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the now playing module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Brightness</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>brightness</string>
-			<key>moduleTitle</key>
-			<string>Brightness</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the brightness module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Volume</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>volume</string>
-			<key>moduleTitle</key>
-			<string>Volume</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the volume module.</string>
-		</dict>
-		<dict>
-			<key>PostNotification</key>
-			<string>com.nextsolution.unlockvibrate/preferences.changed</string>
-			<key>cell</key>
-			<string>PSSwitchCell</string>
-			<key>default</key>
-			<false/>
-			<key>defaults</key>
-			<string>com.nextsolution.unlockvibrate</string>
-			<key>description</key>
-			<string>Keeps the working Volume background unchanged and applies your chosen color only to the native speaker glyph.</string>
-			<key>key</key>
-			<string>CCModuleVolumeIconColorEnabled</string>
-			<key>label</key>
-			<string>Custom Volume Icon Color</string>
-		</dict>
-		<dict>
-			<key>action</key>
-			<string>chooseVolumeIconColor:</string>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>description</key>
-			<string>Opens the native iOS color picker. Choosing a color automatically enables the custom Volume icon color.</string>
-			<key>label</key>
-			<string>Volume Icon Color</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Screen Mirroring</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>screenmirroring</string>
-			<key>moduleTitle</key>
-			<string>Screen Mirroring</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the screen mirroring module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Focus</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>focus</string>
-			<key>moduleTitle</key>
-			<string>Focus</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the focus module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Flashlight</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>flashlight</string>
-			<key>moduleTitle</key>
-			<string>Flashlight</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the flashlight module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Timer</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>timer</string>
-			<key>moduleTitle</key>
-			<string>Timer</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the timer module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Calculator</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>calculator</string>
-			<key>moduleTitle</key>
-			<string>Calculator</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the calculator module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Camera</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>camera</string>
-			<key>moduleTitle</key>
-			<string>Camera</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the camera module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Orientation Lock</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>orientation</string>
-			<key>moduleTitle</key>
-			<string>Orientation Lock</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the orientation lock module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Screen Recording</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>screenrecording</string>
-			<key>moduleTitle</key>
-			<string>Screen Recording</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the screen recording module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Low Power Mode</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>lowpower</string>
-			<key>moduleTitle</key>
-			<string>Low Power Mode</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the low power mode module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Dark Mode</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>darkmode</string>
-			<key>moduleTitle</key>
-			<string>Dark Mode</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the dark mode module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Hearing</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>hearing</string>
-			<key>moduleTitle</key>
-			<string>Hearing</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the hearing module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Notes</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>notes</string>
-			<key>moduleTitle</key>
-			<string>Notes</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the notes module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Home</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>home</string>
-			<key>moduleTitle</key>
-			<string>Home</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the home module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Choose or Remove Other Modules</string>
-			<key>action</key>
-			<string>configureCCModuleBackground:</string>
-			<key>moduleSlot</key>
-			<string>other</string>
-			<key>moduleTitle</key>
-			<string>Other Modules</string>
-			<key>description</key>
-			<string>Chooses or removes the image used behind the other modules module.</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
-			<string>Remove All Module Images</string>
-			<key>action</key>
-			<string>resetAllCCModuleBackgrounds:</string>
-			<key>description</key>
-			<string>Deletes every custom Control Center module background image.</string>
+			<string>Adjust the soft glow radius around module icons and labels.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Apply &amp; Restart</string>
+			<string>MODULE IMAGES</string>
 			<key>footerText</key>
-			<string>Apply refreshes Module Glass immediately. If Control Center is already cached, use Respring for a complete SpringBoard reload. Choosing a photo automatically enables module backgrounds.</string>
+			<string>Open a category, then tap any module to choose or remove its image.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Core Modules</string>
+			<key>detail</key>
+			<string>AuraCategoryListController</string>
+			<key>isController</key>
+			<true/>
+			<key>plist</key>
+			<string>ModuleGlassCoreModules</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Quick Controls</string>
+			<key>detail</key>
+			<string>AuraCategoryListController</string>
+			<key>isController</key>
+			<true/>
+			<key>plist</key>
+			<string>ModuleGlassQuickControls</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Display &amp; System</string>
+			<key>detail</key>
+			<string>AuraCategoryListController</string>
+			<key>isController</key>
+			<true/>
+			<key>plist</key>
+			<string>ModuleGlassDisplaySystem</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Accessories &amp; Apps</string>
+			<key>detail</key>
+			<string>AuraCategoryListController</string>
+			<key>isController</key>
+			<true/>
+			<key>plist</key>
+			<string>ModuleGlassAccessoriesApps</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkCell</string>
+			<key>label</key>
+			<string>Other &amp; Reset</string>
+			<key>detail</key>
+			<string>AuraCategoryListController</string>
+			<key>isController</key>
+			<true/>
+			<key>plist</key>
+			<string>ModuleGlassOtherReset</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>APPLY CHANGES</string>
+			<key>footerText</key>
+			<string>Apply your saved settings immediately, or respring if another tweak has cached Control Center.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -432,7 +212,7 @@
 			<key>action</key>
 			<string>applyCCModuleBackgrounds:</string>
 			<key>description</key>
-			<string>Reloads Module Glass settings and selected images without changing your other tweaks.</string>
+			<string>Reload Module Glass settings without a full respring.</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -442,7 +222,7 @@
 			<key>action</key>
 			<string>respringDevice:</string>
 			<key>description</key>
-			<string>Restarts SpringBoard so Control Center recreates all module views and reloads their backgrounds.</string>
+			<string>Restart SpringBoard and reload every module.</string>
 		</dict>
 	</array>
 </dict>

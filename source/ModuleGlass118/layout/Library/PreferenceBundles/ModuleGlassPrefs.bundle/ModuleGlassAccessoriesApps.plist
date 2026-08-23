@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Accessories &amp; Apps</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>ACCESSORIES &amp; APPS</string>
+			<key>footerText</key>
+			<string>Backgrounds for accessibility, Home, and app-based controls.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Hearing</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>hearing</string>
+			<key>moduleTitle</key>
+			<string>Hearing</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the hearing module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Notes</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>notes</string>
+			<key>moduleTitle</key>
+			<string>Notes</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the notes module.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Home</string>
+			<key>action</key>
+			<string>configureCCModuleBackground:</string>
+			<key>moduleSlot</key>
+			<string>home</string>
+			<key>moduleTitle</key>
+			<string>Home</string>
+			<key>description</key>
+			<string>Choose or remove the image used behind the home module.</string>
+		</dict>
+	</array>
+</dict>
+</plist>

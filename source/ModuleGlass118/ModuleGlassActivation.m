@@ -1,4 +1,4 @@
-// Module Glass 1.1.18 — NextLock-style activation UI and live license refresh.
+// Module Glass 1.1.19 — Next Jailbreak activation UI and live license refresh.
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
@@ -139,7 +139,7 @@ static void MGCheckActivation(void (^completion)(BOOL active, NSError *error)) {
     NSString *urlText = [NSString stringWithFormat:@"%@?t=%.0f", MGRegistryURL, NSDate.date.timeIntervalSince1970];
     NSURL *url = [NSURL URLWithString:urlText];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:15.0];
-    [request setValue:@"ModuleGlass/1.1.18" forHTTPHeaderField:@"User-Agent"];
+    [request setValue:@"ModuleGlass/1.1.19" forHTTPHeaderField:@"User-Agent"];
     [[[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         NSError *finalError = error;
         BOOL active = MGStoredActive();
@@ -221,7 +221,7 @@ static void MGCheckActivationAction(id controller, SEL command) {
     MGCheckActivation(^(BOOL active, NSError *error) {
         MGReloadSpecifiers(controller);
         if (error) {
-            MGShowResult(controller, @"Module Glass License", [NSString stringWithFormat:@"Could not reach the Next Solution activation server. Your existing activation state was not changed.\n\n%@", error.localizedDescription]);
+            MGShowResult(controller, @"Module Glass License", [NSString stringWithFormat:@"Could not reach the Next Jailbreak activation server. Your existing activation state was not changed.\n\n%@", error.localizedDescription]);
         } else if (active) {
             MGShowResult(controller, @"Activated", @"Module Glass is activated on this device.");
         } else {
