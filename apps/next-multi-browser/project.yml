@@ -1,0 +1,21 @@
+name: NextMultiBrowser
+options:
+  bundleIdPrefix: com.nextsolution
+  deploymentTarget:
+    iOS: '15.0'
+targets:
+  NextMultiBrowser:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    info:
+      path: Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser
+        PRODUCT_NAME: Next Multi Browser
+        SWIFT_VERSION: 5.0
+        TARGETED_DEVICE_FAMILY: '1,2'
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO
