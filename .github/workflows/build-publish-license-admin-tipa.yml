@@ -8,6 +8,7 @@ on:
       - 'scripts/patch_license_admin_102.py'
       - 'scripts/patch_license_admin_103.py'
       - 'scripts/patch_license_admin_104.py'
+      - 'scripts/patch_license_admin_105.py'
       - 'scripts/generate_ns_admin_icon.py'
       - '.github/workflows/build-publish-license-admin-tipa.yml'
 
@@ -39,16 +40,21 @@ jobs:
           python3 scripts/patch_license_admin_102.py
           python3 scripts/patch_license_admin_103.py
           python3 scripts/patch_license_admin_104.py
+          python3 scripts/patch_license_admin_105.py
           SRC=NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
           grep -q 'Protected App Storage' "$SRC"
           grep -q 'struct ActiveDevicesView' "$SRC"
           grep -q 'Label("Devices", systemImage: "iphone")' "$SRC"
           grep -q 'deviceModel' "$SRC"
           grep -q 'iosVersion' "$SRC"
-          grep -q 'LabeledContent("Version", value: "1.0.4")' "$SRC"
-          grep -q 'NSAdmin/1.0.4' "$SRC"
-          grep -q 'MARKETING_VERSION: "1.0.4"' NextSolutionLicenseAdmin/project.yml
-          grep -q 'CURRENT_PROJECT_VERSION: "104"' NextSolutionLicenseAdmin/project.yml
+          grep -q 'static let moduleGlass = ProductConfig' "$SRC"
+          grep -q 'com.nextsolution.nextaura.cc-module-backgrounds' "$SRC"
+          grep -q 'licenses/moduleglass.json' "$SRC"
+          grep -q 'static let all: \[ProductConfig\] = \[.nextLock, .moduleGlass\]' "$SRC"
+          grep -q 'LabeledContent("Version", value: "1.0.5")' "$SRC"
+          grep -q 'NSAdmin/1.0.5' "$SRC"
+          grep -q 'MARKETING_VERSION: "1.0.5"' NextSolutionLicenseAdmin/project.yml
+          grep -q 'CURRENT_PROJECT_VERSION: "105"' NextSolutionLicenseAdmin/project.yml
 
       - name: Generate NS Admin icon assets
         run: |
@@ -87,12 +93,17 @@ jobs:
           test -d "$APP"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.licenseadmin"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist")" = "NS Admin"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.0.4"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = "104"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.0.5"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = "105"
           EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")"
           test "$EXECUTABLE" = "NextSolutionLicenseAdmin"
           test -x "$APP/$EXECUTABLE"
           file "$APP/$EXECUTABLE" | grep -q 'Mach-O 64-bit executable arm64'
+          strings -a "$APP/$EXECUTABLE" > build-output/app.strings
+          grep -q 'Module Glass' build-output/app.strings
+          grep -q 'com.nextsolution.nextaura.cc-module-backgrounds' build-output/app.strings
+          grep -q 'licenses/moduleglass.json' build-output/app.strings
+          grep -q 'nextsolution-license-v1' build-output/app.strings
           test -s "$APP/AppIcon60x60@2x.png"
           test -s "$APP/AppIcon60x60@3x.png"
           /usr/bin/codesign --force --sign - --entitlements NextSolutionLicenseAdmin.entitlements --generate-entitlement-der "$APP"
@@ -104,11 +115,11 @@ jobs:
           set -euo pipefail
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/NextSolutionLicenseAdmin.app Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload NS-Admin-1.0.4.tipa
-          cp NS-Admin-1.0.4.tipa build-output/
-          shasum -a 256 NS-Admin-1.0.4.tipa | tee build-output/NS-Admin-1.0.4.sha256
-          unzip -l NS-Admin-1.0.4.tipa | grep -q "Payload/NextSolutionLicenseAdmin.app/NextSolutionLicenseAdmin"
-          test -s NS-Admin-1.0.4.tipa
+          ditto -c -k --sequesterRsrc --keepParent Payload NS-Admin-1.0.5.tipa
+          cp NS-Admin-1.0.5.tipa build-output/
+          shasum -a 256 NS-Admin-1.0.5.tipa | tee build-output/NS-Admin-1.0.5.sha256
+          unzip -l NS-Admin-1.0.5.tipa | grep -q "Payload/NextSolutionLicenseAdmin.app/NextSolutionLicenseAdmin"
+          test -s NS-Admin-1.0.5.tipa
 
       - name: Publish to NextSolution Transfer
         if: github.ref == 'refs/heads/main'
@@ -116,20 +127,20 @@ jobs:
           set -euo pipefail
           git config user.name "Next Solution Build Bot"
           git config user.email "actions@users.noreply.github.com"
-          cp NextSolutionLicenseAdmin/NS-Admin-1.0.4.tipa /tmp/NS-Admin-1.0.4.tipa
-          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.tipa /tmp/NS-Admin-1.0.4-artifact.tipa
-          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.sha256 /tmp/NS-Admin-1.0.4.sha256
+          cp NextSolutionLicenseAdmin/NS-Admin-1.0.5.tipa /tmp/NS-Admin-1.0.5.tipa
+          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.5.tipa /tmp/NS-Admin-1.0.5-artifact.tipa
+          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.5.sha256 /tmp/NS-Admin-1.0.5.sha256
           cp NextSolutionLicenseAdmin/build-output/xcodebuild.log /tmp/NS-Admin-xcodebuild.log
           git reset --hard HEAD
           git clean -fd NextSolutionLicenseAdmin
           git pull --rebase origin main
           mkdir -p NextSolutionLicenseAdmin/build-output
-          cp /tmp/NS-Admin-1.0.4-artifact.tipa NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.tipa
-          cp /tmp/NS-Admin-1.0.4.sha256 NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.sha256
+          cp /tmp/NS-Admin-1.0.5-artifact.tipa NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.5.tipa
+          cp /tmp/NS-Admin-1.0.5.sha256 NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.5.sha256
           cp /tmp/NS-Admin-xcodebuild.log NextSolutionLicenseAdmin/build-output/xcodebuild.log
-          DEST="transfer/files/NextSolutionLicenseAdmin/1.0.4/NS-Admin-1.0.4.tipa"
+          DEST="transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa"
           mkdir -p "$(dirname "$DEST")"
-          cp /tmp/NS-Admin-1.0.4.tipa "$DEST"
+          cp /tmp/NS-Admin-1.0.5.tipa "$DEST"
           SHA=$(shasum -a 256 "$DEST" | awk '{print $1}')
           python3 - "$SHA" <<'PY'
           import json,sys
@@ -139,15 +150,15 @@ jobs:
           p=Path('transfer/index.json')
           data=json.loads(p.read_text()) if p.exists() else {'version':1,'files':[]}
           entry={
-            'id':'ns-admin-1.0.4',
-            'name':'NS Admin 1.0.4',
-            'fileName':'NS-Admin-1.0.4.tipa',
+            'id':'ns-admin-1.0.5',
+            'name':'NS Admin 1.0.5',
+            'fileName':'NS-Admin-1.0.5.tipa',
             'type':'tipa',
             'platform':'TrollStore / iOS 16+',
-            'version':'1.0.4',
-            'url':'https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.4/NS-Admin-1.0.4.tipa',
+            'version':'1.0.5',
+            'url':'https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa',
             'sha256':sha,
-            'notes':'Fixes the missing Devices tab glyph on iOS 16 and adds device model + iOS version to activation requests and active-device cards. Keeps server-backed active device tracking, direct revoke, request handoff and TrollStore-safe token storage.'
+            'notes':'Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock.'
           }
           files=[x for x in data.get('files',[]) if not (x.get('id','').startswith('nextsolution-license-admin-') or x.get('id','').startswith('ns-admin-'))]
           data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
@@ -155,7 +166,7 @@ jobs:
           p.write_text(json.dumps(data,indent=2)+'\n')
           PY
           git add -f "$DEST" transfer/index.json
-          git commit -m "Publish NS Admin 1.0.4"
+          git commit -m "Publish NS Admin 1.0.5"
           for attempt in 1 2 3; do
             if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
             sleep $((attempt*3))
@@ -165,9 +176,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NS-Admin-1.0.4
+          name: NS-Admin-1.0.5
           path: |
-            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.tipa
-            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.4.sha256
+            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.5.tipa
+            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.5.sha256
             NextSolutionLicenseAdmin/build-output/xcodebuild.log
           if-no-files-found: error
