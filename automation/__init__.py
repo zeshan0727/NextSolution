@@ -1,1 +1,1 @@
-"""Next Solution editorial automation."""
+"""Next Jailbreak editorial automation."""

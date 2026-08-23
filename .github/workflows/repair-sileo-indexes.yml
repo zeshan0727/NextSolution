@@ -74,7 +74,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "Next Solution Build Bot"
+          git config user.name "Next Jailbreak Build Bot"
           git config user.email "actions@users.noreply.github.com"
           git add Packages.gz Packages.bz2 Packages.xz Packages.zst Release
           git diff --cached --check

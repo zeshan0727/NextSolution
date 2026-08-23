@@ -1,6 +1,6 @@
 # Next Signer
 
-Next Signer is a small iOS utility for the Next Solution private app catalog.
+Next Signer is a small iOS utility for the Next Jailbreak private app catalog.
 
 ## Goal
 

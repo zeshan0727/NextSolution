@@ -1,6 +1,6 @@
 # Headphone Disconnect Haptic 1.0.0
 
-A small Next Solution tweak for iOS 15+ that plays one warning haptic when a wired or Bluetooth personal-audio route is actually removed and audio falls back away from headphones.
+A small Next Jailbreak tweak for iOS 15+ that plays one warning haptic when a wired or Bluetooth personal-audio route is actually removed and audio falls back away from headphones.
 
 ## Single feature
 

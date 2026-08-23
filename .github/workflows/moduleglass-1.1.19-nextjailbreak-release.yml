@@ -71,7 +71,7 @@ jobs:
           grep -Fq 'Label: Next Jailbreak Repo' Release
           grep -Fq 'Module Glass 1.1.19 — Next Jailbreak' depictions/moduleglass.html
           grep -Fq 'BY NEXT JAILBREAK' depictions/moduleglass.html
-          if grep -Fq 'Next Solution' depictions/moduleglass.html; then
+          if grep -Fq 'Next Jailbreak' depictions/moduleglass.html; then
             echo 'Legacy customer-facing brand remains in the Module Glass depiction' >&2
             exit 1
           fi
@@ -82,11 +82,11 @@ jobs:
           grep -Fq 'amara@zeshanbarvi.uk' license/moduleglass/index.html
           grep -Fq 'NEXT JAILBREAK LICENSE' license/request/index.html
           grep -Fq 'nextsolutionlicense://request?' license/request/index.html
-          if grep -Fq 'Next Solution' license/moduleglass/index.html license/moduleglass/success/index.html; then
+          if grep -Fq 'Next Jailbreak' license/moduleglass/index.html license/moduleglass/success/index.html; then
             echo 'Legacy customer-facing brand remains in the Module Glass purchase flow' >&2
             exit 1
           fi
-          if grep -Fq 'Next Solution' license/request/index.html; then
+          if grep -Fq 'Next Jailbreak' license/request/index.html; then
             echo 'Legacy customer-facing brand remains in the activation request handoff' >&2
             exit 1
           fi

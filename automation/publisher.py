@@ -289,7 +289,7 @@ def _render_feed(entries: list[dict[str, Any]], site: dict[str, Any]) -> str:
     ElementTree.SubElement(channel, "title").text = str(site["site_name"])
     ElementTree.SubElement(channel, "link").text = str(site["base_url"])
     ElementTree.SubElement(channel, "description").text = (
-        "Verified-source jailbreak tweak information and Next Solution guides."
+        "Verified-source jailbreak tweak information and Next Jailbreak guides."
     )
     ElementTree.SubElement(channel, "language").text = "en"
     sorted_entries = sorted(

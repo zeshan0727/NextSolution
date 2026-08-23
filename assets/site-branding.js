@@ -1,11 +1,11 @@
-/* Next Solution — site-wide branding cleanup */
+/* Next Jailbreak — site-wide branding cleanup */
 (function () {
   'use strict';
 
   var PERSONAL_NAME = /\b(?:Muhammad\s+)?Zeeshan(?:\s+Barvi)?\b/g;
 
   function replaceName(value) {
-    return String(value || '').replace(PERSONAL_NAME, 'NextSolution');
+    return String(value || '').replace(PERSONAL_NAME, 'Next Jailbreak');
   }
 
   function replaceText(root) {

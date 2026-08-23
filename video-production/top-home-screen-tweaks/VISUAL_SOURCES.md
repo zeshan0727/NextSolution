@@ -1,6 +1,6 @@
 # Feature visual sources
 
-The video builder uses resized copies of authentic screenshots published by each package marketplace or developer. The copies are framed, cropped, and composed by Next Solution for editorial comparison. They are not represented as original Next Solution screenshots or hands-on testing.
+The video builder uses resized copies of authentic screenshots published by each package marketplace or developer. The copies are framed, cropped, and composed by Next Jailbreak for editorial comparison. They are not represented as original Next Jailbreak screenshots or hands-on testing.
 
 | Tweak | Publisher/source | Package or developer page | Included source images |
 | --- | --- | --- | --- |

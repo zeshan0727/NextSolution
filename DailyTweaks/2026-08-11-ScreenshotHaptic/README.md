@@ -4,7 +4,7 @@
 Screenshot Haptic plays one success haptic after iOS confirms that a screenshot was taken. It does not capture, inspect, copy, upload, modify, block, hide, or delete screenshot content.
 
 ## Native-feature verification
-Target iOS is 15 and later, primarily iOS 16.0. Apple documents `UIApplicationUserDidTakeScreenshotNotification` as a notification posted after a screenshot is taken. Apple Support documents that on iOS 18 and earlier a screenshot produces the normal screenshot flow with a temporary thumbnail; the documented iOS screenshot settings do not provide a dedicated screenshot-haptic option. Repository history and the current `Packages` catalogue were reviewed before implementation and no Next Solution package provides this feature.
+Target iOS is 15 and later, primarily iOS 16.0. Apple documents `UIApplicationUserDidTakeScreenshotNotification` as a notification posted after a screenshot is taken. Apple Support documents that on iOS 18 and earlier a screenshot produces the normal screenshot flow with a temporary thumbnail; the documented iOS screenshot settings do not provide a dedicated screenshot-haptic option. Repository history and the current `Packages` catalogue were reviewed before implementation and no Next Jailbreak package provides this feature.
 
 Apple references reviewed:
 - https://developer.apple.com/documentation/uikit/uiapplication/userdidtakescreenshotnotification

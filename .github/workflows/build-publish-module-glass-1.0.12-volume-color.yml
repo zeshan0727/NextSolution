@@ -385,7 +385,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'Next Solution Build Bot'
+          git config user.name 'Next Jailbreak Build Bot'
           git config user.email 'actions@users.noreply.github.com'
           git pull --rebase --autostash origin main
           grep -q '^Version: 1.0.8$' source/ModuleGlass/control

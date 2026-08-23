@@ -5,7 +5,7 @@
 </defs>
 <rect width="1600" height="900" fill="url(#bg)"/>
 <text x="90" y="105" fill="url(#accent)" font-family="Arial" font-size="66" font-weight="900">NextLock Features</text>
-<text x="90" y="154" fill="#aab6d0" font-family="Arial" font-size="24">A clean Lock Screen customization suite by Next Solution</text>
+<text x="90" y="154" fill="#aab6d0" font-family="Arial" font-size="24">A clean Lock Screen customization suite by Next Jailbreak</text>
 
 <g transform="translate(90 220)">
   <g>
@@ -60,7 +60,7 @@
   <text x="470" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
   <text x="508" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">Live reload</text>
   <text x="650" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
-  <text x="688" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">Next Solution</text>
+  <text x="688" y="45" fill="#f1f4ff" font-family="Arial" font-size="23" font-weight="700">Next Jailbreak</text>
   <text x="870" y="45" fill="#71809f" font-family="Arial" font-size="22">•</text>
   <text x="908" y="45" fill="#9aabca" font-family="Arial" font-size="22">nextsolution.cc</text>
 </g>

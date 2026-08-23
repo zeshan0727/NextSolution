@@ -1,11 +1,11 @@
-/* Next Solution — Adsterra responsive ad manager */
+/* Next Jailbreak — Adsterra responsive ad manager */
 (function () {
   'use strict';
 
   // Apply shared branding cleanup on every page before the content renderer.
   if (!document.querySelector('script[data-ns-site-branding]')) {
     var brandingScript = document.createElement('script');
-    brandingScript.src = '/assets/site-branding.js?v=20260823-1';
+    brandingScript.src = '/assets/site-branding.js?v=20260823-2';
     brandingScript.defer = true;
     brandingScript.setAttribute('data-ns-site-branding', '1');
     document.head.appendChild(brandingScript);

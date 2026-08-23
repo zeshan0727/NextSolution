@@ -65,7 +65,7 @@ jobs:
           mkdir -p Diagnostics/low-battery-haptic-alert
           cp "$RUNNER_TEMP/lbha-rootless-diagnostic.txt" Diagnostics/low-battery-haptic-alert/rootless-latest.txt
           printf 'source_commit=%s\nworkflow_run=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > Diagnostics/low-battery-haptic-alert/status.txt
-          git config user.name "Next Solution Diagnostic Bot"
+          git config user.name "Next Jailbreak Diagnostic Bot"
           git config user.email "actions@users.noreply.github.com"
           git add Diagnostics/low-battery-haptic-alert/rootless-latest.txt Diagnostics/low-battery-haptic-alert/status.txt
           git diff --cached --check

@@ -1,4 +1,4 @@
-/* Next Solution — live article/category renderer */
+/* Next Jailbreak — live article/category renderer */
 (function () {
   'use strict';
 
@@ -7,7 +7,7 @@
   var isTutorials = path === '/tutorials/' || path === '/tutorials' || path === '/tutorials.html';
   if (!isHome && !isTutorials) return;
 
-  var HOME_FALLBACK_IMAGE = '/nextsolution-iphone-customization-showcase.png';
+  var HOME_FALLBACK_IMAGE = '/assets/brand/next-jailbreak-social-card.png';
   var HOME_PAGE_SIZE = 5;
   var homeEntries = [];
   var homePage = 1;
@@ -64,13 +64,6 @@
   function installHomePolish() {
     if (!isHome) return;
 
-    var hero = document.querySelector('.editorial-hero');
-    if (hero) {
-      var stage = hero.querySelector('.hero-stage');
-      if (stage) stage.remove();
-      hero.classList.add('editorial-hero-clean');
-    }
-
     if (!document.getElementById('ns-home-polish')) {
       var style = document.createElement('style');
       style.id = 'ns-home-polish';
@@ -123,7 +116,7 @@
 
     var source = document.createElement('span');
     source.className = 'tag';
-    source.textContent = text(entry.source_name || 'Next Solution');
+    source.textContent = text(entry.source_name || 'Next Jailbreak');
     meta.appendChild(source);
     article.appendChild(meta);
 
@@ -135,7 +128,7 @@
 
     var image = document.createElement('img');
     image.src = cleanImage(entry.image);
-    image.alt = text(entry.title || entry.name || 'Next Solution article');
+    image.alt = text(entry.title || entry.name || 'Next Jailbreak article');
     image.width = 1600;
     image.height = 900;
     image.loading = eager ? 'eager' : 'lazy';
@@ -146,7 +139,7 @@
     article.appendChild(link);
 
     var title = document.createElement('h3');
-    title.textContent = text(entry.title || entry.name || 'Next Solution article');
+    title.textContent = text(entry.title || entry.name || 'Next Jailbreak article');
     article.appendChild(title);
 
     var description = document.createElement('p');

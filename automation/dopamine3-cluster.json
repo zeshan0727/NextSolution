@@ -17,7 +17,7 @@
     "The Dopamine 3.x README points to https://ellekit.space/dopamine/ as the official website and download location.",
     "The official Dopamine website describes Dopamine as rootless and identifies Sileo and Zebra as package managers associated with Dopamine; its displayed compatibility text may lag the newer 3.x README, so the 3.x README is the authority for current version ranges.",
     "The official Dopamine website explains that rootless jailbreaks only allow writes to certain parts of the filesystem and that tweaks may need to be updated or recompiled for rootless support.",
-    "The existing Next Solution Dopamine 3 iOS 17.6.1 guide is at dopamine-3-jailbreak-ios-17-6-1.html and includes a real Next Solution test-device visual."
+    "The existing Next Jailbreak Dopamine 3 iOS 17.6.1 guide is at dopamine-3-jailbreak-ios-17-6-1.html and includes a real Next Jailbreak test-device visual."
   ],
   "existing_pages": [
     {

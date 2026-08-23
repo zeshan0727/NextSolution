@@ -16,7 +16,7 @@ Next Charge Pulse gives one clear success haptic when the device transitions fro
 
 ## Installation
 
-Install the package matching the jailbreak environment from the Next Solution Sileo repository, then respring if the package manager does not do so automatically.
+Install the package matching the jailbreak environment from the Next Jailbreak Sileo repository, then respring if the package manager does not do so automatically.
 
 ## Settings
 

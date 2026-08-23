@@ -439,7 +439,7 @@ active_devices_view = '''struct ActiveDevicesView: View {
                                 .foregroundStyle(.secondary)
                             Text(model.isRefreshingDevices ? "Refreshing…" : "No active devices")
                                 .font(.headline)
-                            Text("Pull to refresh. Active licenses are read directly from the Next Solution registry.")
+                            Text("Pull to refresh. Active licenses are read directly from the Next Jailbreak registry.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)

@@ -1,6 +1,6 @@
 # Visual sources
 
-All feature visuals are real screenshots. Next Solution crops, frames and animates them for editorial presentation; it does not recreate the tweak interface.
+All feature visuals are real screenshots. Next Jailbreak crops, frames and animates them for editorial presentation; it does not recreate the tweak interface.
 
 - HelloKeyboardAI — official Havoc listing: https://havoc.app/package/hellokeyboardai
 - IconTweak2 — official Havoc listing: https://havoc.app/package/icontweak2

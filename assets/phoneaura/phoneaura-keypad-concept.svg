@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
   <title id="title">PhoneAura smart keypad concept</title>
-  <desc id="desc">A Next Solution themed PhoneAura keypad showing fixed contact suggestions and long press editing.</desc>
+  <desc id="desc">A Next Jailbreak themed PhoneAura keypad showing fixed contact suggestions and long press editing.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050816"/><stop offset="1" stop-color="#210c3d"/></linearGradient>
-    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7b2cff"/><stop offset="1" stop-color="#168dff"/></linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d86c36"/><stop offset="1" stop-color="#0faaa6"/></linearGradient>
     <linearGradient id="orange" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ff4e67"/><stop offset="1" stop-color="#ff8b19"/></linearGradient>
     <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#000" flood-opacity=".5"/></filter>
   </defs>
   <rect width="1200" height="800" fill="url(#bg)"/>
-  <circle cx="150" cy="120" r="210" fill="#168dff" opacity=".13"/>
+  <circle cx="150" cy="120" r="210" fill="#0faaa6" opacity=".13"/>
   <circle cx="1050" cy="690" r="240" fill="#8f2cff" opacity=".13"/>
 
   <g transform="translate(70 88)" font-family="Arial, sans-serif">
@@ -18,14 +18,14 @@
 
     <g transform="translate(0 145)">
       <rect width="430" height="88" rx="24" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".14"/>
-      <circle cx="46" cy="44" r="25" fill="#168dff"/>
+      <circle cx="46" cy="44" r="25" fill="#0faaa6"/>
       <path d="M34 44 h24" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
       <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Fixed suggestion area</text>
       <text x="88" y="62" fill="#9faed0" font-size="17">Matches or “Number not saved”</text>
     </g>
     <g transform="translate(0 249)">
       <rect width="430" height="88" rx="24" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".14"/>
-      <circle cx="46" cy="44" r="25" fill="#7b2cff"/>
+      <circle cx="46" cy="44" r="25" fill="#d86c36"/>
       <path d="M37 36 h18 v18 h-18z" fill="none" stroke="#fff" stroke-width="3"/>
       <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Long-press edit menu</text>
       <text x="88" y="62" fill="#9faed0" font-size="17">Cut, Copy and Paste on keypad</text>
@@ -41,7 +41,7 @@
       <rect width="430" height="88" rx="24" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".14"/>
       <circle cx="46" cy="44" r="25" fill="url(#brand)"/>
       <path d="M37 48 L46 38 L56 48 L46 58 Z" fill="#fff"/>
-      <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Next Solution shortcut</text>
+      <text x="88" y="37" fill="#fff" font-size="22" font-weight="700">Next Jailbreak shortcut</text>
       <text x="88" y="62" fill="#9faed0" font-size="17">Upper logo opens the YouTube channel</text>
     </g>
   </g>

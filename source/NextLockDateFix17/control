@@ -3,7 +3,7 @@ Name: NextLock Date Fix 17
 Version: 1.1.5~test17
 Architecture: iphoneos-arm64e
 Description: Date-only native iOS 16 Lock Screen fix for NextLock Test 17.
-Maintainer: Next Solution
-Author: Next Solution
+Maintainer: Next Jailbreak
+Author: Next Jailbreak
 Section: Tweaks
 Depends: mobilesubstrate, firmware (>= 16.0)

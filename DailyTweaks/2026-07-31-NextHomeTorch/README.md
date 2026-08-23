@@ -11,13 +11,13 @@ Next Home Torch toggles the iPhone flashlight with a single two-finger tap on an
 
 ## Native-feature verification
 
-Apple documents the Lock Screen and Control Center flashlight controls, but iOS 15/16 does not provide a system setting that maps a two-finger tap on empty Home Screen space to the flashlight. Apple also documents app-controlled Home indicator behavior separately; this tweak does not alter system security or replace an existing accessibility gesture. Repository searches performed before implementation found no existing Next Solution tweak using this two-finger Home Screen trigger.
+Apple documents the Lock Screen and Control Center flashlight controls, but iOS 15/16 does not provide a system setting that maps a two-finger tap on empty Home Screen space to the flashlight. Apple also documents app-controlled Home indicator behavior separately; this tweak does not alter system security or replace an existing accessibility gesture. Repository searches performed before implementation found no existing Next Jailbreak tweak using this two-finger Home Screen trigger.
 
 References checked on 31 July 2026:
 
 - Apple iPhone User Guide and Apple Support flashlight/control documentation.
 - Current Havoc rootless/iOS 15–16 catalogue for comparable convenience gestures.
-- Existing Next Solution source and package history.
+- Existing Next Jailbreak source and package history.
 
 ## Working references inspected
 
@@ -63,4 +63,4 @@ Remove the package in Sileo and respring. The tweak stores only the local enable
 
 ## Attribution and licence
 
-Original Next Solution implementation. No paid or proprietary source or assets were copied. Released under the MIT licence included in this folder.
+Original Next Jailbreak implementation. No paid or proprietary source or assets were copied. Released under the MIT licence included in this folder.

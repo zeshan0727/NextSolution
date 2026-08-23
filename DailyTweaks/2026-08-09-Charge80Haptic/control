@@ -4,8 +4,8 @@ Version: 1.0.0
 Architecture: iphoneos-arm64
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Description: Plays one success haptic when the iPhone crosses 80% battery while connected to power.
-Maintainer: Next Solution
-Author: Next Solution
+Maintainer: Next Jailbreak
+Author: Next Jailbreak
 Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/

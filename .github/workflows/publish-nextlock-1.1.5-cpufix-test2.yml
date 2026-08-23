@@ -78,7 +78,7 @@ jobs:
           set -euo pipefail
           mkdir -p transfer/diagnostics
           cp "$RUNNER_TEMP/nextlock-test2-build.log" transfer/diagnostics/nextlock-1.1.5-test2-build.log
-          git config user.name 'Next Solution Build Bot'
+          git config user.name 'Next Jailbreak Build Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add transfer/diagnostics/nextlock-1.1.5-test2-build.log
           git commit -m 'Save NextLock 1.1.5 Test 2 build diagnostic' || true
@@ -198,7 +198,7 @@ jobs:
           grep -q 'nextlock-1.1.5-cpufix-test2-roothide' transfer/index.json
           grep -q "$OUT_SHA" transfer/index.json
 
-          git config user.name 'Next Solution Build Bot'
+          git config user.name 'Next Jailbreak Build Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add "$DEST" transfer/index.json
           git diff --cached --check

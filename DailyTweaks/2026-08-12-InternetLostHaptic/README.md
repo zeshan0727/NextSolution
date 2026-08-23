@@ -4,7 +4,7 @@ Internet Lost Haptic is a focused iOS jailbreak tweak that plays one warning hap
 
 ## Native-feature verification
 
-Apple's Network framework documents a path monitor and distinct satisfied, unsatisfied, and satisfiable/requires-connection states. On the iOS 15-16 target, Apple exposes connectivity state and system network UI, but the documented stock system does not provide a user-configurable haptic dedicated to the exact usable-path -> unavailable-path transition. Repository/package/history review found no existing Next Solution package implementing this exact alert. Wi-Fi Drop Haptic is intentionally different: it alerts when the active path leaves Wi-Fi even if cellular remains usable; this tweak alerts only on a hard satisfied -> unsatisfied transition.
+Apple's Network framework documents a path monitor and distinct satisfied, unsatisfied, and satisfiable/requires-connection states. On the iOS 15-16 target, Apple exposes connectivity state and system network UI, but the documented stock system does not provide a user-configurable haptic dedicated to the exact usable-path -> unavailable-path transition. Repository/package/history review found no existing Next Jailbreak package implementing this exact alert. Wi-Fi Drop Haptic is intentionally different: it alerts when the active path leaves Wi-Fi even if cellular remains usable; this tweak alerts only on a hard satisfied -> unsatisfied transition.
 
 ## Compatibility
 
@@ -15,7 +15,7 @@ Apple's Network framework documents a path monitor and distinct satisfied, unsat
 
 ## Implementation
 
-The runtime follows the proven Next Solution structure used by Next Aura (`com.nextsolution.unlockvibrate`), PhoneAura, physically verified Next Home Lock 1.0.4/1.0.5, and recent successful dual-package daily releases. In particular: conservative SpringBoard targeting, arm64/arm64e build settings, 0x4000 segment alignment, PreferenceLoader, CFPreferences, Darwin preference notifications, and safe post-install SpringBoard/Preferences restart behavior. The network callback structure reuses the already-published Wi-Fi Drop Haptic's Network-framework monitor pattern while changing the critical decision rule to exact path status transitions.
+The runtime follows the proven Next Jailbreak structure used by Next Aura (`com.nextsolution.unlockvibrate`), PhoneAura, physically verified Next Home Lock 1.0.4/1.0.5, and recent successful dual-package daily releases. In particular: conservative SpringBoard targeting, arm64/arm64e build settings, 0x4000 segment alignment, PreferenceLoader, CFPreferences, Darwin preference notifications, and safe post-install SpringBoard/Preferences restart behavior. The network callback structure reuses the already-published Wi-Fi Drop Haptic's Network-framework monitor pattern while changing the critical decision rule to exact path status transitions.
 
 The monitor is retained for SpringBoard lifetime, runs on a dedicated serial dispatch queue, and dispatches UIKit haptic generation to the main queue. No private runtime class or selector is required.
 

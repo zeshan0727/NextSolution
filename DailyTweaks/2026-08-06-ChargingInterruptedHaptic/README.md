@@ -4,7 +4,7 @@ Charging Interrupted Haptic is a focused iOS jailbreak tweak that plays one warn
 
 ## Native-feature verification
 
-Stock iOS 15 and iOS 16 expose battery state and charging information but do not provide a dedicated user-configurable warning haptic when an active charging connection is interrupted. Apple documents `UIDeviceBatteryStateDidChangeNotification` and requires `batteryMonitoringEnabled = YES` before battery-state notifications are posted. The repository catalogue and recent daily tweaks were searched before implementation; no existing Next Solution package provides this exact charging-interruption alert.
+Stock iOS 15 and iOS 16 expose battery state and charging information but do not provide a dedicated user-configurable warning haptic when an active charging connection is interrupted. Apple documents `UIDeviceBatteryStateDidChangeNotification` and requires `batteryMonitoringEnabled = YES` before battery-state notifications are posted. The repository catalogue and recent daily tweaks were searched before implementation; no existing Next Jailbreak package provides this exact charging-interruption alert.
 
 ## Compatibility
 
@@ -86,4 +86,4 @@ Removing the package removes the tweak dylib, filter and preference bundle. Exis
 
 ## Upstream attribution and licensing
 
-No paid or proprietary tweak code is used. The runtime is original and relies on documented UIKit APIs. Internal repository structures were reused from the user's own Next Solution projects. External catalogues were used only for market comparison. This project should retain the repository's existing licensing terms and this attribution section if redistributed.
+No paid or proprietary tweak code is used. The runtime is original and relies on documented UIKit APIs. Internal repository structures were reused from the user's own Next Jailbreak projects. External catalogues were used only for market comparison. This project should retain the repository's existing licensing terms and this attribution section if redistributed.

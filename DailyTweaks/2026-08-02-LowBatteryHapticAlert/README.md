@@ -4,7 +4,7 @@
 Plays one warning haptic when the unplugged battery percentage crosses a user-selected threshold. It does not display notifications, read private data, change charging behavior, or alter battery management.
 
 ## Native-feature verification
-Apple documents battery percentage display, Low Power Mode, and system low-battery behavior, but iOS 15 and iOS 16 do not provide a user setting for a custom tactile alert at a selected battery percentage. This tweak adds only that missing accessibility/convenience behavior. Repository history and the live `Packages` catalogue were checked; no published Next Solution package implements a custom battery-threshold haptic.
+Apple documents battery percentage display, Low Power Mode, and system low-battery behavior, but iOS 15 and iOS 16 do not provide a user setting for a custom tactile alert at a selected battery percentage. This tweak adds only that missing accessibility/convenience behavior. Repository history and the live `Packages` catalogue were checked; no published Next Jailbreak package implements a custom battery-threshold haptic.
 
 ## Compatibility
 - iOS 15 and later

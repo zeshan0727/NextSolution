@@ -2,13 +2,13 @@ import Foundation
 
 enum AppData {
     static let websiteURL = URL(string: "https://nextsolution.cc/")!
-    static let youtubeURL = URL(string: "https://youtube.com/@zeshan0727")!
-    static let xURL = URL(string: "https://x.com/nextsoluti0n")!
-    static let instagramURL = URL(string: "https://instagram.com/nextsolut1on")!
+    static let youtubeURL = URL(string: "https://youtube.com/@nextjailbreak")!
+    static let xURL = URL(string: "https://x.com/nextjailbreak")!
+    static let instagramURL = URL(string: "https://instagram.com/nextjailbreak")!
     static let emailURL = URL(string: "mailto:NextSolution@zeshanbarvi.uk")!
     static let githubURL = URL(string: "https://github.com/zeshan0727/NextSolution")!
-    static let repoURL = URL(string: "https://zeshan0727.github.io/")!
-    static let sileoURL = URL(string: "sileo://source/https://zeshan0727.github.io/")!
+    static let repoURL = URL(string: "https://nextsolution.cc/")!
+    static let sileoURL = URL(string: "sileo://source/https://nextsolution.cc/")!
 
     static let tutorials: [Tutorial] = [
         Tutorial(
@@ -43,7 +43,7 @@ enum AppData {
                 ),
                 TutorialSection(
                     title: "Installation",
-                    body: "Add the Next Solution repository in Sileo, search for PhoneAura, confirm version 0.4.15 and the correct architecture, install, then respring.",
+                    body: "Add the Next Jailbreak repository in Sileo, search for PhoneAura, confirm version 0.4.15 and the correct architecture, install, then respring.",
                     bullets: [
                         "Fully close the Phone app after respring.",
                         "Open Settings → PhoneAura and choose the replacement tabs.",
@@ -233,7 +233,7 @@ enum AppData {
         ),
         DownloadItem(
             id: "sileo-repo",
-            title: "Add Next Solution Repository",
+            title: "Add Next Jailbreak Repository",
             detail: "Open the official package source directly in Sileo.",
             version: "Official",
             kind: .repository,
@@ -296,7 +296,7 @@ enum AppData {
         FAQItem(
             id: "free",
             question: "Are the tutorials free?",
-            answer: "Yes. The written guides, native app content and videos provided by Next Solution are free."
+            answer: "Yes. The written guides, native app content and videos provided by Next Jailbreak are free."
         ),
         FAQItem(
             id: "tweak",

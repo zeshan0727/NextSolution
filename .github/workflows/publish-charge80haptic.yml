@@ -97,7 +97,7 @@ jobs:
           O="$RUNNER_TEMP/c80-release"; S="$RUNNER_TEMP/c80-scan"; rm -rf "$S"; mkdir -p "$S"; cp "$O"/*.deb "$S/"
           dpkg-scanpackages -m "$S" /dev/null > "$RUNNER_TEMP/c80-stanzas"
           sed -i '' 's|^Filename: .*/c80-scan/|Filename: ./debfiles/|' "$RUNNER_TEMP/c80-stanzas"
-          git config user.name 'Next Solution Build Bot'; git config user.email 'actions@users.noreply.github.com'
+          git config user.name 'Next Jailbreak Build Bot'; git config user.email 'actions@users.noreply.github.com'
           for attempt in 1 2 3; do
             git fetch origin main; git reset --hard origin/main; mkdir -p debfiles; cp "$O"/*.deb debfiles/
             python3 - "$RUNNER_TEMP/c80-stanzas" <<'PY'

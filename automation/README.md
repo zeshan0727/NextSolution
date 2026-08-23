@@ -1,4 +1,4 @@
-# Next Solution content automation
+# Next Jailbreak content automation
 
 This directory contains the safe, metadata-only foundation for monitoring iOS
 jailbreak repositories. The first workflow is intentionally a dry run: it reads

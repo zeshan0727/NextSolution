@@ -351,7 +351,7 @@ jobs:
           else
             echo 'R2 secrets are not configured; using GitHub Releases fallback.'
             if ! gh release view "$PUBLISH_TAG" >/dev/null 2>&1; then
-              gh release create "$PUBLISH_TAG" --title 'Next Solution Private Apps' --notes 'Signed builds published by Next Signer.' --latest=false
+              gh release create "$PUBLISH_TAG" --title 'Next Jailbreak Private Apps' --notes 'Signed builds published by Next Signer.' --latest=false
             fi
             gh release upload "$PUBLISH_TAG" "$RUNNER_TEMP/$SIGNED_FILENAME" --clobber
             echo "SIGNED_URL=https://github.com/$GITHUB_REPOSITORY/releases/download/$PUBLISH_TAG/$SIGNED_FILENAME" >> "$GITHUB_ENV"
@@ -491,7 +491,7 @@ jobs:
               ICON_SOURCE='Existing app icon'
             else
               ICON_URL='/apple-touch-icon.png'
-              ICON_SOURCE='Next Solution fallback icon'
+              ICON_SOURCE='Next Jailbreak fallback icon'
             fi
           fi
           echo "ICON_URL=$ICON_URL" >> "$GITHUB_ENV"
@@ -533,7 +533,7 @@ jobs:
               'customIcon': bool(os.environ.get('CUSTOM_ICON_ASSET')),
           }
           catalog_path = root / 'apps.json'
-          catalog = json.loads(catalog_path.read_text()) if catalog_path.exists() else {'catalog': 'Next Solution Private Apps', 'updated': '', 'apps': []}
+          catalog = json.loads(catalog_path.read_text()) if catalog_path.exists() else {'catalog': 'Next Jailbreak Private Apps', 'updated': '', 'apps': []}
           catalog['apps'] = [app] + [x for x in catalog.get('apps', []) if x.get('id') != app['id']]
           catalog['updated'] = date.today().isoformat()
           catalog_path.write_text(json.dumps(catalog, indent=2) + '\n')
@@ -562,7 +562,7 @@ jobs:
       - name: Log • commit site catalog
         continue-on-error: true
         shell: bash
-        run: bash .github/scripts/nextsigner-publish-status.sh running Site "Committing the app, manifest and icon to the Next Solution installer."
+        run: bash .github/scripts/nextsigner-publish-status.sh running Site "Committing the app, manifest and icon to the Next Jailbreak installer."
 
       - name: Commit catalog update
         shell: bash
@@ -605,7 +605,7 @@ jobs:
         if: success()
         continue-on-error: true
         shell: bash
-        run: bash .github/scripts/nextsigner-publish-status.sh success Complete "Signed IPA uploaded, verified and added to the Next Solution site."
+        run: bash .github/scripts/nextsigner-publish-status.sh success Complete "Signed IPA uploaded, verified and added to the Next Jailbreak site."
 
       - name: Report publish failure
         if: failure()

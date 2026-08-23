@@ -61,7 +61,7 @@ struct ContentView: View {
                 Text("Next Post")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
 
-                Text("Next Solution → X post generator")
+                Text("Next Jailbreak → X post generator")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

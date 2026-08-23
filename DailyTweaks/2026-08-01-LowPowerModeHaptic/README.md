@@ -4,7 +4,7 @@
 Plays a success haptic when Low Power Mode turns on and a warning haptic when it turns off.
 
 ## Native-feature verification
-Apple documents the Low Power Mode state and `NSProcessInfoPowerStateDidChangeNotification`, but stock iOS 15 and iOS 16 do not provide a dedicated haptic confirmation when the user changes Low Power Mode. Repository history and the published `Packages` index were searched for low-power-mode haptic packages and no existing Next Solution tweak implementing this feature was found.
+Apple documents the Low Power Mode state and `NSProcessInfoPowerStateDidChangeNotification`, but stock iOS 15 and iOS 16 do not provide a dedicated haptic confirmation when the user changes Low Power Mode. Repository history and the published `Packages` index were searched for low-power-mode haptic packages and no existing Next Jailbreak tweak implementing this feature was found.
 
 ## Compatibility
 - iOS 15 and later
@@ -18,7 +18,7 @@ The tweak injects only into SpringBoard. It observes Apple's documented `NSProce
 ## Working references inspected
 - Next Home Lock 1.0.5: architecture settings, SpringBoard-only filter, segment alignment, PreferenceLoader layout, CFPreferences, Darwin notification reload, post-install respring and successful release workflow.
 - NextAura and PhoneAura package entries: RootHide/rootless architecture naming, dependencies, package paths and repository metadata. Their full current source was not available in the repository, so no unavailable implementation was claimed or copied.
-- Existing Next Solution package index and recent failed Home Screen Flashlight releases were reviewed to avoid repeating private-class lifecycle and missing-Settings-entry mistakes.
+- Existing Next Jailbreak package index and recent failed Home Screen Flashlight releases were reviewed to avoid repeating private-class lifecycle and missing-Settings-entry mistakes.
 
 ## Settings
 Settings → Low Power Mode Haptic → Enable Low Power Mode Haptic.

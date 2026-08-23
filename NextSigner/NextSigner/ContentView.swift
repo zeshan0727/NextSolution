@@ -68,7 +68,7 @@ private struct SignView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Pick. Sign. Publish.", systemImage: "checkmark.seal.fill")
                 .font(.title2.bold())
-            Text("Choose an IPA, assign a Next Solution bundle ID, then send it to your signing workflow. The signed build is published automatically to nextsolution.cc/install/ for registered devices.")
+            Text("Choose an IPA, assign a Next Jailbreak bundle ID, then send it to your signing workflow. The signed build is published automatically to nextsolution.cc/install/ for registered devices.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -239,7 +239,7 @@ private struct ActivityView: View {
 
                 Section("Installer") {
                     Link(destination: URL(string: "https://nextsolution.cc/install/")!) {
-                        Label("Open Next Solution Private Apps", systemImage: "safari")
+                        Label("Open Next Jailbreak Private Apps", systemImage: "safari")
                     }
                 }
             }

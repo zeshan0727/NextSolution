@@ -27,12 +27,12 @@ Title: **iOS 17.6.1 Jailbreak Is Here for A12–A13! #Shorts**
 ## 0:36–0:43 — CTA
 
 **Visual:** Article URL and channel handle.  
-**Voice:** “The complete compatibility list, official links and step-by-step guide are on Next Solution. Watch the full video for every step.”
+**Voice:** “The complete compatibility list, official links and step-by-step guide are on Next Jailbreak. Watch the full video for every step.”
 
 ## Caption text
 
 `iOS 17.6.1 + DOPAMINE 3`  
 `A12 / A12X / A12Z / A13`  
 `REAL iPAD RESULT`  
-`FULL GUIDE: NEXT SOLUTION`
+`FULL GUIDE: NEXT JAILBREAK`
 

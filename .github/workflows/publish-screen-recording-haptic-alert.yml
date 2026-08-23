@@ -78,7 +78,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          O="$RUNNER_TEMP/srh"; git config user.name "Next Solution Build Bot"; git config user.email "actions@users.noreply.github.com"
+          O="$RUNNER_TEMP/srh"; git config user.name "Next Jailbreak Build Bot"; git config user.email "actions@users.noreply.github.com"
           for attempt in 1 2 3; do
             git fetch origin main; git reset --hard origin/main
             mkdir -p debfiles "$RUNNER_TEMP/srh-scan"; cp "$O"/*.deb debfiles/; cp "$O"/*.deb "$RUNNER_TEMP/srh-scan/"

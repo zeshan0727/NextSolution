@@ -60,7 +60,7 @@ def update_index() -> bool:
     original = INDEX_PATH.read_text(encoding="utf-8")
     updated = original.replace(
         '<div class="heading"><h2>Popular tutorials</h2><p>Guides covering the most requested jailbreak and iPhone customization topics.</p></div>',
-        '<div class="heading"><h2>Recent tutorials</h2><p>The newest Next Solution guides, with PhoneAura permanently pinned for quick access.</p></div>',
+        '<div class="heading"><h2>Recent tutorials</h2><p>The newest Next Jailbreak guides, with PhoneAura permanently pinned for quick access.</p></div>',
     )
 
     updated = remove_marked_block(updated, RECENT_CARD_START, RECENT_CARD_END)
@@ -134,11 +134,11 @@ def update_article() -> bool:
         "Long-Press Number Editing": "Stable Number Handling",
         "PhoneAura Keypad with fixed contact suggestion card and long-press edit menu":
             "PhoneAura Keypad with fixed contact suggestion card and stable number display",
-        "Keypad concept: fixed suggestion space, preserved Number Options, Next Solution shortcut and native phone-number editing.":
-            "Keypad concept: fixed suggestion space, preserved Number Options, Next Solution shortcut and a stable number display.",
+        "Keypad concept: fixed suggestion space, preserved Number Options, Next Jailbreak shortcut and native phone-number editing.":
+            "Keypad concept: fixed suggestion space, preserved Number Options, Next Jailbreak shortcut and a stable number display.",
         "            <li>Long press the displayed number to open the editing menu.</li>\n": "",
-        "Read more jailbreak tutorials on <a href=\"./#tutorials\">Next Solution</a>":
-            "Read more jailbreak tutorials on <a href=\"tutorials.html\">Next Solution</a>",
+        "Read more jailbreak tutorials on <a href=\"./#tutorials\">Next Jailbreak</a>":
+            "Read more jailbreak tutorials on <a href=\"tutorials.html\">Next Jailbreak</a>",
     }
     for old, new in replacements.items():
         updated = updated.replace(old, new)
@@ -155,10 +155,10 @@ def update_article() -> bool:
           <ul>
             <li>The global long-press phone-number editing hooks have been removed.</li>
             <li>The tweak now uses the proven 0.4.14 runtime file set.</li>
-            <li>Favorites, Recents, Contacts, Keypad, fixed suggestions, Number Options and the Next Solution shortcut remain available.</li>
+            <li>Favorites, Recents, Contacts, Keypad, fixed suggestions, Number Options and the Next Jailbreak shortcut remain available.</li>
             <li>RootHide and rootless builds were compiled separately as version 0.4.16.</li>
           </ul>
-          <div class="warning"><strong>Remove 0.4.15 immediately.</strong> Refresh the Next Solution repository and upgrade to 0.4.16 before reopening the Phone app.</div>
+          <div class="warning"><strong>Remove 0.4.15 immediately.</strong> Refresh the Next Jailbreak repository and upgrade to 0.4.16 before reopening the Phone app.</div>
         </div>
       </section>
 
@@ -178,7 +178,7 @@ def update_article() -> bool:
             <li>Confirm the suggestion area stays visible and the keypad does not move.</li>
             <li>Long press the typed number and test Copy or Paste.</li>
             <li>Open Contacts or Recents and long press a displayed number.</li>
-            <li>Check Favorites, Recents filters and the upper Next Solution logo.</li>
+            <li>Check Favorites, Recents filters and the upper Next Jailbreak logo.</li>
           </ol>'''
     new_test = '''          <h3>Recommended first test</h3>
           <ol>
@@ -186,7 +186,7 @@ def update_article() -> bool:
             <li>Respring, fully close the Phone app and reopen it.</li>
             <li>Open Keypad and type at least two digits.</li>
             <li>Confirm the suggestion area stays visible and the keypad does not move.</li>
-            <li>Check Favorites, Recents filters, Contacts, Number Options and the upper Next Solution logo.</li>
+            <li>Check Favorites, Recents filters, Contacts, Number Options and the upper Next Jailbreak logo.</li>
           </ol>'''
     if old_test in updated:
         updated = updated.replace(old_test, new_test)

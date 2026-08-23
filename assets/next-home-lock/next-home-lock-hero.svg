@@ -1,29 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Next Home Lock 1.0.5 concept artwork</title>
-  <desc id="desc">A purple and blue Next Solution concept showing an iPhone Home Screen, a double-tap ripple and a lock symbol.</desc>
+  <desc id="desc">A purple and blue Next Jailbreak concept showing an iPhone Home Screen, a double-tap ripple and a lock symbol.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#030712"/><stop offset=".5" stop-color="#111b42"/><stop offset="1" stop-color="#2d0b62"/></linearGradient>
-    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#168dff"/></linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d86c36"/><stop offset="1" stop-color="#0faaa6"/></linearGradient>
     <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111c39"/><stop offset="1" stop-color="#211149"/></linearGradient>
     <filter id="glow"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000" flood-opacity=".55"/></filter>
   </defs>
   <rect width="1600" height="900" fill="url(#bg)"/>
-  <circle cx="1410" cy="120" r="310" fill="#168dff" opacity=".16"/>
-  <circle cx="160" cy="760" r="380" fill="#7c3aed" opacity=".17"/>
+  <circle cx="1410" cy="120" r="310" fill="#0faaa6" opacity=".16"/>
+  <circle cx="160" cy="760" r="380" fill="#d86c36" opacity=".17"/>
   <g opacity=".14" stroke="#fff"><path d="M0 150h1600M0 300h1600M0 450h1600M0 600h1600M0 750h1600"/><path d="M200 0v900M400 0v900M600 0v900M800 0v900M1000 0v900M1200 0v900M1400 0v900"/></g>
 
   <g transform="translate(110 130)">
     <rect x="0" y="0" width="720" height="640" rx="44" fill="#ffffff0d" stroke="#ffffff24"/>
-    <text x="54" y="86" fill="#87d9ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" letter-spacing="2">NEXT SOLUTION ORIGINAL TWEAK</text>
+    <text x="54" y="86" fill="#87d9ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" letter-spacing="2">NEXT JAILBREAK ORIGINAL TWEAK</text>
     <text x="54" y="176" fill="#fff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="76" font-weight="900">Next Home Lock</text>
     <text x="54" y="238" fill="#c9d8ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="34" font-weight="700">Version 1.0.5</text>
     <text x="54" y="320" fill="#b8c5df" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="28">Double-tap an empty Home Screen area</text>
     <text x="54" y="360" fill="#b8c5df" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="28">to lock your iPhone instantly.</text>
     <g transform="translate(54 430)">
-      <rect width="150" height="54" rx="27" fill="#7c3aed33" stroke="#a78bfa88"/><text x="75" y="35" text-anchor="middle" fill="#eee8ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" font-weight="800">iOS 16+</text>
-      <rect x="168" width="170" height="54" rx="27" fill="#168dff33" stroke="#60a5fa88"/><text x="253" y="35" text-anchor="middle" fill="#e4f2ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" font-weight="800">RootHide</text>
-      <rect x="356" width="170" height="54" rx="27" fill="#168dff33" stroke="#60a5fa88"/><text x="441" y="35" text-anchor="middle" fill="#e4f2ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" font-weight="800">Rootless</text>
+      <rect width="150" height="54" rx="27" fill="#d86c3633" stroke="#a78bfa88"/><text x="75" y="35" text-anchor="middle" fill="#eee8ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" font-weight="800">iOS 16+</text>
+      <rect x="168" width="170" height="54" rx="27" fill="#0faaa633" stroke="#60a5fa88"/><text x="253" y="35" text-anchor="middle" fill="#e4f2ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" font-weight="800">RootHide</text>
+      <rect x="356" width="170" height="54" rx="27" fill="#0faaa633" stroke="#60a5fa88"/><text x="441" y="35" text-anchor="middle" fill="#e4f2ff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" font-weight="800">Rootless</text>
     </g>
     <g transform="translate(54 530)"><rect width="352" height="66" rx="20" fill="url(#brand)"/><text x="176" y="43" text-anchor="middle" fill="#fff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="24" font-weight="900">Double-tap. Lock instantly.</text></g>
   </g>

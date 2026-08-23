@@ -2,7 +2,7 @@
 
 Target runtime: 6–7 minutes  
 Format: 16:9 long-form tutorial  
-Test device visual: real Next Solution iPad Home Screen with Dopamine and Sileo  
+Test device visual: real Next Jailbreak iPad Home Screen with Dopamine and Sileo
 Article: https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1.html
 
 ## Accuracy lock before editing
@@ -153,7 +153,7 @@ Article: https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1.html
 
 **Narration**
 
-> Keep a backup, avoid random repositories, and never update iOS until you have checked the jailbreak status for your exact device. The full written guide, compatibility table, official links and troubleshooting steps are available on Next Solution. If this walkthrough helped, subscribe for more real-device jailbreak guides and verified tweak coverage.
+> Keep a backup, avoid random repositories, and never update iOS until you have checked the jailbreak status for your exact device. The full written guide, compatibility table, official links and troubleshooting steps are available on Next Jailbreak. If this walkthrough helped, subscribe for more real-device jailbreak guides and verified tweak coverage.
 
 ## Editor checklist
 

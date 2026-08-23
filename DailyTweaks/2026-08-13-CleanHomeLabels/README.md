@@ -13,7 +13,7 @@ Because existing icon views may not all receive another `setLabelHidden:` call i
 ## Working references inspected
 - Next Home Lock 1.0.5: SpringBoard-only process guard, `arm64 arm64e`, 0x4000 segment alignment, CFPreferences, Darwin notifications, PreferenceLoader layout, and conservative constructor behavior.
 - Next Aura (`com.nextsolution.unlockvibrate`) package metadata and recent release references in the repository.
-- PhoneAura repository/tutorial history for Next Solution naming and publication conventions.
+- PhoneAura repository/tutorial history for Next Jailbreak naming and publication conventions.
 - Internet Lost Haptic's latest successful dual-package build/index workflow as a packaging reference only; no haptic behavior is reused.
 
 ## Upstream / market comparison
@@ -34,7 +34,7 @@ No third-party source is vendored, so there is no inherited code licence obligat
 No diagnostics, process IDs, runtime selectors, test buttons, or developer-only rows are exposed in the release pane.
 
 ## Installation / uninstall
-Install the build matching the jailbreak environment from the Next Solution Sileo repository. The package filters injection to SpringBoard. Uninstalling removes the tweak and PreferenceLoader bundle; after respring, SpringBoard returns to its normal label behavior.
+Install the build matching the jailbreak environment from the Next Jailbreak Sileo repository. The package filters injection to SpringBoard. Uninstalling removes the tweak and PreferenceLoader bundle; after respring, SpringBoard returns to its normal label behavior.
 
 ## Deterministic checks
 `tests/test_runtime.py` verifies both enabled outcomes and both disabled/pass-through outcomes, SpringBoard-only targeting, expected selector presence, CFPreferences/Darwin wiring, package identity, settings controls, and absence of retired-repository links.

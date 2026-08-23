@@ -172,7 +172,7 @@ jobs:
           grep -q 'nextlock-1.1.5-cpufix-test5-roothide' transfer/index.json
           grep -q "$OUT_SHA" transfer/index.json
 
-          git config user.name 'Next Solution Build Bot'
+          git config user.name 'Next Jailbreak Build Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add "$DEST" transfer/index.json
           git diff --cached --check

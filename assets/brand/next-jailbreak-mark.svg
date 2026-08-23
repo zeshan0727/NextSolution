@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Next Jailbreak</title>
+  <desc id="desc">Circular Next Jailbreak logo with an original open package emblem</desc>
+  <defs>
+    <radialGradient id="field" cx="50%" cy="44%" r="66%"><stop stop-color="#17232f"/><stop offset=".72" stop-color="#0c121a"/><stop offset="1" stop-color="#070a0f"/></radialGradient>
+    <linearGradient id="orbit" x1=".12" y1=".12" x2=".88" y2=".88"><stop stop-color="#f4a15a"/><stop offset=".48" stop-color="#d56635"/><stop offset=".52" stop-color="#47e0d5"/><stop offset="1" stop-color="#13b8b3"/></linearGradient>
+    <linearGradient id="copper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f29b52"/><stop offset="1" stop-color="#c2522b"/></linearGradient>
+    <path id="top-name-path" d="M238 430a356 356 0 0 1 548 0"/><path id="bottom-name-path" d="M190 625a400 400 0 0 0 644 0"/>
+  </defs>
+  <circle cx="512" cy="512" r="486" fill="url(#field)"/>
+  <circle cx="512" cy="512" r="470" fill="none" stroke="#27313d" stroke-width="8"/>
+  <circle cx="512" cy="512" r="441" fill="none" stroke="url(#orbit)" stroke-width="25"/>
+  <rect x="912" y="447" width="94" height="130" rx="34" fill="#080c12"/>
+  <path d="m916 477 40 35-40 35" fill="none" stroke="#4be0d5" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <text fill="#f39a52" font-family="Arial, sans-serif" font-size="104" font-weight="700" letter-spacing="10"><textPath xlink:href="#top-name-path" startOffset="50%" text-anchor="middle">NEXT</textPath></text>
+  <text fill="#4ddfd4" font-family="Arial, sans-serif" font-size="67" font-weight="700" letter-spacing="7"><textPath xlink:href="#bottom-name-path" startOffset="50%" text-anchor="middle">JAILBREAK</textPath></text>
+  <g stroke="#f7f1e8" stroke-width="23" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m512 431 134 67-134 67-134-67z" fill="#080c12"/><path d="m378 498 134 67v109l-134-67z" fill="url(#copper)"/><path d="m646 498-134 67v109l134-67z" fill="#a94327"/>
+    <path d="m378 498-96-50 134-67 96 50z" fill="#111923"/><path d="m646 498 96-50-134-67-96 50z" fill="#111923"/><path d="m416 381 96-49 96 49-96 50z" fill="#111923"/>
+  </g>
+</svg>

@@ -3,8 +3,8 @@ Name: Screenshot Haptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
 Description: Plays one success haptic after iOS confirms a screenshot was taken.
-Maintainer: Next Solution
-Author: Next Solution
+Maintainer: Next Jailbreak
+Author: Next Jailbreak
 Section: Tweaks
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Homepage: https://nextsolution.cc/

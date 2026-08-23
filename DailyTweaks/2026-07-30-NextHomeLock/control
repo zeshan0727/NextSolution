@@ -4,7 +4,7 @@ Version: 1.0.5
 Architecture: iphoneos-arm64
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.5 keeps the verified SBIconListView runtime and replaces the diagnostic-heavy Settings page with one simple enable or disable switch.
-Maintainer: Next Solution
-Author: Next Solution
+Maintainer: Next Jailbreak
+Author: Next Jailbreak
 Section: Tweaks
 Priority: optional

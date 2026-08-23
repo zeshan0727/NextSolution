@@ -3,9 +3,9 @@
   "thumbnail_title": "TOP 8 HOME SCREEN TWEAKS",
   "thumbnail_badge": "2026 GUIDE",
   "article_url": "https://nextsolution.cc/top-home-screen-tweaks.html",
-  "channel_url": "https://youtube.com/@zeshan0727",
+  "channel_url": "https://youtube.com/@nextjailbreak",
   "voice_disclosure": "Narration in this video uses an AI-generated voice.",
-  "description": "Eight Home Screen jailbreak tweaks for layouts, folders, widgets and shortcuts, compared using their current package listings. This is an editorial overview, not a hands-on compatibility test. Always confirm your exact iOS version, jailbreak, bootstrap, architecture, dependencies and current package details before installing.\n\nRead the full comparison: https://nextsolution.cc/top-home-screen-tweaks.html\n\nPackages covered:\n00:00 What this guide compares\n00:50 Atria\n01:42 Bolders Reborn\n02:32 FiveIconDock\n03:16 IconOrder\n04:03 Remove Widget Background\n04:50 AddToFolder Rootless\n05:38 SpringCuts Rootless\n06:28 PrimalFolder 2\n07:17 Quick picks by goal\n08:09 Compatibility checklist\n\nNarration in this video uses an AI-generated voice. Original script and graphics by Next Solution. Package names and trademarks belong to their respective owners.\n\n#JailbreakTweaks #iPhoneCustomization #HomeScreen",
+  "description": "Eight Home Screen jailbreak tweaks for layouts, folders, widgets and shortcuts, compared using their current package listings. This is an editorial overview, not a hands-on compatibility test. Always confirm your exact iOS version, jailbreak, bootstrap, architecture, dependencies and current package details before installing.\n\nRead the full comparison: https://nextsolution.cc/top-home-screen-tweaks.html\n\nPackages covered:\n00:00 What this guide compares\n00:50 Atria\n01:42 Bolders Reborn\n02:32 FiveIconDock\n03:16 IconOrder\n04:03 Remove Widget Background\n04:50 AddToFolder Rootless\n05:38 SpringCuts Rootless\n06:28 PrimalFolder 2\n07:17 Quick picks by goal\n08:09 Compatibility checklist\n\nNarration in this video uses an AI-generated voice. Original script and graphics by Next Jailbreak. Package names and trademarks belong to their respective owners.\n\n#JailbreakTweaks #iPhoneCustomization #HomeScreen",
   "tags": [
     "jailbreak tweaks",
     "home screen tweaks",
@@ -15,7 +15,7 @@
     "Bolders Reborn",
     "FiveIconDock",
     "IconOrder",
-    "Next Solution"
+    "Next Jailbreak"
   ],
   "thumbnail_visual": {
     "assets": [
@@ -108,7 +108,7 @@
   ],
   "scenes": [
     {
-      "kicker": "NEXT SOLUTION · 2026 GUIDE",
+      "kicker": "NEXT JAILBREAK · 2026 GUIDE",
       "title": "8 Home Screen tweaks worth comparing",
       "subtitle": "Layouts, folders, widgets and shortcuts",
       "facts": ["Source-checked overview", "No one-size-fits-all compatibility", "Original comparison and editing"],
@@ -122,7 +122,7 @@
         ],
         "credit": "Authentic package screenshots · sources credited below"
       },
-      "narration": "Your iPhone Home Screen can be changed in dozens of ways after a jailbreak, but the useful question is not which tweak has the flashiest screenshot. It is which package matches the job you actually want to do, and whether its current listing matches your setup. In this guide, we will compare eight different approaches: complete grid control, larger folders, a five-icon dock, layout recovery, cleaner widgets, faster folder organization, Shortcuts actions, and smarter folder launching. This is an editorial comparison based on current package information, not a hands-on compatibility test. Always verify the source page before installing. Narration in this video uses an AI-generated voice, while the research, script, visual design and final editorial choices are original Next Solution work."
+      "narration": "Your iPhone Home Screen can be changed in dozens of ways after a jailbreak, but the useful question is not which tweak has the flashiest screenshot. It is which package matches the job you actually want to do, and whether its current listing matches your setup. In this guide, we will compare eight different approaches: complete grid control, larger folders, a five-icon dock, layout recovery, cleaner widgets, faster folder organization, Shortcuts actions, and smarter folder launching. This is an editorial comparison based on current package information, not a hands-on compatibility test. Always verify the source page before installing. Narration in this video uses an AI-generated voice, while the research, script, visual design and final editorial choices are original Next Jailbreak work."
     },
     {
       "slug": "atria",
@@ -293,7 +293,7 @@
         ],
         "credit": "Eight real tweak visuals · sources in description"
       },
-      "narration": "The complete comparison, with direct links to the current package sources, is available on nextsolution dot c c and in the video description. If this format helped you narrow the choices, subscribe to Next Solution for more practical jailbreak tweak comparisons and setup guides. In the comments, tell us which category should be next: Lock Screen, Control Center, notifications or battery tools. Thanks for watching, and remember to verify compatibility before you install."
+      "narration": "The complete comparison, with direct links to the current package sources, is available on nextsolution dot c c and in the video description. If this format helped you narrow the choices, subscribe to Next Jailbreak for more practical jailbreak tweak comparisons and setup guides. In the comments, tell us which category should be next: Lock Screen, Control Center, notifications or battery tools. Thanks for watching, and remember to verify compatibility before you install."
     }
   ]
 }

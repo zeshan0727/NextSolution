@@ -6,7 +6,7 @@
 
 - Repository path: `assets/articles/dopamine-3-ios-17-6-1-hero.jpg`
 - Role: YouTube thumbnail and article hero.
-- Origin: Original Next Solution composition made from the real test-device Home Screen image.
+- Origin: Original Next Jailbreak composition made from the real test-device Home Screen image.
 - Editorial treatment: The Dopamine icon is enlarged and connected to its real position on the iPad screen. Dopamine and Sileo are highlighted; Feedback is intentionally not highlighted.
 - Exact compatibility text: `A12–A13 DEVICES`.
 - This is promotional artwork, not a replacement for the unedited proof image.
@@ -15,7 +15,7 @@
 
 - Repository path: `assets/articles/dopamine-3-ipad-proof.jpeg`
 - Role: Unedited in-article and video proof visual.
-- Origin: Next Solution test-device screenshot supplied by Zeeshan Barvi on 13 August 2026.
+- Origin: Next Jailbreak test-device screenshot supplied by Zeeshan Barvi on 13 August 2026.
 - Visible evidence: Dopamine and Sileo icons on the iPad Home Screen.
 - Editorial limitation: The Home Screen alone does not display the firmware number. The video must separately record `Settings → General → About` with version 17.6.1 visible.
 

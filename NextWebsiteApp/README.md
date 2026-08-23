@@ -1,4 +1,4 @@
-# Next Solution Website App
+# Next Jailbreak Website App
 
 Native iOS/TrollStore wrapper for **nextsolution.cc**.
 

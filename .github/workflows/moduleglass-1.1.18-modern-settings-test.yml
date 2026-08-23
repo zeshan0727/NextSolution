@@ -62,7 +62,7 @@ jobs:
           t=t.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.17)','Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)')
           t=t.replace('<= 1.1.16','<= 1.1.17')
           old='Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds the current Aura Settings preference bundle directly in the same package.'
-          new='Description: Module Glass 1.1.18 UI Test 1 preserves the validated 1.1.15 External Host Isolation Control Center runtime bit-for-bit and adds a Next Solution branded modern Settings UI, grouped module selectors, and live device activation.'
+          new='Description: Module Glass 1.1.18 UI Test 1 preserves the validated 1.1.15 External Host Isolation Control Center runtime bit-for-bit and adds a Next Jailbreak branded modern Settings UI, grouped module selectors, and live device activation.'
           t=t.replace(old,new)
           p.write_text(t)
           PY
@@ -125,8 +125,8 @@ jobs:
           Version: 1.1.18
           Architecture: iphoneos-arm64e
           Description: Build helper only.
-          Maintainer: Next Solution
-          Author: Next Solution
+          Maintainer: Next Jailbreak
+          Author: Next Jailbreak
           Section: Tweaks
           Depends: mobilesubstrate
           CONTROL

@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://nextsolution.cc"
-SOCIAL_IMAGE = f"{SITE}/nextsolution-iphone-customization-showcase.png"
+SOCIAL_IMAGE = f"{SITE}/assets/brand/next-jailbreak-social-card.png"
 
 ATTR_RE = re.compile(
     r"(?P<prefix>\b(?:href|src|poster|action)\s*=\s*)(?P<quote>[\"'])(?P<url>.*?)(?P=quote)",
@@ -130,7 +130,7 @@ def social_image_is_safe(url: str) -> bool:
 
     # Havoc serves package screenshots from extensionless HTTPS media URLs.
     # Those are valid Open Graph/Twitter card images and should not be replaced
-    # by the generic Next Solution brand image.
+    # by the generic Next Jailbreak brand image.
     if host == "media.havoc.app":
         return True
 
@@ -143,7 +143,7 @@ def preferred_social_image(text: str) -> str | None:
     """Recover the article-specific image from structured data or the hero.
 
     Older clean-url runs replaced external OG/Twitter images with the generic
-    Next Solution showcase image. The original article image is still present
+    Next Jailbreak showcase image. The original article image is still present
     in JSON-LD and/or the authentic article hero, so use it to restore cards.
     """
     for pattern in (JSON_LD_IMAGE_RE, ARTICLE_HERO_IMAGE_RE):

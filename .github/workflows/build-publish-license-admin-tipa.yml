@@ -125,7 +125,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
-          git config user.name "Next Solution Build Bot"
+          git config user.name "Next Jailbreak Build Bot"
           git config user.email "actions@users.noreply.github.com"
           cp NextSolutionLicenseAdmin/NS-Admin-1.0.5.tipa /tmp/NS-Admin-1.0.5.tipa
           cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.5.tipa /tmp/NS-Admin-1.0.5-artifact.tipa

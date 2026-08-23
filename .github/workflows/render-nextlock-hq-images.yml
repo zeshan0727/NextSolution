@@ -64,7 +64,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "Next Solution Build Bot"
+          git config user.name "Next Jailbreak Build Bot"
           git config user.email "actions@users.noreply.github.com"
           git add assets/articles/nextlock/nextlock-hero.png assets/articles/nextlock/nextlock-features.png nextlock-tweak.html index.html tutorials.html
           git diff --cached --check

@@ -1,8 +1,8 @@
 Package: com.nextsolution.nextaura.prefsext.moduleglass
 Name: Module Glass Preferences Extension
 Description: Internal Preferences-only native Volume icon color picker extension used by Module Glass.
-Maintainer: Next Solution
-Author: Next Solution - zeshan0727
+Maintainer: Next Jailbreak
+Author: Next Jailbreak - zeshan0727
 Section: System
 Depends: firmware (>= 16.0), mobilesubstrate
 Priority: optional

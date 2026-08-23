@@ -9,7 +9,7 @@
 			<string>PSGroupCell</string>
 			<key>footerText</key>
 			<string>Lock Screen, your way.
-Version 1.1.4 • by Next Solution</string>
+Version 1.1.4 • by Next Jailbreak</string>
 			<key>label</key>
 			<string>NEXTLOCK</string>
 		</dict>
@@ -27,7 +27,7 @@ Version 1.1.4 • by Next Solution</string>
 			<key>cell</key>
 			<string>PSButtonCell</string>
 			<key>label</key>
-			<string>YouTube — Next Solution</string>
+			<string>YouTube — Next Jailbreak</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -41,7 +41,7 @@ Version 1.1.4 • by Next Solution</string>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>footerText</key>
-			<string>© 2026 Next Solution</string>
+			<string>© 2026 Next Jailbreak</string>
 			<key>label</key>
 			<string></string>
 		</dict>

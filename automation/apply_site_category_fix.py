@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-time site/category repair and publisher hardening for Next Solution."""
+"""One-time site/category repair and publisher hardening for Next Jailbreak."""
 
 from __future__ import annotations
 
@@ -63,9 +63,9 @@ def render_card(entry: dict, *, indent: str = "          ") -> str:
         label = str(category["label"])
     href = clean_href(entry.get("href"))
     image = clean_image(entry.get("image"))
-    title = str(entry.get("title") or entry.get("name") or "Next Solution article")
-    description = str(entry.get("description") or "Read the full Next Solution article for details, compatibility notes, and source information.")
-    source_name = str(entry.get("source_name") or "Next Solution")
+    title = str(entry.get("title") or entry.get("name") or "Next Jailbreak article")
+    description = str(entry.get("description") or "Read the full Next Jailbreak article for details, compatibility notes, and source information.")
+    source_name = str(entry.get("source_name") or "Next Jailbreak")
     return "\n".join(
         (
             f'{indent}<article class="content-card has-visual">',

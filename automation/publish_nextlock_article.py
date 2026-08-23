@@ -31,7 +31,7 @@ if 'NEXTLOCK_RECENT_CARD_START' not in index.read_text():
     card = '''          <!-- NEXTLOCK_RECENT_CARD_START -->
             <article class="content-card has-visual featured">
               <a class="card-media" href="nextlock-tweak.html" aria-label="Read the NextLock 1.0.1 feature guide"><img src="assets/articles/nextlock/nextlock-hero.jpg" alt="NextLock time font, date and custom icon Lock Screen showcase" width="360" height="240" loading="eager"></a>
-              <div class="card-meta"><span class="tag">Next Solution release</span><span class="tag">Lock Screen</span><span class="tag">iOS 15+</span></div>
+              <div class="card-meta"><span class="tag">Next Jailbreak release</span><span class="tag">Lock Screen</span><span class="tag">iOS 15+</span></div>
               <h3>NextLock 1.0.1 — Lock Screen, Your Way</h3>
               <p>Change time and date fonts, size, color, position and shadows, then add 30+ icons or your own transparent sticker-style photo.</p>
               <a class="card-link" href="nextlock-tweak.html">See features and install →</a>
@@ -46,7 +46,7 @@ if 'NEXTLOCK_TUTORIAL_CARD_START' not in tutorials.read_text():
           <article class="featured-guide">
             <a class="featured-media" href="nextlock-tweak.html" aria-label="Open the NextLock 1.0.1 guide"><img src="assets/articles/nextlock/nextlock-hero.jpg" alt="NextLock Lock Screen customization showcase" width="360" height="240" loading="eager"></a>
             <div class="featured-body">
-              <div class="tags"><span class="tag">iOS 15+</span><span class="tag">RootHide</span><span class="tag">Rootless</span><span class="tag">Next Solution release</span></div>
+              <div class="tags"><span class="tag">iOS 15+</span><span class="tag">RootHide</span><span class="tag">Rootless</span><span class="tag">Next Jailbreak release</span></div>
               <div class="card-icon" aria-hidden="true">NL</div>
               <h3>NextLock 1.0.1</h3>
               <p>Customize Lock Screen time and date fonts, colors, size, position and shadows, then add built-in icons or transparent sticker-style custom photos.</p>
@@ -64,7 +64,7 @@ if 'https://nextsolution.cc/nextlock-tweak.html' not in feed.read_text():
       <link>https://nextsolution.cc/nextlock-tweak.html</link>
       <guid isPermaLink="true">https://nextsolution.cc/nextlock-tweak.html</guid>
       <pubDate>Sun, 16 Aug 2026 12:58:00 GMT</pubDate>
-      <description>NextLock by Next Solution adds 27 fonts, independent time and date styling, position controls, shadows, 30+ icons and transparent sticker-style custom photos for Rootless and RootHide jailbreaks.</description>
+      <description>NextLock by Next Jailbreak adds 27 fonts, independent time and date styling, position controls, shadows, 30+ icons and transparent sticker-style custom photos for Rootless and RootHide jailbreaks.</description>
       <category>Lock Screen</category>
     </item>
 '''

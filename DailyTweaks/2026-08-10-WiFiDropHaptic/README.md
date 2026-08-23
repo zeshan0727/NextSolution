@@ -4,7 +4,7 @@
 Wi-Fi Drop Haptic plays one warning haptic when the active iOS network path transitions from Wi-Fi to a non-Wi-Fi path. It does not change Wi-Fi settings, cellular settings, routing, credentials, VPNs, or network security.
 
 ## Native-feature verification
-Target iOS is 15 and later, primarily iOS 16.0. Apple documents NWPathMonitor as the API for observing network-path changes and NWPath as the API for determining whether a path uses Wi-Fi. Stock iOS 16 shows network state in system UI but does not provide a dedicated haptic alert specifically for loss of the active Wi-Fi path. Repository history and current Packages were reviewed before implementation; no existing Next Solution package provides this same feature.
+Target iOS is 15 and later, primarily iOS 16.0. Apple documents NWPathMonitor as the API for observing network-path changes and NWPath as the API for determining whether a path uses Wi-Fi. Stock iOS 16 shows network state in system UI but does not provide a dedicated haptic alert specifically for loss of the active Wi-Fi path. Repository history and current Packages were reviewed before implementation; no existing Next Jailbreak package provides this same feature.
 
 Apple references reviewed:
 - https://developer.apple.com/documentation/network/nwpathmonitor
@@ -22,7 +22,7 @@ No private SpringBoard lifecycle class is required by this tweak. The runtime re
 Havoc's SmartNetwork iOS 15-16 listing was reviewed only as market context for the usefulness of network-state customization. SmartNetwork is a much broader paid product. No proprietary source, assets, text, branding, settings, or feature implementation were copied. Wi-Fi Drop Haptic is intentionally limited to one original convenience behavior.
 
 ## Upstream/open-source review and licence obligations
-A web/GitHub search was performed for reputable open-source jailbreak implementations using the same Wi-Fi path-loss behavior. No source was copied into this project. The implementation uses Apple Network/UIKit APIs and original Next Solution code, so there is no third-party source-code licence obligation for this release.
+A web/GitHub search was performed for reputable open-source jailbreak implementations using the same Wi-Fi path-loss behavior. No source was copied into this project. The implementation uses Apple Network/UIKit APIs and original Next Jailbreak code, so there is no third-party source-code licence obligation for this release.
 
 ## Compatibility
 - iOS 15.0+

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only APT feed scanner for Next Solution editorial automation."""
+"""Read-only APT feed scanner for Next Jailbreak editorial automation."""
 
 from __future__ import annotations
 

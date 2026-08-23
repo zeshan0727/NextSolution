@@ -1,4 +1,4 @@
-"""Deterministic candidate selection for the Next Solution editorial queue."""
+"""Deterministic candidate selection for the Next Jailbreak editorial queue."""
 
 from __future__ import annotations
 

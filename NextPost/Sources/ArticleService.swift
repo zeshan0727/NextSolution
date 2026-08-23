@@ -7,7 +7,7 @@ enum ArticleServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidResponse:
-            return "Next Solution returned an invalid response."
+            return "Next Jailbreak returned an invalid response."
         case .noArticles:
             return "No published articles were found."
         }

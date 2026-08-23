@@ -12,7 +12,7 @@ Apple documents `UIScreenBrightnessDidChangeNotification` for brightness changes
 - SpringBoard only.
 
 ## Settings
-The release pane contains one real control: **Enable Brightness Peek**. It uses CFPreferences and a Darwin notification for live reload, following the proven Next Solution preference pattern. No diagnostic rows, process IDs, hook status, or test buttons are exposed.
+The release pane contains one real control: **Enable Brightness Peek**. It uses CFPreferences and a Darwin notification for live reload, following the proven Next Jailbreak preference pattern. No diagnostic rows, process IDs, hook status, or test buttons are exposed.
 
 ## Runtime design
 The critical path uses UIKit's brightness-change notification rather than attaching a gesture recognizer to a private view. On a notification, the tweak reads `UIScreen.mainScreen.brightness`, clamps it to 0...1, converts it to a rounded percentage, and displays a retained pass-through overlay. A generation counter prevents an older delayed fade from hiding a newer update during rapid slider movement. The overlay disables interaction so it cannot block SpringBoard touches.

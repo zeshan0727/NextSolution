@@ -660,7 +660,7 @@ struct SettingsView: View {
                 Section("About") {
                     LabeledContent("App", value: "NextSolution License Admin")
                     LabeledContent("Version", value: "1.0.0")
-                    LabeledContent("Developer", value: "Next Solution")
+                    LabeledContent("Developer", value: "Next Jailbreak")
                 }
             }
             .navigationTitle("Settings")

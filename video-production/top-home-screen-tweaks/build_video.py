@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the first Next Solution YouTube package from original source material."""
+"""Build the first Next Jailbreak YouTube package from original source material."""
 
 from __future__ import annotations
 
@@ -156,7 +156,7 @@ def draw_brand(image: Image.Image, logo_path: Path, *, small: bool = False) -> N
     word_gap = max(10, round(wordmark_size * 0.27))
     solution_x = next_x + next_width + word_gap
     if solution_x - (next_x + next_width) < 10:
-        raise RuntimeError("Next Solution wordmark spacing is below the safe minimum")
+        raise RuntimeError("Next Jailbreak wordmark spacing is below the safe minimum")
     draw.text((next_x, y + 5), "Next", font=next_face, fill=(22, 29, 52, 255))
     draw.text((solution_x, y + 5), "Solution", font=solution_face, fill=(48, 60, 91, 255))
 
@@ -616,7 +616,7 @@ def write_metadata(content: dict[str, Any], timings: list[SceneTiming], output: 
         + "\n".join(visual_source_lines(content))
         + "\n\n"
         + str(content["voice_disclosure"])
-        + " Original research, script, editing and visual composition by Next Solution. Feature screenshots are reproduced for editorial commentary and remain the property of their respective owners.\n\n"
+        + " Original research, script, editing and visual composition by Next Jailbreak. Feature screenshots are reproduced for editorial commentary and remain the property of their respective owners.\n\n"
         "#JailbreakTweaks #iPhoneCustomization #HomeScreen"
     )
     metadata = {

@@ -1,7 +1,7 @@
 Package: com.nextsolution.charge80haptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/Charge80Haptic_1.0.0_Rootless.deb
@@ -13,14 +13,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one success haptic when the iPhone crosses 80% battery while connected to power.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/charge80haptic.html
 Name: Charge 80 Haptic
 
 Package: com.nextsolution.charge80haptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/Charge80Haptic_1.0.0_RootHide.deb
@@ -32,14 +32,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one success haptic when the iPhone crosses 80% battery while connected to power.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/charge80haptic.html
 Name: Charge 80 Haptic
 
 Package: com.nextsolution.cleanhomelabels
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/CleanHomeLabels_1.0.0_RootHide.deb
@@ -51,14 +51,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Hides SpringBoard icon names for a cleaner Home Screen while leaving icons and badges intact.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
 Name: Clean Home Labels
 
 Package: com.nextsolution.cleanhomelabels
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/CleanHomeLabels_1.0.0_Rootless.deb
@@ -70,14 +70,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Hides SpringBoard icon names for a cleaner Home Screen while leaving icons and badges intact.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
 Name: Clean Home Labels
 
 Package: com.nextsolution.dailyledger.smsimport
 Version: 1.1.0
 Architecture: iphoneos-arm64e
-Maintainer: NextSolution
+Maintainer: Next Jailbreak
 Filename: ./debfiles/DailyLedgerSMSImport-1.1.0-roothide.deb
 Size: 17988
 MD5sum: 3ecb94061123f739f8ae42f7dd39be7f
@@ -86,13 +86,13 @@ SHA256: 4f10d6f12704cb3a42fc7815963d10697009b8694e39f28be506b73c91d7529e
 Section: Utilities
 Priority: optional
 Description: Automatically imports matching QAR bank SMS into a selected Daily Ledger account. Includes editable matching preferences, recent-message recovery, and importer status. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.0 or later.
-Author: NextSolution
+Author: Next Jailbreak
 Name: Daily Ledger SMS Import
 
 Package: com.nextsolution.dailyledger.smsimport
 Version: 1.1.1
 Architecture: iphoneos-arm64e
-Maintainer: NextSolution
+Maintainer: Next Jailbreak
 Filename: ./debfiles/DailyLedgerSMSImport-1.1.1-roothide.deb
 Size: 18256
 MD5sum: 04c256fa30824a088a46df5ad11ca461
@@ -101,13 +101,13 @@ SHA256: 06fcde433b129b388b5bca13d56164f5720902203b9f81c5ac2c8a513fa44cd5
 Section: Utilities
 Priority: optional
 Description: Automatically imports matching QAR bank SMS into a selected Daily Ledger account. Adds the RootHide container-access entitlements required for SMS database and TrollStore app data access. Includes editable matching preferences, recent-message recovery, and importer status. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.0 or later.
-Author: NextSolution
+Author: Next Jailbreak
 Name: Daily Ledger SMS Import
 
 Package: com.nextsolution.dailyledger.smsimport
 Version: 1.1.2
 Architecture: iphoneos-arm64e
-Maintainer: NextSolution
+Maintainer: Next Jailbreak
 Filename: ./debfiles/DailyLedgerSMSImport-1.1.2-roothide.deb
 Size: 18684
 MD5sum: 9e2e4bb21bfdd36894d8805c3b8731ea
@@ -116,13 +116,13 @@ SHA256: 45f1489af33ec28ec69a7463af6786b2d9fd8c31411eaa8a738e75d020389095
 Section: Utilities
 Priority: optional
 Description: Automatically imports QAR bank SMS containing the exact configured marker, including **6760, into a selected Daily Ledger account. Includes RootHide container entitlements, attributed-message decoding, recent-message recovery, importer status, and one vibration after a successful import. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.2 or later.
-Author: NextSolution
+Author: Next Jailbreak
 Name: Daily Ledger SMS Import
 
 Package: com.nextsolution.dailyledger.smsimport
 Version: 1.1.3
 Architecture: iphoneos-arm64e
-Maintainer: NextSolution
+Maintainer: Next Jailbreak
 Filename: ./debfiles/DailyLedgerSMSImport-1.1.3-roothide.deb
 Size: 18716
 MD5sum: c9b58e8a9431cf091b84240346f018fd
@@ -131,13 +131,13 @@ SHA256: b2a1fed9e703cef27de761525591ec0dce49a6b5981b4ea2278fd468f7a24843
 Section: Utilities
 Priority: optional
 Description: Automatically imports QAR bank SMS containing the exact configured marker, including **6760, into a selected Daily Ledger account. Runs in the RootHide mobile foreground domain and includes attributed-message decoding, recovery, status, and one vibration after a successful import. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.2 or later.
-Author: NextSolution
+Author: Next Jailbreak
 Name: Daily Ledger SMS Import
 
 Package: com.nextsolution.dailyledger.smsimport
 Version: 1.2.0
 Architecture: iphoneos-arm64e
-Maintainer: NextSolution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Filename: ./debfiles/DailyLedgerSMSImport-1.2.0-roothide.deb
 Size: 17792
@@ -147,13 +147,13 @@ SHA256: a0009aee2d4005f2c2288f30df35682dc94c08918d82c50b1f16dd88402ff8a6
 Section: Tweaks
 Priority: optional
 Description: RootHide SpringBoard tweak that automatically imports QAR bank SMS containing the exact configured marker, including **6760, into Daily Ledger. Includes attributed-message decoding, recovery, status, and one vibration after a successful import. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.2 or later.
-Author: NextSolution
+Author: Next Jailbreak
 Name: Daily Ledger SMS Import
 
 Package: com.nextsolution.dailyledger.smsimport
 Version: 1.3.0
 Architecture: iphoneos-arm64e
-Maintainer: NextSolution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/DailyLedgerSMSImport-1.3.0-roothide.deb
 Size: 21724
@@ -163,13 +163,13 @@ SHA256: 2d532d79a1e1910d7223b46f1285ac1a04ed3c832eb571eeeb1c2536e0447af2
 Section: Tweaks
 Priority: optional
 Description: RootHide SpringBoard tweak that automatically imports QAR bank SMS containing the exact configured marker, including **6760, into Daily Ledger. Includes attributed-message decoding, recovery, status, and one vibration after a successful import. Requires RootHide Bootstrap 2.0 or later and Daily Ledger 1.3.2 or later.
-Author: NextSolution
+Author: Next Jailbreak
 Name: Daily Ledger SMS Import
 
 Package: com.nextsolution.dailyledger.smsimport
 Version: 1.4.0
 Architecture: iphoneos-arm64e
-Maintainer: NextSolution
+Maintainer: Next Jailbreak
 Installed-Size: 176
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/DailyLedgerSMSImport-1.4.0-roothide.deb
@@ -180,13 +180,13 @@ SHA256: 757cb7e0626855d40196458e1bd7ed63d1345749878c16efd640faab8d1af33a
 Section: Tweaks
 Priority: optional
 Description: Native RootHide SpringBoard tweak that automatically imports matching bank SMS into Daily Ledger and vibrates after successful recording.
-Author: NextSolution
+Author: Next Jailbreak
 Name: Daily Ledger SMS Import
 
 Package: com.nextsolution.headphonedisconnecthaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 348
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_RootHide.deb
@@ -198,14 +198,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
 Name: Headphone Disconnect Haptic
 
 Package: com.nextsolution.headphonedisconnecthaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 348
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/HeadphoneDisconnectHaptic_1.0.0_Rootless.deb
@@ -217,14 +217,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
 Name: Headphone Disconnect Haptic
 
 Package: com.nextsolution.internetlosthaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/InternetLostHaptic_1.0.0_Rootless.deb
@@ -236,14 +236,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one warning haptic when a usable network path becomes unavailable.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html
 Name: Internet Lost Haptic
 
 Package: com.nextsolution.internetlosthaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/InternetLostHaptic_1.0.0_RootHide.deb
@@ -255,14 +255,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one warning haptic when a usable network path becomes unavailable.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html
 Name: Internet Lost Haptic
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 532
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.0_RootHide.deb
@@ -272,8 +272,8 @@ SHA1: 807c7b9bd560cc9542cbd0db88b5f1c8319dd50e
 SHA256: 1fbb75b99c25962de10c5982b62e55b85b0f88839ab603e60dd297c0eefd71dd
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -282,7 +282,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 532
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.0_Rootless.deb
@@ -292,8 +292,8 @@ SHA1: b4f0d275058fe8d1f74ab4884a5db81ee0a9b5fc
 SHA256: 29605c714355477c6fdacfbe90bac06f9b91d241a66f1c2ab1474e930c1ad22b
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -302,7 +302,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.1
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.1_RootHide.deb
@@ -312,8 +312,8 @@ SHA1: 39bbf1ece4cdc0c548ab0da056819aae276dbb20
 SHA256: 8ef667eb560c134d074652c499d351363bed30c2a8815c3dccffd60271264e60
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -322,7 +322,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.1
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.1_Rootless.deb
@@ -332,8 +332,8 @@ SHA1: 2cd3b34b2a1a49dc5ef8d809dac88741cd0a86dd
 SHA256: 53a7eea48a36b06fa0b529e53fc6ec3fde2e73a96d47350ee684f5d33fe2aa48
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -342,7 +342,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.2
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.2_Rootless.deb
@@ -352,8 +352,8 @@ SHA1: 3704668317de86426f2bb4f91f3a679b4a304851
 SHA256: bd8d6b5555654ad4b579b58168c63d8c39799846490ecfe7c5c5b0329ce9bb2f
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.2 fixes live clock refresh so customized time updates automatically without respring.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.2 fixes live clock refresh so customized time updates automatically without respring.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -362,7 +362,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.2
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.2_RootHide.deb
@@ -372,8 +372,8 @@ SHA1: e723107f8b8285d5999dc3c6f3a347a54179c8a6
 SHA256: 8c3b2a24dfedaa91a2d44a9dacf2f8c112474e2582f7b6b0b1408b4be2e0333b
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.2 fixes live clock refresh so customized time updates automatically without respring.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.2 fixes live clock refresh so customized time updates automatically without respring.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -382,7 +382,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.3
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.3_Rootless.deb
@@ -392,8 +392,8 @@ SHA1: 8246af99cc8e34afb0c3ab5d2ff858474c350117
 SHA256: 369c915cf48bae2087ea32714cddf36e69c85676b643a1545ab5c521fcd3495e
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.3 follows Apple's native Lock Screen clock text updates directly, with the timer retained as a fallback.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.3 follows Apple's native Lock Screen clock text updates directly, with the timer retained as a fallback.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -402,7 +402,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.3
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.3_RootHide.deb
@@ -412,8 +412,8 @@ SHA1: a08d5a961a89a5bbcbdc94d6a65bd97a03473e67
 SHA256: 0b31981ae213933561a94de7d8d4e9fd139257d8b6f309734eb6199f1687372e
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.3 follows Apple's native Lock Screen clock text updates directly, with the timer retained as a fallback.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.3 follows Apple's native Lock Screen clock text updates directly, with the timer retained as a fallback.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -422,7 +422,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.4
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.4_Rootless.deb
@@ -432,8 +432,8 @@ SHA1: 75106bd58f4502bec80a58360fb6f6b8985cfea6
 SHA256: fc7355239c645804fd83c1ebfc7f3d3098fbbce4e2c3c4d5d8eb0840774b1e46
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.4 adds an independent expandable Custom Photo frame-size control up to 180pt.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.4 adds an independent expandable Custom Photo frame-size control up to 180pt.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -442,7 +442,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.4_RootHide.deb
@@ -452,8 +452,8 @@ SHA1: 448a48b09e704a5eeaf6460b91a7c608946e2be3
 SHA256: 9e437fda714b932aa633fa7047c1b65de953dbcce793c660bbfbc68318cb1da0
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.4 adds an independent expandable Custom Photo frame-size control up to 180pt.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.4 adds an independent expandable Custom Photo frame-size control up to 180pt.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -462,7 +462,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.5
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.5_Rootless.deb
@@ -472,8 +472,8 @@ SHA1: 8577b598208399bcad49149dc7902ce1aa08d7fc
 SHA256: cefe2d706c1f995ffb900d95941bb121ab878e08ee42362dcfcce7f2c8893984
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.5 adds independent Custom Photo width and height controls up to 600pt.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.5 adds independent Custom Photo width and height controls up to 600pt.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -482,7 +482,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.5
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 528
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.0.5_RootHide.deb
@@ -492,8 +492,8 @@ SHA1: 8e1371a01412180432cb4fc67dc4b8f072834041
 SHA256: 676222e5a73e0d02d5e3b19ecf8d75681b1d04d5336d6c6cbd96e6995bf37a1b
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.5 adds independent Custom Photo width and height controls up to 600pt.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.5 adds independent Custom Photo width and height controls up to 600pt.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -502,7 +502,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.2
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 572
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.1.2_Rootless.deb
@@ -512,8 +512,8 @@ SHA1: ed6598e623243c025daa8347265efb5a45e266b2
 SHA256: e6e44346da51337bbab937539f362ed6df5bf2bb9eafe1ee5b4ef94d22aea695
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -522,7 +522,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.2
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 572
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.1.2_RootHide.deb
@@ -532,8 +532,8 @@ SHA1: c0a75a4c7920173c313b946f3b729965e235d9bb
 SHA256: 778e50330d095e11d6cc72d17ee0123f41ee52a37d1cbe34c2137d3fc24577f1
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -542,7 +542,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.3
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 572
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.1.3_Rootless.deb
@@ -552,8 +552,8 @@ SHA1: 4fb9c76a443d117db305551049d2c75bc77ab6f5
 SHA256: b03b77183f4ba3c135b71dfdcf842e3b3e9e11b351f6b1a40950073296de9d5a
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -562,7 +562,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.3
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 572
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.1.3_RootHide.deb
@@ -572,8 +572,8 @@ SHA1: 7c1a155e4ebcdb834413595ebd1a3c6d3ddeb5d4
 SHA256: 3286fa216bd3b53bb342d9db89d00896fa1a81749c89752984769269b074f131
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -582,7 +582,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.4
 Architecture: iphoneos-arm64
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 620
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.1.4_Rootless.deb
@@ -592,8 +592,8 @@ SHA1: 163fe5dcc4eea671d3ba8bb4e2cdf54d7353cc4a
 SHA256: ee542d3030e7ff3ae0e642666ea1c250e6012ee7a6c316c3059dafa23c76f90f
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -602,7 +602,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 620
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextLock_1.1.4_RootHide.deb
@@ -612,8 +612,8 @@ SHA1: 1040daa54c0e05d6d98e575a4fadd8ab8502edd7
 SHA256: 276ee4cc2ae667f4e8e884341d5efdb6d1632958aea0f15489da69822ca09450
 Section: Tweaks
 Homepage: https://nextsolution.cc
-Description: Next Solution lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
-Author: Next Solution - Zeeshan Barvi
+Description: Next Jailbreak lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextlock.html
 Icon: https://nextsolution.cc/NextLockIcon.png
 Name: NextLock
@@ -622,7 +622,7 @@ Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
 Package: com.nextsolution.lowpowermodehaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/LowPowerModeHaptic_1.0.0_RootHide.deb
@@ -634,14 +634,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays distinct haptic feedback when iPhone Low Power Mode turns on or off. Includes one simple enable switch in Settings.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
 Name: Low Power Mode Haptic
 
 Package: com.nextsolution.lowpowermodehaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/LowPowerModeHaptic_1.0.0_Rootless.deb
@@ -653,14 +653,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays distinct haptic feedback when iPhone Low Power Mode turns on or off. Includes one simple enable switch in Settings.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
 Name: Low Power Mode Haptic
 
 Package: com.nextsolution.nextaura.animations
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_animations_1.0.4_RootHide.deb
@@ -672,14 +672,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: System animation-speed control.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/animations.png
 Name: Motion
 
 Package: com.nextsolution.nextaura.app-switcher
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_app_switcher_1.0.4_RootHide.deb
@@ -691,14 +691,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: App Switcher card scale, opacity, spacing, labels, icons and background controls.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/app-switcher.png
 Name: SwitchDeck
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.10
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.6)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.10_RootHide.deb
@@ -710,14 +710,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Passive custom Control Center backgrounds with slider-aware Volume and Brightness support while preserving Apple's native expanded-module behavior.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.11
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.7)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.11_RootHide.deb
@@ -729,14 +729,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Volume-only validation build. All non-Volume Module Glass rendering remains unchanged from 1.0.10.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.12
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.8)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.12_RootHide.deb
@@ -748,14 +748,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Working Volume image-first validation build with native speaker icon color picker; non-Volume rendering remains unchanged.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.13
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.9)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.13_RootHide.deb
@@ -767,14 +767,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Working Volume image-first build with persistent speaker icon color overlay; all non-Volume rendering remains unchanged.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.14
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.10)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.14_RootHide.deb
@@ -786,14 +786,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Working Volume image-first build with synchronized speaker icon and live percentage color from the same native color picker; all non-Volume rendering remains unchanged.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.15
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.11)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.15_RootHide.deb
@@ -805,14 +805,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: All mapped Control Center module backgrounds now use the validated Volume image-first rendering method; Volume icon and live percentage share the selected custom color.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.16
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.12)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.16_RootHide.deb
@@ -824,14 +824,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Native-host Control Center backgrounds: validated Volume preserved, Brightness fill handling corrected, and standard modules clipped through Apple compact module hosts.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.17
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.13)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.17_RootHide.deb
@@ -843,14 +843,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Volume-pattern Control Center backgrounds: all compact modules now place artwork exactly like the validated Volume renderer, with Apple clipping geometry and dedicated Brightness fill suppression.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.18
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.14)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb
@@ -862,14 +862,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Rounded Volume-pattern Control Center backgrounds: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses its full fill hierarchy, and the validated Volume renderer remains unchanged.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.19
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.15)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.19_RootHide.deb
@@ -881,14 +881,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Rounded Module Glass backgrounds with value-sized Volume artwork matching Brightness behavior and protected compact switch/glyph visibility; all other rendering remains unchanged.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.4_RootHide.deb
@@ -900,14 +900,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Control Center module backgrounds, blur removal, opacity and control glow effects.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.5
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.1)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.5_RootHide.deb
@@ -919,14 +919,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Custom Control Center module images, blur removal, opacity and glow controls with a rebuilt runtime and Next Log diagnostics.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.6
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.2)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.6_RootHide.deb
@@ -938,14 +938,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Custom Control Center module images with rebuilt runtime, early ControlCenterUI hook bootstrap and Next Log heartbeat diagnostics.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.7
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.3)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.7_RootHide.deb
@@ -957,14 +957,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Custom Control Center module images with exact Volume, Brightness and Now Playing mapping, safe compact-only rendering and expanded-module protection.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.0.9
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.0.5)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.0.9_RootHide.deb
@@ -976,14 +976,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Passive custom Control Center backgrounds that preserve Apple's exact module size, rounded shape, material hierarchy, gestures and expanded-module behavior.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.1.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.1.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.1.0_RootHide.deb
@@ -995,14 +995,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Stable Module Glass release with Objective-C++ renderer isolation, foreground-safe standard tiles, preserved Brightness behavior, and full-frame value-masked Volume artwork.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.1.1
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.1.1)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.1.1_RootHide.deb
@@ -1014,14 +1014,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Clean Module Glass renderer with undimmed photo backgrounds, full static Volume/Brightness shells, untouched native foreground controls, and transition-safe expanded modules.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.1.3
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.5), com.nextsolution.nextaura.runtime.ccbackgrounds (>= 1.1.3)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_module_backgrounds_1.1.3_StableRecovery_RootHide.deb
@@ -1033,14 +1033,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Rounded Volume-pattern Control Center backgrounds: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses its full fill hierarchy, and the validated Volume renderer remains unchanged.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.1.18
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)
 Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.17), com.nextsolution.unlockvibrate
@@ -1055,7 +1055,7 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Customize Control Center modules with per-module images, blur, opacity, glow, and Volume icon color controls. Version 1.1.18 adds the functional $1 lifetime activation section used by NextLock while preserving the validated Module Glass renderer and settings.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/moduleglass.html
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
@@ -1063,7 +1063,7 @@ Name: Module Glass
 Package: com.nextsolution.nextaura.cc-module-backgrounds
 Version: 1.1.18
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)
 Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.17), com.nextsolution.unlockvibrate
@@ -1078,7 +1078,7 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Customize Control Center modules with per-module images, blur, opacity, glow, and Volume icon color controls. Version 1.1.18 adds the functional $1 lifetime activation section used by NextLock while preserving the validated Module Glass renderer and settings.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/moduleglass.html
 Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
@@ -1138,7 +1138,7 @@ Tag: role::cydia
 Package: com.nextsolution.nextaura.cc-second-page
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.advanced (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_cc_second_page_1.0.4_RootHide.deb
@@ -1150,14 +1150,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Second Control Center page with configurable tiles, spacing, information and haptics.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/cc-second-page.png
 Name: Control Deck
 
 Package: com.nextsolution.nextaura.control-center
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_control_center_1.0.4_RootHide.deb
@@ -1169,14 +1169,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Control Center labels, module sizing, background appearance and advanced stock-layout controls.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/control-center.png
 Name: ControlKit
 
 Package: com.nextsolution.nextaura.dock-folders
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_dock_folders_1.0.4_RootHide.deb
@@ -1188,14 +1188,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Dock and folder backgrounds, labels, sizing, opacity and advanced layout controls.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/dock-folders.png
 Name: DockCraft
 
 Package: com.nextsolution.nextaura.feedback
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.feedback (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_feedback_1.0.4_RootHide.deb
@@ -1207,14 +1207,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Unlock and call-connect vibration feedback.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/feedback.png
 Name: Pulse
 
 Package: com.nextsolution.nextaura.home-screen
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_home_screen_1.0.4_RootHide.deb
@@ -1226,14 +1226,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Home Screen labels, badges, icon sizing, opacity and advanced visual controls.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/home-screen.png
 Name: HomeFlow
 
 Package: com.nextsolution.nextaura.lock-screen
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.springboard (>= 1.0.0), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_lock_screen_1.0.4_RootHide.deb
@@ -1245,14 +1245,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Lock Screen clock, quick actions, status elements, charging text and notification-list visuals.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/lock-screen.png
 Name: LockCraft
 
 Package: com.nextsolution.nextaura.notification-glow
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.glow (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_notification_glow_1.0.4_RootHide.deb
@@ -1264,14 +1264,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Edge glow, pulse, ripple and lock-screen notification lighting effects.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/notification-glow.png
 Name: Notify Glow
 
 Package: com.nextsolution.nextaura.notification-island
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.island (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_notification_island_1.0.4_RootHide.deb
@@ -1283,14 +1283,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Notification Island with app icons, privacy, exact-app Open, Dismiss, live preview and layout controls.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/notification-island.png
 Name: Notify Island
 
 Package: com.nextsolution.nextaura.notifications
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_notifications_1.0.4_RootHide.deb
@@ -1302,14 +1302,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Stock notification icon, app name, time, buttons, scale, opacity and advanced card appearance.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/notifications.png
 Name: NotifyKit
 
 Package: com.nextsolution.nextaura.now-playing
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_now_playing_1.0.4_RootHide.deb
@@ -1321,14 +1321,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Now Playing artwork, title, artist, controls, opacity, scaling and background appearance.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/now-playing.png
 Name: NowPlay
 
 Package: com.nextsolution.nextaura.runtime.advanced
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1343,13 +1343,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal advanced runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (advanced)
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1364,13 +1364,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal ccbackgrounds runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (ccbackgrounds)
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.1
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1385,13 +1385,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Source-controlled Module Glass runtime with reliable Control Center module image application and Next Log diagnostics.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.10
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 204
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1407,13 +1407,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Working isolated Module Glass Volume runtime with persistent speaker icon and percentage color overlays and unchanged image-first background behavior.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.11
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 208
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1429,13 +1429,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: All-module Module Glass image-first runtime using the validated Volume background method, with live native Volume percentage tint and preserved compact/expanded behavior.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.12
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 240
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1451,13 +1451,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Native-host Module Glass runtime that preserves the validated Volume renderer, adds Brightness fill-aware rendering, and clips standard module images through Apple compact hosts and masks.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.13
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 240
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1473,13 +1473,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Volume-pattern Module Glass runtime: all compact modules place images like the validated Volume renderer, with Apple mask geometry and Brightness UIView/CALayer fill suppression.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.14
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 240
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1495,13 +1495,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Rounded Volume-pattern Module Glass runtime: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses fill from the full module hierarchy, and the validated Volume renderer remains unchanged.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.15
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 240
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1517,13 +1517,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Rounded Module Glass runtime with value-sized Volume artwork matching Brightness behavior and protected compact-module foreground switch/glyph visibility.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.2
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1538,13 +1538,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Source-controlled Module Glass runtime with early ControlCenterUI loading, reliable module image application and unconditional Next Log heartbeat diagnostics.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.3
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1559,13 +1559,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Stable Module Glass runtime with exact iOS 16 module mapping, compact-only backgrounds, safe expanded Control Center handling and Next Log diagnostics.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.5
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1580,13 +1580,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Passive Module Glass runtime that paints above Apple's compact module background without changing module layout, native material hierarchy, or expanded Control Center behavior.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.6
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 204
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1602,13 +1602,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Passive Module Glass runtime with slider-aware compact backgrounds for Volume and Brightness while preserving Apple's expanded Control Center behavior.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.7
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 204
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1624,13 +1624,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Isolated Volume validation runtime for Module Glass. Other module rendering paths are unchanged.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.8
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 204
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1646,13 +1646,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Working isolated Module Glass Volume runtime with native speaker icon color customization and unchanged image-first background behavior.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.0.9
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 204
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1668,13 +1668,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Working isolated Module Glass Volume runtime with persistent speaker icon color overlay and unchanged image-first background behavior.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.1.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 272
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1690,13 +1690,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Stable Objective-C++ Module Glass runtime with isolated slider renderers, full-frame Volume value masking, passive foreground-safe standard tiles, and preserved Brightness behavior.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.1.1
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 240
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1712,13 +1712,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Clean static Module Glass renderer with undimmed photo placement, full-shell Volume and Brightness backgrounds, untouched Apple foreground controls, and transition-safe expanded modules.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
 Version: 1.1.3
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 240
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
@@ -1734,13 +1734,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Rounded Volume-pattern Module Glass runtime: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses fill from the full module hierarchy, and the validated Volume renderer remains unchanged.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Module Glass Runtime
 
 Package: com.nextsolution.nextaura.runtime.extended
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1755,13 +1755,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal extended runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (extended)
 
 Package: com.nextsolution.nextaura.runtime.feedback
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1776,13 +1776,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal feedback runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (feedback)
 
 Package: com.nextsolution.nextaura.runtime.glow
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1797,13 +1797,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal glow runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (glow)
 
 Package: com.nextsolution.nextaura.runtime.island
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1818,13 +1818,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal island runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (island)
 
 Package: com.nextsolution.nextaura.runtime.preferences
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1839,13 +1839,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal native category Preferences controller shared by modular tweaks.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Aura Preferences Runtime
 
 Package: com.nextsolution.nextaura.runtime.preferences
 Version: 1.0.5
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1860,13 +1860,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal native category Preferences controller shared by modular tweaks, with native Module Glass Volume icon color picker.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Aura Preferences Runtime
 
 Package: com.nextsolution.nextaura.runtime.safe
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1881,13 +1881,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal safe runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (safe)
 
 Package: com.nextsolution.nextaura.runtime.springboard
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1902,13 +1902,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal springboard runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (springboard)
 
 Package: com.nextsolution.nextaura.runtime.thermal
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
@@ -1923,13 +1923,13 @@ Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Internal thermal runtime shared by modular NextAura categories.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: NextAura Runtime (thermal)
 
 Package: com.nextsolution.nextaura.safety-recovery
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_safety_recovery_1.0.4_RootHide.deb
@@ -1941,14 +1941,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Crash-guard recovery and reset tools for advanced visual controls.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/safety-recovery.png
 Name: Rescue
 
 Package: com.nextsolution.nextaura.status-bar
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.extended (>= 1.0.0), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_status_bar_1.0.4_RootHide.deb
@@ -1960,14 +1960,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Status Bar visibility, opacity, scale, positioning and individual indicator controls.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/status-bar.png
 Name: StatusKit
 
 Package: com.nextsolution.nextaura.system-overlays
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.safe (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_system_overlays_1.0.4_RootHide.deb
@@ -1979,14 +1979,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Screenshot flash/preview controls plus Volume and Ringer HUD visibility options.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/system-overlays.png
 Name: HUDKit
 
 Package: com.nextsolution.nextaura.thermal-sweat
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 16.0), preferenceloader, com.nextsolution.nextaura.runtime.preferences (>= 1.0.4), com.nextsolution.nextaura.runtime.thermal (>= 1.0.0)
 Conflicts: com.nextsolution.unlockvibrate
 Filename: ./debfiles/NextAura_thermal_sweat_1.0.4_RootHide.deb
@@ -1998,14 +1998,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Temperature-aware battery visuals, Sweat My Phone effects and battery percentage tools.
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
 Name: Therma
 
 Package: com.nextsolution.nextdiagnostics.runtime
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 15.0), mobilesubstrate
 Filename: ./debfiles/NextDiagnosticsRuntime_1.0.0_RootHide.deb
 Size: 12300
@@ -2015,15 +2015,15 @@ SHA256: e479b09420fb6eccdf5cb696287db48da29ab488d06255ee070656e628ed8e46
 Section: System
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Shared RootHide diagnostic runtime for Next Solution tweaks. It remains idle until Next Log starts a focused capture, then reports process injection and loaded tweak dylibs.
+Description: Shared RootHide diagnostic runtime for Next Jailbreak tweaks. It remains idle until Next Log starts a focused capture, then reports process injection and loaded tweak dylibs.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Next Diagnostics Runtime
 
 Package: com.nextsolution.nextdiagnostics.runtime
 Version: 1.0.1
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Depends: firmware (>= 15.0), mobilesubstrate
 Filename: ./debfiles/NextDiagnosticsRuntime_1.0.1_RootHide.deb
 Size: 12296
@@ -2033,15 +2033,15 @@ SHA256: 74f48927e549b4b3c3d8190196dd87ec34adb1ee27e84e1bd7de36ad888fece9
 Section: System
 Priority: optional
 Homepage: https://nextsolution.cc/
-Description: Shared RootHide diagnostic runtime for Next Solution tweaks. Idle until Next Log starts a focused capture, then reports target-process injection and loaded tweak dylibs.
+Description: Shared RootHide diagnostic runtime for Next Jailbreak tweaks. Idle until Next Log starts a focused capture, then reports target-process injection and loaded tweak dylibs.
 Tag: role::cydia
-Author: Next Solution - zeshan0727
+Author: Next Jailbreak - zeshan0727
 Name: Next Diagnostics Runtime
 
 Package: com.nextsolution.nexthomelock
 Version: 1.0.4
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 352
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeLock_1.0.4_Rootless.deb
@@ -2052,13 +2052,13 @@ SHA256: fc7221755c5ac6e3c9a488a1116045870539b3802f3c6ecaf74c09c9255c2094
 Section: Tweaks
 Priority: optional
 Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.4 replaces the failed gesture-recognizer implementation with the proven SBIconListView touchesEnded method and SpringBoard simulated lock-button route. Includes live CFPreferences diagnostics and Test Lock Now.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Next Home Lock
 
 Package: com.nextsolution.nexthomelock
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 352
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeLock_1.0.4_RootHide.deb
@@ -2069,13 +2069,13 @@ SHA256: 7fece88e46448523508f1b0e045b49dda48d83533a62eb3ddf62db97f5247f3f
 Section: Tweaks
 Priority: optional
 Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.4 replaces the failed gesture-recognizer implementation with the proven SBIconListView touchesEnded method and SpringBoard simulated lock-button route. Includes live CFPreferences diagnostics and Test Lock Now.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Next Home Lock
 
 Package: com.nextsolution.nexthomelock
 Version: 1.0.5
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 348
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeLock_1.0.5_Rootless.deb
@@ -2086,13 +2086,13 @@ SHA256: a7ec52389bdbd4bd8e959bb63a776b000eac4ff13b6688edf0badd34924743d2
 Section: Tweaks
 Priority: optional
 Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.5 keeps the verified SBIconListView runtime and replaces the diagnostic-heavy Settings page with one simple enable or disable switch.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Next Home Lock
 
 Package: com.nextsolution.nexthomelock
 Version: 1.0.5
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 348
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeLock_1.0.5_RootHide.deb
@@ -2103,13 +2103,13 @@ SHA256: d56c4188687d703bc7abc4f68951748bdbab739e18206376ca88df7605ab3745
 Section: Tweaks
 Priority: optional
 Description: Double-tap an empty Home Screen area to lock the device. Version 1.0.5 keeps the verified SBIconListView runtime and replaces the diagnostic-heavy Settings page with one simple enable or disable switch.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Next Home Lock
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeTorch_1.0.0_RootHide.deb
@@ -2121,14 +2121,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Next Home Torch
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeTorch_1.0.0_Rootless.deb
@@ -2140,14 +2140,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Next Home Torch
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.1
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeTorch_1.0.1_RootHide.deb
@@ -2159,14 +2159,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Next Home Torch
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.1
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextHomeTorch_1.0.1_Rootless.deb
@@ -2178,14 +2178,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Toggle the flashlight with a two-finger tap on an empty Home Screen area. Includes one simple enable or disable switch.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Next Home Torch
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.2
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/HomeScreenFlashlight_1.0.2_RootHide.deb
@@ -2197,14 +2197,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Includes a simple enable or disable switch in Settings.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Home Screen Flashlight
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.2
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/HomeScreenFlashlight_1.0.2_Rootless.deb
@@ -2216,14 +2216,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Includes a simple enable or disable switch in Settings.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Home Screen Flashlight
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.4
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 348
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/HomeScreenFlashlight_1.0.4_RootHide.deb
@@ -2235,14 +2235,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Version 1.0.4 adds verified SpringBoard injection diagnostics, a Settings test command, framework loading, haptic gesture confirmation and multiple flashlight routes.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Home Screen Flashlight
 
 Package: com.nextsolution.nexthometorch
 Version: 1.0.4
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 348
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/HomeScreenFlashlight_1.0.4_Rootless.deb
@@ -2254,14 +2254,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Version 1.0.4 adds verified SpringBoard injection diagnostics, a Settings test command, framework loading, haptic gesture confirmation and multiple flashlight routes.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/nexthometorch.html
 Name: Home Screen Flashlight
 
 Package: com.nextsolution.nextledger
 Version: 1.3.41
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 7692
 Depends: firmware (>= 16.0)
 Filename: ./debfiles/NextLedger_1.3.41_iphoneos-arm64e.deb
@@ -2273,7 +2273,7 @@ Section: Applications
 Priority: optional
 Homepage: https://nextsolution.cc/applications/
 Description: Fast personal finance ledger with account balances, historical closing-balance cards, reports, budgets, transaction search, backup and AI-assisted insights.
-Author: Next Solution - Zeeshan Barvi
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextledger.html
 Icon: https://nextsolution.cc/CydiaIcon.png
 Name: Next Ledger
@@ -2281,7 +2281,7 @@ Name: Next Ledger
 Package: com.nextsolution.nextledger
 Version: 1.3.42
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 7848
 Depends: firmware (>= 16.0)
 Filename: ./debfiles/NextLedger_1.3.42_iphoneos-arm64e.deb
@@ -2293,7 +2293,7 @@ Section: Applications
 Priority: optional
 Homepage: https://nextsolution.cc/applications/
 Description: Fast personal finance ledger with filtered Net Balance and Income account cards, historical closing balances, reports, budgets, backup and AI-assisted insights.
-Author: Next Solution - Zeeshan Barvi
+Author: Next Jailbreak - Zeeshan Barvi
 Depiction: https://nextsolution.cc/depictions/nextledger.html
 Icon: https://nextsolution.cc/CydiaIcon.png
 Name: Next Ledger
@@ -2301,7 +2301,7 @@ Name: Next Ledger
 Package: com.nextsolution.nextmessage
 Version: 1.1.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 424
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextMessage_1.1.0_Rootless_iOS16.deb
@@ -2310,17 +2310,17 @@ MD5sum: 4c3f7e41e2581be203c03301489d353c
 SHA1: 0aa17520b2145c571f41c4e64b3f431e2f2cf3ee
 SHA256: b371c2cecc2c1955e6f8d7d3cddc7e573b3c31574ef907bebac6dc1ad595dae2
 Section: Tweaks
-Homepage: https://zeshan0727.github.io/
+Homepage: https://nextsolution.cc/
 Description: A free PhoneAura-inspired redesign for the iOS 16 Messages app with elegant conversation cards, dark glass styling, swipe-to-view conversation details, message count, first-message date, safe conversation deletion, haptics, animations and a branded Settings pane. Built for rootless jailbreaks.
-Author: Next Solution - zeshan0727
-Depiction: https://zeshan0727.github.io/depictions/nextmessage.html
-Icon: https://zeshan0727.github.io/CydiaIcon.png
+Author: Next Jailbreak - zeshan0727
+Depiction: https://nextsolution.cc/depictions/nextmessage.html
+Icon: https://nextsolution.cc/CydiaIcon.png
 Name: Next Message
 
 Package: com.nextsolution.nextmessage
 Version: 1.1.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 424
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextMessage_1.1.0_RootHide_iOS16.deb
@@ -2329,17 +2329,17 @@ MD5sum: df278ca66df86b7c84b8888f5bed4efb
 SHA1: 671f048fbec9b121db96f9cbfaab30b466dbb5f6
 SHA256: 3a5d181776dbb892510f0cd18e02c3dc9aa53baa3403d290b3633ed248d49140
 Section: Tweaks
-Homepage: https://zeshan0727.github.io/
+Homepage: https://nextsolution.cc/
 Description: A free PhoneAura-inspired redesign for the iOS 16 Messages app with elegant conversation cards, dark glass styling, swipe-to-view conversation details, message count, first-message date, safe conversation deletion, haptics, animations and a branded Settings pane. Built for RootHide.
-Author: Next Solution - zeshan0727
-Depiction: https://zeshan0727.github.io/depictions/nextmessage.html
-Icon: https://zeshan0727.github.io/CydiaIcon.png
+Author: Next Jailbreak - zeshan0727
+Depiction: https://nextsolution.cc/depictions/nextmessage.html
+Icon: https://nextsolution.cc/CydiaIcon.png
 Name: Next Message
 
 Package: com.nextsolution.nextquickreminder
 Version: 1.0.10
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 588
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
@@ -2350,13 +2350,13 @@ SHA1: 32a371856eaf155888353ade8e1437b3f498f0d1
 SHA256: 4cbb9208d287ab359f7b0ba535f5b03e642aa9b2377c3c39c01d63a8358aa6c4
 Section: Tweaks
 Description: RootHide quick reminder with multi-trigger access, keyboard input, background saving, Dynamic Island/System Aperture due reminders, persistent dismiss, and live size/position controls with a test preview in Settings.
-Author: Next Solution - Zeeshan Barvi
+Author: Next Jailbreak - Zeeshan Barvi
 Name: Next Quick Reminder
 
 Package: com.nextsolution.nextquickreminder
 Version: 1.0.6
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 536
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
@@ -2367,13 +2367,13 @@ SHA1: 009171757f4e2de6459c1bdb075d62e8b6bb2e19
 SHA256: b6ede421085e700734a875501055b40408ace077bc6ad2e6587a174edb563ff8
 Section: Tweaks
 Description: RootHide quick reminder card with reliable multi-trigger access, Lock Screen support, background saving, in-panel Quick Access settings, and restored keyboard input.
-Author: Next Solution - Zeeshan Barvi
+Author: Next Jailbreak - Zeeshan Barvi
 Name: Next Quick Reminder
 
 Package: com.nextsolution.nextquickreminder
 Version: 1.0.7
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 584
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
@@ -2384,13 +2384,13 @@ SHA1: b574651997fbf006470e69c680bd8ee6840affdd
 SHA256: ef52cfb47f8145ee4e6d2934b2709250ca4f29b63706701941a60942a390a425
 Section: Tweaks
 Description: RootHide quick reminder with reliable multi-trigger access, keyboard input, background saving, and an iOS 16.0 Lock Screen due-reminder live-card fallback with Completed and Extend controls.
-Author: Next Solution - Zeeshan Barvi
+Author: Next Jailbreak - Zeeshan Barvi
 Name: Next Quick Reminder
 
 Package: com.nextsolution.nextquickreminder
 Version: 1.0.8
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 584
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
@@ -2401,13 +2401,13 @@ SHA1: 22b81342d175efa6c6c444791a86666a4b1e3ce9
 SHA256: 0c0c99784dc7e2cb26ba69839eb5f724933fb218d856004b4006e4017a0f3229
 Section: Tweaks
 Description: RootHide quick reminder with reliable multi-trigger access, keyboard input, background saving, and iOS 16 Dynamic Island integration through Apple SpringBoard System Aperture instead of a separate reminder window.
-Author: Next Solution - Zeeshan Barvi
+Author: Next Jailbreak - Zeeshan Barvi
 Name: Next Quick Reminder
 
 Package: com.nextsolution.nextquickreminder
 Version: 1.0.9
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution - Zeeshan Barvi
+Maintainer: Next Jailbreak - Zeeshan Barvi
 Installed-Size: 584
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.nextsolution.nextquickreminder.beta
@@ -2418,13 +2418,13 @@ SHA1: 84beeb45bdadcc037c40fabbbb69dd455261eefd
 SHA256: 877108756ebe2af45a950380f19b3b7d9a9c5dcab4a9b2aa55c3a08fc98b90c5
 Section: Tweaks
 Description: RootHide quick reminder with multi-trigger access, reliable keyboard input, background saving, and iOS 16 Dynamic Island presentation attached to SpringBoard System Aperture. Version 1.0.9 adds persistent Dismiss so the same reminder occurrence does not return after lock/unlock.
-Author: Next Solution - Zeeshan Barvi
+Author: Next Jailbreak - Zeeshan Barvi
 Name: Next Quick Reminder
 
 Package: com.nextsolution.screenshothaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/ScreenshotHaptic_1.0.0_RootHide.deb
@@ -2435,14 +2435,14 @@ SHA256: 8c0decd47514ca99affa27f2374cf8eedaa185651bec9d59698b13ce22a7d3bb
 Section: Tweaks
 Homepage: https://nextsolution.cc/
 Description: Plays one success haptic after iOS confirms a screenshot was taken.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/screenshothaptic.html
 Name: Screenshot Haptic
 
 Package: com.nextsolution.screenshothaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/ScreenshotHaptic_1.0.0_Rootless.deb
@@ -2453,14 +2453,14 @@ SHA256: 24900b809ba48aa77ce6d98fdfa091928cd78ba612ace8f0cd96e56df1db3919
 Section: Tweaks
 Homepage: https://nextsolution.cc/
 Description: Plays one success haptic after iOS confirms a screenshot was taken.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/screenshothaptic.html
 Name: Screenshot Haptic
 
 Package: com.nextsolution.shaketorun
 Version: 1.1.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 380
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/ShakeToRun_RootHide_1.1.0_iOS16.deb
@@ -2471,13 +2471,13 @@ SHA256: 24ec6ef33be3fc7d27554d28dc5ef9d4b3ba601fb99c1311094db1d2f8584f8e
 Section: Tweaks
 Priority: optional
 Description: Detects shakes directly, vibrates as confirmation, and runs the most recent Shortcuts automation prompt while unlocked. Includes an enabled-by-default Settings pane. Separate SpringBoard-only RootHide Bootstrap tweak for iOS 16.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Shake to Run Automation (RootHide)
 
 Package: com.nextsolution.thermalwarninghaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/ThermalWarningHaptic_1.0.0_Rootless.deb
@@ -2489,14 +2489,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/thermalwarninghaptic.html
 Name: Thermal Warning Haptic
 
 Package: com.nextsolution.thermalwarninghaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/ThermalWarningHaptic_1.0.0_RootHide.deb
@@ -2508,14 +2508,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/thermalwarninghaptic.html
 Name: Thermal Warning Haptic
 
 Package: com.nextsolution.unlockvibrate
 Version: 2.7.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 632
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/SweatMyPhone_RootHide_2.7.0_AdjustableTemperature_iOS16.deb
@@ -2525,14 +2525,14 @@ SHA1: 4e41eaaf0293d6d214a8478b79008575c4ac0ee6
 SHA256: 2977cba3da24ba2bf17ede34c27f1ad48f95d0b86ba12444c3da1a69033c90fa
 Section: Tweaks
 Priority: optional
-Description: Adds an adjustable 30–50°C sweat trigger temperature in the Next Solution Tweaks Settings pane, defaulting to 37°C. Keeps all thermal and sweat hooks SpringBoard-only for stability, with the five-second Home Screen test, battery temperature colors, unlock vibration, and call-connect vibration. Built for RootHide on iOS 16.
-Author: Next Solution
+Description: Adds an adjustable 30–50°C sweat trigger temperature in the Next Jailbreak Tweaks Settings pane, defaulting to 37°C. Keeps all thermal and sweat hooks SpringBoard-only for stability, with the five-second Home Screen test, battery temperature colors, unlock vibration, and call-connect vibration. Built for RootHide on iOS 16.
+Author: Next Jailbreak
 Name: Sweat My Phone (RootHide)
 
 Package: com.nextsolution.unlockvibrate
 Version: 3.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 812
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/SweatMyPhone_RootHide_3.0.0_20FeatureSuite_iOS16.deb
@@ -2542,14 +2542,14 @@ SHA1: 400256cb090ffac78d65417cdba9947d8de5527c
 SHA256: f3bbe6edc358d74d9153cd46f35ea1a4924bb72b1a96066a4f8aa7708ebf8652
 Section: Tweaks
 Priority: optional
-Description: Adds 20 individually configurable SpringBoard customizations to Next Solution Tweaks while preserving unlock and call vibration, thermal battery colors, adjustable sweat temperature, and the five-second sweat test. All tweak dylibs remain SpringBoard-only for RootHide stability on iOS 16.
-Author: Next Solution
+Description: Adds 20 individually configurable SpringBoard customizations to Next Jailbreak Tweaks while preserving unlock and call vibration, thermal battery colors, adjustable sweat temperature, and the five-second sweat test. All tweak dylibs remain SpringBoard-only for RootHide stability on iOS 16.
+Author: Next Jailbreak
 Name: Sweat My Phone (RootHide)
 
 Package: com.nextsolution.unlockvibrate
 Version: 3.1.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 1012
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/SweatMyPhone_RootHide_3.1.0_50MoreFeatures_iOS16.deb
@@ -2560,13 +2560,13 @@ SHA256: cd08678dd450fd441dcb2950736cab49d6992d9a28d9025a464c6eb0d096effb
 Section: Tweaks
 Priority: optional
 Description: Adds 50 more opt-in Home Screen, Status Bar, Control Center, Lock Screen, Now Playing, and notification controls to the existing 20-feature suite. Preserves vibration, thermal battery, and sweat features with SpringBoard-only RootHide stability on iOS 16.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Sweat My Phone (RootHide)
 
 Package: com.nextsolution.unlockvibrate
 Version: 3.2.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 1240
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/SweatMyPhone_RootHide_3.2.0_Organized100Features_CCSecondPage_iOS16.deb
@@ -2577,13 +2577,13 @@ SHA256: 6092d1995cb7bca8ff702f21bdfe7c56bff8572e1cf44355b8e4ccf57b4d4c42
 Section: Tweaks
 Priority: optional
 Description: Organizes approximately 100 controls into clear Settings groups with a short explanation beneath every function. Adds a swipeable second Control Center page, adjustable grid columns and rows, quick-launch tiles, live battery, temperature and memory information, plus 18 related layout controls. SpringBoard-only RootHide build for iOS 16.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Sweat My Phone (RootHide)
 
 Package: com.nextsolution.unlockvibrate
 Version: 4.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 1572
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/SweatMyPhone_RootHide_4.0.0_100MoreSafeFeatures_iOS16.deb
@@ -2594,13 +2594,13 @@ SHA256: 54edb75f51441e4c97d4aae37e2fd621dec6480ee977c56422dcdfc7c6acdd34
 Section: Tweaks
 Priority: optional
 Description: Adds 100 opt-in Safety Lab appearance controls to the existing organized suite, for approximately 200 controls total. The new module is disabled by default and automatically disables itself after an incomplete SpringBoard startup. Includes a reset button, crash-guard recovery, exact SpringBoard-only injection, and no daemon or system-file patches. RootHide iOS 16 build.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Sweat My Phone (RootHide)
 
 Package: com.nextsolution.unlockvibrate
 Version: 4.1.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 1820
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/SweatMyPhone_RootHide_4.1.0_UnifiedControls_CCBackgrounds_iOS16.deb
@@ -2611,13 +2611,13 @@ SHA256: 2a0d35e387714e5c5be5e15bf2e17875b466fb3f4ebf9f2364cf01d667f2e55c
 Section: Tweaks
 Priority: optional
 Description: Unified RootHide iOS 16 tweak suite with reliable choice controls, icon-labeled Settings categories, a selectable second Control Center page, and separate local background images for Control Center modules. Advanced visual controls activate when changed and reset automatically after an incomplete SpringBoard startup. Every dylib remains SpringBoard-only.
-Author: Next Solution
+Author: Next Jailbreak
 Name: Sweat My Phone (RootHide)
 
 Package: com.nextsolution.unlockvibrate
 Version: 4.4.8
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 2332
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextAura_4.4.8_RootHide_iOS16.deb
@@ -2627,17 +2627,17 @@ SHA1: 7eaef7d3ceb4220dd7914c5af7ce41ec437af779
 SHA256: 158d1f8b26992b879dbeef36d8c0e49de5a31d2b30b4e2a949d592a55ec437a3
 Section: Tweaks
 Priority: optional
-Homepage: https://zeshan0727.github.io/
-Description: The complete Next Solution customization suite for iOS 16. NextAura adds Dynamic Island notifications with gestures, live preview, adjustable sizing, stock-banner suppression, notification stacking, configurable backgrounds and native blur. It also includes vibration feedback, thermal battery colors, Sweat My Phone effects, Control Center tools, notification glow and safety recovery controls.
-Author: Next Solution - zeshan0727
-Depiction: https://zeshan0727.github.io/depictions/nextaura.html
-Icon: https://zeshan0727.github.io/CydiaIcon.png
+Homepage: https://nextsolution.cc/
+Description: The complete Next Jailbreak customization suite for iOS 16. NextAura adds Dynamic Island notifications with gestures, live preview, adjustable sizing, stock-banner suppression, notification stacking, configurable backgrounds and native blur. It also includes vibration feedback, thermal battery colors, Sweat My Phone effects, Control Center tools, notification glow and safety recovery controls.
+Author: Next Jailbreak - zeshan0727
+Depiction: https://nextsolution.cc/depictions/nextaura.html
+Icon: https://nextsolution.cc/CydiaIcon.png
 Name: NextAura
 
 Package: com.nextsolution.unlockvibrate
 Version: 4.4.8
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 2332
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/NextAura_4.4.8_Rootless_iOS16.deb
@@ -2647,17 +2647,17 @@ SHA1: fa6485f07085bf29ad2f6409b324968d7f290554
 SHA256: efdbc4e146fde4fd4f49257f28d1ea49228c51e15226fa67bcc46c78b70e630f
 Section: Tweaks
 Priority: optional
-Homepage: https://zeshan0727.github.io/
-Description: The complete Next Solution customization suite for iOS 16. NextAura adds Dynamic Island notifications with gestures, live preview, adjustable sizing, stock-banner suppression, notification stacking, configurable backgrounds and native blur. It also includes vibration feedback, thermal battery colors, Sweat My Phone effects, Control Center tools, notification glow and safety recovery controls.
-Author: Next Solution - zeshan0727
-Depiction: https://zeshan0727.github.io/depictions/nextaura.html
-Icon: https://zeshan0727.github.io/CydiaIcon.png
+Homepage: https://nextsolution.cc/
+Description: The complete Next Jailbreak customization suite for iOS 16. NextAura adds Dynamic Island notifications with gestures, live preview, adjustable sizing, stock-banner suppression, notification stacking, configurable backgrounds and native blur. It also includes vibration feedback, thermal battery colors, Sweat My Phone effects, Control Center tools, notification glow and safety recovery controls.
+Author: Next Jailbreak - zeshan0727
+Depiction: https://nextsolution.cc/depictions/nextaura.html
+Icon: https://nextsolution.cc/CydiaIcon.png
 Name: NextAura
 
 Package: com.nextsolution.wifidrophaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/WiFiDropHaptic_1.0.0_Rootless.deb
@@ -2669,14 +2669,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one warning haptic when the active network path leaves Wi-Fi.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/wifidrophaptic.html
 Name: Wi-Fi Drop Haptic
 
 Package: com.nextsolution.wifidrophaptic
 Version: 1.0.0
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/WiFiDropHaptic_1.0.0_RootHide.deb
@@ -2688,14 +2688,14 @@ Section: Tweaks
 Priority: optional
 Homepage: https://nextsolution.cc/
 Description: Plays one warning haptic when the active network path leaves Wi-Fi.
-Author: Next Solution
+Author: Next Jailbreak
 Depiction: https://nextsolution.cc/depictions/wifidrophaptic.html
 Name: Wi-Fi Drop Haptic
 
 Package: com.zeshan.phoneaura
 Version: 0.4.16
 Architecture: iphoneos-arm64
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 1084
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/PhoneAura_0.4.16_Rootless_iOS16.deb
@@ -2704,16 +2704,16 @@ MD5sum: 0b033f8a7ce252dd6400d1f6dd0a6dab
 SHA1: c2bfdbd4c2506eba0e74ed4f359b34750f972d66
 SHA256: 953d3eadfbc379bc57349cb92ed2cad8fae78d9c35092c33bce437573fe4fbc4
 Section: Tweaks
-Homepage: https://zeshan0727.github.io/
-Description: PhoneAura is a free, modern redesign of the iOS 16 Phone app. Version 0.4.16 is an emergency stability hotfix that removes the crashing global long-press phone-number editing hooks introduced in 0.4.15 and restores the proven 0.4.14 runtime behavior. It preserves the fixed saved-number suggestion area, Number not saved status, corrected Next Solution header logo, original Number Options menu, custom Favorites, smart Recents filters, Contacts, haptics and animations. Built for rootless jailbreaks.
-Author: Next Solution
-Depiction: https://zeshan0727.github.io/depictions/phoneaura.html
+Homepage: https://nextsolution.cc/
+Description: PhoneAura is a free, modern redesign of the iOS 16 Phone app. Version 0.4.16 is an emergency stability hotfix that removes the crashing global long-press phone-number editing hooks introduced in 0.4.15 and restores the proven 0.4.14 runtime behavior. It preserves the fixed saved-number suggestion area, Number not saved status, corrected Next Jailbreak header logo, original Number Options menu, custom Favorites, smart Recents filters, Contacts, haptics and animations. Built for rootless jailbreaks.
+Author: Next Jailbreak
+Depiction: https://nextsolution.cc/depictions/phoneaura.html
 Name: PhoneAura
 
 Package: com.zeshan.phoneaura
 Version: 0.4.16
 Architecture: iphoneos-arm64e
-Maintainer: Next Solution
+Maintainer: Next Jailbreak
 Installed-Size: 1084
 Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
 Filename: ./debfiles/PhoneAura_0.4.16_RootHide_iOS16.deb
@@ -2722,8 +2722,8 @@ MD5sum: c28f125b2cdfa68b3fa40fb53c18a616
 SHA1: ffef4e94457bbcd995c8febd014fb44193cafe7b
 SHA256: c5e8f0c0e9e2b46adf82e4456d36853fd758ece9227e55766affebb9e8e90c2d
 Section: Tweaks
-Homepage: https://zeshan0727.github.io/
-Description: PhoneAura is a free, modern redesign of the iOS 16 Phone app. Version 0.4.16 is an emergency stability hotfix that removes the crashing global long-press phone-number editing hooks introduced in 0.4.15 and restores the proven 0.4.14 runtime behavior. It preserves the fixed saved-number suggestion area, Number not saved status, corrected Next Solution header logo, original Number Options menu, custom Favorites, smart Recents filters, Contacts, haptics and animations. Built for RootHide.
-Author: Next Solution
-Depiction: https://zeshan0727.github.io/depictions/phoneaura.html
+Homepage: https://nextsolution.cc/
+Description: PhoneAura is a free, modern redesign of the iOS 16 Phone app. Version 0.4.16 is an emergency stability hotfix that removes the crashing global long-press phone-number editing hooks introduced in 0.4.15 and restores the proven 0.4.14 runtime behavior. It preserves the fixed saved-number suggestion area, Number not saved status, corrected Next Jailbreak header logo, original Number Options menu, custom Favorites, smart Recents filters, Contacts, haptics and animations. Built for RootHide.
+Author: Next Jailbreak
+Depiction: https://nextsolution.cc/depictions/phoneaura.html
 Name: PhoneAura

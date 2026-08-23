@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "site_name": "Next Solution",
+  "site_name": "Next Jailbreak",
   "base_url": "https://nextsolution.cc",
   "author_name": "Zeeshan Barvi",
-  "author_url": "https://youtube.com/@zeshan0727",
-  "youtube_channel_url": "https://youtube.com/@zeshan0727",
+  "author_url": "https://youtube.com/@nextjailbreak",
+  "youtube_channel_url": "https://youtube.com/@nextjailbreak",
   "adsense_client": "ca-pub-4770123899731214",
   "default_model": "gpt-5.6-luna",
   "excluded_source_ids": ["nextsolution"],

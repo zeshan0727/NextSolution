@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">PhoneAura 0.4.15 concept hero</title>
-  <desc id="desc">A purple and blue Next Solution themed showcase of the PhoneAura redesigned iOS Phone app.</desc>
+  <desc id="desc">A purple and blue Next Jailbreak themed showcase of the PhoneAura redesigned iOS Phone app.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#050816"/>
@@ -8,8 +8,8 @@
       <stop offset="1" stop-color="#230a41"/>
     </linearGradient>
     <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7b2cff"/>
-      <stop offset="1" stop-color="#168dff"/>
+      <stop offset="0" stop-color="#d86c36"/>
+      <stop offset="1" stop-color="#0faaa6"/>
     </linearGradient>
     <linearGradient id="orange" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#ff4d63"/>
@@ -24,7 +24,7 @@
   </defs>
 
   <rect width="1600" height="900" fill="url(#bg)"/>
-  <circle cx="210" cy="170" r="230" fill="#168dff" opacity=".18" filter="url(#glow)"/>
+  <circle cx="210" cy="170" r="230" fill="#0faaa6" opacity=".18" filter="url(#glow)"/>
   <circle cx="1360" cy="720" r="300" fill="#9b32ff" opacity=".18" filter="url(#glow)"/>
   <path d="M0 760 C300 610 470 900 820 710 C1120 550 1300 660 1600 510 V900 H0 Z" fill="#6c2cff" opacity=".08"/>
 
@@ -32,7 +32,7 @@
     <rect x="0" y="0" width="172" height="54" rx="27" fill="#ffffff" opacity=".1" stroke="#ffffff" stroke-opacity=".18"/>
     <circle cx="29" cy="27" r="17" fill="url(#brand)"/>
     <path d="M20 30 L28 22 L36 30 L28 38 Z" fill="#fff"/>
-    <text x="56" y="34" fill="#fff" font-size="21" font-family="Arial, sans-serif" font-weight="700">NEXT SOLUTION</text>
+    <text x="56" y="34" fill="#fff" font-size="21" font-family="Arial, sans-serif" font-weight="700">NEXT JAILBREAK</text>
   </g>
 
   <g transform="translate(110 232)">
@@ -41,21 +41,21 @@
     <g transform="translate(0 110)">
       <rect width="190" height="48" rx="24" fill="#6f3cff" opacity=".24" stroke="#a77cff" stroke-opacity=".65"/>
       <text x="95" y="31" fill="#d9ceff" text-anchor="middle" font-size="20" font-family="Arial, sans-serif" font-weight="700">VERSION 0.4.15</text>
-      <rect x="206" width="220" height="48" rx="24" fill="#168dff" opacity=".2" stroke="#66b8ff" stroke-opacity=".6"/>
+      <rect x="206" width="220" height="48" rx="24" fill="#0faaa6" opacity=".2" stroke="#66b8ff" stroke-opacity=".6"/>
       <text x="316" y="31" fill="#d7efff" text-anchor="middle" font-size="20" font-family="Arial, sans-serif" font-weight="700">ROOTHIDE + ROOTLESS</text>
     </g>
 
     <g transform="translate(0 200)" font-family="Arial, sans-serif">
       <g>
         <rect width="465" height="82" rx="22" fill="#ffffff" opacity=".075" stroke="#ffffff" stroke-opacity=".12"/>
-        <circle cx="43" cy="41" r="24" fill="#7b2cff"/>
+        <circle cx="43" cy="41" r="24" fill="#d86c36"/>
         <path d="M32 41 h22 M43 30 v22" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
         <text x="84" y="34" fill="#fff" font-size="23" font-weight="700">Full Phone app redesign</text>
         <text x="84" y="59" fill="#9fb0d2" font-size="17">Favorites, Recents, Contacts and Keypad</text>
       </g>
       <g transform="translate(0 98)">
         <rect width="465" height="82" rx="22" fill="#ffffff" opacity=".075" stroke="#ffffff" stroke-opacity=".12"/>
-        <circle cx="43" cy="41" r="24" fill="#168dff"/>
+        <circle cx="43" cy="41" r="24" fill="#0faaa6"/>
         <path d="M31 41 h24 M43 29 v24" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
         <text x="84" y="34" fill="#fff" font-size="23" font-weight="700">Stable smart keypad</text>
         <text x="84" y="59" fill="#9fb0d2" font-size="17">Saved-number suggestions never move the digits</text>

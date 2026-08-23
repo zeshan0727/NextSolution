@@ -82,4 +82,4 @@ Build validation cannot prove that SpringBoard on every iOS build continues rece
 
 ## Attribution and licence
 
-Original implementation by Next Solution. It uses Apple-documented UIKit APIs and repository-owned structural patterns. No paid or proprietary tweak source or assets were copied. Repository licence terms apply.
+Original implementation by Next Jailbreak. It uses Apple-documented UIKit APIs and repository-owned structural patterns. No paid or proprietary tweak source or assets were copied. Repository licence terms apply.

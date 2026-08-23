@@ -1,4 +1,4 @@
-name: Build Native Next Solution TIPA
+name: Build Native Next Jailbreak TIPA
 
 on:
   workflow_dispatch:
@@ -99,7 +99,7 @@ jobs:
           else
             git rm -f --ignore-unmatch build-output/NextSolution-Native-2.0.0.tipa build-output/NextSolution-Native-2.0.0.sha256
           fi
-          git commit -m "Publish native Next Solution 2.0.0" || true
+          git commit -m "Publish native Next Jailbreak 2.0.0" || true
           git pull --rebase origin main
           git push origin HEAD:main
 

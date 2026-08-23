@@ -3,8 +3,8 @@ Name: Module Glass Runtime
 Version: 1.0.14
 Architecture: iphoneos-arm64e
 Description: Rounded Volume-pattern Module Glass runtime: standard modules use Apple matching masks or safe iOS 16 compact radii, Brightness suppresses fill from the full module hierarchy, and the validated Volume renderer remains unchanged.
-Maintainer: Next Solution
-Author: Next Solution - zeshan0727
+Maintainer: Next Jailbreak
+Author: Next Jailbreak - zeshan0727
 Section: System
 Depends: firmware (>= 16.0), mobilesubstrate
 Conflicts: com.nextsolution.unlockvibrate

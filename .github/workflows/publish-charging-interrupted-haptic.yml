@@ -125,7 +125,7 @@ jobs:
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/charging-interrupted-haptic"
-          git config user.name "Next Solution Build Bot"
+          git config user.name "Next Jailbreak Build Bot"
           git config user.email "actions@users.noreply.github.com"
           for attempt in 1 2 3; do
             git fetch origin main

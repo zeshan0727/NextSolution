@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">Next Jailbreak brand artwork</title>
+  <desc id="desc">Next Jailbreak package logo with copper and teal light trails</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20130f"/><stop offset=".44" stop-color="#0d141c"/><stop offset="1" stop-color="#072b31"/></linearGradient>
+    <radialGradient id="warm" cx="0" cy="0" r="1" gradientTransform="translate(190 90) rotate(35) scale(580)"><stop stop-color="#db7138" stop-opacity=".34"/><stop offset="1" stop-color="#db7138" stop-opacity="0"/></radialGradient>
+    <radialGradient id="cool" cx="0" cy="0" r="1" gradientTransform="translate(1080 770) rotate(-145) scale(650)"><stop stop-color="#20c8c1" stop-opacity=".29"/><stop offset="1" stop-color="#20c8c1" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0h64M0 32h64" fill="none" stroke="#fff" stroke-opacity=".04" stroke-width="2"/></pattern>
+  </defs>
+  <rect width="1200" height="900" rx="64" fill="url(#bg)"/><rect width="1200" height="900" rx="64" fill="url(#warm)"/><rect width="1200" height="900" rx="64" fill="url(#cool)"/><rect width="1200" height="900" rx="64" fill="url(#grid)"/>
+  <path d="M-60 740C210 600 390 820 700 665c170-85 350-88 570 20" fill="none" stroke="#37d8d0" stroke-opacity=".25" stroke-width="5"/><path d="M-40 180c230-100 405 95 690 0 190-63 345-150 620-65" fill="none" stroke="#f08b45" stroke-opacity=".22" stroke-width="5"/>
+  <image href="/assets/brand/next-jailbreak-mark.svg" x="230" y="125" width="740" height="740"/>
+</svg>

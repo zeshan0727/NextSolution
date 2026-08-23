@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the fully native SwiftUI Next Solution app sources."""
+"""Generate the fully native SwiftUI Next Jailbreak app sources."""
 from pathlib import Path
 import base64
 import zlib
@@ -44,4 +44,4 @@ all_source = b"\n".join((DESTINATION / name).read_bytes() for name in FILES)
 assert b"WebKit" not in all_source, "The native app must not contain WebKit"
 assert b"WKWebView" not in all_source, "The native app must not contain WKWebView"
 assert b"module-glass-preview" in all_source, "Module Glass Preview must be present in Downloads"
-print("Generated the fully native SwiftUI Next Solution app.")
+print("Generated the fully native SwiftUI Next Jailbreak app.")

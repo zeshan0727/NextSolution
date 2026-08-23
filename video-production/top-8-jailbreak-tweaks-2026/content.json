@@ -4,7 +4,7 @@
   "thumbnail_title": "8 FRESH JAILBREAK TWEAKS",
   "thumbnail_badge": "2026 GUIDE",
   "article_url": "https://nextsolution.cc/tutorials.html#verified-articles",
-  "channel_url": "https://youtube.com/@zeshan0727",
+  "channel_url": "https://youtube.com/@nextjailbreak",
   "voice_disclosure": "Narration in this video uses an AI-generated voice.",
   "description_intro": "Eight recent jailbreak tweaks covering AI keyboard actions, Home Screen controls, music, AirPods compatibility, lyrics and the Phone app. Every feature image comes from a package, developer or clearly credited editorial source. This is a source-checked comparison, not a hands-on compatibility test. Verify your exact iOS version, jailbreak, bootstrap, architecture, dependencies and current package details before installing.",
   "hashtags": "#JailbreakTweaks #iOSJailbreak #iPhoneCustomization",
@@ -23,7 +23,7 @@
     "Reo tweak",
     "LSLyrics",
     "Phonehub",
-    "Next Solution"
+    "Next Jailbreak"
   ],
   "thumbnail_visual": {
     "assets": [
@@ -123,7 +123,7 @@
   ],
   "scenes": [
     {
-      "kicker": "NEXT SOLUTION · 2026 GUIDE",
+      "kicker": "NEXT JAILBREAK · 2026 GUIDE",
       "title": "8 fresh jailbreak tweaks with real screenshots",
       "subtitle": "AI, Home Screen, music, AirPods, lyrics and calls",
       "facts": [
@@ -141,7 +141,7 @@
         ],
         "credit": "Authentic package screenshots · all sources credited below"
       },
-      "narration": "A jailbreak can change almost every part of an iPhone, but a useful tweak video should show what each package really looks like, not a row of invented icons. In this source-checked guide, we are looking at eight very different packages: an AI keyboard assistant, a Home Screen control menu, upcoming-song controls, AirPods compatibility, advanced keyboard gestures, two Lock Screen music upgrades, and a complete Phone app toolkit. Every feature image comes from the official package or developer listing, except PodsGrant, where the real preference screenshots are clearly credited to an established editorial source and the release warning comes directly from the developer. This is not a hands-on compatibility test. Before installing anything, compare the current source page with your exact iOS version, jailbreak, bootstrap, architecture and dependencies. Narration uses an AI-generated voice, while the research, script, design and editorial choices are original Next Solution work."
+      "narration": "A jailbreak can change almost every part of an iPhone, but a useful tweak video should show what each package really looks like, not a row of invented icons. In this source-checked guide, we are looking at eight very different packages: an AI keyboard assistant, a Home Screen control menu, upcoming-song controls, AirPods compatibility, advanced keyboard gestures, two Lock Screen music upgrades, and a complete Phone app toolkit. Every feature image comes from the official package or developer listing, except PodsGrant, where the real preference screenshots are clearly credited to an established editorial source and the release warning comes directly from the developer. This is not a hands-on compatibility test. Before installing anything, compare the current source page with your exact iOS version, jailbreak, bootstrap, architecture and dependencies. Narration uses an AI-generated voice, while the research, script, design and editorial choices are original Next Jailbreak work."
     },
     {
       "slug": "hellokeyboardai",
@@ -165,7 +165,7 @@
           "hellokeyboardai"
         ]
       },
-      "narration": "First is HelloKeyboardAI, a paid keyboard tweak built around quick AI activation. Its preference pane lets users assign actions to upward, downward, left and right keyboard gestures. The published feature overview also describes analyzing existing or selected text, replacing it with a response, or copying the analyzed result to the clipboard. Other configurable entry points involve keyboard controls such as the bottom bar, dictation button, dock or globe key. Havoc currently lists support from iOS 14.0 through 17.3.1 and identifies rootless compatibility, with a listed price of five dollars and ninety-nine cents. One detail needs attention: Next Solution recorded a 6.3.0-6 package-feed build while the public product page displayed 6.3.0-3 when checked. Confirm the exact build offered by your package manager. This is the tweak to compare if you want AI commands integrated into typing instead of repeatedly switching to another application."
+      "narration": "First is HelloKeyboardAI, a paid keyboard tweak built around quick AI activation. Its preference pane lets users assign actions to upward, downward, left and right keyboard gestures. The published feature overview also describes analyzing existing or selected text, replacing it with a response, or copying the analyzed result to the clipboard. Other configurable entry points involve keyboard controls such as the bottom bar, dictation button, dock or globe key. Havoc currently lists support from iOS 14.0 through 17.3.1 and identifies rootless compatibility, with a listed price of five dollars and ninety-nine cents. One detail needs attention: Next Jailbreak recorded a 6.3.0-6 package-feed build while the public product page displayed 6.3.0-3 when checked. Confirm the exact build offered by your package manager. This is the tweak to compare if you want AI commands integrated into typing instead of repeatedly switching to another application."
     },
     {
       "slug": "icontweak2",
@@ -375,7 +375,7 @@
         ],
         "credit": "Real settings screenshots · sources credited in description"
       },
-      "narration": "Before installing any package from this video, complete five checks. First, open the original source and verify the current version. The feed and public page sometimes display different builds, as we saw with HelloKeyboardAI and IconTweak2. Second, confirm the iOS range instead of guessing from an architecture label. Third, match the package to your bootstrap: rootful, rootless, RootHide or another environment are not interchangeable words. Fourth, identify conflicts. Keyboard tweaks, Lock Screen players and icon gestures often modify the same process as another package. Test one change at a time. Fifth, keep a recovery path so you can disable or remove a package if SpringBoard or an application behaves unexpectedly. The full written guides and every source link are available at NextSolution dot c c. Tell us which tweak you want to see in a full hands-on guide. Narration in this video uses an AI-generated voice. Thanks for watching Next Solution."
+      "narration": "Before installing any package from this video, complete five checks. First, open the original source and verify the current version. The feed and public page sometimes display different builds, as we saw with HelloKeyboardAI and IconTweak2. Second, confirm the iOS range instead of guessing from an architecture label. Third, match the package to your bootstrap: rootful, rootless, RootHide or another environment are not interchangeable words. Fourth, identify conflicts. Keyboard tweaks, Lock Screen players and icon gestures often modify the same process as another package. Test one change at a time. Fifth, keep a recovery path so you can disable or remove a package if SpringBoard or an application behaves unexpectedly. The full written guides and every source link are available at NextSolution dot c c. Tell us which tweak you want to see in a full hands-on guide. Narration in this video uses an AI-generated voice. Thanks for watching Next Jailbreak."
     }
   ],
   "thumbnail_lines": [

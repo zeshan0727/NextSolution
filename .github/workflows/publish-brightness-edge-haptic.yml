@@ -71,7 +71,7 @@ jobs:
       - name: Publish packages and preserve unrelated indexes
         run: |
           set -euo pipefail
-          git config user.name 'Next Solution Build Bot'
+          git config user.name 'Next Jailbreak Build Bot'
           git config user.email 'actions@users.noreply.github.com'
           git pull --rebase origin main
           mkdir -p debfiles "$RUNNER_TEMP/scan"

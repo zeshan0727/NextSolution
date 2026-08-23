@@ -3,8 +3,8 @@ Name: NextLock Feature Fix Runtime
 Version: 1.1.5~cpu11
 Architecture: iphoneos-arm64e
 Description: Runtime feature restoration for NextLock Test 11. Applies Time/Date position, color and shadow directly after NextLock's own render pass while preserving the validated low-CPU/photo fixes.
-Maintainer: Next Solution
-Author: Next Solution
+Maintainer: Next Jailbreak
+Author: Next Jailbreak
 Section: Tweaks
 Depends: firmware (>= 16.0), mobilesubstrate
 Priority: optional
