@@ -11,10 +11,31 @@ targets:
       - Sources
     info:
       path: Info.plist
+      properties:
+        CFBundleDisplayName: Next Multi Browser
+        CFBundleShortVersionString: '1.0.1'
+        CFBundleVersion: '2'
+        UILaunchScreen: {}
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+          NSAllowsArbitraryLoadsInWebContent: true
+        NSCameraUsageDescription: Allow websites you choose to use the camera.
+        NSMicrophoneUsageDescription: Allow websites you choose to use the microphone.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser
         PRODUCT_NAME: Next Multi Browser
+        MARKETING_VERSION: 1.0.1
+        CURRENT_PROJECT_VERSION: 2
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
         CODE_SIGN_STYLE: Automatic
