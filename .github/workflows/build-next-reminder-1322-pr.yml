@@ -1,0 +1,85 @@
+name: Next Reminder 1.3.22 Package Validation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tmp-build/nr1322xz/**'
+      - 'tmp-build/nqr1012/**'
+      - '.github/workflows/build-next-reminder-1322-pr.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/appsrc" "$RUNNER_TEMP/nqrsrc" "$RUNNER_TEMP/out"
+          cat tmp-build/nr1322xz/part-* > "$RUNNER_TEMP/nr.b64"
+          cat tmp-build/nqr1012/part-* > "$RUNNER_TEMP/nqr.b64"
+          python3 - <<'PY'
+          import base64,os,pathlib
+          r=pathlib.Path(os.environ['RUNNER_TEMP'])
+          (r/'nr.tar.xz').write_bytes(base64.b64decode((r/'nr.b64').read_bytes()))
+          (r/'nqr.tar.xz').write_bytes(base64.b64decode((r/'nqr.b64').read_bytes()))
+          PY
+          echo '8334365b7095d7fb3b1cbe92a08a837c097a6ca3b6de7f34765d2541ceaf0046  '"$RUNNER_TEMP/nr.tar.xz" | shasum -a 256 -c -
+          echo 'eba18cc3ee4117e3e190441ce3533e10613a182aa610a3c92756c72a84cfd757  '"$RUNNER_TEMP/nqr.tar.xz" | shasum -a 256 -c -
+          tar -xJf "$RUNNER_TEMP/nr.tar.xz" -C "$RUNNER_TEMP/appsrc"
+          tar -xJf "$RUNNER_TEMP/nqr.tar.xz" -C "$RUNNER_TEMP/nqrsrc"
+      - name: Build unsigned TIPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/appsrc"
+          mkdir -p "$P/NextReminder/Resources/Assets.xcassets"
+          printf '%s\n' '{"info":{"author":"xcode","version":1}}' > "$P/NextReminder/Resources/Assets.xcassets/Contents.json"
+          python3 - <<'PY'
+          import os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'appsrc/NextReminder.xcodeproj/project.pbxproj'
+          s=p.read_text().splitlines()
+          p.write_text('\n'.join(x for x in s if 'ASSETCATALOG_COMPILER_APPICON_NAME' not in x and 'ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME' not in x)+'\n')
+          PY
+          xcodebuild -project "$P/NextReminder.xcodeproj" -scheme NextReminder -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/DD" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' build
+          APP=$(find "$RUNNER_TEMP/DD/Build/Products/Release-iphoneos" -maxdepth 1 -name NextReminder.app -print -quit); test -n "$APP"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = 1.3.22
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = 32
+          grep -R -q 'nextreminder://send-report' "$P/NextReminder/Sources"
+          mkdir -p "$RUNNER_TEMP/out/Payload"; cp -R "$APP" "$RUNNER_TEMP/out/Payload/"
+          (cd "$RUNNER_TEMP/out" && zip -qry NextReminder_1.3.22_Unsigned.tipa Payload); rm -rf "$RUNNER_TEMP/out/Payload"
+      - name: Build RootHide DEB
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -R -q 'nextreminder://send-report' "$RUNNER_TEMP/nqrsrc"
+          grep -R -q 'Send Report' "$RUNNER_TEMP/nqrsrc"
+          brew install dpkg ldid
+          T="$RUNNER_TEMP/theos-rh"; git init "$T"; git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          export THEOS="$T" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$RUNNER_TEMP/nqrsrc" clean package FINALPACKAGE=1
+          D=$(find "$RUNNER_TEMP/nqrsrc/packages" -name '*.deb' -print -quit); test -n "$D"
+          test "$(dpkg-deb -f "$D" Version)" = 1.0.12
+          X=$(mktemp -d); dpkg-deb -x "$D" "$X"; F=$(find "$X" -name NextQuickReminder.dylib -print -quit); test -n "$F"
+          strings -a "$F" | grep -q 'Send Report'; strings -a "$F" | grep -q 'nextreminder://send-report'
+          cp "$D" "$RUNNER_TEMP/out/NextQuickReminder_1.0.12_RootHide.deb"
+      - name: Checksums
+        run: |
+          cd "$RUNNER_TEMP/out"
+          shasum -a 256 NextReminder_1.3.22_Unsigned.tipa NextQuickReminder_1.0.12_RootHide.deb > SHA256SUMS.txt
+          ls -lh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NextReminder-1.3.22-Test-Packages
+          path: |
+            ${{ runner.temp }}/out/NextReminder_1.3.22_Unsigned.tipa
+            ${{ runner.temp }}/out/NextQuickReminder_1.0.12_RootHide.deb
+            ${{ runner.temp }}/out/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
