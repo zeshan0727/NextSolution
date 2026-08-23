@@ -8,6 +8,7 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
     private var allServers: [VPNGateServer] = []
     private var sections: [(country: String, code: String, servers: [VPNGateServer])] = []
     private var isConnecting = false
+    private var isLoadingServers = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,13 +23,10 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
         navigationItem.hidesSearchBarWhenScrolling = false
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(close))
-        navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(title: "Disconnect", style: .plain, target: self, action: #selector(disconnectVPN)),
-            UIBarButtonItem(customView: spinner)
-        ]
+        updateRightItems()
 
         tableView.tableHeaderView = makeNoticeHeader()
-        loadServers()
+        loadServers(showFailureAlert: true)
     }
 
     private func makeNoticeHeader() -> UIView {
@@ -36,7 +34,7 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 12)
         label.textColor = .secondaryLabel
-        label.text = "VPN Gate uses public volunteer-operated VPN relay servers. Server availability, logging, speed and privacy vary by operator. These servers are not operated by Next Multi Browser."
+        label.text = "VPN Gate uses public volunteer-operated VPN relay servers. Server availability, logging, speed and privacy vary by operator. If the main feed is slow, this app automatically tries VPN Gate mirrors and then a cached last-good list."
         label.translatesAutoresizingMaskIntoConstraints = false
 
         let container = UIView()
@@ -47,27 +45,57 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
             label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
             label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12)
         ])
-        container.frame.size.height = 86
+        container.frame.size.height = 104
         return container
     }
 
-    private func loadServers() {
+    private func updateRightItems() {
+        let refresh = UIBarButtonItem(image: UIImage(systemName: "arrow.clockwise"), style: .plain, target: self, action: #selector(refreshServers))
+        refresh.accessibilityLabel = "Refresh VPN servers"
+        refresh.isEnabled = !isLoadingServers && !isConnecting
+        let disconnect = UIBarButtonItem(title: "Disconnect", style: .plain, target: self, action: #selector(disconnectVPN))
+        disconnect.isEnabled = !isConnecting
+        navigationItem.rightBarButtonItems = [disconnect, refresh, UIBarButtonItem(customView: spinner)]
+    }
+
+    private func loadServers(showFailureAlert: Bool) {
+        guard !isLoadingServers else { return }
+        isLoadingServers = true
         spinner.startAnimating()
+        navigationItem.prompt = "Searching live server feeds and mirrors…"
+        updateRightItems()
+
         Task {
             do {
                 let servers = try await manager.fetchServers()
                 await MainActor.run {
+                    self.isLoadingServers = false
                     self.spinner.stopAnimating()
                     self.allServers = servers
                     self.rebuildSections(query: self.searchController.searchBar.text)
+                    if self.manager.lastFetchUsedCache {
+                        self.navigationItem.prompt = "Using cached server list • Refresh to retry live feeds"
+                    } else if let source = self.manager.lastSuccessfulFeedDescription {
+                        self.navigationItem.prompt = "Live servers loaded • \(source)"
+                    } else {
+                        self.navigationItem.prompt = "Live servers loaded"
+                    }
+                    self.updateRightItems()
                 }
             } catch {
                 await MainActor.run {
+                    self.isLoadingServers = false
                     self.spinner.stopAnimating()
-                    self.showError(error)
+                    self.navigationItem.prompt = "Server list unavailable"
+                    self.updateRightItems()
+                    if showFailureAlert { self.showError(error) }
                 }
             }
         }
+    }
+
+    @objc private func refreshServers() {
+        loadServers(showFailureAlert: true)
     }
 
     private func rebuildSections(query: String?) {
@@ -153,6 +181,7 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
         isConnecting = true
         spinner.startAnimating()
         navigationItem.prompt = "Connecting to \(server.countryName)…"
+        updateRightItems()
 
         Task {
             do {
@@ -162,12 +191,14 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
                     self.spinner.stopAnimating()
                     self.navigationItem.prompt = "VPN requested • \(server.countryName)"
                     self.tableView.reloadData()
+                    self.updateRightItems()
                 }
             } catch {
                 await MainActor.run {
                     self.isConnecting = false
                     self.spinner.stopAnimating()
                     self.navigationItem.prompt = nil
+                    self.updateRightItems()
                     self.showError(error)
                 }
             }
@@ -192,7 +223,10 @@ final class VPNGateViewController: UITableViewController, UISearchResultsUpdatin
 
     private func showError(_ error: Error) {
         let alert = UIAlertController(title: "VPN Error", message: error.localizedDescription, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
+            self?.loadServers(showFailureAlert: true)
+        })
+        alert.addAction(UIAlertAction(title: "Close", style: .cancel))
         present(alert, animated: true)
     }
 }
