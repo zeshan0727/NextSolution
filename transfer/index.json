@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T08:21:32Z",
+  "updatedAt": "2026-08-24T08:37:58Z",
   "files": [
+    {
+      "id": "nextaccounts-1.0.3-platform-signup-links",
+      "name": "Next Accounts 1.0.3 — Platform Signup Links",
+      "fileName": "NextAccounts-1.0.3-Platform-Signup-Links.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.3",
+      "url": "https://nextsolution.cc/transfer/files/NextAccounts/1.0.3/NextAccounts-1.0.3-Platform-Signup-Links.tipa",
+      "sha256": "55717ef91e132821fb59c72512e061016a8cc4af8261addf8ca5fbfaddc0d34a",
+      "sizeBytes": 1159784,
+      "notes": "Keeps the compact platform status workflow: tap Apple, Google, YouTube, Instagram, Facebook, Twitter or TikTok to toggle its saved green state; press and hold to open that platform's official account-creation page in the system browser without changing status. Includes automatic local email/password suggestions, editor generators, Generate 5 More, bulk import, one-tap copy and Keychain persistence. Suggested Gmail addresses are not registered accounts and availability is not guaranteed."
+    },
     {
       "id": "nextaccounts-1.0.2-automatic-emails",
       "name": "Next Accounts 1.0.2 — Automatic Emails",
