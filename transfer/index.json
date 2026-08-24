@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T08:37:58Z",
+  "updatedAt": "2026-08-24T08:52:18Z",
   "files": [
+    {
+      "id": "nextaccounts-1.0.4-in-app-signup-browser",
+      "name": "Next Accounts 1.0.4 — In-App Signup Browser",
+      "fileName": "NextAccounts-1.0.4-In-App-Signup-Browser.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.4",
+      "url": "https://nextsolution.cc/transfer/files/NextAccounts/1.0.4/NextAccounts-1.0.4-In-App-Signup-Browser.tipa",
+      "sha256": "42c65c1af8b062c34485d321f3b0ca8bfa1052ac563298ad57abd2bdd7da17bc",
+      "sizeBytes": 1197666,
+      "notes": "Fixes platform-card taps so a normal tap reliably toggles and persists the green status. Press and hold now switches to a dedicated second Browser tab inside Next Accounts and loads the selected platform's signup page there instead of leaving the app. The in-app WKWebView keeps normal website data and provides back, forward, reload and signup controls. Automatic local email/password suggestions, editor generators, Generate 5 More, bulk import, one-tap copy and Keychain persistence remain included."
+    },
     {
       "id": "nextaccounts-1.0.3-platform-signup-links",
       "name": "Next Accounts 1.0.3 — Platform Signup Links",
