@@ -57,6 +57,10 @@ final class BrowserProfileStore {
         )
     }
 
+    func persistenceDescription(for index: Int) -> String {
+        session(for: index).persistenceDescription
+    }
+
     func displayName(for index: Int) -> String {
         let saved = defaults.string(forKey: displayNameKey(for: index))?
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -187,12 +191,35 @@ final class BrowserProfileStore {
 }
 
 final class BrowserProfileSession: NSObject, WKHTTPCookieStoreObserver {
+    private enum PersistenceMode {
+        case namedStore
+        case profileDirectory
+        case cookieArchiveFallback
+
+        var usesPersistentWebsiteDataStore: Bool {
+            self != .cookieArchiveFallback
+        }
+
+        var description: String {
+            switch self {
+            case .namedStore, .profileDirectory:
+                return "Persistent profile"
+            case .cookieArchiveFallback:
+                return "Cookie fallback"
+            }
+        }
+    }
+
     let index: Int
     let dataStore: WKWebsiteDataStore
     let processPool = WKProcessPool()
-    let usesNativePersistentStore: Bool
+
+    var persistenceDescription: String {
+        persistenceMode.description
+    }
 
     private weak var profileStore: BrowserProfileStore?
+    private let persistenceMode: PersistenceMode
     private var readyBlocks: [() -> Void] = []
     private var isReady = false
     private var saveWorkItem: DispatchWorkItem?
@@ -203,10 +230,15 @@ final class BrowserProfileSession: NSObject, WKHTTPCookieStoreObserver {
 
         if #available(iOS 17.0, *) {
             dataStore = WKWebsiteDataStore(forIdentifier: persistentIdentifier)
-            usesNativePersistentStore = true
+            persistenceMode = .namedStore
+        } else if let persistentStore = NMBCreatePersistentWebsiteDataStore(
+            BrowserProfileDirectories.websiteDataDirectory(profileIndex: index)
+        ) {
+            dataStore = persistentStore
+            persistenceMode = .profileDirectory
         } else {
             dataStore = WKWebsiteDataStore.nonPersistent()
-            usesNativePersistentStore = false
+            persistenceMode = .cookieArchiveFallback
         }
 
         super.init()
@@ -262,30 +294,20 @@ final class BrowserProfileSession: NSObject, WKHTTPCookieStoreObserver {
                 self.profileStore?.recordCookies([], for: self.index)
                 DispatchQueue.main.async(execute: completion)
             }
-            if self.usesNativePersistentStore {
-                finish()
-            } else {
-                BrowserCookieArchive.remove(profileIndex: self.index, completion: finish)
-            }
+            BrowserCookieArchive.remove(profileIndex: self.index, completion: finish)
         }
     }
 
     private func restoreCookiesIfNeeded() {
-        guard !usesNativePersistentStore else {
+        let archivedCookies = BrowserCookieArchive.load(profileIndex: index)
+        guard !archivedCookies.isEmpty else {
             finishPreparing()
             captureCookies()
             return
         }
 
-        let cookies = BrowserCookieArchive.load(profileIndex: index)
-        guard !cookies.isEmpty else {
-            finishPreparing()
-            profileStore?.recordCookies([], for: index)
-            return
-        }
-
         let group = DispatchGroup()
-        for cookie in cookies {
+        for cookie in archivedCookies {
             group.enter()
             dataStore.httpCookieStore.setCookie(cookie) {
                 group.leave()
@@ -294,8 +316,19 @@ final class BrowserProfileSession: NSObject, WKHTTPCookieStoreObserver {
 
         group.notify(queue: .main) { [weak self] in
             guard let self else { return }
-            self.profileStore?.recordCookies(cookies, for: self.index)
-            self.finishPreparing()
+            self.profileStore?.recordCookies(archivedCookies, for: self.index)
+
+            guard self.persistenceMode.usesPersistentWebsiteDataStore else {
+                self.finishPreparing()
+                return
+            }
+
+            BrowserCookieArchive.remove(profileIndex: self.index) { [weak self] in
+                DispatchQueue.main.async {
+                    self?.finishPreparing()
+                    self?.captureCookies()
+                }
+            }
         }
     }
 
@@ -334,12 +367,22 @@ final class BrowserProfileSession: NSObject, WKHTTPCookieStoreObserver {
                 self.profileStore?.recordCookies(cookies, for: self.index)
                 DispatchQueue.main.async(execute: completion)
             }
-            if !self.usesNativePersistentStore {
+            if !self.persistenceMode.usesPersistentWebsiteDataStore {
                 BrowserCookieArchive.save(cookies, profileIndex: self.index, completion: finish)
             } else {
                 finish()
             }
         }
+    }
+}
+
+private enum BrowserProfileDirectories {
+    static func websiteDataDirectory(profileIndex: Int) -> URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return base
+            .appendingPathComponent("BrowserProfiles", isDirectory: true)
+            .appendingPathComponent(String(format: "Profile-%02d", profileIndex), isDirectory: true)
+            .appendingPathComponent("WebsiteData", isDirectory: true)
     }
 }
 

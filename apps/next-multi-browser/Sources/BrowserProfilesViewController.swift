@@ -58,7 +58,7 @@ final class BrowserProfilesViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        "Each browser has an isolated cookie store. Sign in to a different Google account in every profile; sessions are restored separately after closing the app."
+        "Each browser has an isolated persistent website-data store. Sign in to a different Google account in every profile; sessions are restored separately after closing the app."
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -214,11 +214,7 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
                 cell.imageView?.image = UIImage(systemName: snapshot.hasGoogleSession ? "checkmark.shield.fill" : "shield")
             } else {
                 cell.textLabel?.text = "Isolation"
-                if #available(iOS 17.0, *) {
-                    cell.detailTextLabel?.text = "Persistent profile"
-                } else {
-                    cell.detailTextLabel?.text = "Cookies restored"
-                }
+                cell.detailTextLabel?.text = profileStore.persistenceDescription(for: profileIndex)
                 cell.imageView?.image = UIImage(systemName: "shippingbox.fill")
             }
             cell.selectionStyle = .none
