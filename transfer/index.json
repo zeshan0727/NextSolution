@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T14:26:10Z",
+  "updatedAt": "2026-08-24T14:31:10Z",
   "files": [
     {
-      "id": "nextmultibrowser-1.1.2-global-phone-environments",
-      "name": "Next Multi Browser 1.1.2 — Global Phone Environments",
-      "fileName": "NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
+      "id": "nextmultibrowser-1.1.3-inline-autoplay-random-urls",
+      "name": "Next Multi Browser 1.1.3 — Inline Autoplay + Random 4 URLs",
+      "fileName": "NextMultiBrowser_1.1.3_Inline_Autoplay_Random_4_URLs_iPhone_Test.tipa",
       "type": "tipa",
       "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.2 (10)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.2/NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
-      "sha256": "bee01f4712aaf30ee66e2422a0c2056ed07d94db88a841cb77a2a4ed916b2d42",
-      "sizeBytes": 4896684,
-      "notes": "Adds one Profiles-wide Randomize All Environments action for all 20 isolated browsers while retaining the individual per-profile randomize button. Selectable and randomized devices are phone-only: multiple iPhones plus Pixel 9 Pro/XL, Galaxy S25/Ultra, OnePlus 13, and Xiaomi 15 Ultra. Legacy tablet and desktop settings migrate safely to phone presets without replacing profile storage identifiers or clearing cookies, Google sessions, or website data. Includes 17 languages, 24 regions, and 27 timezones."
+      "version": "1.1.3 (11)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.3/NextMultiBrowser_1.1.3_Inline_Autoplay_Random_4_URLs_iPhone_Test.tipa",
+      "sha256": "f7d4a96163b21f948f141694e2acd038af10aae3516381c415f82bdb7d220b80",
+      "sizeBytes": 4901948,
+      "notes": "Keeps video playback inline inside every browser pane and starts media automatically without a manual play tap, with a muted retry when required by WebKit or the website. Adds a Random 4 URLs action that opens all 20 isolated browsers and assigns each entered link to five randomly selected profiles in a newly shuffled order. Retains separate profile storage, individual and global environment randomization, auto refresh, and VPN features."
     },
     {
       "id": "nextaccounts-1.0.5-independent-browser",
