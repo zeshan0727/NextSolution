@@ -25,6 +25,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NextAccounts-TIPA
-          path: .codex-build/next-accounts/NextAccounts_1.0.0.tipa
+          path: .codex-build/next-accounts/NextAccounts_1.0.1.tipa
           if-no-files-found: error
           retention-days: 1

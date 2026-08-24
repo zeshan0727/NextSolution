@@ -1,9 +1,22 @@
 import SwiftUI
 import Foundation
 
+private enum AccountSheet: Identifiable {
+    case edit(Credential)
+    case importEmails
+
+    var id: String {
+        switch self {
+        case .edit(let credential): return "edit-\(credential.id.uuidString)"
+        case .importEmails: return "import-emails"
+        }
+    }
+}
+
 struct CredentialListView: View {
     @EnvironmentObject private var store: CredentialStore
     @Environment(\.scenePhase) private var scenePhase
+    @State private var presentedSheet: AccountSheet?
 
     var body: some View {
         NavigationStack {
@@ -30,6 +43,12 @@ struct CredentialListView: View {
                             },
                             onCopyPassword: {
                                 store.copy(credential.password, label: "Password")
+                            },
+                            onTogglePlatform: { platform in
+                                store.toggle(platform, for: credential.id)
+                            },
+                            onEdit: {
+                                presentedSheet = .edit(credential)
                             }
                         )
                         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
@@ -48,6 +67,24 @@ struct CredentialListView: View {
             .navigationTitle("Next Accounts")
             .navigationBarTitleDisplayMode(.inline)
             .tint(AppTheme.accent)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        presentedSheet = .importEmails
+                    } label: {
+                        Label("Import Emails", systemImage: "square.and.arrow.down")
+                    }
+                    .accessibilityLabel("Import emails")
+                }
+            }
+            .sheet(item: $presentedSheet) { destination in
+                switch destination {
+                case .edit(let credential):
+                    EditCredentialSheet(credential: credential)
+                case .importEmails:
+                    ImportEmailsSheet()
+                }
+            }
             .overlay(alignment: .bottom) {
                 if let message = store.statusMessage {
                     ToastView(message: message)
@@ -95,7 +132,7 @@ private struct AccountHeaderView: View {
                 Text("Account Copy Center")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
-                Text("\(count) saved accounts")
+                Text("\(count) private account slots")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white.opacity(0.72))
                 Label("Passwords hidden by default", systemImage: "lock.fill")
@@ -118,6 +155,8 @@ private struct CredentialCard: View {
     let credential: Credential
     let onCopyEmail: () -> Void
     let onCopyPassword: () -> Void
+    let onTogglePlatform: (AccountPlatform) -> Void
+    let onEdit: () -> Void
 
     @State private var showsPassword = false
 
@@ -132,7 +171,7 @@ private struct CredentialCard: View {
                     .background(AppTheme.accent.opacity(0.14), in: Capsule())
 
                 if credential.isGenerated {
-                    Text("Generated")
+                    Text("Local")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(AppTheme.gold)
                         .padding(.horizontal, 8)
@@ -141,6 +180,16 @@ private struct CredentialCard: View {
                 }
 
                 Spacer()
+
+                Button(action: onEdit) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppTheme.accent)
+                        .frame(width: 36, height: 32)
+                        .background(AppTheme.accent.opacity(0.10), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Edit account")
 
                 Button {
                     showsPassword.toggle()
@@ -158,9 +207,9 @@ private struct CredentialCard: View {
 
             VStack(alignment: .leading, spacing: 9) {
                 Label {
-                    Text(credential.email)
+                    Text(credential.email.isEmpty ? "Tap pencil to add email" : credential.email)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(credential.email.isEmpty ? Color.white.opacity(0.48) : Color.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.74)
                 } icon: {
@@ -179,11 +228,29 @@ private struct CredentialCard: View {
                 }
             }
 
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(AccountPlatform.allCases) { platform in
+                        PlatformChip(
+                            platform: platform,
+                            isActive: credential.activePlatforms.contains(platform),
+                            action: {
+                                withAnimation(.easeInOut(duration: 0.16)) {
+                                    onTogglePlatform(platform)
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(.vertical, 1)
+            }
+
             HStack(spacing: 10) {
                 CopyButton(
                     title: "Copy Email",
                     systemImage: "doc.on.doc",
-                    color: AppTheme.accent,
+                    color: credential.email.isEmpty ? Color.gray : AppTheme.accent,
+                    isDisabled: credential.email.isEmpty,
                     action: onCopyEmail
                 )
                 CopyButton(
@@ -207,10 +274,46 @@ private struct CredentialCard: View {
     }
 }
 
+private struct PlatformChip: View {
+    let platform: AccountPlatform
+    let isActive: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: platform.systemImage)
+                    .font(.system(size: 10, weight: .bold))
+                Text(platform.title)
+                    .font(.system(size: 10, weight: .bold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(isActive ? Color.white : Color.white.opacity(0.58))
+            .padding(.horizontal, 8)
+            .frame(height: 27)
+            .background(
+                isActive ? Color.green.opacity(0.88) : Color.white.opacity(0.065),
+                in: Capsule()
+            )
+            .overlay {
+                Capsule()
+                    .stroke(
+                        isActive ? Color.green.opacity(0.95) : Color.white.opacity(0.10),
+                        lineWidth: 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(platform.title)
+        .accessibilityValue(isActive ? "Selected" : "Not selected")
+    }
+}
+
 private struct CopyButton: View {
     let title: String
     let systemImage: String
     let color: Color
+    var isDisabled: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -224,6 +327,8 @@ private struct CopyButton: View {
         }
         .buttonStyle(.plain)
         .contentShape(Rectangle())
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.58 : 1)
     }
 }
 
@@ -249,11 +354,179 @@ private struct GenerateMoreView: View {
             }
             .buttonStyle(.plain)
 
-            Text("Adds five address suggestions and passwords to this list. Gmail registration is separate.")
+            Text("Adds five empty private slots with passwords generated only on this iPhone.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.58))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)
+        }
+    }
+}
+
+private struct EditCredentialSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var store: CredentialStore
+
+    let credential: Credential
+
+    @State private var email: String
+    @State private var password: String
+    @State private var revealsPassword = false
+    @FocusState private var focusedField: Field?
+
+    private enum Field {
+        case email
+        case password
+    }
+
+    init(credential: Credential) {
+        self.credential = credential
+        _email = State(initialValue: credential.email)
+        _password = State(initialValue: credential.password)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Account") {
+                    TextField("Email address", text: $email)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .textContentType(.emailAddress)
+                        .focused($focusedField, equals: .email)
+
+                    HStack {
+                        Group {
+                            if revealsPassword {
+                                TextField("Password", text: $password)
+                            } else {
+                                SecureField("Password", text: $password)
+                            }
+                        }
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .focused($focusedField, equals: .password)
+
+                        Button {
+                            revealsPassword.toggle()
+                        } label: {
+                            Image(systemName: revealsPassword ? "eye.slash.fill" : "eye.fill")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(revealsPassword ? "Hide password" : "Show password")
+                    }
+                } footer: {
+                    Text("Enter only an account you own. This information stays in this app's Keychain.")
+                }
+
+                Section {
+                    Button {
+                        password = store.freshPassword()
+                        revealsPassword = true
+                    } label: {
+                        Label("Generate New Password", systemImage: "sparkles")
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(
+                LinearGradient(
+                    colors: [AppTheme.backgroundTop, AppTheme.backgroundBottom],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            )
+            .navigationTitle("Edit Account")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        store.updateCredential(id: credential.id, email: email, password: password)
+                        dismiss()
+                    }
+                    .disabled(!canSave)
+                }
+            }
+            .onAppear {
+                focusedField = credential.email.isEmpty ? .email : nil
+            }
+        }
+    }
+
+    private var canSave: Bool {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !password.isEmpty && (trimmedEmail.isEmpty || isValidEmail(trimmedEmail))
+    }
+
+    private func isValidEmail(_ value: String) -> Bool {
+        let parts = value.split(separator: "@", omittingEmptySubsequences: false)
+        return parts.count == 2 && !parts[0].isEmpty && parts[1].contains(".") && !value.contains(" ")
+    }
+}
+
+private struct ImportEmailsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var store: CredentialStore
+
+    @State private var text = ""
+    @State private var errorMessage: String?
+    @FocusState private var isEditorFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Paste Email Addresses") {
+                    TextEditor(text: $text)
+                        .frame(minHeight: 220)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .focused($isEditorFocused)
+                } footer: {
+                    Text("Use one address per line. Empty slots are filled first; extra addresses create new local slots.")
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(
+                LinearGradient(
+                    colors: [AppTheme.backgroundTop, AppTheme.backgroundBottom],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            )
+            .navigationTitle("Import Emails")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Import") {
+                        let imported = store.importEmails(text)
+                        if imported > 0 {
+                            dismiss()
+                        } else {
+                            errorMessage = "No new valid email addresses were found."
+                        }
+                    }
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+            .onAppear {
+                isEditorFocused = true
+            }
         }
     }
 }

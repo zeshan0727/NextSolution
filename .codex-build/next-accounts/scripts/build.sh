@@ -51,7 +51,7 @@ file "${APP_DIR}/${APP_NAME}"
 
 (
   cd "${BUILD_ROOT}"
-  /usr/bin/zip -qry "../NextAccounts_1.0.0.tipa" Payload
+  /usr/bin/zip -qry "../NextAccounts_1.0.1.tipa" Payload
 )
 
-echo "Built ${PWD}/NextAccounts_1.0.0.tipa"
+echo "Built ${PWD}/NextAccounts_1.0.1.tipa"

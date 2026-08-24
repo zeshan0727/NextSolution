@@ -14,31 +14,84 @@ final class CredentialStore: ObservableObject {
     }
 
     func copy(_ value: String, label: String) {
+        guard !value.isEmpty else {
+            showStatus("Add an email first")
+            return
+        }
         UIPasteboard.general.string = value
         HapticManager.shared.copied()
         showStatus("\(label) copied")
     }
 
     func generateFive() {
-        var newCredentials: [Credential] = []
-        var knownEmails = Set(credentials.map { $0.email.lowercased() })
-
-        while newCredentials.count < 5 {
-            let email = makeEmailSuggestion()
-            guard knownEmails.insert(email.lowercased()).inserted else { continue }
-            newCredentials.append(
-                Credential(
-                    email: email,
-                    password: makePassword(),
-                    isGenerated: true
-                )
-            )
-        }
-
-        credentials.append(contentsOf: newCredentials)
+        credentials.append(contentsOf: makeBlankCredentials(count: 5))
         saveCredentials()
         HapticManager.shared.generated()
-        showStatus("5 suggestions added")
+        showStatus("5 private slots added")
+    }
+
+    func toggle(_ platform: AccountPlatform, for credentialID: UUID) {
+        guard let index = credentials.firstIndex(where: { $0.id == credentialID }) else { return }
+
+        var credential = credentials[index]
+        if credential.activePlatforms.contains(platform) {
+            credential.activePlatforms.remove(platform)
+        } else {
+            credential.activePlatforms.insert(platform)
+        }
+        credentials[index] = credential
+        saveCredentials()
+        HapticManager.shared.selectionChanged()
+    }
+
+    func updateCredential(id: UUID, email: String, password: String) {
+        guard let index = credentials.firstIndex(where: { $0.id == id }) else { return }
+        credentials[index].email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        credentials[index].password = password
+        saveCredentials()
+        HapticManager.shared.generated()
+        showStatus("Account updated")
+    }
+
+    @discardableResult
+    func importEmails(_ text: String) -> Int {
+        let separators = CharacterSet(charactersIn: "\n,;")
+        let candidates = text
+            .components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { isValidEmail($0) }
+
+        var known = Set(credentials.map { $0.email.lowercased() }.filter { !$0.isEmpty })
+        var imported = 0
+
+        for email in candidates where known.insert(email.lowercased()).inserted {
+            if let blankIndex = credentials.firstIndex(where: { $0.email.isEmpty }) {
+                credentials[blankIndex].email = email
+            } else {
+                credentials.append(
+                    Credential(
+                        email: email,
+                        password: makePassword(),
+                        isGenerated: true
+                    )
+                )
+            }
+            imported += 1
+        }
+
+        guard imported > 0 else {
+            showStatus("No new valid emails found")
+            return 0
+        }
+
+        saveCredentials()
+        HapticManager.shared.generated()
+        showStatus("\(imported) email\(imported == 1 ? "" : "s") imported")
+        return imported
+    }
+
+    func freshPassword() -> String {
+        makePassword()
     }
 
     private func loadCredentials() {
@@ -51,16 +104,16 @@ final class CredentialStore: ObservableObject {
             return
         }
 
-        guard let url = Bundle.main.url(forResource: "Seed", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let seed = try? decoder.decode([SeedCredential].self, from: data) else {
-            credentials = []
+        if let legacyData = KeychainStore.loadLegacy(),
+           let legacy = try? decoder.decode([Credential].self, from: legacyData),
+           let first = legacy.first {
+            credentials = [first] + makeBlankCredentials(count: 21)
+            saveCredentials()
+            KeychainStore.deleteLegacy()
             return
         }
 
-        credentials = seed.map {
-            Credential(email: $0.email, password: $0.password)
-        }
+        credentials = makeBlankCredentials(count: 22)
         saveCredentials()
     }
 
@@ -69,19 +122,25 @@ final class CredentialStore: ObservableObject {
         KeychainStore.save(data)
     }
 
-    private func makeEmailSuggestion() -> String {
-        let firstWords = [
-            "amber", "bright", "cedar", "coral", "fresh", "golden",
-            "maple", "quiet", "silver", "sunny", "urban", "velvet"
-        ]
-        let secondWords = [
-            "bird", "cove", "desk", "harbor", "meadow", "orbit",
-            "palm", "river", "stone", "studio", "trail", "wave"
-        ]
-        let first = firstWords.randomElement() ?? "bright"
-        let second = secondWords.randomElement() ?? "cove"
-        let digits = Int.random(in: 1000...9999)
-        return "\(first)\(second)\(digits)@gmail.com"
+    private func makeBlankCredentials(count: Int) -> [Credential] {
+        (0..<count).map { _ in
+            Credential(
+                email: "",
+                password: makePassword(),
+                isGenerated: true
+            )
+        }
+    }
+
+    private func isValidEmail(_ value: String) -> Bool {
+        let parts = value.split(separator: "@", omittingEmptySubsequences: false)
+        guard parts.count == 2,
+              !parts[0].isEmpty,
+              parts[1].contains("."),
+              !value.contains(" ") else {
+            return false
+        }
+        return true
     }
 
     private func makePassword() -> String {
