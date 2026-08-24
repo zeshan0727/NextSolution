@@ -1,0 +1,3 @@
+build/
+*.tipa
+Resources/Seed.private.json
