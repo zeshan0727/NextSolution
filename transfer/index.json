@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T11:11:31Z",
+  "updatedAt": "2026-08-24T11:35:32Z",
   "files": [
     {
-      "id": "nextmultibrowser-1.1.0-profile-environment-manager",
-      "name": "Next Multi Browser 1.1.0 — Profile Environment Manager",
-      "fileName": "NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa",
+      "id": "nextmultibrowser-1.1.1-random-environments",
+      "name": "Next Multi Browser 1.1.1 — Random Environments",
+      "fileName": "NextMultiBrowser_1.1.1_Random_Environment_Devices_Locations_iPhone_Test.tipa",
       "type": "tipa",
       "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.0 (8)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.0/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa",
-      "sha256": "0cfb407cb00b842aa63429abc4c5b502e5cbbf3c690e4c24bc17f1af59dcd53a",
-      "sizeBytes": 4877924,
-      "notes": "Professional 20-profile testing browser with per-profile environment settings, icon and color, user-agent, locale, region, timezone, viewport presets, storage inspection and clearing, permission reset, settings-only duplication into an independent container, backup and restore, and developer information. Preserves the proven isolated persistent WebKit profile architecture and existing Google sessions when installed as an update."
+      "version": "1.1.1 (9)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.1/NextMultiBrowser_1.1.1_Random_Environment_Devices_Locations_iPhone_Test.tipa",
+      "sha256": "d648992fc74ea35842df527c55f8181fe2aabe3914ab5ea001d3e837082119b5",
+      "sizeBytes": 4922127,
+      "notes": "Adds one-tap profile-scoped environment randomization with matched device, user-agent, language, region, and timezone settings. Includes 19 device and viewport presets across multiple iPhones, iPod touch, iPads, Pixel, Galaxy, laptop, and desktop; 17 language choices; 24 regions; and 27 timezones. Randomization preserves the selected profile storage, login cookies, and every other profile."
     },
     {
       "id": "nextaccounts-1.0.5-independent-browser",
