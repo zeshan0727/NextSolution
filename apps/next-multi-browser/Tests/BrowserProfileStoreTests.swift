@@ -1,6 +1,6 @@
 import XCTest
 import WebKit
-@testable import NextMultiBrowser
+@testable import Next_Multi_Browser
 
 @available(iOS 17.0, *)
 @MainActor
