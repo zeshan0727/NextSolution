@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "4fb8fecb603400d6ee8c28303625482ac8297ecbf99f57533087d0804e0d6474",
+      "candidate_fingerprint": "85dab8ddab6c103fd92152cbfbc7c5bd42a2a7fa479890b49912c40ff8cec682",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and ",
+      "entry_type": "cluster",
+      "href": "dopamine-3-vs-dopamine-2.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Jailbreak real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-24T15:33:22+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-vs-dopamine2",
+      "published_at": "2026-08-24T15:33:22+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "source_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "title": "Dopamine 3 vs Dopamine 2: Compatibility Ranges and What Changed",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "6a07f3d95020f227a0ee0a841bccfd908aee9edb8814fb009f773167889f6111",
       "candidate_fingerprint": "6af09f39399d89f77499550db86101b3877073b4f8730bc7889bbe4d9779cd47",
       "category": {
@@ -800,8 +824,18 @@
       "published_at": "2026-08-23T06:49:41+00:00",
       "run_id": "32623925196",
       "version": "3.x"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "85dab8ddab6c103fd92152cbfbc7c5bd42a2a7fa479890b49912c40ff8cec682",
+      "channel": "dopamine-cluster",
+      "href": "dopamine-3-vs-dopamine-2.html",
+      "package": "editorial.dopamine3.dopamine3-vs-dopamine2",
+      "published_at": "2026-08-24T15:33:22+00:00",
+      "run_id": "32745499641",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-23T06:49:41+00:00"
+  "updated_at": "2026-08-24T15:33:22+00:00"
 }

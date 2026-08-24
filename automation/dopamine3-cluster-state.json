@@ -24,6 +24,11 @@
       "path": "sileo-dopamine-3-jailbreak-guide.html",
       "published_at": "2026-08-23T06:49:41+00:00",
       "topic_id": "dopamine3-sileo"
+    },
+    {
+      "path": "dopamine-3-vs-dopamine-2.html",
+      "published_at": "2026-08-24T15:33:22+00:00",
+      "topic_id": "dopamine3-vs-dopamine2"
     }
   ],
   "published": {
@@ -386,6 +391,78 @@
       "path": "sileo-dopamine-3-jailbreak-guide.html",
       "published_at": "2026-08-23T06:49:41+00:00",
       "title": "Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks"
+    },
+    "dopamine3-vs-dopamine2": {
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_019cde73c1f30b26016a8c645b296087d19f7ff54d52c2b110",
+          "usage": {
+            "input_tokens": 3947,
+            "input_tokens_details": {
+              "cache_write_tokens": 3944,
+              "cached_tokens": 0
+            },
+            "output_tokens": 530,
+            "output_tokens_details": {
+              "reasoning_tokens": 426
+            },
+            "total_tokens": 4477
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_08100633117f294e016a8c6461eacc87d1a47ade4f0e9165ff",
+          "usage": {
+            "input_tokens": 4055,
+            "input_tokens_details": {
+              "cache_write_tokens": 4052,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2372,
+            "output_tokens_details": {
+              "reasoning_tokens": 78
+            },
+            "total_tokens": 6427
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0d7eb3c12c4d9815016a8c6474088c87d19ac94f7c29ca55b4",
+          "usage": {
+            "input_tokens": 3290,
+            "input_tokens_details": {
+              "cache_write_tokens": 3287,
+              "cached_tokens": 0
+            },
+            "output_tokens": 352,
+            "output_tokens_details": {
+              "reasoning_tokens": 247
+            },
+            "total_tokens": 3642
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0654f54d56f25e1c016a8c6443a63487d19dc0842af5149ee5",
+          "usage": {
+            "input_tokens": 1125,
+            "input_tokens_details": {
+              "cache_write_tokens": 1122,
+              "cached_tokens": 0
+            },
+            "output_tokens": 3014,
+            "output_tokens_details": {
+              "reasoning_tokens": 64
+            },
+            "total_tokens": 4139
+          }
+        }
+      },
+      "fingerprint": "85dab8ddab6c103fd92152cbfbc7c5bd42a2a7fa479890b49912c40ff8cec682",
+      "path": "dopamine-3-vs-dopamine-2.html",
+      "published_at": "2026-08-24T15:33:22+00:00",
+      "title": "Dopamine 3 vs Dopamine 2: Compatibility Ranges and What Changed"
     }
   },
   "schema_version": 1

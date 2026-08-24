@@ -39,6 +39,14 @@
       "title": "Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks",
       "topic_id": "dopamine3-sileo",
       "url": "https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide.html"
+    },
+    {
+      "created_at": "2026-08-24T15:33:22+00:00",
+      "post": "Dopamine 3 expands the documented compatibility ranges beyond Dopamine 2: arm64e reaches iOS 17.3.1, while arm64 and A12/A13 categories reach iOS 18.7.1. A12/A13 are also listed for iOS 26.0–26.0.1. Always verify the iOS https://nextsolution.cc/dopamine-3-vs-dopamine-2.html",
+      "status": "pending",
+      "title": "Dopamine 3 vs Dopamine 2: Compatibility Ranges and What Changed",
+      "topic_id": "dopamine3-vs-dopamine2",
+      "url": "https://nextsolution.cc/dopamine-3-vs-dopamine-2.html"
     }
   ],
   "schema_version": 1
