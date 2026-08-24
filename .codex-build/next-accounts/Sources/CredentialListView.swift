@@ -388,7 +388,7 @@ private struct EditCredentialSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Account") {
+                Section {
                     TextField("Email address", text: $email)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
@@ -416,6 +416,8 @@ private struct EditCredentialSheet: View {
                         .buttonStyle(.plain)
                         .accessibilityLabel(revealsPassword ? "Hide password" : "Show password")
                     }
+                } header: {
+                    Text("Account")
                 } footer: {
                     Text("Enter only an account you own. This information stays in this app's Keychain.")
                 }
@@ -480,12 +482,14 @@ private struct ImportEmailsSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Paste Email Addresses") {
+                Section {
                     TextEditor(text: $text)
                         .frame(minHeight: 220)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .focused($isEditorFocused)
+                } header: {
+                    Text("Paste Email Addresses")
                 } footer: {
                     Text("Use one address per line. Empty slots are filled first; extra addresses create new local slots.")
                 }
