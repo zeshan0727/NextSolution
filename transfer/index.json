@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T18:26:12Z",
+  "updatedAt": "2026-08-24T18:34:44Z",
   "files": [
+    {
+      "id": "nextmultibrowser-1.1.4-manual-desktop-automatic-environment",
+      "name": "Next Multi Browser 1.1.4 — Manual Desktop Selection",
+      "fileName": "NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / RootHide / iOS 15+",
+      "version": "1.1.4 (12)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.4/NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa",
+      "sha256": "3b2513359252653bb4d8da72290972f856890c27309a4d43707fd5bca2e558c4",
+      "sizeBytes": 4924547,
+      "notes": "Restores manual device selection with macOS Safari and Windows Chrome desktop modes. Selecting any manual device pairs its compatible user agent and returns language, region, and timezone to Automatic; the selection persists after relaunch. Individual and global randomization remain phone-only. Also retains inline automatic video playback, Random 4 URLs distribution across 20 isolated browsers, separate profile storage, auto refresh, and VPN features."
+    },
     {
       "id": "nextaccounts-1.0.6-search-swipe-delete",
       "name": "Next Accounts 1.0.6 — Search & Swipe Delete",
@@ -13,18 +25,6 @@
       "sha256": "da2706cd5a465eb068a2ddbc1889e8c82ab1cb729630f162fba580eff5b9e91c",
       "sizeBytes": 1212075,
       "notes": "Adds a native email search bar with case-insensitive filtering and a clear no-results state. Each account can now be deleted with a simple left swipe, including full-swipe deletion, and the updated list is saved immediately in Keychain. Existing account editing, one-tap copy, platform status buttons, automatic local generators, bulk import, Generate 5 More and the independent in-app browser remain unchanged."
-    },
-    {
-      "id": "nextmultibrowser-1.1.2-global-phone-environments",
-      "name": "Next Multi Browser 1.1.2 — Global Phone Environments",
-      "fileName": "NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.2 (10)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.2/NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
-      "sha256": "bee01f4712aaf30ee66e2422a0c2056ed07d94db88a841cb77a2a4ed916b2d42",
-      "sizeBytes": 4896684,
-      "notes": "Adds one Profiles-wide Randomize All Environments action for all 20 isolated browsers while retaining the individual per-profile randomize button. Selectable and randomized devices are phone-only: multiple iPhones plus Pixel 9 Pro/XL, Galaxy S25/Ultra, OnePlus 13, and Xiaomi 15 Ultra. Legacy tablet and desktop settings migrate safely to phone presets without replacing profile storage identifiers or clearing cookies, Google sessions, or website data. Includes 17 languages, 24 regions, and 27 timezones."
     },
     {
       "id": "nextaccounts-1.0.5-independent-browser",
