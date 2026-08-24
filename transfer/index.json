@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T09:03:48Z",
+  "updatedAt": "2026-08-24T11:11:31Z",
   "files": [
+    {
+      "id": "nextmultibrowser-1.1.0-profile-environment-manager",
+      "name": "Next Multi Browser 1.1.0 — Profile Environment Manager",
+      "fileName": "NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / RootHide / iOS 15+",
+      "version": "1.1.0 (8)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.0/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa",
+      "sha256": "0cfb407cb00b842aa63429abc4c5b502e5cbbf3c690e4c24bc17f1af59dcd53a",
+      "sizeBytes": 4877924,
+      "notes": "Professional 20-profile testing browser with per-profile environment settings, icon and color, user-agent, locale, region, timezone, viewport presets, storage inspection and clearing, permission reset, settings-only duplication into an independent container, backup and restore, and developer information. Preserves the proven isolated persistent WebKit profile architecture and existing Google sessions when installed as an update."
+    },
     {
       "id": "nextaccounts-1.0.5-independent-browser",
       "name": "Next Accounts 1.0.5 — Independent Browser",
@@ -61,18 +73,6 @@
       "sha256": "e62a08c6ff0904395b0855d80ec0b2e17f1c366ae5fa8e10584ca598997ba6e0",
       "sizeBytes": 1149925,
       "notes": "Credential-free public build. Creates 22 blank private slots and unique passwords locally on-device; upgrades keep only the first legacy account and replace the other 21 with blank slots. Adds compact per-account Apple, Google, YouTube, Instagram, Facebook, Twitter and TikTok status chips, account editing, bulk email import, one-tap copy and Keychain persistence."
-    },
-    {
-      "id": "nextmultibrowser-1.0.6-ios16-persistent-profiles",
-      "name": "Next Multi Browser 1.0.6 — Persistent Profiles",
-      "fileName": "NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.0.6 (7)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.0.6/NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa",
-      "sha256": "c97a322b5e225a66c91b9b87c26fe07657f4bbf18290d48ef1898cf8c6d09a77",
-      "sizeBytes": 4794298,
-      "notes": "Twenty isolated browser profiles. Fixes Google session loss on iOS 15/16 by assigning each profile its own persistent WebKit cookies, local storage, IndexedDB, cache storage, service-worker data, and related website data. Migrates cookie snapshots created by 1.0.5."
     },
     {
       "id": "nextpost-1.0.9-x-preview-fix",
