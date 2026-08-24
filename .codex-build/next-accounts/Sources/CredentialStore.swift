@@ -24,10 +24,11 @@ final class CredentialStore: ObservableObject {
     }
 
     func generateFive() {
-        credentials.append(contentsOf: makeBlankCredentials(count: 5))
+        let existingEmails = Set(credentials.map { normalizedEmail($0.email) }.filter { !$0.isEmpty })
+        credentials.append(contentsOf: makeGeneratedCredentials(count: 5, existingEmails: existingEmails))
         saveCredentials()
         HapticManager.shared.generated()
-        showStatus("5 private slots added")
+        showStatus("5 accounts generated")
     }
 
     func toggle(_ platform: AccountPlatform, for credentialID: UUID) {
@@ -61,10 +62,10 @@ final class CredentialStore: ObservableObject {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { isValidEmail($0) }
 
-        var known = Set(credentials.map { $0.email.lowercased() }.filter { !$0.isEmpty })
+        var known = Set(credentials.map { normalizedEmail($0.email) }.filter { !$0.isEmpty })
         var imported = 0
 
-        for email in candidates where known.insert(email.lowercased()).inserted {
+        for email in candidates where known.insert(normalizedEmail(email)).inserted {
             if let blankIndex = credentials.firstIndex(where: { $0.email.isEmpty }) {
                 credentials[blankIndex].email = email
             } else {
@@ -94,6 +95,16 @@ final class CredentialStore: ObservableObject {
         makePassword()
     }
 
+    func freshEmail(excluding credentialID: UUID? = nil) -> String {
+        let existingEmails = Set(
+            credentials
+                .filter { $0.id != credentialID }
+                .map { normalizedEmail($0.email) }
+                .filter { !$0.isEmpty }
+        )
+        return makeEmail(excluding: existingEmails)
+    }
+
     private func loadCredentials() {
         let decoder = JSONDecoder()
 
@@ -104,16 +115,26 @@ final class CredentialStore: ObservableObject {
             return
         }
 
+        if let previousData = KeychainStore.loadPrevious(),
+           let previous = try? decoder.decode([Credential].self, from: previousData),
+           !previous.isEmpty {
+            credentials = fillingMissingGeneratedValues(in: previous)
+            saveCredentials()
+            KeychainStore.deletePrevious()
+            return
+        }
+
         if let legacyData = KeychainStore.loadLegacy(),
            let legacy = try? decoder.decode([Credential].self, from: legacyData),
            let first = legacy.first {
-            credentials = [first] + makeBlankCredentials(count: 21)
+            let existingEmails = Set([normalizedEmail(first.email)].filter { !$0.isEmpty })
+            credentials = [first] + makeGeneratedCredentials(count: 21, existingEmails: existingEmails)
             saveCredentials()
             KeychainStore.deleteLegacy()
             return
         }
 
-        credentials = makeBlankCredentials(count: 22)
+        credentials = makeGeneratedCredentials(count: 22)
         saveCredentials()
     }
 
@@ -122,14 +143,45 @@ final class CredentialStore: ObservableObject {
         KeychainStore.save(data)
     }
 
-    private func makeBlankCredentials(count: Int) -> [Credential] {
-        (0..<count).map { _ in
-            Credential(
-                email: "",
-                password: makePassword(),
-                isGenerated: true
+    private func makeGeneratedCredentials(
+        count: Int,
+        existingEmails: Set<String> = []
+    ) -> [Credential] {
+        var knownEmails = existingEmails
+        var generated: [Credential] = []
+
+        for style in 0..<count {
+            let email = makeEmail(excluding: knownEmails, styleHint: style)
+            knownEmails.insert(normalizedEmail(email))
+            generated.append(
+                Credential(
+                    email: email,
+                    password: makePassword(),
+                    isGenerated: true
+                )
             )
         }
+
+        return generated
+    }
+
+    private func fillingMissingGeneratedValues(in stored: [Credential]) -> [Credential] {
+        var migrated = stored
+        var knownEmails = Set(stored.map { normalizedEmail($0.email) }.filter { !$0.isEmpty })
+
+        for index in migrated.indices {
+            if migrated[index].email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let email = makeEmail(excluding: knownEmails, styleHint: index)
+                migrated[index].email = email
+                knownEmails.insert(normalizedEmail(email))
+            }
+
+            if migrated[index].password.isEmpty {
+                migrated[index].password = makePassword()
+            }
+        }
+
+        return migrated
     }
 
     private func isValidEmail(_ value: String) -> Bool {
@@ -158,6 +210,68 @@ final class CredentialStore: ObservableObject {
         let symbol = symbols.randomElement() ?? "@"
         let digits = Int.random(in: 1000...9999)
         return "\(first)\(second)\(symbol)\(digits)"
+    }
+
+    private func makeEmail(excluding existingEmails: Set<String>, styleHint: Int? = nil) -> String {
+        let firstWords = [
+            "amber", "atlas", "cedar", "coral", "echo", "ember",
+            "forest", "hazel", "indigo", "lunar", "maple", "meadow",
+            "mint", "nova", "olive", "orbit", "pearl", "river",
+            "silver", "solar", "swift", "urban", "violet", "willow"
+        ]
+        let secondWords = [
+            "bird", "bloom", "cloud", "cove", "craft", "daily",
+            "desk", "field", "fox", "garden", "harbor", "journal",
+            "lane", "light", "nest", "notes", "page", "pixel",
+            "point", "studio", "trail", "vault", "wave", "works"
+        ]
+
+        for attempt in 0..<100 {
+            let first = firstWords.randomElement() ?? "amber"
+            let second = secondWords.randomElement() ?? "wave"
+            let twoDigits = Int.random(in: 10...99)
+            let fourDigits = Int.random(in: 1000...9999)
+            let baseStyle = styleHint ?? Int.random(in: 0...7)
+            let style = (baseStyle + attempt) % 8
+
+            let localPart: String
+            switch style {
+            case 0:
+                localPart = "\(first)\(second)\(fourDigits)"
+            case 1:
+                localPart = "\(first)\(twoDigits)\(second)"
+            case 2:
+                localPart = "\(first.prefix(1))\(second)\(fourDigits)"
+            case 3:
+                localPart = "\(second)\(fourDigits)\(first.suffix(2))"
+            case 4:
+                localPart = "\(first).\(second)\(twoDigits)"
+            case 5:
+                localPart = "\(first.prefix(3))\(fourDigits)\(second)"
+            case 6:
+                localPart = "\(second)\(twoDigits)\(first)"
+            default:
+                localPart = "\(first)\(fourDigits)\(second.prefix(3))"
+            }
+
+            let candidate = "\(localPart)@gmail.com"
+            if !existingEmails.contains(normalizedEmail(candidate)) {
+                return candidate
+            }
+        }
+
+        return "mail\(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12).lowercased())@gmail.com"
+    }
+
+    private func normalizedEmail(_ email: String) -> String {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let parts = trimmed.split(separator: "@", omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return trimmed }
+
+        let domain = String(parts[1])
+        guard domain == "gmail.com" || domain == "googlemail.com" else { return trimmed }
+        let localPart = String(parts[0]).replacingOccurrences(of: ".", with: "")
+        return "\(localPart)@gmail.com"
     }
 
     private func showStatus(_ message: String) {

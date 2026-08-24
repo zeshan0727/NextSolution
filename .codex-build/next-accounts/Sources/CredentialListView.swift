@@ -135,7 +135,7 @@ private struct AccountHeaderView: View {
                 Text("\(count) private account slots")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white.opacity(0.72))
-                Label("Passwords hidden by default", systemImage: "lock.fill")
+                Label("Emails and passwords stored locally", systemImage: "lock.fill")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.58))
             }
@@ -354,7 +354,7 @@ private struct GenerateMoreView: View {
             }
             .buttonStyle(.plain)
 
-            Text("Adds five empty private slots with passwords generated only on this iPhone.")
+            Text("Adds five accounts with unique email suggestions and passwords generated on this iPhone.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.58))
                 .multilineTextAlignment(.center)
@@ -424,11 +424,22 @@ private struct EditCredentialSheet: View {
 
                 Section {
                     Button {
+                        email = store.freshEmail(excluding: credential.id)
+                        focusedField = nil
+                    } label: {
+                        Label("Generate Random Email", systemImage: "envelope.fill")
+                    }
+
+                    Button {
                         password = store.freshPassword()
                         revealsPassword = true
                     } label: {
                         Label("Generate New Password", systemImage: "sparkles")
                     }
+                } header: {
+                    Text("Quick Generate")
+                } footer: {
+                    Text("Generated Gmail addresses are suggestions only. Availability is not guaranteed until you create the account with Google.")
                 }
             }
             .scrollContentBackground(.hidden)

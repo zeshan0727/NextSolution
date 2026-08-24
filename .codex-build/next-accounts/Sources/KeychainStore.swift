@@ -3,7 +3,8 @@ import Security
 
 enum KeychainStore {
     private static let service = "com.nextsolution.nextaccounts"
-    private static let currentAccount = "credential-list-v2"
+    private static let currentAccount = "credential-list-v3"
+    private static let previousAccount = "credential-list-v2"
     private static let legacyAccount = "credential-list-v1"
 
     static func load() -> Data? {
@@ -12,6 +13,10 @@ enum KeychainStore {
 
     static func loadLegacy() -> Data? {
         load(account: legacyAccount)
+    }
+
+    static func loadPrevious() -> Data? {
+        load(account: previousAccount)
     }
 
     private static func load(account: String) -> Data? {
@@ -54,10 +59,18 @@ enum KeychainStore {
     }
 
     static func deleteLegacy() {
+        delete(account: legacyAccount)
+    }
+
+    static func deletePrevious() {
+        delete(account: previousAccount)
+    }
+
+    private static func delete(account: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: legacyAccount
+            kSecAttrAccount as String: account
         ]
         SecItemDelete(query as CFDictionary)
     }
