@@ -1,4 +1,5 @@
 name: Publish Next Multi Browser 1.1.2 to NS Transfer
+# Publishes only the checksum-pinned artifact that passed the app build workflow.
 
 on:
   push:
