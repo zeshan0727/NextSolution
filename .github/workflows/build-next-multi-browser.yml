@@ -127,8 +127,8 @@ jobs:
           assert vpn['CFBundleShortVersionString'] == '1.1.3'
           assert vpn['CFBundleVersion'] == '11'
           for feature in (
-              b'Random 4 URLs',
-              b'Open Randomly',
+              b'NextMultiBrowser.randomURLInputs',
+              b'Every link opens in five randomly selected browsers',
               b'Four URLs Required',
               b'playsinline',
               b'webkitbeginfullscreen',
