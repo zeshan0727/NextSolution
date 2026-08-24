@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T08:52:18Z",
+  "updatedAt": "2026-08-24T09:03:48Z",
   "files": [
+    {
+      "id": "nextaccounts-1.0.5-independent-browser",
+      "name": "Next Accounts 1.0.5 — Independent Browser",
+      "fileName": "NextAccounts-1.0.5-Independent-Browser.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.5",
+      "url": "https://nextsolution.cc/transfer/files/NextAccounts/1.0.5/NextAccounts-1.0.5-Independent-Browser.tipa",
+      "sha256": "604ddfcbcbee88c4566e0c86b541bac74d1f48a485bd5b38200251fccebd3a3d",
+      "sizeBytes": 1199945,
+      "notes": "Removes all hold gestures and signup actions from the platform cards, leaving one reliable tap to toggle and persist each green status. The separate Browser tab now opens Google by default and includes a manual address/search bar plus back, forward, home, stop and reload. The in-app WKWebView keeps normal website data without coupling browser navigation to accounts. Automatic local email/password suggestions, editor generators, Generate 5 More, bulk import, one-tap copy and Keychain persistence remain included."
+    },
     {
       "id": "nextaccounts-1.0.4-in-app-signup-browser",
       "name": "Next Accounts 1.0.4 — In-App Signup Browser",
