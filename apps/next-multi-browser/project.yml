@@ -96,6 +96,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: 5.0
         CODE_SIGN_STYLE: Automatic
+        TEST_HOST: '$(BUILT_PRODUCTS_DIR)/Next Multi Browser.app/Next Multi Browser'
+        BUNDLE_LOADER: '$(TEST_HOST)'
     dependencies:
       - target: NextMultiBrowser
 
