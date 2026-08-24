@@ -3,6 +3,11 @@ import UIKit
 final class BrowserProfilesViewController: UITableViewController {
     typealias OpenProfileHandler = (_ profileIndex: Int, _ openGoogleSignIn: Bool) -> Void
 
+    private enum Section: Int, CaseIterable {
+        case globalEnvironment
+        case profiles
+    }
+
     private let profileStore: BrowserProfileStore
     private let openProfileHandler: OpenProfileHandler
     private var profileObservation: NSObjectProtocol?
@@ -46,7 +51,10 @@ final class BrowserProfilesViewController: UITableViewController {
                   self.isViewLoaded,
                   let profileIndex = notification.userInfo?["profileIndex"] as? Int,
                   (1...BrowserProfileStore.profileCount).contains(profileIndex) else { return }
-            let indexPath = IndexPath(row: profileIndex - 1, section: 0)
+            let indexPath = IndexPath(
+                row: profileIndex - 1,
+                section: Section.profiles.rawValue
+            )
             if self.tableView.indexPathsForVisibleRows?.contains(indexPath) == true {
                 self.tableView.reloadRows(at: [indexPath], with: .none)
             }
@@ -60,25 +68,55 @@ final class BrowserProfilesViewController: UITableViewController {
     }
 
     override func numberOfSections(in tableView: UITableView) -> Int {
-        1
+        Section.allCases.count
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        BrowserProfileStore.profileCount
+        switch Section(rawValue: section)! {
+        case .globalEnvironment: return 1
+        case .profiles: return BrowserProfileStore.profileCount
+        }
     }
 
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        "20 Isolated Browser Profiles"
+        switch Section(rawValue: section)! {
+        case .globalEnvironment: return "Global Environment"
+        case .profiles: return "20 Isolated Browser Profiles"
+        }
     }
 
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        "Every profile keeps its own persistent WebKit store, process pool, cookies, local storage, IndexedDB, cache, environment, and website permissions."
+        switch Section(rawValue: section)! {
+        case .globalEnvironment:
+            return "Randomizes phone, user agent, language, region, and timezone for every profile. Cookies, logins, and website data remain untouched."
+        case .profiles:
+            return "Every profile keeps its own persistent WebKit store, process pool, cookies, local storage, IndexedDB, cache, environment, and website permissions."
+        }
     }
 
     override func tableView(
         _ tableView: UITableView,
         cellForRowAt indexPath: IndexPath
     ) -> UITableViewCell {
+        if Section(rawValue: indexPath.section) == .globalEnvironment {
+            let identifier = "RandomizeAllEnvironmentsCell"
+            let cell = tableView.dequeueReusableCell(withIdentifier: identifier)
+                ?? UITableViewCell(style: .subtitle, reuseIdentifier: identifier)
+            var content = cell.defaultContentConfiguration()
+            content.text = "Randomize All Environments"
+            content.textProperties.color = view.tintColor
+            content.textProperties.font = .preferredFont(forTextStyle: .headline)
+            content.secondaryText = "20 profiles • Unique phone-based combinations"
+            content.secondaryTextProperties.color = .secondaryLabel
+            content.image = UIImage(systemName: "shuffle")
+            content.imageProperties.tintColor = view.tintColor
+            cell.contentConfiguration = content
+            cell.accessoryType = .none
+            cell.accessibilityIdentifier = "randomizeAllProfileEnvironments"
+            cell.accessibilityHint = "Randomizes all profile environments without clearing login or website data."
+            return cell
+        }
+
         let identifier = "BrowserProfileCell"
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier)
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: identifier)
@@ -110,6 +148,10 @@ final class BrowserProfilesViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        if Section(rawValue: indexPath.section) == .globalEnvironment {
+            confirmRandomizeAllEnvironments()
+            return
+        }
         let profileIndex = indexPath.row + 1
         let controller = BrowserProfileDetailViewController(
             profileIndex: profileIndex,
@@ -128,12 +170,52 @@ final class BrowserProfilesViewController: UITableViewController {
             ) { [weak self] _ in
                 guard let self else { return }
                 self.storageRefreshes.remove(index)
-                let indexPath = IndexPath(row: index - 1, section: 0)
+                let indexPath = IndexPath(
+                    row: index - 1,
+                    section: Section.profiles.rawValue
+                )
                 if self.tableView.indexPathsForVisibleRows?.contains(indexPath) == true {
                     self.tableView.reloadRows(at: [indexPath], with: .none)
                 }
             }
         }
+    }
+
+    private func confirmRandomizeAllEnvironments() {
+        let alert = UIAlertController(
+            title: "Randomize All 20 Profiles?",
+            message: "Each browser will receive a new phone-only device, user agent, language, region, and timezone combination. Cookies, Google logins, and website storage remain untouched.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Randomize All", style: .default) { [weak self] _ in
+            guard let self else { return }
+            let environments = self.profileStore.randomizeAllEnvironments()
+            guard environments.count == BrowserProfileStore.profileCount else {
+                let error = UIAlertController(
+                    title: "Could Not Randomize",
+                    message: "The profile environments could not be generated. Please try again.",
+                    preferredStyle: .alert
+                )
+                error.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(error, animated: true)
+                return
+            }
+            UIView.transition(
+                with: self.tableView,
+                duration: 0.3,
+                options: [.transitionCrossDissolve, .allowAnimatedContent],
+                animations: {
+                    self.tableView.reloadSections(
+                        IndexSet(integer: Section.profiles.rawValue),
+                        with: .none
+                    )
+                },
+                completion: nil
+            )
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        })
+        present(alert, animated: true)
     }
 }
 
@@ -695,4 +777,3 @@ final class BrowserProfileDetailViewController: UITableViewController, UITextFie
         present(alert, animated: true)
     }
 }
-

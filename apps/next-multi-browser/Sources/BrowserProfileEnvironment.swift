@@ -71,7 +71,11 @@ enum BrowserUserAgentPreset: String, CaseIterable, Codable {
     case iPodSafari
     case iPadSafari
     case pixelChrome
+    case pixelXLChrome
+    case galaxyS25Chrome
     case galaxyChrome
+    case onePlusChrome
+    case xiaomiChrome
     case desktopSafari
     case desktopChrome
 
@@ -81,8 +85,12 @@ enum BrowserUserAgentPreset: String, CaseIterable, Codable {
         case .iPhoneSafari: return "Safari — iPhone"
         case .iPodSafari: return "Safari — iPod touch"
         case .iPadSafari: return "Safari — iPad"
-        case .pixelChrome: return "Chrome — Google Pixel"
-        case .galaxyChrome: return "Chrome — Samsung Galaxy"
+        case .pixelChrome: return "Chrome — Pixel 9 Pro"
+        case .pixelXLChrome: return "Chrome — Pixel 9 Pro XL"
+        case .galaxyS25Chrome: return "Chrome — Galaxy S25"
+        case .galaxyChrome: return "Chrome — Galaxy S25 Ultra"
+        case .onePlusChrome: return "Chrome — OnePlus 13"
+        case .xiaomiChrome: return "Chrome — Xiaomi 15 Ultra"
         case .desktopSafari: return "Safari — Desktop"
         case .desktopChrome: return "Chrome — Windows"
         }
@@ -100,8 +108,16 @@ enum BrowserUserAgentPreset: String, CaseIterable, Codable {
             return "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
         case .pixelChrome:
             return "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+        case .pixelXLChrome:
+            return "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+        case .galaxyS25Chrome:
+            return "Mozilla/5.0 (Linux; Android 15; SM-S931B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
         case .galaxyChrome:
             return "Mozilla/5.0 (Linux; Android 15; SM-S938B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+        case .onePlusChrome:
+            return "Mozilla/5.0 (Linux; Android 15; CPH2653) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+        case .xiaomiChrome:
+            return "Mozilla/5.0 (Linux; Android 15; 25010PN30G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
         case .desktopSafari:
             return "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15"
         case .desktopChrome:
@@ -111,6 +127,21 @@ enum BrowserUserAgentPreset: String, CaseIterable, Codable {
 
     var prefersDesktopContent: Bool {
         self == .desktopSafari || self == .desktopChrome
+    }
+
+    static let selectablePhoneCases: [BrowserUserAgentPreset] = [
+        .automatic,
+        .iPhoneSafari,
+        .pixelChrome,
+        .pixelXLChrome,
+        .galaxyS25Chrome,
+        .galaxyChrome,
+        .onePlusChrome,
+        .xiaomiChrome
+    ]
+
+    var isSelectablePhonePreset: Bool {
+        Self.selectablePhoneCases.contains(self)
     }
 }
 
@@ -374,7 +405,11 @@ enum BrowserViewportPreset: String, CaseIterable, Codable {
     case iPadPro11
     case iPadPro
     case pixel9Pro
+    case pixel9ProXL
+    case galaxyS25
     case galaxyS25Ultra
+    case onePlus13
+    case xiaomi15Ultra
     case laptop
     case desktop
 
@@ -396,15 +431,18 @@ enum BrowserViewportPreset: String, CaseIterable, Codable {
         case .iPadPro11: return "iPad Pro 11-inch"
         case .iPadPro: return "iPad Pro 13-inch"
         case .pixel9Pro: return "Google Pixel 9 Pro"
+        case .pixel9ProXL: return "Google Pixel 9 Pro XL"
+        case .galaxyS25: return "Samsung Galaxy S25"
         case .galaxyS25Ultra: return "Samsung Galaxy S25 Ultra"
+        case .onePlus13: return "OnePlus 13"
+        case .xiaomi15Ultra: return "Xiaomi 15 Ultra"
         case .laptop: return "Laptop"
         case .desktop: return "Desktop"
         }
     }
 
     var viewportDescription: String {
-        guard let size else { return "App window"
-        }
+        guard let size else { return "App window" }
         return "\(Int(size.width)) × \(Int(size.height)) CSS px"
     }
 
@@ -426,7 +464,11 @@ enum BrowserViewportPreset: String, CaseIterable, Codable {
         case .iPadPro11: return CGSize(width: 834, height: 1194)
         case .iPadPro: return CGSize(width: 1024, height: 1366)
         case .pixel9Pro: return CGSize(width: 412, height: 915)
+        case .pixel9ProXL: return CGSize(width: 448, height: 998)
+        case .galaxyS25: return CGSize(width: 360, height: 780)
         case .galaxyS25Ultra: return CGSize(width: 384, height: 854)
+        case .onePlus13: return CGSize(width: 450, height: 1000)
+        case .xiaomi15Ultra: return CGSize(width: 393, height: 873)
         case .laptop: return CGSize(width: 1366, height: 768)
         case .desktop: return CGSize(width: 1440, height: 900)
         }
@@ -447,15 +489,46 @@ enum BrowserViewportPreset: String, CaseIterable, Codable {
             return [.iPadSafari]
         case .pixel9Pro:
             return [.pixelChrome]
+        case .pixel9ProXL:
+            return [.pixelXLChrome]
+        case .galaxyS25:
+            return [.galaxyS25Chrome]
         case .galaxyS25Ultra:
             return [.galaxyChrome]
+        case .onePlus13:
+            return [.onePlusChrome]
+        case .xiaomi15Ultra:
+            return [.xiaomiChrome]
         case .laptop, .desktop:
             return [.desktopSafari, .desktopChrome]
         }
     }
 
+    static let selectablePhoneCases: [BrowserViewportPreset] = [
+        .automatic,
+        .iPhoneSE,
+        .iPhone8Plus,
+        .iPhone13Mini,
+        .iPhone11,
+        .iPhone14,
+        .iPhonePro,
+        .iPhoneProMax,
+        .iPhone16Pro,
+        .iPhone16ProMax,
+        .pixel9Pro,
+        .pixel9ProXL,
+        .galaxyS25,
+        .galaxyS25Ultra,
+        .onePlus13,
+        .xiaomi15Ultra
+    ]
+
+    var isSelectablePhonePreset: Bool {
+        Self.selectablePhoneCases.contains(self)
+    }
+
     static var randomizableCases: [BrowserViewportPreset] {
-        allCases.filter { $0 != .automatic }
+        selectablePhoneCases.filter { $0 != .automatic }
     }
 }
 
@@ -494,7 +567,7 @@ struct BrowserEnvironmentLocationPreset: Equatable {
     ]
 }
 
-struct BrowserProfileEnvironment: Codable, Equatable {
+struct BrowserProfileEnvironment: Codable, Equatable, Hashable {
     var userAgent: BrowserUserAgentPreset = .automatic
     var language: BrowserLanguagePreset = .automatic
     var region: BrowserRegionPreset = .automatic
@@ -504,7 +577,35 @@ struct BrowserProfileEnvironment: Codable, Equatable {
     static let `default` = BrowserProfileEnvironment()
 
     static func randomized(excluding current: BrowserProfileEnvironment? = nil) -> BrowserProfileEnvironment {
-        let candidates = BrowserViewportPreset.randomizableCases.flatMap { viewport in
+        randomizedBatch(
+            count: 1,
+            excluding: current.map { [$0] } ?? []
+        ).first ?? .default
+    }
+
+    static func randomizedBatch(
+        count: Int,
+        excluding environments: [BrowserProfileEnvironment] = []
+    ) -> [BrowserProfileEnvironment] {
+        guard count > 0 else { return [] }
+        let excluded = Set(environments)
+        var candidates = randomizableCandidates.filter { !excluded.contains($0) }
+        candidates.shuffle()
+
+        if candidates.count >= count {
+            return Array(candidates.prefix(count))
+        }
+
+        var result = candidates
+        let fallback = randomizableCandidates.shuffled()
+        while result.count < count, !fallback.isEmpty {
+            result.append(fallback[result.count % fallback.count])
+        }
+        return result
+    }
+
+    private static var randomizableCandidates: [BrowserProfileEnvironment] {
+        BrowserViewportPreset.randomizableCases.flatMap { viewport in
             BrowserEnvironmentLocationPreset.all.flatMap { location in
                 viewport.compatibleUserAgents.map { userAgent in
                     BrowserProfileEnvironment(
@@ -516,11 +617,34 @@ struct BrowserProfileEnvironment: Codable, Equatable {
                     )
                 }
             }
-        }.filter { candidate in
-            current.map { candidate != $0 } ?? true
+        }
+    }
+
+    var phoneOnlyNormalized: BrowserProfileEnvironment {
+        var value = self
+        if !value.viewport.isSelectablePhonePreset {
+            switch value.viewport {
+            case .iPodTouch:
+                value.viewport = .iPhoneSE
+            case .iPadMini, .iPadAir, .iPadPro11, .iPadPro:
+                value.viewport = .iPhoneProMax
+            case .laptop, .desktop:
+                value.viewport = .iPhone16ProMax
+            default:
+                value.viewport = .automatic
+            }
         }
 
-        return candidates.randomElement() ?? .default
+        if !value.userAgent.isSelectablePhonePreset {
+            value.userAgent = value.viewport == .automatic
+                ? .automatic
+                : (value.viewport.compatibleUserAgents.first ?? .iPhoneSafari)
+        }
+        return value
+    }
+
+    var isPhoneOnly: Bool {
+        viewport.isSelectablePhonePreset && userAgent.isSelectablePhonePreset
     }
 
     var usesCoherentRandomPreset: Bool {

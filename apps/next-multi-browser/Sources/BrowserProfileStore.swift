@@ -198,17 +198,42 @@ final class BrowserProfileStore {
               let value = try? JSONDecoder().decode(BrowserProfileEnvironment.self, from: data) else {
             return .default
         }
-        return value
+        let normalized = value.phoneOnlyNormalized
+        if normalized != value {
+            persistEnvironment(normalized, for: index)
+        }
+        return normalized
     }
 
     func setEnvironment(_ environment: BrowserProfileEnvironment, for index: Int) {
         validate(index)
+        persistEnvironment(environment.phoneOnlyNormalized, for: index)
+        postEnvironmentChanged(index)
+    }
+
+    @discardableResult
+    func randomizeAllEnvironments() -> [BrowserProfileEnvironment] {
+        let indices = Array(1...Self.profileCount)
+        let existing = indices.map(environment(for:))
+        let randomized = BrowserProfileEnvironment.randomizedBatch(
+            count: Self.profileCount,
+            excluding: existing
+        )
+        guard randomized.count == Self.profileCount else { return [] }
+
+        for (index, environment) in zip(indices, randomized) {
+            persistEnvironment(environment, for: index)
+        }
+        indices.forEach { postEnvironmentChanged($0) }
+        return randomized
+    }
+
+    private func persistEnvironment(_ environment: BrowserProfileEnvironment, for index: Int) {
         if environment == .default {
             defaults.removeObject(forKey: environmentKey(for: index))
         } else if let data = try? JSONEncoder().encode(environment) {
             defaults.set(data, forKey: environmentKey(for: index))
         }
-        postEnvironmentChanged(index)
     }
 
     func setLastURL(_ url: URL, for index: Int) {

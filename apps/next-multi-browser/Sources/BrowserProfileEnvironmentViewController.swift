@@ -41,7 +41,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch Section(rawValue: section)! {
         case .randomize: return nil
-        case .device: return "Device & Viewport"
+        case .device: return "Phone & Viewport"
         case .userAgent: return "User Agent"
         case .language: return "Language & Locale"
         case .region: return "Region"
@@ -55,7 +55,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         case .randomize:
             return "Creates one matching device, user agent, language, region, and timezone combination for this profile only."
         case .device:
-            return "Device presets set WebKit content mode and a CSS viewport hint for this profile."
+            return "Phone presets set WebKit mobile content mode and a CSS viewport hint for this profile. Tablet and desktop presets are no longer selectable."
         case .timezone:
             return "Language, locale, region, and timezone are applied to web content in this profile. Automatic follows the device."
         case .reset:
@@ -143,9 +143,10 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
 
     private func showViewportPicker() {
         let current = profileStore.environment(for: profileIndex).viewport
+        let presets = BrowserViewportPreset.selectablePhoneCases
         showPicker(
-            title: "Device & Viewport",
-            options: BrowserViewportPreset.allCases.map {
+            title: "Phone & Viewport",
+            options: presets.map {
                 BrowserProfilePickerOption(
                     title: $0.title,
                     subtitle: $0.viewportDescription,
@@ -155,7 +156,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         ) { [weak self] selectedIndex in
             guard let self else { return }
             var environment = self.profileStore.environment(for: self.profileIndex)
-            environment.viewport = BrowserViewportPreset.allCases[selectedIndex]
+            environment.viewport = presets[selectedIndex]
             self.profileStore.setEnvironment(environment, for: self.profileIndex)
             self.tableView.reloadData()
         }
@@ -163,9 +164,10 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
 
     private func showUserAgentPicker() {
         let current = profileStore.environment(for: profileIndex).userAgent
+        let presets = BrowserUserAgentPreset.selectablePhoneCases
         showPicker(
-            title: "User Agent",
-            options: BrowserUserAgentPreset.allCases.map {
+            title: "Phone User Agent",
+            options: presets.map {
                 BrowserProfilePickerOption(
                     title: $0.title,
                     subtitle: $0 == .automatic ? "Use the current WebKit user agent" : "Compatibility preset",
@@ -175,7 +177,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         ) { [weak self] selectedIndex in
             guard let self else { return }
             var environment = self.profileStore.environment(for: self.profileIndex)
-            environment.userAgent = BrowserUserAgentPreset.allCases[selectedIndex]
+            environment.userAgent = presets[selectedIndex]
             self.profileStore.setEnvironment(environment, for: self.profileIndex)
             self.tableView.reloadData()
         }
@@ -305,7 +307,9 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
             return "iphone"
         case .iPodTouch: return "ipodtouch"
         case .iPadMini, .iPadAir, .iPadPro11, .iPadPro: return "ipad"
-        case .pixel9Pro, .galaxyS25Ultra: return "rectangle.portrait"
+        case .pixel9Pro, .pixel9ProXL, .galaxyS25, .galaxyS25Ultra,
+             .onePlus13, .xiaomi15Ultra:
+            return "rectangle.portrait"
         case .laptop: return "laptopcomputer"
         case .desktop: return "desktopcomputer"
         }

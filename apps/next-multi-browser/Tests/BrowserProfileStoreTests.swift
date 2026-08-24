@@ -71,7 +71,8 @@ final class BrowserProfileStoreTests: XCTestCase {
         firstStore.setEnvironment(profileOneEnvironment, for: 1)
 
         var profileTwoEnvironment = BrowserProfileEnvironment.default
-        profileTwoEnvironment.viewport = .iPadPro
+        profileTwoEnvironment.viewport = .pixel9Pro
+        profileTwoEnvironment.userAgent = .pixelChrome
         profileTwoEnvironment.language = .arabic
         profileTwoEnvironment.region = .qatar
         firstStore.setDisplayName("Google Test 02", for: 2)
@@ -90,7 +91,17 @@ final class BrowserProfileStoreTests: XCTestCase {
         XCTAssertNotEqual(randomizedEnvironment.language, .automatic)
         XCTAssertNotEqual(randomizedEnvironment.region, .automatic)
         XCTAssertNotEqual(randomizedEnvironment.timezone, .automatic)
-        XCTAssertGreaterThanOrEqual(BrowserViewportPreset.allCases.count, 19)
+        XCTAssertEqual(BrowserViewportPreset.selectablePhoneCases.count, 16)
+        XCTAssertFalse(BrowserViewportPreset.selectablePhoneCases.contains(.iPodTouch))
+        XCTAssertFalse(BrowserViewportPreset.selectablePhoneCases.contains(.iPadPro))
+        XCTAssertFalse(BrowserViewportPreset.selectablePhoneCases.contains(.desktop))
+        XCTAssertTrue(BrowserViewportPreset.selectablePhoneCases.contains(.pixel9ProXL))
+        XCTAssertTrue(BrowserViewportPreset.selectablePhoneCases.contains(.galaxyS25))
+        XCTAssertTrue(BrowserViewportPreset.selectablePhoneCases.contains(.onePlus13))
+        XCTAssertTrue(BrowserViewportPreset.selectablePhoneCases.contains(.xiaomi15Ultra))
+        XCTAssertEqual(BrowserUserAgentPreset.selectablePhoneCases.count, 8)
+        XCTAssertFalse(BrowserUserAgentPreset.selectablePhoneCases.contains(.iPadSafari))
+        XCTAssertFalse(BrowserUserAgentPreset.selectablePhoneCases.contains(.desktopSafari))
         XCTAssertGreaterThanOrEqual(BrowserLanguagePreset.allCases.count, 17)
         XCTAssertGreaterThanOrEqual(BrowserRegionPreset.allCases.count, 24)
         XCTAssertGreaterThanOrEqual(BrowserTimezonePreset.allCases.count, 27)
@@ -120,13 +131,72 @@ final class BrowserProfileStoreTests: XCTestCase {
             "Randomizing Profile 1 must not affect Profile 2's login cookie"
         )
 
+        var legacyTabletEnvironment = BrowserProfileEnvironment.default
+        legacyTabletEnvironment.viewport = .iPadPro
+        legacyTabletEnvironment.userAgent = .iPadSafari
+        legacyTabletEnvironment.language = .english
+        legacyTabletEnvironment.region = .unitedStates
+        defaults.set(
+            try JSONEncoder().encode(legacyTabletEnvironment),
+            forKey: "NextMultiBrowser.profile.3.environment"
+        )
+        let migratedEnvironment = firstStore.environment(for: 3)
+        XCTAssertTrue(migratedEnvironment.isPhoneOnly)
+        XCTAssertEqual(migratedEnvironment.viewport, .iPhoneProMax)
+        XCTAssertEqual(migratedEnvironment.userAgent, .iPhoneSafari)
+
+        let environmentsBeforeGlobalRandomization = (1...BrowserProfileStore.profileCount).map {
+            firstStore.environment(for: $0)
+        }
+        let globallyRandomized = firstStore.randomizeAllEnvironments()
+        XCTAssertEqual(globallyRandomized.count, BrowserProfileStore.profileCount)
+        XCTAssertEqual(
+            Set(globallyRandomized).count,
+            BrowserProfileStore.profileCount,
+            "Global randomization must create 20 unique environment combinations"
+        )
+        XCTAssertTrue(
+            globallyRandomized.allSatisfy { $0.isPhoneOnly && $0.usesCoherentRandomPreset },
+            "Every global environment must be a coherent phone-only preset"
+        )
+        XCTAssertTrue(
+            Set(globallyRandomized).isDisjoint(with: Set(environmentsBeforeGlobalRandomization)),
+            "Global randomization must replace every previous environment"
+        )
+        XCTAssertEqual(
+            (1...BrowserProfileStore.profileCount).map { firstStore.environment(for: $0) },
+            globallyRandomized,
+            "All 20 randomized environments must be saved to their matching profile"
+        )
+        XCTAssertEqual(
+            (1...BrowserProfileStore.profileCount).map { firstStore.persistentIdentifier(for: $0) },
+            identifiers,
+            "Global randomization must not replace any persistent website-data store"
+        )
+
+        let profileOneCookieAfterGlobalRandomizing = await cookieValue(
+            named: "NMB_PROFILE",
+            in: sessions[0].dataStore.httpCookieStore
+        )
+        let profileTwoCookieAfterGlobalRandomizing = await cookieValue(
+            named: "NMB_PROFILE",
+            in: sessions[1].dataStore.httpCookieStore
+        )
+        XCTAssertEqual(profileOneCookieAfterGlobalRandomizing, "profile-one")
+        XCTAssertEqual(profileTwoCookieAfterGlobalRandomizing, "profile-two")
+
         let relaunchedStore = BrowserProfileStore(
             defaults: defaults,
             profilesRootDirectory: root,
             usesNamedDataStoreWhenAvailable: true
         )
         XCTAssertEqual(relaunchedStore.displayName(for: 1), "Google Test 01")
-        XCTAssertEqual(relaunchedStore.environment(for: 1), randomizedEnvironment)
+        XCTAssertEqual(relaunchedStore.environment(for: 1), globallyRandomized[0])
+        XCTAssertEqual(
+            (1...BrowserProfileStore.profileCount).map { relaunchedStore.environment(for: $0) },
+            globallyRandomized,
+            "A relaunch must restore all 20 globally randomized environments"
+        )
         XCTAssertEqual(
             relaunchedStore.persistentIdentifier(for: 1),
             identifiers[0],
@@ -166,7 +236,7 @@ final class BrowserProfileStoreTests: XCTestCase {
         XCTAssertEqual(firstStore.displayName(for: 1), "Browser 1")
         XCTAssertEqual(firstStore.environment(for: 1), .default)
         XCTAssertEqual(firstStore.displayName(for: 2), "Google Test 02")
-        XCTAssertEqual(firstStore.environment(for: 2), profileTwoEnvironment)
+        XCTAssertEqual(firstStore.environment(for: 2), globallyRandomized[1])
 
         sessions.removeAll()
     }
