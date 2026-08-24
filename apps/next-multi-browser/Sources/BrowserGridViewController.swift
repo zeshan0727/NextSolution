@@ -1,13 +1,6 @@
 import UIKit
 import WebKit
 
-private final class SharedBrowserSession {
-    static let shared = SharedBrowserSession()
-    let dataStore = WKWebsiteDataStore.default()
-    let processPool = WKProcessPool()
-    private init() {}
-}
-
 protocol BrowserPaneViewDelegate: AnyObject {
     func browserPaneRequestedFocus(_ pane: BrowserPaneView)
 }
@@ -15,23 +8,30 @@ protocol BrowserPaneViewDelegate: AnyObject {
 final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, WKUIDelegate {
     weak var delegate: BrowserPaneViewDelegate?
     let webView: WKWebView
+    let profileIndex: Int
 
     private let addressField = UITextField()
     private let progress = UIProgressView(progressViewStyle: .bar)
     private let autoRefreshButton = UIButton(type: .system)
-    private let index: Int
+    private let profileStore: BrowserProfileStore
+    private let profileSession: BrowserProfileSession
     private var progressObservation: NSKeyValueObservation?
     private var urlObservation: NSKeyValueObservation?
+    private var profileObservation: NSObjectProtocol?
     private var autoRefreshTimer: Timer?
     private(set) var autoRefreshInterval: TimeInterval?
     private var paneIsActive = true
+    private var sessionIsReady = false
+    private var pendingLoad: String?
 
-    init(index: Int) {
-        self.index = index
+    init(index: Int, profileStore: BrowserProfileStore) {
+        self.profileIndex = index
+        self.profileStore = profileStore
+        self.profileSession = profileStore.session(for: index)
 
         let config = WKWebViewConfiguration()
-        config.websiteDataStore = SharedBrowserSession.shared.dataStore
-        config.processPool = SharedBrowserSession.shared.processPool
+        config.websiteDataStore = profileSession.dataStore
+        config.processPool = profileSession.processPool
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
@@ -41,7 +41,20 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 
         setupUI()
         observeWebView()
-        showReadyPage()
+        observeProfile()
+        showPreparingPage()
+
+        profileSession.whenReady { [weak self] in
+            guard let self else { return }
+            self.sessionIsReady = true
+            self.addressField.isEnabled = true
+            if let pendingLoad = self.pendingLoad {
+                self.pendingLoad = nil
+                self.load(pendingLoad)
+            } else {
+                self.showReadyPage()
+            }
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -52,6 +65,9 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         autoRefreshTimer?.invalidate()
         progressObservation?.invalidate()
         urlObservation?.invalidate()
+        if let profileObservation {
+            NotificationCenter.default.removeObserver(profileObservation)
+        }
     }
 
     private func makeButton(_ symbol: String, action: Selector) -> UIButton {
@@ -76,9 +92,10 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         addressField.keyboardType = .URL
         addressField.returnKeyType = .go
         addressField.clearButtonMode = .whileEditing
-        addressField.placeholder = "Browser \(index) – URL or search"
+        addressField.placeholder = "\(profileStore.displayName(for: profileIndex)) – URL or search"
         addressField.delegate = self
         addressField.font = .systemFont(ofSize: 11)
+        addressField.isEnabled = false
         addressField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let back = makeButton("chevron.left", action: #selector(goBack))
@@ -143,19 +160,57 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         }
     }
 
-    private func showReadyPage() {
+    private func observeProfile() {
+        profileObservation = NotificationCenter.default.addObserver(
+            forName: .nextMultiBrowserProfileDidChange,
+            object: profileStore,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let changedIndex = notification.userInfo?["profileIndex"] as? Int,
+                  changedIndex == self.profileIndex else { return }
+            self.addressField.placeholder = "\(self.profileStore.displayName(for: self.profileIndex)) – URL or search"
+        }
+    }
+
+    private func showPreparingPage() {
         let html = """
         <html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>
         <body style='font-family:-apple-system;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;height:90vh;margin:0'>
-        <div style='text-align:center'><div style='font-size:24px;font-weight:700'>Browser \(index)</div><div style='margin-top:8px;color:#aaa'>Ready</div></div>
+        <div style='text-align:center'><div style='font-size:22px;font-weight:700'>Browser \(profileIndex)</div><div style='margin-top:8px;color:#aaa'>Restoring separate profile…</div></div>
         </body></html>
         """
         webView.loadHTMLString(html, baseURL: nil)
     }
 
+    private func showReadyPage() {
+        let name = escapedHTML(profileStore.displayName(for: profileIndex))
+        let html = """
+        <html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>
+        <body style='font-family:-apple-system;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;height:90vh;margin:0'>
+        <div style='text-align:center'><div style='font-size:24px;font-weight:700'>\(name)</div><div style='margin-top:8px;color:#aaa'>Separate profile ready</div></div>
+        </body></html>
+        """
+        webView.loadHTMLString(html, baseURL: nil)
+    }
+
+    private func escapedHTML(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&#39;")
+    }
+
     func load(_ input: String) {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+
+        guard sessionIsReady else {
+            pendingLoad = trimmed
+            return
+        }
 
         let candidate: String
         if trimmed.contains(" ") || (!trimmed.contains(".") && !trimmed.hasPrefix("http://") && !trimmed.hasPrefix("https://")) {
@@ -169,6 +224,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         }
 
         guard let url = URL(string: candidate) else { return }
+        profileStore.setLastURL(url, for: profileIndex)
         webView.load(URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
     }
 
@@ -268,15 +324,28 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
     private let rowsStack = UIStackView()
     private let countButton = UIButton(type: .system)
     private let globalRefreshButton = UIButton(type: .system)
+    private let profileStore: BrowserProfileStore
 
     private var panes: [BrowserPaneView] = []
-    private var browserCount = 2
+    private var browserCount: Int = {
+        let saved = UserDefaults.standard.integer(forKey: "NextMultiBrowser.browserCount")
+        return saved > 0 ? min(saved, BrowserProfileStore.profileCount) : 2
+    }()
     private var focusedPane: BrowserPaneView?
     private var focusedConstraints: [NSLayoutConstraint] = []
     private var globalRefreshInterval: TimeInterval? = {
         let value = UserDefaults.standard.double(forKey: "NextMultiBrowser.globalRefreshSeconds")
         return value > 0 ? value : nil
     }()
+
+    init(profileStore: BrowserProfileStore = .shared) {
+        self.profileStore = profileStore
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -403,9 +472,10 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         }
 
         browserCount = max(1, min(20, requestedCount))
+        UserDefaults.standard.set(browserCount, forKey: "NextMultiBrowser.browserCount")
 
         while panes.count < browserCount {
-            let pane = BrowserPaneView(index: panes.count + 1)
+            let pane = BrowserPaneView(index: panes.count + 1, profileStore: profileStore)
             pane.delegate = self
             pane.applyAutoRefresh(globalRefreshInterval)
             panes.append(pane)
@@ -418,6 +488,26 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         rebuildRows()
         countButton.setTitle("\(browserCount) ▾", for: .normal)
         countButton.menu = makeCountMenu()
+    }
+
+    func openProfile(_ index: Int, openGoogleSignIn: Bool) {
+        loadViewIfNeeded()
+        let safeIndex = max(1, min(BrowserProfileStore.profileCount, index))
+        if safeIndex > browserCount {
+            applyBrowserCount(safeIndex)
+        }
+
+        guard panes.indices.contains(safeIndex - 1) else { return }
+        let pane = panes[safeIndex - 1]
+        if focusedPane !== pane {
+            browserPaneRequestedFocus(pane)
+        }
+
+        if openGoogleSignIn {
+            pane.load("https://accounts.google.com/")
+        } else if let lastURL = profileStore.lastURL(for: safeIndex) {
+            pane.load(lastURL.absoluteString)
+        }
     }
 
     private func removeExistingRows() {

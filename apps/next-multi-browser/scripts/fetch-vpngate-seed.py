@@ -18,7 +18,7 @@ def fetch_text(url: str):
     request = urllib.request.Request(
         url,
         headers={
-            "User-Agent": "NextMultiBrowser-CI/1.0.4",
+            "User-Agent": "NextMultiBrowser-CI/1.0.5",
             "Accept": "text/plain,text/csv,*/*",
         },
     )

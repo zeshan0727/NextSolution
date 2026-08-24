@@ -17,8 +17,8 @@ targets:
       path: Info.plist
       properties:
         CFBundleDisplayName: Next Multi Browser
-        CFBundleShortVersionString: '1.0.4'
-        CFBundleVersion: '5'
+        CFBundleShortVersionString: '1.0.5'
+        CFBundleVersion: '6'
         UILaunchScreen: {}
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
@@ -38,8 +38,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser
         PRODUCT_NAME: Next Multi Browser
-        MARKETING_VERSION: 1.0.4
-        CURRENT_PROJECT_VERSION: 5
+        MARKETING_VERSION: 1.0.5
+        CURRENT_PROJECT_VERSION: 6
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
         CODE_SIGN_STYLE: Automatic
@@ -62,8 +62,8 @@ targets:
       path: VPNExtension/Info.plist
       properties:
         CFBundleDisplayName: Next Multi Browser VPN
-        CFBundleShortVersionString: '1.0.4'
-        CFBundleVersion: '5'
+        CFBundleShortVersionString: '1.0.5'
+        CFBundleVersion: '6'
         NSExtension:
           NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
@@ -71,8 +71,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser.vpn
         PRODUCT_NAME: NextMultiBrowserVPN
-        MARKETING_VERSION: 1.0.4
-        CURRENT_PROJECT_VERSION: 5
+        MARKETING_VERSION: 1.0.5
+        CURRENT_PROJECT_VERSION: 6
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
         APPLICATION_EXTENSION_API_ONLY: YES
