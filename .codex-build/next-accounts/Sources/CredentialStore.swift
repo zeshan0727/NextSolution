@@ -45,6 +45,14 @@ final class CredentialStore: ObservableObject {
         HapticManager.shared.selectionChanged()
     }
 
+    func deleteCredential(id: UUID) {
+        guard let index = credentials.firstIndex(where: { $0.id == id }) else { return }
+        credentials.remove(at: index)
+        saveCredentials()
+        HapticManager.shared.deleted()
+        showStatus("Account deleted")
+    }
+
     func updateCredential(id: UUID, email: String, password: String) {
         guard let index = credentials.firstIndex(where: { $0.id == id }) else { return }
         credentials[index].email = email.trimmingCharacters(in: .whitespacesAndNewlines)

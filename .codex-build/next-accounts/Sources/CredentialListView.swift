@@ -16,6 +16,7 @@ private enum AccountSheet: Identifiable {
 struct CredentialListView: View {
     @EnvironmentObject private var store: CredentialStore
     @State private var presentedSheet: AccountSheet?
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -33,7 +34,7 @@ struct CredentialListView: View {
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
 
-                    ForEach(Array(store.credentials.enumerated()), id: \.element.id) { index, credential in
+                    ForEach(filteredCredentials, id: \.element.id) { index, credential in
                         CredentialCard(
                             number: index + 1,
                             credential: credential,
@@ -53,12 +54,31 @@ struct CredentialListView: View {
                         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                withAnimation(.easeInOut(duration: 0.20)) {
+                                    store.deleteCredential(id: credential.id)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash.fill")
+                            }
+                            .accessibilityLabel("Delete \(credential.email)")
+                        }
                     }
 
-                    GenerateMoreView(action: store.generateFive)
-                        .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 30, trailing: 16))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+                    if filteredCredentials.isEmpty && isSearching {
+                        SearchEmptyView(query: searchText)
+                            .listRowInsets(EdgeInsets(top: 24, leading: 16, bottom: 24, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    }
+
+                    if !isSearching {
+                        GenerateMoreView(action: store.generateFive)
+                            .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 30, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
@@ -66,6 +86,13 @@ struct CredentialListView: View {
             .navigationTitle("Next Accounts")
             .navigationBarTitleDisplayMode(.inline)
             .tint(AppTheme.accent)
+            .searchable(
+                text: $searchText,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: Text("Search emails")
+            )
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -92,6 +119,48 @@ struct CredentialListView: View {
                 }
             }
             .animation(.spring(response: 0.28, dampingFraction: 0.86), value: store.statusMessage)
+        }
+    }
+
+    private var filteredCredentials: [(offset: Int, element: Credential)] {
+        let indexedCredentials = Array(store.credentials.enumerated())
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return indexedCredentials }
+        return indexedCredentials.filter { entry in
+            entry.element.email.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
+private struct SearchEmptyView: View {
+    let query: String
+
+    var body: some View {
+        VStack(spacing: 11) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(AppTheme.accent)
+
+            Text("No email found")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+
+            Text("No saved email matches “\(query)”.")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.58))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+        .padding(.horizontal, 16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 21, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 21, style: .continuous)
+                .stroke(AppTheme.cardStroke, lineWidth: 1)
         }
     }
 }

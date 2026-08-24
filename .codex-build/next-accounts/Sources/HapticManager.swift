@@ -24,6 +24,11 @@ final class HapticManager {
         notification.prepare()
     }
 
+    func deleted() {
+        notification.notificationOccurred(.warning)
+        notification.prepare()
+    }
+
     func selectionChanged() {
         selection.selectionChanged()
         selection.prepare()
