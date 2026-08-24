@@ -2,7 +2,7 @@
 
 iPhone-first test build for 1–20 simultaneously loaded WKWebView browser panes. Includes grid/focus mode, per-pane navigation, load-all URL, reload-all, 20 isolated persistent browser profiles, and adaptive iPhone/iPad layouts.
 
-Current test build: 1.1.3.
+Current test build: 1.1.4.
 
 - The `Profiles` tab lists all 20 browser containers with last-used time, storage size, session status, and environment summary.
 - Every browser has a separate persistent website data store and process pool so Google cookies and other login state are never shared between panes.
@@ -12,7 +12,8 @@ Current test build: 1.1.3.
 - Each profile now has independent icon/color, device and viewport, user-agent preset, language/locale, region, timezone, and saved website-permission choices.
 - Environment Manager includes one profile-scoped randomize button that selects a matching device, user agent, language, region, and timezone without touching cookies or website data.
 - The Profiles tab includes one global action that assigns 20 unique phone-based environment combinations while keeping every profile's persistent storage identifier and login data unchanged.
-- Selectable device presets are phone-only: multiple iPhones, Google Pixel 9 Pro/XL, Samsung Galaxy S25/Ultra, OnePlus 13, and Xiaomi 15 Ultra. Legacy iPod, iPad, laptop, and desktop values remain decodable only for safe migration.
+- Manual device selection includes multiple iPhones, Google Pixel 9 Pro/XL, Samsung Galaxy S25/Ultra, OnePlus 13, Xiaomi 15 Ultra, macOS Safari desktop, and Windows Chrome desktop. Choosing a device pairs its compatible user agent and returns language, region, and timezone to Automatic.
+- Individual and global environment randomization remain phone-only, so automated 20-browser assignments never select a desktop preset.
 - Environment choices include 17 languages, 24 regions, and 27 timezone choices.
 - Profile actions include settings-only duplication into a fresh independent container, clear, delete/reset, internal backup/restore, and a developer diagnostics panel.
 - Storage management reports cookies, cache, local storage, IndexedDB, other website data, total size, and the persistent storage location.

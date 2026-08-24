@@ -140,8 +140,15 @@ enum BrowserUserAgentPreset: String, CaseIterable, Codable {
         .xiaomiChrome
     ]
 
+    static let manuallySelectableCases: [BrowserUserAgentPreset] =
+        selectablePhoneCases + [.desktopSafari, .desktopChrome]
+
     var isSelectablePhonePreset: Bool {
         Self.selectablePhoneCases.contains(self)
+    }
+
+    var isManuallySelectablePreset: Bool {
+        Self.manuallySelectableCases.contains(self)
     }
 }
 
@@ -523,12 +530,75 @@ enum BrowserViewportPreset: String, CaseIterable, Codable {
         .xiaomi15Ultra
     ]
 
+    static let manuallySelectableCases: [BrowserViewportPreset] =
+        selectablePhoneCases + [.desktop]
+
     var isSelectablePhonePreset: Bool {
         Self.selectablePhoneCases.contains(self)
     }
 
+    var isManuallySelectablePreset: Bool {
+        Self.manuallySelectableCases.contains(self)
+    }
+
     static var randomizableCases: [BrowserViewportPreset] {
         selectablePhoneCases.filter { $0 != .automatic }
+    }
+}
+
+struct BrowserManualDevicePreset: Equatable {
+    let title: String
+    let subtitle: String
+    let viewport: BrowserViewportPreset
+    let userAgent: BrowserUserAgentPreset
+
+    static let all: [BrowserManualDevicePreset] = {
+        let automatic = BrowserManualDevicePreset(
+            title: "Automatic",
+            subtitle: "Use the current device and WebKit settings",
+            viewport: .automatic,
+            userAgent: .automatic
+        )
+        let phones = BrowserViewportPreset.selectablePhoneCases
+            .filter { $0 != .automatic }
+            .map { viewport in
+                let userAgent = viewport.compatibleUserAgents.first ?? .automatic
+                return BrowserManualDevicePreset(
+                    title: viewport.title,
+                    subtitle: "\(viewport.viewportDescription) • \(userAgent.title)",
+                    viewport: viewport,
+                    userAgent: userAgent
+                )
+            }
+        let desktops = [
+            BrowserManualDevicePreset(
+                title: "Desktop — macOS Safari",
+                subtitle: BrowserViewportPreset.desktop.viewportDescription,
+                viewport: .desktop,
+                userAgent: .desktopSafari
+            ),
+            BrowserManualDevicePreset(
+                title: "Desktop — Windows Chrome",
+                subtitle: BrowserViewportPreset.desktop.viewportDescription,
+                viewport: .desktop,
+                userAgent: .desktopChrome
+            )
+        ]
+        return [automatic] + phones + desktops
+    }()
+
+    var environmentWithAutomaticLocation: BrowserProfileEnvironment {
+        BrowserProfileEnvironment(
+            userAgent: userAgent,
+            language: .automatic,
+            region: .automatic,
+            timezone: .automatic,
+            viewport: viewport
+        )
+    }
+
+    func matches(_ environment: BrowserProfileEnvironment) -> Bool {
+        viewport == environment.viewport && userAgent == environment.userAgent
     }
 }
 
@@ -639,6 +709,29 @@ struct BrowserProfileEnvironment: Codable, Equatable, Hashable {
             value.userAgent = value.viewport == .automatic
                 ? .automatic
                 : (value.viewport.compatibleUserAgents.first ?? .iPhoneSafari)
+        }
+        return value
+    }
+
+    var manuallySelectableNormalized: BrowserProfileEnvironment {
+        var value = self
+        if !value.viewport.isManuallySelectablePreset {
+            switch value.viewport {
+            case .iPodTouch:
+                value.viewport = .iPhoneSE
+            case .iPadMini, .iPadAir, .iPadPro11, .iPadPro:
+                value.viewport = .iPhoneProMax
+            case .laptop:
+                value.viewport = .desktop
+            default:
+                value.viewport = .automatic
+            }
+        }
+
+        if !value.userAgent.isManuallySelectablePreset {
+            value.userAgent = value.viewport == .automatic
+                ? .automatic
+                : (value.viewport.compatibleUserAgents.first ?? .automatic)
         }
         return value
     }

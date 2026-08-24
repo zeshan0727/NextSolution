@@ -53,6 +53,52 @@ final class BrowserProfileStoreTests: XCTestCase {
         XCTAssertTrue(scripts.first?.source.contains("webkitbeginfullscreen") ?? false)
     }
 
+    func testManualDeviceSelectionIncludesPersistentDesktopModesWithAutomaticLocation() throws {
+        let desktopPresets = BrowserManualDevicePreset.all.filter { $0.viewport == .desktop }
+        XCTAssertEqual(desktopPresets.count, 2)
+        XCTAssertEqual(
+            Set(desktopPresets.map(\.userAgent)),
+            Set([BrowserUserAgentPreset.desktopSafari, .desktopChrome])
+        )
+
+        for preset in desktopPresets {
+            let environment = preset.environmentWithAutomaticLocation
+            XCTAssertEqual(environment.viewport, .desktop)
+            XCTAssertEqual(environment.language, .automatic)
+            XCTAssertEqual(environment.region, .automatic)
+            XCTAssertEqual(environment.timezone, .automatic)
+            XCTAssertTrue(environment.userAgent.prefersDesktopContent)
+        }
+
+        let suiteName = "com.nextsolution.multibrowser.desktop-tests.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            XCTFail("Could not create isolated desktop test defaults")
+            return
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("NextMultiBrowserDesktopTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let selected = try XCTUnwrap(
+            desktopPresets.first { $0.userAgent == .desktopChrome }
+        ).environmentWithAutomaticLocation
+        BrowserProfileStore(
+            defaults: defaults,
+            profilesRootDirectory: root,
+            usesNamedDataStoreWhenAvailable: true
+        ).setEnvironment(selected, for: 20)
+
+        let relaunchedStore = BrowserProfileStore(
+            defaults: defaults,
+            profilesRootDirectory: root,
+            usesNamedDataStoreWhenAvailable: true
+        )
+        XCTAssertEqual(relaunchedStore.environment(for: 20), selected)
+    }
+
     func testTwentyProfilesRemainIsolatedPersistentAndDeleteSafely() async throws {
         let suiteName = "com.nextsolution.multibrowser.tests.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suiteName) else {
@@ -144,6 +190,7 @@ final class BrowserProfileStoreTests: XCTestCase {
         XCTAssertFalse(BrowserViewportPreset.selectablePhoneCases.contains(.iPodTouch))
         XCTAssertFalse(BrowserViewportPreset.selectablePhoneCases.contains(.iPadPro))
         XCTAssertFalse(BrowserViewportPreset.selectablePhoneCases.contains(.desktop))
+        XCTAssertTrue(BrowserViewportPreset.manuallySelectableCases.contains(.desktop))
         XCTAssertTrue(BrowserViewportPreset.selectablePhoneCases.contains(.pixel9ProXL))
         XCTAssertTrue(BrowserViewportPreset.selectablePhoneCases.contains(.galaxyS25))
         XCTAssertTrue(BrowserViewportPreset.selectablePhoneCases.contains(.onePlus13))
@@ -151,6 +198,8 @@ final class BrowserProfileStoreTests: XCTestCase {
         XCTAssertEqual(BrowserUserAgentPreset.selectablePhoneCases.count, 8)
         XCTAssertFalse(BrowserUserAgentPreset.selectablePhoneCases.contains(.iPadSafari))
         XCTAssertFalse(BrowserUserAgentPreset.selectablePhoneCases.contains(.desktopSafari))
+        XCTAssertTrue(BrowserUserAgentPreset.manuallySelectableCases.contains(.desktopSafari))
+        XCTAssertTrue(BrowserUserAgentPreset.manuallySelectableCases.contains(.desktopChrome))
         XCTAssertGreaterThanOrEqual(BrowserLanguagePreset.allCases.count, 17)
         XCTAssertGreaterThanOrEqual(BrowserRegionPreset.allCases.count, 24)
         XCTAssertGreaterThanOrEqual(BrowserTimezonePreset.allCases.count, 27)

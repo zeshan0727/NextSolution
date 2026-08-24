@@ -1,6 +1,9 @@
 import UIKit
 
 final class BrowserProfileEnvironmentViewController: UITableViewController {
+    private static let manualDesktopFeatureIdentifier =
+        "NMB_MANUAL_DESKTOP_AUTOMATIC_ENVIRONMENT_114"
+
     private enum Section: Int, CaseIterable {
         case randomize
         case device
@@ -41,7 +44,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch Section(rawValue: section)! {
         case .randomize: return nil
-        case .device: return "Phone & Viewport"
+        case .device: return "Device & Viewport"
         case .userAgent: return "User Agent"
         case .language: return "Language & Locale"
         case .region: return "Region"
@@ -55,7 +58,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         case .randomize:
             return "Creates one matching device, user agent, language, region, and timezone combination for this profile only."
         case .device:
-            return "Phone presets set WebKit mobile content mode and a CSS viewport hint for this profile. Tablet and desktop presets are no longer selectable."
+            return "Choose a phone or desktop manually. The matching user agent is selected automatically, while language, region, and timezone return to Automatic. Randomization remains phone-only."
         case .timezone:
             return "Language, locale, region, and timezone are applied to web content in this profile. Automatic follows the device."
         case .reset:
@@ -85,9 +88,11 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
             cell.accessibilityHint = "Randomizes this profile's testing environment without clearing its login or website data."
             return cell
         case .device:
-            cell.textLabel?.text = environment.viewport.title
-            cell.detailTextLabel?.text = environment.viewport.viewportDescription
+            let preset = BrowserManualDevicePreset.all.first { $0.matches(environment) }
+            cell.textLabel?.text = preset?.title ?? environment.viewport.title
+            cell.detailTextLabel?.text = preset?.subtitle ?? environment.viewport.viewportDescription
             cell.imageView?.image = UIImage(systemName: deviceSymbol(environment.viewport))
+            cell.accessibilityIdentifier = Self.manualDesktopFeatureIdentifier
         case .userAgent:
             cell.textLabel?.text = environment.userAgent.title
             cell.detailTextLabel?.text = environment.userAgent == .automatic ? "System WebKit" : "Preset"
@@ -127,7 +132,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         case .randomize:
             confirmRandomize()
         case .device:
-            showViewportPicker()
+            showDevicePicker()
         case .userAgent:
             showUserAgentPicker()
         case .language:
@@ -141,22 +146,21 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         }
     }
 
-    private func showViewportPicker() {
-        let current = profileStore.environment(for: profileIndex).viewport
-        let presets = BrowserViewportPreset.selectablePhoneCases
+    private func showDevicePicker() {
+        let current = profileStore.environment(for: profileIndex)
+        let presets = BrowserManualDevicePreset.all
         showPicker(
-            title: "Phone & Viewport",
+            title: "Manual Device",
             options: presets.map {
                 BrowserProfilePickerOption(
                     title: $0.title,
-                    subtitle: $0.viewportDescription,
-                    isSelected: $0 == current
+                    subtitle: $0.subtitle,
+                    isSelected: $0.matches(current)
                 )
             }
         ) { [weak self] selectedIndex in
             guard let self else { return }
-            var environment = self.profileStore.environment(for: self.profileIndex)
-            environment.viewport = presets[selectedIndex]
+            let environment = presets[selectedIndex].environmentWithAutomaticLocation
             self.profileStore.setEnvironment(environment, for: self.profileIndex)
             self.tableView.reloadData()
         }
@@ -164,9 +168,9 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
 
     private func showUserAgentPicker() {
         let current = profileStore.environment(for: profileIndex).userAgent
-        let presets = BrowserUserAgentPreset.selectablePhoneCases
+        let presets = BrowserUserAgentPreset.manuallySelectableCases
         showPicker(
-            title: "Phone User Agent",
+            title: "User Agent",
             options: presets.map {
                 BrowserProfilePickerOption(
                     title: $0.title,

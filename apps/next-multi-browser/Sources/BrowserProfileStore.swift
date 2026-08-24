@@ -198,7 +198,7 @@ final class BrowserProfileStore {
               let value = try? JSONDecoder().decode(BrowserProfileEnvironment.self, from: data) else {
             return .default
         }
-        let normalized = value.phoneOnlyNormalized
+        let normalized = value.manuallySelectableNormalized
         if normalized != value {
             persistEnvironment(normalized, for: index)
         }
@@ -207,7 +207,7 @@ final class BrowserProfileStore {
 
     func setEnvironment(_ environment: BrowserProfileEnvironment, for index: Int) {
         validate(index)
-        persistEnvironment(environment.phoneOnlyNormalized, for: index)
+        persistEnvironment(environment.manuallySelectableNormalized, for: index)
         postEnvironmentChanged(index)
     }
 
