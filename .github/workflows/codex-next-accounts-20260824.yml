@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -28,3 +28,62 @@ jobs:
           path: .codex-build/next-accounts/NextAccounts_1.0.1.tipa
           if-no-files-found: error
           retention-days: 1
+
+      - name: Publish safe package to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          package_name="NextAccounts-1.0.1-PrivateSlots-PlatformStatus.tipa"
+          built_package=".codex-build/next-accounts/NextAccounts_1.0.1.tipa"
+          staged_package="${RUNNER_TEMP}/${package_name}"
+          destination="transfer/files/NextAccounts/1.0.1/${package_name}"
+
+          cp "${built_package}" "${staged_package}"
+          git fetch origin main
+          git checkout -B main origin/main
+          mkdir -p "$(dirname "${destination}")"
+          cp "${staged_package}" "${destination}"
+
+          python3 - "${destination}" <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import pathlib
+          import sys
+
+          package = pathlib.Path(sys.argv[1])
+          catalog_path = pathlib.Path("transfer/index.json")
+          catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+          package_bytes = package.read_bytes()
+
+          entry = {
+              "id": "nextaccounts-1.0.1-private-slots-platform-status",
+              "name": "Next Accounts 1.0.1 — Private Slots & Platform Status",
+              "fileName": package.name,
+              "type": "tipa",
+              "platform": "TrollStore / iOS 16+",
+              "version": "1.0.1",
+              "url": f"https://nextsolution.cc/transfer/files/NextAccounts/1.0.1/{package.name}",
+              "sha256": hashlib.sha256(package_bytes).hexdigest(),
+              "sizeBytes": len(package_bytes),
+              "notes": (
+                  "Credential-free public build. Creates 22 blank private slots and unique passwords "
+                  "locally on-device; upgrades keep only the first legacy account and replace the other "
+                  "21 with blank slots. Adds compact per-account Apple, Google, YouTube, Instagram, "
+                  "Facebook, Twitter and TikTok status chips, account editing, bulk email import, "
+                  "one-tap copy and Keychain persistence."
+              ),
+          }
+
+          catalog["files"] = [item for item in catalog.get("files", []) if item.get("id") != entry["id"]]
+          catalog["files"].insert(0, entry)
+          catalog["updatedAt"] = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
+          git config user.name "Next Solution Build Bot"
+          git config user.email "180765564+zeshan0727@users.noreply.github.com"
+          git add "${destination}" transfer/index.json
+          git commit -m "Publish Next Accounts 1.0.1 to NS Transfer"
+          git push origin main
