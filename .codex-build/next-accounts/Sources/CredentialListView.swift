@@ -323,7 +323,9 @@ private struct PlatformChip: View {
             .onEnded { result in
                 switch result {
                 case .first(_):
-                    openSignup()
+                    Task { @MainActor in
+                        openSignup()
+                    }
                 case .second(_):
                     action()
                 }
