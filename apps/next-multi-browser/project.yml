@@ -17,8 +17,8 @@ targets:
       path: Info.plist
       properties:
         CFBundleDisplayName: Next Multi Browser
-        CFBundleShortVersionString: '1.0.6'
-        CFBundleVersion: '7'
+        CFBundleShortVersionString: '1.1.0'
+        CFBundleVersion: '8'
         UILaunchScreen: {}
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
@@ -38,8 +38,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser
         PRODUCT_NAME: Next Multi Browser
-        MARKETING_VERSION: 1.0.6
-        CURRENT_PROJECT_VERSION: 7
+        MARKETING_VERSION: 1.1.0
+        CURRENT_PROJECT_VERSION: 8
         SWIFT_OBJC_BRIDGING_HEADER: Sources/NextMultiBrowser-Bridging-Header.h
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
@@ -63,8 +63,8 @@ targets:
       path: VPNExtension/Info.plist
       properties:
         CFBundleDisplayName: Next Multi Browser VPN
-        CFBundleShortVersionString: '1.0.6'
-        CFBundleVersion: '7'
+        CFBundleShortVersionString: '1.1.0'
+        CFBundleVersion: '8'
         NSExtension:
           NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
@@ -72,8 +72,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser.vpn
         PRODUCT_NAME: NextMultiBrowserVPN
-        MARKETING_VERSION: 1.0.6
-        CURRENT_PROJECT_VERSION: 7
+        MARKETING_VERSION: 1.1.0
+        CURRENT_PROJECT_VERSION: 8
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -83,3 +83,27 @@ targets:
     dependencies:
       - package: TunnelKit
         product: TunnelKitOpenVPNAppExtension
+
+  NextMultiBrowserTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: '17.0'
+    sources:
+      - Tests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser.tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 5.0
+        CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - target: NextMultiBrowser
+
+schemes:
+  NextMultiBrowser:
+    build:
+      targets:
+        NextMultiBrowser: all
+    test:
+      targets:
+        - NextMultiBrowserTests

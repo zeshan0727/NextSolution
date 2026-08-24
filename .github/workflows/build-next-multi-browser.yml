@@ -28,6 +28,19 @@ jobs:
       - name: Generate Xcode project
         working-directory: apps/next-multi-browser
         run: xcodegen generate
+      - name: Run 20-profile isolation and persistence tests
+        working-directory: apps/next-multi-browser
+        run: |
+          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(device["udid"] for runtime, devices in data["devices"].items() if "iOS" in runtime for device in devices if device.get("isAvailable") and device["name"].startswith("iPhone")))')
+          test -n "$SIMULATOR_ID"
+          xcodebuild \
+            -project NextMultiBrowser.xcodeproj \
+            -scheme NextMultiBrowser \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -only-testing:NextMultiBrowserTests \
+            CODE_SIGNING_ALLOWED=NO \
+            test
       - name: Build unsigned device app
         working-directory: apps/next-multi-browser
         run: |
@@ -61,10 +74,10 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa Payload
+          zip -qry ../NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa Payload
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.0.6-iOS16-Persistent-Profiles
-          path: apps/next-multi-browser/NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa
+          name: NextMultiBrowser-1.1.0-Profile-Environment-Manager
+          path: apps/next-multi-browser/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa
           if-no-files-found: error

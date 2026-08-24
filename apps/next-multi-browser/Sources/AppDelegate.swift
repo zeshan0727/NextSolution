@@ -36,7 +36,7 @@ final class MultiBrowserTabBarController: UITabBarController {
         let profilesNavigationController = UINavigationController(rootViewController: profilesController)
         profilesNavigationController.navigationBar.prefersLargeTitles = false
         profilesNavigationController.tabBarItem = UITabBarItem(
-            title: "20 Profiles",
+            title: "Profiles",
             image: UIImage(systemName: "person.3"),
             selectedImage: UIImage(systemName: "person.3.fill")
         )

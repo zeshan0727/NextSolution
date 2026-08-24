@@ -6,6 +6,7 @@ final class BrowserProfilesViewController: UITableViewController {
     private let profileStore: BrowserProfileStore
     private let openProfileHandler: OpenProfileHandler
     private var profileObservation: NSObjectProtocol?
+    private var storageRefreshes = Set<Int>()
 
     init(profileStore: BrowserProfileStore, openProfileHandler: @escaping OpenProfileHandler) {
         self.profileStore = profileStore
@@ -25,10 +26,16 @@ final class BrowserProfilesViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Profile Settings"
+        title = "Profiles"
         navigationItem.largeTitleDisplayMode = .never
-        tableView.rowHeight = 64
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 94
         tableView.accessibilityIdentifier = "browserProfilesTable"
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .refresh,
+            target: self,
+            action: #selector(refreshStorage)
+        )
 
         profileObservation = NotificationCenter.default.addObserver(
             forName: .nextMultiBrowserProfileDidChange,
@@ -36,13 +43,20 @@ final class BrowserProfilesViewController: UITableViewController {
             queue: .main
         ) { [weak self] notification in
             guard let self,
+                  self.isViewLoaded,
                   let profileIndex = notification.userInfo?["profileIndex"] as? Int,
                   (1...BrowserProfileStore.profileCount).contains(profileIndex) else { return }
-            self.tableView.reloadRows(
-                at: [IndexPath(row: profileIndex - 1, section: 0)],
-                with: .none
-            )
+            let indexPath = IndexPath(row: profileIndex - 1, section: 0)
+            if self.tableView.indexPathsForVisibleRows?.contains(indexPath) == true {
+                self.tableView.reloadRows(at: [indexPath], with: .none)
+            }
         }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        tableView.reloadData()
+        refreshStorage()
     }
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -54,14 +68,17 @@ final class BrowserProfilesViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        "20 Separate Browser Profiles"
+        "20 Isolated Browser Profiles"
     }
 
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        "Each browser has an isolated persistent website-data store. Sign in to a different Google account in every profile; sessions are restored separately after closing the app."
+        "Every profile keeps its own persistent WebKit store, process pool, cookies, local storage, IndexedDB, cache, environment, and website permissions."
     }
 
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    override func tableView(
+        _ tableView: UITableView,
+        cellForRowAt indexPath: IndexPath
+    ) -> UITableViewCell {
         let identifier = "BrowserProfileCell"
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier)
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: identifier)
@@ -70,9 +87,21 @@ final class BrowserProfilesViewController: UITableViewController {
         let snapshot = profileStore.snapshot(for: profileIndex)
         var content = cell.defaultContentConfiguration()
         content.text = snapshot.displayName
-        content.secondaryText = snapshot.statusText
-        content.image = UIImage(systemName: snapshot.hasGoogleSession ? "person.crop.circle.badge.checkmark" : "person.crop.circle")
-        content.imageProperties.tintColor = snapshot.hasGoogleSession ? .systemGreen : .systemBlue
+        let sessionLine = snapshot.hasGoogleSession
+            ? "Google session saved"
+            : snapshot.statusText
+        content.secondaryText = """
+        \(sessionLine)
+        Last used: \(BrowserProfileFormatting.lastUsed(snapshot.lastUsed)) • Storage: \(BrowserProfileFormatting.bytes(snapshot.cachedStorageSize))
+        \(snapshot.environment.summary)
+        """
+        content.secondaryTextProperties.numberOfLines = 3
+        content.secondaryTextProperties.font = .preferredFont(forTextStyle: .caption1)
+        content.image = UIImage(systemName: snapshot.icon.symbolName)
+        content.imageProperties.tintColor = snapshot.hasGoogleSession
+            ? .systemGreen
+            : snapshot.color.uiColor
+        content.imageProperties.maximumSize = CGSize(width: 32, height: 32)
         cell.contentConfiguration = content
         cell.accessoryType = .disclosureIndicator
         cell.accessibilityIdentifier = "browserProfile\(profileIndex)"
@@ -89,14 +118,43 @@ final class BrowserProfilesViewController: UITableViewController {
         )
         navigationController?.pushViewController(controller, animated: true)
     }
+
+    @objc private func refreshStorage() {
+        for index in 1...BrowserProfileStore.profileCount where !storageRefreshes.contains(index) {
+            storageRefreshes.insert(index)
+            profileStore.inspectStorage(
+                for: index,
+                includeWebsiteRecords: false
+            ) { [weak self] _ in
+                guard let self else { return }
+                self.storageRefreshes.remove(index)
+                let indexPath = IndexPath(row: index - 1, section: 0)
+                if self.tableView.indexPathsForVisibleRows?.contains(indexPath) == true {
+                    self.tableView.reloadRows(at: [indexPath], with: .none)
+                }
+            }
+        }
+    }
 }
 
-private final class BrowserProfileDetailViewController: UITableViewController, UITextFieldDelegate {
+final class BrowserProfileDetailViewController: UITableViewController, UITextFieldDelegate {
     private enum Section: Int, CaseIterable {
-        case profileName
+        case identity
+        case environment
         case session
+        case storage
         case actions
-        case data
+        case privacy
+        case danger
+    }
+
+    private enum ActionRow: Int {
+        case openProfile
+        case googleSignIn
+        case duplicate
+        case backup
+        case restore
+        case debug
     }
 
     private let profileIndex: Int
@@ -104,6 +162,11 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
     private let openProfileHandler: BrowserProfilesViewController.OpenProfileHandler
     private let nameField = UITextField()
     private var profileObservation: NSObjectProtocol?
+    private var storageSnapshot: BrowserProfileStorageSnapshot?
+    private var isWorking = false {
+        didSet { updateWorkingState() }
+    }
+
     private lazy var nameCell: UITableViewCell = {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         nameField.translatesAutoresizingMaskIntoConstraints = false
@@ -112,7 +175,8 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
             nameField.leadingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.leadingAnchor),
             nameField.trailingAnchor.constraint(equalTo: cell.contentView.layoutMarginsGuide.trailingAnchor),
             nameField.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
-            nameField.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8)
+            nameField.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8),
+            nameField.heightAnchor.constraint(greaterThanOrEqualToConstant: 36)
         ])
         cell.selectionStyle = .none
         return cell
@@ -144,6 +208,7 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
         title = profileStore.displayName(for: profileIndex)
         navigationItem.largeTitleDisplayMode = .never
         tableView.keyboardDismissMode = .interactive
+        tableView.rowHeight = UITableView.automaticDimension
 
         nameField.text = profileStore.displayName(for: profileIndex)
         nameField.placeholder = "Browser \(profileIndex)"
@@ -162,8 +227,20 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
                   let changedIndex = notification.userInfo?["profileIndex"] as? Int,
                   changedIndex == self.profileIndex else { return }
             self.title = self.profileStore.displayName(for: self.profileIndex)
-            self.tableView.reloadSections(IndexSet(integer: Section.session.rawValue), with: .none)
+            guard !self.isWorking else { return }
+            let sections = IndexSet(
+                Section.allCases
+                    .filter { $0 != .identity }
+                    .map(\.rawValue)
+            )
+            self.tableView.reloadSections(sections, with: .none)
         }
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
+        inspectStorage()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -177,67 +254,144 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch Section(rawValue: section)! {
-        case .profileName: return 1
-        case .session: return 2
-        case .actions: return 2
-        case .data: return 1
+        case .identity: return 2
+        case .environment: return 1
+        case .session: return 3
+        case .storage: return 1
+        case .actions: return 6
+        case .privacy: return 2
+        case .danger: return 1
         }
     }
 
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch Section(rawValue: section)! {
-        case .profileName: return "Profile Name"
-        case .session: return "Saved Session"
-        case .actions: return "Open"
-        case .data: return "Profile Data"
+        case .identity: return "Profile"
+        case .environment: return "Profile Environment"
+        case .session: return "Session"
+        case .storage: return "Storage"
+        case .actions: return "Profile Actions"
+        case .privacy: return "Website Privacy"
+        case .danger: return "Delete"
         }
     }
 
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        guard Section(rawValue: section) == .data else { return nil }
-        return "Clearing this profile signs it out and removes only this browser’s cookies, cache, and website data. Other browser profiles are not affected."
+        switch Section(rawValue: section)! {
+        case .environment:
+            return "Environment choices affect this profile only. Existing cookies and login storage are not moved or merged."
+        case .privacy:
+            return "Clear Website Data removes cookies, cache, local storage, IndexedDB, and other site data from this profile only."
+        case .danger:
+            return "Delete resets this fixed browser slot to a new blank profile and removes its latest backup. Other profiles are unchanged."
+        default:
+            return nil
+        }
     }
 
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    override func tableView(
+        _ tableView: UITableView,
+        cellForRowAt indexPath: IndexPath
+    ) -> UITableViewCell {
         let section = Section(rawValue: indexPath.section)!
         switch section {
-        case .profileName:
-            return nameCell
+        case .identity:
+            if indexPath.row == 0 { return nameCell }
+            let snapshot = profileStore.snapshot(for: profileIndex)
+            return valueCell(
+                title: "Icon & Color",
+                value: "\(snapshot.icon.title) • \(snapshot.color.title)",
+                symbol: snapshot.icon.symbolName,
+                tint: snapshot.color.uiColor,
+                disclosure: true
+            )
+
+        case .environment:
+            let environment = profileStore.environment(for: profileIndex)
+            return subtitleCell(
+                title: "Environment Manager",
+                subtitle: environment.summary,
+                symbol: "slider.horizontal.3",
+                disclosure: true
+            )
 
         case .session:
-            let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
             let snapshot = profileStore.snapshot(for: profileIndex)
-            if indexPath.row == 0 {
-                cell.textLabel?.text = "Status"
-                cell.detailTextLabel?.text = snapshot.statusText
-                cell.detailTextLabel?.textColor = snapshot.hasGoogleSession ? .systemGreen : .secondaryLabel
-                cell.imageView?.image = UIImage(systemName: snapshot.hasGoogleSession ? "checkmark.shield.fill" : "shield")
-            } else {
-                cell.textLabel?.text = "Isolation"
-                cell.detailTextLabel?.text = profileStore.persistenceDescription(for: profileIndex)
-                cell.imageView?.image = UIImage(systemName: "shippingbox.fill")
+            switch indexPath.row {
+            case 0:
+                return valueCell(
+                    title: "Status",
+                    value: snapshot.statusText,
+                    symbol: snapshot.hasGoogleSession ? "checkmark.shield.fill" : "shield",
+                    tint: snapshot.hasGoogleSession ? .systemGreen : .secondaryLabel
+                )
+            case 1:
+                return valueCell(
+                    title: "Last Used",
+                    value: BrowserProfileFormatting.lastUsed(snapshot.lastUsed),
+                    symbol: "clock"
+                )
+            default:
+                return valueCell(
+                    title: "Isolation",
+                    value: profileStore.persistenceDescription(for: profileIndex),
+                    symbol: "shippingbox.fill"
+                )
             }
-            cell.selectionStyle = .none
-            return cell
+
+        case .storage:
+            let total = storageSnapshot?.totalWebsiteDataBytes
+                ?? profileStore.snapshot(for: profileIndex).cachedStorageSize
+            return subtitleCell(
+                title: "Storage Management",
+                subtitle: "\(BrowserProfileFormatting.bytes(total)) • Cookies, cache, local storage & IndexedDB",
+                symbol: "internaldrive.fill",
+                disclosure: true
+            )
 
         case .actions:
-            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            if indexPath.row == 0 {
-                cell.textLabel?.text = "Open Google Sign-In"
-                cell.imageView?.image = UIImage(systemName: "person.badge.key.fill")
-            } else {
-                cell.textLabel?.text = profileStore.lastURL(for: profileIndex) == nil ? "Open Browser" : "Open Last Page"
-                cell.imageView?.image = UIImage(systemName: "safari.fill")
+            let row = ActionRow(rawValue: indexPath.row)!
+            switch row {
+            case .openProfile:
+                return actionCell("Open Profile", symbol: "safari.fill")
+            case .googleSignIn:
+                return actionCell("Open Google Sign-In", symbol: "person.badge.key.fill")
+            case .duplicate:
+                return actionCell("Duplicate Profile", symbol: "plus.square.on.square")
+            case .backup:
+                let lastBackup = profileStore.snapshot(for: profileIndex).lastBackupDate
+                return actionCell(
+                    lastBackup == nil ? "Backup Profile" : "Backup Profile • Updated \(BrowserProfileFormatting.lastUsed(lastBackup))",
+                    symbol: "externaldrive.badge.plus"
+                )
+            case .restore:
+                let cell = actionCell("Restore Profile", symbol: "arrow.counterclockwise.icloud")
+                let available = profileStore.hasBackup(for: profileIndex)
+                cell.isUserInteractionEnabled = available
+                cell.textLabel?.textColor = available ? view.tintColor : .tertiaryLabel
+                cell.imageView?.tintColor = available ? view.tintColor : .tertiaryLabel
+                return cell
+            case .debug:
+                return actionCell("Developer Information", symbol: "ladybug.fill")
             }
-            cell.textLabel?.textColor = view.tintColor
-            cell.accessoryType = .disclosureIndicator
+
+        case .privacy:
+            if indexPath.row == 0 {
+                let count = profileStore.snapshot(for: profileIndex).savedPermissionCount
+                return valueCell(
+                    title: "Reset Website Permissions",
+                    value: count == 0 ? "No saved choices" : "\(count) saved",
+                    symbol: "camera.badge.ellipsis"
+                )
+            }
+            let cell = actionCell("Clear All Website Data", symbol: "eraser.fill")
+            cell.textLabel?.textColor = .systemRed
+            cell.imageView?.tintColor = .systemRed
             return cell
 
-        case .data:
-            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.textLabel?.text = "Clear This Profile"
+        case .danger:
+            let cell = actionCell("Delete Profile", symbol: "trash.fill")
             cell.textLabel?.textColor = .systemRed
-            cell.imageView?.image = UIImage(systemName: "trash")
             cell.imageView?.tintColor = .systemRed
             return cell
         }
@@ -245,17 +399,51 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let section = Section(rawValue: indexPath.section)!
-        switch section {
-        case .actions:
-            saveName()
-            view.endEditing(true)
-            openProfileHandler(profileIndex, indexPath.row == 0)
+        guard !isWorking else { return }
+        saveName()
+        view.endEditing(true)
 
-        case .data:
+        switch Section(rawValue: indexPath.section)! {
+        case .identity where indexPath.row == 1:
+            navigationController?.pushViewController(
+                BrowserProfileAppearanceViewController(
+                    profileIndex: profileIndex,
+                    profileStore: profileStore
+                ),
+                animated: true
+            )
+
+        case .environment:
+            navigationController?.pushViewController(
+                BrowserProfileEnvironmentViewController(
+                    profileIndex: profileIndex,
+                    profileStore: profileStore
+                ),
+                animated: true
+            )
+
+        case .storage:
+            navigationController?.pushViewController(
+                BrowserProfileStorageViewController(
+                    profileIndex: profileIndex,
+                    profileStore: profileStore
+                ),
+                animated: true
+            )
+
+        case .actions:
+            handleAction(ActionRow(rawValue: indexPath.row)!)
+
+        case .privacy where indexPath.row == 0:
+            confirmResetPermissions()
+
+        case .privacy:
             confirmClearProfile()
 
-        case .profileName, .session:
+        case .danger:
+            confirmDeleteProfile()
+
+        case .identity, .session:
             break
         }
     }
@@ -270,25 +458,241 @@ private final class BrowserProfileDetailViewController: UITableViewController, U
         saveName()
     }
 
+    private func handleAction(_ action: ActionRow) {
+        switch action {
+        case .openProfile:
+            openProfileHandler(profileIndex, false)
+        case .googleSignIn:
+            openProfileHandler(profileIndex, true)
+        case .duplicate:
+            duplicateProfile()
+        case .backup:
+            backupProfile()
+        case .restore:
+            confirmRestoreProfile()
+        case .debug:
+            navigationController?.pushViewController(
+                BrowserProfileDebugViewController(
+                    profileIndex: profileIndex,
+                    profileStore: profileStore
+                ),
+                animated: true
+            )
+        }
+    }
+
     private func saveName() {
         profileStore.setDisplayName(nameField.text ?? "", for: profileIndex)
         nameField.text = profileStore.displayName(for: profileIndex)
+    }
+
+    private func inspectStorage() {
+        profileStore.inspectStorage(for: profileIndex) { [weak self] value in
+            guard let self else { return }
+            self.storageSnapshot = value
+            self.tableView.reloadSections(
+                IndexSet(integer: Section.storage.rawValue),
+                with: .none
+            )
+        }
+    }
+
+    private func duplicateProfile() {
+        isWorking = true
+        profileStore.duplicateProfile(profileIndex) { [weak self] result in
+            guard let self else { return }
+            self.isWorking = false
+            switch result {
+            case .success(let target):
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                self.showMessage(
+                    title: "Profile Duplicated",
+                    message: "Settings were copied to \(self.profileStore.displayName(for: target)) in Browser \(target). It has a new independent storage container; login and website data were not copied."
+                )
+            case .failure(let error):
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                self.showMessage(title: "Couldn’t Duplicate", message: error.localizedDescription)
+            }
+        }
+    }
+
+    private func backupProfile() {
+        isWorking = true
+        profileStore.createBackup(for: profileIndex) { [weak self] result in
+            guard let self else { return }
+            self.isWorking = false
+            switch result {
+            case .success(let date):
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                self.showMessage(
+                    title: "Backup Complete",
+                    message: "Profile preferences, cookies, and available website data were backed up at \(BrowserProfileFormatting.dateAndTime(date))."
+                )
+            case .failure(let error):
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                self.showMessage(title: "Backup Failed", message: error.localizedDescription)
+            }
+        }
+    }
+
+    private func confirmRestoreProfile() {
+        let alert = UIAlertController(
+            title: "Restore \(profileStore.displayName(for: profileIndex))?",
+            message: "This replaces the selected profile’s current settings and website data with its latest backup. Other profiles are not affected.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Restore", style: .default) { [weak self] _ in
+            self?.restoreProfile()
+        })
+        present(alert, animated: true)
+    }
+
+    private func restoreProfile() {
+        isWorking = true
+        profileStore.restoreLatestBackup(for: profileIndex) { [weak self] result in
+            guard let self else { return }
+            self.isWorking = false
+            switch result {
+            case .success(let value):
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                let restartNote = value.restartRequiredForFullWebsiteData
+                    ? " Close and reopen the app once to finish restoring the full on-disk website data."
+                    : ""
+                self.showMessage(
+                    title: "Profile Restored",
+                    message: "Restored the backup from \(BrowserProfileFormatting.dateAndTime(value.backupDate)).\(restartNote)"
+                )
+                self.nameField.text = self.profileStore.displayName(for: self.profileIndex)
+                self.inspectStorage()
+            case .failure(let error):
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                self.showMessage(title: "Restore Failed", message: error.localizedDescription)
+            }
+        }
+    }
+
+    private func confirmResetPermissions() {
+        let name = profileStore.displayName(for: profileIndex)
+        let alert = UIAlertController(
+            title: "Reset Permissions?",
+            message: "Saved camera and microphone decisions for \(name) will be removed. Websites will ask again.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Reset", style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            self.profileStore.resetWebsitePermissions(self.profileIndex)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        })
+        present(alert, animated: true)
     }
 
     private func confirmClearProfile() {
         let name = profileStore.displayName(for: profileIndex)
         let alert = UIAlertController(
             title: "Clear \(name)?",
-            message: "This signs out the account in this profile and removes its saved website data.",
+            message: "This signs out this profile and removes only its cookies, cache, local storage, IndexedDB, and website data.",
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Clear Profile", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "Clear Website Data", style: .destructive) { [weak self] _ in
             guard let self else { return }
+            self.isWorking = true
             self.profileStore.clearProfile(self.profileIndex) { [weak self] in
-                self?.tableView.reloadSections(IndexSet(integer: Section.session.rawValue), with: .automatic)
+                guard let self else { return }
+                self.isWorking = false
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                self.inspectStorage()
             }
         })
         present(alert, animated: true)
     }
+
+    private func confirmDeleteProfile() {
+        let name = profileStore.displayName(for: profileIndex)
+        let alert = UIAlertController(
+            title: "Delete \(name)?",
+            message: "This permanently clears this profile’s website data, environment, permissions, name, appearance, and latest backup. Browser \(profileIndex) returns as a blank isolated slot.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete Profile", style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            self.isWorking = true
+            self.profileStore.deleteProfile(self.profileIndex) { [weak self] in
+                guard let self else { return }
+                self.isWorking = false
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                self.navigationController?.popViewController(animated: true)
+            }
+        })
+        present(alert, animated: true)
+    }
+
+    private func updateWorkingState() {
+        guard isViewLoaded else { return }
+        tableView.isUserInteractionEnabled = !isWorking
+        if isWorking {
+            let indicator = UIActivityIndicatorView(style: .medium)
+            indicator.startAnimating()
+            navigationItem.rightBarButtonItem = UIBarButtonItem(customView: indicator)
+        } else {
+            navigationItem.rightBarButtonItem = nil
+            tableView.reloadData()
+        }
+    }
+
+    private func valueCell(
+        title: String,
+        value: String,
+        symbol: String,
+        tint: UIColor = .secondaryLabel,
+        disclosure: Bool = false
+    ) -> UITableViewCell {
+        let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
+        cell.textLabel?.text = title
+        cell.detailTextLabel?.text = value
+        cell.detailTextLabel?.textColor = tint
+        cell.detailTextLabel?.adjustsFontSizeToFitWidth = true
+        cell.detailTextLabel?.minimumScaleFactor = 0.75
+        cell.imageView?.image = UIImage(systemName: symbol)
+        cell.imageView?.tintColor = tint == .secondaryLabel ? view.tintColor : tint
+        cell.accessoryType = disclosure ? .disclosureIndicator : .none
+        cell.selectionStyle = disclosure ? .default : .none
+        return cell
+    }
+
+    private func subtitleCell(
+        title: String,
+        subtitle: String,
+        symbol: String,
+        disclosure: Bool
+    ) -> UITableViewCell {
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+        cell.textLabel?.text = title
+        cell.detailTextLabel?.text = subtitle
+        cell.detailTextLabel?.textColor = .secondaryLabel
+        cell.detailTextLabel?.numberOfLines = 2
+        cell.imageView?.image = UIImage(systemName: symbol)
+        cell.imageView?.tintColor = view.tintColor
+        cell.accessoryType = disclosure ? .disclosureIndicator : .none
+        return cell
+    }
+
+    private func actionCell(_ title: String, symbol: String) -> UITableViewCell {
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.textLabel?.text = title
+        cell.textLabel?.textColor = view.tintColor
+        cell.imageView?.image = UIImage(systemName: symbol)
+        cell.imageView?.tintColor = view.tintColor
+        return cell
+    }
+
+    private func showMessage(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
 }
+

@@ -18,6 +18,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
     private var progressObservation: NSKeyValueObservation?
     private var urlObservation: NSKeyValueObservation?
     private var profileObservation: NSObjectProtocol?
+    private var environmentObservation: NSObjectProtocol?
     private var autoRefreshTimer: Timer?
     private(set) var autoRefreshInterval: TimeInterval?
     private var paneIsActive = true
@@ -35,9 +36,18 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
+        BrowserEnvironmentWebKit.configure(
+            profileStore.environment(for: index),
+            configuration: config
+        )
 
         self.webView = WKWebView(frame: .zero, configuration: config)
         super.init(frame: .zero)
+
+        BrowserEnvironmentWebKit.apply(
+            profileStore.environment(for: index),
+            to: webView
+        )
 
         setupUI()
         observeWebView()
@@ -68,6 +78,9 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         if let profileObservation {
             NotificationCenter.default.removeObserver(profileObservation)
         }
+        if let environmentObservation {
+            NotificationCenter.default.removeObserver(environmentObservation)
+        }
     }
 
     private func makeButton(_ symbol: String, action: Selector) -> UIButton {
@@ -84,7 +97,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         layer.cornerRadius = 10
         layer.masksToBounds = true
         layer.borderWidth = 0.5
-        layer.borderColor = UIColor.separator.cgColor
+        layer.borderColor = profileStore.color(for: profileIndex).uiColor.withAlphaComponent(0.5).cgColor
 
         addressField.borderStyle = .roundedRect
         addressField.autocapitalizationType = .none
@@ -170,14 +183,38 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
                   let changedIndex = notification.userInfo?["profileIndex"] as? Int,
                   changedIndex == self.profileIndex else { return }
             self.addressField.placeholder = "\(self.profileStore.displayName(for: self.profileIndex)) – URL or search"
+            self.layer.borderColor = self.profileStore.color(for: self.profileIndex)
+                .uiColor
+                .withAlphaComponent(0.5)
+                .cgColor
+        }
+
+        environmentObservation = NotificationCenter.default.addObserver(
+            forName: .nextMultiBrowserProfileEnvironmentDidChange,
+            object: profileStore,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self,
+                  let changedIndex = notification.userInfo?["profileIndex"] as? Int,
+                  changedIndex == self.profileIndex else { return }
+            BrowserEnvironmentWebKit.apply(
+                self.profileStore.environment(for: self.profileIndex),
+                to: self.webView
+            )
+            if self.sessionIsReady, self.webView.url != nil {
+                self.webView.reload()
+            }
         }
     }
 
     private func showPreparingPage() {
         let html = """
-        <html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>
-        <body style='font-family:-apple-system;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;height:90vh;margin:0'>
-        <div style='text-align:center'><div style='font-size:22px;font-weight:700'>Browser \(profileIndex)</div><div style='margin-top:8px;color:#aaa'>Restoring separate profile…</div></div>
+        <html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>
+        :root{color-scheme:light dark}body{font-family:-apple-system;background:#111;color:#fff}.sub{color:#aaa}
+        @media(prefers-color-scheme:light){body{background:#f2f2f7;color:#111}.sub{color:#666}}
+        </style></head>
+        <body style='display:flex;align-items:center;justify-content:center;height:90vh;margin:0'>
+        <div style='text-align:center'><div style='font-size:22px;font-weight:700'>Browser \(profileIndex)</div><div class='sub' style='margin-top:8px'>Restoring separate profile…</div></div>
         </body></html>
         """
         webView.loadHTMLString(html, baseURL: nil)
@@ -186,9 +223,12 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
     private func showReadyPage() {
         let name = escapedHTML(profileStore.displayName(for: profileIndex))
         let html = """
-        <html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>
-        <body style='font-family:-apple-system;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;height:90vh;margin:0'>
-        <div style='text-align:center'><div style='font-size:24px;font-weight:700'>\(name)</div><div style='margin-top:8px;color:#aaa'>Separate profile ready</div></div>
+        <html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>
+        :root{color-scheme:light dark}body{font-family:-apple-system;background:#111;color:#fff}.sub{color:#aaa}
+        @media(prefers-color-scheme:light){body{background:#f2f2f7;color:#111}.sub{color:#666}}
+        </style></head>
+        <body style='display:flex;align-items:center;justify-content:center;height:90vh;margin:0'>
+        <div style='text-align:center'><div style='font-size:24px;font-weight:700'>\(name)</div><div class='sub' style='margin-top:8px'>Separate profile ready</div></div>
         </body></html>
         """
         webView.loadHTMLString(html, baseURL: nil)
@@ -225,7 +265,10 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 
         guard let url = URL(string: candidate) else { return }
         profileStore.setLastURL(url, for: profileIndex)
-        webView.load(URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
+        webView.load(BrowserEnvironmentWebKit.request(
+            for: url,
+            environment: profileStore.environment(for: profileIndex)
+        ))
     }
 
     func setPaneActive(_ active: Bool) {
@@ -297,9 +340,90 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         return nil
     }
 
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        let environment = profileStore.environment(for: profileIndex)
+        guard navigationAction.targetFrame?.isMainFrame == true,
+              navigationAction.request.httpMethod?.uppercased() == "GET",
+              navigationAction.request.value(forHTTPHeaderField: "Accept-Language")
+                != environment.acceptLanguageHeader else {
+            decisionHandler(.allow)
+            return
+        }
+
+        var request = navigationAction.request
+        request.setValue(environment.acceptLanguageHeader, forHTTPHeaderField: "Accept-Language")
+        decisionHandler(.cancel)
+        webView.load(request)
+    }
+
     @available(iOS 15.0, *)
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
-        decisionHandler(.prompt)
+        let originKey = permissionOriginKey(origin)
+        let permission = permissionDescription(type)
+        switch profileStore.permissionDecision(
+            forOrigin: originKey,
+            kind: permission.key,
+            profileIndex: profileIndex
+        ) {
+        case .allow:
+            decisionHandler(.grant)
+        case .deny:
+            decisionHandler(.deny)
+        case nil:
+            guard let controller = nearestViewController,
+                  controller.presentedViewController == nil else {
+                decisionHandler(.prompt)
+                return
+            }
+            let alert = UIAlertController(
+                title: "Allow \(permission.title)?",
+                message: "\(origin.host) is requesting \(permission.title.lowercased()) access in \(profileStore.displayName(for: profileIndex)).",
+                preferredStyle: .alert
+            )
+            let permissionStore = profileStore
+            let currentProfileIndex = profileIndex
+            alert.addAction(UIAlertAction(title: "Don’t Allow", style: .destructive) { _ in
+                permissionStore.setPermissionDecision(
+                    .deny,
+                    forOrigin: originKey,
+                    kind: permission.key,
+                    profileIndex: currentProfileIndex
+                )
+                decisionHandler(.deny)
+            })
+            alert.addAction(UIAlertAction(title: "Allow Once", style: .default) { _ in
+                decisionHandler(.grant)
+            })
+            alert.addAction(UIAlertAction(title: "Always Allow", style: .default) { _ in
+                permissionStore.setPermissionDecision(
+                    .allow,
+                    forOrigin: originKey,
+                    kind: permission.key,
+                    profileIndex: currentProfileIndex
+                )
+                decisionHandler(.grant)
+            })
+            controller.present(alert, animated: true)
+        }
+    }
+
+    @available(iOS 15.0, *)
+    private func permissionDescription(_ type: WKMediaCaptureType) -> (key: String, title: String) {
+        switch type {
+        case .camera: return ("camera", "Camera")
+        case .microphone: return ("microphone", "Microphone")
+        case .cameraAndMicrophone: return ("cameraAndMicrophone", "Camera and Microphone")
+        @unknown default: return ("media", "Media")
+        }
+    }
+
+    private func permissionOriginKey(_ origin: WKSecurityOrigin) -> String {
+        let port = origin.port == 0 ? "" : ":\(origin.port)"
+        return "\(origin.protocol)://\(origin.host)\(port)"
     }
 
     @objc private func goBack() {
@@ -644,5 +768,18 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         let navigation = UINavigationController(rootViewController: controller)
         navigation.modalPresentationStyle = .pageSheet
         present(navigation, animated: true)
+    }
+}
+
+private extension UIView {
+    var nearestViewController: UIViewController? {
+        var responder: UIResponder? = self
+        while let current = responder {
+            if let viewController = current as? UIViewController {
+                return viewController
+            }
+            responder = current.next
+        }
+        return nil
     }
 }
