@@ -132,7 +132,7 @@ private struct AccountHeaderView: View {
                 Label("Emails and passwords stored locally", systemImage: "lock.fill")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.58))
-                Label("Tap: status • Hold: in-app signup", systemImage: "hand.tap.fill")
+                Label("Tap a platform to mark it green", systemImage: "checkmark.circle.fill")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.white.opacity(0.52))
             }
@@ -272,19 +272,12 @@ private struct CredentialCard: View {
 }
 
 private struct PlatformChip: View {
-    @EnvironmentObject private var router: AppRouter
-
     let platform: AccountPlatform
     let isActive: Bool
     let action: () -> Void
 
-    @State private var longPressTriggered = false
-
     var body: some View {
-        Button {
-            guard !longPressTriggered else { return }
-            action()
-        } label: {
+        Button(action: action) {
             HStack(spacing: 4) {
                 Image(systemName: platform.systemImage)
                     .font(.system(size: 10, weight: .bold))
@@ -309,34 +302,9 @@ private struct PlatformChip: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.55, maximumDistance: 12)
-                .onEnded { _ in
-                    longPressTriggered = true
-                    Task { @MainActor in
-                        HapticManager.shared.openedLink()
-                        router.openSignup(for: platform)
-                    }
-                }
-        )
         .accessibilityLabel(platform.title)
         .accessibilityValue(isActive ? "Selected" : "Not selected")
-        .accessibilityHint("Tap to change status. Press and hold to open account creation in the Browser tab.")
-        .accessibilityAction(named: Text("Open \(platform.title) signup")) {
-            Task { @MainActor in
-                longPressTriggered = true
-                HapticManager.shared.openedLink()
-                router.openSignup(for: platform)
-            }
-        }
-        .onAppear {
-            longPressTriggered = false
-        }
-        .onChange(of: router.selectedTab) { selectedTab in
-            if selectedTab == .accounts {
-                longPressTriggered = false
-            }
-        }
+        .accessibilityHint("Tap to change the saved status.")
     }
 }
 

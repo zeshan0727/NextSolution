@@ -25,7 +25,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NextAccounts-TIPA
-          path: .codex-build/next-accounts/NextAccounts_1.0.4.tipa
+          path: .codex-build/next-accounts/NextAccounts_1.0.5.tipa
           if-no-files-found: error
           retention-days: 1
 
@@ -34,10 +34,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          package_name="NextAccounts-1.0.4-In-App-Signup-Browser.tipa"
-          built_package=".codex-build/next-accounts/NextAccounts_1.0.4.tipa"
+          package_name="NextAccounts-1.0.5-Independent-Browser.tipa"
+          built_package=".codex-build/next-accounts/NextAccounts_1.0.5.tipa"
           staged_package="${RUNNER_TEMP}/${package_name}"
-          destination="transfer/files/NextAccounts/1.0.4/${package_name}"
+          destination="transfer/files/NextAccounts/1.0.5/${package_name}"
 
           cp "${built_package}" "${staged_package}"
           git fetch origin main
@@ -58,20 +58,20 @@ jobs:
           package_bytes = package.read_bytes()
 
           entry = {
-              "id": "nextaccounts-1.0.4-in-app-signup-browser",
-              "name": "Next Accounts 1.0.4 — In-App Signup Browser",
+              "id": "nextaccounts-1.0.5-independent-browser",
+              "name": "Next Accounts 1.0.5 — Independent Browser",
               "fileName": package.name,
               "type": "tipa",
               "platform": "TrollStore / iOS 16+",
-              "version": "1.0.4",
-              "url": f"https://nextsolution.cc/transfer/files/NextAccounts/1.0.4/{package.name}",
+              "version": "1.0.5",
+              "url": f"https://nextsolution.cc/transfer/files/NextAccounts/1.0.5/{package.name}",
               "sha256": hashlib.sha256(package_bytes).hexdigest(),
               "sizeBytes": len(package_bytes),
               "notes": (
-                  "Fixes platform-card taps so a normal tap reliably toggles and persists the green status. "
-                  "Press and hold now switches to a dedicated second Browser tab inside Next Accounts and "
-                  "loads the selected platform's signup page there instead of leaving the app. The in-app "
-                  "WKWebView keeps normal website data and provides back, forward, reload and signup controls. "
+                  "Removes all hold gestures and signup actions from the platform cards, leaving one reliable "
+                  "tap to toggle and persist each green status. The separate Browser tab now opens Google by "
+                  "default and includes a manual address/search bar plus back, forward, home, stop and reload. "
+                  "The in-app WKWebView keeps normal website data without coupling browser navigation to accounts. "
                   "Automatic local email/password suggestions, editor generators, Generate 5 More, bulk import, "
                   "one-tap copy and Keychain persistence remain included."
               ),
@@ -86,5 +86,5 @@ jobs:
           git config user.name "Next Solution Build Bot"
           git config user.email "180765564+zeshan0727@users.noreply.github.com"
           git add "${destination}" transfer/index.json
-          git commit -m "Publish Next Accounts 1.0.4 to NS Transfer"
+          git commit -m "Publish Next Accounts 1.0.5 to NS Transfer"
           git push origin main

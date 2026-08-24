@@ -12,7 +12,7 @@ struct AppRootView: View {
                 }
                 .tag(AppTab.accounts)
 
-            SignupBrowserView()
+            BrowserView()
                 .tabItem {
                     Label("Browser", systemImage: "globe")
                 }

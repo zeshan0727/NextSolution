@@ -35,22 +35,6 @@ enum AccountPlatform: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var signupURL: URL {
-        switch self {
-        case .apple:
-            return URL(string: "https://account.apple.com/account")!
-        case .google, .youtube:
-            return URL(string: "https://accounts.google.com/signup")!
-        case .instagram:
-            return URL(string: "https://www.instagram.com/accounts/signup/phone/")!
-        case .facebook:
-            return URL(string: "https://www.facebook.com/r.php")!
-        case .twitter:
-            return URL(string: "https://x.com/i/flow/signup")!
-        case .tiktok:
-            return URL(string: "https://www.tiktok.com/signup")!
-        }
-    }
 }
 
 struct Credential: Codable, Equatable, Identifiable {

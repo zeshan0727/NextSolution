@@ -1,7 +1,7 @@
 import SwiftUI
 import WebKit
 
-struct SignupBrowserView: View {
+struct BrowserView: View {
     @EnvironmentObject private var router: AppRouter
 
     var body: some View {
@@ -14,48 +14,96 @@ struct SignupBrowserView: View {
                 )
                 .ignoresSafeArea()
 
-                if let request = router.signupRequest {
-                    VStack(spacing: 0) {
-                        BrowserControlsView()
+                VStack(spacing: 0) {
+                    BrowserAddressBar()
+                    BrowserNavigationBar()
 
-                        if router.isBrowserLoading {
-                            ProgressView()
-                                .progressViewStyle(.linear)
-                                .tint(AppTheme.accent)
-                        }
-
-                        SignupWebView(request: request, router: router)
-
-                        if let error = router.browserError {
-                            BrowserErrorView(message: error, retry: router.reload)
-                        }
+                    if router.isBrowserLoading {
+                        ProgressView()
+                            .progressViewStyle(.linear)
+                            .tint(AppTheme.accent)
                     }
-                } else {
-                    BrowserEmptyView {
-                        router.selectedTab = .accounts
+
+                    BrowserWebView(request: router.browserRequest, router: router)
+
+                    if let error = router.browserError {
+                        BrowserErrorView(message: error, retry: router.reload)
                     }
                 }
             }
-            .navigationTitle(router.signupRequest?.title ?? "Account Browser")
+            .navigationTitle("Browser")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        router.selectedTab = .accounts
-                    } label: {
-                        Label("Accounts", systemImage: "chevron.left")
-                    }
-                }
-            }
         }
     }
 }
 
-private struct BrowserControlsView: View {
+private struct BrowserAddressBar: View {
+    @EnvironmentObject private var router: AppRouter
+    @FocusState private var isAddressFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 9) {
+            HStack(spacing: 8) {
+                Image(systemName: "globe")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+
+                TextField("Search or enter website", text: $router.addressText)
+                    .font(.subheadline)
+                    .foregroundStyle(.white)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    .submitLabel(.go)
+                    .focused($isAddressFocused)
+                    .onSubmit(loadAddress)
+
+                if isAddressFocused && !router.addressText.isEmpty {
+                    Button {
+                        router.addressText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.white.opacity(0.42))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear address")
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 40)
+            .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(isAddressFocused ? AppTheme.accent.opacity(0.75) : Color.white.opacity(0.11), lineWidth: 1)
+            }
+
+            Button(action: loadAddress) {
+                Text("Go")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 40)
+                    .background(AppTheme.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open address")
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 10)
+        .padding(.bottom, 7)
+        .background(.ultraThinMaterial)
+    }
+
+    private func loadAddress() {
+        isAddressFocused = false
+        router.loadAddress()
+    }
+}
+
+private struct BrowserNavigationBar: View {
     @EnvironmentObject private var router: AppRouter
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             BrowserControlButton(
                 systemImage: "chevron.backward",
                 label: "Back",
@@ -69,25 +117,30 @@ private struct BrowserControlsView: View {
                 action: router.goForward
             )
             BrowserControlButton(
-                systemImage: "arrow.clockwise",
-                label: "Reload",
-                action: router.reload
+                systemImage: "house.fill",
+                label: "Google home",
+                action: router.goHome
+            )
+            BrowserControlButton(
+                systemImage: router.isBrowserLoading ? "xmark" : "arrow.clockwise",
+                label: router.isBrowserLoading ? "Stop" : "Reload",
+                action: {
+                    if router.isBrowserLoading {
+                        router.stopLoading()
+                    } else {
+                        router.reload()
+                    }
+                }
             )
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 0)
 
-            Button(action: router.loadSignupPage) {
-                Label("Signup", systemImage: "person.badge.plus")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(AppTheme.accent)
-                    .padding(.horizontal, 11)
-                    .frame(height: 34)
-                    .background(AppTheme.accent.opacity(0.12), in: Capsule())
-            }
-            .buttonStyle(.plain)
+            Text("Google opens by default")
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.white.opacity(0.48))
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 9)
+        .padding(.vertical, 8)
         .background(.ultraThinMaterial)
     }
 }
@@ -112,29 +165,6 @@ private struct BrowserControlButton: View {
     }
 }
 
-private struct BrowserEmptyView: View {
-    let showAccounts: () -> Void
-
-    var body: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "globe")
-                .font(.system(size: 48, weight: .semibold))
-                .foregroundStyle(AppTheme.accent)
-            Text("Account Browser")
-                .font(.title2.weight(.bold))
-                .foregroundStyle(.white)
-            Text("Press and hold any platform card to open its signup page here.")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.62))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 28)
-            Button("View Accounts", action: showAccounts)
-                .buttonStyle(.borderedProminent)
-                .tint(AppTheme.accent)
-        }
-    }
-}
-
 private struct BrowserErrorView: View {
     let message: String
     let retry: () -> Void
@@ -156,8 +186,8 @@ private struct BrowserErrorView: View {
     }
 }
 
-private struct SignupWebView: UIViewRepresentable {
-    let request: SignupRequest
+private struct BrowserWebView: UIViewRepresentable {
+    let request: BrowserRequest
     @ObservedObject var router: AppRouter
 
     func makeCoordinator() -> Coordinator {
@@ -180,7 +210,6 @@ private struct SignupWebView: UIViewRepresentable {
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        router.attachBrowser(webView)
         guard context.coordinator.loadedRequestID != request.id else { return }
         context.coordinator.loadedRequestID = request.id
         webView.load(URLRequest(url: request.url))

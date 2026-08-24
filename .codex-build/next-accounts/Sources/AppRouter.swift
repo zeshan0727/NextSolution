@@ -7,17 +7,17 @@ enum AppTab: Hashable {
     case browser
 }
 
-struct SignupRequest: Identifiable, Equatable {
+struct BrowserRequest: Identifiable, Equatable {
     let id = UUID()
-    let platform: AccountPlatform
-
-    var url: URL { platform.signupURL }
-    var title: String { "\(platform.title) Signup" }
+    let url: URL
 }
 
 final class AppRouter: ObservableObject {
+    static let browserHomeURL = URL(string: "https://www.google.com")!
+
     @Published var selectedTab: AppTab = .accounts
-    @Published private(set) var signupRequest: SignupRequest?
+    @Published var addressText = "google.com"
+    @Published private(set) var browserRequest: BrowserRequest
     @Published private(set) var isBrowserLoading = false
     @Published private(set) var canGoBack = false
     @Published private(set) var canGoForward = false
@@ -25,15 +25,24 @@ final class AppRouter: ObservableObject {
 
     private weak var webView: WKWebView?
 
-    func openSignup(for platform: AccountPlatform) {
-        browserError = nil
-        signupRequest = SignupRequest(platform: platform)
-        selectedTab = .browser
+    init() {
+        browserRequest = BrowserRequest(url: Self.browserHomeURL)
     }
 
     func attachBrowser(_ webView: WKWebView) {
         self.webView = webView
-        updateNavigationState(from: webView)
+    }
+
+    func loadAddress() {
+        guard let url = webURL(from: addressText) else {
+            browserError = "Enter a valid website address"
+            return
+        }
+        load(url)
+    }
+
+    func goHome() {
+        load(Self.browserHomeURL)
     }
 
     func goBack() {
@@ -45,17 +54,21 @@ final class AppRouter: ObservableObject {
     }
 
     func reload() {
-        guard let webView else { return }
-        if webView.url == nil, let request = signupRequest {
-            webView.load(URLRequest(url: request.url))
+        guard let webView else {
+            browserRequest = BrowserRequest(url: browserRequest.url)
+            return
+        }
+
+        if webView.url == nil {
+            webView.load(URLRequest(url: browserRequest.url))
         } else {
             webView.reload()
         }
     }
 
-    func loadSignupPage() {
-        guard let request = signupRequest else { return }
-        webView?.load(URLRequest(url: request.url))
+    func stopLoading() {
+        webView?.stopLoading()
+        isBrowserLoading = false
     }
 
     func browserDidStart(_ webView: WKWebView) {
@@ -78,8 +91,65 @@ final class AppRouter: ObservableObject {
         browserError = error.localizedDescription
     }
 
+    private func load(_ url: URL) {
+        browserError = nil
+        addressText = displayAddress(for: url)
+        browserRequest = BrowserRequest(url: url)
+    }
+
+    private func webURL(from rawValue: String) -> URL? {
+        let value = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return nil }
+
+        if value.contains(where: { $0.isWhitespace }) {
+            return googleSearchURL(for: value)
+        }
+
+        let candidate: String
+        if value.lowercased().hasPrefix("https://") || value.lowercased().hasPrefix("http://") {
+            candidate = value
+        } else {
+            candidate = "https://\(value)"
+        }
+
+        guard
+            let components = URLComponents(string: candidate),
+            let scheme = components.scheme?.lowercased(),
+            scheme == "https" || scheme == "http",
+            components.host?.isEmpty == false,
+            let url = components.url
+        else {
+            return googleSearchURL(for: value)
+        }
+
+        return url
+    }
+
+    private func googleSearchURL(for query: String) -> URL? {
+        var components = URLComponents(string: "https://www.google.com/search")
+        components?.queryItems = [URLQueryItem(name: "q", value: query)]
+        return components?.url
+    }
+
     private func updateNavigationState(from webView: WKWebView) {
-        canGoBack = webView.canGoBack
-        canGoForward = webView.canGoForward
+        if canGoBack != webView.canGoBack {
+            canGoBack = webView.canGoBack
+        }
+        if canGoForward != webView.canGoForward {
+            canGoForward = webView.canGoForward
+        }
+        if let url = webView.url {
+            let newAddress = displayAddress(for: url)
+            if addressText != newAddress {
+                addressText = newAddress
+            }
+        }
+    }
+
+    private func displayAddress(for url: URL) -> String {
+        if url.host == "www.google.com", url.path.isEmpty || url.path == "/" {
+            return "google.com"
+        }
+        return url.absoluteString
     }
 }
