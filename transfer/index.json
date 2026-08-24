@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T08:06:34Z",
+  "updatedAt": "2026-08-24T08:21:32Z",
   "files": [
+    {
+      "id": "nextaccounts-1.0.2-automatic-emails",
+      "name": "Next Accounts 1.0.2 — Automatic Emails",
+      "fileName": "NextAccounts-1.0.2-Automatic-Emails.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.2",
+      "url": "https://nextsolution.cc/transfer/files/NextAccounts/1.0.2/NextAccounts-1.0.2-Automatic-Emails.tipa",
+      "sha256": "47625e82eae35b395ab850097d9fbd6aa01639009067ce5c8c1f4025fb8e9d84",
+      "sizeBytes": 1155372,
+      "notes": "Credential-free public build. Generates unique Gmail-style address suggestions and passwords locally for all 22 starting accounts. Upgrades preserve existing addresses and fill previously blank saved slots once. The account editor can generate a new email or password separately, and Generate 5 More creates five complete local entries. Platform status chips, bulk import, one-tap copy and Keychain persistence remain included. Suggested addresses are not registered Gmail accounts and availability is not guaranteed."
+    },
     {
       "id": "nextaccounts-1.0.1-private-slots-platform-status",
       "name": "Next Accounts 1.0.1 — Private Slots & Platform Status",
