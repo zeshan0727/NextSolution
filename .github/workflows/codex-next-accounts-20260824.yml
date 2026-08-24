@@ -25,7 +25,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NextAccounts-TIPA
-          path: .codex-build/next-accounts/NextAccounts_1.0.2.tipa
+          path: .codex-build/next-accounts/NextAccounts_1.0.3.tipa
           if-no-files-found: error
           retention-days: 1
 
@@ -34,10 +34,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          package_name="NextAccounts-1.0.2-Automatic-Emails.tipa"
-          built_package=".codex-build/next-accounts/NextAccounts_1.0.2.tipa"
+          package_name="NextAccounts-1.0.3-Platform-Signup-Links.tipa"
+          built_package=".codex-build/next-accounts/NextAccounts_1.0.3.tipa"
           staged_package="${RUNNER_TEMP}/${package_name}"
-          destination="transfer/files/NextAccounts/1.0.2/${package_name}"
+          destination="transfer/files/NextAccounts/1.0.3/${package_name}"
 
           cp "${built_package}" "${staged_package}"
           git fetch origin main
@@ -58,22 +58,22 @@ jobs:
           package_bytes = package.read_bytes()
 
           entry = {
-              "id": "nextaccounts-1.0.2-automatic-emails",
-              "name": "Next Accounts 1.0.2 — Automatic Emails",
+              "id": "nextaccounts-1.0.3-platform-signup-links",
+              "name": "Next Accounts 1.0.3 — Platform Signup Links",
               "fileName": package.name,
               "type": "tipa",
               "platform": "TrollStore / iOS 16+",
-              "version": "1.0.2",
-              "url": f"https://nextsolution.cc/transfer/files/NextAccounts/1.0.2/{package.name}",
+              "version": "1.0.3",
+              "url": f"https://nextsolution.cc/transfer/files/NextAccounts/1.0.3/{package.name}",
               "sha256": hashlib.sha256(package_bytes).hexdigest(),
               "sizeBytes": len(package_bytes),
               "notes": (
-                  "Credential-free public build. Generates unique Gmail-style address suggestions and "
-                  "passwords locally for all 22 starting accounts. Upgrades preserve existing addresses "
-                  "and fill previously blank saved slots once. The account editor can generate a new email "
-                  "or password separately, and Generate 5 More creates five complete local entries. "
-                  "Platform status chips, bulk import, one-tap copy and Keychain persistence remain included. "
-                  "Suggested addresses are not registered Gmail accounts and availability is not guaranteed."
+                  "Keeps the compact platform status workflow: tap Apple, Google, YouTube, Instagram, "
+                  "Facebook, Twitter or TikTok to toggle its saved green state; press and hold to open that "
+                  "platform's official account-creation page in the system browser without changing status. "
+                  "Includes automatic local email/password suggestions, editor generators, Generate 5 More, "
+                  "bulk import, one-tap copy and Keychain persistence. Suggested Gmail addresses are not "
+                  "registered accounts and availability is not guaranteed."
               ),
           }
 
@@ -86,5 +86,5 @@ jobs:
           git config user.name "Next Solution Build Bot"
           git config user.email "180765564+zeshan0727@users.noreply.github.com"
           git add "${destination}" transfer/index.json
-          git commit -m "Publish Next Accounts 1.0.2 to NS Transfer"
+          git commit -m "Publish Next Accounts 1.0.3 to NS Transfer"
           git push origin main

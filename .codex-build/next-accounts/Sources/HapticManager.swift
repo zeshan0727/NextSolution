@@ -28,4 +28,9 @@ final class HapticManager {
         selection.selectionChanged()
         selection.prepare()
     }
+
+    func openedLink() {
+        impact.impactOccurred(intensity: 0.82)
+        impact.prepare()
+    }
 }
