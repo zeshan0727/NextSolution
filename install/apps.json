@@ -1,6 +1,26 @@
 {
   "apps": [
     {
+      "id": "com-nextsolution-3ad641639e664ffb93dd",
+      "name": "3AD64163 9E66 4FFB 93DD",
+      "version": "1.4.6",
+      "build": "12",
+      "platform": "iPhone",
+      "minimumOS": "iOS 10+",
+      "bundleId": "com.nextsolution.3ad641639e664ffb93dd",
+      "icon": "/install/icons/com-nextsolution-3ad641639e664ffb93dd-b26bbe938b6c.png",
+      "manifest": "/install/com-nextsolution-3ad641639e664ffb93dd.plist",
+      "available": true,
+      "status": "Ready to install",
+      "downloadURL": "https://files.nextsolution.cc/apps/ipa/com-nextsolution-3ad641639e664ffb93dd/1.4.6/com-nextsolution-3ad641639e664ffb93dd-1.4.6-12.ipa",
+      "sha256": "b26bbe938b6cf709d9362d095bf1a5b00809a0f41f25878c238389162438b6e5",
+      "sizeBytes": 7279551,
+      "storage": "Cloudflare R2",
+      "duplicateSigned": false,
+      "tweakCount": 0,
+      "customIcon": false
+    },
+    {
       "id": "com-nextsolution-tiktok",
       "name": "TikTuk",
       "version": "46.2.0",
@@ -87,5 +107,5 @@
     }
   ],
   "catalog": "Next Jailbreak Private Apps",
-  "updated": "2026-08-23"
+  "updated": "2026-08-24"
 }
