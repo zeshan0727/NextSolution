@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-23T18:47:13Z",
+  "updatedAt": "2026-08-24T07:55:32Z",
   "files": [
+    {
+      "id": "nextmultibrowser-1.0.6-ios16-persistent-profiles",
+      "name": "Next Multi Browser 1.0.6 — Persistent Profiles",
+      "fileName": "NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / RootHide / iOS 15+",
+      "version": "1.0.6 (7)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.0.6/NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa",
+      "sha256": "c97a322b5e225a66c91b9b87c26fe07657f4bbf18290d48ef1898cf8c6d09a77",
+      "sizeBytes": 4794298,
+      "notes": "Twenty isolated browser profiles. Fixes Google session loss on iOS 15/16 by assigning each profile its own persistent WebKit cookies, local storage, IndexedDB, cache storage, service-worker data, and related website data. Migrates cookie snapshots created by 1.0.5."
+    },
     {
       "id": "nextpost-1.0.9-x-preview-fix",
       "name": "Next Post 1.0.9 X Preview Fix",
@@ -50,7 +62,7 @@
     },
     {
       "id": "nextquickreminder-1.0.16-persistent-wake-roothide",
-      "name": "Next Quick Reminder 1.0.16 \u2014 Persistent Wake RootHide",
+      "name": "Next Quick Reminder 1.0.16 — Persistent Wake RootHide",
       "fileName": "NextQuickReminder_1.0.16_RootHide.deb",
       "type": "deb",
       "platform": "RootHide",
@@ -62,7 +74,7 @@
     },
     {
       "id": "nextreminder-1.3.30-automatic-pending-reports",
-      "name": "Next Reminder 1.3.30 \u2014 Automatic Pending Reports",
+      "name": "Next Reminder 1.3.30 — Automatic Pending Reports",
       "fileName": "NextReminder_1.3.30_Unsigned.tipa",
       "type": "tipa",
       "platform": "Unsigned TIPA / iOS 16+",
@@ -96,7 +108,7 @@
     },
     {
       "id": "nextmockupstudio-0.4-live3d",
-      "name": "Next Mockup Studio 0.4 \u2014 Live 3D iPhone Test",
+      "name": "Next Mockup Studio 0.4 — Live 3D iPhone Test",
       "fileName": "NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
@@ -188,7 +200,7 @@
       "id": "nextpost-1.0.2-levelplay-diagnostic",
       "fileName": "NextPost-1.0.2-LevelPlay-Diagnostic.tipa",
       "platform": "TrollStore / iOS 16+",
-      "notes": "LevelPlay diagnostic build. Enables Unity\u2019s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
+      "notes": "LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.",
       "version": "1.0.2",
       "type": "tipa",
       "name": "Next Post 1.0.2 LevelPlay Diagnostic",
