@@ -75,10 +75,10 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa Payload
+          zip -qry ../NextMultiBrowser_1.1.1_Random_Environment_Devices_Locations_iPhone_Test.tipa Payload
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.1.0-Profile-Environment-Manager
-          path: apps/next-multi-browser/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa
+          name: NextMultiBrowser-1.1.1-Random-Environment-Devices-Locations
+          path: apps/next-multi-browser/NextMultiBrowser_1.1.1_Random_Environment_Devices_Locations_iPhone_Test.tipa
           if-no-files-found: error

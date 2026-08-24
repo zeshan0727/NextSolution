@@ -77,13 +77,56 @@ final class BrowserProfileStoreTests: XCTestCase {
         firstStore.setDisplayName("Google Test 02", for: 2)
         firstStore.setEnvironment(profileTwoEnvironment, for: 2)
 
+        let randomizedEnvironment = BrowserProfileEnvironment.randomized(
+            excluding: profileOneEnvironment
+        )
+        XCTAssertNotEqual(randomizedEnvironment, profileOneEnvironment)
+        XCTAssertTrue(
+            randomizedEnvironment.usesCoherentRandomPreset,
+            "Randomization must select a compatible device, user agent, language, region, and timezone"
+        )
+        XCTAssertNotEqual(randomizedEnvironment.viewport, .automatic)
+        XCTAssertNotEqual(randomizedEnvironment.userAgent, .automatic)
+        XCTAssertNotEqual(randomizedEnvironment.language, .automatic)
+        XCTAssertNotEqual(randomizedEnvironment.region, .automatic)
+        XCTAssertNotEqual(randomizedEnvironment.timezone, .automatic)
+        XCTAssertGreaterThanOrEqual(BrowserViewportPreset.allCases.count, 19)
+        XCTAssertGreaterThanOrEqual(BrowserLanguagePreset.allCases.count, 17)
+        XCTAssertGreaterThanOrEqual(BrowserRegionPreset.allCases.count, 24)
+        XCTAssertGreaterThanOrEqual(BrowserTimezonePreset.allCases.count, 27)
+
+        firstStore.setEnvironment(randomizedEnvironment, for: 1)
+        XCTAssertEqual(
+            firstStore.environment(for: 2),
+            profileTwoEnvironment,
+            "Randomizing Profile 1 must not change Profile 2"
+        )
+        let profileOneCookieAfterRandomizing = await cookieValue(
+            named: "NMB_PROFILE",
+            in: sessions[0].dataStore.httpCookieStore
+        )
+        let profileTwoCookieAfterRandomizing = await cookieValue(
+            named: "NMB_PROFILE",
+            in: sessions[1].dataStore.httpCookieStore
+        )
+        XCTAssertEqual(
+            profileOneCookieAfterRandomizing,
+            "profile-one",
+            "Randomizing an environment must not clear that profile's login cookie"
+        )
+        XCTAssertEqual(
+            profileTwoCookieAfterRandomizing,
+            "profile-two",
+            "Randomizing Profile 1 must not affect Profile 2's login cookie"
+        )
+
         let relaunchedStore = BrowserProfileStore(
             defaults: defaults,
             profilesRootDirectory: root,
             usesNamedDataStoreWhenAvailable: true
         )
         XCTAssertEqual(relaunchedStore.displayName(for: 1), "Google Test 01")
-        XCTAssertEqual(relaunchedStore.environment(for: 1), profileOneEnvironment)
+        XCTAssertEqual(relaunchedStore.environment(for: 1), randomizedEnvironment)
         XCTAssertEqual(
             relaunchedStore.persistentIdentifier(for: 1),
             identifiers[0],

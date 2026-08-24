@@ -2,6 +2,7 @@ import UIKit
 
 final class BrowserProfileEnvironmentViewController: UITableViewController {
     private enum Section: Int, CaseIterable {
+        case randomize
         case device
         case userAgent
         case language
@@ -39,6 +40,7 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch Section(rawValue: section)! {
+        case .randomize: return nil
         case .device: return "Device & Viewport"
         case .userAgent: return "User Agent"
         case .language: return "Language & Locale"
@@ -50,6 +52,8 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         switch Section(rawValue: section)! {
+        case .randomize:
+            return "Creates one matching device, user agent, language, region, and timezone combination for this profile only."
         case .device:
             return "Device presets set WebKit content mode and a CSS viewport hint for this profile."
         case .timezone:
@@ -69,6 +73,17 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
 
         switch Section(rawValue: indexPath.section)! {
+        case .randomize:
+            cell.textLabel?.text = "Randomize Environment"
+            cell.textLabel?.textColor = view.tintColor
+            cell.textLabel?.font = .preferredFont(forTextStyle: .headline)
+            cell.detailTextLabel?.text = "All settings"
+            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.imageView?.image = UIImage(systemName: "shuffle")
+            cell.imageView?.tintColor = view.tintColor
+            cell.accessoryType = .none
+            cell.accessibilityHint = "Randomizes this profile's testing environment without clearing its login or website data."
+            return cell
         case .device:
             cell.textLabel?.text = environment.viewport.title
             cell.detailTextLabel?.text = environment.viewport.viewportDescription
@@ -109,6 +124,8 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         switch Section(rawValue: indexPath.section)! {
+        case .randomize:
+            confirmRandomize()
         case .device:
             showViewportPicker()
         case .userAgent:
@@ -253,11 +270,43 @@ final class BrowserProfileEnvironmentViewController: UITableViewController {
         present(alert, animated: true)
     }
 
+    private func confirmRandomize() {
+        let profileName = profileStore.displayName(for: profileIndex)
+        let alert = UIAlertController(
+            title: "Randomize Environment?",
+            message: "Device, user agent, language, region, and timezone will be randomized for \(profileName) only. Cookies, login, and website storage remain untouched.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Randomize", style: .default) { [weak self] _ in
+            guard let self else { return }
+            let current = self.profileStore.environment(for: self.profileIndex)
+            let randomized = BrowserProfileEnvironment.randomized(excluding: current)
+            self.profileStore.setEnvironment(randomized, for: self.profileIndex)
+            UIView.transition(
+                with: self.tableView,
+                duration: 0.25,
+                options: [.transitionCrossDissolve, .allowAnimatedContent],
+                animations: {
+                    self.tableView.reloadData()
+                },
+                completion: nil
+            )
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        })
+        present(alert, animated: true)
+    }
+
     private func deviceSymbol(_ viewport: BrowserViewportPreset) -> String {
         switch viewport {
         case .automatic: return "rectangle.dashed"
-        case .iPhoneSE, .iPhonePro, .iPhoneProMax: return "iphone"
-        case .iPadPro: return "ipad"
+        case .iPhoneSE, .iPhone8Plus, .iPhone13Mini, .iPhone11, .iPhone14,
+             .iPhonePro, .iPhoneProMax, .iPhone16Pro, .iPhone16ProMax:
+            return "iphone"
+        case .iPodTouch: return "ipodtouch"
+        case .iPadMini, .iPadAir, .iPadPro11, .iPadPro: return "ipad"
+        case .pixel9Pro, .galaxyS25Ultra: return "rectangle.portrait"
+        case .laptop: return "laptopcomputer"
         case .desktop: return "desktopcomputer"
         }
     }
