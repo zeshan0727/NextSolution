@@ -17,8 +17,8 @@ targets:
       path: Info.plist
       properties:
         CFBundleDisplayName: Next Multi Browser
-        CFBundleShortVersionString: '1.1.2'
-        CFBundleVersion: '10'
+        CFBundleShortVersionString: '1.1.3'
+        CFBundleVersion: '11'
         UILaunchScreen: {}
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
@@ -38,8 +38,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser
         PRODUCT_NAME: Next Multi Browser
-        MARKETING_VERSION: 1.1.2
-        CURRENT_PROJECT_VERSION: 10
+        MARKETING_VERSION: 1.1.3
+        CURRENT_PROJECT_VERSION: 11
         SWIFT_OBJC_BRIDGING_HEADER: Sources/NextMultiBrowser-Bridging-Header.h
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
@@ -63,8 +63,8 @@ targets:
       path: VPNExtension/Info.plist
       properties:
         CFBundleDisplayName: Next Multi Browser VPN
-        CFBundleShortVersionString: '1.1.2'
-        CFBundleVersion: '10'
+        CFBundleShortVersionString: '1.1.3'
+        CFBundleVersion: '11'
         NSExtension:
           NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
@@ -72,8 +72,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser.vpn
         PRODUCT_NAME: NextMultiBrowserVPN
-        MARKETING_VERSION: 1.1.2
-        CURRENT_PROJECT_VERSION: 10
+        MARKETING_VERSION: 1.1.3
+        CURRENT_PROJECT_VERSION: 11
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: '1,2'
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -93,6 +93,8 @@ targets:
       - Sources/BrowserProfileEnvironment.swift
       - Sources/BrowserProfileMaintenance.swift
       - Sources/BrowserProfileStore.swift
+      - Sources/BrowserMediaPlayback.swift
+      - Sources/BrowserURLDistribution.swift
       - Sources/NMBPersistentWebsiteDataStore.h
       - Sources/NMBPersistentWebsiteDataStore.m
     settings:

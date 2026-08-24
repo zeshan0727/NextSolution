@@ -2,7 +2,7 @@
 
 iPhone-first test build for 1–20 simultaneously loaded WKWebView browser panes. Includes grid/focus mode, per-pane navigation, load-all URL, reload-all, 20 isolated persistent browser profiles, and adaptive iPhone/iPad layouts.
 
-Current test build: 1.1.2.
+Current test build: 1.1.3.
 
 - The `Profiles` tab lists all 20 browser containers with last-used time, storage size, session status, and environment summary.
 - Every browser has a separate persistent website data store and process pool so Google cookies and other login state are never shared between panes.
@@ -18,8 +18,10 @@ Current test build: 1.1.2.
 - Storage management reports cookies, cache, local storage, IndexedDB, other website data, total size, and the persistent storage location.
 - Automated simulator tests create 20 unique stores, validate cookie isolation and relaunch persistence, and confirm deleting one profile does not affect another.
 
+- The shuffle toolbar action accepts exactly four URLs, expands the grid to all 20 browsers, and assigns every link to five randomly selected profiles in a new order each time.
 - Global auto refresh: Off / 1m / 2m / 3m / 5m / 10m, applied to current and newly created browsers.
 - Per-browser refresh override remains available.
 - Free multi-country VPN browser using VPN Gate OpenVPN relay profiles.
 - VPN list loading races the primary feed, saved mirrors, and bootstrap mirrors, then falls back to the cached last-good list.
-- Best-effort automatic media playback after navigation, with muted retry when unmuted autoplay is blocked by WebKit/site policy.
+- Inline media policy is installed at document start in every frame so video remains inside its browser pane instead of opening the native player.
+- Best-effort automatic media playback begins without a manual play tap, with muted retry when unmuted autoplay is blocked by WebKit or site policy.

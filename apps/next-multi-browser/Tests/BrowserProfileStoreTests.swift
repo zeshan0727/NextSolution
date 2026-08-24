@@ -4,6 +4,55 @@ import WebKit
 @available(iOS 17.0, *)
 @MainActor
 final class BrowserProfileStoreTests: XCTestCase {
+    func testFourURLsAreBalancedAcrossTwentyBrowsersInRandomOrder() {
+        let urls = [
+            "https://example.com/one",
+            "https://example.com/two",
+            "https://example.com/three",
+            "https://example.com/four"
+        ]
+        var generator = TestRandomNumberGenerator(seed: 0x4E4D42)
+        let assignments = BrowserURLDistribution.assignments(
+            for: urls,
+            browserCount: BrowserProfileStore.profileCount,
+            using: &generator
+        )
+
+        XCTAssertEqual(assignments.count, BrowserProfileStore.profileCount)
+        for url in urls {
+            XCTAssertEqual(assignments.filter { $0 == url }.count, 5)
+        }
+        XCTAssertNotEqual(
+            assignments,
+            (0..<BrowserProfileStore.profileCount).map { urls[$0 % urls.count] },
+            "Browser assignments must not follow the original four-link sequence"
+        )
+    }
+
+    func testFourURLInputRequiresFourNonEmptyValues() {
+        XCTAssertEqual(
+            BrowserURLDistribution.cleanedURLs(from: [" one ", "two", "three", "four\n"]),
+            ["one", "two", "three", "four"]
+        )
+        XCTAssertNil(BrowserURLDistribution.cleanedURLs(from: ["one", "two", "three"]))
+        XCTAssertNil(BrowserURLDistribution.cleanedURLs(from: ["one", "two", "", "four"]))
+    }
+
+    func testMediaPlaybackPolicyIsInlineAndInstalledAtDocumentStart() {
+        let configuration = WKWebViewConfiguration()
+        BrowserMediaPlaybackPolicy.configure(configuration)
+
+        XCTAssertTrue(configuration.allowsInlineMediaPlayback)
+        XCTAssertEqual(configuration.mediaTypesRequiringUserActionForPlayback, [])
+        XCTAssertFalse(configuration.allowsPictureInPictureMediaPlayback)
+        let scripts = configuration.userContentController.userScripts
+        XCTAssertEqual(scripts.count, 1)
+        XCTAssertEqual(scripts.first?.injectionTime, .atDocumentStart)
+        XCTAssertFalse(scripts.first?.isForMainFrameOnly ?? true)
+        XCTAssertTrue(scripts.first?.source.contains("playsinline") ?? false)
+        XCTAssertTrue(scripts.first?.source.contains("webkitbeginfullscreen") ?? false)
+    }
+
     func testTwentyProfilesRemainIsolatedPersistentAndDeleteSafely() async throws {
         let suiteName = "com.nextsolution.multibrowser.tests.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suiteName) else {
@@ -284,5 +333,18 @@ final class BrowserProfileStoreTests: XCTestCase {
                 continuation.resume()
             }
         }
+    }
+}
+
+private struct TestRandomNumberGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state = state &* 6364136223846793005 &+ 1442695040888963407
+        return state
     }
 }

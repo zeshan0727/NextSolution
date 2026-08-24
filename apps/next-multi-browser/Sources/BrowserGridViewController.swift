@@ -33,8 +33,6 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         let config = WKWebViewConfiguration()
         config.websiteDataStore = profileSession.dataStore
         config.processPool = profileSession.processPool
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
         BrowserEnvironmentWebKit.configure(
             profileStore.environment(for: index),
@@ -493,9 +491,21 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         navigationItem.leftBarButtonItems = [
             UIBarButtonItem(image: UIImage(systemName: "house"), style: .plain, target: self, action: #selector(homeAll)),
             UIBarButtonItem(image: UIImage(systemName: "arrow.clockwise.circle"), style: .plain, target: self, action: #selector(reloadAll)),
-            UIBarButtonItem(image: UIImage(systemName: "square.on.square"), style: .plain, target: self, action: #selector(loadSameURL))
+            UIBarButtonItem(image: UIImage(systemName: "square.on.square"), style: .plain, target: self, action: #selector(loadSameURL)),
+            randomURLsBarButtonItem()
         ]
         installNormalRightItems()
+    }
+
+    private func randomURLsBarButtonItem() -> UIBarButtonItem {
+        let item = UIBarButtonItem(
+            image: UIImage(systemName: "shuffle"),
+            style: .plain,
+            target: self,
+            action: #selector(loadFourURLsRandomly)
+        )
+        item.accessibilityLabel = "Open Four URLs Randomly"
+        return item
     }
 
     private func installNormalRightItems() {
@@ -760,6 +770,58 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             guard let self, let text = alert?.textFields?.first?.text else { return }
             self.panes.prefix(self.browserCount).forEach { $0.load(text) }
         })
+        present(alert, animated: true)
+    }
+
+    @objc private func loadFourURLsRandomly() {
+        let alert = UIAlertController(
+            title: "Random 4 URLs",
+            message: "Paste one link in each field. Every link opens in five randomly selected browsers.",
+            preferredStyle: .alert
+        )
+        let savedURLs = UserDefaults.standard.stringArray(
+            forKey: "NextMultiBrowser.randomURLInputs"
+        ) ?? []
+        for index in 0..<BrowserURLDistribution.requiredURLCount {
+            alert.addTextField { field in
+                field.placeholder = "URL \(index + 1)"
+                field.keyboardType = .URL
+                field.autocapitalizationType = .none
+                field.autocorrectionType = .no
+                field.clearButtonMode = .whileEditing
+                if savedURLs.indices.contains(index) {
+                    field.text = savedURLs[index]
+                }
+            }
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Open Randomly", style: .default) { [weak self, weak alert] _ in
+            guard let self else { return }
+            let inputs = alert?.textFields?.map { $0.text ?? "" } ?? []
+            guard let urls = BrowserURLDistribution.cleanedURLs(from: inputs) else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.showRandomURLsError()
+                }
+                return
+            }
+
+            UserDefaults.standard.set(urls, forKey: "NextMultiBrowser.randomURLInputs")
+            self.applyBrowserCount(BrowserProfileStore.profileCount)
+            let assignments = BrowserURLDistribution.assignments(for: urls)
+            for (pane, url) in zip(self.panes.prefix(assignments.count), assignments) {
+                pane.load(url)
+            }
+        })
+        present(alert, animated: true)
+    }
+
+    private func showRandomURLsError() {
+        let alert = UIAlertController(
+            title: "Four URLs Required",
+            message: "Enter one URL in each of the four fields, then try again.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
 
