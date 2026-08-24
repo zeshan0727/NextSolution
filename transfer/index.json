@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T07:55:32Z",
+  "updatedAt": "2026-08-24T08:06:34Z",
   "files": [
+    {
+      "id": "nextaccounts-1.0.1-private-slots-platform-status",
+      "name": "Next Accounts 1.0.1 — Private Slots & Platform Status",
+      "fileName": "NextAccounts-1.0.1-PrivateSlots-PlatformStatus.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.1",
+      "url": "https://nextsolution.cc/transfer/files/NextAccounts/1.0.1/NextAccounts-1.0.1-PrivateSlots-PlatformStatus.tipa",
+      "sha256": "e62a08c6ff0904395b0855d80ec0b2e17f1c366ae5fa8e10584ca598997ba6e0",
+      "sizeBytes": 1149925,
+      "notes": "Credential-free public build. Creates 22 blank private slots and unique passwords locally on-device; upgrades keep only the first legacy account and replace the other 21 with blank slots. Adds compact per-account Apple, Google, YouTube, Instagram, Facebook, Twitter and TikTok status chips, account editing, bulk email import, one-tap copy and Keychain persistence."
+    },
     {
       "id": "nextmultibrowser-1.0.6-ios16-persistent-profiles",
       "name": "Next Multi Browser 1.0.6 — Persistent Profiles",
