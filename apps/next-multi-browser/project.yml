@@ -90,22 +90,31 @@ targets:
     deploymentTarget: '17.0'
     sources:
       - Tests
+      - Sources/BrowserProfileEnvironment.swift
+      - Sources/BrowserProfileMaintenance.swift
+      - Sources/BrowserProfileStore.swift
+      - Sources/NMBPersistentWebsiteDataStore.h
+      - Sources/NMBPersistentWebsiteDataStore.m
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.multibrowser.tests
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: 5.0
         CODE_SIGN_STYLE: Automatic
-        TEST_HOST: '$(BUILT_PRODUCTS_DIR)/Next Multi Browser.app/Next Multi Browser'
-        BUNDLE_LOADER: '$(TEST_HOST)'
-    dependencies:
-      - target: NextMultiBrowser
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/NextMultiBrowser-Bridging-Header.h
 
 schemes:
   NextMultiBrowser:
     build:
       targets:
         NextMultiBrowser: all
+    test:
+      targets:
+        - NextMultiBrowserTests
+  NextMultiBrowserProfileTests:
+    build:
+      targets:
+        NextMultiBrowserTests: all
     test:
       targets:
         - NextMultiBrowserTests

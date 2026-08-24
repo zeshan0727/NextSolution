@@ -29,13 +29,14 @@ jobs:
         working-directory: apps/next-multi-browser
         run: xcodegen generate
       - name: Run 20-profile isolation and persistence tests
+        timeout-minutes: 10
         working-directory: apps/next-multi-browser
         run: |
           SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(device["udid"] for runtime, devices in data["devices"].items() if "iOS" in runtime for device in devices if device.get("isAvailable") and device["name"].startswith("iPhone")))')
           test -n "$SIMULATOR_ID"
           xcodebuild \
             -project NextMultiBrowser.xcodeproj \
-            -scheme NextMultiBrowser \
+            -scheme NextMultiBrowserProfileTests \
             -configuration Debug \
             -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
             -only-testing:NextMultiBrowserTests \
