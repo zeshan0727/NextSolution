@@ -330,6 +330,7 @@ private struct PlatformChip: View {
             }
     }
 
+    @MainActor
     private func openSignup() {
         HapticManager.shared.openedLink()
         openURL(platform.signupURL)
