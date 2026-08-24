@@ -4,11 +4,13 @@ import SwiftUI
 @MainActor
 struct NextAccountsApp: App {
     @StateObject private var store = CredentialStore()
+    @StateObject private var router = AppRouter()
 
     var body: some Scene {
         WindowGroup {
-            CredentialListView()
+            AppRootView()
                 .environmentObject(store)
+                .environmentObject(router)
         }
     }
 }

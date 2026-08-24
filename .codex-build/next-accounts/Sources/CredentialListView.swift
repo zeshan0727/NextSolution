@@ -15,7 +15,6 @@ private enum AccountSheet: Identifiable {
 
 struct CredentialListView: View {
     @EnvironmentObject private var store: CredentialStore
-    @Environment(\.scenePhase) private var scenePhase
     @State private var presentedSheet: AccountSheet?
 
     var body: some View {
@@ -93,11 +92,6 @@ struct CredentialListView: View {
                 }
             }
             .animation(.spring(response: 0.28, dampingFraction: 0.86), value: store.statusMessage)
-            .overlay {
-                if scenePhase != .active {
-                    PrivacyCoverView()
-                }
-            }
         }
     }
 }
@@ -138,7 +132,7 @@ private struct AccountHeaderView: View {
                 Label("Emails and passwords stored locally", systemImage: "lock.fill")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.58))
-                Label("Tap platform: status • Hold: signup", systemImage: "hand.tap.fill")
+                Label("Tap: status • Hold: in-app signup", systemImage: "hand.tap.fill")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.white.opacity(0.52))
             }
@@ -278,64 +272,71 @@ private struct CredentialCard: View {
 }
 
 private struct PlatformChip: View {
-    @Environment(\.openURL) private var openURL
+    @EnvironmentObject private var router: AppRouter
 
     let platform: AccountPlatform
     let isActive: Bool
     let action: () -> Void
 
+    @State private var longPressTriggered = false
+
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: platform.systemImage)
-                .font(.system(size: 10, weight: .bold))
-            Text(platform.title)
-                .font(.system(size: 10, weight: .bold))
-                .lineLimit(1)
+        Button {
+            guard !longPressTriggered else { return }
+            action()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: platform.systemImage)
+                    .font(.system(size: 10, weight: .bold))
+                Text(platform.title)
+                    .font(.system(size: 10, weight: .bold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(isActive ? Color.white : Color.white.opacity(0.58))
+            .padding(.horizontal, 8)
+            .frame(height: 27)
+            .background(
+                isActive ? Color.green.opacity(0.88) : Color.white.opacity(0.065),
+                in: Capsule()
+            )
+            .overlay {
+                Capsule()
+                    .stroke(
+                        isActive ? Color.green.opacity(0.95) : Color.white.opacity(0.10),
+                        lineWidth: 1
+                    )
+            }
+            .contentShape(Capsule())
         }
-        .foregroundStyle(isActive ? Color.white : Color.white.opacity(0.58))
-        .padding(.horizontal, 8)
-        .frame(height: 27)
-        .background(
-            isActive ? Color.green.opacity(0.88) : Color.white.opacity(0.065),
-            in: Capsule()
+        .buttonStyle(.plain)
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.55, maximumDistance: 12)
+                .onEnded { _ in
+                    longPressTriggered = true
+                    Task { @MainActor in
+                        HapticManager.shared.openedLink()
+                        router.openSignup(for: platform)
+                    }
+                }
         )
-        .overlay {
-            Capsule()
-                .stroke(
-                    isActive ? Color.green.opacity(0.95) : Color.white.opacity(0.10),
-                    lineWidth: 1
-                )
-        }
-        .contentShape(Capsule())
-        .gesture(interactionGesture)
-        .accessibilityAddTraits(.isButton)
         .accessibilityLabel(platform.title)
         .accessibilityValue(isActive ? "Selected" : "Not selected")
-        .accessibilityHint("Tap to change status. Press and hold to open account creation in your browser.")
+        .accessibilityHint("Tap to change status. Press and hold to open account creation in the Browser tab.")
         .accessibilityAction(named: Text("Open \(platform.title) signup")) {
-            openSignup()
-        }
-    }
-
-    private var interactionGesture: some Gesture {
-        LongPressGesture(minimumDuration: 0.55, maximumDistance: 12)
-            .exclusively(before: TapGesture())
-            .onEnded { result in
-                switch result {
-                case .first(_):
-                    Task { @MainActor in
-                        openSignup()
-                    }
-                case .second(_):
-                    action()
-                }
+            Task { @MainActor in
+                longPressTriggered = true
+                HapticManager.shared.openedLink()
+                router.openSignup(for: platform)
             }
-    }
-
-    @MainActor
-    private func openSignup() {
-        HapticManager.shared.openedLink()
-        openURL(platform.signupURL)
+        }
+        .onAppear {
+            longPressTriggered = false
+        }
+        .onChange(of: router.selectedTab) { selectedTab in
+            if selectedTab == .accounts {
+                longPressTriggered = false
+            }
+        }
     }
 }
 
@@ -593,7 +594,7 @@ private struct ToastView: View {
     }
 }
 
-private struct PrivacyCoverView: View {
+struct PrivacyCoverView: View {
     var body: some View {
         ZStack {
             LinearGradient(

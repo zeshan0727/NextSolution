@@ -22,6 +22,7 @@ xcrun --sdk iphoneos swiftc \
   -framework UIKit \
   -framework Foundation \
   -framework Security \
+  -framework WebKit \
   -Xlinker -dead_strip \
   Sources/*.swift \
   -o "${APP_DIR}/${APP_NAME}"
@@ -51,7 +52,7 @@ file "${APP_DIR}/${APP_NAME}"
 
 (
   cd "${BUILD_ROOT}"
-  /usr/bin/zip -qry "../NextAccounts_1.0.3.tipa" Payload
+  /usr/bin/zip -qry "../NextAccounts_1.0.4.tipa" Payload
 )
 
-echo "Built ${PWD}/NextAccounts_1.0.3.tipa"
+echo "Built ${PWD}/NextAccounts_1.0.4.tipa"
