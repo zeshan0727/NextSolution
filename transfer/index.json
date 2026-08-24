@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T18:25:31Z",
+  "updatedAt": "2026-08-24T18:26:12Z",
   "files": [
+    {
+      "id": "nextaccounts-1.0.6-search-swipe-delete",
+      "name": "Next Accounts 1.0.6 — Search & Swipe Delete",
+      "fileName": "NextAccounts-1.0.6-Search-Swipe-Delete.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.6",
+      "url": "https://nextsolution.cc/transfer/files/NextAccounts/1.0.6/NextAccounts-1.0.6-Search-Swipe-Delete.tipa",
+      "sha256": "da2706cd5a465eb068a2ddbc1889e8c82ab1cb729630f162fba580eff5b9e91c",
+      "sizeBytes": 1212075,
+      "notes": "Adds a native email search bar with case-insensitive filtering and a clear no-results state. Each account can now be deleted with a simple left swipe, including full-swipe deletion, and the updated list is saved immediately in Keychain. Existing account editing, one-tap copy, platform status buttons, automatic local generators, bulk import, Generate 5 More and the independent in-app browser remain unchanged."
+    },
     {
       "id": "nextmultibrowser-1.1.2-global-phone-environments",
       "name": "Next Multi Browser 1.1.2 — Global Phone Environments",
