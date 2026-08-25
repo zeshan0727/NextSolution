@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-25T13:57:11Z",
+  "updatedAt": "2026-08-25T14:07:54Z",
   "files": [
     {
-      "id": "nextmultibrowser-1.1.6-apple-keychain-autofill",
-      "name": "Next Multi Browser 1.1.6 — Apple Keychain AutoFill",
-      "fileName": "NextMultiBrowser_1.1.6_Apple_Keychain_AutoFill_Imported_URL_Queue.tipa",
+      "id": "nextmultibrowser-1.1.2-global-phone-environments",
+      "name": "Next Multi Browser 1.1.2 — Global Phone Environments",
+      "fileName": "NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
       "type": "tipa",
       "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.6 (14)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.6/NextMultiBrowser_1.1.6_Apple_Keychain_AutoFill_Imported_URL_Queue.tipa",
-      "sha256": "009ba1392546410144fd75120f2859706cad5fbaad216f124cc1ea09d96e0631",
-      "sizeBytes": 6796289,
-      "notes": "Adds Apple Password AutoFill/iCloud Keychain field support for web username, email, current-password, new-password, and one-time-code inputs, including login forms inserted dynamically after page load. The script only adds standards-based autocomplete hints and never reads typed credentials. Retains the Imported URL Queue, redesigned controls, dedicated icon, 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features."
+      "version": "1.1.2 (10)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.2/NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
+      "sha256": "bee01f4712aaf30ee66e2422a0c2056ed07d94db88a841cb77a2a4ed916b2d42",
+      "sizeBytes": 4896684,
+      "notes": "Adds one Profiles-wide Randomize All Environments action for all 20 isolated browsers while retaining the individual per-profile randomize button. Selectable and randomized devices are phone-only: multiple iPhones plus Pixel 9 Pro/XL, Galaxy S25/Ultra, OnePlus 13, and Xiaomi 15 Ultra. Legacy tablet and desktop settings migrate safely to phone presets without replacing profile storage identifiers or clearing cookies, Google sessions, or website data. Includes 17 languages, 24 regions, and 27 timezones."
     },
     {
       "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
