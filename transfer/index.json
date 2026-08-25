@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-25T08:03:44Z",
+  "updatedAt": "2026-08-25T13:13:31Z",
   "files": [
+    {
+      "id": "nextmultibrowser-1.1.2-global-phone-environments",
+      "name": "Next Multi Browser 1.1.2 — Global Phone Environments",
+      "fileName": "NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / RootHide / iOS 15+",
+      "version": "1.1.2 (10)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.2/NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
+      "sha256": "bee01f4712aaf30ee66e2422a0c2056ed07d94db88a841cb77a2a4ed916b2d42",
+      "sizeBytes": 4896684,
+      "notes": "Adds one Profiles-wide Randomize All Environments action for all 20 isolated browsers while retaining the individual per-profile randomize button. Selectable and randomized devices are phone-only: multiple iPhones plus Pixel 9 Pro/XL, Galaxy S25/Ultra, OnePlus 13, and Xiaomi 15 Ultra. Legacy tablet and desktop settings migrate safely to phone presets without replacing profile storage identifiers or clearing cookies, Google sessions, or website data. Includes 17 languages, 24 regions, and 27 timezones."
+    },
     {
       "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
       "name": "Next Reminder 1.3.31 — Gmail Report Recovery Fix",
@@ -13,18 +25,6 @@
       "sha256": "0fc56b2bf9cfc0522a899de7fe261a17fd3010ec101632909313ddbab7b06d55",
       "sizeBytes": 2199353,
       "notes": "Fixes Pending Reports Send Email when Gmail tests successfully but the file-share request sees a stale connector. Send Report now uses the same secure Gmail recovery mechanism as the working email test path, synchronizes any refreshed connector ID, retries the PDF once, and shows the real HTTP/server error if retry still fails. Stable Files implementation remains unchanged."
-    },
-    {
-      "id": "nextmultibrowser-1.1.4-manual-desktop-automatic-environment",
-      "name": "Next Multi Browser 1.1.4 — Manual Desktop Selection",
-      "fileName": "NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.4 (12)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.4/NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa",
-      "sha256": "3b2513359252653bb4d8da72290972f856890c27309a4d43707fd5bca2e558c4",
-      "sizeBytes": 4924547,
-      "notes": "Restores manual device selection with macOS Safari and Windows Chrome desktop modes. Selecting any manual device pairs its compatible user agent and returns language, region, and timezone to Automatic; the selection persists after relaunch. Individual and global randomization remain phone-only. Also retains inline automatic video playback, Random 4 URLs distribution across 20 isolated browsers, separate profile storage, auto refresh, and VPN features."
     },
     {
       "id": "nextaccounts-1.0.6-search-swipe-delete",
