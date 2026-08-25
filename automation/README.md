@@ -5,9 +5,9 @@ jailbreak repositories. The first workflow is intentionally a dry run: it reads
 APT `Packages` indexes, produces a report artifact, and cannot modify the live
 website.
 
-The publisher workflow runs once per day at 06:00 Qatar time. It first checks a
-committed kill switch and the one-per-day audit log, before making any billable
-request. It can then generate one article from a new eligible release or, when
+The publisher workflow runs three times per day at 06:00, 14:00, and 22:00 Qatar
+time. It first checks a committed kill switch and the three-per-day audit log
+before making any billable request. It can then generate one article from a new eligible release or, when
 that queue is empty, one undrafted package from the verified-source evergreen
 catalog. It uses the OpenAI Responses API only when `OPENAI_API_KEY` exists as an
 encrypted repository secret. The model produces strict structured text; trusted

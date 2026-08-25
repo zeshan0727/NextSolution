@@ -8,13 +8,8 @@ on:
     paths:
       - "automation/publisher-trigger.json"
   schedule:
-    # 03:00 UTC is 06:00 in Qatar (UTC+3, no daylight-saving changes).
-    - cron: "0 3 * * *"
-    # During the three-day launch boost, frequent gates make the three-hour
-    # publishing interval resilient to delayed Actions starts. Preflight stops
-    # early without an API request until three hours have actually elapsed.
-    # After the boost, preflight closes this path before API use and daily publishing remains.
-    - cron: "*/15 * * * *"
+    # Publish at 06:00, 14:00, and 22:00 Qatar time (UTC+3).
+    - cron: "0 3,11,19 * * *"
   pull_request:
     paths:
       - "automation/**"

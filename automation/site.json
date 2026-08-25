@@ -7,7 +7,9 @@
   "youtube_channel_url": "https://youtube.com/@nextjailbreak",
   "adsense_client": "ca-pub-4770123899731214",
   "default_model": "gpt-5.6-luna",
-  "excluded_source_ids": ["nextsolution"],
+  "excluded_source_ids": [
+    "nextsolution"
+  ],
   "traffic_ranking": {
     "enabled": true,
     "max_bonus": 100,
@@ -48,9 +50,9 @@
   },
   "publishing": {
     "enabled": true,
-    "max_per_day": 1,
+    "max_per_day": 3,
     "timezone": "Asia/Qatar",
-    "normal_cron": "0 3 * * *",
+    "normal_cron": "0 3,11,19 * * *",
     "boost_cron": "*/15 * * * *",
     "boost_until": "2026-08-16T07:30:00Z",
     "boost_interval_hours": 3,

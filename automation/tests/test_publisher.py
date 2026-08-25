@@ -25,7 +25,7 @@ class PublisherTests(unittest.TestCase):
         cls.site = deepcopy(base_site)
         cls.site["base_url"] = "https://nextsolution.cc"
         cls.site["publishing"]["enabled"] = True
-        cls.site["publishing"]["max_per_day"] = 1
+        cls.site["publishing"]["max_per_day"] = 3
         cls.site["publishing"]["timezone"] = "Asia/Qatar"
         cls.site["shortener"]["enabled"] = False
         cls.candidate = select_candidate(state, categories, cls.site)
@@ -122,14 +122,25 @@ class PublisherTests(unittest.TestCase):
         self.assertFalse(blocked.allowed)
         self.assertEqual(blocked.reason, "three-hour-interval-not-reached")
 
-    def test_preflight_returns_to_one_per_day_after_boost(self) -> None:
-        after_boost = datetime(2026, 8, 17, 6, 30, tzinfo=timezone.utc)
+    def test_preflight_allows_three_per_day_after_boost(self) -> None:
+        after_boost = datetime(2026, 8, 17, 20, 30, tzinfo=timezone.utc)
         audit = self.empty_audit()
-        audit["events"].append({"published_at": "2026-08-17T03:10:00+00:00"})
+        audit["events"].extend(
+            [
+                {"published_at": "2026-08-17T03:10:00+00:00"},
+                {"published_at": "2026-08-17T11:10:00+00:00"},
+            ]
+        )
+        ready = preflight(self.site, audit, now=after_boost)
+        self.assertTrue(ready.allowed)
+        self.assertFalse(ready.boost_active)
+        self.assertEqual(ready.max_today, 3)
+
+        audit["events"].append({"published_at": "2026-08-17T19:10:00+00:00"})
         blocked = preflight(self.site, audit, now=after_boost)
         self.assertFalse(blocked.allowed)
-        self.assertFalse(blocked.boost_active)
         self.assertEqual(blocked.reason, "publication-limit-reached")
+
         expired_trigger = preflight(
             self.site,
             self.empty_audit(),

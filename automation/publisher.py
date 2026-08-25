@@ -89,8 +89,8 @@ def _policy(site: dict[str, Any]) -> tuple[dict[str, Any], ZoneInfo]:
     publishing = site.get("publishing")
     if not isinstance(publishing, dict):
         raise PublishingError("site publishing policy is missing")
-    if publishing.get("max_per_day") != 1:
-        raise PublishingError("publishing.max_per_day must remain exactly 1 outside the launch boost")
+    if publishing.get("max_per_day") != 3:
+        raise PublishingError("publishing.max_per_day must remain exactly 3 for the regular schedule")
     if not isinstance(publishing.get("boost_max_per_day"), int) or not 1 <= publishing["boost_max_per_day"] <= 8:
         raise PublishingError("publishing.boost_max_per_day must be between 1 and 8")
     if publishing.get("boost_interval_hours") != 3:
