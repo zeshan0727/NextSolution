@@ -52,6 +52,28 @@ final class BrowserProfileStoreTests: XCTestCase {
         XCTAssertTrue(scripts.first?.source.contains("webkitbeginfullscreen") ?? false)
     }
 
+    func testApplePasswordAutofillHintsAreInstalledForEveryFrame() {
+        let configuration = WKWebViewConfiguration()
+        BrowserCredentialAutofillPolicy.configure(configuration)
+
+        let scripts = configuration.userContentController.userScripts
+        XCTAssertEqual(scripts.count, 1)
+        XCTAssertEqual(scripts.first?.injectionTime, .atDocumentStart)
+        XCTAssertFalse(scripts.first?.isForMainFrameOnly ?? true)
+        let source = scripts.first?.source ?? ""
+        for marker in [
+            "NMB_APPLE_PASSWORD_AUTOFILL_116",
+            "username",
+            "current-password",
+            "new-password",
+            "one-time-code",
+            "MutationObserver",
+            "focusin"
+        ] {
+            XCTAssertTrue(source.contains(marker), "Missing AutoFill marker: \(marker)")
+        }
+    }
+
     func testManualDeviceSelectionIncludesPersistentDesktopModesWithAutomaticLocation() throws {
         let desktopPresets = BrowserManualDevicePreset.all.filter { $0.viewport == .desktop }
         XCTAssertEqual(desktopPresets.count, 2)

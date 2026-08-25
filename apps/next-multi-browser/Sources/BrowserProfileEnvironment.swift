@@ -776,6 +776,7 @@ struct BrowserProfileEnvironment: Codable, Equatable, Hashable {
 enum BrowserEnvironmentWebKit {
     static func configure(_ environment: BrowserProfileEnvironment, configuration: WKWebViewConfiguration) {
         BrowserMediaPlaybackPolicy.configure(configuration)
+        BrowserCredentialAutofillPolicy.configure(configuration)
         configuration.defaultWebpagePreferences.preferredContentMode = preferredContentMode(for: environment)
         configuration.userContentController.addUserScript(environmentScript(for: environment))
     }
@@ -785,6 +786,7 @@ enum BrowserEnvironmentWebKit {
         webView.configuration.defaultWebpagePreferences.preferredContentMode = preferredContentMode(for: environment)
         webView.configuration.userContentController.removeAllUserScripts()
         BrowserMediaPlaybackPolicy.install(in: webView.configuration.userContentController)
+        BrowserCredentialAutofillPolicy.install(in: webView.configuration.userContentController)
         webView.configuration.userContentController.addUserScript(environmentScript(for: environment))
     }
 
