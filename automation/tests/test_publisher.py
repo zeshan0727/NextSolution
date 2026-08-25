@@ -149,6 +149,30 @@ class PublisherTests(unittest.TestCase):
         )
         self.assertEqual(expired_trigger.reason, "launch-boost-ended")
 
+    def test_preflight_does_not_count_existing_page_updates_as_new_posts(self) -> None:
+        after_boost = datetime(2026, 8, 17, 20, 30, tzinfo=timezone.utc)
+        audit = self.empty_audit()
+        audit["events"].extend(
+            [
+                {
+                    "action": "update",
+                    "published_at": "2026-08-17T03:10:00+00:00",
+                },
+                {
+                    "action": "update",
+                    "published_at": "2026-08-17T11:10:00+00:00",
+                },
+                {
+                    "action": "update",
+                    "published_at": "2026-08-17T19:10:00+00:00",
+                },
+            ]
+        )
+        ready = preflight(self.site, audit, now=after_boost)
+        self.assertTrue(ready.allowed)
+        self.assertEqual(ready.published_today, 0)
+        self.assertEqual(ready.max_today, 3)
+
     def test_publish_writes_article_cards_feed_sitemap_and_audit(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

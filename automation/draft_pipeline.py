@@ -619,6 +619,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--state", type=Path, default=Path("automation/runtime-state/known-packages.json"))
     parser.add_argument("--categories", type=Path, default=Path("automation/categories.json"))
     parser.add_argument("--site", type=Path, default=Path("automation/site.json"))
+    parser.add_argument(
+        "--published-audit",
+        type=Path,
+        default=Path("automation/published-articles.json"),
+    )
+    parser.add_argument(
+        "--new-pages-only",
+        action="store_true",
+        help="Exclude packages that already have a published article URL.",
+    )
     parser.add_argument("--output", type=Path, default=Path("automation/out/draft"))
     parser.add_argument("--fixture-article", type=Path)
     parser.add_argument(
@@ -635,7 +645,23 @@ def main() -> int:
         state = load_json(args.state)
         categories = load_json(args.categories)
         site = load_json(args.site)
-        candidate = select_candidate(state, categories, site)
+        excluded_packages: set[str] | None = None
+        if args.new_pages_only:
+            audit = load_json(args.published_audit)
+            entries = audit.get("entries")
+            if not isinstance(entries, list):
+                raise ValueError("published article audit entries must be an array")
+            excluded_packages = {
+                str(entry.get("package", ""))
+                for entry in entries
+                if isinstance(entry, dict) and str(entry.get("package", "")).strip()
+            }
+        candidate = select_candidate(
+            state,
+            categories,
+            site,
+            excluded_packages=excluded_packages,
+        )
         if args.fixture_article:
             article = load_json(args.fixture_article)
             verifier = {"approved": True, "issues": [], "unsupported_claims": [], "notes": "Fixture validation"}

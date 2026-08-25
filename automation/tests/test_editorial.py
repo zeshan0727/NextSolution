@@ -83,6 +83,22 @@ class EditorialTests(unittest.TestCase):
         self.assertEqual(candidate["selection_pool"], "pending")
         self.assertEqual(candidate["package"], "com.example.focuscards")
 
+    def test_new_page_selection_excludes_existing_packages(self) -> None:
+        state = copy.deepcopy(self.state)
+        new_item = copy.deepcopy(next(iter(state["pending"].values())))
+        new_item["package"] = "com.example.newpage"
+        new_item["identity"] = "com.example.newpage|iphoneos-arm64"
+        new_item["release_identity"] = "com.example.newpage|1.2.0|iphoneos-arm64"
+        state["pending"][new_item["release_identity"]] = new_item
+
+        candidate = select_candidate(
+            state,
+            self.categories,
+            self.site,
+            excluded_packages={"com.example.focuscards"},
+        )
+        self.assertEqual(candidate["package"], "com.example.newpage")
+
     def test_evergreen_is_used_when_release_queue_is_empty(self) -> None:
         state = copy.deepcopy(self.state)
         state["evergreen"] = state.pop("pending")

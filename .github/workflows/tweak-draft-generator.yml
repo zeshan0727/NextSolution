@@ -133,6 +133,8 @@ jobs:
           set +e
           python3 -m automation.draft_pipeline \
             --state automation/runtime-state/known-packages.json \
+            --published-audit automation/published-articles.json \
+            --new-pages-only \
             --write-state \
             --output automation/out/draft | tee automation/out/draft-run.log
           status=${PIPESTATUS[0]}
@@ -140,7 +142,7 @@ jobs:
           if [ "$status" -eq 3 ]; then
             echo "drafted=false" >> "$GITHUB_OUTPUT"
             echo "### Publisher" >> "$GITHUB_STEP_SUMMARY"
-            echo "No undrafted eligible release or verified evergreen tweak is waiting." >> "$GITHUB_STEP_SUMMARY"
+            echo "No unpublished eligible release or verified evergreen tweak is waiting." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           if [ "$status" -ne 0 ]; then

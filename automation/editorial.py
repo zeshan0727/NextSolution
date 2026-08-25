@@ -240,7 +240,11 @@ def build_candidates(
 
 
 def select_candidate(
-    state: dict[str, Any], categories: dict[str, Any], site: dict[str, Any]
+    state: dict[str, Any],
+    categories: dict[str, Any],
+    site: dict[str, Any],
+    *,
+    excluded_packages: set[str] | None = None,
 ) -> dict[str, Any]:
     pending = state.get("pending", {})
     if not isinstance(pending, dict):
@@ -248,6 +252,12 @@ def select_candidate(
     candidates = build_candidates(
         pending.values(), categories, site, selection_pool="pending"
     )
+    if excluded_packages:
+        candidates = [
+            candidate
+            for candidate in candidates
+            if str(candidate.get("package", "")) not in excluded_packages
+        ]
     if candidates:
         return candidates[0]
     evergreen = state.get("evergreen", {})
@@ -256,8 +266,18 @@ def select_candidate(
     candidates = build_candidates(
         evergreen.values(), categories, site, selection_pool="evergreen"
     )
+    if excluded_packages:
+        candidates = [
+            candidate
+            for candidate in candidates
+            if str(candidate.get("package", "")) not in excluded_packages
+        ]
     if candidates:
         return candidates[0]
+    if excluded_packages:
+        raise NoCandidateError(
+            "no unpublished eligible release or evergreen tweak is waiting"
+        )
     raise NoCandidateError("no eligible undrafted release or evergreen tweak is waiting")
 
 

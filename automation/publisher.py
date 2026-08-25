@@ -138,7 +138,10 @@ def preflight(
             raise PublishingError("publication timestamps must contain a timezone")
         published_at = published_at.astimezone(timezone.utc)
         event_times.append(published_at)
-        if published_at.astimezone(local_timezone).date().isoformat() == local_day:
+        if (
+            published_at.astimezone(local_timezone).date().isoformat() == local_day
+            and event.get("action", "create") == "create"
+        ):
             events_today += 1
     boost_until = datetime.fromisoformat(
         str(publishing["boost_until"]).replace("Z", "+00:00")
