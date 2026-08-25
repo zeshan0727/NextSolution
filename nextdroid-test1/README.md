@@ -1,7 +1,7 @@
-# NextDroid Android 11 — Test 1
+# NextDroid Android 11 — Test 2
 
 This test package targets iPhone 14 Pro Max on iOS 16.0 installed through
-TrollStore. It uses the UTM/QEMU runtime and creates a persistent Bliss OS
+TrollStore. It uses UTM's JIT/QEMU runtime and creates a persistent Bliss OS
 14.10.3 (Android 11) VM with OpenGApps.
 
 The TIPA is intentionally small. On first launch it downloads the official
@@ -14,7 +14,7 @@ Expected Android image SHA-256:
 
 ## First test flow
 
-1. Install `NextDroid_Android11_Test1.tipa` with TrollStore.
+1. Remove Test 1 and install `NextDroid_Android11_Test2.tipa` with TrollStore.
 2. Open NextDroid and accept the one-time Android download.
 3. Keep NextDroid open until verification completes.
 4. Close and reopen NextDroid.

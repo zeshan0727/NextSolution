@@ -1,4 +1,4 @@
-name: Build NextDroid Android 11 Test 1
+name: Build NextDroid Android 11 Test 2
 
 on:
   push:
@@ -30,10 +30,10 @@ jobs:
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextDroid-Android11-Test1
+          name: NextDroid-Android11-Test2
           path: |
-            nextdroid-test1/output/NextDroid_Android11_Test1.tipa
-            nextdroid-test1/output/NextDroid_Android11_Test1.sha256
+            nextdroid-test1/output/NextDroid_Android11_Test2.tipa
+            nextdroid-test1/output/NextDroid_Android11_Test2.sha256
           if-no-files-found: error
           compression-level: 0
           retention-days: 14

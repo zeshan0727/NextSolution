@@ -16,6 +16,7 @@ static const unsigned long long NDExpectedSize = 2087714816ULL;
 @property (nonatomic, strong) UILabel *statusLabel;
 @property (nonatomic, strong) UIProgressView *progressView;
 @property (nonatomic, strong) UILabel *detailLabel;
+@property (nonatomic, assign) BOOL hasOfferedThisLaunch;
 @end
 
 static NDAndroidInstaller *NDSharedInstaller;
@@ -83,7 +84,7 @@ static NDAndroidInstaller *NDSharedInstaller;
 }
 
 - (void)offerInstallation {
-    if ([self isInstalled] || self.task) {
+    if ([self isInstalled] || self.task || self.hasOfferedThisLaunch) {
         return;
     }
     UIViewController *presenter = [self topViewController];
@@ -95,14 +96,17 @@ static NDAndroidInstaller *NDSharedInstaller;
         return;
     }
 
+    self.hasOfferedThisLaunch = YES;
     UIAlertController *alert = [UIAlertController
         alertControllerWithTitle:@"Install Android 11"
                          message:@"NextDroid needs a one-time 2.0 GB Android download. Keep the app open until verification finishes. Android data remains saved after installation."
                   preferredStyle:UIAlertControllerStyleAlert];
+    __weak typeof(self) weakSelf = self;
     [alert addAction:[UIAlertAction actionWithTitle:@"Not Now"
                                               style:UIAlertActionStyleCancel
-                                            handler:nil]];
-    __weak typeof(self) weakSelf = self;
+                                            handler:^(__unused UIAlertAction *action) {
+        weakSelf.hasOfferedThisLaunch = NO;
+    }]];
     [alert addAction:[UIAlertAction actionWithTitle:@"Download"
                                               style:UIAlertActionStyleDefault
                                             handler:^(__unused UIAlertAction *action) {
@@ -434,9 +438,29 @@ didCompleteWithError:(NSError *)error {
 __attribute__((constructor))
 static void NDInstallBootstrap(void) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)),
+        NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
+        [center addObserverForName:UIApplicationDidBecomeActiveNotification
+                           object:nil
+                            queue:NSOperationQueue.mainQueue
+                       usingBlock:^(__unused NSNotification *notification) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                @try {
+                    [[NDAndroidInstaller sharedInstaller] offerInstallation];
+                } @catch (NSException *exception) {
+                    NSLog(@"NextDroid bootstrap activation error: %@", exception);
+                }
+            });
+        }];
+
+        // Covers launches where the active notification was delivered before the observer.
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
-            [[NDAndroidInstaller sharedInstaller] offerInstallation];
+            @try {
+                [[NDAndroidInstaller sharedInstaller] offerInstallation];
+            } @catch (NSException *exception) {
+                NSLog(@"NextDroid bootstrap fallback error: %@", exception);
+            }
         });
     });
 }
