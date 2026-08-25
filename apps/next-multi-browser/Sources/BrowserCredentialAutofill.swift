@@ -23,8 +23,9 @@ enum BrowserCredentialAutofillPolicy {
         window.__nextMultiBrowserCredentialAutofillInstalled = true;
 
         const featureMarker = 'NMB_APPLE_PASSWORD_AUTOFILL_116';
+        const emailFocusMarker = 'NMB_APPLE_EMAIL_AUTOFILL_FOCUS_REFRESH_117';
         const supportedHints = new Set([
-            'username', 'current-password', 'new-password', 'one-time-code'
+            'username', 'email', 'current-password', 'new-password', 'one-time-code'
         ]);
         const ignoredTypes = new Set([
             'hidden', 'button', 'submit', 'reset', 'checkbox', 'radio',
@@ -48,7 +49,11 @@ enum BrowserCredentialAutofillPolicy {
         ];
         const usernameTokens = [
             'username', 'user name', 'user-name', 'userid', 'user id',
-            'login', 'email', 'e-mail', 'account', 'identifier'
+            'login', 'account', 'identifier'
+        ];
+        const contactEmailTokens = [
+            'recovery', 'contact', 'alternate', 'alternative', 'backup',
+            'notification', 'receipt', 'billing'
         ];
 
         function containsAny(value, tokens) {
@@ -66,14 +71,14 @@ enum BrowserCredentialAutofillPolicy {
             ].filter(Boolean).join(' ').toLowerCase();
         }
 
-        function hasSupportedHint(input) {
+        function supportedHint(input) {
             const value = (input.getAttribute('autocomplete') || '').toLowerCase();
-            return value.split(/\s+/).some(function(token) {
+            return value.split(/\s+/).find(function(token) {
                 return supportedHints.has(token);
-            });
+            }) || null;
         }
 
-        function registrationContext(input, details) {
+        function formContext(input, details) {
             let context = details + ' ' + String(location.pathname || '').toLowerCase();
             try {
                 if (input.form) {
@@ -85,47 +90,98 @@ enum BrowserCredentialAutofillPolicy {
                     ].filter(Boolean).join(' ').toLowerCase();
                 }
             } catch (_) {}
-            return containsAny(context, registrationTokens);
+            return context;
+        }
+
+        function registrationContext(input, details) {
+            return containsAny(formContext(input, details), registrationTokens);
+        }
+
+        function isFocusedInput(input) {
+            if (!input) return false;
+            if (document.activeElement === input) return true;
+            try { return input.matches(':focus'); } catch (_) { return false; }
+        }
+
+        function refreshFocusedEmailTraits(input) {
+            if (!input || input.__nextMultiBrowserEmailTraitsRefreshed) return;
+            if (!isFocusedInput(input)) return;
+            input.__nextMultiBrowserEmailTraitsRefreshed = emailFocusMarker;
+
+            setTimeout(function() {
+                if (!input.isConnected || !isFocusedInput(input)) return;
+                const value = input.value;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                const direction = input.selectionDirection;
+                const scrollX = window.scrollX;
+                const scrollY = window.scrollY;
+                try { input.blur(); } catch (_) { return; }
+                requestAnimationFrame(function() {
+                    if (!input.isConnected) return;
+                    try {
+                        input.focus({ preventScroll: true });
+                    } catch (_) {
+                        try { input.focus(); } catch (_) { return; }
+                    }
+                    try {
+                        if (input.value !== value) input.value = value;
+                        if (start !== null && end !== null) {
+                            input.setSelectionRange(start, end, direction || 'none');
+                        }
+                    } catch (_) {}
+                    try { window.scrollTo(scrollX, scrollY); } catch (_) {}
+                });
+            }, 0);
         }
 
         function applyHint(input, hint) {
-            if (!hint || hasSupportedHint(input)) return;
+            if (!hint || supportedHint(input)) return supportedHint(input);
             try {
                 input.setAttribute('autocomplete', hint);
-                if (hint === 'username') {
+                input.autocomplete = hint;
+                if (hint === 'username' || hint === 'email') {
                     if (!input.hasAttribute('autocapitalize')) {
                         input.setAttribute('autocapitalize', 'none');
                     }
                     if (!input.hasAttribute('spellcheck')) {
                         input.setAttribute('spellcheck', 'false');
                     }
+                    refreshFocusedEmailTraits(input);
                 }
             } catch (_) {}
+            return hint;
         }
 
         function annotate(input) {
-            if (!input || input.nodeType !== 1 || input.tagName !== 'INPUT') return;
-            if (hasSupportedHint(input)) return;
+            if (!input || input.nodeType !== 1 || input.tagName !== 'INPUT') return null;
+            const existingHint = supportedHint(input);
+            if (existingHint) return existingHint;
 
             const type = String(input.getAttribute('type') || input.type || 'text').toLowerCase();
-            if (ignoredTypes.has(type)) return;
+            if (ignoredTypes.has(type)) return null;
             const details = fingerprint(input);
 
             if (containsAny(details, oneTimeCodeTokens)) {
-                applyHint(input, 'one-time-code');
-                return;
+                return applyHint(input, 'one-time-code');
             }
 
             if (type === 'password') {
                 const isNew = containsAny(details, newPasswordTokens)
                     || registrationContext(input, details);
-                applyHint(input, isNew ? 'new-password' : 'current-password');
-                return;
+                return applyHint(input, isNew ? 'new-password' : 'current-password');
             }
 
-            if (type === 'email' || containsAny(details, usernameTokens)) {
-                applyHint(input, 'username');
+            if (containsAny(details, usernameTokens)) {
+                return applyHint(input, 'username');
             }
+
+            if (type === 'email') {
+                const isContactEmail = containsAny(details, contactEmailTokens);
+                return applyHint(input, isContactEmail ? 'email' : 'username');
+            }
+
+            return null;
         }
 
         function prepareTree(root) {
@@ -167,7 +223,10 @@ enum BrowserCredentialAutofillPolicy {
         }
 
         document.addEventListener('focusin', function(event) {
-            annotate(event.target);
+            const hint = annotate(event.target);
+            if (hint === 'username' || hint === 'email') {
+                refreshFocusedEmailTraits(event.target);
+            }
             try {
                 const root = event.target && event.target.getRootNode
                     ? event.target.getRootNode()
@@ -180,6 +239,11 @@ enum BrowserCredentialAutofillPolicy {
         document.addEventListener('DOMContentLoaded', function() {
             observeRoot(document);
             prepareTree(document);
+            const active = document.activeElement;
+            const hint = annotate(active);
+            if (hint === 'username' || hint === 'email') {
+                refreshFocusedEmailTraits(active);
+            }
         }, { once: true });
     })();
     """#

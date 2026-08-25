@@ -2,7 +2,7 @@
 
 iPhone-first test build for 1–20 simultaneously loaded WKWebView browser panes. Includes grid/focus mode, per-pane navigation, load-all URL, reload-all, 20 isolated persistent browser profiles, and adaptive iPhone/iPad layouts.
 
-Current test build: 1.1.6.
+Current test build: 1.1.7.
 
 - The `Profiles` tab lists all 20 browser containers with last-used time, storage size, session status, and environment summary.
 - Every browser has a separate persistent website data store and process pool so Google cookies and other login state are never shared between panes.
@@ -29,3 +29,4 @@ Current test build: 1.1.6.
 - Inline media policy is installed at document start in every frame so video remains inside its browser pane instead of opening the native player.
 - Best-effort automatic media playback begins without a manual play tap, with muted retry when unmuted autoplay is blocked by WebKit or site policy.
 - Apple Password AutoFill support annotates username/email, current-password, new-password, and one-time-code fields at document start and as dynamic login forms appear. This lets iOS show its Passwords/iCloud Keychain controls when they are enabled on the device, without reading or sharing typed credentials between browser profiles.
+- Auto-focused first-step email fields receive a one-time, value-preserving focus refresh so WebKit recalculates their AutoFill keyboard traits. Login emails stay classified as usernames, while recovery/contact email fields receive the separate email AutoFill hint.

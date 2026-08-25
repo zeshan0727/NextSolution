@@ -63,12 +63,15 @@ final class BrowserProfileStoreTests: XCTestCase {
         let source = scripts.first?.source ?? ""
         for marker in [
             "NMB_APPLE_PASSWORD_AUTOFILL_116",
+            "NMB_APPLE_EMAIL_AUTOFILL_FOCUS_REFRESH_117",
             "username",
+            "email",
             "current-password",
             "new-password",
             "one-time-code",
             "MutationObserver",
-            "focusin"
+            "focusin",
+            "preventScroll"
         ] {
             XCTAssertTrue(source.contains(marker), "Missing AutoFill marker: \(marker)")
         }
