@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "eb632b4d76ab663b8d7ebbe25df1b80bc0edb29117ce9c3053a14a11dbd80faa",
+      "candidate_fingerprint": "48ff95b6b06c0de95d2a3490deb47d61c3d6b2b50f5c5b9a3e9ffe668b7e7369",
+      "category": {
+        "id": "home-screen",
+        "label": "Home Screen"
+      },
+      "description": "Remove Widget Background 2.1.1 is a Home Screen tweak by 82flex. Review its listed function, architecture variants, firmware requirement, and dependencies.",
+      "href": "remove-widget-background-tweak.html",
+      "image": "https://media.havoc.app/66e1e1e9f7944810d9701bba",
+      "media_credit": "Remove Widget Background official package listing",
+      "media_source_url": "https://havoc.app/package/removewidgetbg",
+      "modified_at": "2026-08-25T12:35:43+00:00",
+      "name": "Remove Widget Background",
+      "package": "com.82flex.removewidgetbg",
+      "published_at": "2026-08-25T12:35:43+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/removewidgetbg",
+      "source_url": "https://havoc.app/",
+      "title": "Remove Widget Background 2.1.1: Home Screen Widget Background Removal",
+      "version": "2.1.1"
+    },
+    {
       "article_sha256": "a7339d25123c77028da730e728b38622f60b6faaa70ba61901c94c07e17b9dd6",
       "candidate_fingerprint": "2bd02c033a4ffa349b2fb523f8ccd515db3385842da8ec095b99e4b9e551d7a1",
       "category": {
@@ -843,8 +866,17 @@
       "published_at": "2026-08-25T12:21:25+00:00",
       "run_id": "32846991847",
       "version": "1.9.23"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "48ff95b6b06c0de95d2a3490deb47d61c3d6b2b50f5c5b9a3e9ffe668b7e7369",
+      "href": "remove-widget-background-tweak.html",
+      "package": "com.82flex.removewidgetbg",
+      "published_at": "2026-08-25T12:35:43+00:00",
+      "run_id": "32848172117",
+      "version": "2.1.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-25T12:21:25+00:00"
+  "updated_at": "2026-08-25T12:35:43+00:00"
 }
