@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T18:34:44Z",
+  "updatedAt": "2026-08-25T08:03:44Z",
   "files": [
+    {
+      "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
+      "name": "Next Reminder 1.3.31 — Gmail Report Recovery Fix",
+      "fileName": "NextReminder_1.3.31_Unsigned.tipa",
+      "type": "tipa",
+      "platform": "Unsigned TIPA / iOS 16+",
+      "version": "1.3.31 (41)",
+      "url": "https://nextsolution.cc/transfer/files/NextReminder/1.3.31/NextReminder_1.3.31_Unsigned.tipa",
+      "sha256": "0fc56b2bf9cfc0522a899de7fe261a17fd3010ec101632909313ddbab7b06d55",
+      "sizeBytes": 2199353,
+      "notes": "Fixes Pending Reports Send Email when Gmail tests successfully but the file-share request sees a stale connector. Send Report now uses the same secure Gmail recovery mechanism as the working email test path, synchronizes any refreshed connector ID, retries the PDF once, and shows the real HTTP/server error if retry still fails. Stable Files implementation remains unchanged."
+    },
     {
       "id": "nextmultibrowser-1.1.4-manual-desktop-automatic-environment",
       "name": "Next Multi Browser 1.1.4 — Manual Desktop Selection",
@@ -143,18 +155,6 @@
       "sha256": "22413d82950dafcbc889eed8d3a149379e37a1874f888f8046e643e0bf403ea1",
       "sizeBytes": 111040,
       "notes": "Replaces the unreliable 30-second SpringBoard polling scheduler with PCPersistentTimer and system waking enabled for locked-device scheduled sends. Keeps the working fresh pending-reminder PDF generation, newest-3 retention, selected weekdays/time preferences, and Gmail file-share sender unchanged."
-    },
-    {
-      "id": "nextreminder-1.3.30-automatic-pending-reports",
-      "name": "Next Reminder 1.3.30 — Automatic Pending Reports",
-      "fileName": "NextReminder_1.3.30_Unsigned.tipa",
-      "type": "tipa",
-      "platform": "Unsigned TIPA / iOS 16+",
-      "version": "1.3.30 (40)",
-      "url": "https://nextsolution.cc/transfer/files/NextReminder/1.3.30/NextReminder_1.3.30_Unsigned.tipa",
-      "sha256": "de51f5b3c3390f09657afbe36516f1a46ee000aaa771b11d5db50cbac8c1944d",
-      "sizeBytes": 2197838,
-      "notes": "Adds Automatic Email controls to the standalone Pending Reports screen while keeping the confirmed-stable Files implementation byte-for-byte unchanged. Choose a preset time and any weekdays or Daily. Manual PDF generation, newest-3 retention, sharing, and manual email remain available."
     },
     {
       "id": "nextlock-1.1.5-test19-preferences-sections-roothide",
