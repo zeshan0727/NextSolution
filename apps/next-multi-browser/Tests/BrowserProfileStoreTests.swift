@@ -4,38 +4,37 @@ import WebKit
 @available(iOS 17.0, *)
 @MainActor
 final class BrowserProfileStoreTests: XCTestCase {
-    func testFourURLsAreBalancedAcrossTwentyBrowsersInRandomOrder() {
-        let urls = [
-            "https://example.com/one",
-            "https://example.com/two",
-            "https://example.com/three",
-            "https://example.com/four"
-        ]
+    func testImportedURLQueueUsesBoundedNonRepeatingRandomBatches() throws {
+        let pasted = (1...28).map { " https://example.com/\($0) " }.joined(separator: "\n")
+            + "\nhttps://example.com/1\n\n"
+        let urls = BrowserURLQueue.cleanedURLs(from: pasted)
+        XCTAssertEqual(urls.count, 28)
+        XCTAssertEqual(urls.first, "https://example.com/1")
+        XCTAssertEqual(urls.last, "https://example.com/28")
+
+        let first = try XCTUnwrap(BrowserURLQueue.nextBatch(from: urls, cursor: 0))
+        XCTAssertEqual(first.urls, Array(urls.prefix(20)))
+        XCTAssertEqual(first.nextCursor, 20)
+        XCTAssertFalse(first.isComplete)
+
+        let second = try XCTUnwrap(
+            BrowserURLQueue.nextBatch(from: urls, cursor: first.nextCursor)
+        )
+        XCTAssertEqual(second.urls, Array(urls.suffix(8)))
+        XCTAssertEqual(second.nextCursor, 28)
+        XCTAssertTrue(second.isComplete)
+        XCTAssertNil(BrowserURLQueue.nextBatch(from: urls, cursor: second.nextCursor))
+
         var generator = TestRandomNumberGenerator(seed: 0x4E4D42)
-        let assignments = BrowserURLDistribution.assignments(
-            for: urls,
+        let assignments = BrowserURLQueue.randomizedAssignments(
+            for: second.urls,
             browserCount: BrowserProfileStore.profileCount,
             using: &generator
         )
-
-        XCTAssertEqual(assignments.count, BrowserProfileStore.profileCount)
-        for url in urls {
-            XCTAssertEqual(assignments.filter { $0 == url }.count, 5)
-        }
-        XCTAssertNotEqual(
-            assignments,
-            (0..<BrowserProfileStore.profileCount).map { urls[$0 % urls.count] },
-            "Browser assignments must not follow the original four-link sequence"
-        )
-    }
-
-    func testFourURLInputRequiresFourNonEmptyValues() {
-        XCTAssertEqual(
-            BrowserURLDistribution.cleanedURLs(from: [" one ", "two", "three", "four\n"]),
-            ["one", "two", "three", "four"]
-        )
-        XCTAssertNil(BrowserURLDistribution.cleanedURLs(from: ["one", "two", "three"]))
-        XCTAssertNil(BrowserURLDistribution.cleanedURLs(from: ["one", "two", "", "four"]))
+        XCTAssertEqual(assignments.count, 8)
+        XCTAssertEqual(Set(assignments.map(\.url)), Set(second.urls))
+        XCTAssertEqual(Set(assignments.map(\.browserIndex)).count, 8)
+        XCTAssertTrue(assignments.allSatisfy { (0..<20).contains($0.browserIndex) })
     }
 
     func testMediaPlaybackPolicyIsInlineAndInstalledAtDocumentStart() {

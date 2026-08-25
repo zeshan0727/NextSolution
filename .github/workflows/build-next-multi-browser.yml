@@ -84,18 +84,18 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa Payload
+          zip -qry ../NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa Payload
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.1.4-Manual-Desktop-Automatic-Environment
-          path: apps/next-multi-browser/NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa
+          name: NextMultiBrowser-1.1.5-Imported-URL-Queue-New-Icon
+          path: apps/next-multi-browser/NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa
           if-no-files-found: error
       - name: Verify package identity and requested features
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa"
+          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa"
           unzip -tq "$TIPA" >/dev/null
           python3 - "$TIPA" <<'PY'
           import plistlib
@@ -116,20 +116,27 @@ jobs:
                   name for name in names
                   if name.endswith('/Next Multi Browser.app/Next Multi Browser')
               )
+              asset_catalog = next(
+                  name for name in names
+                  if name.endswith('/Next Multi Browser.app/Assets.car')
+              )
               host = plistlib.loads(archive.read(host_info))
               vpn = plistlib.loads(archive.read(vpn_info))
               binary = archive.read(executable)
+              assets = archive.read(asset_catalog)
 
           assert host['CFBundleIdentifier'] == 'com.nextsolution.multibrowser'
-          assert host['CFBundleShortVersionString'] == '1.1.4'
-          assert host['CFBundleVersion'] == '12'
+          assert host['CFBundleShortVersionString'] == '1.1.5'
+          assert host['CFBundleVersion'] == '13'
           assert vpn['CFBundleIdentifier'] == 'com.nextsolution.multibrowser.vpn'
-          assert vpn['CFBundleShortVersionString'] == '1.1.4'
-          assert vpn['CFBundleVersion'] == '12'
+          assert vpn['CFBundleShortVersionString'] == '1.1.5'
+          assert vpn['CFBundleVersion'] == '13'
+          assert len(assets) > 1000
           for feature in (
-              b'NextMultiBrowser.randomURLInputs',
-              b'Every link opens in five randomly selected browsers',
-              b'Four URLs Required',
+              b'NextMultiBrowser.importedURLQueue.values',
+              b'NMB_IMPORTED_URL_QUEUE_MANUAL_BATCHES_115',
+              b'Load Next Random Batch',
+              b'Imported URL Queue',
               b'playsinline',
               b'webkitbeginfullscreen',
               b'Randomize All Environments',
@@ -139,6 +146,11 @@ jobs:
               b'Windows NT 10.0; Win64; x64',
           ):
               assert feature in binary, feature
+          for removed_feature in (
+              b'NextMultiBrowser.randomURLInputs',
+              b'Four URLs Required',
+          ):
+              assert removed_feature not in binary, removed_feature
           PY
       - name: Check out NS Transfer publication target
         if: github.event_name != 'pull_request'
@@ -153,9 +165,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa"
-          DEST_DIR="transfer/files/NextMultiBrowser/1.1.4"
-          FILE_NAME="NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa"
+          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa"
+          DEST_DIR="transfer/files/NextMultiBrowser/1.1.5"
+          FILE_NAME="NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa"
           mkdir -p "$DEST_DIR"
           cp "$TIPA" "$DEST_DIR/$FILE_NAME"
 
@@ -180,16 +192,16 @@ jobs:
               current.append(item)
 
           entry = {
-              'id': 'nextmultibrowser-1.1.4-manual-desktop-automatic-environment',
-              'name': 'Next Multi Browser 1.1.4 — Manual Desktop Selection',
-              'fileName': 'NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa',
+              'id': 'nextmultibrowser-1.1.5-imported-url-queue-new-icon',
+              'name': 'Next Multi Browser 1.1.5 — Imported URL Queue + New Icon',
+              'fileName': 'NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / RootHide / iOS 15+',
-              'version': '1.1.4 (12)',
-              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.4/NextMultiBrowser_1.1.4_Manual_Desktop_Automatic_Environment_iPhone_Test.tipa',
+              'version': '1.1.5 (13)',
+              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.5/NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa',
               'sha256': sha256,
               'sizeBytes': size,
-              'notes': 'Restores manual device selection with macOS Safari and Windows Chrome desktop modes. Selecting any manual device pairs its compatible user agent and returns language, region, and timezone to Automatic; the selection persists after relaunch. Individual and global randomization remain phone-only. Also retains inline automatic video playback, Random 4 URLs distribution across 20 isolated browsers, separate profile storage, auto refresh, and VPN features.'
+              'notes': 'Replaces Random 4 URLs with a dedicated Imported URL Queue. Paste any number of links, remove duplicates, save progress, and explicitly load each non-repeating batch of up to 20 links into randomly selected browser panes; the final partial batch uses only its remaining links. Redesigns the crowded navigation bar into compact Actions and Browser Controls menus and adds a dedicated blue/cyan/violet app icon for iPhone and iPad. Retains 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features.'
           }
           data['files'] = [entry] + current
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -203,6 +215,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add transfer/index.json "$DEST_DIR/$FILE_NAME"
           git diff --cached --stat
-          git commit -m 'Publish Next Multi Browser 1.1.4 to NS Transfer'
+          git commit -m 'Publish Next Multi Browser 1.1.5 to NS Transfer'
           git pull --rebase origin main
           git push origin HEAD:main

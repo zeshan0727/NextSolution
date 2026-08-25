@@ -444,8 +444,6 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate {
     private let scrollView = UIScrollView()
     private let rowsStack = UIStackView()
-    private let countButton = UIButton(type: .system)
-    private let globalRefreshButton = UIButton(type: .system)
     private let profileStore: BrowserProfileStore
 
     private var panes: [BrowserPaneView] = []
@@ -479,49 +477,63 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
     }
 
     private func setupToolbar() {
-        countButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
-        countButton.showsMenuAsPrimaryAction = true
-
-        globalRefreshButton.setImage(UIImage(systemName: "timer"), for: .normal)
-        globalRefreshButton.showsMenuAsPrimaryAction = true
-        globalRefreshButton.widthAnchor.constraint(equalToConstant: 30).isActive = true
-        globalRefreshButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
-        updateGlobalRefreshMenu()
-
-        navigationItem.leftBarButtonItems = [
-            UIBarButtonItem(image: UIImage(systemName: "house"), style: .plain, target: self, action: #selector(homeAll)),
-            UIBarButtonItem(image: UIImage(systemName: "arrow.clockwise.circle"), style: .plain, target: self, action: #selector(reloadAll)),
-            UIBarButtonItem(image: UIImage(systemName: "square.on.square"), style: .plain, target: self, action: #selector(loadSameURL)),
-            randomURLsBarButtonItem()
-        ]
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "ellipsis.circle"),
+            menu: makeMainActionsMenu()
+        )
+        navigationItem.leftBarButtonItem?.accessibilityLabel = "Browser Actions"
         installNormalRightItems()
     }
 
-    private func randomURLsBarButtonItem() -> UIBarButtonItem {
+    private func makeMainActionsMenu() -> UIMenu {
+        let home = UIAction(title: "Home All", image: UIImage(systemName: "house")) { [weak self] _ in
+            self?.homeAll()
+        }
+        let reload = UIAction(
+            title: "Reload All",
+            image: UIImage(systemName: "arrow.clockwise.circle")
+        ) { [weak self] _ in
+            self?.reloadAll()
+        }
+        let loadSame = UIAction(
+            title: "Load Same URL",
+            image: UIImage(systemName: "square.on.square")
+        ) { [weak self] _ in
+            self?.loadSameURL()
+        }
+        return UIMenu(title: "Browser Actions", children: [home, reload, loadSame])
+    }
+
+    private func urlQueueBarButtonItem() -> UIBarButtonItem {
         let item = UIBarButtonItem(
-            image: UIImage(systemName: "shuffle"),
+            image: UIImage(systemName: "list.bullet.rectangle.portrait"),
             style: .plain,
             target: self,
-            action: #selector(loadFourURLsRandomly)
+            action: #selector(openURLQueue)
         )
-        item.accessibilityLabel = "Open Four URLs Randomly"
+        item.accessibilityLabel = "Imported URL Queue"
+        return item
+    }
+
+    private func controlsBarButtonItem() -> UIBarButtonItem {
+        let item = UIBarButtonItem(
+            image: UIImage(systemName: "slider.horizontal.3"),
+            menu: makeControlsMenu()
+        )
+        item.accessibilityLabel = "Browser Quantity, Auto Refresh, and VPN"
         return item
     }
 
     private func installNormalRightItems() {
-        let vpnItem = UIBarButtonItem(image: UIImage(systemName: "shield.lefthalf.filled"), style: .plain, target: self, action: #selector(openVPN))
-        vpnItem.accessibilityLabel = "Free VPN Servers"
         navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(customView: countButton),
-            UIBarButtonItem(customView: globalRefreshButton),
-            vpnItem
+            urlQueueBarButtonItem(),
+            controlsBarButtonItem()
         ]
     }
 
     private func installFocusRightItems() {
         let gridItem = UIBarButtonItem(title: "Grid", style: .done, target: self, action: #selector(exitFocus))
-        let vpnItem = UIBarButtonItem(image: UIImage(systemName: "shield.lefthalf.filled"), style: .plain, target: self, action: #selector(openVPN))
-        navigationItem.rightBarButtonItems = [gridItem, UIBarButtonItem(customView: globalRefreshButton), vpnItem]
+        navigationItem.rightBarButtonItems = [gridItem, controlsBarButtonItem()]
     }
 
     private func makeCountMenu() -> UIMenu {
@@ -533,7 +545,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         return UIMenu(title: "Browser quantity", children: actions)
     }
 
-    private func updateGlobalRefreshMenu() {
+    private func makeGlobalRefreshMenu() -> UIMenu {
         let choices: [(String, TimeInterval?)] = [
             ("Off", nil),
             ("1 minute", 60),
@@ -548,8 +560,28 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             }
         }
         let current = globalRefreshInterval.map { formatMinutes($0) } ?? "Off"
-        globalRefreshButton.menu = UIMenu(title: "All Browsers • \(current)", children: actions)
-        globalRefreshButton.accessibilityLabel = "Global Auto Refresh \(current)"
+        return UIMenu(title: "Auto Refresh • \(current)", image: UIImage(systemName: "timer"), children: actions)
+    }
+
+    private func makeControlsMenu() -> UIMenu {
+        let vpn = UIAction(
+            title: "Free VPN Servers",
+            image: UIImage(systemName: "shield.lefthalf.filled")
+        ) { [weak self] _ in
+            self?.openVPN()
+        }
+        return UIMenu(
+            title: "Browser Controls",
+            children: [makeCountMenu(), makeGlobalRefreshMenu(), vpn]
+        )
+    }
+
+    private func refreshToolbarMenus() {
+        if focusedPane == nil {
+            installNormalRightItems()
+        } else {
+            installFocusRightItems()
+        }
     }
 
     private func intervalsMatch(_ lhs: TimeInterval?, _ rhs: TimeInterval?) -> Bool {
@@ -573,7 +605,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             UserDefaults.standard.removeObject(forKey: "NextMultiBrowser.globalRefreshSeconds")
         }
         panes.forEach { $0.applyAutoRefresh(interval) }
-        updateGlobalRefreshMenu()
+        refreshToolbarMenus()
     }
 
     private func setupGrid() {
@@ -620,8 +652,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         }
 
         rebuildRows()
-        countButton.setTitle("\(browserCount) ▾", for: .normal)
-        countButton.menu = makeCountMenu()
+        refreshToolbarMenus()
     }
 
     func openProfile(_ index: Int, openGoogleSignIn: Bool) {
@@ -773,56 +804,22 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         present(alert, animated: true)
     }
 
-    @objc private func loadFourURLsRandomly() {
-        let alert = UIAlertController(
-            title: "Random 4 URLs",
-            message: "Paste one link in each field. Every link opens in five randomly selected browsers.",
-            preferredStyle: .alert
-        )
-        let savedURLs = UserDefaults.standard.stringArray(
-            forKey: "NextMultiBrowser.randomURLInputs"
-        ) ?? []
-        for index in 0..<BrowserURLDistribution.requiredURLCount {
-            alert.addTextField { field in
-                field.placeholder = "URL \(index + 1)"
-                field.keyboardType = .URL
-                field.autocapitalizationType = .none
-                field.autocorrectionType = .no
-                field.clearButtonMode = .whileEditing
-                if savedURLs.indices.contains(index) {
-                    field.text = savedURLs[index]
-                }
-            }
+    @objc private func openURLQueue() {
+        let controller = BrowserURLQueueViewController { [weak self] urls in
+            self?.loadURLQueueBatch(urls)
         }
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Open Randomly", style: .default) { [weak self, weak alert] _ in
-            guard let self else { return }
-            let inputs = alert?.textFields?.map { $0.text ?? "" } ?? []
-            guard let urls = BrowserURLDistribution.cleanedURLs(from: inputs) else {
-                DispatchQueue.main.async { [weak self] in
-                    self?.showRandomURLsError()
-                }
-                return
-            }
-
-            UserDefaults.standard.set(urls, forKey: "NextMultiBrowser.randomURLInputs")
-            self.applyBrowserCount(BrowserProfileStore.profileCount)
-            let assignments = BrowserURLDistribution.assignments(for: urls)
-            for (pane, url) in zip(self.panes.prefix(assignments.count), assignments) {
-                pane.load(url)
-            }
-        })
-        present(alert, animated: true)
+        let navigation = UINavigationController(rootViewController: controller)
+        navigation.modalPresentationStyle = .pageSheet
+        present(navigation, animated: true)
     }
 
-    private func showRandomURLsError() {
-        let alert = UIAlertController(
-            title: "Four URLs Required",
-            message: "Enter one URL in each of the four fields, then try again.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+    private func loadURLQueueBatch(_ urls: [String]) {
+        guard !urls.isEmpty else { return }
+        applyBrowserCount(BrowserProfileStore.profileCount)
+        let assignments = BrowserURLQueue.randomizedAssignments(for: urls)
+        for assignment in assignments where panes.indices.contains(assignment.browserIndex) {
+            panes[assignment.browserIndex].load(assignment.url)
+        }
     }
 
     @objc private func openVPN() {

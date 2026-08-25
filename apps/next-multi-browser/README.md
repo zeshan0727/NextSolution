@@ -2,7 +2,7 @@
 
 iPhone-first test build for 1–20 simultaneously loaded WKWebView browser panes. Includes grid/focus mode, per-pane navigation, load-all URL, reload-all, 20 isolated persistent browser profiles, and adaptive iPhone/iPad layouts.
 
-Current test build: 1.1.4.
+Current test build: 1.1.5.
 
 - The `Profiles` tab lists all 20 browser containers with last-used time, storage size, session status, and environment summary.
 - Every browser has a separate persistent website data store and process pool so Google cookies and other login state are never shared between panes.
@@ -19,7 +19,9 @@ Current test build: 1.1.4.
 - Storage management reports cookies, cache, local storage, IndexedDB, other website data, total size, and the persistent storage location.
 - Automated simulator tests create 20 unique stores, validate cookie isolation and relaunch persistence, and confirm deleting one profile does not affect another.
 
-- The shuffle toolbar action accepts exactly four URLs, expands the grid to all 20 browsers, and assigns every link to five randomly selected profiles in a new order each time.
+- A dedicated Imported URL Queue accepts any number of pasted links, removes duplicate lines, saves progress, and explicitly loads the next non-repeating batch of up to 20 links into randomly selected browser panes.
+- The previous Random 4 URLs action has been removed. Home All, Reload All, and Load Same URL now live in one compact Actions menu; browser quantity, auto refresh, and VPN share a separate Controls menu.
+- A dedicated blue, cyan, and violet multi-window app icon is included for iPhone and iPad.
 - Global auto refresh: Off / 1m / 2m / 3m / 5m / 10m, applied to current and newly created browsers.
 - Per-browser refresh override remains available.
 - Free multi-country VPN browser using VPN Gate OpenVPN relay profiles.
