@@ -1,2 +1,1 @@
-NS Transfers deployment refresh
-2026-08-20T15:47:00Z
+Next Multi Browser 1.1.6 published 2026-08-25T13:57:11Z
