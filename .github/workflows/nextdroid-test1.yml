@@ -1,0 +1,39 @@
+name: Build NextDroid Android 11 Test 1
+
+on:
+  push:
+    branches:
+      - codex/nextdroid-test1
+    paths:
+      - "nextdroid-test1/**"
+      - ".github/workflows/nextdroid-test1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build TrollStore TIPA
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+
+      - name: Build and validate
+        run: bash nextdroid-test1/build_test1.sh
+
+      - name: Upload TIPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextDroid-Android11-Test1
+          path: |
+            nextdroid-test1/output/NextDroid_Android11_Test1.tipa
+            nextdroid-test1/output/NextDroid_Android11_Test1.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
