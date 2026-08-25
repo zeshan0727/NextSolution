@@ -85,8 +85,9 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: symbol), for: .normal)
         button.addTarget(self, action: action, for: .touchUpInside)
-        button.widthAnchor.constraint(equalToConstant: 28).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        let controlSize: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 36 : 28
+        button.widthAnchor.constraint(equalToConstant: controlSize).isActive = true
+        button.heightAnchor.constraint(equalToConstant: UIDevice.current.userInterfaceIdiom == .pad ? 38 : 30).isActive = true
         return button
     }
 
@@ -105,7 +106,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         addressField.clearButtonMode = .whileEditing
         addressField.placeholder = "\(profileStore.displayName(for: profileIndex)) – URL or search"
         addressField.delegate = self
-        addressField.font = .systemFont(ofSize: 11)
+        addressField.font = .systemFont(ofSize: UIDevice.current.userInterfaceIdiom == .pad ? 13 : 11)
         addressField.isEnabled = false
         addressField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
@@ -116,13 +117,14 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 
         autoRefreshButton.setImage(UIImage(systemName: "timer"), for: .normal)
         autoRefreshButton.showsMenuAsPrimaryAction = true
-        autoRefreshButton.widthAnchor.constraint(equalToConstant: 30).isActive = true
-        autoRefreshButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        let refreshSize: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 38 : 30
+        autoRefreshButton.widthAnchor.constraint(equalToConstant: refreshSize).isActive = true
+        autoRefreshButton.heightAnchor.constraint(equalToConstant: refreshSize).isActive = true
         updateAutoRefreshMenu()
 
         let bar = UIStackView(arrangedSubviews: [back, forward, reload, autoRefreshButton, addressField, focus])
         bar.axis = .horizontal
-        bar.spacing = 2
+        bar.spacing = UIDevice.current.userInterfaceIdiom == .pad ? 4 : 2
         bar.alignment = .center
 
         [bar, progress, webView].forEach {
@@ -131,10 +133,10 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
         }
 
         NSLayoutConstraint.activate([
-            bar.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
-            bar.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
-            bar.topAnchor.constraint(equalTo: topAnchor, constant: 5),
-            bar.heightAnchor.constraint(equalToConstant: 34),
+            bar.leadingAnchor.constraint(equalTo: leadingAnchor, constant: UIDevice.current.userInterfaceIdiom == .pad ? 7 : 4),
+            bar.trailingAnchor.constraint(equalTo: trailingAnchor, constant: UIDevice.current.userInterfaceIdiom == .pad ? -7 : -4),
+            bar.topAnchor.constraint(equalTo: topAnchor, constant: UIDevice.current.userInterfaceIdiom == .pad ? 6 : 5),
+            bar.heightAnchor.constraint(equalToConstant: UIDevice.current.userInterfaceIdiom == .pad ? 42 : 34),
 
             progress.leadingAnchor.constraint(equalTo: leadingAnchor),
             progress.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -442,6 +444,7 @@ final class BrowserPaneView: UIView, UITextFieldDelegate, WKNavigationDelegate, 
 }
 
 final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate {
+    private static let iPadLayoutMarker = "NMB_IPAD_PRO_129_PORTRAIT_LANDSCAPE_118"
     private let scrollView = UIScrollView()
     private let rowsStack = UIStackView()
     private let profileStore: BrowserProfileStore
@@ -453,6 +456,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
     }()
     private var focusedPane: BrowserPaneView?
     private var focusedConstraints: [NSLayoutConstraint] = []
+    private var lastLaidOutSize = CGSize.zero
     private var globalRefreshInterval: TimeInterval? = {
         let value = UserDefaults.standard.double(forKey: "NextMultiBrowser.globalRefreshSeconds")
         return value > 0 ? value : nil
@@ -474,6 +478,13 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         setupToolbar()
         setupGrid()
         applyBrowserCount(browserCount)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard focusedPane == nil, view.bounds.size != lastLaidOutSize else { return }
+        lastLaidOutSize = view.bounds.size
+        rebuildRows()
     }
 
     private func setupToolbar() {
@@ -611,9 +622,9 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
     private func setupGrid() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.keyboardDismissMode = .interactive
+        scrollView.accessibilityIdentifier = Self.iPadLayoutMarker
         rowsStack.translatesAutoresizingMaskIntoConstraints = false
         rowsStack.axis = .vertical
-        rowsStack.spacing = 8
         rowsStack.alignment = .fill
 
         scrollView.addSubview(rowsStack)
@@ -691,28 +702,31 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         removeExistingRows()
 
         let visible = Array(panes.prefix(browserCount))
-        let isLandscape = view.bounds.width > view.bounds.height
-        let columns: Int
-        if browserCount == 1 {
-            columns = 1
-        } else if traitCollection.horizontalSizeClass == .regular {
-            columns = isLandscape ? 4 : 3
-        } else {
-            columns = isLandscape ? 3 : 2
-        }
-
-        let rowHeight: CGFloat = traitCollection.horizontalSizeClass == .regular ? 360 : 300
+        let metrics = BrowserGridLayout.metrics(
+            for: view.bounds.size,
+            horizontalSizeClass: traitCollection.horizontalSizeClass,
+            interfaceIdiom: traitCollection.userInterfaceIdiom,
+            browserCount: browserCount
+        )
+        rowsStack.spacing = metrics.spacing
+        rowsStack.layoutMargins = UIEdgeInsets(
+            top: metrics.contentInset - 8,
+            left: metrics.contentInset - 8,
+            bottom: max(0, metrics.contentInset - 12),
+            right: metrics.contentInset - 8
+        )
+        rowsStack.isLayoutMarginsRelativeArrangement = true
         var index = 0
 
         while index < visible.count {
             let row = UIStackView()
             row.axis = .horizontal
-            row.spacing = 8
+            row.spacing = metrics.spacing
             row.distribution = .fillEqually
             row.translatesAutoresizingMaskIntoConstraints = false
-            row.heightAnchor.constraint(equalToConstant: rowHeight).isActive = true
+            row.heightAnchor.constraint(equalToConstant: metrics.rowHeight).isActive = true
 
-            for column in 0..<columns {
+            for column in 0..<metrics.columns {
                 if index + column < visible.count {
                     row.addArrangedSubview(visible[index + column])
                 } else {
@@ -723,7 +737,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
             }
 
             rowsStack.addArrangedSubview(row)
-            index += columns
+            index += metrics.columns
         }
     }
 
@@ -731,6 +745,7 @@ final class BrowserGridViewController: UIViewController, BrowserPaneViewDelegate
         super.viewWillTransition(to: size, with: coordinator)
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
             guard let self, self.focusedPane == nil else { return }
+            self.lastLaidOutSize = size
             self.rebuildRows()
         }
     }

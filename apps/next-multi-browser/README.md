@@ -2,7 +2,15 @@
 
 iPhone-first test build for 1–20 simultaneously loaded WKWebView browser panes. Includes grid/focus mode, per-pane navigation, load-all URL, reload-all, 20 isolated persistent browser profiles, and adaptive iPhone/iPad layouts.
 
-Current test build: 1.1.7.
+Current test build: 1.1.8.
+
+### iPad Pro 12.9 layout
+
+- Native universal iPhone/iPad build with all four iPad orientations enabled.
+- 12.9-inch iPad Pro portrait uses three browser columns; landscape uses four.
+- Larger address bars and browser controls on iPad.
+- Live rotation rebuilding and responsive two-column iPad Split View support.
+- Release packaging includes both `.tipa` and identical `.ipa` install files.
 
 - The `Profiles` tab lists all 20 browser containers with last-used time, storage size, session status, and environment summary.
 - Every browser has a separate persistent website data store and process pool so Google cookies and other login state are never shared between panes.

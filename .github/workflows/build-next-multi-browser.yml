@@ -37,11 +37,11 @@ jobs:
       - name: Generate Xcode project
         working-directory: apps/next-multi-browser
         run: xcodegen generate
-      - name: Run 20-profile isolation and persistence tests
+      - name: Run iPad layout and 20-profile isolation tests
         timeout-minutes: 10
         working-directory: apps/next-multi-browser
         run: |
-          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(device["udid"] for runtime, devices in data["devices"].items() if "iOS" in runtime for device in devices if device.get("isAvailable") and device["name"].startswith("iPhone")))')
+          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); devices=[device for runtime, values in data["devices"].items() if "iOS" in runtime for device in values if device.get("isAvailable") and device["name"].startswith("iPad")]; print(next((device["udid"] for device in devices if "iPad Pro" in device["name"]), devices[0]["udid"]))')
           test -n "$SIMULATOR_ID"
           xcodebuild \
             -project NextMultiBrowser.xcodeproj \
@@ -84,18 +84,21 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa Payload
+          zip -qry ../NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa Payload
+          cp ../NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa ../NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.ipa
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.1.7-Email-Username-AutoFill-Focus-Fix
-          path: apps/next-multi-browser/NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa
+          name: NextMultiBrowser-1.1.8-iPad-Pro-12.9-Portrait-Landscape
+          path: |
+            apps/next-multi-browser/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa
+            apps/next-multi-browser/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.ipa
           if-no-files-found: error
       - name: Verify package identity and requested features
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa"
+          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa"
           unzip -tq "$TIPA" >/dev/null
           python3 - "$TIPA" <<'PY'
           import plistlib
@@ -126,11 +129,18 @@ jobs:
               assets = archive.read(asset_catalog)
 
           assert host['CFBundleIdentifier'] == 'com.nextsolution.multibrowser'
-          assert host['CFBundleShortVersionString'] == '1.1.7'
-          assert host['CFBundleVersion'] == '15'
+          assert host['CFBundleShortVersionString'] == '1.1.8'
+          assert host['CFBundleVersion'] == '16'
+          assert set(host['UIDeviceFamily']) == {1, 2}
+          assert set(host['UISupportedInterfaceOrientations~ipad']) == {
+              'UIInterfaceOrientationPortrait',
+              'UIInterfaceOrientationPortraitUpsideDown',
+              'UIInterfaceOrientationLandscapeLeft',
+              'UIInterfaceOrientationLandscapeRight',
+          }
           assert vpn['CFBundleIdentifier'] == 'com.nextsolution.multibrowser.vpn'
-          assert vpn['CFBundleShortVersionString'] == '1.1.7'
-          assert vpn['CFBundleVersion'] == '15'
+          assert vpn['CFBundleShortVersionString'] == '1.1.8'
+          assert vpn['CFBundleVersion'] == '16'
           assert len(assets) > 1000
           for feature in (
               b'NextMultiBrowser.importedURLQueue.values',
@@ -144,6 +154,7 @@ jobs:
               b'NMB_MANUAL_DESKTOP_AUTOMATIC_ENVIRONMENT_114',
               b'NMB_APPLE_PASSWORD_AUTOFILL_116',
               b'NMB_APPLE_EMAIL_AUTOFILL_FOCUS_REFRESH_117',
+              b'NMB_IPAD_PRO_129_PORTRAIT_LANDSCAPE_118',
               b'current-password',
               b'new-password',
               b'one-time-code',
@@ -170,11 +181,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa"
-          DEST_DIR="transfer/files/NextMultiBrowser/1.1.7"
-          FILE_NAME="NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa"
+          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa"
+          IPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.ipa"
+          DEST_DIR="transfer/files/NextMultiBrowser/1.1.8"
+          FILE_NAME="NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa"
+          IPA_FILE_NAME="NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.ipa"
           mkdir -p "$DEST_DIR"
           cp "$TIPA" "$DEST_DIR/$FILE_NAME"
+          cp "$IPA" "$DEST_DIR/$IPA_FILE_NAME"
 
           python3 - "$TIPA" <<'PY'
           import hashlib
@@ -197,16 +211,17 @@ jobs:
               current.append(item)
 
           entry = {
-              'id': 'nextmultibrowser-1.1.7-email-username-autofill-focus-fix',
-              'name': 'Next Multi Browser 1.1.7 — Email AutoFill Focus Fix',
-              'fileName': 'NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa',
+              'id': 'nextmultibrowser-1.1.8-ipad-pro-12.9-portrait-landscape',
+              'name': 'Next Multi Browser 1.1.8 — iPad Pro 12.9 Layout',
+              'fileName': 'NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / RootHide / iOS 15+',
-              'version': '1.1.7 (15)',
-              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.7/NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa',
+              'version': '1.1.8 (16)',
+              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.8/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa',
+              'ipaUrl': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.8/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.ipa',
               'sha256': sha256,
               'sizeBytes': size,
-              'notes': 'Fixes first-step email/username AutoFill when a website focuses the field before WebKit has recalculated its keyboard traits. Applies a one-time, value-preserving focus refresh, keeps login emails classified as username credentials, and gives recovery/contact fields the separate email hint. Retains Apple password/new-password/OTP support, the Imported URL Queue, redesigned controls, dedicated icon, 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features.'
+              'notes': 'Adds a dedicated adaptive layout for the 12.9-inch iPad Pro: 3 browser columns in portrait, 4 in landscape, larger iPad controls, live rotation updates, full-screen focused browsing, and responsive 2-column support in iPad split view. Includes both TIPA and IPA downloads. Retains email/username and password AutoFill, the Imported URL Queue, dedicated icon, 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features.'
           }
           data['files'] = [entry] + current
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -218,9 +233,9 @@ jobs:
           python3 -m json.tool transfer/index.json >/dev/null
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          printf '%s\n' "Next Multi Browser 1.1.7 published $(date -u +%Y-%m-%dT%H:%M:%SZ)" > transfer/deploy-trigger.txt
-          git add transfer/index.json transfer/deploy-trigger.txt "$DEST_DIR/$FILE_NAME"
+          printf '%s\n' "Next Multi Browser 1.1.8 published $(date -u +%Y-%m-%dT%H:%M:%SZ)" > transfer/deploy-trigger.txt
+          git add transfer/index.json transfer/deploy-trigger.txt "$DEST_DIR/$FILE_NAME" "$DEST_DIR/$IPA_FILE_NAME"
           git diff --cached --stat
-          git commit -m 'Publish Next Multi Browser 1.1.7 to NS Transfer'
+          git commit -m 'Publish Next Multi Browser 1.1.8 to NS Transfer'
           git pull --rebase origin main
           git push origin HEAD:main

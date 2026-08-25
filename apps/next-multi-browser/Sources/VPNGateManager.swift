@@ -174,7 +174,7 @@ final class VPNGateManager {
     private static func fetchAndParseFeed(_ url: URL) async -> FeedResult? {
         do {
             var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 9)
-            request.setValue("NextMultiBrowser/1.1.7 iOS", forHTTPHeaderField: "User-Agent")
+            request.setValue("NextMultiBrowser/1.1.8 iOS", forHTTPHeaderField: "User-Agent")
             request.setValue("text/plain,text/csv,*/*", forHTTPHeaderField: "Accept")
 
             let configuration = URLSessionConfiguration.ephemeral

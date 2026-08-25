@@ -4,6 +4,43 @@ import WebKit
 @available(iOS 17.0, *)
 @MainActor
 final class BrowserProfileStoreTests: XCTestCase {
+    func testIPadPro129GridAdaptsToPortraitLandscapeAndSplitView() {
+        let portrait = BrowserGridLayout.metrics(
+            for: BrowserGridLayout.iPadPro129Portrait,
+            horizontalSizeClass: .regular,
+            interfaceIdiom: .pad,
+            browserCount: 20
+        )
+        XCTAssertEqual(portrait.columns, 3)
+        XCTAssertEqual(portrait.rowHeight, 400)
+
+        let landscape = BrowserGridLayout.metrics(
+            for: BrowserGridLayout.iPadPro129Landscape,
+            horizontalSizeClass: .regular,
+            interfaceIdiom: .pad,
+            browserCount: 20
+        )
+        XCTAssertEqual(landscape.columns, 4)
+        XCTAssertEqual(landscape.rowHeight, 330)
+
+        let splitView = BrowserGridLayout.metrics(
+            for: CGSize(width: 683, height: 1_024),
+            horizontalSizeClass: .regular,
+            interfaceIdiom: .pad,
+            browserCount: 20
+        )
+        XCTAssertEqual(splitView.columns, 2)
+
+        let focused = BrowserGridLayout.metrics(
+            for: BrowserGridLayout.iPadPro129Landscape,
+            horizontalSizeClass: .regular,
+            interfaceIdiom: .pad,
+            browserCount: 1
+        )
+        XCTAssertEqual(focused.columns, 1)
+        XCTAssertGreaterThanOrEqual(focused.rowHeight, 520)
+    }
+
     func testImportedURLQueueUsesBoundedNonRepeatingRandomBatches() throws {
         let pasted = (1...28).map { " https://example.com/\($0) " }.joined(separator: "\n")
             + "\nhttps://example.com/1\n\n"
