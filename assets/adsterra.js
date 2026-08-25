@@ -14,7 +14,7 @@
   // Keep the homepage/category renderer separate from ad logic while loading it site-wide.
   if (!document.querySelector('script[data-ns-site-content]')) {
     var contentScript = document.createElement('script');
-    contentScript.src = '/assets/site-content.js';
+    contentScript.src = '/assets/site-content.js?v=20260825-1';
     contentScript.defer = true;
     contentScript.setAttribute('data-ns-site-content', '1');
     document.head.appendChild(contentScript);
