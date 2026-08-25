@@ -11,6 +11,7 @@
   var HOME_PAGE_SIZE = 5;
   var homeEntries = [];
   var homePage = 1;
+  var homePinnedCard = null;
   var TWEAKS_START = 'AUTO_ARTICLES_TUTORIALS_START';
   var TWEAKS_END = 'AUTO_ARTICLES_TUTORIALS_END';
   var JAILBREAK_START = 'AUTO_ARTICLES_JAILBREAK_START';
@@ -263,7 +264,15 @@
     var start = (homePage - 1) * HOME_PAGE_SIZE;
     var current = homeEntries.slice(start, start + HOME_PAGE_SIZE);
 
+    if (!homePinnedCard) {
+      var staticPinned = feed.querySelector('.content-card.featured');
+      if (staticPinned) homePinnedCard = staticPinned.cloneNode(true);
+    }
+
     feed.innerHTML = '';
+    if (homePage === 1 && homePinnedCard) {
+      feed.appendChild(homePinnedCard.cloneNode(true));
+    }
     current.forEach(function (entry, index) {
       feed.appendChild(createCard(entry, homePage === 1 && index < 2));
     });
