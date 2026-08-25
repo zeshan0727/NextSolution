@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "a7339d25123c77028da730e728b38622f60b6faaa70ba61901c94c07e17b9dd6",
+      "candidate_fingerprint": "2bd02c033a4ffa349b2fb523f8ccd515db3385842da8ec095b99e4b9e551d7a1",
+      "category": {
+        "id": "home-screen",
+        "label": "Home Screen"
+      },
+      "description": "Learn what Physpringboard 1.9.23 lists for rootless Dopamine, including configurable SpringBoard icon physics, architecture, dependencies, and installation checks.",
+      "href": "physpringboard-tweak.html",
+      "image": "https://media.havoc.app/6a82799dfd9eaa8115539d4f",
+      "media_credit": "Physpringboard official package listing",
+      "media_source_url": "https://havoc.app/package/physpringboard",
+      "modified_at": "2026-08-25T12:21:25+00:00",
+      "name": "Physpringboard",
+      "package": "com.chloe.physpringboard",
+      "published_at": "2026-08-22T03:38:46+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/physpringboard",
+      "source_url": "https://havoc.app/",
+      "title": "Physpringboard 1.9.23: Configurable Physics for SpringBoard Icons",
+      "version": "1.9.23"
+    },
+    {
       "article_sha256": "4fb8fecb603400d6ee8c28303625482ac8297ecbf99f57533087d0804e0d6474",
       "candidate_fingerprint": "85dab8ddab6c103fd92152cbfbc7c5bd42a2a7fa479890b49912c40ff8cec682",
       "category": {
@@ -47,29 +70,6 @@
       "source_url": "https://github.com/Sileo/Sileo",
       "title": "Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks",
       "version": "3.x"
-    },
-    {
-      "article_sha256": "0f9dfcfe3c049aa2535591dbb47154d46828d1e60cac23b56ea95197ab38b0d0",
-      "candidate_fingerprint": "0bfe6bbb12c8bfab1848ef371b3988933ac52b39968f51e9af04a2b831610797",
-      "category": {
-        "id": "home-screen",
-        "label": "Home Screen"
-      },
-      "description": "Physpringboard 1.9.19 is an iPhoneOS arm64 jailbreak tweak that lets users shake SpringBoard icons loose with configurable physics on rootless Dopamine.",
-      "href": "physpringboard-tweak.html",
-      "image": "https://media.havoc.app/6a82799dfd9eaa8115539d4f",
-      "media_credit": "Physpringboard official package listing",
-      "media_source_url": "https://havoc.app/package/physpringboard",
-      "modified_at": "2026-08-23T03:46:10+00:00",
-      "name": "Physpringboard",
-      "package": "com.chloe.physpringboard",
-      "published_at": "2026-08-22T03:38:46+00:00",
-      "selection_pool": "pending",
-      "source_name": "Havoc",
-      "source_page_url": "https://havoc.app/package/physpringboard",
-      "source_url": "https://havoc.app/",
-      "title": "Physpringboard 1.9.19: Configurable Physics for SpringBoard Icons",
-      "version": "1.9.19"
     },
     {
       "article_sha256": "f92134fb0379c07ad1621457bbe21a3d76f5599e681beb9c0eef30723e6d6dd0",
@@ -834,8 +834,17 @@
       "published_at": "2026-08-24T15:33:22+00:00",
       "run_id": "32745499641",
       "version": "3.x"
+    },
+    {
+      "action": "update",
+      "candidate_fingerprint": "2bd02c033a4ffa349b2fb523f8ccd515db3385842da8ec095b99e4b9e551d7a1",
+      "href": "physpringboard-tweak.html",
+      "package": "com.chloe.physpringboard",
+      "published_at": "2026-08-25T12:21:25+00:00",
+      "run_id": "32846991847",
+      "version": "1.9.23"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-24T15:33:22+00:00"
+  "updated_at": "2026-08-25T12:21:25+00:00"
 }
