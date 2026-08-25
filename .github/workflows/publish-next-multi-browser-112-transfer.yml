@@ -1,0 +1,16 @@
+name: Archived Next Multi Browser 1.1.2 Publisher
+
+# This historical publisher is intentionally retained as a manual-only no-op.
+# Current Next Multi Browser releases publish from build-next-multi-browser.yml.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archived:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Archived release
+        run: echo "Next Multi Browser 1.1.2 publication is archived; no files or catalog entries are changed."
