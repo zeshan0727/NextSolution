@@ -1,18 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-25T14:19:40Z",
+  "updatedAt": "2026-08-25T17:53:37Z",
   "files": [
     {
-      "id": "nextmultibrowser-1.1.7-email-username-autofill-focus-fix",
-      "name": "Next Multi Browser 1.1.7 — Email AutoFill Focus Fix",
-      "fileName": "NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa",
+      "id": "nextmultibrowser-1.1.8-ipad-pro-12.9-portrait-landscape",
+      "name": "Next Multi Browser 1.1.8 — iPad Pro 12.9 Layout",
+      "fileName": "NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa",
       "type": "tipa",
       "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.7 (15)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.7/NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa",
-      "sha256": "46b32d78d08ad9c1eb17c3f5aa14086e22a64471bf0164bade83995ca1ff5cb0",
-      "sizeBytes": 6796974,
-      "notes": "Fixes first-step email/username AutoFill when a website focuses the field before WebKit has recalculated its keyboard traits. Applies a one-time, value-preserving focus refresh, keeps login emails classified as username credentials, and gives recovery/contact fields the separate email hint. Retains Apple password/new-password/OTP support, the Imported URL Queue, redesigned controls, dedicated icon, 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features."
+      "version": "1.1.8 (16)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.8/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa",
+      "ipaUrl": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.8/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.ipa",
+      "sha256": "b7283e0129b5b6237c7e3076e67ba20a47e34016798ec72f1addf865d8f57a14",
+      "sizeBytes": 6809712,
+      "notes": "Adds a dedicated adaptive layout for the 12.9-inch iPad Pro: 3 browser columns in portrait, 4 in landscape, larger iPad controls, live rotation updates, full-screen focused browsing, and responsive 2-column support in iPad split view. Includes both TIPA and IPA downloads. Retains email/username and password AutoFill, the Imported URL Queue, dedicated icon, 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features."
     },
     {
       "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
