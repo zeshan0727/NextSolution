@@ -41,11 +41,19 @@ clang "$WORK_DIR/insert_dylib/insert_dylib/main.c" -o "$WORK_DIR/insert_dylib_to
     "@executable_path/Frameworks/NextDroidBootstrap.dylib" \
     "$APP_EXECUTABLE"
 
-/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName NextDroid Test" "$APP_PATH/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleName NextDroid" "$APP_PATH/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $APP_ID" "$APP_PATH/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.1" "$APP_PATH/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" "$APP_PATH/Info.plist"
+set_plist_string() {
+    local key="$1"
+    local value="$2"
+    if ! /usr/libexec/PlistBuddy -c "Set :${key} ${value}" "$APP_PATH/Info.plist"; then
+        /usr/libexec/PlistBuddy -c "Add :${key} string ${value}" "$APP_PATH/Info.plist"
+    fi
+}
+
+set_plist_string CFBundleDisplayName "NextDroid Test"
+set_plist_string CFBundleName "NextDroid"
+set_plist_string CFBundleIdentifier "$APP_ID"
+set_plist_string CFBundleShortVersionString "0.1"
+set_plist_string CFBundleVersion "1"
 rm -rf "$APP_PATH/_CodeSignature"
 
 if ! command -v ldid >/dev/null 2>&1; then
