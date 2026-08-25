@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-25T14:07:54Z",
+  "updatedAt": "2026-08-25T14:19:40Z",
   "files": [
     {
-      "id": "nextmultibrowser-1.1.2-global-phone-environments",
-      "name": "Next Multi Browser 1.1.2 — Global Phone Environments",
-      "fileName": "NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
+      "id": "nextmultibrowser-1.1.7-email-username-autofill-focus-fix",
+      "name": "Next Multi Browser 1.1.7 — Email AutoFill Focus Fix",
+      "fileName": "NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa",
       "type": "tipa",
       "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.2 (10)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.2/NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
-      "sha256": "bee01f4712aaf30ee66e2422a0c2056ed07d94db88a841cb77a2a4ed916b2d42",
-      "sizeBytes": 4896684,
-      "notes": "Adds one Profiles-wide Randomize All Environments action for all 20 isolated browsers while retaining the individual per-profile randomize button. Selectable and randomized devices are phone-only: multiple iPhones plus Pixel 9 Pro/XL, Galaxy S25/Ultra, OnePlus 13, and Xiaomi 15 Ultra. Legacy tablet and desktop settings migrate safely to phone presets without replacing profile storage identifiers or clearing cookies, Google sessions, or website data. Includes 17 languages, 24 regions, and 27 timezones."
+      "version": "1.1.7 (15)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.7/NextMultiBrowser_1.1.7_Email_Username_AutoFill_Focus_Fix.tipa",
+      "sha256": "46b32d78d08ad9c1eb17c3f5aa14086e22a64471bf0164bade83995ca1ff5cb0",
+      "sizeBytes": 6796974,
+      "notes": "Fixes first-step email/username AutoFill when a website focuses the field before WebKit has recalculated its keyboard traits. Applies a one-time, value-preserving focus refresh, keeps login emails classified as username credentials, and gives recovery/contact fields the separate email hint. Retains Apple password/new-password/OTP support, the Imported URL Queue, redesigned controls, dedicated icon, 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features."
     },
     {
       "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
