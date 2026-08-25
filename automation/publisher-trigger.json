@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
   "purpose": "Request a gated publisher run through the connected GitHub app",
-  "last_trigger_requested_at": "2026-08-14T13:32:06Z",
-  "reason": "Three-hour connected GitHub trigger"
+  "last_trigger_requested_at": "2026-08-25T12:19:32Z",
+  "reason": "Immediate catch-up after three-times-daily schedule repair"
 }
