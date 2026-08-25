@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-25T13:13:31Z",
+  "updatedAt": "2026-08-25T13:32:09Z",
   "files": [
     {
-      "id": "nextmultibrowser-1.1.2-global-phone-environments",
-      "name": "Next Multi Browser 1.1.2 — Global Phone Environments",
-      "fileName": "NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
+      "id": "nextmultibrowser-1.1.5-imported-url-queue-new-icon",
+      "name": "Next Multi Browser 1.1.5 — Imported URL Queue + New Icon",
+      "fileName": "NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa",
       "type": "tipa",
       "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.2 (10)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.2/NextMultiBrowser_1.1.2_Global_Randomize_Phone_Only_iPhone_Test.tipa",
-      "sha256": "bee01f4712aaf30ee66e2422a0c2056ed07d94db88a841cb77a2a4ed916b2d42",
-      "sizeBytes": 4896684,
-      "notes": "Adds one Profiles-wide Randomize All Environments action for all 20 isolated browsers while retaining the individual per-profile randomize button. Selectable and randomized devices are phone-only: multiple iPhones plus Pixel 9 Pro/XL, Galaxy S25/Ultra, OnePlus 13, and Xiaomi 15 Ultra. Legacy tablet and desktop settings migrate safely to phone presets without replacing profile storage identifiers or clearing cookies, Google sessions, or website data. Includes 17 languages, 24 regions, and 27 timezones."
+      "version": "1.1.5 (13)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.5/NextMultiBrowser_1.1.5_Imported_URL_Queue_New_Icon_iPhone_Test.tipa",
+      "sha256": "2c5fda88c289815a13083885381a01772067088d94310319d5638238248a33bb",
+      "sizeBytes": 6795212,
+      "notes": "Replaces Random 4 URLs with a dedicated Imported URL Queue. Paste any number of links, remove duplicates, save progress, and explicitly load each non-repeating batch of up to 20 links into randomly selected browser panes; the final partial batch uses only its remaining links. Redesigns the crowded navigation bar into compact Actions and Browser Controls menus and adds a dedicated blue/cyan/violet app icon for iPhone and iPad. Retains 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features."
     },
     {
       "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
