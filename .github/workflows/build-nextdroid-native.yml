@@ -105,22 +105,25 @@ jobs:
           set_plist_string CFBundleDisplayName "NextDroid"
           set_plist_string CFBundleName "NextDroid"
           set_plist_string CFBundleIdentifier "$NEXTDROID_BUNDLE_ID"
-          set_plist_string CFBundleShortVersionString "0.3"
-          set_plist_string CFBundleVersion "3"
+          set_plist_string CFBundleShortVersionString "0.4"
+          set_plist_string CFBundleVersion "4"
 
           brew install ldid
           mkdir -p package stage output
-          ./scripts/package.sh ipa UTM.xcarchive package
+          # The normal `ipa` mode contains dynamic-codesigning, which iOS 15+
+          # rejects at exec time on A12+ devices. `ipa-hv` is UTM's official
+          # TrollStore profile and deliberately omits that banned entitlement.
+          ./scripts/package.sh ipa-hv UTM.xcarchive package
           unzip -q package/UTM.ipa -d stage
           mv stage/Payload/UTM.app stage/Payload/NextDroid.app
           (
             cd stage
-            zip -qry ../output/NextDroid_Android11_Native_Test3.tipa Payload \
+            zip -qry ../output/NextDroid_Android11_Native_Test4.tipa Payload \
               -x "._*" "*/.DS_Store" "*/__MACOSX/*"
           )
-          unzip -t output/NextDroid_Android11_Native_Test3.tipa
-          shasum -a 256 output/NextDroid_Android11_Native_Test3.tipa \
-            | tee output/NextDroid_Android11_Native_Test3.sha256
+          unzip -t output/NextDroid_Android11_Native_Test4.tipa
+          shasum -a 256 output/NextDroid_Android11_Native_Test4.tipa \
+            | tee output/NextDroid_Android11_Native_Test4.sha256
 
       - name: Verify native package structure
         working-directory: UTM-Native
@@ -134,14 +137,19 @@ jobs:
           /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' stage/Payload/NextDroid.app/Info.plist \
             | grep -Fx "$NEXTDROID_BUNDLE_ID"
           file stage/Payload/NextDroid.app/UTM | grep -F 'Mach-O 64-bit executable arm64'
+          ldid -e stage/Payload/NextDroid.app/UTM > output/NextDroid_Test4.entitlements.plist
+          ! grep -q '<key>dynamic-codesigning</key>' output/NextDroid_Test4.entitlements.plist
+          grep -q '<key>com.apple.private.security.no-sandbox</key>' output/NextDroid_Test4.entitlements.plist
+          grep -q '<key>platform-application</key>' output/NextDroid_Test4.entitlements.plist
 
       - name: Upload native TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextDroid-Android11-Native-Test3
+          name: NextDroid-Android11-Native-Test4
           path: |
-            UTM-Native/output/NextDroid_Android11_Native_Test3.tipa
-            UTM-Native/output/NextDroid_Android11_Native_Test3.sha256
+            UTM-Native/output/NextDroid_Android11_Native_Test4.tipa
+            UTM-Native/output/NextDroid_Android11_Native_Test4.sha256
+            UTM-Native/output/NextDroid_Test4.entitlements.plist
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
