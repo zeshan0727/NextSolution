@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "f4cdbd0b9664d6398a9cc5350976bc458c1ed603b2b638358d38dbca86e17610",
+      "candidate_fingerprint": "94e5a264724481715741c578bcc5b50d2e2e174b7657750ae4a00d2fd403644e",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Compare Dopamine 3 and TrollStore by purpose, rootless behavior, documented compatibility categories, and the limits of permanent IPA installation in TrollStore.",
+      "entry_type": "cluster",
+      "href": "dopamine-3-vs-trollstore.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Jailbreak real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-26T06:57:38+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-trollstore",
+      "published_at": "2026-08-26T06:57:38+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://github.com/opa334/TrollStore",
+      "source_url": "https://github.com/opa334/TrollStore",
+      "title": "Dopamine 3 vs TrollStore: Jailbreak, IPA Installation, and Compatibility",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "531d2171b8bc91e36bbe0b1372fca132a0c20d855eb7e9a68cfd57740f4d4946",
       "candidate_fingerprint": "0b8895e071ff916cc2e7e800bd5275cb1a61e67d37ec7f8518d7474b73afc42f",
       "category": {
@@ -939,8 +963,18 @@
       "published_at": "2026-08-26T06:12:23+00:00",
       "run_id": "32937000634",
       "version": "1.1.0"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "94e5a264724481715741c578bcc5b50d2e2e174b7657750ae4a00d2fd403644e",
+      "channel": "dopamine-cluster",
+      "href": "dopamine-3-vs-trollstore.html",
+      "package": "editorial.dopamine3.dopamine3-trollstore",
+      "published_at": "2026-08-26T06:57:38+00:00",
+      "run_id": "32940411555",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-26T06:12:23+00:00"
+  "updated_at": "2026-08-26T06:57:38+00:00"
 }

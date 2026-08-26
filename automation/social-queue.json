@@ -47,6 +47,14 @@
       "title": "Dopamine 3 vs Dopamine 2: Compatibility Ranges and What Changed",
       "topic_id": "dopamine3-vs-dopamine2",
       "url": "https://nextsolution.cc/dopamine-3-vs-dopamine-2.html"
+    },
+    {
+      "created_at": "2026-08-26T06:57:38+00:00",
+      "post": "Dopamine 3 and TrollStore are not interchangeable: Dopamine 3 is documented as a rootless semi-untethered jailbreak, while TrollStore is a permasigned jailed app that can permanently install IPAs opened in TrollStore. To https://nextsolution.cc/dopamine-3-vs-trollstore.html",
+      "status": "pending",
+      "title": "Dopamine 3 vs TrollStore: Jailbreak, IPA Installation, and Compatibility",
+      "topic_id": "dopamine3-trollstore",
+      "url": "https://nextsolution.cc/dopamine-3-vs-trollstore.html"
     }
   ],
   "schema_version": 1

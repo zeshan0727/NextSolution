@@ -29,6 +29,11 @@
       "path": "dopamine-3-vs-dopamine-2.html",
       "published_at": "2026-08-24T15:33:22+00:00",
       "topic_id": "dopamine3-vs-dopamine2"
+    },
+    {
+      "path": "dopamine-3-vs-trollstore.html",
+      "published_at": "2026-08-26T06:57:38+00:00",
+      "topic_id": "dopamine3-trollstore"
     }
   ],
   "published": {
@@ -391,6 +396,78 @@
       "path": "sileo-dopamine-3-jailbreak-guide.html",
       "published_at": "2026-08-23T06:49:41+00:00",
       "title": "Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks"
+    },
+    "dopamine3-trollstore": {
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0d64781c61474b3b016a8e8e7b8ba887d099e904419f3e4dcb",
+          "usage": {
+            "input_tokens": 3415,
+            "input_tokens_details": {
+              "cache_write_tokens": 3412,
+              "cached_tokens": 0
+            },
+            "output_tokens": 698,
+            "output_tokens_details": {
+              "reasoning_tokens": 499
+            },
+            "total_tokens": 4113
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_01a5842dc37108b8016a8e8e83085c87d0a7df57ed0cf241c1",
+          "usage": {
+            "input_tokens": 3648,
+            "input_tokens_details": {
+              "cache_write_tokens": 3645,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2271,
+            "output_tokens_details": {
+              "reasoning_tokens": 169
+            },
+            "total_tokens": 5919
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0ccd622bee8c337d016a8e8e97b3b087d0aed7cdbc14f46925",
+          "usage": {
+            "input_tokens": 3079,
+            "input_tokens_details": {
+              "cache_write_tokens": 3076,
+              "cached_tokens": 0
+            },
+            "output_tokens": 522,
+            "output_tokens_details": {
+              "reasoning_tokens": 411
+            },
+            "total_tokens": 3601
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0da3bbaea25546bc016a8e8e63eb8887d09d3a42937e68f7a4",
+          "usage": {
+            "input_tokens": 1119,
+            "input_tokens_details": {
+              "cache_write_tokens": 1116,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2481,
+            "output_tokens_details": {
+              "reasoning_tokens": 48
+            },
+            "total_tokens": 3600
+          }
+        }
+      },
+      "fingerprint": "94e5a264724481715741c578bcc5b50d2e2e174b7657750ae4a00d2fd403644e",
+      "path": "dopamine-3-vs-trollstore.html",
+      "published_at": "2026-08-26T06:57:38+00:00",
+      "title": "Dopamine 3 vs TrollStore: Jailbreak, IPA Installation, and Compatibility"
     },
     "dopamine3-vs-dopamine2": {
       "api": {

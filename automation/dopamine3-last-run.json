@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "status": "error",
-  "exit_code": 2,
-  "run_id": "32866759858",
-  "run_number": "24",
-  "recorded_at": "2026-08-25T15:41:01+00:00",
-  "diagnostic_tail": "Dopamine cluster publisher error: Dopamine cluster draft rejected: unsupported OS version claim: iOS 14; The social_post is incomplete and ends mid-sentence: \"Dopamine compatibility depends on exact iOS version and,\". It should be completed or removed before publication.\n"
-}
