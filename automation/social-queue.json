@@ -2,59 +2,59 @@
   "items": [
     {
       "created_at": "2026-08-19T15:46:56+00:00",
-      "post": "Dopamine 3 compatibility is split by device category: arm64e covers iOS 15.0–17.3.1, A12/A13 cover iOS 15.0–18.7.1 plus a separate iOS 26.0–26.0.1 range, and arm64 covers iOS 15.0–18.7.1. Check the exact category and iOS https://nextsolution.cc/dopamine-3-jailbreak.html",
+      "post": "Dopamine 3 compatibility is split by device category: arm64e covers iOS 15.0–17.3.1, A12/A13 cover iOS 15.0–18.7.1 plus a separate iOS 26.0–26.0.1 range, and arm64 covers iOS 15.0–18.7.1. Check the exact category and iOS https://nextjailbreak.com/dopamine-3-jailbreak.html",
       "status": "pending",
       "title": "Dopamine 3 Compatibility: Supported iOS Versions by Device Category",
       "topic_id": "dopamine3-master-compatibility",
-      "url": "https://nextsolution.cc/dopamine-3-jailbreak.html"
+      "url": "https://nextjailbreak.com/dopamine-3-jailbreak.html"
     },
     {
       "created_at": "2026-08-21T06:55:47+00:00",
-      "post": "Dopamine 3 iOS 26 compatibility is documented specifically for A12 and A13 devices. Do not generalize that entry to every arm64e or arm64 device; check the device category and its separate README range. https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13.html",
+      "post": "Dopamine 3 iOS 26 compatibility is documented specifically for A12 and A13 devices. Do not generalize that entry to every arm64e or arm64 device; check the device category and its separate README range. https://nextjailbreak.com/dopamine-3-ios-26-jailbreak-a12-a13.html",
       "status": "pending",
       "title": "Dopamine 3 iOS 26 Jailbreak Compatibility for A12 and A13",
       "topic_id": "dopamine3-ios26-a12-a13",
-      "url": "https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13.html"
+      "url": "https://nextjailbreak.com/dopamine-3-ios-26-jailbreak-a12-a13.html"
     },
     {
       "created_at": "2026-08-21T15:26:54+00:00",
-      "post": "Dopamine 3.x compatibility on iOS 18 is documented for A12 and A13 devices from iOS 15.0 through iOS 18.7.1. The general arm64e range ends at iOS 17.3.1, so iOS 18 support should not be generalized to every arm64e device https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13.html",
+      "post": "Dopamine 3.x compatibility on iOS 18 is documented for A12 and A13 devices from iOS 15.0 through iOS 18.7.1. The general arm64e range ends at iOS 17.3.1, so iOS 18 support should not be generalized to every arm64e device https://nextjailbreak.com/dopamine-3-ios-18-jailbreak-a12-a13.html",
       "status": "pending",
       "title": "Dopamine 3 Jailbreak: iOS 18 Compatibility for A12 and A13 Devices",
       "topic_id": "dopamine3-ios18-a12-a13",
-      "url": "https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13.html"
+      "url": "https://nextjailbreak.com/dopamine-3-ios-18-jailbreak-a12-a13.html"
     },
     {
       "created_at": "2026-08-22T06:48:41+00:00",
-      "post": "DarkSword is described as a kernel exploit reimplemented in Objective-C. An official Dopamine 2.5 beta note added it as an option, while current Dopamine 3.x compatibility depends on the device category and exact iOS 版本. https://nextsolution.cc/darksword-dopamine-3-jailbreak.html",
+      "post": "DarkSword is described as a kernel exploit reimplemented in Objective-C. An official Dopamine 2.5 beta note added it as an option, while current Dopamine 3.x compatibility depends on the device category and exact iOS 版本. https://nextjailbreak.com/darksword-dopamine-3-jailbreak.html",
       "status": "pending",
       "title": "DarkSword and Dopamine: What the Documented Connection Means",
       "topic_id": "dopamine3-darksword",
-      "url": "https://nextsolution.cc/darksword-dopamine-3-jailbreak.html"
+      "url": "https://nextjailbreak.com/darksword-dopamine-3-jailbreak.html"
     },
     {
       "created_at": "2026-08-23T06:49:41+00:00",
-      "post": "Sileo is associated with Dopamine 3, but it is not the jailbreak itself. Check the official 3.x README for the correct device and iOS range, then verify that each tweak is compatible and properly compiled for the rootles https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide.html",
+      "post": "Sileo is associated with Dopamine 3, but it is not the jailbreak itself. Check the official 3.x README for the correct device and iOS range, then verify that each tweak is compatible and properly compiled for the rootles https://nextjailbreak.com/sileo-dopamine-3-jailbreak-guide.html",
       "status": "pending",
       "title": "Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks",
       "topic_id": "dopamine3-sileo",
-      "url": "https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide.html"
+      "url": "https://nextjailbreak.com/sileo-dopamine-3-jailbreak-guide.html"
     },
     {
       "created_at": "2026-08-24T15:33:22+00:00",
-      "post": "Dopamine 3 expands the documented compatibility ranges beyond Dopamine 2: arm64e reaches iOS 17.3.1, while arm64 and A12/A13 categories reach iOS 18.7.1. A12/A13 are also listed for iOS 26.0–26.0.1. Always verify the iOS https://nextsolution.cc/dopamine-3-vs-dopamine-2.html",
+      "post": "Dopamine 3 expands the documented compatibility ranges beyond Dopamine 2: arm64e reaches iOS 17.3.1, while arm64 and A12/A13 categories reach iOS 18.7.1. A12/A13 are also listed for iOS 26.0–26.0.1. Always verify the iOS https://nextjailbreak.com/dopamine-3-vs-dopamine-2.html",
       "status": "pending",
       "title": "Dopamine 3 vs Dopamine 2: Compatibility Ranges and What Changed",
       "topic_id": "dopamine3-vs-dopamine2",
-      "url": "https://nextsolution.cc/dopamine-3-vs-dopamine-2.html"
+      "url": "https://nextjailbreak.com/dopamine-3-vs-dopamine-2.html"
     },
     {
       "created_at": "2026-08-26T06:57:38+00:00",
-      "post": "Dopamine 3 and TrollStore are not interchangeable: Dopamine 3 is documented as a rootless semi-untethered jailbreak, while TrollStore is a permasigned jailed app that can permanently install IPAs opened in TrollStore. To https://nextsolution.cc/dopamine-3-vs-trollstore.html",
+      "post": "Dopamine 3 and TrollStore are not interchangeable: Dopamine 3 is documented as a rootless semi-untethered jailbreak, while TrollStore is a permasigned jailed app that can permanently install IPAs opened in TrollStore. To https://nextjailbreak.com/dopamine-3-vs-trollstore.html",
       "status": "pending",
       "title": "Dopamine 3 vs TrollStore: Jailbreak, IPA Installation, and Compatibility",
       "topic_id": "dopamine3-trollstore",
-      "url": "https://nextsolution.cc/dopamine-3-vs-trollstore.html"
+      "url": "https://nextjailbreak.com/dopamine-3-vs-trollstore.html"
     }
   ],
   "schema_version": 1

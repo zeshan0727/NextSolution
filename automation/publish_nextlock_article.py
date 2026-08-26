@@ -18,12 +18,12 @@ feed = ROOT / "feed.xml"
 sitemap = ROOT / "sitemap.xml"
 
 # Home structured data: newest original release first.
-if '"url": "https://nextsolution.cc/nextlock-tweak.html"' not in index.read_text():
+if '"url": "https://nextjailbreak.com/nextlock-tweak.html"' not in index.read_text():
     replace_once(
         index,
         '    "blogPost": [\n',
         '    "blogPost": [\n'
-        '      {"@type": "BlogPosting", "headline": "NextLock 1.0.1 — Customize Lock Screen Time, Date & Icons", "url": "https://nextsolution.cc/nextlock-tweak.html", "datePublished": "2026-08-16", "dateModified": "2026-08-16"},\n'
+        '      {"@type": "BlogPosting", "headline": "NextLock 1.0.1 — Customize Lock Screen Time, Date & Icons", "url": "https://nextjailbreak.com/nextlock-tweak.html", "datePublished": "2026-08-16", "dateModified": "2026-08-16"},\n'
     )
 
 # Home Recent / Latest articles card.
@@ -58,11 +58,11 @@ if 'NEXTLOCK_TUTORIAL_CARD_START' not in tutorials.read_text():
     replace_once(tutorials, '        <div class="content-grid releases-grid">\n', '        <div class="content-grid releases-grid">\n' + release)
 
 # RSS: newest item first after channel metadata.
-if 'https://nextsolution.cc/nextlock-tweak.html' not in feed.read_text():
+if 'https://nextjailbreak.com/nextlock-tweak.html' not in feed.read_text():
     item = '''    <item>
       <title>NextLock 1.0.1 — Customize Lock Screen Time, Date &amp; Icons</title>
-      <link>https://nextsolution.cc/nextlock-tweak.html</link>
-      <guid isPermaLink="true">https://nextsolution.cc/nextlock-tweak.html</guid>
+      <link>https://nextjailbreak.com/nextlock-tweak.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/nextlock-tweak.html</guid>
       <pubDate>Sun, 16 Aug 2026 12:58:00 GMT</pubDate>
       <description>NextLock by Next Jailbreak adds 27 fonts, independent time and date styling, position controls, shadows, 30+ icons and transparent sticker-style custom photos for Rootless and RootHide jailbreaks.</description>
       <category>Lock Screen</category>
@@ -72,12 +72,12 @@ if 'https://nextsolution.cc/nextlock-tweak.html' not in feed.read_text():
 
 # Sitemap: add article and refresh important landing-page dates.
 st = sitemap.read_text()
-st = st.replace('<loc>https://nextsolution.cc/</loc>\n    <lastmod>2026-08-13</lastmod>', '<loc>https://nextsolution.cc/</loc>\n    <lastmod>2026-08-16</lastmod>')
-st = st.replace('<loc>https://nextsolution.cc/tutorials.html</loc>\n    <lastmod>2026-08-13</lastmod>', '<loc>https://nextsolution.cc/tutorials.html</loc>\n    <lastmod>2026-08-16</lastmod>')
-if 'https://nextsolution.cc/nextlock-tweak.html' not in st:
+st = st.replace('<loc>https://nextjailbreak.com/</loc>\n    <lastmod>2026-08-13</lastmod>', '<loc>https://nextjailbreak.com/</loc>\n    <lastmod>2026-08-16</lastmod>')
+st = st.replace('<loc>https://nextjailbreak.com/tutorials.html</loc>\n    <lastmod>2026-08-13</lastmod>', '<loc>https://nextjailbreak.com/tutorials.html</loc>\n    <lastmod>2026-08-16</lastmod>')
+if 'https://nextjailbreak.com/nextlock-tweak.html' not in st:
     marker = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     entry = '''  <url>
-    <loc>https://nextsolution.cc/nextlock-tweak.html</loc>
+    <loc>https://nextjailbreak.com/nextlock-tweak.html</loc>
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>

@@ -37,7 +37,7 @@
     </div>
     <p class="lead">Send the activation request to Next Jailbreak. After approval, return to <strong>Settings → Module Glass → Activation</strong> and tap <strong>Check Activation</strong>.</p>
     <button class="btn" id="shareRequest" type="button">Share Activation Request</button>
-    <a class="btn secondary" id="requestLink" href="https://nextsolution.cc/license/request/">Open Activation Request</a>
+    <a class="btn secondary" id="requestLink" href="https://nextjailbreak.com/license/request/">Open Activation Request</a>
     <p class="fine">Keep your PayPal transaction confirmation until activation is complete.</p>
   </main>
   <script>
@@ -52,8 +52,8 @@
       const q=new URLSearchParams({product:'Module Glass',device:d,package:'com.nextsolution.nextaura.cc-module-backgrounds'});
       if(model)q.set('model',model);
       if(ios)q.set('ios',ios);
-      const url='https://nextsolution.cc/license/request/?'+q.toString();
-      document.getElementById('requestLink').href=valid?url:'https://nextsolution.cc/license/request/';
+      const url='https://nextjailbreak.com/license/request/?'+q.toString();
+      document.getElementById('requestLink').href=valid?url:'https://nextjailbreak.com/license/request/';
       document.getElementById('shareRequest').addEventListener('click',async()=>{
         if(!valid){alert('Open Module Glass Settings and copy your Device ID.');return;}
         const text=`Module Glass activation request\nDevice ID: ${d}${model?'\nDevice: '+model:''}${ios?'\niOS: '+ios:''}`;

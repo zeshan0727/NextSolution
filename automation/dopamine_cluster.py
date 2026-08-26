@@ -503,7 +503,7 @@ def publish_cluster(*, repository_root: Path, now: datetime, run_id: str, github
         "article_sha256": hashlib.sha256(rendered.encode("utf-8")).hexdigest(),
         "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
         "media_credit": "Next Jailbreak real Dopamine 3 test-device visual",
-        "media_source_url": "https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1/",
+        "media_source_url": "https://nextjailbreak.com/dopamine-3-jailbreak-ios-17-6-1/",
         "published_at": published_at,
         "modified_at": published_at,
     }

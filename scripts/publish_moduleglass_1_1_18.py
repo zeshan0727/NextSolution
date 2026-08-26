@@ -73,11 +73,11 @@ def stanza(root: Path, architecture: str, filename: str, expected_sha256: str) -
             f"SHA256: {sha256}",
             "Section: Tweaks",
             "Priority: optional",
-            "Homepage: https://nextsolution.cc/",
+            "Homepage: https://nextjailbreak.com/",
             f"Description: {DESCRIPTION}",
             "Author: Next Jailbreak",
-            "Depiction: https://nextsolution.cc/depictions/moduleglass.html",
-            "Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png",
+            "Depiction: https://nextjailbreak.com/depictions/moduleglass.html",
+            "Icon: https://nextjailbreak.com/icons/nextaura/cc-module-backgrounds.png",
             "Name: Module Glass",
         )
     )

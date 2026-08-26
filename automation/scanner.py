@@ -29,7 +29,7 @@ DEFAULT_FEED_PATHS = ["Packages.xz", "Packages.gz", "Packages.bz2", "Packages"]
 ALLOWED_TIERS = {"verified", "observe", "excluded"}
 MAX_COMPRESSED_BYTES = 24 * 1024 * 1024
 MAX_EXPANDED_BYTES = 64 * 1024 * 1024
-USER_AGENT = "NextSolutionFeedScanner/0.1 (+https://nextsolution.cc/)"
+USER_AGENT = "NextSolutionFeedScanner/0.1 (+https://nextjailbreak.com/)"
 RISK_PATTERNS = {
     "piracy_language": re.compile(r"\b(crack(?:ed)?|pirated?|warez)\b", re.I),
     "game_cheat_language": re.compile(

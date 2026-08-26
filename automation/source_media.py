@@ -103,7 +103,7 @@ def _download_page(url: str) -> str:
     request = Request(
         url,
         headers={
-            "User-Agent": "NextSolutionSourceMedia/1.0 (+https://nextsolution.cc)",
+            "User-Agent": "NextSolutionSourceMedia/1.0 (+https://nextjailbreak.com)",
             "Accept": "text/html,application/xhtml+xml",
         },
     )

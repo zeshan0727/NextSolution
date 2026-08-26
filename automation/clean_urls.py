@@ -14,7 +14,7 @@ import re
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-SITE = "https://nextsolution.cc"
+SITE = "https://nextjailbreak.com"
 SOCIAL_IMAGE = f"{SITE}/assets/brand/next-jailbreak-social-card.png"
 
 ATTR_RE = re.compile(
@@ -66,8 +66,8 @@ def rewrite_url(value: str, pages: set[str]) -> str:
     if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", raw):
         parsed = urlsplit(raw)
         if parsed.scheme not in {"http", "https"} or parsed.netloc.lower() not in {
-            "nextsolution.cc",
-            "www.nextsolution.cc",
+            "nextjailbreak.com",
+            "www.nextjailbreak.com",
         }:
             return value
         local = parsed.path.lstrip("/")
@@ -112,10 +112,10 @@ def rewrite_attributes(text: str, pages: set[str]) -> str:
 def rewrite_absolute_page_urls(text: str, pages: set[str]) -> str:
     for filename in sorted(pages, key=len, reverse=True):
         slug = filename[:-5]
-        text = text.replace(f"https://nextsolution.cc/{filename}", f"https://nextsolution.cc/{slug}/")
-        text = text.replace(f"https://www.nextsolution.cc/{filename}", f"https://nextsolution.cc/{slug}/")
-        text = text.replace(f"http://nextsolution.cc/{filename}", f"https://nextsolution.cc/{slug}/")
-        text = text.replace(f"http://www.nextsolution.cc/{filename}", f"https://nextsolution.cc/{slug}/")
+        text = text.replace(f"https://nextjailbreak.com/{filename}", f"https://nextjailbreak.com/{slug}/")
+        text = text.replace(f"https://www.nextjailbreak.com/{filename}", f"https://nextjailbreak.com/{slug}/")
+        text = text.replace(f"http://nextjailbreak.com/{filename}", f"https://nextjailbreak.com/{slug}/")
+        text = text.replace(f"http://www.nextjailbreak.com/{filename}", f"https://nextjailbreak.com/{slug}/")
     return text
 
 
@@ -125,7 +125,7 @@ def social_image_is_safe(url: str) -> bool:
         return False
 
     host = parsed.netloc.lower()
-    if host in {"nextsolution.cc", "www.nextsolution.cc"}:
+    if host in {"nextjailbreak.com", "www.nextjailbreak.com"}:
         return parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
 
     # Havoc serves package screenshots from extensionless HTTPS media URLs.

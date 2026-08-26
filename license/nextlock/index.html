@@ -24,11 +24,11 @@
   <form id="paypalForm" action="https://www.paypal.com/cgi-bin/webscr" method="post">
     <input type="hidden" name="cmd" value="_xclick"><input type="hidden" name="business" value="amara@zeshanbarvi.uk">
     <input type="hidden" name="item_name" id="itemName" value="NextLock License"><input type="hidden" name="amount" value="1.00"><input type="hidden" name="currency_code" value="USD"><input type="hidden" name="no_shipping" value="1">
-    <input type="hidden" name="custom" id="custom" value=""><input type="hidden" name="return" id="returnUrl" value="https://nextsolution.cc/license/nextlock/success/"><input type="hidden" name="cancel_return" id="cancelUrl" value="https://nextsolution.cc/license/nextlock/"><input type="hidden" name="charset" value="utf-8">
+    <input type="hidden" name="custom" id="custom" value=""><input type="hidden" name="return" id="returnUrl" value="https://nextjailbreak.com/license/nextlock/success/"><input type="hidden" name="cancel_return" id="cancelUrl" value="https://nextjailbreak.com/license/nextlock/"><input type="hidden" name="charset" value="utf-8">
     <button class="pay" id="payButton" type="submit" disabled>Pay $1.00 with PayPal</button>
   </form>
   <p class="fine">Payment recipient: <strong>amara@zeshanbarvi.uk</strong>. After payment, activation remains pending until the Device ID is approved by Next Jailbreak.</p>
-  <a class="back" href="https://nextsolution.cc/nextlock-tweak/">← Back to NextLock</a>
+  <a class="back" href="https://nextjailbreak.com/nextlock-tweak/">← Back to NextLock</a>
 </main>
 <script>
 (function(){
@@ -45,8 +45,8 @@
   document.getElementById('itemName').value='NextLock License — '+raw;
   document.getElementById('custom').value=['NEXTLOCK',raw,'com.nextsolution.lockglyphtime',model,ios].join('|');
   const q=new URLSearchParams({device:raw});if(model)q.set('model',model);if(ios)q.set('ios',ios);
-  document.getElementById('returnUrl').value='https://nextsolution.cc/license/nextlock/success/?'+q.toString();
-  document.getElementById('cancelUrl').value='https://nextsolution.cc/license/nextlock/?'+q.toString();
+  document.getElementById('returnUrl').value='https://nextjailbreak.com/license/nextlock/success/?'+q.toString();
+  document.getElementById('cancelUrl').value='https://nextjailbreak.com/license/nextlock/?'+q.toString();
   document.getElementById('payButton').disabled=false;
 })();
 </script>

@@ -24,7 +24,7 @@ class PublisherTests(unittest.TestCase):
         state = load_json(FIXTURES / "editorial-state.json")
         base_site = load_json(AUTOMATION / "site.json")
         cls.site = deepcopy(base_site)
-        cls.site["base_url"] = "https://nextsolution.cc"
+        cls.site["base_url"] = "https://nextjailbreak.com"
         cls.site["publishing"]["enabled"] = True
         cls.site["publishing"]["max_per_day"] = 3
         cls.site["publishing"]["timezone"] = "Asia/Qatar"
@@ -76,7 +76,7 @@ class PublisherTests(unittest.TestCase):
         (root / "sitemap.xml").write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-            "<url><loc>https://nextsolution.cc/</loc></url></urlset>",
+            "<url><loc>https://nextjailbreak.com/</loc></url></urlset>",
             encoding="utf-8",
         )
         audit_path = root / "automation" / "published-articles.json"

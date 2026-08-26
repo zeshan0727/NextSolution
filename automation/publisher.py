@@ -250,7 +250,7 @@ def _validate_manifest(
     if not result.approved:
         raise PublishingError("draft failed publication-time validation: " + "; ".join(result.issues))
     configured_base = str(site.get("base_url", "")).rstrip("/")
-    if configured_base != "https://nextsolution.cc":
+    if configured_base != "https://nextjailbreak.com":
         raise PublishingError("publishing base URL is not the production domain")
     return article, candidate
 
