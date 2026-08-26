@@ -1,0 +1,100 @@
+name: Migrate all links to Next Jailbreak
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/migrate-all-nextjailbreak-links.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace every legacy Next Solution domain reference
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+          self_path = Path('.github/workflows/migrate-all-nextjailbreak-links.yml')
+          skip_dirs = {'.git'}
+
+          replacements = (
+              ('https://www.nextsolution.cc', 'https://nextjailbreak.com'),
+              ('http://www.nextsolution.cc', 'https://nextjailbreak.com'),
+              ('https://nextsolution.cc', 'https://nextjailbreak.com'),
+              ('http://nextsolution.cc', 'https://nextjailbreak.com'),
+              ('www.nextsolution.cc', 'nextjailbreak.com'),
+              ('nextsolution.cc', 'nextjailbreak.com'),
+              ('https://www.nextsolution.app', 'https://nextjailbreak.com'),
+              ('http://www.nextsolution.app', 'https://nextjailbreak.com'),
+              ('https://nextsolution.app', 'https://nextjailbreak.com'),
+              ('http://nextsolution.app', 'https://nextjailbreak.com'),
+              ('www.nextsolution.app', 'nextjailbreak.com'),
+              ('nextsolution.app', 'nextjailbreak.com'),
+          )
+
+          changed = []
+          for path in root.rglob('*'):
+              if not path.is_file() or path == self_path:
+                  continue
+              if any(part in skip_dirs for part in path.parts):
+                  continue
+              try:
+                  data = path.read_bytes()
+              except OSError:
+                  continue
+              if b'nextsolution.cc' not in data.lower() and b'nextsolution.app' not in data.lower():
+                  continue
+              try:
+                  text = data.decode('utf-8')
+              except UnicodeDecodeError:
+                  continue
+
+              new = text
+              for old, replacement in replacements:
+                  new = new.replace(old, replacement)
+                  new = new.replace(old.upper(), replacement)
+
+              if new != text:
+                  path.write_text(new, encoding='utf-8')
+                  changed.append(str(path))
+
+          print(f'Updated {len(changed)} text files')
+          for path in changed:
+              print(path)
+          PY
+
+      - name: Commit all migrated links
+        shell: bash
+        run: |
+          if git diff --quiet && [ -z "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "No legacy domain references remain in writable UTF-8 files."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Migrate all app and site links to nextjailbreak.com"
+
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase origin main || { git rebase --abort || true; sleep 3; continue; }
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; retrying..."
+            sleep 4
+          done
+          echo "Unable to push migration after retries"
+          exit 1
