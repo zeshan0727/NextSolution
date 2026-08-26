@@ -1,0 +1,147 @@
+name: Publish Next Multi Browser 1.1.10
+
+on:
+  push:
+    branches: [next-multi-browser]
+    paths:
+      - '.github/workflows/publish-next-multi-browser-1.1.10.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download verified 1.1.10 artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl -fL \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9605706252/zip" \
+            -o next-multi-browser-artifact.zip
+          mkdir artifact
+          unzip -q next-multi-browser-artifact.zip -d artifact
+          test -f artifact/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa
+          test -f artifact/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa
+
+      - name: Verify package and device category engines
+        run: |
+          set -euo pipefail
+          TIPA="artifact/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
+          unzip -tq "$TIPA" >/dev/null
+          python3 - "$TIPA" <<'PY'
+          import plistlib
+          import sys
+          import zipfile
+
+          with zipfile.ZipFile(sys.argv[1]) as archive:
+              names = archive.namelist()
+              host_info = next(name for name in names if name.endswith('/Next Multi Browser.app/Info.plist') and name.count('/') == 2)
+              vpn_info = next(name for name in names if name.endswith('/PlugIns/NextMultiBrowserVPN.appex/Info.plist'))
+              executable = next(name for name in names if name.endswith('/Next Multi Browser.app/Next Multi Browser'))
+              host = plistlib.loads(archive.read(host_info))
+              vpn = plistlib.loads(archive.read(vpn_info))
+              binary = archive.read(executable)
+
+          assert host['CFBundleIdentifier'] == 'com.nextsolution.multibrowser'
+          assert host['CFBundleShortVersionString'] == '1.1.10'
+          assert host['CFBundleVersion'] == '18'
+          assert set(host['UIDeviceFamily']) == {1, 2}
+          assert vpn['CFBundleIdentifier'] == 'com.nextsolution.multibrowser.vpn'
+          assert vpn['CFBundleShortVersionString'] == '1.1.10'
+          assert vpn['CFBundleVersion'] == '18'
+
+          for feature in (
+              b'NextMultiBrowser.importedURLQueue.values',
+              b'Randomize Environment',
+              b'Randomize All Now',
+              b'NextMultiBrowser.autoRandomizeEnvironmentSeconds',
+              b'NextMultiBrowser.environmentRandomizationMode',
+              b'Device Mode ',
+              b'Random iPhone devices',
+              b'Random Android phones',
+              b'Random Windows Chrome or macOS Safari',
+              b'Random iOS, Android, Windows, and macOS',
+              b'Auto Randomize',
+              b'NMB_IPAD_PRO_129_PORTRAIT_LANDSCAPE_118',
+          ):
+              assert feature in binary, feature
+          PY
+
+      - name: Check out NS Transfer
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: ns-transfer
+          fetch-depth: 0
+
+      - name: Publish to NS Transfer
+        working-directory: ns-transfer
+        run: |
+          set -euo pipefail
+          TIPA="$GITHUB_WORKSPACE/artifact/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
+          IPA="$GITHUB_WORKSPACE/artifact/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa"
+          DEST_DIR="transfer/files/NextMultiBrowser/1.1.10"
+          FILE_NAME="NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
+          IPA_FILE_NAME="NextMultiBrowser_1.1.10_Device_Category_Modes.ipa"
+          mkdir -p "$DEST_DIR"
+          cp "$TIPA" "$DEST_DIR/$FILE_NAME"
+          cp "$IPA" "$DEST_DIR/$IPA_FILE_NAME"
+
+          python3 - "$TIPA" <<'PY'
+          import hashlib
+          import json
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          tipa = Path(sys.argv[1])
+          sha256 = hashlib.sha256(tipa.read_bytes()).hexdigest()
+          size = tipa.stat().st_size
+          path = Path('transfer/index.json')
+          data = json.loads(path.read_text())
+          current = []
+          for item in data.get('files', []):
+              item_id = str(item.get('id', '')).lower()
+              file_name = str(item.get('fileName', '')).lower()
+              if item_id.startswith('nextmultibrowser-') or file_name.startswith('nextmultibrowser_'):
+                  continue
+              current.append(item)
+
+          entry = {
+              'id': 'nextmultibrowser-1.1.10-device-category-modes',
+              'name': 'Next Multi Browser 1.1.10 — Device Category Modes',
+              'fileName': 'NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
+              'type': 'tipa',
+              'platform': 'TrollStore / RootHide / iOS 15+',
+              'version': '1.1.10 (18)',
+              'url': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
+              'ipaUrl': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa',
+              'sha256': sha256,
+              'sizeBytes': size,
+              'notes': 'Adds four global environment device modes to the main Random Environment control: iOS Mode assigns random iPhone presets, Android Mode assigns random Android phones, PC / Mac Mode mixes Windows Chrome and macOS Safari desktop presets, and Mixed Mode combines all categories. Selecting a mode immediately randomizes all 20 profiles, and the saved Auto Randomize timer continues using that selected mode. Cookies, Google logins, persistent website data, profile isolation, iPad Pro layout, URL queue, AutoFill, auto refresh, and VPN features remain intact.'
+          }
+          data['files'] = [entry] + current
+          data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+          print(f'SHA-256: {sha256}')
+          print(f'Size: {size}')
+          PY
+
+          python3 -m json.tool transfer/index.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          printf '%s\n' "Next Multi Browser 1.1.10 published $(date -u +%Y-%m-%dT%H:%M:%SZ)" > transfer/deploy-trigger.txt
+          git add transfer/index.json transfer/deploy-trigger.txt "$DEST_DIR/$FILE_NAME" "$DEST_DIR/$IPA_FILE_NAME"
+          git diff --cached --stat
+          git commit -m 'Publish Next Multi Browser 1.1.10 to NS Transfer'
+          git pull --rebase origin main
+          git push origin HEAD:main
