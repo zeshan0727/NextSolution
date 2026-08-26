@@ -52,7 +52,7 @@ struct BrowserProxyRoute: Codable, Equatable {
             host: NWEndpoint.Host(trimmedHost),
             port: nwPort
         )
-        let configuration: ProxyConfiguration
+        var configuration: ProxyConfiguration
         switch kind {
         case .httpConnect:
             configuration = ProxyConfiguration(httpCONNECTProxy: endpoint, tlsOptions: nil)
