@@ -4,11 +4,12 @@
 The repository keeps root ``*.html`` files as legacy publisher targets, while
 public URLs are served from ``/<slug>/index.html``. This script is idempotent
 and also rewrites site navigation, canonical URLs, feed/sitemap URLs, and
-social preview images to GitHub-Pages-safe values.
+social preview metadata to GitHub-Pages-safe values.
 """
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
 import re
 from urllib.parse import urlsplit
@@ -16,6 +17,8 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://nextjailbreak.com"
 SOCIAL_IMAGE = f"{SITE}/assets/brand/next-jailbreak-social-card.png"
+SOCIAL_IMAGE_WIDTH = "1200"
+SOCIAL_IMAGE_HEIGHT = "630"
 
 ATTR_RE = re.compile(
     r"(?P<prefix>\b(?:href|src|poster|action)\s*=\s*)(?P<quote>[\"'])(?P<url>.*?)(?P=quote)",
@@ -28,11 +31,6 @@ META_IMAGE_RE = re.compile(
 META_IMAGE_RE_REVERSED = re.compile(
     r"(?P<prefix><meta\s+[^>]*content=[\"'])(?P<url>[^\"']+)(?P<middle>[\"'][^>]*(?:property|name)=[\"'](?:og:image|twitter:image)[\"'][^>]*>)",
     re.IGNORECASE,
-)
-JSON_LD_IMAGE_RE = re.compile(r'"image"\s*:\s*"(?P<url>https://[^"\\]+)"', re.IGNORECASE)
-ARTICLE_HERO_IMAGE_RE = re.compile(
-    r'<figure\s+class=[\"\'][^\"\']*article-visual[^\"\']*[\"\'][^>]*>.*?<img\s+[^>]*src=[\"\'](?P<url>https://[^\"\']+)[\"\']',
-    re.IGNORECASE | re.DOTALL,
 )
 REDIRECT_MARKER = "data-clean-url-redirect"
 REDIRECT_SCRIPT = """  <script data-clean-url-redirect>\n    (function () {\n      var path = window.location.pathname;\n      if (/\\.html$/i.test(path) && path.toLowerCase() !== '/index.html') {\n        window.location.replace(path.slice(0, -5) + '/' + window.location.search + window.location.hash);\n      }\n    }());\n  </script>\n"""
@@ -119,65 +117,114 @@ def rewrite_absolute_page_urls(text: str, pages: set[str]) -> str:
     return text
 
 
-def social_image_is_safe(url: str) -> bool:
-    parsed = urlsplit(url)
-    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
-        return False
-
-    host = parsed.netloc.lower()
-    if host in {"nextjailbreak.com", "www.nextjailbreak.com"}:
-        return parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
-
-    # Havoc serves package screenshots from extensionless HTTPS media URLs.
-    # Those are valid Open Graph/Twitter card images and should not be replaced
-    # by the generic Next Jailbreak brand image.
-    if host == "media.havoc.app":
-        return True
-
-    # Preserve other attributable external raster images when the URL itself
-    # clearly identifies a supported image format.
-    return parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
-
-
-def preferred_social_image(text: str) -> str | None:
-    """Recover the article-specific image from structured data or the hero.
-
-    Older clean-url runs replaced external OG/Twitter images with the generic
-    Next Jailbreak showcase image. The original article image is still present
-    in JSON-LD and/or the authentic article hero, so use it to restore cards.
-    """
-    for pattern in (JSON_LD_IMAGE_RE, ARTICLE_HERO_IMAGE_RE):
-        match = pattern.search(text)
-        if match:
-            candidate = match.group("url")
-            if social_image_is_safe(candidate):
-                return candidate
-    return None
-
-
 def stabilize_social_images(text: str) -> str:
-    article_image = preferred_social_image(text)
+    """Use a first-party 1200x630 image for reliable social-card crawling.
 
-    def replacement_for(url: str) -> str:
-        if social_image_is_safe(url) and url != SOCIAL_IMAGE:
-            return url
-        if article_image:
-            return article_image
-        if social_image_is_safe(url):
-            return url
-        return SOCIAL_IMAGE
-
+    WhatsApp, Facebook, X, Telegram and other link unfurlers can fail to fetch
+    extensionless or hotlink-protected third-party screenshots. The article
+    itself still keeps its authentic feature image; only OG/Twitter preview
+    metadata is normalized to the first-party Next Jailbreak social card.
+    """
     def repl(match: re.Match[str]) -> str:
-        url = replacement_for(match.group("url"))
-        return f"{match.group('prefix')}{url}{match.group('suffix')}"
+        return f"{match.group('prefix')}{SOCIAL_IMAGE}{match.group('suffix')}"
 
     text = META_IMAGE_RE.sub(repl, text)
 
     def repl_reversed(match: re.Match[str]) -> str:
-        url = replacement_for(match.group("url"))
-        return f"{match.group('prefix')}{url}{match.group('middle')}"
+        return f"{match.group('prefix')}{SOCIAL_IMAGE}{match.group('middle')}"
 
     return META_IMAGE_RE_REVERSED.sub(repl_reversed, text)
+
+
+def _meta_value(text: str, *, attr: str, key: str) -> str | None:
+    pattern = re.compile(
+        rf'<meta\s+[^>]*{attr}=["\']{re.escape(key)}["\'][^>]*content=["\'](?P<value>[^"\']*)["\'][^>]*>',
+        re.IGNORECASE,
+    )
+    match = pattern.search(text)
+    if match:
+        return html.unescape(match.group("value")).strip()
+    reversed_pattern = re.compile(
+        rf'<meta\s+[^>]*content=["\'](?P<value>[^"\']*)["\'][^>]*{attr}=["\']{re.escape(key)}["\'][^>]*>',
+        re.IGNORECASE,
+    )
+    match = reversed_pattern.search(text)
+    return html.unescape(match.group("value")).strip() if match else None
+
+
+def _canonical_value(text: str) -> str | None:
+    pattern = re.compile(
+        r'<link\s+[^>]*rel=["\']canonical["\'][^>]*href=["\'](?P<value>[^"\']+)["\'][^>]*>',
+        re.IGNORECASE,
+    )
+    match = pattern.search(text)
+    if match:
+        return html.unescape(match.group("value")).strip()
+    reversed_pattern = re.compile(
+        r'<link\s+[^>]*href=["\'](?P<value>[^"\']+)["\'][^>]*rel=["\']canonical["\'][^>]*>',
+        re.IGNORECASE,
+    )
+    match = reversed_pattern.search(text)
+    return html.unescape(match.group("value")).strip() if match else None
+
+
+def _title_value(text: str) -> str | None:
+    match = re.search(r"<title>(?P<value>.*?)</title>", text, re.IGNORECASE | re.DOTALL)
+    if not match:
+        return None
+    return html.unescape(re.sub(r"\s+", " ", match.group("value"))).strip()
+
+
+def _upsert_meta(text: str, *, attr: str, key: str, content: str) -> str:
+    escaped = html.escape(content, quote=True)
+    replacement = f'<meta {attr}="{key}" content="{escaped}">'
+    pattern = re.compile(
+        rf'<meta\s+[^>]*{attr}=["\']{re.escape(key)}["\'][^>]*>',
+        re.IGNORECASE,
+    )
+    if pattern.search(text):
+        return pattern.sub(replacement, text, count=1)
+    reversed_pattern = re.compile(
+        rf'<meta\s+[^>]*{attr}=["\']{re.escape(key)}["\'][^>]*>',
+        re.IGNORECASE,
+    )
+    if reversed_pattern.search(text):
+        return reversed_pattern.sub(replacement, text, count=1)
+    if "</head>" in text:
+        return text.replace("</head>", f"  {replacement}\n</head>", 1)
+    return text
+
+
+def ensure_social_preview_meta(text: str) -> str:
+    title = _title_value(text) or "Next Jailbreak | Jailbreaks, Tweaks, Apps & Guides"
+    description = _meta_value(text, attr="name", key="description") or (
+        "Next Jailbreak covers jailbreak news, Cydia and Sileo tweaks, useful apps, tutorials and troubleshooting."
+    )
+    canonical = _canonical_value(text) or SITE + "/"
+    page_type = "article" if "<article" in text.lower() else "website"
+
+    values = (
+        ("property", "og:type", page_type),
+        ("property", "og:site_name", "Next Jailbreak"),
+        ("property", "og:url", canonical),
+        ("property", "og:title", title),
+        ("property", "og:description", description),
+        ("property", "og:image", SOCIAL_IMAGE),
+        ("property", "og:image:secure_url", SOCIAL_IMAGE),
+        ("property", "og:image:type", "image/png"),
+        ("property", "og:image:width", SOCIAL_IMAGE_WIDTH),
+        ("property", "og:image:height", SOCIAL_IMAGE_HEIGHT),
+        ("property", "og:image:alt", "Next Jailbreak — jailbreaks, tweaks, apps and guides"),
+        ("name", "twitter:card", "summary_large_image"),
+        ("name", "twitter:site", "@nextjailbreak"),
+        ("name", "twitter:title", title),
+        ("name", "twitter:description", description),
+        ("name", "twitter:image", SOCIAL_IMAGE),
+        ("name", "twitter:image:alt", "Next Jailbreak — jailbreaks, tweaks, apps and guides"),
+    )
+    for attr, key, value in values:
+        text = _upsert_meta(text, attr=attr, key=key, content=value)
+    return text
 
 
 def ensure_legacy_redirect(text: str) -> str:
@@ -190,6 +237,7 @@ def normalize_html(text: str, pages: set[str], *, legacy_redirect: bool) -> str:
     text = rewrite_attributes(text, pages)
     text = rewrite_absolute_page_urls(text, pages)
     text = stabilize_social_images(text)
+    text = ensure_social_preview_meta(text)
     if legacy_redirect:
         text = ensure_legacy_redirect(text)
     return text
