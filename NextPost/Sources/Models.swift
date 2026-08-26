@@ -62,10 +62,11 @@ struct PublishedArticle: Decodable, Identifiable, Hashable {
         }
 
         var items = components.queryItems ?? []
-        items.removeAll { ["utm_source", "utm_medium", "utm_campaign", "v"].contains($0.name) }
+        items.removeAll { ["utm_source", "utm_medium", "utm_campaign", "v", "card"].contains($0.name) }
         items.append(URLQueryItem(name: "utm_source", value: "nextpost"))
         items.append(URLQueryItem(name: "utm_medium", value: "x"))
         items.append(URLQueryItem(name: "utm_campaign", value: "article_share"))
+        items.append(URLQueryItem(name: "card", value: "article-v2"))
         if let version, !version.isEmpty {
             items.append(URLQueryItem(name: "v", value: version))
         }

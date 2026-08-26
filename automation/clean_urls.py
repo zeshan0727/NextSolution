@@ -118,23 +118,8 @@ def rewrite_absolute_page_urls(text: str, pages: set[str]) -> str:
 
 
 def stabilize_social_images(text: str) -> str:
-    """Use a first-party 1200x630 image for reliable social-card crawling.
-
-    WhatsApp, Facebook, X, Telegram and other link unfurlers can fail to fetch
-    extensionless or hotlink-protected third-party screenshots. The article
-    itself still keeps its authentic feature image; only OG/Twitter preview
-    metadata is normalized to the first-party Next Jailbreak social card.
-    """
-    def repl(match: re.Match[str]) -> str:
-        return f"{match.group('prefix')}{SOCIAL_IMAGE}{match.group('suffix')}"
-
-    text = META_IMAGE_RE.sub(repl, text)
-
-    def repl_reversed(match: re.Match[str]) -> str:
-        return f"{match.group('prefix')}{SOCIAL_IMAGE}{match.group('middle')}"
-
-    return META_IMAGE_RE_REVERSED.sub(repl_reversed, text)
-
+    """Preserve each page's own topic image instead of forcing the site card."""
+    return text
 
 def _meta_value(text: str, *, attr: str, key: str) -> str | None:
     pattern = re.compile(
@@ -189,6 +174,73 @@ def _upsert_meta(text: str, *, attr: str, key: str, content: str) -> str:
     return text
 
 
+def _absolute_preview_url(value: str) -> str | None:
+    value = html.unescape(value).strip()
+    if not value:
+        return None
+    if value.startswith("https://") or value.startswith("http://"):
+        return value
+    if value.startswith("//"):
+        return "https:" + value
+    if value.startswith("/"):
+        return SITE + value
+    return SITE + "/" + value.lstrip("/")
+
+
+def _article_preview_image(text: str) -> str:
+    for script in re.finditer(
+        r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(?P<body>.*?)</script>',
+        text,
+        re.IGNORECASE | re.DOTALL,
+    ):
+        body = html.unescape(script.group("body"))
+        image = re.search(
+            r'"image"\s*:\s*(?:"(?P<single>[^"\\]+)"|\[\s*"(?P<array>[^"\\]+)")',
+            body,
+            re.IGNORECASE,
+        )
+        if image:
+            value = image.group("single") or image.group("array")
+            resolved = _absolute_preview_url(value)
+            if resolved and resolved != SOCIAL_IMAGE:
+                return resolved
+
+    figure = re.search(
+        r'<figure[^>]*class=["\'][^"\']*(?:article-visual|authentic-media)[^"\']*["\'][^>]*>.*?<img[^>]*src=["\'](?P<src>[^"\']+)["\']',
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if figure:
+        resolved = _absolute_preview_url(figure.group("src"))
+        if resolved:
+            return resolved
+
+    article_img = re.search(
+        r'<article\b[^>]*>.*?<img[^>]*src=["\'](?P<src>[^"\']+)["\']',
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if article_img:
+        resolved = _absolute_preview_url(article_img.group("src"))
+        if resolved:
+            return resolved
+
+    existing = _meta_value(text, attr="property", key="og:image")
+    resolved = _absolute_preview_url(existing) if existing else None
+    if resolved and resolved != SOCIAL_IMAGE:
+        return resolved
+
+    return SOCIAL_IMAGE
+
+
+def _remove_meta(text: str, *, attr: str, key: str) -> str:
+    pattern = re.compile(
+        rf'\s*<meta\s+[^>]*{attr}=["\']{re.escape(key)}["\'][^>]*>\s*',
+        re.IGNORECASE,
+    )
+    return pattern.sub("\n", text)
+
+
 def ensure_social_preview_meta(text: str) -> str:
     title = _title_value(text) or "Next Jailbreak | Jailbreaks, Tweaks, Apps & Guides"
     description = _meta_value(text, attr="name", key="description") or (
@@ -197,6 +249,8 @@ def ensure_social_preview_meta(text: str) -> str:
     canonical = _canonical_value(text) or SITE + "/"
     is_homepage = canonical.rstrip("/") == SITE
     page_type = "website" if is_homepage else ("article" if "<article" in text.lower() else "website")
+    social_image = _article_preview_image(text) if page_type == "article" else SOCIAL_IMAGE
+    image_alt = title if page_type == "article" else "Next Jailbreak — jailbreaks, tweaks, apps and guides"
 
     values = (
         ("property", "og:type", page_type),
@@ -204,23 +258,28 @@ def ensure_social_preview_meta(text: str) -> str:
         ("property", "og:url", canonical),
         ("property", "og:title", title),
         ("property", "og:description", description),
-        ("property", "og:image", SOCIAL_IMAGE),
-        ("property", "og:image:secure_url", SOCIAL_IMAGE),
-        ("property", "og:image:type", "image/png"),
-        ("property", "og:image:width", SOCIAL_IMAGE_WIDTH),
-        ("property", "og:image:height", SOCIAL_IMAGE_HEIGHT),
-        ("property", "og:image:alt", "Next Jailbreak — jailbreaks, tweaks, apps and guides"),
+        ("property", "og:image", social_image),
+        ("property", "og:image:secure_url", social_image),
+        ("property", "og:image:alt", image_alt),
         ("name", "twitter:card", "summary_large_image"),
         ("name", "twitter:site", "@nextjailbreak"),
         ("name", "twitter:title", title),
         ("name", "twitter:description", description),
-        ("name", "twitter:image", SOCIAL_IMAGE),
-        ("name", "twitter:image:alt", "Next Jailbreak — jailbreaks, tweaks, apps and guides"),
+        ("name", "twitter:image", social_image),
+        ("name", "twitter:image:alt", image_alt),
     )
     for attr, key, value in values:
         text = _upsert_meta(text, attr=attr, key=key, content=value)
-    return text
 
+    if social_image == SOCIAL_IMAGE:
+        text = _upsert_meta(text, attr="property", key="og:image:type", content="image/png")
+        text = _upsert_meta(text, attr="property", key="og:image:width", content=SOCIAL_IMAGE_WIDTH)
+        text = _upsert_meta(text, attr="property", key="og:image:height", content=SOCIAL_IMAGE_HEIGHT)
+    else:
+        text = _remove_meta(text, attr="property", key="og:image:type")
+        text = _remove_meta(text, attr="property", key="og:image:width")
+        text = _remove_meta(text, attr="property", key="og:image:height")
+    return text
 
 def ensure_legacy_redirect(text: str) -> str:
     if REDIRECT_MARKER in text or "</head>" not in text:
