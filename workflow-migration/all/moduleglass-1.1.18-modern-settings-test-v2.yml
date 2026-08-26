@@ -1,0 +1,221 @@
+name: Build Module Glass 1.1.18 Modern Settings Test V2
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.moduleglass-build/ModuleGlassModernPrefs.m'
+      - '.moduleglass-build/ModuleGlassLicenseGate.m'
+      - '.moduleglass-build/mg118_modern_prefs.py'
+      - '.github/workflows/moduleglass-1.1.18-modern-settings-test-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moduleglass-1.1.18-modern-v2-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 30
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+      BASE_SHA: a15205e928db116e74102a29d4b116d14d1b57f0e9412707493d8c109433ecb0
+      RUNTIME_SHA: fe3bd040d4718d07303b66e011f91c4de67ff9be820c854839ef3bf5d679ac96
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid xz
+
+      - name: Extract exact working 1.1.17 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git show origin/main:transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb > /tmp/moduleglass117.deb
+          echo "$BASE_SHA  /tmp/moduleglass117.deb" | shasum -a 256 -c -
+          rm -rf stage output addon
+          mkdir -p stage output addon
+          dpkg-deb -R /tmp/moduleglass117.deb stage
+          echo "$RUNTIME_SHA  stage/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
+
+      - name: Apply modern grouped preferences
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUNDLE=stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle
+          python3 .moduleglass-build/mg118_modern_prefs.py "$BUNDLE"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('stage/DEBIAN/control')
+          t=p.read_text()
+          t=t.replace('Version: 1.1.17','Version: 1.1.18')
+          t=t.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.17)','Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.18)')
+          t=t.replace('<= 1.1.16','<= 1.1.17')
+          old='Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds the current Aura Settings preference bundle directly in the same package.'
+          new='Description: Module Glass 1.1.18 UI Test 1 preserves the validated 1.1.15 External Host Isolation Control Center runtime bit-for-bit and adds a Next Jailbreak branded modern Settings UI, grouped module selectors, and live device activation.'
+          t=t.replace(old,new)
+          p.write_text(t)
+          PY
+          test "$(grep '^Version:' stage/DEBIAN/control | awk '{print $2}')" = '1.1.18'
+          plutil -lint "$BUNDLE/Info.plist"
+          plutil -lint "$BUNDLE/CCModuleBackgrounds.plist"
+          echo "$RUNTIME_SHA  stage/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib" | shasum -a 256 -c -
+
+      - name: Install RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$THEOS"
+          curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
+          for attempt in 1 2 3; do
+            if bash /tmp/install-theos; then break; fi
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            sleep 3
+          done
+          test -f "$THEOS/makefiles/common.mk"
+          mkdir -p "$THEOS/sdks"
+          if ! ls "$THEOS"/sdks/iPhoneOS*.sdk >/dev/null 2>&1; then
+            curl -fL --retry 3 https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/sdk.tar.xz
+            tar -xJf /tmp/sdk.tar.xz -C "$THEOS/sdks"
+          fi
+
+      - name: Prepare corrected modern UI sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .moduleglass-build/ModuleGlassModernPrefs.m addon/
+          cp .moduleglass-build/ModuleGlassLicenseGate.m addon/
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('addon/ModuleGlassModernPrefs.m')
+          t=p.read_text()
+          old='''    if ([app respondsToSelector:@selector(openURL:options:completionHandler:)]) {\n        [app openURL:url options:@{} completionHandler:nil];\n    } else {\n#pragma clang diagnostic push\n#pragma clang diagnostic ignored "-Wdeprecated-declarations"\n        [app openURL:url];\n#pragma clang diagnostic pop\n    }'''
+          new='''    if ([app respondsToSelector:@selector(openURL:options:completionHandler:)]) {\n        [app openURL:url options:@{} completionHandler:nil];\n    }'''
+          if old not in t: raise SystemExit('openURL compatibility patch anchor missing')
+          t=t.replace(old,new)
+          old_bundle='''    NSString *bundlePath = @"/Library/PreferenceBundles/ModuleGlassPrefs.bundle";\n    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];'''
+          new_bundle='''    NSBundle *bundle = [NSBundle bundleForClass:[controller class]];'''
+          if old_bundle in t: t=t.replace(old_bundle,new_bundle)
+          old_store='''    [d setDouble:NSDate.date.timeIntervalSince1970 forKey:@"licenseLastCheck"];\n    [d synchronize];'''
+          new_store='''    [d setDouble:NSDate.date.timeIntervalSince1970 forKey:@"licenseLastCheck"];\n    [d synchronize];\n    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.nextsolution.moduleglass/license.changed"), NULL, NULL, true);\n    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.nextsolution.unlockvibrate/preferences.changed"), NULL, NULL, true);'''
+          if old_store in t: t=t.replace(old_store,new_store)
+          p.write_text(t)
+          PY
+          cat > addon/Makefile <<'MAKE'
+          ARCHS = arm64 arm64e
+          TARGET = iphone:clang:16.5:16.0
+          include $(THEOS)/makefiles/common.mk
+          TWEAK_NAME = ModuleGlassModernPrefs
+          ModuleGlassModernPrefs_FILES = ModuleGlassModernPrefs.m ModuleGlassLicenseGate.m
+          ModuleGlassModernPrefs_FRAMEWORKS = UIKit Foundation QuartzCore CoreFoundation
+          ModuleGlassModernPrefs_LIBRARIES = substrate commonCrypto
+          ModuleGlassModernPrefs_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
+          include $(THEOS_MAKE_PATH)/tweak.mk
+          MAKE
+          cat > addon/control <<'CONTROL'
+          Package: com.nextsolution.moduleglass.modernprefs.build
+          Name: Module Glass Modern Prefs Build Helper
+          Version: 1.1.18
+          Architecture: iphoneos-arm64e
+          Description: Build helper only.
+          Maintainer: Next Jailbreak
+          Author: Next Jailbreak
+          Section: Tweaks
+          Depends: mobilesubstrate
+          CONTROL
+          cat > addon/ModuleGlassModernPrefs.plist <<'PLIST'
+          { Filter = { Bundles = ( "com.apple.Preferences", "com.apple.springboard" ); }; }
+          PLIST
+
+      - name: Build branded Settings and activation layer
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd addon
+          make clean
+          make package FINALPACKAGE=1
+          RAW="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$RAW"
+          rm -rf /tmp/mgaddon && mkdir -p /tmp/mgaddon
+          dpkg-deb -x "$RAW" /tmp/mgaddon
+          DYLIB="$(find /tmp/mgaddon -type f -name 'ModuleGlassModernPrefs.dylib' -print -quit)"
+          FILTER="$(find /tmp/mgaddon -type f -name 'ModuleGlassModernPrefs.plist' -print -quit)"
+          test -n "$DYLIB" && test -n "$FILTER"
+          cd ..
+          cp "$DYLIB" stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassModernPrefs.dylib
+          cp "$FILTER" stage/Library/MobileSubstrate/DynamicLibraries/ModuleGlassModernPrefs.plist
+
+      - name: Package and verify Module Glass 1.1.18 UI Test 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > stage/DEBIAN/postinst <<'SH'
+          #!/bin/sh
+          killall -9 Preferences 2>/dev/null || true
+          killall -9 SpringBoard 2>/dev/null || true
+          exit 0
+          SH
+          chmod 0755 stage/DEBIAN/postinst
+          dpkg-deb -b stage output/ModuleGlass_1.1.18_ModernSettings_Test1_RootHide.deb
+          DEB=output/ModuleGlass_1.1.18_ModernSettings_Test1_RootHide.deb
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.18'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          rm -rf verify && mkdir verify
+          dpkg-deb -x "$DEB" verify
+          RUNTIME=verify/Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib
+          MODERN=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassModernPrefs.dylib
+          echo "$RUNTIME_SHA  $RUNTIME" | shasum -a 256 -c -
+          strings "$RUNTIME" > output/runtime.strings
+          grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' output/runtime.strings
+          test -f "$MODERN"
+          ARCHS="$(lipo -archs "$MODERN")"
+          [[ " $ARCHS " == *' arm64 '* && " $ARCHS " == *' arm64e '* ]]
+          strings -a "$MODERN" > output/modern.strings
+          grep -Fq 'Module Glass License & Device' output/modern.strings
+          grep -Fq 'licenses/moduleglass.json' output/modern.strings
+          grep -Fq 'license/moduleglass/' output/modern.strings
+          grep -Fq 'com.nextsolution.unlockvibrate' output/modern.strings
+          test -f verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib
+          test -f verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
+          python3 - <<'PY'
+          import plistlib
+          p='verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist'
+          x=plistlib.load(open(p,'rb'))
+          groups=[i.get('label') for i in x['items'] if i.get('cell')=='PSGroupCell']
+          expected=['APPEARANCE','MEDIA & SLIDERS','CONNECTIVITY & MEDIA','UTILITY MODULES','OTHER MODULES','MAINTENANCE','APPLY & RESTART']
+          assert groups == expected, (groups,expected)
+          labels=[i.get('label') for i in x['items']]
+          for label in ['Brightness Background','Volume Background','Volume Icon Color','Remove All Module Images','Apply Module Glass','Respring']:
+              assert label in labels, label
+          PY
+          mkdir -p output/source/ModuleGlass-1.1.18-ModernSettings-Test1
+          cp .moduleglass-build/ModuleGlassModernPrefs.m output/source/ModuleGlass-1.1.18-ModernSettings-Test1/
+          cp .moduleglass-build/ModuleGlassLicenseGate.m output/source/ModuleGlass-1.1.18-ModernSettings-Test1/
+          cp .moduleglass-build/mg118_modern_prefs.py output/source/ModuleGlass-1.1.18-ModernSettings-Test1/
+          cp stage/Library/PreferenceBundles/ModuleGlassPrefs.bundle/CCModuleBackgrounds.plist output/source/ModuleGlass-1.1.18-ModernSettings-Test1/
+          cp stage/DEBIAN/control output/source/ModuleGlass-1.1.18-ModernSettings-Test1/control
+          ditto -c -k --sequesterRsrc --keepParent output/source/ModuleGlass-1.1.18-ModernSettings-Test1 output/ModuleGlass_1.1.18_ModernSettings_Test1_Source.zip
+          dpkg-deb -c "$DEB" > output/PACKAGE-CONTENTS.txt
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.18_ModernSettings_Test1_Source.zip > output/SHA256SUMS.txt
+          cat output/SHA256SUMS.txt
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.18-ModernSettings-Test1-RootHide
+          path: |
+            output/ModuleGlass_1.1.18_ModernSettings_Test1_RootHide.deb
+            output/ModuleGlass_1.1.18_ModernSettings_Test1_Source.zip
+            output/SHA256SUMS.txt
+            output/PACKAGE-CONTENTS.txt
+          if-no-files-found: error
+          retention-days: 7

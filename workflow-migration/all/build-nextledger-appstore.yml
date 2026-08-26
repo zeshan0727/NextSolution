@@ -1,0 +1,111 @@
+# Trigger App Store base build 2026-08-18
+name: Build Next Ledger App Store IPA
+
+on:
+  workflow_dispatch:
+  issues:
+    types: [opened]
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-nextledger-appstore.yml"
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    if: github.event_name != 'issues' || github.event.issue.title == 'build-nextledger-appstore'
+    runs-on: macos-26
+    timeout-minutes: 25
+
+    steps:
+      - name: Report build start
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "Next Ledger App Store build started on macOS 26."
+
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Verify Xcode 26+
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          XCODE_MAJOR="$(xcodebuild -version | awk '/Xcode/{split($2,v,"."); print v[1]}')"
+          test "$XCODE_MAJOR" -ge 26
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare App Store metadata
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleURLTypes:0:CFBundleURLName com.nextsolution.nextledger" DailyLedger/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :BGTaskSchedulerPermittedIdentifiers:0 com.nextsolution.nextledger.backup-refresh" DailyLedger/Info.plist
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned App Store base
+        run: |
+          xcodebuild \
+            -project DailyLedger.xcodeproj \
+            -scheme DailyLedger \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build-appstore \
+            PRODUCT_BUNDLE_IDENTIFIER=com.nextsolution.nextledger \
+            MARKETING_VERSION=1.3.76 \
+            CURRENT_PROJECT_VERSION=85 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        run: |
+          APP_PATH="$(find build-appstore/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf Payload NextLedger-1.3.76-AppStore-Unsigned.ipa
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent Payload NextLedger-1.3.76-AppStore-Unsigned.ipa
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :DTXcode" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :DTSDKName" "$APP_PATH/Info.plist"
+          shasum -a 256 NextLedger-1.3.76-AppStore-Unsigned.ipa > NextLedger-1.3.76-AppStore-Unsigned.sha256
+
+      - name: Upload App Store base IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLedger-AppStore-Unsigned
+          path: |
+            NextLedger-1.3.76-AppStore-Unsigned.ipa
+            NextLedger-1.3.76-AppStore-Unsigned.sha256
+          if-no-files-found: error
+
+      - name: Publish build output
+        run: |
+          mkdir -p build-output
+          cp NextLedger-1.3.76-AppStore-Unsigned.ipa build-output/
+          cp NextLedger-1.3.76-AppStore-Unsigned.sha256 build-output/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build-output/NextLedger-1.3.76-AppStore-Unsigned.ipa build-output/NextLedger-1.3.76-AppStore-Unsigned.sha256
+          if git diff --cached --quiet; then
+            echo "App Store build output is already current."
+            exit 0
+          fi
+          git commit -m "Build Next Ledger 1.3.76 App Store base IPA"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Report build result
+        if: always() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "Next Ledger App Store build finished with status: **${{ job.status }}**."

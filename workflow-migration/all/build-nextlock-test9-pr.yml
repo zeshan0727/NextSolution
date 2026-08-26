@@ -1,0 +1,135 @@
+name: Build NextLock Test 9 PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'transfer/build-triggers/nextlock-test9.txt'
+      - '.github/workflows/build-nextlock-test9-pr.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: brew install dpkg ldid
+      - name: Prepare source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feature/nextlock-photo-content-modes
+          git worktree add "$RUNNER_TEMP/feature" FETCH_HEAD
+          P="$RUNNER_TEMP/feature/source/NextLockPerfFix"
+          cp "$P/TweakTest7.m" "$P/TweakTest9.m"
+          python3 - "$P/TweakTest9.m" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1]); t=p.read_text()
+          t=t.replace('NextLockPerfFix 1.1.5-test7 refined-full-photo 2048px test5-cpu auto-stretch-full-cutcrop','NextLockPerfFix 1.1.5-test9 preserve-all-style free-photo-position refined-full-picker')
+          t=t.replace('static const uintptr_t kArm64CallbackBlockOffset   = 0xBC30;\n','').replace('static const uintptr_t kArm64eCallbackBlockOffset  = 0xBDD4;\n','')
+          t=t.replace('static void (*NLOriginalHotCallbackBlock)(void *blockObject) = NULL;\n','')
+          t=t.replace('static void NLSuppressHotCallback(void *blockObject) {\n    (void)blockObject;\n}\n\n','')
+          t=t.replace('static BOOL NLInstalled = NO;\n','static BOOL NLInstalled = NO;\nstatic volatile uint8_t *NLHotCallbackFlag = NULL;\n',1)
+          fn='static void NLPhotosWithContentModes(id host) {\n    if (NLOriginalPhotos == NULL) return;\n'
+          t=t.replace(fn,fn+'\n    if (NLHotCallbackFlag != NULL && *NLHotCallbackFlag != 0) return;\n',1)
+          t=t.replace('    uintptr_t callbackOffset = isArm64e ? kArm64eCallbackBlockOffset : kArm64CallbackBlockOffset;\n','')
+          hook='    MSHookFunction((void *)((uintptr_t)mh + callbackOffset),\n                   (void *)&NLSuppressHotCallback,\n                   (void **)&NLOriginalHotCallbackBlock);\n'
+          t=t.replace(hook,'')
+          after='    uintptr_t contentModeStub = isArm64e ? kArm64eSetContentModeStub : kArm64SetContentModeStub;\n'
+          t=t.replace(after,after+'\n    if (isArm64e) NLHotCallbackFlag = (volatile uint8_t *)((uintptr_t)mh + 0x18EF4);\n',1)
+          t=t.replace('        NLOriginalHotCallbackBlock != NULL &&\n','')
+          t=t.replace('Test7 SpringBoard hooks installed (%s): Test5 CPU fix + refined photo modes','Test9 SpringBoard hooks installed (%s): full styling + free photo positioning')
+          t=t.replace('Test7 refined full-photo picker installed','Test9 full-photo no-crop picker installed')
+          a='static BOOL NLFrameHasPhoto[4] = {NO, NO, NO, NO};\n'
+          t=t.replace(a,a+'static CGFloat NLFreeXPercent[4] = {50,50,50,50};\nstatic CGFloat NLFreeYPercent[4] = {30,30,30,30};\n',1)
+          a='    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n\n    for (NSUInteger i = 0; i < 4; i++) {'
+          t=t.replace(a,'    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n    NSInteger freeX[4] = {50,50,50,50};\n    NSInteger freeY[4] = {30,30,30,30};\n\n    for (NSUInteger i = 0; i < 4; i++) {',1)
+          a='        hasPhoto[i] = NLPhotoDataExistsForFrame(i);\n        CFRelease(modeKey);\n        CFRelease(enabledKey);'
+          r='        hasPhoto[i] = NLPhotoDataExistsForFrame(i);\n        CFStringRef xKey=CFStringCreateWithFormat(kCFAllocatorDefault,NULL,CFSTR("photoFrame%luFreeXPercent"),(unsigned long)(i+1));\n        CFStringRef yKey=CFStringCreateWithFormat(kCFAllocatorDefault,NULL,CFSTR("photoFrame%luFreeYPercent"),(unsigned long)(i+1));\n        freeX[i]=MAX(0,MIN(100,NLCopyIntegerPref(xKey,50)));\n        freeY[i]=MAX(0,MIN(100,NLCopyIntegerPref(yKey,30)));\n        CFRelease(xKey); CFRelease(yKey);\n        CFRelease(modeKey);\n        CFRelease(enabledKey);'
+          t=t.replace(a,r,1)
+          a='        NLFrameHasPhoto[i] = hasPhoto[i];\n'
+          t=t.replace(a,a+'        NLFreeXPercent[i]=(CGFloat)freeX[i];\n        NLFreeYPercent[i]=(CGFloat)freeY[i];\n',1)
+          helper='''static void NLApplyFreeScreenPosition(UIImageView *view, CGFloat xPercent, CGFloat yPercent) {
+    if (view == nil || view.superview == nil) return;
+    CGFloat xp=MAX(0.0,MIN(100.0,xPercent))/100.0;
+    CGFloat yp=MAX(0.0,MIN(100.0,yPercent))/100.0;
+    UIWindow *window=view.window; UIView *superview=view.superview;
+    if (window != nil) {
+        CGRect b=window.bounds;
+        CGPoint q=CGPointMake(CGRectGetMinX(b)+CGRectGetWidth(b)*xp,CGRectGetMinY(b)+CGRectGetHeight(b)*yp);
+        view.center=[superview convertPoint:q fromView:window];
+    } else {
+        CGRect b=superview.bounds;
+        view.center=CGPointMake(CGRectGetMinX(b)+CGRectGetWidth(b)*xp,CGRectGetMinY(b)+CGRectGetHeight(b)*yp);
+    }
+}
+
+'''
+          t=t.replace('static void NLPhotosWithContentModes(id host) {',helper+'static void NLPhotosWithContentModes(id host) {',1)
+          a='    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n\n    os_unfair_lock_lock(&NLModeLock);'
+          t=t.replace(a,'    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n    CGFloat freeX[4] = {50,50,50,50};\n    CGFloat freeY[4] = {30,30,30,30};\n\n    os_unfair_lock_lock(&NLModeLock);',1)
+          a='        hasPhoto[i] = NLFrameHasPhoto[i];\n'
+          t=t.replace(a,a+'        freeX[i]=NLFreeXPercent[i];\n        freeY[i]=NLFreeYPercent[i];\n',1)
+          a='            NLApplyPhotoModeToView(NLCapturedViews[i], modes[i]);\n'
+          t=t.replace(a,a+'            NLApplyFreeScreenPosition(NLCapturedViews[i], freeX[i], freeY[i]);\n',1)
+          if 'NLSuppressHotCallback' in t or 'NLOriginalHotCallbackBlock' in t: raise SystemExit('callback suppress remains')
+          if 'NLApplyFreeScreenPosition' not in t: raise SystemExit('free helper missing')
+          p.write_text(t)
+          PY
+          sed -i '' 's/NextLockPerfFix_FILES = TweakTest7.m/NextLockPerfFix_FILES = TweakTest9.m/' "$P/Makefile"
+      - name: Build shim
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/feature/source/NextLockPerfFix"; T="$RUNNER_TEMP/theos"
+          git init "$T"; git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$T" THEOS_PACKAGE_SCHEME=roothide
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -name '*.deb' -print -quit); test -n "$D"; echo "FIX_DEB=$D" >> "$GITHUB_ENV"
+      - name: Integrate and validate UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/stage"; FIX="$RUNNER_TEMP/fix"; OUT="$RUNNER_TEMP/out"; mkdir -p "$OUT"
+          dpkg-deb -R transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb "$STAGE"
+          dpkg-deb -x "$FIX_DEB" "$FIX"
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit); SHIM=$(find "$FIX" -name NextLockPerfFix.dylib -print -quit); PL=$(find "$FIX" -name NextLockPerfFix.plist -print -quit)
+          cp "$SHIM" "$(dirname "$LOCK")/NextLockPerfFix.dylib"; cp "$PL" "$(dirname "$LOCK")/NextLockPerfFix.plist"
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,sys,re
+          stage=Path(sys.argv[1]); b=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+          for i in range(1,5):
+            p=b/f'PhotoFrame{i}.plist'; d=plistlib.load(p.open('rb')); rm={f'photoFrame{i}AnchorTarget',f'photoFrame{i}Position',f'photoFrame{i}OffsetX',f'photoFrame{i}OffsetY',f'photoFrame{i}ContentMode'}
+            items=[]; pos=None
+            for x in d['items']:
+              if x.get('key') in rm: continue
+              if x.get('label')=='POSITION' and x.get('cell')=='PSGroupCell': x=dict(x); x['footerText']='Free screen position. Not anchored to Time or Date.'; pos=len(items)+1
+              items.append(x)
+            mode={'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs','cell':'PSLinkListCell','default':0,'defaults':'com.nextsolution.lockglyphtime','detail':'PSListItemsController','key':f'photoFrame{i}ContentMode','label':'Photo Display','validTitles':['Auto (Recommended)','Stretch','Full Photo','Cut / Crop'],'validValues':[0,1,2,3]}
+            items.insert(4,mode)
+            if pos is None: pos=len(items)
+            if pos>=4: pos+=1
+            def s(k,l,dv): return {'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs','cell':'PSSliderCell','default':dv,'defaults':'com.nextsolution.lockglyphtime','key':k,'label':l,'min':0,'max':100,'showValue':True}
+            items.insert(pos,s(f'photoFrame{i}FreeXPercent','Horizontal Position',50)); items.insert(pos+1,s(f'photoFrame{i}FreeYPercent','Vertical Position',30)); d['items']=items
+            plistlib.dump(d,p.open('wb'),fmt=plistlib.FMT_XML,sort_keys=False)
+          c=stage/'DEBIAN/control'; t=c.read_text(); c.write_text(re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu9', t, flags=re.M))
+          PY
+          DEB="$OUT/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb"; dpkg-deb -b "$STAGE" "$DEB"
+          X=$(mktemp -d); dpkg-deb -x "$DEB" "$X"; S=$(find "$X" -name NextLockPerfFix.dylib -print -quit)
+          strings -a "$S" | grep -q '1.1.5-test9 preserve-all-style free-photo-position'
+          for i in 1 2 3 4; do P="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/PhotoFrame${i}.plist"; plutil -p "$P" | grep -q "photoFrame${i}FreeXPercent"; ! plutil -p "$P" | grep -q "photoFrame${i}AnchorTarget"; done
+          echo "OUTDEB=$DEB" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test9-FreePosition-RootHide
+          path: ${{ env.OUTDEB }}

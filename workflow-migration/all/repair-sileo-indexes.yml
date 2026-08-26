@@ -1,0 +1,83 @@
+name: Repair Sileo Indexes
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/repair-sileo-indexes.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Rebuild all package indexes from canonical Packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s Packages
+          gzip -9 -n -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9 -c Packages > Packages.xz
+          zstd -19 -q -c Packages > Packages.zst
+
+          cmp -s Packages <(gzip -dc Packages.gz)
+          cmp -s Packages <(bzip2 -dc Packages.bz2)
+          cmp -s Packages <(xz -dc Packages.xz)
+          cmp -s Packages <(zstd -dcq Packages.zst)
+
+          python3 - <<'PY'
+          from pathlib import Path
+          from datetime import datetime, timezone
+          p=Path('Release')
+          lines=p.read_text().splitlines()
+          now=datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC')
+          out=[]
+          seen=False
+          for line in lines:
+              if line.startswith('Date:'):
+                  out.append('Date: '+now); seen=True
+              else:
+                  out.append(line)
+          if not seen:
+              out.append('Date: '+now)
+          p.write_text('\n'.join(out)+'\n')
+          PY
+
+      - name: Revalidate Module Glass install chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in \
+            debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb \
+            debfiles/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb \
+            debfiles/NextAura_Runtime_preferences_1.0.5_RootHide.deb; do
+            test -f "$f"
+            dpkg-deb -f "$f" Package Version Architecture Depends
+          done
+          grep -q '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' Packages
+          grep -q '^Version: 1.0.18$' Packages
+          grep -q '^Package: com.nextsolution.nextaura.runtime.ccbackgrounds$' Packages
+          grep -q '^Version: 1.0.14$' Packages
+          grep -q '^Package: com.nextsolution.nextaura.runtime.preferences$' Packages
+          grep -q '^Version: 1.0.5$' Packages
+
+      - name: Publish repaired indexes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Next Jailbreak Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add Packages.gz Packages.bz2 Packages.xz Packages.zst Release
+          git diff --cached --check
+          git commit -m "Repair Sileo indexes for Module Glass 1.0.18" || exit 0
+          git pull --rebase origin main
+          git push origin main

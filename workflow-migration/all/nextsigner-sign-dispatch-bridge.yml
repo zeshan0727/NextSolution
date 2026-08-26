@@ -1,0 +1,121 @@
+name: Next Signer - PAT Safe Publish Dispatch
+
+on:
+  repository_dispatch:
+    types: [nextsigner_sign_publish]
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: nextsigner-sign-dispatch-bridge
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INBOX_TAG: nextsigner-inbox
+      REQUEST_ID: ${{ github.event.client_payload.request_id }}
+      STAGING_ASSET: ${{ github.event.client_payload.staging_asset }}
+      REQUESTED_NAME: ${{ github.event.client_payload.requested_name }}
+      REQUESTED_BUNDLE_ID: ${{ github.event.client_payload.requested_bundle_id }}
+      SIGN_ENABLED: ${{ github.event.client_payload.sign_enabled }}
+      CUSTOM_ICON_ASSET: ${{ github.event.client_payload.custom_icon_asset }}
+      TWEAK_ASSETS_JSON: ${{ github.event.client_payload.tweak_assets_json }}
+      DUPLICATE_SIGNING: ${{ github.event.client_payload.duplicate_signing }}
+      INJECT_EXTENSIONS: ${{ github.event.client_payload.inject_extensions }}
+      WEAK_INJECTION: ${{ github.event.client_payload.weak_injection }}
+    steps:
+      - name: Check out status helper
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Validate request
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$REQUEST_ID" || { echo 'request_id is required'; exit 1; }
+          test -n "$STAGING_ASSET" || { echo 'staging_asset is required'; exit 1; }
+          case "${SIGN_ENABLED:-false}" in true|false) ;; *) echo 'sign_enabled must be true/false'; exit 1;; esac
+          if [ "${SIGN_ENABLED:-false}" = true ]; then
+            test -n "$REQUESTED_NAME" || { echo 'requested_name is required when signing'; exit 1; }
+            test -n "$REQUESTED_BUNDLE_ID" || { echo 'requested_bundle_id is required when signing'; exit 1; }
+          fi
+          printf '%s' "${TWEAK_ASSETS_JSON:-[]}" | jq -e 'type == "array" and all(.[]; type == "string")' >/dev/null
+          case "${DUPLICATE_SIGNING:-false}" in true|false) ;; *) echo 'duplicate_signing must be true/false'; exit 1;; esac
+          case "${INJECT_EXTENSIONS:-false}" in true|false) ;; *) echo 'inject_extensions must be true/false'; exit 1;; esac
+          case "${WEAK_INJECTION:-false}" in true|false) ;; *) echo 'weak_injection must be true/false'; exit 1;; esac
+
+      - name: Report request received
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ "${SIGN_ENABLED:-false}" = true ]; then
+            bash .github/scripts/nextsigner-publish-status.sh running Received "GitHub received the Sign & Publish request."
+          else
+            bash .github/scripts/nextsigner-publish-status.sh running Received "GitHub received the Publish Only request."
+          fi
+
+      - name: Start requested workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${SIGN_ENABLED:-false}" = true ]; then
+            gh workflow run nextsigner-sign-publish.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main \
+              -f request_id="$REQUEST_ID" \
+              -f staging_asset="$STAGING_ASSET" \
+              -f requested_name="$REQUESTED_NAME" \
+              -f requested_bundle_id="$REQUESTED_BUNDLE_ID" \
+              -f custom_icon_asset="${CUSTOM_ICON_ASSET:-}" \
+              -f tweak_assets_json="${TWEAK_ASSETS_JSON:-[]}" \
+              -f duplicate_signing="${DUPLICATE_SIGNING:-false}" \
+              -f inject_extensions="${INJECT_EXTENSIONS:-false}" \
+              -f weak_injection="${WEAK_INJECTION:-false}"
+          else
+            gh workflow run nextsigner-publish-only.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main \
+              -f request_id="$REQUEST_ID" \
+              -f staging_asset="$STAGING_ASSET" \
+              -f requested_name="$REQUESTED_NAME" \
+              -f requested_bundle_id="$REQUESTED_BUNDLE_ID" \
+              -f custom_icon_asset="${CUSTOM_ICON_ASSET:-}" \
+              -f tweak_assets_json="${TWEAK_ASSETS_JSON:-[]}"
+          fi
+
+      - name: Report runner queued
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ "${SIGN_ENABLED:-false}" = true ]; then
+            bash .github/scripts/nextsigner-publish-status.sh running Bridge "Signing runner queued successfully."
+          else
+            bash .github/scripts/nextsigner-publish-status.sh running Bridge "Publish-only runner queued successfully."
+          fi
+
+      - name: Report bridge failure
+        if: failure()
+        continue-on-error: true
+        shell: bash
+        run: bash .github/scripts/nextsigner-publish-status.sh failed Bridge "Could not start the requested publish workflow."
+
+      - name: Summary
+        run: |
+          {
+            echo '## Next Signer PAT-safe dispatch'
+            echo
+            echo "Request: $REQUEST_ID"
+            echo "Mode: $([ "${SIGN_ENABLED:-false}" = true ] && echo 'Sign & Publish' || echo 'Publish Only')"
+            echo "App: $REQUESTED_NAME"
+            echo "Bundle ID: $REQUESTED_BUNDLE_ID"
+          } >> "$GITHUB_STEP_SUMMARY"

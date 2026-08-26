@@ -1,0 +1,74 @@
+name: Diagnose Low Battery Haptic Alert
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-low-battery-haptic-alert.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose-rootless:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install tools
+        run: brew install dpkg ldid
+      - name: Build rootless and preserve result
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          P="$GITHUB_WORKSPACE/DailyTweaks/2026-08-02-LowBatteryHapticAlert"
+          LOG="$RUNNER_TEMP/lbha-rootless-diagnostic.txt"
+          {
+            echo "Low Battery Haptic Alert rootless diagnostic"
+            echo "Commit: $GITHUB_SHA"
+            date -u
+            echo "--- deterministic test ---"
+            clang -std=c11 -Wall -Wextra -Werror "$P/tests/test_decision.c" -o "$RUNNER_TEMP/test_decision"
+            TEST_STATUS=$?
+            if [ "$TEST_STATUS" -eq 0 ]; then "$RUNNER_TEMP/test_decision"; TEST_STATUS=$?; fi
+            echo "deterministic_status=$TEST_STATUS"
+            echo "--- Theos clone ---"
+            git clone --recursive --depth 1 https://github.com/theos/theos.git "$RUNNER_TEMP/theos-rootless"
+            CLONE_STATUS=$?
+            echo "clone_status=$CLONE_STATUS"
+            if [ "$CLONE_STATUS" -eq 0 ]; then
+              export THEOS="$RUNNER_TEMP/theos-rootless"
+              export THEOS_PACKAGE_SCHEME=rootless
+              rm -rf "$P/packages"
+              echo "--- make output ---"
+              make -C "$P" clean package FINALPACKAGE=1
+              BUILD_STATUS=$?
+            else
+              BUILD_STATUS=99
+            fi
+            echo "build_status=$BUILD_STATUS"
+            echo "--- packages ---"
+            find "$P/packages" -maxdepth 2 -type f -print 2>/dev/null || true
+            exit "$BUILD_STATUS"
+          } 2>&1 | tee "$LOG"
+          exit ${PIPESTATUS[0]}
+      - name: Commit diagnostic record
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Diagnostics/low-battery-haptic-alert
+          cp "$RUNNER_TEMP/lbha-rootless-diagnostic.txt" Diagnostics/low-battery-haptic-alert/rootless-latest.txt
+          printf 'source_commit=%s\nworkflow_run=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > Diagnostics/low-battery-haptic-alert/status.txt
+          git config user.name "Next Jailbreak Diagnostic Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add Diagnostics/low-battery-haptic-alert/rootless-latest.txt Diagnostics/low-battery-haptic-alert/status.txt
+          git diff --cached --check
+          git commit -m "Record Low Battery Haptic Alert build diagnostics"
+          git pull --rebase origin main
+          git push origin HEAD:main

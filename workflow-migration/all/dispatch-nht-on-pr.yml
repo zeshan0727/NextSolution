@@ -1,0 +1,20 @@
+name: Dispatch Next Home Torch Build from PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "DailyTweaks/2026-07-31-NextHomeTorch/BUILD_TRIGGER"
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch final release workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish-nexthometorch-final.yml --repo zeshan0727/NextSolution --ref main

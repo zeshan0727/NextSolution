@@ -1,0 +1,73 @@
+name: Render NextLock HQ Article Images
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "assets/articles/nextlock/nextlock-hero-hq.svg"
+      - "assets/articles/nextlock/nextlock-features-hq.svg"
+      - ".github/workflows/render-nextlock-hq-images.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-nextlock-hq-images
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install SVG renderer
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
+
+      - name: Render 1600x900 PNG artwork
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsvg-convert -w 1600 -h 900 assets/articles/nextlock/nextlock-hero-hq.svg -o assets/articles/nextlock/nextlock-hero.png
+          rsvg-convert -w 1600 -h 900 assets/articles/nextlock/nextlock-features-hq.svg -o assets/articles/nextlock/nextlock-features.png
+          file assets/articles/nextlock/nextlock-hero.png
+          file assets/articles/nextlock/nextlock-features.png
+          test "$(file assets/articles/nextlock/nextlock-hero.png | grep -c '1600 x 900')" -eq 1
+          test "$(file assets/articles/nextlock/nextlock-features.png | grep -c '1600 x 900')" -eq 1
+
+      - name: Point article and cards to HQ assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['nextlock-tweak.html','index.html','tutorials.html']:
+              p=Path(name)
+              s=p.read_text()
+              s=s.replace('assets/articles/nextlock/nextlock-hero.jpg','assets/articles/nextlock/nextlock-hero.png')
+              s=s.replace('/assets/articles/nextlock/nextlock-hero.jpg','/assets/articles/nextlock/nextlock-hero.png')
+              s=s.replace('assets/articles/nextlock/nextlock-features.jpg','assets/articles/nextlock/nextlock-features.png')
+              s=s.replace('/assets/articles/nextlock/nextlock-features.jpg','/assets/articles/nextlock/nextlock-features.png')
+              s=s.replace('width="360" height="240"','width="1600" height="900"')
+              p.write_text(s)
+          PY
+          grep -q 'nextlock-hero.png' nextlock-tweak.html
+          grep -q 'nextlock-features.png' nextlock-tweak.html
+          grep -q 'nextlock-hero.png' index.html
+          grep -q 'nextlock-hero.png' tutorials.html
+
+      - name: Commit HQ website artwork
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Next Jailbreak Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add assets/articles/nextlock/nextlock-hero.png assets/articles/nextlock/nextlock-features.png nextlock-tweak.html index.html tutorials.html
+          git diff --cached --check
+          git commit -m "Replace blurry NextLock article images with 1600x900 artwork" || exit 0
+          git pull --rebase origin main
+          git push origin main

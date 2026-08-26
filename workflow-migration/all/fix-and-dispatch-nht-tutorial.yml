@@ -1,0 +1,41 @@
+name: Fix and Dispatch Next Home Torch Tutorial
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  fix-and-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Replace brittle Tutorials-page insertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/prepare-nexthometorch-tutorial.yml')
+          text=p.read_text()
+          old="""          anchor='      <article class=\"card\">\\n        <div class=\"icon\"><i class=\"fas fa-sync-alt\"'\n          if 'href=\"next-home-torch-ios15-ios16.html\"' not in text:\n              assert anchor in text\n              text=text.replace(anchor,card+'\\n'+anchor,1)\n"""
+          new="""          if 'href=\"next-home-torch-ios15-ios16.html\"' not in text:\n              grid_start=text.index('<section class=\"grid\" aria-label=\"Tutorial guides\">')\n              grid_end=text.index('</section>',grid_start)\n              text=text[:grid_end]+card+'\\n'+text[grid_end:]\n"""
+          if old not in text:
+              raise SystemExit('Expected brittle tutorial anchor was not found')
+          p.write_text(text.replace(old,new,1))
+          PY
+          git config user.name 'Next Jailbreak Workflow Bot'
+          git config user.email actions@users.noreply.github.com
+          git add .github/workflows/prepare-nexthometorch-tutorial.yml
+          git diff --cached --check
+          git commit -m 'Fix Next Home Torch tutorial card insertion'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Dispatch corrected tutorial preparation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run prepare-nexthometorch-tutorial.yml --repo zeshan0727/NextSolution --ref main

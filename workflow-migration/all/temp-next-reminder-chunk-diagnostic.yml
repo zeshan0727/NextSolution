@@ -1,0 +1,22 @@
+name: Temp Next Reminder Payload Diagnostic
+on:
+  pull_request:
+    branches: [main]
+    paths: ['tmp-build/**']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    if: github.head_ref == 'build-next-reminder-1322-working'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hash app chunk 09 blocks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          b=Path('tmp-build/nr1322xz/part-09').read_bytes()
+          print('size',len(b),'blob',hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest())
+          for i in range(0,len(b),500): print(i,hashlib.sha256(b[i:i+500]).hexdigest())
+          PY

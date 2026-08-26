@@ -1,0 +1,123 @@
+name: Build NextPDF TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'NextPDF/**'
+      - '!NextPDF/build-output/**'
+      - '.github/workflows/build-nextpdf.yml'
+  pull_request:
+    paths:
+      - 'NextPDF/**'
+      - '.github/workflows/build-nextpdf.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply bullet-speed PDF loading
+        run: python3 NextPDF/apply_bullet_speed_patch.py
+
+      - name: Connect PDF library to editor
+        run: python3 NextPDF/apply_library_router_patch.py
+
+      - name: Fix PDFKit SwiftUI render loop
+        run: python3 NextPDF/apply_render_loop_fix.py
+
+      - name: Match text and fix library and annotation dragging
+        run: |
+          python3 NextPDF/apply_editor_quality_patch.py
+          python3 NextPDF/apply_editor_quality_compile_fix.py
+
+      - name: Rebuild lines and enable pinch resizing
+        run: python3 NextPDF/apply_true_text_resize_patch.py
+
+      - name: Add floating collapsible editing palette
+        run: |
+          python3 NextPDF/apply_floating_tools_patch_v2.py
+          python3 NextPDF/apply_floating_tools_compile_fix.py
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate themed app icon
+        working-directory: NextPDF
+        run: swift generate_app_icon.swift NextPDF/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+
+      - name: Generate project
+        working-directory: NextPDF
+        run: xcodegen generate
+
+      - name: Build unsigned app
+        id: build
+        working-directory: NextPDF
+        shell: bash
+        run: |
+          set +e
+          mkdir -p build-output
+          xcodebuild \
+            -project NextPDF.xcodeproj \
+            -scheme NextPDF \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build-output/xcodebuild.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          echo "exit_code=$BUILD_STATUS" >> "$GITHUB_OUTPUT"
+          if [ "$BUILD_STATUS" -eq 0 ]; then
+            echo "SUCCESS" > build-output/build-status.txt
+          else
+            echo "FAILED (xcodebuild exit code $BUILD_STATUS)" > build-output/build-status.txt
+          fi
+          exit 0
+
+      - name: Package TIPA
+        if: steps.build.outputs.exit_code == '0'
+        working-directory: NextPDF
+        run: |
+          rm -rf Payload NextPDF.tipa
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/NextPDF.app Payload/
+          zip -r NextPDF.tipa Payload
+          cp NextPDF.tipa build-output/NextPDF.tipa
+          rm -f build-output/NextPDF.tipa.b64.part-*
+          base64 < build-output/NextPDF.tipa | tr -d '\n' > build-output/NextPDF.tipa.b64
+          split -b 12000 -a 2 build-output/NextPDF.tipa.b64 build-output/NextPDF.tipa.b64.part-
+          rm build-output/NextPDF.tipa.b64
+          shasum -a 256 build-output/NextPDF.tipa > build-output/NextPDF.tipa.sha256
+
+      - name: Publish build result to repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: NextPDF
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f build-output/build-status.txt build-output/xcodebuild.log
+          if [ -f build-output/NextPDF.tipa ]; then
+            git add -f build-output/NextPDF.tipa build-output/NextPDF.tipa.sha256 build-output/NextPDF.tipa.b64.part-*
+          else
+            git rm -f --ignore-unmatch build-output/NextPDF.tipa build-output/NextPDF.tipa.sha256 build-output/NextPDF.tipa.b64.part-*
+          fi
+          git commit -m "Publish NextPDF test build" || true
+          git push
+
+      - name: Upload test build artifact
+        if: steps.build.outputs.exit_code == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextPDF-TIPA
+          path: NextPDF/NextPDF.tipa
+
+      - name: Fail workflow when build failed
+        if: steps.build.outputs.exit_code != '0'
+        run: exit 1

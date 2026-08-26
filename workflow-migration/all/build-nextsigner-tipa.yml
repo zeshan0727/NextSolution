@@ -1,0 +1,130 @@
+name: Build Next Signer TIPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/nextsigner-1.0
+      - feature/nextsigner-local-signing
+    paths:
+      - 'NextSigner/**'
+      - '.github/workflows/build-nextsigner-tipa.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'NextSigner/**'
+      - '.github/workflows/build-nextsigner-tipa.yml'
+      - '.github/workflows/nextsigner-sign-publish.yml'
+      - '.github/workflows/nextsigner-library-manage.yml'
+      - '.github/workflows/nextsigner-sign-dispatch-bridge.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextsigner-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXTSIGNER_VERSION: '1.3.2'
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare patched Zsign sources
+        run: |
+          set -euo pipefail
+          rm -rf NextSigner/Vendor/Zsign-Package
+          git clone --depth 1 --branch package https://github.com/claration/Zsign-Package.git NextSigner/Vendor/Zsign-Package
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          bridge = Path('NextSigner/Vendor/Zsign-Package/swift/zsign.mm')
+          s = bridge.read_text()
+          s = s.replace('void(^completionHandler)(BOOL success, NSError *error)',
+                        'void(^completionHandler)(BOOL success)')
+          old_call = 'bundle.SignFolder(&zsa, strFolder, strBundleId, strBundleVersion, strDisplayName, arrDylibFiles, bForce, bWeakInject, bEnableCache, excludeprovion)'
+          new_call = 'bundle.SignFolder(&zsa, strFolder, strBundleId, strBundleVersion, strDisplayName, arrDylibFiles, arrDisDylibFiles, bForce, bWeakInject, bEnableCache, excludeprovion)'
+          if old_call not in s:
+              raise SystemExit('Expected stale SignFolder bridge call not found')
+          s = s.replace(old_call, new_call)
+          s = s.replace('completionHandler(bRet);', 'if (completionHandler) { completionHandler(bRet); }')
+          bridge.write_text(s)
+
+          bundle = Path('NextSigner/Vendor/Zsign-Package/src/bundle.cpp')
+          b = bundle.read_text()
+          old = '''if (!pSignAsset->m_strProvData.empty()) {
+\t\tif (bRemoveProvision) {
+\t\t\tif (!ZFile::WriteFileV(pSignAsset->m_strProvData, "%s/embedded.mobileprovision", m_strAppFolder.c_str())) { // embedded.mobileprovision'''
+          new = '''if (!pSignAsset->m_strProvData.empty()) {
+\t\tif (!bRemoveProvision) {
+\t\t\tif (!ZFile::WriteFileV(pSignAsset->m_strProvData, "%s/embedded.mobileprovision", m_strAppFolder.c_str())) { // embedded.mobileprovision'''
+          if old not in b:
+              raise SystemExit('Expected inverted embedded.mobileprovision condition not found')
+          b = b.replace(old, new, 1)
+          bundle.write_text(b)
+          PY
+
+      - name: Generate Next Signer app icon
+        run: python3 NextSigner/generate_app_icon.py
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: NextSigner
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        working-directory: NextSigner
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project NextSigner.xcodeproj \
+            -scheme NextSigner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/NextSignerDerived" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Verify packaged app icon
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextSignerDerived/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' | head -n1)"
+          test -n "$APP_PATH" || { echo 'Built .app not found'; exit 1; }
+          test -f "$APP_PATH/Assets.car" || { echo 'Compiled asset catalog missing'; exit 1; }
+
+      - name: Package IPA and TIPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextSignerDerived/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' | head -n1)"
+          test -n "$APP_PATH" || { echo 'Built .app not found'; exit 1; }
+          rm -rf "$RUNNER_TEMP/package"
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/package/Payload/NextSigner.app"
+          cd "$RUNNER_TEMP/package"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.ipa" Payload
+          cp "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.ipa" "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.tipa"
+          unzip -t "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.tipa" >/dev/null
+          shasum -a 256 "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.ipa" "$RUNNER_TEMP/NextSigner-${NEXTSIGNER_VERSION}.tipa"
+
+      - name: Upload TIPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextSigner-1.3.2-TIPA
+          path: |
+            ${{ runner.temp }}/NextSigner-1.3.2.tipa
+            ${{ runner.temp }}/NextSigner-1.3.2.ipa
+          if-no-files-found: error
+          retention-days: 30
