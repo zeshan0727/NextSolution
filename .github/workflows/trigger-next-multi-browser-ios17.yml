@@ -1,0 +1,22 @@
+name: Trigger Next Multi Browser iOS 17 Build
+
+on:
+  push:
+    branches: [next-multi-browser-ios17]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch iOS 17 app build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST \
+            "repos/${{ github.repository }}/actions/workflows/build-next-multi-browser.yml/dispatches" \
+            -f ref=next-multi-browser-ios17
