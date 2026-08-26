@@ -1,22 +1,87 @@
-name: Trigger Next Multi Browser iOS 17 Build
+name: Build Next Multi Browser iOS 17 Test
 
 on:
   push:
     branches: [next-multi-browser-ios17]
+    paths:
+      - 'apps/next-multi-browser/**'
+      - '.github/workflows/trigger-next-multi-browser-ios17.yml'
   workflow_dispatch:
 
 permissions:
-  actions: write
   contents: read
 
+concurrency:
+  group: next-multi-browser-ios17-fast-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  dispatch:
-    runs-on: ubuntu-latest
+  build-ios17-test:
+    runs-on: macos-latest
+    timeout-minutes: 25
     steps:
-      - name: Dispatch iOS 17 app build
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare OpenVPN package
+        working-directory: apps/next-multi-browser
+        run: bash scripts/prepare-tunnelkit.sh
+
+      - name: Prepare bundled VPN Gate fallback
+        working-directory: apps/next-multi-browser
+        run: python3 scripts/fetch-vpngate-seed.py Resources/VPNGateSeed.csv
+
+      - name: Generate Xcode project
+        working-directory: apps/next-multi-browser
+        run: xcodegen generate
+
+      - name: Build unsigned iOS 17 device app
+        working-directory: apps/next-multi-browser
         run: |
-          gh api --method POST \
-            "repos/${{ github.repository }}/actions/workflows/build-next-multi-browser.yml/dispatches" \
-            -f ref=next-multi-browser-ios17
+          set -o pipefail
+          xcodebuild \
+            -project NextMultiBrowser.xcodeproj \
+            -scheme NextMultiBrowser \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            build | tee ios17-build.log
+
+      - name: Ad-hoc sign VPN extension and host
+        working-directory: apps/next-multi-browser
+        run: |
+          set -euo pipefail
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP_PATH"
+          EXT_PATH="$APP_PATH/PlugIns/NextMultiBrowserVPN.appex"
+          test -d "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der --entitlements VPNExtension/VPN.entitlements "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der --entitlements App.entitlements "$APP_PATH"
+
+      - name: Package iOS 17 TIPA and IPA
+        working-directory: apps/next-multi-browser
+        run: |
+          set -euo pipefail
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP_PATH"
+          rm -rf package
+          mkdir -p package/Payload
+          cp -R "$APP_PATH" package/Payload/
+          cd package
+          zip -qry ../NextMultiBrowser_iOS17_Test.tipa Payload
+          cp ../NextMultiBrowser_iOS17_Test.tipa ../NextMultiBrowser_iOS17_Test.ipa
+
+      - name: Upload iOS 17 test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMultiBrowser-iOS17-Test
+          path: |
+            apps/next-multi-browser/NextMultiBrowser_iOS17_Test.tipa
+            apps/next-multi-browser/NextMultiBrowser_iOS17_Test.ipa
+            apps/next-multi-browser/ios17-build.log
+          if-no-files-found: error
