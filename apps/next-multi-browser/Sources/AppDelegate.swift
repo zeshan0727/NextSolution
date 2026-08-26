@@ -42,6 +42,8 @@ final class MultiBrowserTabBarController: UITabBarController {
         )
 
         viewControllers = [browserNavigationController, profilesNavigationController]
+        browserController.loadViewIfNeeded()
+        browserController.installMainEnvironmentControls()
     }
 
     private func openProfile(_ profileIndex: Int, openGoogleSignIn: Bool) {
@@ -68,7 +70,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        BrowserEnvironmentAutoRandomizeCoordinator.shared.applicationDidBecomeActive()
+    }
+
     func applicationDidEnterBackground(_ application: UIApplication) {
+        BrowserEnvironmentAutoRandomizeCoordinator.shared.applicationDidEnterBackground()
+
         var backgroundTask = UIBackgroundTaskIdentifier.invalid
         let finish = {
             guard backgroundTask != .invalid else { return }
