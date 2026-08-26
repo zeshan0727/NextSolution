@@ -1,0 +1,10 @@
+{
+    entry = {
+        bundle = NextMessagePrefs;
+        cell = PSLinkCell;
+        detail = NMRootListController;
+        isController = 1;
+        label = "Next Message";
+        icon = "/Library/PreferenceBundles/NextMessagePrefs.bundle/icon.png";
+    };
+}

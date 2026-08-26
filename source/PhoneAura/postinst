@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Refresh jailbreak and SpringBoard application registrations after RootHide relocates the package.
+if command -v uicache >/dev/null 2>&1; then
+    uicache -a >/dev/null 2>&1 || true
+fi
+
+killall -9 Preferences 2>/dev/null || true
+killall -9 MobilePhone 2>/dev/null || true
+exit 0

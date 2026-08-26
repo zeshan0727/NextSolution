@@ -1,0 +1,10 @@
+Package: com.nextsolution.unlockvibrate
+Name: Unlock Vibrate (RootHide)
+Version: 1.4.0
+Architecture: iphoneos-arm
+Description: Vibrates after a successful unlock and when a phone call connects. Includes individual Settings switches. Native RootHide Bootstrap build for iOS 16.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Priority: optional

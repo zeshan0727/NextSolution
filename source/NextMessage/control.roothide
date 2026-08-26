@@ -1,0 +1,12 @@
+Package: com.nextsolution.nextmessage
+Name: Next Message
+Version: 1.1.0
+Architecture: iphoneos-arm64e
+Description: A free PhoneAura-inspired redesign for the iOS 16 Messages app with elegant conversation cards, dark glass styling, swipe-to-view conversation details, message count, first-message date, safe conversation deletion, haptics, animations and a branded Settings pane. Built for RootHide.
+Maintainer: Next Solution
+Author: Next Solution - zeshan0727
+Section: Tweaks
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Homepage: https://nextjailbreak.com/
+Depiction: https://nextjailbreak.com/depictions/nextmessage.html
+Icon: https://nextjailbreak.com/CydiaIcon.png

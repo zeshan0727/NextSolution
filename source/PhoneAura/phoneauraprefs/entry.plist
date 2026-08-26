@@ -1,0 +1,10 @@
+{
+    entry = {
+        bundle = PhoneAuraPrefs;
+        cell = PSLinkCell;
+        detail = PARootListController;
+        isController = 1;
+        label = "PhoneAura";
+        icon = "/Library/PreferenceBundles/PhoneAuraPrefs.bundle/icon.png";
+    };
+}

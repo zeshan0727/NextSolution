@@ -1,0 +1,1 @@
+Build validation marker for Wool Control Center 1.1.0 real-module integration and repaired Settings preference pane.

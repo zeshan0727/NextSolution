@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleDisplayName</key><string>PhoneAura Studio</string>
+    <key>CFBundleExecutable</key><string>PhoneAuraStudio</string>
+    <key>CFBundleIdentifier</key><string>com.zeshan.phoneaurastudio</string>
+    <key>CFBundleIconFile</key><string>icon.png</string>
+    <key>CFBundleIconFiles</key><array><string>icon.png</string></array>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>PhoneAuraStudio</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>0.4.16</string>
+    <key>CFBundleVersion</key><string>56</string>
+    <key>LSRequiresIPhoneOS</key><true/>
+    <key>MinimumOSVersion</key><string>16.0</string>
+    <key>NSContactsUsageDescription</key><string>PhoneAura uses Contacts to show saved-number suggestions and to create or update contacts from the redesigned keypad.</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key><string>PhoneAura Studio</string>
+            <key>CFBundleURLSchemes</key><array><string>phoneaurastudio</string></array>
+        </dict>
+    </array>
+    <key>UIDeviceFamily</key><array><integer>1</integer><integer>2</integer></array>
+    <key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
+    <key>UIRequiresFullScreen</key><true/>
+    <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
+    <key>UILaunchScreen</key><dict/>
+</dict>
+</plist>

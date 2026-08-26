@@ -1,0 +1,11 @@
+Package: com.zeshan.phoneaura
+Name: PhoneAura
+Version: 0.4.16
+Architecture: iphoneos-arm64
+Description: PhoneAura is a free, modern redesign of the iOS 16 Phone app. Version 0.4.16 is an emergency stability hotfix that removes the crashing global long-press phone-number editing hooks introduced in 0.4.15 and restores the proven 0.4.14 runtime behavior. It preserves the fixed saved-number suggestion area, Number not saved status, corrected Next Solution header logo, original Number Options menu, custom Favorites, smart Recents filters, Contacts, haptics and animations. Built for rootless jailbreaks.
+Depiction: https://nextjailbreak.com/depictions/phoneaura.html
+Homepage: https://nextjailbreak.com/
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader

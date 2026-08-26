@@ -1,0 +1,9 @@
+Package: com.nextsolution.woolcontrolcenter
+Name: Wool Control Center
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Description: Redesigns iOS 16 Control Center modules with realistic 3D wool and felt backgrounds. Includes global and per-module wool palettes, solid backgrounds, custom photos, opacity, texture density, depth, and corner radius controls.
+Maintainer: Next Solution
+Author: Next Solution
+Section: Tweaks
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
