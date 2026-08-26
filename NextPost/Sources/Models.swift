@@ -20,14 +20,18 @@ struct PublishedArticle: Decodable, Identifiable, Hashable {
     var id: String { cleanURL.absoluteString }
 
     /// The exact URL published by the website manifest/feed.
-    ///
-    /// Some newly published articles are available immediately at their
-    /// legacy `.html` route before a clean `/slug/` copy exists. Social
-    /// crawlers such as X must receive the URL that definitely serves the
-    /// article metadata, otherwise the link card can fail with a 404/no card.
+    /// Legacy Next Solution URLs are normalized to the current Next Jailbreak domain
+    /// so stale manifests or cached article data can never generate an old-domain post.
     var publishedURL: URL {
-        if let absolute = URL(string: href), absolute.scheme != nil {
-            return absolute
+        if var components = URLComponents(string: href), components.scheme != nil {
+            let host = components.host?.lowercased()
+            if ["nextsolution.cc", "www.nextsolution.cc", "nextsolution.app", "www.nextsolution.app", "www.nextjailbreak.com"].contains(host) {
+                components.scheme = "https"
+                components.host = "nextjailbreak.com"
+            }
+            if let normalized = components.url {
+                return normalized
+            }
         }
 
         let trimmed = href.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
