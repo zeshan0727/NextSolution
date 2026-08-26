@@ -26,7 +26,6 @@ jobs:
           from pathlib import Path
 
           root = Path('.')
-          self_path = Path('.github/workflows/migrate-all-nextjailbreak-links.yml')
           skip_dirs = {'.git'}
 
           replacements = (
@@ -46,9 +45,12 @@ jobs:
 
           changed = []
           for path in root.rglob('*'):
-              if not path.is_file() or path == self_path:
+              if not path.is_file():
                   continue
               if any(part in skip_dirs for part in path.parts):
+                  continue
+              # GITHUB_TOKEN cannot update workflow files; those are handled separately.
+              if len(path.parts) >= 3 and path.parts[0] == '.github' and path.parts[1] == 'workflows':
                   continue
               try:
                   data = path.read_bytes()
@@ -70,7 +72,7 @@ jobs:
                   path.write_text(new, encoding='utf-8')
                   changed.append(str(path))
 
-          print(f'Updated {len(changed)} text files')
+          print(f'Updated {len(changed)} non-workflow text files')
           for path in changed:
               print(path)
           PY
@@ -79,7 +81,7 @@ jobs:
         shell: bash
         run: |
           if git diff --quiet && [ -z "$(git status --porcelain --untracked-files=all)" ]; then
-            echo "No legacy domain references remain in writable UTF-8 files."
+            echo "No legacy domain references remain in non-workflow UTF-8 files."
             exit 0
           fi
 
