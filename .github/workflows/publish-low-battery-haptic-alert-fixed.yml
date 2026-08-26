@@ -133,7 +133,7 @@ jobs:
             ${{ runner.temp }}/roothide-build.log
             ${{ runner.temp }}/build-validation.txt
 
-      - name: Publish to nextsolution.cc Sileo repository
+      - name: Publish to nextjailbreak.com Sileo repository
         shell: bash
         run: |
           set -euo pipefail
@@ -179,7 +179,7 @@ jobs:
           if m:
               t = re.sub(r'^Version: .*$', f'Version: {m.group(1)}.{m.group(2)}.{int(m.group(3))+1}', t, flags=re.M)
           t = re.sub(r'^Date: .*$', 'Date: ' + datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'), t, flags=re.M)
-          t = re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png', t, flags=re.M)
+          t = re.sub(r'^Icon: .*$', 'Icon: https://nextjailbreak.com/CydiaIcon.png', t, flags=re.M)
           p.write_text(t)
           PY
 

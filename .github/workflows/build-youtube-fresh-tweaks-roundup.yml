@@ -48,7 +48,7 @@ jobs:
             local url="$1"
             local output="$2"
             curl --fail --location --retry 4 --retry-all-errors --connect-timeout 20 --max-time 120 \
-              --user-agent "NextSolutionVideoBuilder/1.0 (+https://nextsolution.cc)" \
+              --user-agent "NextSolutionVideoBuilder/1.0 (+https://nextjailbreak.com)" \
               --output "$assets/$output" "$url"
           }
           fetch "https://media.havoc.app/670de6309d2f1af2966fc7e0" "hello-1.jpg"

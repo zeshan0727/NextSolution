@@ -185,7 +185,7 @@ jobs:
             'type':'deb',
             'platform':'RootHide',
             'version':'1.1.5-test2',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test2/NextLock_1.1.5_CPUFix_Test2_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test2/NextLock_1.1.5_CPUFix_Test2_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Feature-preserving Test 2 for the verified NextLock 1.1.4 SpringBoard CPU issue. Reuses immutable UIImage decodes only for calls originating inside LockGlyphTime and keeps the exact transparent-photo/sticker classification while preventing repeated image decode, CoreGraphics redraw and vImage alpha scans during layout.'
           }

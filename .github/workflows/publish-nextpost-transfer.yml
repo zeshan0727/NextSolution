@@ -59,7 +59,7 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
               'version': '1.0.9',
-              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.9/NextPost-1.0.9-X-Preview-Fix.tipa',
+              'url': 'https://nextjailbreak.com/transfer/files/NextPost/1.0.9/NextPost-1.0.9-X-Preview-Fix.tipa',
               'sha256': os.environ['SHA256'],
               'notes': 'Fixes missing X post link previews. Next Post now shares the exact published article URL (.html when that is the live route) instead of forcing a clean route that may not exist yet, and passes the article URL separately to the X web intent so it is recognized as the card target. Keeps LevelPlay + Unity Ads mediation support from 1.0.8.'
           }

@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 45
     env:
       R2_BUCKET: next-signer-apps
-      R2_PUBLIC_BASE: https://files.nextsolution.cc
+      R2_PUBLIC_BASE: https://files.nextjailbreak.com
       R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
       AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}

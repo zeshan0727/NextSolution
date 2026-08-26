@@ -47,7 +47,7 @@ jobs:
           grep -q 'aria-current="page">Tutorials' phoneaura-tweak-ios16.html
           grep -q 'PhoneAura_0.4.16_RootHide_iOS16.deb' phoneaura-tweak-ios16.html
           grep -q 'PhoneAura_0.4.16_Rootless_iOS16.deb' phoneaura-tweak-ios16.html
-          grep -q 'https://nextsolution.cc/phoneaura-tweak-ios16.html' sitemap.xml
+          grep -q 'https://nextjailbreak.com/phoneaura-tweak-ios16.html' sitemap.xml
           if grep -q 'PhoneAura_0.4.15' phoneaura-tweak-ios16.html; then
             echo 'Old 0.4.15 article reference remains.'
             exit 1

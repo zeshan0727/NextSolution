@@ -123,7 +123,7 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / RootHide / iOS 15+',
               'version': '1.1.0 (8)',
-              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.0/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa',
+              'url': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.0/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa',
               'sha256': '0cfb407cb00b842aa63429abc4c5b502e5cbbf3c690e4c24bc17f1af59dcd53a',
               'sizeBytes': 4877924,
               'notes': 'Professional 20-profile testing browser with per-profile environment settings, icon and color, user-agent, locale, region, timezone, viewport presets, storage inspection and clearing, permission reset, settings-only duplication into an independent container, backup and restore, and developer information. Preserves the proven isolated persistent WebKit profile architecture and existing Google sessions when installed as an update.'

@@ -170,7 +170,7 @@ jobs:
             'name':'NextLock 1.1.5 Test 17 Date Fix RootHide',
             'fileName':'NextLock_1.1.5_Test17_DateFix_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test17',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test17-DateFix/NextLock_1.1.5_Test17_DateFix_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test17-DateFix/NextLock_1.1.5_Test17_DateFix_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 17 keeps every Test 16 runtime unchanged and adds a date-only native iOS 16 fix. Hide Date now targets CSProminentSubtitleView, which owns the normal and compact Apple date views, while the custom NextLock date remains untouched.'
           }

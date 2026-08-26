@@ -51,7 +51,7 @@ jobs:
             'name':'NextLock 1.1.5 CPU Fix Test 9 Free Position RootHide',
             'fileName':'NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test9',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test9-FreePosition/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test9-FreePosition/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 9 keeps Test 8 full time/date styling, targeted low-CPU callback-photo suppression and uncropped full-photo picker. Photo Frames 1-4 are no longer anchored to Time or Date: Anchor To and Placement are removed and replaced with independent whole-screen Horizontal/Vertical Position sliders (0-100%).'
           }

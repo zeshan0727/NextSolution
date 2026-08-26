@@ -190,7 +190,7 @@ jobs:
             'type':'deb',
             'platform':'RootHide',
             'version':'1.1.5-test6',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test6-PhotoModes/NextLock_1.1.5_CPUFix_Test6_PhotoModes_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test6-PhotoModes/NextLock_1.1.5_CPUFix_Test6_PhotoModes_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 6 replaces Test 4 global 10 Hz throttling with a targeted suppression of only the proven 120 Hz redundant callback so time/date/photo position controls remain fully live. Adds Photo Display to each of Frames 1-4: Auto (original transparent/opaque behavior), Stretch (fill exact frame), Full Photo (show entire image), and Cut/Crop (aspect-fill and crop). Retains duplicate deferred-render suppression and exact transparency caching.'
           }

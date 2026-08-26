@@ -120,7 +120,7 @@ jobs:
             'name':'Next Mockup Studio 0.2 — iPhone 17 Pro Max Test',
             'fileName':'NextMockupStudio-iPhone17ProMax-Test-v0.2.tipa',
             'type':'tipa','platform':'TrollStore / iOS 16+','version':'0.2',
-            'url':'https://nextsolution.cc/transfer/files/NextMockupStudio/0.2/NextMockupStudio-iPhone17ProMax-Test-v0.2.tipa',
+            'url':'https://nextjailbreak.com/transfer/files/NextMockupStudio/0.2/NextMockupStudio-iPhone17ProMax-Test-v0.2.tipa',
             'sha256':os.environ['TIPA_SHA'],'sizeBytes':int(os.environ['TIPA_SIZE']),
             'notes':'Crash-fix test build. Replaced the experimental Objective-C runtime launch layer with normal UIKit Objective-C. Includes iPhone 17 Pro Max Silver, Cosmic Orange and Deep Blue, screenshot import, screen masking, background switching, scaling and PNG export.'
           }

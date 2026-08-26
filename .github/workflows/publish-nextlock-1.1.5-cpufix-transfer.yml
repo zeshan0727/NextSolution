@@ -62,7 +62,7 @@ jobs:
               'type': 'deb',
               'platform': 'RootHide',
               'version': '1.1.5-test1',
-              'url': 'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test1/NextLock_1.1.5_CPUFix_Test1_RootHide.deb',
+              'url': 'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test1/NextLock_1.1.5_CPUFix_Test1_RootHide.deb',
               'sha256': os.environ['SHA256'],
               'notes': 'NextLock 1.1.4 feature-preserving CPU-fix test. Keeps the original LockGlyphTime 1.1.4 runtime and all clock/date, four-frame photo/sticker, sizing, positioning, fonts, colors and shadow features, while adding an exact-result transparency cache to stop repeated full-image CoreGraphics/vImage alpha scans during layout.'
           }

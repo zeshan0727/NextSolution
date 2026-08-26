@@ -1,4 +1,4 @@
-# Trigger 2: publish Next Home Lock 1.0.5 entirely from the repo served by nextsolution.cc.
+# Trigger 2: publish Next Home Lock 1.0.5 entirely from the repo served by nextjailbreak.com.
 name: Build and Publish Next Home Lock
 
 on:
@@ -117,7 +117,7 @@ jobs:
           validate "$OUT/NextHomeLock_1.0.5_RootHide.deb" iphoneos-arm64e
           shasum -a 256 "$OUT"/*.deb
 
-      - name: Publish to nextsolution.cc
+      - name: Publish to nextjailbreak.com
         shell: bash
         run: |
           set -euo pipefail
@@ -161,13 +161,13 @@ jobs:
           t = p.read_text()
           t = re.sub(r'^Version: .*$', 'Version: 1.0.22', t, flags=re.M)
           t = re.sub(r'^Date: .*$', 'Date: ' + datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'), t, flags=re.M)
-          t = re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png', t, flags=re.M)
+          t = re.sub(r'^Icon: .*$', 'Icon: https://nextjailbreak.com/CydiaIcon.png', t, flags=re.M)
           p.write_text(t)
           PY
 
             git add debfiles/NextHomeLock_1.0.5_Rootless.deb debfiles/NextHomeLock_1.0.5_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release
             git diff --cached --check
-            git commit -m "Publish Next Home Lock 1.0.5 to nextsolution.cc"
+            git commit -m "Publish Next Home Lock 1.0.5 to nextjailbreak.com"
             git push origin HEAD:main && exit 0
             sleep $((attempt * 3))
           done

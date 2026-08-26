@@ -47,7 +47,7 @@ jobs:
       REQUEST_ID: ${{ inputs.request_id }}
       INBOX_TAG: nextsigner-inbox
       R2_BUCKET: next-signer-apps
-      R2_PUBLIC_BASE: https://files.nextsolution.cc
+      R2_PUBLIC_BASE: https://files.nextjailbreak.com
       R2_ACCOUNT_ID: 4fe920e259870b0366118a17cc5727e5
       AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
@@ -233,7 +233,7 @@ jobs:
           }
           cp=root/'apps.json'; catalog=json.loads(cp.read_text()) if cp.exists() else {'catalog':'Next Jailbreak Private Apps','updated':'','apps':[]}
           catalog['apps']=[app]+[x for x in catalog.get('apps',[]) if x.get('id')!=app['id']]; catalog['updated']=date.today().isoformat(); cp.write_text(json.dumps(catalog,indent=2)+'\n')
-          icon=os.environ['ICON_URL']; icon_abs=icon if icon.startswith('http') else 'https://nextsolution.cc'+icon
+          icon=os.environ['ICON_URL']; icon_abs=icon if icon.startswith('http') else 'https://nextjailbreak.com'+icon
           manifest={'items':[{'assets':[{'kind':'software-package','url':os.environ['PUBLISHED_URL']},{'kind':'display-image','needs-shine':False,'url':icon_abs},{'kind':'full-size-image','needs-shine':False,'url':icon_abs}], 'metadata':{'bundle-identifier':os.environ['APP_BUNDLE_ID'],'bundle-version':os.environ['APP_BUILD'],'kind':'software','title':os.environ['APP_NAME']}}]}
           with open(root/f"{os.environ['APP_SLUG']}.plist",'wb') as f: plistlib.dump(manifest,f,fmt=plistlib.FMT_XML,sort_keys=False)
           PY

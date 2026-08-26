@@ -155,7 +155,7 @@ jobs:
             'name':'NextLock 1.1.5 CPU Fix Test 11 Live Features RootHide',
             'fileName':'NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test11',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test11-LiveFeatures/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test11-LiveFeatures/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 11 keeps the validated CPU/photo fixes and independent Time/Date font controls. It adds a direct post-render runtime fix for both Time and Date position, color and shadow/glow, and adds visible function labels above every Time/Date movement slider.'
           }

@@ -35,8 +35,8 @@ jobs:
           grep -q '^Name: Screenshot Haptic$' "$P/control"
           grep -q '^Version: 1.0.0$' "$P/control"
           grep -q '^Architecture: iphoneos-arm64$' "$P/control"
-          grep -q '^Homepage: https://nextsolution.cc/$' "$P/control"
-          grep -q '^Depiction: https://nextsolution.cc/depictions/screenshothaptic.html$' "$P/control"
+          grep -q '^Homepage: https://nextjailbreak.com/$' "$P/control"
+          grep -q '^Depiction: https://nextjailbreak.com/depictions/screenshothaptic.html$' "$P/control"
           ! grep -R -q 'zeshan0727.github.io' "$P" depictions/screenshothaptic.html
           grep -q '^ARCHS = arm64 arm64e$' "$P/Makefile"
           grep -q '^TARGET = iphone:clang:latest:15.0$' "$P/Makefile"
@@ -112,7 +112,7 @@ jobs:
           p=Path('Release'); t=p.read_text(); m=re.search(r'^Version: (\d+)\.(\d+)\.(\d+)$',t,re.M)
           if m: t=re.sub(r'^Version: .*$',f'Version: {m.group(1)}.{m.group(2)}.{int(m.group(3))+1}',t,flags=re.M)
           t=re.sub(r'^Date: .*$', 'Date: '+datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'),t,flags=re.M)
-          t=re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png',t,flags=re.M); p.write_text(t)
+          t=re.sub(r'^Icon: .*$', 'Icon: https://nextjailbreak.com/CydiaIcon.png',t,flags=re.M); p.write_text(t)
           PY
             rm -f .github/workflows/diagnostic-screenshothaptic.yml ReleaseTriggers/screenshothaptic-diagnostic.txt Diagnostics/2026-08-11-screenshothaptic-build.txt
             git add debfiles/ScreenshotHaptic_1.0.0_Rootless.deb debfiles/ScreenshotHaptic_1.0.0_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release .github/workflows/diagnostic-screenshothaptic.yml ReleaseTriggers/screenshothaptic-diagnostic.txt Diagnostics/2026-08-11-screenshothaptic-build.txt

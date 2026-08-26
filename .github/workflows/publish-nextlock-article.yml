@@ -32,8 +32,8 @@ jobs:
           grep -q 'nextlock-tweak.html' index.html
           grep -q 'NEXTLOCK_TUTORIAL_CARD_START' tutorials.html
           grep -q 'NextLock 1.0.1' tutorials.html
-          grep -q 'https://nextsolution.cc/nextlock-tweak.html' feed.xml
-          grep -q 'https://nextsolution.cc/nextlock-tweak.html' sitemap.xml
+          grep -q 'https://nextjailbreak.com/nextlock-tweak.html' feed.xml
+          grep -q 'https://nextjailbreak.com/nextlock-tweak.html' sitemap.xml
           ! grep -R 'nextsolution\.app' nextlock-tweak.html index.html tutorials.html feed.xml sitemap.xml || exit 1
       - name: Commit site updates
         shell: bash

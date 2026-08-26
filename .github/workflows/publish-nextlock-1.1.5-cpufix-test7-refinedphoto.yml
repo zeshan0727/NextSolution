@@ -212,7 +212,7 @@ jobs:
             'type':'deb',
             'platform':'RootHide',
             'version':'1.1.5-test7',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test7-RefinedPhoto/NextLock_1.1.5_CPUFix_Test7_RefinedPhoto_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test7-RefinedPhoto/NextLock_1.1.5_CPUFix_Test7_RefinedPhoto_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Refined photo build. Fixes the old selector pipeline that square-cropped every chosen image and rendered it to 512x512 before saving. Test 7 shows the whole selected photo, preserves its aspect ratio and detail at up to 2048 px on the long edge, and keeps Auto, Stretch, Full Photo and Cut/Crop per frame. Retains the proven targeted 120 Hz callback suppression so time/date/photo position controls remain fully live without the previous SpringBoard CPU drain.'
           }

@@ -99,7 +99,7 @@ jobs:
             'type':'tipa',
             'platform':'TrollStore / iOS 16+',
             'version':'0.4',
-            'url':'https://nextsolution.cc/transfer/files/NextMockupStudio/0.4/NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa',
+            'url':'https://nextjailbreak.com/transfer/files/NextMockupStudio/0.4/NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa',
             'sha256':os.environ['TIPA_SHA'],
             'sizeBytes':int(os.environ['TIPA_SIZE']),
             'notes':'Live SceneKit 3D proof build: drag to rotate, pinch to zoom, import a screenshot as the screen texture, switch Silver/Cosmic Orange/Deep Blue materials, and export PNG including transparent-background mode.'

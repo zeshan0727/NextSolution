@@ -159,7 +159,7 @@ jobs:
           m = re.search(r'^Version: (\d+)\.(\d+)\.(\d+)$', t, re.M)
           if m: t = re.sub(r'^Version: .*$', f'Version: {m.group(1)}.{m.group(2)}.{int(m.group(3))+1}', t, flags=re.M)
           t = re.sub(r'^Date: .*$', 'Date: ' + datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'), t, flags=re.M)
-          t = re.sub(r'^Icon: .*$', 'Icon: https://nextsolution.cc/CydiaIcon.png', t, flags=re.M)
+          t = re.sub(r'^Icon: .*$', 'Icon: https://nextjailbreak.com/CydiaIcon.png', t, flags=re.M)
           p.write_text(t)
           PY
             git add debfiles/ChargingInterruptedHaptic_1.0.0_Rootless.deb debfiles/ChargingInterruptedHaptic_1.0.0_RootHide.deb Packages Packages.gz Packages.bz2 Packages.xz Packages.zst Release

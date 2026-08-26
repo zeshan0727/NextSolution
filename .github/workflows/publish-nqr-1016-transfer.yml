@@ -62,7 +62,7 @@ jobs:
             'type':'deb',
             'platform':'RootHide',
             'version':'1.0.16',
-            'url':'https://nextsolution.cc/transfer/files/NextQuickReminder/1.0.16/NextQuickReminder_1.0.16_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextQuickReminder/1.0.16/NextQuickReminder_1.0.16_RootHide.deb',
             'sha256':'22413d82950dafcbc889eed8d3a149379e37a1874f888f8046e643e0bf403ea1',
             'sizeBytes':111040,
             'notes':'Replaces the unreliable 30-second SpringBoard polling scheduler with PCPersistentTimer and system waking enabled for locked-device scheduled sends. Keeps the working fresh pending-reminder PDF generation, newest-3 retention, selected weekdays/time preferences, and Gmail file-share sender unchanged.'

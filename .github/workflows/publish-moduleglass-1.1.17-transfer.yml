@@ -110,7 +110,7 @@ jobs:
             'type': 'deb',
             'platform': 'RootHide',
             'version': '1.1.17',
-            'url': 'https://nextsolution.cc/transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb',
+            'url': 'https://nextjailbreak.com/transfer/files/ModuleGlass/1.1.17/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb',
             'sha256': sys.argv[1],
             'notes': 'Full self-contained Module Glass package. Preserves the validated 1.1.15 External Host Isolation Control Center runtime and embeds the current Aura 1.0.5 Module Glass preferences, PreferenceLoader entry, image controls, glow controls and native Volume icon color picker directly in the same DEB.'
           }

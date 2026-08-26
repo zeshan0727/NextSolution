@@ -209,7 +209,7 @@ jobs:
             'name':'NextLock 1.1.5 Test 19 Preferences Sections RootHide',
             'fileName':'NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test19',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test19-PreferencesSections/NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test19-PreferencesSections/NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Preferences-only Test 19. Keeps every Test 18 runtime unchanged, separates Hide Options and Battery into clear sections, and adds visible section labels above every battery horizontal/vertical/size slider so no slider is unlabeled.'
           }

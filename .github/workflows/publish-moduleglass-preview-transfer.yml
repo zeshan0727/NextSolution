@@ -54,7 +54,7 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / Jailbroken iOS 15+',
               'version': '1.0.0',
-              'url': 'https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa',
+              'url': 'https://nextjailbreak.com/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa',
               'sha256': os.environ['SHA256'],
               'notes': 'Live companion app for Module Glass Stable Recovery. Provides Control Center preview, Device Live preference/image changes, Darwin reload notifications, and direct Module Glass log viewing.'
           }

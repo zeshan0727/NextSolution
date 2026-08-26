@@ -104,7 +104,7 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / Jailbroken iOS 16+',
               'version': '1.1.1',
-              'url': 'https://nextsolution.cc/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa',
+              'url': 'https://nextjailbreak.com/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa',
               'sha256': sha,
               'notes': 'Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured.'
           }

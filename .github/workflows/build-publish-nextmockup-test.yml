@@ -188,7 +188,7 @@ jobs:
             'type': 'tipa',
             'platform': 'TrollStore / iOS 16+',
             'version': '0.1',
-            'url': 'https://nextsolution.cc/transfer/files/NextMockupStudio/0.1/NextMockupStudio-iPhone17ProMax-Test-v0.1.tipa',
+            'url': 'https://nextjailbreak.com/transfer/files/NextMockupStudio/0.1/NextMockupStudio-iPhone17ProMax-Test-v0.1.tipa',
             'sha256': os.environ['TIPA_SHA'],
             'sizeBytes': int(os.environ['TIPA_SIZE']),
             'notes': 'Premium single-device validation build for iPhone 17 Pro Max. Includes Silver, Cosmic Orange and Deep Blue 3000x6285 front frames, screenshot import, fitted screen masking, Dynamic Island, background switching, device scaling and PNG export.'

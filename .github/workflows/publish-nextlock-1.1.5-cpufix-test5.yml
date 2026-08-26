@@ -159,7 +159,7 @@ jobs:
             'type':'deb',
             'platform':'RootHide',
             'version':'1.1.5-test5',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test5/NextLock_1.1.5_CPUFix_Test5_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test5/NextLock_1.1.5_CPUFix_Test5_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Feature-preserving replacement for Test 4. Test 4 fixed CPU but broke time/date position because it throttled the actual render/update functions. Test 5 restores those functions fully and suppresses only the live-proven 120 Hz callback block (+0xBDD4 arm64e / +0xBC30 arm64), while retaining duplicate deferred-render suppression and exact transparency caching.'
           }

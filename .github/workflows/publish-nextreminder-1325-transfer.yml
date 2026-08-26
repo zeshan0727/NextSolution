@@ -105,7 +105,7 @@ jobs:
               'type':'tipa',
               'platform':'Unsigned TIPA / iOS 16+',
               'version':'1.3.25 (35)',
-              'url':'https://nextsolution.cc/transfer/files/NextReminder/1.3.25/NextReminder_1.3.25_Unsigned.tipa',
+              'url':'https://nextjailbreak.com/transfer/files/NextReminder/1.3.25/NextReminder_1.3.25_Unsigned.tipa',
               'sha256':'c2320733b374aeeb1f08ddd5d8c6dfb408319f19e080f69cdae81d404fc4f08b',
               'sizeBytes':1991664,
               'notes':'Polished Pending Reminder Report card and controls, automatic latest-three PDF retention, Background Send toggle, visible status, and Gmail connection preservation so temporary network or delivery failures do not clear the saved Gmail login.'
@@ -117,7 +117,7 @@ jobs:
               'type':'deb',
               'platform':'RootHide',
               'version':'1.0.14',
-              'url':'https://nextsolution.cc/transfer/files/NextQuickReminder/1.0.14/NextQuickReminder_1.0.14_RootHide.deb',
+              'url':'https://nextjailbreak.com/transfer/files/NextQuickReminder/1.0.14/NextQuickReminder_1.0.14_RootHide.deb',
               'sha256':'8f36071b0b49ccd7e6a0e052a2d0a51ff9df0b75cc8038dd9acd9b4070175daf',
               'sizeBytes':100224,
               'notes':'Send PDF Report sends the newest locally saved Pending Reminder PDF in the background without opening Next Reminder. Uses the same proven v1/file-shares Gmail attachment route as the successful in-app send and preserves the saved Gmail connection on failures.'

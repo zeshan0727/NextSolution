@@ -172,7 +172,7 @@ jobs:
             'name':'NextLock 1.1.5 Test 14 Hide Items RootHide',
             'fileName':'NextLock_1.1.5_Test14_HideItems_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test14',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test14-HideItems/NextLock_1.1.5_Test14_HideItems_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test14-HideItems/NextLock_1.1.5_Test14_HideItems_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 14 replaces the non-functional visibility controls with one Hide Items section. Time/Date, Flashlight, Camera, Status Bar, other Lock Screen text and CC/gesture bars are handled by the new direct runtime while Test 12 custom clock, refined photo modes and low-CPU fixes remain intact.'
           }

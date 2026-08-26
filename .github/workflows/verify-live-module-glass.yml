@@ -10,11 +10,11 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify live nextsolution.cc package indexes and DEBs
+      - name: Verify live nextjailbreak.com package indexes and DEBs
         shell: bash
         run: |
           set -euo pipefail
-          base='https://nextsolution.cc'
+          base='https://nextjailbreak.com'
           mkdir -p /tmp/live
           for f in Release Packages Packages.gz Packages.bz2 Packages.xz Packages.zst; do
             echo "===== $f ====="

@@ -184,7 +184,7 @@ jobs:
           git commit -m "Publish verified tweak article: $ARTICLE_TITLE"
           git push origin HEAD:main
           echo "### Article published" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Page: https://nextsolution.cc/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Page: https://nextjailbreak.com/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
           echo "- Publication count today: **${{ steps.publication.outputs.publication_number }} of ${{ steps.publication.outputs.max_today }}**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Independent verifier: **approved**" >> "$GITHUB_STEP_SUMMARY"
           echo "- ShrinkMe: **disabled**" >> "$GITHUB_STEP_SUMMARY"

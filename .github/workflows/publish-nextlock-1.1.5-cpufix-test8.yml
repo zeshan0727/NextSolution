@@ -226,7 +226,7 @@ jobs:
             'name':'NextLock 1.1.5 CPU Fix Test 8 Full Features RootHide',
             'fileName':'NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test8',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test8-FullFeatures/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test8-FullFeatures/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 8 restores the complete time/date styling callback required for position, color, font weight, style, glow and shadow. It no longer suppresses that callback; only its redundant photo-render call is skipped while normal photo/layout refresh remains active. The refined picker is now injected into Settings (com.apple.Preferences), so selecting a photo keeps the whole uncropped image; Auto, Stretch, Full Photo and Cut/Crop are chosen later per frame. Original NextLock 1.1.4 feature binary remains unchanged.'
           }

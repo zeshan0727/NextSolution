@@ -231,7 +231,7 @@ jobs:
             'name':'NextLock 1.1.5 Test 12 Custom Clock RootHide',
             'fileName':'NextLock_1.1.5_Test12_CustomClock_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test12',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-Test12-CustomClock/NextLock_1.1.5_Test12_CustomClock_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test12-CustomClock/NextLock_1.1.5_Test12_CustomClock_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 12 replaces the Apple Lock Screen time/date text instead of fighting its layout. Native time/date text is hidden while independent NextLock Time and Date labels provide whole-screen X/Y positioning plus separate font, weight, style, size, color, shadow/glow and formatting controls. Keeps the validated CPU/photo fixes.'
           }

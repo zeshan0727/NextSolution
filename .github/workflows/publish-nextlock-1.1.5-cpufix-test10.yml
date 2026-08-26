@@ -149,7 +149,7 @@ jobs:
             'name':'NextLock 1.1.5 CPU Fix Test 10 Time Date Sliders RootHide',
             'fileName':'NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb',
             'type':'deb','platform':'RootHide','version':'1.1.5-test10',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 10 keeps Test 9 CPU fix, free photo positioning and full-photo picker. Time and Date now use clearly labeled independent horizontal/vertical movement sliders (-300 to +300); fixed Alignment controls are removed. Time Font/Weight/Style/Size and Date Font/Weight/Style/Size are explicitly separate controls.'
           }

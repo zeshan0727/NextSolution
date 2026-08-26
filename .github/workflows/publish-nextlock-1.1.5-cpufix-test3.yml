@@ -155,7 +155,7 @@ jobs:
             'type':'deb',
             'platform':'RootHide',
             'version':'1.1.5-test3',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test3/NextLock_1.1.5_CPUFix_Test3_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test3/NextLock_1.1.5_CPUFix_Test3_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Feature-preserving Test 3 for the verified NextLock 1.1.4 SpringBoard CPU issue. Suppresses only the redundant deferred second full-render pass while leaving the synchronous renderer, clock/date styling, timers, preference reloads and all four photo/sticker frames intact; also retains exact transparency-result caching.'
           }

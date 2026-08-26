@@ -70,7 +70,7 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / iOS 16+',
               'version': '1.0.2',
-              'url': 'https://nextsolution.cc/transfer/files/NextPost/1.0.2/NextPost-1.0.2-LevelPlay-Diagnostic.tipa',
+              'url': 'https://nextjailbreak.com/transfer/files/NextPost/1.0.2/NextPost-1.0.2-LevelPlay-Diagnostic.tipa',
               'sha256': os.environ['SHA256'],
               'notes': 'LevelPlay diagnostic build. Enables Unity’s official iOS integration test suite before SDK init, adds the required ATS network configuration, and exposes LevelPlay initialization/load errors instead of silently ignoring them. Use this build to verify test ad delivery while the account is pending approval.'
           }

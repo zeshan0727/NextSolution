@@ -116,7 +116,7 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / RootHide / iOS 15+',
               'version': '1.0.6 (7)',
-              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.0.6/NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa',
+              'url': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.0.6/NextMultiBrowser_1.0.6_iOS16_Persistent_Profiles_iPhone_Test.tipa',
               'sha256': 'c97a322b5e225a66c91b9b87c26fe07657f4bbf18290d48ef1898cf8c6d09a77',
               'sizeBytes': 4794298,
               'notes': 'Twenty isolated browser profiles. Fixes Google session loss on iOS 15/16 by assigning each profile its own persistent WebKit cookies, local storage, IndexedDB, cache storage, service-worker data, and related website data. Migrates cookie snapshots created by 1.0.5.'

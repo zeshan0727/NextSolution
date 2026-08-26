@@ -158,7 +158,7 @@ jobs:
             'type':'deb',
             'platform':'RootHide',
             'version':'1.1.5-test4',
-            'url':'https://nextsolution.cc/transfer/files/NextLock/1.1.5-CPUFix-Test4/NextLock_1.1.5_CPUFix_Test4_RootHide.deb',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test4/NextLock_1.1.5_CPUFix_Test4_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],
             'notes':'Test 4 targets the live-proven cause: NextLock updateA/photos were executing about 180 times/sec and updateB about 60 times/sec from callback and layout paths. This build caps each expensive internal update to 10 Hz while leaving UIKit layout, clock/date customization, all four photo/sticker frames, preferences, and the original 1.1.4 feature binary intact. It also retains duplicate-render suppression and exact transparency caching.'
           }

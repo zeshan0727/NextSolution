@@ -100,8 +100,8 @@ jobs:
           test "$(grep -c '^Package: com.nextsolution.internetlosthaptic$' Packages)" = 2
           grep -q 'Filename: ./debfiles/InternetLostHaptic_1.0.0_RootHide.deb' Packages
           grep -q 'Filename: ./debfiles/InternetLostHaptic_1.0.0_Rootless.deb' Packages
-          grep -q '^Homepage: https://nextsolution.cc/$' Packages
-          grep -q '^Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html$' Packages
+          grep -q '^Homepage: https://nextjailbreak.com/$' Packages
+          grep -q '^Depiction: https://nextjailbreak.com/depictions/internetlosthaptic.html$' Packages
           gzip -dc Packages.gz | cmp - Packages
           bzip2 -dc Packages.bz2 | cmp - Packages
           xz -dc Packages.xz | cmp - Packages

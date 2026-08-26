@@ -142,7 +142,7 @@ jobs:
           git push origin HEAD:main
           echo "### Dopamine 3 article published" >> "$GITHUB_STEP_SUMMARY"
           echo "- Topic: **$TOPIC_ID**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Page: https://nextsolution.cc/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Page: https://nextjailbreak.com/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
           echo "- Social post queued: **yes**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Stale failure diagnostic cleared: **yes**" >> "$GITHUB_STEP_SUMMARY"
 

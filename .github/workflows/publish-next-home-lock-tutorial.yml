@@ -55,7 +55,7 @@ jobs:
           grep -q 'ca-pub-4770123899731214' "$ARTICLE"
           test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' "$ARTICLE")" -eq 1
           grep -q '"@type": "TechArticle"' "$ARTICLE"
-          grep -q '<link rel="canonical" href="https://nextsolution.cc/next-home-lock-tweak-ios16.html">' "$ARTICLE"
+          grep -q '<link rel="canonical" href="https://nextjailbreak.com/next-home-lock-tweak-ios16.html">' "$ARTICLE"
 
           grep -q '<!-- NEXT_HOME_LOCK_RECENT_CARD_START -->' index.html
           grep -q '<!-- NEXT_HOME_LOCK_RECENT_CARD_END -->' index.html
@@ -63,7 +63,7 @@ jobs:
           grep -q '<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->' tutorials.html
           grep -q '<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_END -->' tutorials.html
           test "$(grep -c '<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->' tutorials.html)" -eq 1
-          test "$(grep -c 'https://nextsolution.cc/next-home-lock-tweak-ios16.html' sitemap.xml)" -eq 1
+          test "$(grep -c 'https://nextjailbreak.com/next-home-lock-tweak-ios16.html' sitemap.xml)" -eq 1
 
           ! grep -q 'zeshan0727.github.io' "$ARTICLE"
           ! grep -q 'Next Home Lock 1.0.4' "$ARTICLE"

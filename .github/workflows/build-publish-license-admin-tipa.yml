@@ -156,7 +156,7 @@ jobs:
             'type':'tipa',
             'platform':'TrollStore / iOS 16+',
             'version':'1.0.5',
-            'url':'https://nextsolution.cc/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa',
+            'url':'https://nextjailbreak.com/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa',
             'sha256':sha,
             'notes':'Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock.'
           }
