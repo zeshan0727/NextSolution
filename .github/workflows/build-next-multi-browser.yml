@@ -213,8 +213,8 @@ jobs:
               'type': 'tipa',
               'platform': 'TrollStore / RootHide / iOS 15+',
               'version': '1.1.10 (18)',
-              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
-              'ipaUrl': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa',
+              'url': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
+              'ipaUrl': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa',
               'sha256': sha256,
               'sizeBytes': size,
               'notes': 'Adds four global environment device modes to the main Random Environment control: iOS Mode assigns random iPhone presets, Android Mode assigns random Android phones, PC / Mac Mode mixes Windows Chrome and macOS Safari desktop presets, and Mixed Mode combines all categories. Selecting a mode immediately randomizes all 20 profiles, and the saved Auto Randomize timer continues using that selected mode. Cookies, Google logins, persistent website data, profile isolation, iPad Pro layout, URL queue, AutoFill, auto refresh, and VPN features remain intact.'
