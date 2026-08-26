@@ -1,0 +1,97 @@
+name: Clean repository rename references
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repo-rename-cleanup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace old repository links
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+          workflow = '.github/workflows/repo-rename-cleanup.yml'
+          replacements = [
+              (b'https://raw.githubusercontent.com/zeshan0727/NextSolution/', b'https://raw.githubusercontent.com/zeshan0727/NextJailbreak/'),
+              (b'http://raw.githubusercontent.com/zeshan0727/NextSolution/', b'https://raw.githubusercontent.com/zeshan0727/NextJailbreak/'),
+              (b'https://github.com/zeshan0727/NextSolution', b'https://github.com/zeshan0727/NextJailbreak'),
+              (b'http://github.com/zeshan0727/NextSolution', b'https://github.com/zeshan0727/NextJailbreak'),
+              (b'zeshan0727/NextSolution', b'zeshan0727/NextJailbreak'),
+              (b'NextSolution-main.zip', b'NextJailbreak-main.zip'),
+              (b'NextSolution Repository', b'Next Jailbreak Repository'),
+          ]
+          skip_dirs = {'.git','node_modules','DerivedData','build','.build'}
+          changed=[]
+          for p in root.rglob('*'):
+              if not p.is_file() or p.as_posix()==workflow or '.github/workflows' in p.as_posix() or any(x in skip_dirs for x in p.parts):
+                  continue
+              try:
+                  data=p.read_bytes()
+              except OSError:
+                  continue
+              if b'\0' in data[:8192]:
+                  continue
+              out=data
+              for old,new in replacements:
+                  out=out.replace(old,new)
+              if out!=data:
+                  p.write_bytes(out)
+                  changed.append(p.as_posix())
+          print('Updated files:',len(changed))
+          for p in changed: print('  *',p)
+          PY
+
+      - name: Verify operational old repo links are gone
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          workflow='.github/workflows/repo-rename-cleanup.yml'
+          pats=[
+              b'https://raw.githubusercontent.com/zeshan0727/NextSolution/',
+              b'http://raw.githubusercontent.com/zeshan0727/NextSolution/',
+              b'https://github.com/zeshan0727/NextSolution',
+              b'http://github.com/zeshan0727/NextSolution',
+          ]
+          hits=[]
+          for p in Path('.').rglob('*'):
+              if not p.is_file() or '.git' in p.parts or p.as_posix()==workflow or '.github/workflows' in p.as_posix():
+                  continue
+              try: data=p.read_bytes()
+              except OSError: continue
+              if b'\0' in data[:8192]: continue
+              found=[x.decode() for x in pats if x in data]
+              if found: hits.append((p.as_posix(),found))
+          print('Old operational repository URL hits:',len(hits))
+          for p,f in hits: print('OLD_REPO_URL',p,','.join(f))
+          if hits: raise SystemExit(1)
+          PY
+
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then echo 'No cleanup needed'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Update repository links after NextJailbreak rename'
+          git pull --rebase origin main
+          git push origin main
