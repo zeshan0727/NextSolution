@@ -4,9 +4,12 @@ final class MultiBrowserTabBarController: UITabBarController {
     private let profileStore: BrowserProfileStore
     private let browserController: BrowserGridViewController
     private let browserNavigationController: UINavigationController
+    private var proxyObservation: NSObjectProtocol?
 
     init() {
         let profileStore = BrowserProfileStore.shared
+        BrowserProxyStore.shared.applyAllPersistedRoutes(profileStore: profileStore)
+
         let browserController = BrowserGridViewController(profileStore: profileStore)
         self.profileStore = profileStore
         self.browserController = browserController
@@ -16,6 +19,12 @@ final class MultiBrowserTabBarController: UITabBarController {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        if let proxyObservation {
+            NotificationCenter.default.removeObserver(proxyObservation)
+        }
     }
 
     override func viewDidLoad() {
@@ -41,7 +50,29 @@ final class MultiBrowserTabBarController: UITabBarController {
             selectedImage: UIImage(systemName: "person.3.fill")
         )
 
-        viewControllers = [browserNavigationController, profilesNavigationController]
+        let proxyController = BrowserProxyViewController(profileStore: profileStore)
+        let proxyNavigationController = UINavigationController(rootViewController: proxyController)
+        proxyNavigationController.navigationBar.prefersLargeTitles = false
+        proxyNavigationController.tabBarItem = UITabBarItem(
+            title: "Private IPs",
+            image: UIImage(systemName: "network"),
+            selectedImage: UIImage(systemName: "network.badge.shield.half.filled")
+        )
+
+        viewControllers = [
+            browserNavigationController,
+            profilesNavigationController,
+            proxyNavigationController
+        ]
+
+        proxyObservation = NotificationCenter.default.addObserver(
+            forName: .nextMultiBrowserProxyRouteDidChange,
+            object: BrowserProxyStore.shared,
+            queue: .main
+        ) { [weak self] _ in
+            self?.browserController.reloadWebViewsAfterProxyRouteChange()
+        }
+
         browserController.loadViewIfNeeded()
         browserController.installMainEnvironmentControls()
     }
