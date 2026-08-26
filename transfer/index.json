@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-26T12:13:14Z",
+  "updatedAt": "2026-08-26T12:17:07Z",
   "files": [
     {
       "id": "nextmultibrowser-1.1.10-device-category-modes",
@@ -11,8 +11,8 @@
       "version": "1.1.10 (18)",
       "url": "https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa",
       "ipaUrl": "https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa",
-      "sha256": "df54c379f16fd638715e3703f62f2f9486ab2c6b4d9615d41a6158b5eac78eef",
-      "sizeBytes": 6852522,
+      "sha256": "7fb6c525d018aec3bc2ab64792c6d6e4c04b945b3b1989179f01124a6a4358d9",
+      "sizeBytes": 6846367,
       "notes": "Adds four global environment device modes to the main Random Environment control: iOS Mode assigns random iPhone presets, Android Mode assigns random Android phones, PC / Mac Mode mixes Windows Chrome and macOS Safari desktop presets, and Mixed Mode combines all categories. Selecting a mode immediately randomizes all 20 profiles, and the saved Auto Randomize timer continues using that selected mode. Cookies, Google logins, persistent website data, profile isolation, iPad Pro layout, URL queue, AutoFill, auto refresh, and VPN features remain intact."
     },
     {
