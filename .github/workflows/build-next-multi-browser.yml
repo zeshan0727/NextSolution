@@ -75,7 +75,7 @@ jobs:
           /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der --entitlements App.entitlements "$APP_PATH"
           /usr/bin/codesign -d --entitlements :- "$APP_PATH" || true
           /usr/bin/codesign -d --entitlements :- "$EXT_PATH" || true
-      - name: Package TIPA
+      - name: Package TIPA and IPA
         working-directory: apps/next-multi-browser
         run: |
           APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)
@@ -84,21 +84,21 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.1.10_Device_Category_Modes.tipa Payload
-          cp ../NextMultiBrowser_1.1.10_Device_Category_Modes.tipa ../NextMultiBrowser_1.1.10_Device_Category_Modes.ipa
-      - name: Upload TIPA
+          zip -qry ../NextMultiBrowser_1.1.11_Private_IP_Routing.tipa Payload
+          cp ../NextMultiBrowser_1.1.11_Private_IP_Routing.tipa ../NextMultiBrowser_1.1.11_Private_IP_Routing.ipa
+      - name: Upload TIPA and IPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.1.10-Device-Category-Modes
+          name: NextMultiBrowser-1.1.11-Private-IP-Routing
           path: |
-            apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa
-            apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa
+            apps/next-multi-browser/NextMultiBrowser_1.1.11_Private_IP_Routing.tipa
+            apps/next-multi-browser/NextMultiBrowser_1.1.11_Private_IP_Routing.ipa
           if-no-files-found: error
       - name: Verify package identity and requested features
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
+          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.11_Private_IP_Routing.tipa"
           unzip -tq "$TIPA" >/dev/null
           python3 - "$TIPA" <<'PY'
           import plistlib
@@ -117,8 +117,9 @@ jobs:
               assets = archive.read(asset_catalog)
 
           assert host['CFBundleIdentifier'] == 'com.nextsolution.multibrowser'
-          assert host['CFBundleShortVersionString'] == '1.1.10'
-          assert host['CFBundleVersion'] == '18'
+          assert host['CFBundleShortVersionString'] == '1.1.11'
+          assert host['CFBundleVersion'] == '19'
+          assert float(host['MinimumOSVersion']) >= 17.0
           assert set(host['UIDeviceFamily']) == {1, 2}
           assert set(host['UISupportedInterfaceOrientations~ipad']) == {
               'UIInterfaceOrientationPortrait',
@@ -127,8 +128,8 @@ jobs:
               'UIInterfaceOrientationLandscapeRight',
           }
           assert vpn['CFBundleIdentifier'] == 'com.nextsolution.multibrowser.vpn'
-          assert vpn['CFBundleShortVersionString'] == '1.1.10'
-          assert vpn['CFBundleVersion'] == '18'
+          assert vpn['CFBundleShortVersionString'] == '1.1.11'
+          assert vpn['CFBundleVersion'] == '19'
           assert len(assets) > 1000
           for feature in (
               b'NextMultiBrowser.importedURLQueue.values',
@@ -151,6 +152,12 @@ jobs:
               b'NMB_APPLE_PASSWORD_AUTOFILL_116',
               b'NMB_APPLE_EMAIL_AUTOFILL_FOCUS_REFRESH_117',
               b'NMB_IPAD_PRO_129_PORTRAIT_LANDSCAPE_118',
+              b'Private IPs',
+              b'Import & Assign 1',
+              b'HTTP CONNECT',
+              b'SOCKS5',
+              b'api.ipify.org',
+              b'proxyRoute',
               b'current-password',
               b'new-password',
               b'one-time-code',
@@ -177,11 +184,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
-          IPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa"
-          DEST_DIR="transfer/files/NextMultiBrowser/1.1.10"
-          FILE_NAME="NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
-          IPA_FILE_NAME="NextMultiBrowser_1.1.10_Device_Category_Modes.ipa"
+          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.11_Private_IP_Routing.tipa"
+          IPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.11_Private_IP_Routing.ipa"
+          DEST_DIR="transfer/files/NextMultiBrowser/1.1.11"
+          FILE_NAME="NextMultiBrowser_1.1.11_Private_IP_Routing.tipa"
+          IPA_FILE_NAME="NextMultiBrowser_1.1.11_Private_IP_Routing.ipa"
           mkdir -p "$DEST_DIR"
           cp "$TIPA" "$DEST_DIR/$FILE_NAME"
           cp "$IPA" "$DEST_DIR/$IPA_FILE_NAME"
@@ -207,17 +214,17 @@ jobs:
               current.append(item)
 
           entry = {
-              'id': 'nextmultibrowser-1.1.10-device-category-modes',
-              'name': 'Next Multi Browser 1.1.10 — Device Category Modes',
-              'fileName': 'NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
+              'id': 'nextmultibrowser-1.1.11-private-ip-routing',
+              'name': 'Next Multi Browser 1.1.11 — Private IP Routing',
+              'fileName': 'NextMultiBrowser_1.1.11_Private_IP_Routing.tipa',
               'type': 'tipa',
-              'platform': 'TrollStore / RootHide / iOS 15+',
-              'version': '1.1.10 (18)',
-              'url': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
-              'ipaUrl': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa',
+              'platform': 'TrollStore / RootHide / iOS 17+',
+              'version': '1.1.11 (19)',
+              'url': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.11/NextMultiBrowser_1.1.11_Private_IP_Routing.tipa',
+              'ipaUrl': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.11/NextMultiBrowser_1.1.11_Private_IP_Routing.ipa',
               'sha256': sha256,
               'sizeBytes': size,
-              'notes': 'Adds four global environment device modes to the main Random Environment control: iOS Mode assigns random iPhone presets, Android Mode assigns random Android phones, PC / Mac Mode mixes Windows Chrome and macOS Safari desktop presets, and Mixed Mode combines all categories. Selecting a mode immediately randomizes all 20 profiles, and the saved Auto Randomize timer continues using that selected mode. Cookies, Google logins, persistent website data, profile isolation, iPad Pro layout, URL queue, AutoFill, auto refresh, and VPN features remain intact.'
+              'notes': 'Adds iOS 17 per-profile private IP routing. Each of the 20 persistent browser profiles can be assigned its own HTTP CONNECT or SOCKS5 proxy endpoint, with optional credentials stored in Keychain. Includes bulk one-line-per-profile import, exit-IP verification, duplicate exit-IP reporting, fail-closed proxy configuration, and a dedicated Private IPs tab. Existing cookies, Google logins, persistent website data, profile isolation, iPad Pro layout, environment modes, URL queue, AutoFill, auto refresh, and VPN features remain intact.'
           }
           data['files'] = [entry] + current
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -229,9 +236,9 @@ jobs:
           python3 -m json.tool transfer/index.json >/dev/null
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          printf '%s\n' "Next Multi Browser 1.1.10 published $(date -u +%Y-%m-%dT%H:%M:%SZ)" > transfer/deploy-trigger.txt
+          printf '%s\n' "Next Multi Browser 1.1.11 published $(date -u +%Y-%m-%dT%H:%M:%SZ)" > transfer/deploy-trigger.txt
           git add transfer/index.json transfer/deploy-trigger.txt "$DEST_DIR/$FILE_NAME" "$DEST_DIR/$IPA_FILE_NAME"
           git diff --cached --stat
-          git commit -m 'Publish Next Multi Browser 1.1.10 to NS Transfer'
+          git commit -m 'Publish Next Multi Browser 1.1.11 to NS Transfer'
           git pull --rebase origin main
           git push origin HEAD:main
