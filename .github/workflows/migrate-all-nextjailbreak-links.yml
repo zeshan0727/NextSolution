@@ -19,14 +19,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Replace every legacy Next Solution domain reference
+      - name: Stage migrated workflow copies
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import json
 
-          root = Path('.')
-          skip_dirs = {'.git'}
+          src_dir = Path('.github/workflows')
+          out_dir = Path('workflow-migration')
+          out_dir.mkdir(exist_ok=True)
+          self_name = 'migrate-all-nextjailbreak-links.yml'
 
           replacements = (
               ('https://www.nextsolution.cc', 'https://nextjailbreak.com'),
@@ -43,24 +46,15 @@ jobs:
               ('nextsolution.app', 'nextjailbreak.com'),
           )
 
-          changed = []
-          for path in root.rglob('*'):
-              if not path.is_file():
-                  continue
-              if any(part in skip_dirs for part in path.parts):
-                  continue
-              # GITHUB_TOKEN cannot update workflow files; those are handled separately.
-              if len(path.parts) >= 3 and path.parts[0] == '.github' and path.parts[1] == 'workflows':
+          manifest = []
+          for path in sorted(src_dir.iterdir()):
+              if not path.is_file() or path.name == self_name or path.suffix.lower() not in {'.yml', '.yaml'}:
                   continue
               try:
-                  data = path.read_bytes()
-              except OSError:
-                  continue
-              if b'nextsolution.cc' not in data.lower() and b'nextsolution.app' not in data.lower():
-                  continue
-              try:
-                  text = data.decode('utf-8')
+                  text = path.read_text(encoding='utf-8')
               except UnicodeDecodeError:
+                  continue
+              if 'nextsolution.cc' not in text.lower() and 'nextsolution.app' not in text.lower():
                   continue
 
               new = text
@@ -68,28 +62,33 @@ jobs:
                   new = new.replace(old, replacement)
                   new = new.replace(old.upper(), replacement)
 
-              if new != text:
-                  path.write_text(new, encoding='utf-8')
-                  changed.append(str(path))
+              if new == text:
+                  continue
 
-          print(f'Updated {len(changed)} non-workflow text files')
-          for path in changed:
-              print(path)
+              staged = out_dir / path.name
+              staged.write_text(new, encoding='utf-8')
+              manifest.append({
+                  'target': str(path),
+                  'staged': str(staged),
+              })
+
+          (out_dir / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+          print(f'Staged {len(manifest)} workflow files')
+          for item in manifest:
+              print(item['target'])
           PY
 
-      - name: Commit all migrated links
+      - name: Publish staged workflow copies
         shell: bash
         run: |
-          if git diff --quiet && [ -z "$(git status --porcelain --untracked-files=all)" ]; then
-            echo "No legacy domain references remain in non-workflow UTF-8 files."
-            exit 0
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add --all
-          git commit -m "Migrate all app and site links to nextjailbreak.com"
-
+          git add workflow-migration
+          if git diff --cached --quiet; then
+            echo "No workflow-domain migrations are needed."
+            exit 0
+          fi
+          git commit -m "Stage workflow link migration for nextjailbreak.com"
           for attempt in 1 2 3 4 5; do
             git pull --rebase origin main || { git rebase --abort || true; sleep 3; continue; }
             if git push origin HEAD:main; then
@@ -98,5 +97,4 @@ jobs:
             echo "Push attempt $attempt failed; retrying..."
             sleep 4
           done
-          echo "Unable to push migration after retries"
           exit 1
