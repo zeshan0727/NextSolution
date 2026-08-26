@@ -26,15 +26,15 @@ jobs:
           NEW = 'nextjailbreak.com'
 
           always_exts = {'.html', '.htm', '.xml', '.js', '.mjs', '.css', '.json'}
-          scoped_exts = {'.py', '.yml', '.yaml', '.md', '.txt'}
-          scoped_prefixes = ('automation/', 'scripts/', '.github/workflows/')
+          scoped_exts = {'.py', '.md', '.txt'}
+          scoped_prefixes = ('automation/', 'scripts/')
 
           changed = []
           for path in Path('.').rglob('*'):
               if not path.is_file() or '.git' in path.parts:
                   continue
               rel = path.as_posix()
-              if rel == '.github/workflows/domain-migration-nextjailbreak.yml':
+              if rel.startswith('.github/workflows/'):
                   continue
 
               eligible = path.suffix.lower() in always_exts
@@ -59,9 +59,6 @@ jobs:
               print(item)
           PY
 
-      - name: Remove one-time migration workflow
-        run: rm -f .github/workflows/domain-migration-nextjailbreak.yml
-
       - name: Commit migrated URLs
         run: |
           if git diff --quiet; then
@@ -70,6 +67,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add -A ':!.github/workflows/domain-migration-nextjailbreak.yml'
           git commit -m "Migrate public site URLs to nextjailbreak.com [skip ci]"
           git push
