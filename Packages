@@ -276,44 +276,6 @@ Author: Next Jailbreak
 Depiction: https://nextjailbreak.com/depictions/lowpowermodehaptic.html
 Name: Low Power Mode Haptic
 
-Package: com.nextsolution.thermalwarninghaptic
-Version: 1.0.0
-Architecture: iphoneos-arm64
-Maintainer: Next Jailbreak
-Installed-Size: 344
-Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/ThermalWarningHaptic_1.0.0_Rootless.deb
-Size: 8250
-MD5sum: 4e8e475ba17649ad5d808a6a7a60b005
-SHA1: 23fd9809b560d2df9067fc3011f1718a2160182a
-SHA256: 52760b899c980c060214f8ccd666e956ecd76f7b2dba56a1f49c06b128cdafd0
-Section: Tweaks
-Priority: optional
-Homepage: https://nextjailbreak.com/
-Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
-Author: Next Jailbreak
-Depiction: https://nextjailbreak.com/depictions/thermalwarninghaptic.html
-Name: Thermal Warning Haptic
-
-Package: com.nextsolution.thermalwarninghaptic
-Version: 1.0.0
-Architecture: iphoneos-arm64e
-Maintainer: Next Jailbreak
-Installed-Size: 344
-Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
-Filename: ./debfiles/ThermalWarningHaptic_1.0.0_RootHide.deb
-Size: 8188
-MD5sum: 817e4c9d39bc92dfc04ed3b02f0a7458
-SHA1: b5c0c35a603974f05f078ebfc3d04ccde365d264
-SHA256: c1ece6c7c2f03d1ea6e0e7579ce0a0e2433c29be01bc1f86ba866f406fd3366b
-Section: Tweaks
-Priority: optional
-Homepage: https://nextjailbreak.com/
-Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
-Author: Next Jailbreak
-Depiction: https://nextjailbreak.com/depictions/thermalwarninghaptic.html
-Name: Thermal Warning Haptic
-
 Package: com.nextsolution.charge80haptic
 Version: 1.0.0
 Architecture: iphoneos-arm64
@@ -1819,3 +1781,41 @@ Description: Plays a warning haptic when wired or Bluetooth headphones disconnec
 Author: Next Jailbreak
 Depiction: https://nextjailbreak.com/depictions/headphonedisconnecthaptic.html
 Name: Headphone Disconnect Haptic
+
+Package: com.nextsolution.thermalwarninghaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Next Jailbreak
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/ThermalWarningHaptic_1.0.0_Rootless.deb
+Size: 8252
+MD5sum: 048a6d6590bdbcb7afe35a269b29f091
+SHA1: ed9b6fc468db0d49933aaa046c1954d4b78ba5d3
+SHA256: bd11ca073edf7c804d111f7d0f2685f68bcc9706164db2b60ec793cbbbf58bd9
+Section: Tweaks
+Priority: optional
+Homepage: https://nextjailbreak.com/
+Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
+Author: Next Jailbreak
+Depiction: https://nextjailbreak.com/depictions/thermalwarninghaptic.html
+Name: Thermal Warning Haptic
+
+Package: com.nextsolution.thermalwarninghaptic
+Version: 1.0.0
+Architecture: iphoneos-arm64e
+Maintainer: Next Jailbreak
+Installed-Size: 344
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Filename: ./debfiles/ThermalWarningHaptic_1.0.0_RootHide.deb
+Size: 8184
+MD5sum: 469451b4917c2afb3ff3d65dbc44f1f6
+SHA1: f1abe74b11b1ecbfd942f229b2ba13eb75bd377e
+SHA256: 8218bedaebfbd589e9e4b7156f50f0562d176dba4040f2189f761f285e548bb1
+Section: Tweaks
+Priority: optional
+Homepage: https://nextjailbreak.com/
+Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
+Author: Next Jailbreak
+Depiction: https://nextjailbreak.com/depictions/thermalwarninghaptic.html
+Name: Thermal Warning Haptic
