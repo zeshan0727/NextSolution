@@ -19,6 +19,7 @@ from xml.etree import ElementTree
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from automation.draft_pipeline import article_source_url, render_article, validate_article
+from automation.editorial import mark_candidate_drafted
 from automation.source_media import (
     SourceMediaError,
     is_safe_media_reference,
@@ -91,6 +92,16 @@ def _policy(site: dict[str, Any]) -> tuple[dict[str, Any], ZoneInfo]:
         raise PublishingError("site publishing policy is missing")
     if publishing.get("max_per_day") != 3:
         raise PublishingError("publishing.max_per_day must remain exactly 3 for the regular schedule")
+    windows = publishing.get("windows_local_hours")
+    if (
+        not isinstance(windows, list)
+        or len(windows) != publishing["max_per_day"]
+        or any(not isinstance(hour, int) or not 0 <= hour <= 23 for hour in windows)
+        or windows != sorted(set(windows))
+    ):
+        raise PublishingError(
+            "publishing.windows_local_hours must contain three unique sorted local hours"
+        )
     if not isinstance(publishing.get("boost_max_per_day"), int) or not 1 <= publishing["boost_max_per_day"] <= 8:
         raise PublishingError("publishing.boost_max_per_day must be between 1 and 8")
     if publishing.get("boost_interval_hours") != 3:
@@ -154,6 +165,17 @@ def preflight(
         return PreflightResult(False, "launch-boost-ended", local_day, events_today, max_today, boost_active)
     if events_today >= max_today:
         return PreflightResult(False, "publication-limit-reached", local_day, events_today, max_today, boost_active)
+    if trigger_schedule and trigger_schedule == publishing.get("normal_cron"):
+        local_now = now.astimezone(local_timezone)
+        due_windows = sum(
+            1 for hour in publishing["windows_local_hours"] if local_now.hour >= hour
+        )
+        if due_windows == 0:
+            return PreflightResult(False, "no-publishing-window-due", local_day, events_today, max_today, boost_active)
+        if events_today >= due_windows:
+            return PreflightResult(False, "scheduled-window-already-satisfied", local_day, events_today, max_today, boost_active)
+    elif trigger_schedule and trigger_schedule != publishing.get("boost_cron"):
+        return PreflightResult(False, "unrecognized-scheduled-trigger", local_day, events_today, max_today, boost_active)
     if boost_active and event_times:
         latest = max(event_times)
         interval_seconds = int(publishing["boost_interval_hours"]) * 3600
@@ -384,6 +406,7 @@ def publish(
     now: datetime,
     run_id: str,
     confirm_live: bool,
+    editorial_state_path: Path | None = None,
 ) -> dict[str, Any]:
     if not confirm_live:
         raise PublishingError("live publication requires --confirm-live")
@@ -396,6 +419,19 @@ def publish(
         raise PublishingError("candidate fingerprint is missing or invalid")
     for entry in audit["entries"]:
         if isinstance(entry, dict) and entry.get("candidate_fingerprint") == fingerprint:
+            if editorial_state_path is not None:
+                state = load_json(editorial_state_path)
+                mark_candidate_drafted(
+                    state,
+                    candidate,
+                    drafted_at=now.replace(microsecond=0).isoformat(),
+                    draft_target=str(entry["href"]),
+                    candidate_fingerprint=fingerprint,
+                )
+                editorial_state_path.write_text(
+                    json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
             return {
                 "published": False,
                 "duplicate": True,
@@ -527,6 +563,19 @@ def publish(
         json.dumps(next_audit, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+    if editorial_state_path is not None:
+        state = load_json(editorial_state_path)
+        mark_candidate_drafted(
+            state,
+            candidate,
+            drafted_at=published_at,
+            draft_target=target_path,
+            candidate_fingerprint=fingerprint,
+        )
+        editorial_state_path.write_text(
+            json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
     return {
         "published": True,
         "duplicate": False,
@@ -550,6 +599,7 @@ def parse_args() -> argparse.Namespace:
         "--audit", type=Path, default=Path("automation/published-articles.json")
     )
     parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--editorial-state", type=Path)
     parser.add_argument("--now")
     parser.add_argument("--run-id", default="local")
     parser.add_argument("--github-output", type=Path)
@@ -599,6 +649,11 @@ def main() -> int:
                 now=now,
                 run_id=args.run_id,
                 confirm_live=args.confirm_live,
+                editorial_state_path=(
+                    args.editorial_state
+                    if args.editorial_state is None or args.editorial_state.is_absolute()
+                    else root / args.editorial_state
+                ),
             )
             _write_github_output(args.github_output, payload)
         print(json.dumps(payload, sort_keys=True, ensure_ascii=False))

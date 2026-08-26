@@ -2,6 +2,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 from xml.etree import ElementTree
@@ -149,6 +150,49 @@ class PublisherTests(unittest.TestCase):
         )
         self.assertEqual(expired_trigger.reason, "launch-boost-ended")
 
+    def test_scheduled_retry_only_allows_an_unmet_local_window(self) -> None:
+        after_boost = datetime(2026, 8, 26, 5, 30, tzinfo=timezone.utc)
+        schedule = self.site["publishing"]["normal_cron"]
+        first_due = preflight(
+            self.site,
+            self.empty_audit(),
+            now=after_boost,
+            trigger_schedule=schedule,
+        )
+        self.assertTrue(first_due.allowed)
+
+        audit = self.empty_audit()
+        audit["events"].append(
+            {"action": "create", "published_at": "2026-08-26T03:12:00+00:00"}
+        )
+        satisfied = preflight(
+            self.site,
+            audit,
+            now=after_boost,
+            trigger_schedule=schedule,
+        )
+        self.assertFalse(satisfied.allowed)
+        self.assertEqual(satisfied.reason, "scheduled-window-already-satisfied")
+
+        second_due = preflight(
+            self.site,
+            audit,
+            now=datetime(2026, 8, 26, 11, 30, tzinfo=timezone.utc),
+            trigger_schedule=schedule,
+        )
+        self.assertTrue(second_due.allowed)
+
+    def test_scheduled_retry_waits_until_first_local_window(self) -> None:
+        before_first_window = datetime(2026, 8, 26, 2, 30, tzinfo=timezone.utc)
+        result = preflight(
+            self.site,
+            self.empty_audit(),
+            now=before_first_window,
+            trigger_schedule=self.site["publishing"]["normal_cron"],
+        )
+        self.assertFalse(result.allowed)
+        self.assertEqual(result.reason, "no-publishing-window-due")
+
     def test_preflight_does_not_count_existing_page_updates_as_new_posts(self) -> None:
         after_boost = datetime(2026, 8, 17, 20, 30, tzinfo=timezone.utc)
         audit = self.empty_audit()
@@ -212,6 +256,37 @@ class PublisherTests(unittest.TestCase):
             self.assertEqual(
                 preflight(self.site, audit, now=NOW).reason,
                 "three-hour-interval-not-reached",
+            )
+
+    def test_live_editorial_state_is_marked_only_by_successful_publication(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            audit_path = self.prepare_root(root)
+            state_path = root / "automation" / "runtime-state" / "known-packages.json"
+            state_path.parent.mkdir(parents=True)
+            shutil.copyfile(FIXTURES / "editorial-state.json", state_path)
+
+            publish(
+                repository_root=root,
+                manifest=self.manifest(),
+                site=self.site,
+                audit=self.empty_audit(),
+                audit_path=audit_path,
+                now=NOW,
+                run_id="state-after-publish",
+                confirm_live=True,
+                editorial_state_path=state_path,
+            )
+
+            saved = json.loads(state_path.read_text())
+            self.assertTrue(
+                all(item.get("drafted_at") for item in saved["pending"].values())
+            )
+            self.assertTrue(
+                all(
+                    item.get("draft_target") == self.manifest()["target_path"]
+                    for item in saved["pending"].values()
+                )
             )
 
     def test_editorial_entry_stays_in_feed_without_duplicate_generated_card(self) -> None:

@@ -25,6 +25,11 @@ from automation.editorial import (
 )
 from automation.openai_api import OpenAIAPIError, structured_response
 from automation.schemas import ARTICLE_SCHEMA, VERDICT_SCHEMA
+from automation.source_media import (
+    SourceMediaError,
+    load_source_media,
+    resolve_source_media,
+)
 
 
 WRITER_INSTRUCTIONS = """You are the Next Jailbreak technical editor. Write an original, useful draft about one iOS jailbreak tweak using only the supplied facts.
@@ -208,6 +213,55 @@ def article_source_url(candidate: dict[str, Any]) -> str:
     ):
         return f"https://havoc.app{facts.path.removesuffix('/depiction.json')}"
     return source_url
+
+
+def select_media_ready_candidate(
+    state: dict[str, Any],
+    categories: dict[str, Any],
+    site: dict[str, Any],
+    *,
+    catalog_path: Path,
+    excluded_packages: set[str] | None = None,
+) -> tuple[dict[str, Any], list[dict[str, str]]]:
+    """Select the highest-ranked candidate that already has authentic source media.
+
+    This runs before any OpenAI request. Packages without a curated record or a safe
+    official-source adapter are skipped for the current run without being marked as
+    drafted, so a later catalog update can make them eligible.
+    """
+    load_source_media(catalog_path)
+    excluded = set(excluded_packages or ())
+    media_blocked: list[dict[str, str]] = []
+    while True:
+        try:
+            candidate = select_candidate(
+                state,
+                categories,
+                site,
+                excluded_packages=excluded or None,
+            )
+        except NoCandidateError as exc:
+            if media_blocked:
+                packages = ", ".join(item["package"] for item in media_blocked)
+                raise NoCandidateError(
+                    "no media-ready unpublished candidate is waiting; "
+                    f"skipped {len(media_blocked)} package(s): {packages}"
+                ) from exc
+            raise
+        try:
+            resolve_source_media(
+                candidate,
+                catalog_path=catalog_path,
+                source_page_url=article_source_url(candidate),
+            )
+        except SourceMediaError as exc:
+            package = str(candidate.get("package", ""))
+            if not package or package in excluded:
+                raise ValueError("candidate media preflight could not make progress") from exc
+            excluded.add(package)
+            media_blocked.append({"package": package, "reason": str(exc)})
+            continue
+        return candidate, media_blocked
 
 
 def display_author(value: Any) -> str:
@@ -625,6 +679,12 @@ def parse_args() -> argparse.Namespace:
         default=Path("automation/published-articles.json"),
     )
     parser.add_argument(
+        "--source-media",
+        type=Path,
+        default=Path("automation/source-media.json"),
+        help="Catalog used to verify authentic media before any OpenAI request.",
+    )
+    parser.add_argument(
         "--new-pages-only",
         action="store_true",
         help="Exclude packages that already have a published article URL.",
@@ -634,7 +694,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--write-state",
         action="store_true",
-        help="Mark all selected release variants as drafted after artifact validation.",
+        help="Fixture-only state update; live state is recorded by the publisher.",
     )
     return parser.parse_args()
 
@@ -645,6 +705,10 @@ def main() -> int:
         state = load_json(args.state)
         categories = load_json(args.categories)
         site = load_json(args.site)
+        if args.write_state and not args.fixture_article:
+            raise ValueError(
+                "--write-state is fixture-only; live state is recorded after publication"
+            )
         excluded_packages: set[str] | None = None
         if args.new_pages_only:
             audit = load_json(args.published_audit)
@@ -656,17 +720,25 @@ def main() -> int:
                 for entry in entries
                 if isinstance(entry, dict) and str(entry.get("package", "")).strip()
             }
-        candidate = select_candidate(
-            state,
-            categories,
-            site,
-            excluded_packages=excluded_packages,
-        )
         if args.fixture_article:
+            candidate = select_candidate(
+                state,
+                categories,
+                site,
+                excluded_packages=excluded_packages,
+            )
+            media_blocked: list[dict[str, str]] = []
             article = load_json(args.fixture_article)
             verifier = {"approved": True, "issues": [], "unsupported_claims": [], "notes": "Fixture validation"}
             metadata = {"fixture": True}
         else:
+            candidate, media_blocked = select_media_ready_candidate(
+                state,
+                categories,
+                site,
+                catalog_path=args.source_media,
+                excluded_packages=excluded_packages,
+            )
             article, verifier, metadata = generate_draft(candidate, site)
         quality = validate_article(article, candidate)
         if not quality.approved or not verifier.get("approved"):
@@ -686,12 +758,22 @@ def main() -> int:
                 json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
                 encoding="utf-8",
             )
-        print(json.dumps({"status": "draft-created", "slug": candidate["slug"], **quality.metrics}, sort_keys=True))
+        print(
+            json.dumps(
+                {
+                    "status": "draft-created",
+                    "slug": candidate["slug"],
+                    "source_media_skipped": len(media_blocked),
+                    **quality.metrics,
+                },
+                sort_keys=True,
+            )
+        )
         return 0
     except NoCandidateError as exc:
         print(json.dumps({"status": "no-candidate", "message": str(exc)}))
         return 3
-    except (OpenAIAPIError, ValueError, json.JSONDecodeError) as exc:
+    except (OpenAIAPIError, SourceMediaError, ValueError, json.JSONDecodeError) as exc:
         print(f"draft pipeline error: {exc}", file=sys.stderr)
         return 2
 

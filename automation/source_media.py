@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 from typing import Any
 from urllib.parse import urlparse
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 
@@ -106,28 +107,34 @@ def _download_page(url: str) -> str:
             "Accept": "text/html,application/xhtml+xml",
         },
     )
-    with urlopen(request, timeout=15) as response:
-        content_type = response.headers.get_content_type()
-        if content_type not in {"text/html", "application/xhtml+xml"}:
-            raise SourceMediaError("official source did not return HTML")
-        return response.read(2_000_000).decode(response.headers.get_content_charset() or "utf-8", "replace")
+    try:
+        with urlopen(request, timeout=15) as response:
+            content_type = response.headers.get_content_type()
+            if content_type not in {"text/html", "application/xhtml+xml"}:
+                raise SourceMediaError("official source did not return HTML")
+            return response.read(2_000_000).decode(
+                response.headers.get_content_charset() or "utf-8", "replace"
+            )
+    except (OSError, URLError) as exc:
+        raise SourceMediaError("official source media lookup failed") from exc
 
 
 def _discover_official_media(source_page_url: str, source_name: str) -> dict[str, Any]:
     parsed = urlparse(source_page_url)
     if parsed.scheme != "https" or parsed.username or parsed.password:
         raise SourceMediaError("official package page must use public HTTPS")
-    page = html.unescape(_download_page(source_page_url)).replace("\\/", "/")
     if parsed.hostname == "havoc.app":
-        matches = HAVOC_MEDIA.findall(page)
+        pattern = HAVOC_MEDIA
         media_host = "media.havoc.app"
     elif parsed.hostname in {"chariz.com", "www.chariz.com"}:
-        matches = CHARIZ_MEDIA.findall(page)
+        pattern = CHARIZ_MEDIA
         media_host = "cdn.chariz.cloud"
     else:
         raise SourceMediaError(
             "no curated screenshot record exists and this official source has no safe automatic media adapter"
         )
+    page = html.unescape(_download_page(source_page_url)).replace("\\/", "/")
+    matches = pattern.findall(page)
     urls = list(dict.fromkeys(url.rstrip("\"')]>.,") for url in matches))
     urls = [url for url in urls if urlparse(url).hostname == media_host and is_safe_media_reference(url)]
     if not urls:

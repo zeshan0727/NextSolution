@@ -52,7 +52,12 @@
     "enabled": true,
     "max_per_day": 3,
     "timezone": "Asia/Qatar",
-    "normal_cron": "0 3,11,19 * * *",
+    "normal_cron": "*/30 * * * *",
+    "windows_local_hours": [
+      6,
+      14,
+      22
+    ],
     "boost_cron": "*/15 * * * *",
     "boost_until": "2026-08-16T07:30:00Z",
     "boost_interval_hours": 3,

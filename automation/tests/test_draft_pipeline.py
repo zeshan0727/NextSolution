@@ -17,10 +17,12 @@ from automation.draft_pipeline import (
     generate_draft,
     render_article,
     main,
+    select_media_ready_candidate,
     validate_article,
     write_artifacts,
 )
 from automation.editorial import load_json, select_candidate
+from automation.source_media import SourceMediaError
 
 
 AUTOMATION = Path("automation")
@@ -199,6 +201,34 @@ class DraftPipelineTests(unittest.TestCase):
             repair_payload["rejection_reasons"],
             ["The independent verifier rejected the draft without a detailed reason."],
         )
+
+    def test_media_preflight_skips_blocked_candidate_before_generation(self) -> None:
+        blocked = deepcopy(self.candidate)
+        ready = deepcopy(self.candidate)
+        blocked["package"] = "com.example.blocked"
+        ready["package"] = "com.example.ready"
+        with tempfile.TemporaryDirectory() as directory:
+            catalog = Path(directory) / "source-media.json"
+            catalog.write_text('{"schema_version": 1, "packages": {}}')
+            with (
+                patch(
+                    "automation.draft_pipeline.select_candidate",
+                    side_effect=[blocked, ready],
+                ) as selected,
+                patch(
+                    "automation.draft_pipeline.resolve_source_media",
+                    side_effect=[SourceMediaError("no media"), {"hero": {}}],
+                ),
+            ):
+                candidate, skipped = select_media_ready_candidate(
+                    self.state,
+                    self.categories,
+                    self.site,
+                    catalog_path=catalog,
+                )
+        self.assertEqual(candidate["package"], "com.example.ready")
+        self.assertEqual(skipped[0]["package"], "com.example.blocked")
+        self.assertIn("com.example.blocked", selected.call_args_list[1].kwargs["excluded_packages"])
 
     def test_cli_marks_fixture_release_and_does_not_repeat_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

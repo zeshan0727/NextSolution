@@ -8,8 +8,8 @@ on:
     paths:
       - "automation/publisher-trigger.json"
   schedule:
-    # Publish at 06:00, 14:00, and 22:00 Qatar time (UTC+3).
-    - cron: "0 3,11,19 * * *"
+    # Self-healing check. Policy publishes only unmet 06:00, 14:00, or 22:00 Qatar windows.
+    - cron: "*/30 * * * *"
   pull_request:
     paths:
       - "automation/**"
@@ -135,14 +135,14 @@ jobs:
             --state automation/runtime-state/known-packages.json \
             --published-audit automation/published-articles.json \
             --new-pages-only \
-            --write-state \
             --output automation/out/draft | tee automation/out/draft-run.log
           status=${PIPESTATUS[0]}
           set -e
           if [ "$status" -eq 3 ]; then
             echo "drafted=false" >> "$GITHUB_OUTPUT"
+            message=$(python3 -c 'import json; print(json.loads(open("automation/out/draft-run.log").read().splitlines()[-1])["message"])')
             echo "### Publisher" >> "$GITHUB_STEP_SUMMARY"
-            echo "No unpublished eligible release or verified evergreen tweak is waiting." >> "$GITHUB_STEP_SUMMARY"
+            echo "$message" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           if [ "$status" -ne 0 ]; then
@@ -154,9 +154,11 @@ jobs:
         if: steps.generate.outputs.drafted == 'true'
         id: publication
         run: |
+          set -o pipefail
           python3 -m automation.publisher publish \
             --repository-root . \
             --manifest automation/out/draft/manifest.json \
+            --editorial-state automation/runtime-state/known-packages.json \
             --run-id "$GITHUB_RUN_ID" \
             --confirm-live \
             --github-output "$GITHUB_OUTPUT" | tee automation/out/publication.log
@@ -185,7 +187,7 @@ jobs:
           echo "The selected candidate was already published, so no website files changed." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Save editorial state after publication
-        if: steps.generate.outputs.drafted == 'true' && steps.publication.outcome == 'success'
+        if: steps.publication.outputs.published == 'true' || steps.publication.outputs.duplicate == 'true'
         uses: actions/cache/save@v4
         with:
           path: automation/runtime-state
