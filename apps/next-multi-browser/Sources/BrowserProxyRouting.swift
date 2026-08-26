@@ -52,6 +52,7 @@ struct BrowserProxyRoute: Codable, Equatable {
             host: NWEndpoint.Host(trimmedHost),
             port: nwPort
         )
+        // Mutable because iOS 17 proxy options are configured after initialization.
         var configuration: ProxyConfiguration
         switch kind {
         case .httpConnect:
