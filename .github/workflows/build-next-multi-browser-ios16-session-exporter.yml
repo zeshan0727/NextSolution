@@ -1,0 +1,40 @@
+name: Build Next Multi Browser iOS 16 Session Exporter
+
+on:
+  push:
+    branches: [next-multi-browser-ios16-session-export]
+    paths:
+      - 'apps/next-multi-browser/**'
+      - '.github/workflows/build-next-multi-browser-ios16-session-exporter.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: next-multi-browser-ios16-session-exporter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios16-session-exporter:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build iOS 16 session exporter
+        working-directory: apps/next-multi-browser
+        run: bash scripts/build-ios16-session-exporter-local.sh
+
+      - name: Upload iOS 16 session exporter
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextMultiBrowser-iOS16-SessionExporter
+          path: |
+            apps/next-multi-browser/NextMultiBrowser_iOS16_SessionExporter.tipa
+            apps/next-multi-browser/NextMultiBrowser_iOS16_SessionExporter.ipa
+            apps/next-multi-browser/session-transfer-build.log
+          if-no-files-found: error
