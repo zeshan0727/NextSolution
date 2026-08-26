@@ -11,7 +11,7 @@
 
 static NSString * const MGPackageID = @"com.nextsolution.nextaura.cc-module-backgrounds";
 static NSString * const MGLicenseDomain = @"com.nextsolution.moduleglass";
-static NSString * const MGRegistryURL = @"https://raw.githubusercontent.com/zeshan0727/NextSolution/main/licenses/moduleglass.json";
+static NSString * const MGRegistryURL = @"https://raw.githubusercontent.com/zeshan0727/NextJailbreak/main/licenses/moduleglass.json";
 static NSString * const MGLicenseSalt = @"nextsolution-license-v1";
 
 static NSString *MGHexSHA256(NSString *input) {

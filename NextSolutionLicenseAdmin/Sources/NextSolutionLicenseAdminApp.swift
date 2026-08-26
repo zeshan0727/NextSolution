@@ -640,7 +640,7 @@ struct SettingsView: View {
                 }
 
                 Section("Required Permission") {
-                    Text("Use a fine-grained GitHub personal access token restricted to zeshan0727/NextSolution with Repository contents: Read and write. The token is stored only in iOS Keychain.")
+                    Text("Use a fine-grained GitHub personal access token restricted to zeshan0727/NextJailbreak with Repository contents: Read and write. The token is stored only in iOS Keychain.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

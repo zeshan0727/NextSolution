@@ -6,7 +6,7 @@ enum AppData {
     static let xURL = URL(string: "https://x.com/nextjailbreak")!
     static let instagramURL = URL(string: "https://instagram.com/nextjailbreak")!
     static let emailURL = URL(string: "mailto:NextSolution@zeshanbarvi.uk")!
-    static let githubURL = URL(string: "https://github.com/zeshan0727/NextSolution")!
+    static let githubURL = URL(string: "https://github.com/zeshan0727/NextJailbreak")!
     static let repoURL = URL(string: "https://nextjailbreak.com/")!
     static let sileoURL = URL(string: "sileo://source/https://nextjailbreak.com/")!
 
@@ -183,7 +183,7 @@ enum AppData {
             version: "1.0.0",
             kind: .app,
             icon: "square.grid.2x2.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa")!,
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextJailbreak/main/NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa")!,
             fileName: "ModuleGlass-Preview-1.0.0.tipa",
             externalOnly: false
         ),
@@ -216,7 +216,7 @@ enum AppData {
             version: "Latest",
             kind: .app,
             icon: "doc.richtext.fill",
-            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/NextPDF/build-output/NextPDF.tipa")!,
+            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextJailbreak/main/NextPDF/build-output/NextPDF.tipa")!,
             fileName: "NextPDF.tipa",
             externalOnly: false
         ),
@@ -227,8 +227,8 @@ enum AppData {
             version: "main",
             kind: .source,
             icon: "chevron.left.forwardslash.chevron.right",
-            url: URL(string: "https://github.com/zeshan0727/NextSolution/archive/refs/heads/main.zip")!,
-            fileName: "NextSolution-main.zip",
+            url: URL(string: "https://github.com/zeshan0727/NextJailbreak/archive/refs/heads/main.zip")!,
+            fileName: "NextJailbreak-main.zip",
             externalOnly: false
         ),
         DownloadItem(
@@ -247,7 +247,7 @@ enum AppData {
     static let uploads: [UploadDestination] = [
         UploadDestination(
             id: "repo",
-            title: "NextSolution Repository",
+            title: "Next Jailbreak Repository",
             detail: "Browse all public projects, website files and source code.",
             icon: "chevron.left.forwardslash.chevron.right",
             url: githubURL
@@ -257,21 +257,21 @@ enum AppData {
             title: "Daily Tweaks",
             detail: "Open the collection of jailbreak tweak projects and build files.",
             icon: "wand.and.stars",
-            url: URL(string: "https://github.com/zeshan0727/NextSolution/tree/main/DailyTweaks")!
+            url: URL(string: "https://github.com/zeshan0727/NextJailbreak/tree/main/DailyTweaks")!
         ),
         UploadDestination(
             id: "nextpdf-source",
             title: "NextPDF Project",
             detail: "View the Swift source, build workflow and published test output.",
             icon: "doc.text.magnifyingglass",
-            url: URL(string: "https://github.com/zeshan0727/NextSolution/tree/main/NextPDF")!
+            url: URL(string: "https://github.com/zeshan0727/NextJailbreak/tree/main/NextPDF")!
         ),
         UploadDestination(
             id: "ledger-source",
             title: "Next Ledger Project",
             detail: "Browse the native personal-finance app source and services.",
             icon: "chart.pie.fill",
-            url: URL(string: "https://github.com/zeshan0727/NextSolution/tree/main/DailyLedger")!
+            url: URL(string: "https://github.com/zeshan0727/NextJailbreak/tree/main/DailyLedger")!
         ),
         UploadDestination(
             id: "repo-site",

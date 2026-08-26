@@ -13,7 +13,7 @@ This was checked before implementation.
 - Apple documents audio-route changes and specifically identifies `AVAudioSessionRouteChangeReasonOldDeviceUnavailable` for a removed route. Apple also documents that media apps should normally pause when headphones disconnect: https://developer.apple.com/documentation/avfaudio/responding-to-audio-route-changes
 - Apple Support documents that when a Bluetooth audio accessory goes out of range, playback destination returns to the iPhone: https://support.apple.com/guide/iphone/play-audio-iphone-a-bluetooth-accessory-iph01b6ea9a3/ios
 - Apple's iPhone headphone-notification documentation covers hearing-exposure warnings, not a disconnect haptic. No stock iOS 15/16 setting or Apple-documented system behavior was found that provides a warning haptic specifically when a headphone route disappears.
-- `zeshan0727/NextSolution` was searched for `AVAudioSessionRouteChangeNotification`, headphone-disconnect implementations, package names and recent daily tweaks. No existing published or source tweak in this repository provides this feature.
+- `zeshan0727/NextJailbreak` was searched for `AVAudioSessionRouteChangeNotification`, headphone-disconnect implementations, package names and recent daily tweaks. No existing published or source tweak in this repository provides this feature.
 
 Therefore this is not intended to duplicate a documented stock iOS 15/16 feature.
 

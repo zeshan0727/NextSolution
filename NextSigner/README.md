@@ -34,7 +34,7 @@ The workflow verifies the published URL before updating the OTA manifest. It als
 
 Next Signer does **not** keep the Apple Distribution P12, P12 password, provisioning profile, or Cloudflare R2 secret key on the iPhone. Apple signing material and R2 credentials are stored as encrypted GitHub Actions secrets. The iPhone stores only a repository-scoped GitHub token in the iOS Keychain.
 
-Required signing Actions secrets on `zeshan0727/NextSolution`:
+Required signing Actions secrets on `zeshan0727/NextJailbreak`:
 
 - `NEXTSIGNER_P12_BASE64`
 - `NEXTSIGNER_P12_PASSWORD`
@@ -65,7 +65,7 @@ Never commit the P12, its password, the raw provisioning profile, or R2 credenti
 
 ## GitHub token for the app
 
-Create a fine-grained personal access token scoped only to `zeshan0727/NextSolution` with:
+Create a fine-grained personal access token scoped only to `zeshan0727/NextJailbreak` with:
 
 - Contents: Read and write
 - Actions: Read and write

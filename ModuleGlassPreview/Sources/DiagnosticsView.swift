@@ -120,7 +120,7 @@ struct DiagnosticsView: View {
                 if store.uploadRunning { ProgressView().controlSize(.small) }
             }
 
-            Text("Logs upload to zeshan0727/NextSolution → transfer/uploads/moduleglass/. The token stays in this app's iOS Keychain and is never written into diagnostics.")
+            Text("Logs upload to zeshan0727/NextJailbreak → transfer/uploads/moduleglass/. The token stays in this app's iOS Keychain and is never written into diagnostics.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 

@@ -9,7 +9,7 @@ Checked before implementation on 2026-08-08:
 - Apple documents `NSProcessInfoThermalStateDidChangeNotification` as the supported notification for system thermal-state changes, and specifically requires reading `thermalState` before registering for it.
 - Apple defines the states nominal, fair, serious and critical; critical means heat is significantly impacting performance and the device needs to cool down.
 - Stock iOS can slow/stop charging and can eventually show a temperature warning screen at extreme thresholds, but Apple does not document a user-selectable haptic warning when the thermal state first becomes serious/critical.
-- `zeshan0727/NextSolution` package/index and recent daily-tweak history were checked. No published Thermal Warning Haptic package or equivalent one-feature project was present. NextAura includes thermal battery-color features, but not this dedicated one-shot thermal transition haptic.
+- `zeshan0727/NextJailbreak` package/index and recent daily-tweak history were checked. No published Thermal Warning Haptic package or equivalent one-feature project was present. NextAura includes thermal battery-color features, but not this dedicated one-shot thermal transition haptic.
 
 Therefore the feature is not a duplicate of the stock iOS 15/16 behavior or an existing NextSolution daily tweak.
 

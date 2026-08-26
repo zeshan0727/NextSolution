@@ -137,7 +137,7 @@ def validate() -> None:
         (article, 'href="./#faq"', "FAQ navigation"),
         (article, ROOT_HIDE, "RootHide filename"),
         (article, ROOTLESS, "rootless filename"),
-        (article, "raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/", "new repository download base"),
+        (article, "raw.githubusercontent.com/zeshan0727/NextJailbreak/main/debfiles/", "new repository download base"),
         (article, ADSENSE_CLIENT, "AdSense client"),
         (article, '"@type": "TechArticle"', "TechArticle metadata"),
         (index, RECENT_START, "homepage start marker"),

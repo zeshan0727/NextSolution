@@ -187,8 +187,8 @@ if count != 1:
 text = text.replace('NextSolutionLicenseAdmin/1.0.0', 'NSAdmin/1.0.2')
 text = text.replace('Button("Save Token to Keychain") { model.saveToken() }', 'Button("Save GitHub Token") { model.saveToken() }')
 text = text.replace(
-    'Use a fine-grained GitHub personal access token restricted to zeshan0727/NextSolution with Repository contents: Read and write. The token is stored only in iOS Keychain.',
-    'Use a fine-grained GitHub personal access token restricted to zeshan0727/NextSolution with Repository contents: Read and write. NS Admin uses iOS Keychain when available; TrollStore signatures without Keychain access automatically use the app private sandbox with iOS Data Protection.'
+    'Use a fine-grained GitHub personal access token restricted to zeshan0727/NextJailbreak with Repository contents: Read and write. The token is stored only in iOS Keychain.',
+    'Use a fine-grained GitHub personal access token restricted to zeshan0727/NextJailbreak with Repository contents: Read and write. NS Admin uses iOS Keychain when available; TrollStore signatures without Keychain access automatically use the app private sandbox with iOS Data Protection.'
 )
 text = text.replace('LabeledContent("App", value: "NextSolution License Admin")', 'LabeledContent("App", value: "NS Admin")')
 text = text.replace('LabeledContent("Version", value: "1.0.0")', 'LabeledContent("Version", value: "1.0.2")')

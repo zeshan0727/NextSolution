@@ -42,7 +42,7 @@ app_data = app_data_path.read_text()
 module_glass_id = 'id: "module-glass-preview"'
 if module_glass_id not in app_data:
     downloads_marker = "    static let downloads: [DownloadItem] = [\n"
-    module_glass_download = '''        DownloadItem(\n            id: "module-glass-preview",\n            title: "Module Glass Preview",\n            detail: "Live companion for previewing and changing Module Glass Control Center backgrounds on a TrollStore device.",\n            version: "1.0.0",\n            kind: .app,\n            icon: "square.grid.2x2.fill",\n            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextSolution/main/NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa")!,\n            fileName: "ModuleGlass-Preview-1.0.0.tipa",\n            externalOnly: false\n        ),\n'''
+    module_glass_download = '''        DownloadItem(\n            id: "module-glass-preview",\n            title: "Module Glass Preview",\n            detail: "Live companion for previewing and changing Module Glass Control Center backgrounds on a TrollStore device.",\n            version: "1.0.0",\n            kind: .app,\n            icon: "square.grid.2x2.fill",\n            url: URL(string: "https://raw.githubusercontent.com/zeshan0727/NextJailbreak/main/NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa")!,\n            fileName: "ModuleGlass-Preview-1.0.0.tipa",\n            externalOnly: false\n        ),\n'''
     if downloads_marker not in app_data:
         raise RuntimeError("Could not find AppData.downloads marker")
     app_data = app_data.replace(downloads_marker, downloads_marker + module_glass_download, 1)
