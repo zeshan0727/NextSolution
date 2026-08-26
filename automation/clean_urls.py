@@ -184,12 +184,6 @@ def _upsert_meta(text: str, *, attr: str, key: str, content: str) -> str:
     )
     if pattern.search(text):
         return pattern.sub(replacement, text, count=1)
-    reversed_pattern = re.compile(
-        rf'<meta\s+[^>]*{attr}=["\']{re.escape(key)}["\'][^>]*>',
-        re.IGNORECASE,
-    )
-    if reversed_pattern.search(text):
-        return reversed_pattern.sub(replacement, text, count=1)
     if "</head>" in text:
         return text.replace("</head>", f"  {replacement}\n</head>", 1)
     return text
@@ -201,7 +195,8 @@ def ensure_social_preview_meta(text: str) -> str:
         "Next Jailbreak covers jailbreak news, Cydia and Sileo tweaks, useful apps, tutorials and troubleshooting."
     )
     canonical = _canonical_value(text) or SITE + "/"
-    page_type = "article" if "<article" in text.lower() else "website"
+    is_homepage = canonical.rstrip("/") == SITE
+    page_type = "website" if is_homepage else ("article" if "<article" in text.lower() else "website")
 
     values = (
         ("property", "og:type", page_type),
