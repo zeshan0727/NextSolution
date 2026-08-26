@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-26T11:17:54Z",
+  "updatedAt": "2026-08-26T11:18:09Z",
   "files": [
+    {
+      "id": "nextmultibrowser-1.1.0-profile-environment-manager",
+      "name": "Next Multi Browser 1.1.0 — Profile Environment Manager",
+      "fileName": "NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / RootHide / iOS 15+",
+      "version": "1.1.0 (8)",
+      "url": "https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.0/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa",
+      "sha256": "0cfb407cb00b842aa63429abc4c5b502e5cbbf3c690e4c24bc17f1af59dcd53a",
+      "sizeBytes": 4877924,
+      "notes": "Professional 20-profile testing browser with per-profile environment settings, icon and color, user-agent, locale, region, timezone, viewport presets, storage inspection and clearing, permission reset, settings-only duplication into an independent container, backup and restore, and developer information. Preserves the proven isolated persistent WebKit profile architecture and existing Google sessions when installed as an update."
+    },
     {
       "id": "nextquickreminder-1.0.16-persistent-wake-roothide",
       "name": "Next Quick Reminder 1.0.16 — Persistent Wake RootHide",
@@ -25,19 +37,6 @@
       "sha256": "960f1199cbc5b32962f8077df0bdd48b0c3d6b3c3c0ca94ee1104882e607012b",
       "sizeBytes": 2061731,
       "notes": "Stability rollback for the persistent Files freeze. Restores the entire File Sharing implementation to the verified pre-report stable source instead of carrying any Pending Report/PDF/background-send UI code in the Files view. Keeps the current app data, other app updates, Live Activity version alignment, and compiled AppIcon fix. Pending Report generation is temporarily removed from the app while Files stability is verified."
-    },
-    {
-      "id": "nextmultibrowser-1.1.9-main-random-environment-auto-timer",
-      "name": "Next Multi Browser 1.1.9 — Main Random Environment Timer",
-      "fileName": "NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.9 (17)",
-      "url": "https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.9/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa",
-      "ipaUrl": "https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.9/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.ipa",
-      "sha256": "3641b40eb0fe2151f5606271863193ffb27f7657de0bcc51d29aa56e4665ed4e",
-      "sizeBytes": 6849605,
-      "notes": "Adds Random Environment directly to the main browser screen with one menu for immediate randomization and automatic 1, 2, 3, 5, or 10 minute randomization. The timer selection is saved across relaunches and pauses while the app is backgrounded. Each run uses the existing global 20-profile environment randomizer, preserving cookies, Google logins, persistent website data, profile isolation, the iPad Pro 12.9 adaptive layout, URL queue, AutoFill, auto refresh, and VPN features."
     },
     {
       "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
