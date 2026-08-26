@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "55b8021636b66414085d54c112f451e7ad015da015acb733e77030549dce0d24",
+      "candidate_fingerprint": "8d00ece2cc634273c7978dbc77641173a7b73e4250061205b5e08181ac437d88",
+      "category": {
+        "id": "lock-screen",
+        "label": "Lock Screen"
+      },
+      "description": "Review LockGlass 1.2, a commercial Lock Screen tweak listed for iphoneos-arm64, including its documented purpose, firmware metadata, and dependency checks.",
+      "href": "lockglass-tweak.html",
+      "image": "https://media.havoc.app/6a7779e19e5377f2c511e24f",
+      "media_credit": "LockGlass official package listing",
+      "media_source_url": "https://havoc.app/package/lockglass",
+      "modified_at": "2026-08-26T05:54:52+00:00",
+      "name": "LockGlass",
+      "package": "com.jailbreaktweaker.lockglass17",
+      "published_at": "2026-08-26T05:54:52+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/lockglass",
+      "source_url": "https://havoc.app/",
+      "title": "LockGlass 1.2: Lock Screen Customization Tweak for iphoneos-arm64",
+      "version": "1.2"
+    },
+    {
       "article_sha256": "eb632b4d76ab663b8d7ebbe25df1b80bc0edb29117ce9c3053a14a11dbd80faa",
       "candidate_fingerprint": "48ff95b6b06c0de95d2a3490deb47d61c3d6b2b50f5c5b9a3e9ffe668b7e7369",
       "category": {
@@ -875,8 +898,17 @@
       "published_at": "2026-08-25T12:35:43+00:00",
       "run_id": "32848172117",
       "version": "2.1.1"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "8d00ece2cc634273c7978dbc77641173a7b73e4250061205b5e08181ac437d88",
+      "href": "lockglass-tweak.html",
+      "package": "com.jailbreaktweaker.lockglass17",
+      "published_at": "2026-08-26T05:54:52+00:00",
+      "run_id": "32935800875",
+      "version": "1.2"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-25T12:35:43+00:00"
+  "updated_at": "2026-08-26T05:54:52+00:00"
 }

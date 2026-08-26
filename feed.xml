@@ -6,201 +6,209 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>LockGlass 1.2: Lock Screen Customization Tweak for iphoneos-arm64</title>
+      <link>https://nextsolution.cc/lockglass-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/lockglass-tweak.html</guid>
+      <pubDate>Wed, 26 Aug 2026 05:54:52 GMT</pubDate>
+      <description>Review LockGlass 1.2, a commercial Lock Screen tweak listed for iphoneos-arm64, including its documented purpose, firmware metadata, and dependency checks.</description>
+      <category>Lock Screen</category>
+    </item>
+    <item>
       <title>Remove Widget Background 2.1.1: Home Screen Widget Background Removal</title>
-      <link>https://nextsolution.cc/remove-widget-background-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/remove-widget-background-tweak/</guid>
+      <link>https://nextsolution.cc/remove-widget-background-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/remove-widget-background-tweak.html</guid>
       <pubDate>Tue, 25 Aug 2026 12:35:43 GMT</pubDate>
       <description>Remove Widget Background 2.1.1 is a Home Screen tweak by 82flex. Review its listed function, architecture variants, firmware requirement, and dependencies.</description>
       <category>Home Screen</category>
     </item>
     <item>
       <title>Physpringboard 1.9.23: Configurable Physics for SpringBoard Icons</title>
-      <link>https://nextsolution.cc/physpringboard-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/physpringboard-tweak/</guid>
+      <link>https://nextsolution.cc/physpringboard-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/physpringboard-tweak.html</guid>
       <pubDate>Tue, 25 Aug 2026 12:21:25 GMT</pubDate>
       <description>Learn what Physpringboard 1.9.23 lists for rootless Dopamine, including configurable SpringBoard icon physics, architecture, dependencies, and installation checks.</description>
       <category>Home Screen</category>
     </item>
     <item>
       <title>Dopamine 3 vs Dopamine 2: Compatibility Ranges and What Changed</title>
-      <link>https://nextsolution.cc/dopamine-3-vs-dopamine-2/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-vs-dopamine-2/</guid>
+      <link>https://nextsolution.cc/dopamine-3-vs-dopamine-2.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-vs-dopamine-2.html</guid>
       <pubDate>Mon, 24 Aug 2026 15:33:22 GMT</pubDate>
       <description>Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and </description>
       <category>Jailbreak</category>
     </item>
     <item>
       <title>Sileo and Dopamine 3: Package Manager Role and Rootless Compatibility Checks</title>
-      <link>https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide/</guid>
+      <link>https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/sileo-dopamine-3-jailbreak-guide.html</guid>
       <pubDate>Sun, 23 Aug 2026 06:49:41 GMT</pubDate>
       <description>Understand how Sileo relates to Dopamine 3, what the official compatibility ranges say, and why rootless tweak support must be checked.</description>
       <category>Jailbreak</category>
     </item>
     <item>
       <title>DarkSword and Dopamine: What the Documented Connection Means</title>
-      <link>https://nextsolution.cc/darksword-dopamine-3-jailbreak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/darksword-dopamine-3-jailbreak/</guid>
+      <link>https://nextsolution.cc/darksword-dopamine-3-jailbreak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/darksword-dopamine-3-jailbreak.html</guid>
       <pubDate>Sat, 22 Aug 2026 06:48:41 GMT</pubDate>
       <description>Learn what DarkSword is, how an official Dopamine 2.5 beta note connects it to Dopamine development, and where to find documented Dopamine 3.x compatibility details.</description>
       <category>Jailbreak</category>
     </item>
     <item>
       <title>Dopamine 3 Jailbreak: iOS 18 Compatibility for A12 and A13 Devices</title>
-      <link>https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13/</guid>
+      <link>https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-ios-18-jailbreak-a12-a13.html</guid>
       <pubDate>Fri, 21 Aug 2026 15:26:54 GMT</pubDate>
       <description>Learn what the Dopamine 3.x README confirms about iOS 18 support for A12 and A13 devices, including the documented iOS 18.7.1 endpoint and arm64e limits.</description>
       <category>Jailbreak</category>
     </item>
     <item>
       <title>Dopamine 3 iOS 26 Jailbreak Compatibility for A12 and A13</title>
-      <link>https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13/</guid>
+      <link>https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-ios-26-jailbreak-a12-a13.html</guid>
       <pubDate>Fri, 21 Aug 2026 06:55:47 GMT</pubDate>
       <description>Learn what the Dopamine 3.x README documents about iOS 26 compatibility, including the A12 and A13 limitation and separate arm64e and arm64 ranges.</description>
       <category>Jailbreak</category>
     </item>
     <item>
       <title>NextUp 3 v1.1.2: Upcoming-Track Controls in the Now-Playing UI</title>
-      <link>https://nextsolution.cc/nextup-3-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/nextup-3-tweak/</guid>
+      <link>https://nextsolution.cc/nextup-3-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/nextup-3-tweak.html</guid>
       <pubDate>Fri, 21 Aug 2026 03:47:10 GMT</pubDate>
       <description>NextUp 3 v1.1.2 lists upcoming-track display and skip controls for Apple Music, Apple Podcasts, YouTube, YouTube Music, and Spotify across three now-playing UI areas</description>
       <category>Media</category>
     </item>
     <item>
       <title>Dopamine 3 Compatibility: Supported iOS Versions by Device Category</title>
-      <link>https://nextsolution.cc/dopamine-3-jailbreak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-jailbreak/</guid>
+      <link>https://nextsolution.cc/dopamine-3-jailbreak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/dopamine-3-jailbreak.html</guid>
       <pubDate>Wed, 19 Aug 2026 15:46:56 GMT</pubDate>
       <description>Review the documented Dopamine 3 compatibility ranges for arm64e, A12/A13, and arm64 devices, including the separate A12/A13 iOS 26 range.</description>
       <category>Jailbreak</category>
     </item>
     <item>
       <title>iFetch 6.0.0: System Diagnostics and CLI Fetch for iOS 14–17 Jailbreak Devices</title>
-      <link>https://nextsolution.cc/ifetch-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/ifetch-tweak/</guid>
+      <link>https://nextsolution.cc/ifetch-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/ifetch-tweak.html</guid>
       <pubDate>Wed, 19 Aug 2026 03:42:29 GMT</pubDate>
       <description>Explore iFetch 6.0.0, an iPhoneOS arm64 package offering system diagnostics, process monitoring, and CLI fetch for supported rootless and RootHide jailbreak devices.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
       <title>Crane Lite 1.3.18-2: Multiple Containers for One Application</title>
-      <link>https://nextsolution.cc/crane-lite-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/crane-lite-tweak/</guid>
+      <link>https://nextsolution.cc/crane-lite-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/crane-lite-tweak.html</guid>
       <pubDate>Tue, 18 Aug 2026 03:40:24 GMT</pubDate>
       <description>Learn what Crane Lite 1.3.18-2 lists, including its description, architectures, dependencies, and the checks to complete before installation.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
       <title>FreeformGrid 1.0.3: Home Screen Icon Placement on Rootless iOS 17 Jailbreaks</title>
-      <link>https://nextsolution.cc/freeformgrid-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/freeformgrid-tweak/</guid>
+      <link>https://nextsolution.cc/freeformgrid-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/freeformgrid-tweak.html</guid>
       <pubDate>Mon, 17 Aug 2026 03:45:45 GMT</pubDate>
       <description>FreeformGrid 1.0.3 is a Home Screen tweak described as placing icons in any open grid position on rootless iOS 17 jailbreaks.</description>
       <category>Home Screen</category>
     </item>
     <item>
       <title>Crane 1.3.18-2: Multiple Containers for Applications</title>
-      <link>https://nextsolution.cc/crane-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/crane-tweak/</guid>
+      <link>https://nextsolution.cc/crane-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/crane-tweak.html</guid>
       <pubDate>Sun, 16 Aug 2026 05:34:31 GMT</pubDate>
       <description>Crane 1.3.18-2 is a commercial package by opa334 described as providing multiple containers for applications. Review its architectures and dependencies.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
       <title>Unseen 0.0.3: CALayer Render Server Utility</title>
-      <link>https://nextsolution.cc/unseen-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/unseen-tweak/</guid>
+      <link>https://nextsolution.cc/unseen-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/unseen-tweak.html</guid>
       <pubDate>Sat, 15 Aug 2026 23:01:20 GMT</pubDate>
       <description>Learn what Unseen 0.0.3 is listed to do, its architectures and dependencies, and what to verify before installation.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
       <title>Kayoko 4.3.1: Clipboard Experience and Compatibility Details</title>
-      <link>https://nextsolution.cc/kayoko-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/kayoko-tweak/</guid>
+      <link>https://nextsolution.cc/kayoko-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/kayoko-tweak.html</guid>
       <pubDate>Sat, 15 Aug 2026 19:38:07 GMT</pubDate>
       <description>Review Kayoko 4.3.1, including its clipboard-focused description, listed architectures, dependencies, and installation checks based on the supplied package metadata.</description>
       <category>Productivity</category>
     </item>
     <item>
       <title>Crescendo 1.1 Adds a Volume Slider to the Lock Screen and Dynamic Island</title>
-      <link>https://nextsolution.cc/crescendo-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/crescendo-tweak/</guid>
+      <link>https://nextsolution.cc/crescendo-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/crescendo-tweak.html</guid>
       <pubDate>Sat, 15 Aug 2026 10:42:49 GMT</pubDate>
       <description>Crescendo 1.1 by Yves is listed as a Lock Screen tweak that adds a volume slider to the Lock Screen and Dynamic Island. Review its package requirements and listed##?</description>
       <category>Lock Screen</category>
     </item>
     <item>
       <title>CustomizeCC 1.4.3: Control Center Colors, Borders, and Glow Effects</title>
-      <link>https://nextsolution.cc/customizecc-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/customizecc-tweak/</guid>
+      <link>https://nextsolution.cc/customizecc-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/customizecc-tweak.html</guid>
       <pubDate>Sat, 15 Aug 2026 00:02:56 GMT</pubDate>
       <description>CustomizeCC 1.4.3 lists Control Center options for glyph, module, toggle, launcher, background, border, overlay, and glow customization on iOS 15.</description>
       <category>Control Center</category>
     </item>
     <item>
       <title>HelloKeyboardAI: Add AI Actions and Gestures to the iPhone Keyboard</title>
-      <link>https://nextsolution.cc/hellokeyboardai-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/hellokeyboardai-tweak/</guid>
+      <link>https://nextsolution.cc/hellokeyboardai-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/hellokeyboardai-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>See how HelloKeyboardAI adds configurable AI gestures to the iPhone keyboard, with real screenshots, supported iOS versions, price, and source links.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
       <title>IconTweak2: Open a Control Menu by Swiping Home Screen Icons</title>
-      <link>https://nextsolution.cc/icontweak2-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/icontweak2-tweak/</guid>
+      <link>https://nextsolution.cc/icontweak2-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/icontweak2-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>IconTweak2 adds a swipe-activated control menu to Home Screen app icons. View real screenshots, compatibility, pricing, and the official package source.</description>
       <category>Home Screen</category>
     </item>
     <item>
       <title>PodsGrant Adds Newer AirPods Support to Older Jailbroken iPhones</title>
-      <link>https://nextsolution.cc/podsgrant-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/podsgrant-tweak/</guid>
+      <link>https://nextsolution.cc/podsgrant-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/podsgrant-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>PodsGrant can enable newer AirPods and Beats identification on older jailbroken devices. Read the important 0.5.4 and iOS 17 warnings first.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
       <title>SwipeExtenderX Assigns Powerful Swipe Actions to iPhone Keyboard Keys</title>
-      <link>https://nextsolution.cc/swipeextenderx-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/swipeextenderx-tweak/</guid>
+      <link>https://nextsolution.cc/swipeextenderx-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/swipeextenderx-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>SwipeExtenderX adds 27 swipe and long-press actions to iOS keyboard keys. See official screenshots, compatibility, limitations, and source details.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
       <title>Reo Replaces the iPhone Lock Screen Music Player with a Custom Layout</title>
-      <link>https://nextsolution.cc/reo-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/reo-tweak/</guid>
+      <link>https://nextsolution.cc/reo-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/reo-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>Reo 4.0.1 is a customizable Lock Screen music player for jailbroken iPhones. View real layouts, preferences, price, and supported iOS versions.</description>
       <category>Media</category>
     </item>
     <item>
       <title>Top 8 Home Screen Jailbreak Tweaks with Real Screenshots</title>
-      <link>https://nextsolution.cc/top-home-screen-tweaks/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/top-home-screen-tweaks/</guid>
+      <link>https://nextsolution.cc/top-home-screen-tweaks.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/top-home-screen-tweaks.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>Compare eight Home Screen jailbreak tweaks with real feature screenshots, source links, compatibility notes, and a complete video walkthrough.</description>
       <category>Home Screen</category>
     </item>
     <item>
       <title>LSLyrics Places Time-Synced Song Lyrics on the iPhone Lock Screen</title>
-      <link>https://nextsolution.cc/lslyrics-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/lslyrics-tweak/</guid>
+      <link>https://nextsolution.cc/lslyrics-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/lslyrics-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>LSLyrics 2.0 displays time-synced lyrics on the iPhone or iPad Lock Screen. See real screenshots, full-screen mode, pricing, and compatibility.</description>
       <category>Lock Screen</category>
     </item>
     <item>
       <title>Phonehub Adds Caller ID, Auto Redial and Smarter Call Controls to iPhone</title>
-      <link>https://nextsolution.cc/phonehub-tweak/</link>
-      <guid isPermaLink="true">https://nextsolution.cc/phonehub-tweak/</guid>
+      <link>https://nextsolution.cc/phonehub-tweak.html</link>
+      <guid isPermaLink="true">https://nextsolution.cc/phonehub-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>Phonehub 1.1.3 overhauls the jailbroken iPhone Phone app with caller ID, auto redial, dual-SIM selection, and practical call controls.</description>
       <category>Messages &amp; Phone</category>
