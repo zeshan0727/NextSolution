@@ -1,19 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-25T17:53:37Z",
+  "updatedAt": "2026-08-26T09:35:29Z",
   "files": [
     {
-      "id": "nextmultibrowser-1.1.8-ipad-pro-12.9-portrait-landscape",
-      "name": "Next Multi Browser 1.1.8 — iPad Pro 12.9 Layout",
-      "fileName": "NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa",
+      "id": "nextmultibrowser-1.1.9-main-random-environment-auto-timer",
+      "name": "Next Multi Browser 1.1.9 — Main Random Environment Timer",
+      "fileName": "NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa",
       "type": "tipa",
       "platform": "TrollStore / RootHide / iOS 15+",
-      "version": "1.1.8 (16)",
-      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.8/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.tipa",
-      "ipaUrl": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.8/NextMultiBrowser_1.1.8_iPad_Pro_12.9_Portrait_Landscape.ipa",
-      "sha256": "b7283e0129b5b6237c7e3076e67ba20a47e34016798ec72f1addf865d8f57a14",
-      "sizeBytes": 6809712,
-      "notes": "Adds a dedicated adaptive layout for the 12.9-inch iPad Pro: 3 browser columns in portrait, 4 in landscape, larger iPad controls, live rotation updates, full-screen focused browsing, and responsive 2-column support in iPad split view. Includes both TIPA and IPA downloads. Retains email/username and password AutoFill, the Imported URL Queue, dedicated icon, 20 isolated profiles, inline automatic video playback, manual desktop selection, environment tools, auto refresh, and VPN features."
+      "version": "1.1.9 (17)",
+      "url": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.9/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa",
+      "ipaUrl": "https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.9/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.ipa",
+      "sha256": "3641b40eb0fe2151f5606271863193ffb27f7657de0bcc51d29aa56e4665ed4e",
+      "sizeBytes": 6849605,
+      "notes": "Adds Random Environment directly to the main browser screen with one menu for immediate randomization and automatic 1, 2, 3, 5, or 10 minute randomization. The timer selection is saved across relaunches and pauses while the app is backgrounded. Each run uses the existing global 20-profile environment randomizer, preserving cookies, Google logins, persistent website data, profile isolation, the iPad Pro 12.9 adaptive layout, URL queue, AutoFill, auto refresh, and VPN features."
     },
     {
       "id": "nextreminder-1.3.31-gmail-report-recovery-fix",
