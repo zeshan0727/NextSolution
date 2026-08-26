@@ -1,0 +1,63 @@
+name: Normalize merged pages to Next Jailbreak branding
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/postmerge-brand-cleanup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Normalize merged public HTML pages
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          targets = [
+              Path('about.html'), Path('contact.html'), Path('repo.html'),
+              Path('tutorial-battery-health.html'), Path('tutorial-rootless-basics.html'),
+              Path('tutorial-tweak-troubleshooting.html'),
+              Path('next-island-release/nextaura.html'),
+              Path('next-island-release/nextisland.html'),
+          ]
+          adsense = re.compile(r'\s*<script\s+async\s+src="https://pagead2\.googlesyndication\.com/pagead/js/adsbygoogle\.js\?client=ca-pub-4770123899731214"\s+crossorigin="anonymous"></script>\s*', re.I)
+          loader = '  <script defer src="/assets/adsterra.js" data-nextsolution-ads="adsterra"></script>\n'
+          changed=[]
+          for p in targets:
+              if not p.exists(): continue
+              text=p.read_text(encoding='utf-8')
+              out=text.replace('Next Solution','Next Jailbreak')
+              out=adsense.sub('\n',out)
+              if '/assets/adsterra.js' not in out:
+                  if re.search(r'(?i)</body\s*>',out):
+                      out=re.sub(r'(?i)</body\s*>',loader+'</body>',out,count=1)
+                  elif re.search(r'(?i)</head\s*>',out):
+                      out=re.sub(r'(?i)</head\s*>',loader+'</head>',out,count=1)
+              if out!=text:
+                  p.write_text(out,encoding='utf-8'); changed.append(p.as_posix())
+          print('Normalized merged public pages:',len(changed))
+          for p in changed: print('  *',p)
+          PY
+
+      - name: Commit normalization
+        shell: bash
+        run: |
+          if git diff --quiet; then echo 'No changes'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add about.html contact.html repo.html tutorial-battery-health.html tutorial-rootless-basics.html tutorial-tweak-troubleshooting.html next-island-release/*.html
+          git commit -m 'Normalize merged pages to Next Jailbreak branding'
+          git pull --rebase origin main
+          git push origin main
