@@ -23,217 +23,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Make article cards use the real article topic image
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
+      - name: Patch article preview logic and NextPost cache busting
+        run: python3 -c "import base64; exec(base64.b64decode('ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpwYXRoID0gUGF0aCgiYXV0b21hdGlvbi9jbGVhbl91cmxzLnB5IikKdGV4dCA9IHBhdGgucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCgpzdGFydCA9IHRleHQuaW5kZXgoImRlZiBzdGFiaWxpemVfc29jaWFsX2ltYWdlcyh0ZXh0OiBzdHIpIC0+IHN0cjoiKQplbmQgPSB0ZXh0LmluZGV4KCJcbmRlZiBfbWV0YV92YWx1ZSgiLCBzdGFydCkKdGV4dCA9IHRleHRbOnN0YXJ0XSArICIiImRlZiBzdGFiaWxpemVfc29jaWFsX2ltYWdlcyh0ZXh0OiBzdHIpIC0+IHN0cjoKICAgIFwiXCJcIlByZXNlcnZlIGVhY2ggcGFnZSdzIG93biB0b3BpYyBpbWFnZSBpbnN0ZWFkIG9mIGZvcmNpbmcgdGhlIHNpdGUgY2FyZC5cIlwiXCIKICAgIHJldHVybiB0ZXh0CgoiIiIgKyB0ZXh0W2VuZCsxOl0KCmhlbHBlcl9hbmNob3IgPSAiZGVmIGVuc3VyZV9zb2NpYWxfcHJldmlld19tZXRhKHRleHQ6IHN0cikgLT4gc3RyOlxuIgpoZWxwZXIgPSByIiIiZGVmIF9hYnNvbHV0ZV9wcmV2aWV3X3VybCh2YWx1ZTogc3RyKSAtPiBzdHIgfCBOb25lOgogICAgdmFsdWUgPSBodG1sLnVuZXNjYXBlKHZhbHVlKS5zdHJpcCgpCiAgICBpZiBub3QgdmFsdWU6CiAgICAgICAgcmV0dXJuIE5vbmUKICAgIGlmIHZhbHVlLnN0YXJ0c3dpdGgoImh0dHBzOi8vIikgb3IgdmFsdWUuc3RhcnRzd2l0aCgiaHR0cDovLyIpOgogICAgICAgIHJldHVybiB2YWx1ZQogICAgaWYgdmFsdWUuc3RhcnRzd2l0aCgiLy8iKToKICAgICAgICByZXR1cm4gImh0dHBzOiIgKyB2YWx1ZQogICAgaWYgdmFsdWUuc3RhcnRzd2l0aCgiLyIpOgogICAgICAgIHJldHVybiBTSVRFICsgdmFsdWUKICAgIHJldHVybiBTSVRFICsgIi8iICsgdmFsdWUubHN0cmlwKCIvIikKCgpkZWYgX2FydGljbGVfcHJldmlld19pbWFnZSh0ZXh0OiBzdHIpIC0+IHN0cjoKICAgIGZvciBzY3JpcHQgaW4gcmUuZmluZGl0ZXIoCiAgICAgICAgcic8c2NyaXB0W14+XSp0eXBlPVsiXCddYXBwbGljYXRpb24vbGRcK2pzb25bIlwnXVtePl0qPig/UDxib2R5Pi4qPyk8L3NjcmlwdD4nLAogICAgICAgIHRleHQsCiAgICAgICAgcmUuSUdOT1JFQ0FTRSB8IHJlLkRPVEFMTCwKICAgICk6CiAgICAgICAgYm9keSA9IGh0bWwudW5lc2NhcGUoc2NyaXB0Lmdyb3VwKCJib2R5IikpCiAgICAgICAgaW1hZ2UgPSByZS5zZWFyY2goCiAgICAgICAgICAgIHInImltYWdlIlxzKjpccyooPzoiKD9QPHNpbmdsZT5bXiJcXF0rKSJ8XFtccyoiKD9QPGFycmF5PlteIlxcXSspIiknLAogICAgICAgICAgICBib2R5LAogICAgICAgICAgICByZS5JR05PUkVDQVNFLAogICAgICAgICkKICAgICAgICBpZiBpbWFnZToKICAgICAgICAgICAgdmFsdWUgPSBpbWFnZS5ncm91cCgic2luZ2xlIikgb3IgaW1hZ2UuZ3JvdXAoImFycmF5IikKICAgICAgICAgICAgcmVzb2x2ZWQgPSBfYWJzb2x1dGVfcHJldmlld191cmwodmFsdWUpCiAgICAgICAgICAgIGlmIHJlc29sdmVkIGFuZCByZXNvbHZlZCAhPSBTT0NJQUxfSU1BR0U6CiAgICAgICAgICAgICAgICByZXR1cm4gcmVzb2x2ZWQKCiAgICBmaWd1cmUgPSByZS5zZWFyY2goCiAgICAgICAgcic8ZmlndXJlW14+XSpjbGFzcz1bIlwnXVteIlwnXSooPzphcnRpY2xlLXZpc3VhbHxhdXRoZW50aWMtbWVkaWEpW14iXCddKlsiXCddW14+XSo+Lio/PGltZ1tePl0qc3JjPVsiXCddKD9QPHNyYz5bXiJcJ10rKVsiXCddJywKICAgICAgICB0ZXh0LAogICAgICAgIHJlLklHTk9SRUNBU0UgfCByZS5ET1RBTEwsCiAgICApCiAgICBpZiBmaWd1cmU6CiAgICAgICAgcmVzb2x2ZWQgPSBfYWJzb2x1dGVfcHJldmlld191cmwoZmlndXJlLmdyb3VwKCJzcmMiKSkKICAgICAgICBpZiByZXNvbHZlZDoKICAgICAgICAgICAgcmV0dXJuIHJlc29sdmVkCgogICAgYXJ0aWNsZV9pbWcgPSByZS5zZWFyY2goCiAgICAgICAgcic8YXJ0aWNsZVxiW14+XSo+Lio/PGltZ1tePl0qc3JjPVsiXCddKD9QPHNyYz5bXiJcJ10rKVsiXCddJywKICAgICAgICB0ZXh0LAogICAgICAgIHJlLklHTk9SRUNBU0UgfCByZS5ET1RBTEwsCiAgICApCiAgICBpZiBhcnRpY2xlX2ltZzoKICAgICAgICByZXNvbHZlZCA9IF9hYnNvbHV0ZV9wcmV2aWV3X3VybChhcnRpY2xlX2ltZy5ncm91cCgic3JjIikpCiAgICAgICAgaWYgcmVzb2x2ZWQ6CiAgICAgICAgICAgIHJldHVybiByZXNvbHZlZAoKICAgIGV4aXN0aW5nID0gX21ldGFfdmFsdWUodGV4dCwgYXR0cj0icHJvcGVydHkiLCBrZXk9Im9nOmltYWdlIikKICAgIHJlc29sdmVkID0gX2Fic29sdXRlX3ByZXZpZXdfdXJsKGV4aXN0aW5nKSBpZiBleGlzdGluZyBlbHNlIE5vbmUKICAgIGlmIHJlc29sdmVkIGFuZCByZXNvbHZlZCAhPSBTT0NJQUxfSU1BR0U6CiAgICAgICAgcmV0dXJuIHJlc29sdmVkCgogICAgcmV0dXJuIFNPQ0lBTF9JTUFHRQoKCmRlZiBfcmVtb3ZlX21ldGEodGV4dDogc3RyLCAqLCBhdHRyOiBzdHIsIGtleTogc3RyKSAtPiBzdHI6CiAgICBwYXR0ZXJuID0gcmUuY29tcGlsZSgKICAgICAgICByZidccyo8bWV0YVxzK1tePl0qe2F0dHJ9PVsiXCdde3JlLmVzY2FwZShrZXkpfVsiXCddW14+XSo+XHMqJywKICAgICAgICByZS5JR05PUkVDQVNFLAogICAgKQogICAgcmV0dXJuIHBhdHRlcm4uc3ViKCJcbiIsIHRleHQpCgoKIiIiCmlmIGhlbHBlcl9hbmNob3Igbm90IGluIHRleHQ6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJlbnN1cmVfc29jaWFsX3ByZXZpZXdfbWV0YSBhbmNob3Igbm90IGZvdW5kIikKdGV4dCA9IHRleHQucmVwbGFjZShoZWxwZXJfYW5jaG9yLCBoZWxwZXIgKyBoZWxwZXJfYW5jaG9yLCAxKQoKb2xkX3N0YXJ0ID0gdGV4dC5pbmRleCgiZGVmIGVuc3VyZV9zb2NpYWxfcHJldmlld19tZXRhKHRleHQ6IHN0cikgLT4gc3RyOiIpCm9sZF9lbmQgPSB0ZXh0LmluZGV4KCJcbmRlZiBlbnN1cmVfbGVnYWN5X3JlZGlyZWN0KCIsIG9sZF9zdGFydCkKcmVwbGFjZW1lbnQgPSByIiIiZGVmIGVuc3VyZV9zb2NpYWxfcHJldmlld19tZXRhKHRleHQ6IHN0cikgLT4gc3RyOgogICAgdGl0bGUgPSBfdGl0bGVfdmFsdWUodGV4dCkgb3IgIk5leHQgSmFpbGJyZWFrIHwgSmFpbGJyZWFrcywgVHdlYWtzLCBBcHBzICYgR3VpZGVzIgogICAgZGVzY3JpcHRpb24gPSBfbWV0YV92YWx1ZSh0ZXh0LCBhdHRyPSJuYW1lIiwga2V5PSJkZXNjcmlwdGlvbiIpIG9yICgKICAgICAgICAiTmV4dCBKYWlsYnJlYWsgY292ZXJzIGphaWxicmVhayBuZXdzLCBDeWRpYSBhbmQgU2lsZW8gdHdlYWtzLCB1c2VmdWwgYXBwcywgdHV0b3JpYWxzIGFuZCB0cm91Ymxlc2hvb3RpbmcuIgogICAgKQogICAgY2Fub25pY2FsID0gX2Nhbm9uaWNhbF92YWx1ZSh0ZXh0KSBvciBTSVRFICsgIi8iCiAgICBpc19ob21lcGFnZSA9IGNhbm9uaWNhbC5yc3RyaXAoIi8iKSA9PSBTSVRFCiAgICBwYWdlX3R5cGUgPSAid2Vic2l0ZSIgaWYgaXNfaG9tZXBhZ2UgZWxzZSAoImFydGljbGUiIGlmICI8YXJ0aWNsZSIgaW4gdGV4dC5sb3dlcigpIGVsc2UgIndlYnNpdGUiKQogICAgc29jaWFsX2ltYWdlID0gX2FydGljbGVfcHJldmlld19pbWFnZSh0ZXh0KSBpZiBwYWdlX3R5cGUgPT0gImFydGljbGUiIGVsc2UgU09DSUFMX0lNQUdFCiAgICBpbWFnZV9hbHQgPSB0aXRsZSBpZiBwYWdlX3R5cGUgPT0gImFydGljbGUiIGVsc2UgIk5leHQgSmFpbGJyZWFrIOKAlCBqYWlsYnJlYWtzLCB0d2Vha3MsIGFwcHMgYW5kIGd1aWRlcyIKCiAgICB2YWx1ZXMgPSAoCiAgICAgICAgKCJwcm9wZXJ0eSIsICJvZzp0eXBlIiwgcGFnZV90eXBlKSwKICAgICAgICAoInByb3BlcnR5IiwgIm9nOnNpdGVfbmFtZSIsICJOZXh0IEphaWxicmVhayIpLAogICAgICAgICgicHJvcGVydHkiLCAib2c6dXJsIiwgY2Fub25pY2FsKSwKICAgICAgICAoInByb3BlcnR5IiwgIm9nOnRpdGxlIiwgdGl0bGUpLAogICAgICAgICgicHJvcGVydHkiLCAib2c6ZGVzY3JpcHRpb24iLCBkZXNjcmlwdGlvbiksCiAgICAgICAgKCJwcm9wZXJ0eSIsICJvZzppbWFnZSIsIHNvY2lhbF9pbWFnZSksCiAgICAgICAgKCJwcm9wZXJ0eSIsICJvZzppbWFnZTpzZWN1cmVfdXJsIiwgc29jaWFsX2ltYWdlKSwKICAgICAgICAoInByb3BlcnR5IiwgIm9nOmltYWdlOmFsdCIsIGltYWdlX2FsdCksCiAgICAgICAgKCJuYW1lIiwgInR3aXR0ZXI6Y2FyZCIsICJzdW1tYXJ5X2xhcmdlX2ltYWdlIiksCiAgICAgICAgKCJuYW1lIiwgInR3aXR0ZXI6c2l0ZSIsICJAbmV4dGphaWxicmVhayIpLAogICAgICAgICgibmFtZSIsICJ0d2l0dGVyOnRpdGxlIiwgdGl0bGUpLAogICAgICAgICgibmFtZSIsICJ0d2l0dGVyOmRlc2NyaXB0aW9uIiwgZGVzY3JpcHRpb24pLAogICAgICAgICgibmFtZSIsICJ0d2l0dGVyOmltYWdlIiwgc29jaWFsX2ltYWdlKSwKICAgICAgICAoIm5hbWUiLCAidHdpdHRlcjppbWFnZTphbHQiLCBpbWFnZV9hbHQpLAogICAgKQogICAgZm9yIGF0dHIsIGtleSwgdmFsdWUgaW4gdmFsdWVzOgogICAgICAgIHRleHQgPSBfdXBzZXJ0X21ldGEodGV4dCwgYXR0cj1hdHRyLCBrZXk9a2V5LCBjb250ZW50PXZhbHVlKQoKICAgIGlmIHNvY2lhbF9pbWFnZSA9PSBTT0NJQUxfSU1BR0U6CiAgICAgICAgdGV4dCA9IF91cHNlcnRfbWV0YSh0ZXh0LCBhdHRyPSJwcm9wZXJ0eSIsIGtleT0ib2c6aW1hZ2U6dHlwZSIsIGNvbnRlbnQ9ImltYWdlL3BuZyIpCiAgICAgICAgdGV4dCA9IF91cHNlcnRfbWV0YSh0ZXh0LCBhdHRyPSJwcm9wZXJ0eSIsIGtleT0ib2c6aW1hZ2U6d2lkdGgiLCBjb250ZW50PVNPQ0lBTF9JTUFHRV9XSURUSCkKICAgICAgICB0ZXh0ID0gX3Vwc2VydF9tZXRhKHRleHQsIGF0dHI9InByb3BlcnR5Iiwga2V5PSJvZzppbWFnZTpoZWlnaHQiLCBjb250ZW50PVNPQ0lBTF9JTUFHRV9IRUlHSFQpCiAgICBlbHNlOgogICAgICAgIHRleHQgPSBfcmVtb3ZlX21ldGEodGV4dCwgYXR0cj0icHJvcGVydHkiLCBrZXk9Im9nOmltYWdlOnR5cGUiKQogICAgICAgIHRleHQgPSBfcmVtb3ZlX21ldGEodGV4dCwgYXR0cj0icHJvcGVydHkiLCBrZXk9Im9nOmltYWdlOndpZHRoIikKICAgICAgICB0ZXh0ID0gX3JlbW92ZV9tZXRhKHRleHQsIGF0dHI9InByb3BlcnR5Iiwga2V5PSJvZzppbWFnZTpoZWlnaHQiKQogICAgcmV0dXJuIHRleHQKCiIiIgp0ZXh0ID0gdGV4dFs6b2xkX3N0YXJ0XSArIHJlcGxhY2VtZW50ICsgdGV4dFtvbGRfZW5kKzE6XQpwYXRoLndyaXRlX3RleHQodGV4dCwgZW5jb2Rpbmc9InV0Zi04IikKCm1vZGVscyA9IFBhdGgoIk5leHRQb3N0L1NvdXJjZXMvTW9kZWxzLnN3aWZ0IikKc291cmNlID0gbW9kZWxzLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQpvbGQgPSAnaXRlbXMucmVtb3ZlQWxsIHsgWyJ1dG1fc291cmNlIiwgInV0bV9tZWRpdW0iLCAidXRtX2NhbXBhaWduIiwgInYiXS5jb250YWlucygkMC5uYW1lKSB9JwpuZXcgPSAnaXRlbXMucmVtb3ZlQWxsIHsgWyJ1dG1fc291cmNlIiwgInV0bV9tZWRpdW0iLCAidXRtX2NhbXBhaWduIiwgInYiLCAiY2FyZCJdLmNvbnRhaW5zKCQwLm5hbWUpIH0nCmlmIG9sZCBub3QgaW4gc291cmNlIGFuZCBuZXcgbm90IGluIHNvdXJjZToKICAgIHJhaXNlIFN5c3RlbUV4aXQoIk5leHRQb3N0IHNvY2lhbCBVUkwgY2xlYW51cCBhbmNob3Igbm90IGZvdW5kIikKaWYgb2xkIGluIHNvdXJjZToKICAgIHNvdXJjZSA9IHNvdXJjZS5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKY2FtcGFpZ24gPSAnaXRlbXMuYXBwZW5kKFVSTFF1ZXJ5SXRlbShuYW1lOiAidXRtX2NhbXBhaWduIiwgdmFsdWU6ICJhcnRpY2xlX3NoYXJlIikpJwpjYXJkX2xpbmUgPSAnaXRlbXMuYXBwZW5kKFVSTFF1ZXJ5SXRlbShuYW1lOiAiY2FyZCIsIHZhbHVlOiAiYXJ0aWNsZS12MiIpKScKaWYgY2FyZF9saW5lIG5vdCBpbiBzb3VyY2U6CiAgICBpZiBjYW1wYWlnbiBub3QgaW4gc291cmNlOgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoIk5leHRQb3N0IGNhbXBhaWduIGFuY2hvciBub3QgZm91bmQiKQogICAgc291cmNlID0gc291cmNlLnJlcGxhY2UoY2FtcGFpZ24sIGNhbXBhaWduICsgIlxuICAgICAgICAiICsgY2FyZF9saW5lLCAxKQptb2RlbHMud3JpdGVfdGV4dChzb3VyY2UsIGVuY29kaW5nPSJ1dGYtOCIpCg=='))"
 
-          path = Path('automation/clean_urls.py')
-          text = path.read_text(encoding='utf-8')
-
-          start = text.index('def stabilize_social_images(text: str) -> str:')
-          end = text.index('\ndef _meta_value(', start)
-          text = text[:start] + '''def stabilize_social_images(text: str) -> str:\n    """Preserve each page's own topic image instead of forcing the site card."""\n    return text\n\n''' + text[end+1:]
-
-          helper_anchor = 'def ensure_social_preview_meta(text: str) -> str:\n'
-          helper = r'''def _absolute_preview_url(value: str) -> str | None:
-    value = html.unescape(value).strip()
-    if not value:
-        return None
-    if value.startswith('https://') or value.startswith('http://'):
-        return value
-    if value.startswith('//'):
-        return 'https:' + value
-    if value.startswith('/'):
-        return SITE + value
-    return SITE + '/' + value.lstrip('/')
-
-
-def _article_preview_image(text: str) -> str:
-    # The publisher stores the authentic feature image in article JSON-LD.
-    # Prefer that because clean-url generation may have already touched OG tags.
-    for script in re.finditer(
-        r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(?P<body>.*?)</script>',
-        text,
-        re.IGNORECASE | re.DOTALL,
-    ):
-        body = html.unescape(script.group('body'))
-        image = re.search(
-            r'"image"\s*:\s*(?:"(?P<single>[^"\\]+)"|\[\s*"(?P<array>[^"\\]+)")',
-            body,
-            re.IGNORECASE,
-        )
-        if image:
-            value = image.group('single') or image.group('array')
-            resolved = _absolute_preview_url(value)
-            if resolved and resolved != SOCIAL_IMAGE:
-                return resolved
-
-    # Fallback to the real lead image used inside the article itself.
-    figure = re.search(
-        r'<figure[^>]*class=["\'][^"\']*(?:article-visual|authentic-media)[^"\']*["\'][^>]*>.*?<img[^>]*src=["\'](?P<src>[^"\']+)["\']',
-        text,
-        re.IGNORECASE | re.DOTALL,
-    )
-    if figure:
-        resolved = _absolute_preview_url(figure.group('src'))
-        if resolved:
-            return resolved
-
-    # Older article templates may not use the modern figure classes.
-    article_img = re.search(
-        r'<article\b[^>]*>.*?<img[^>]*src=["\'](?P<src>[^"\']+)["\']',
-        text,
-        re.IGNORECASE | re.DOTALL,
-    )
-    if article_img:
-        resolved = _absolute_preview_url(article_img.group('src'))
-        if resolved:
-            return resolved
-
-    # Preserve any pre-existing article-specific OG image as a final fallback.
-    existing = _meta_value(text, attr='property', key='og:image')
-    resolved = _absolute_preview_url(existing) if existing else None
-    if resolved and resolved != SOCIAL_IMAGE:
-        return resolved
-
-    return SOCIAL_IMAGE
-
-
-def _remove_meta(text: str, *, attr: str, key: str) -> str:
-    pattern = re.compile(
-        rf'\s*<meta\s+[^>]*{attr}=["\']{re.escape(key)}["\'][^>]*>\s*',
-        re.IGNORECASE,
-    )
-    return pattern.sub('\n', text)
-
-
-'''
-          if helper_anchor not in text:
-              raise SystemExit('ensure_social_preview_meta anchor not found')
-          text = text.replace(helper_anchor, helper + helper_anchor, 1)
-
-          old_start = text.index('def ensure_social_preview_meta(text: str) -> str:')
-          old_end = text.index('\ndef ensure_legacy_redirect(', old_start)
-          replacement = r'''def ensure_social_preview_meta(text: str) -> str:
-    title = _title_value(text) or "Next Jailbreak | Jailbreaks, Tweaks, Apps & Guides"
-    description = _meta_value(text, attr="name", key="description") or (
-        "Next Jailbreak covers jailbreak news, Cydia and Sileo tweaks, useful apps, tutorials and troubleshooting."
-    )
-    canonical = _canonical_value(text) or SITE + "/"
-    is_homepage = canonical.rstrip("/") == SITE
-    page_type = "website" if is_homepage else ("article" if "<article" in text.lower() else "website")
-    social_image = _article_preview_image(text) if page_type == "article" else SOCIAL_IMAGE
-    image_alt = title if page_type == "article" else "Next Jailbreak — jailbreaks, tweaks, apps and guides"
-
-    values = (
-        ("property", "og:type", page_type),
-        ("property", "og:site_name", "Next Jailbreak"),
-        ("property", "og:url", canonical),
-        ("property", "og:title", title),
-        ("property", "og:description", description),
-        ("property", "og:image", social_image),
-        ("property", "og:image:secure_url", social_image),
-        ("property", "og:image:alt", image_alt),
-        ("name", "twitter:card", "summary_large_image"),
-        ("name", "twitter:site", "@nextjailbreak"),
-        ("name", "twitter:title", title),
-        ("name", "twitter:description", description),
-        ("name", "twitter:image", social_image),
-        ("name", "twitter:image:alt", image_alt),
-    )
-    for attr, key, value in values:
-        text = _upsert_meta(text, attr=attr, key=key, content=value)
-
-    if social_image == SOCIAL_IMAGE:
-        text = _upsert_meta(text, attr="property", key="og:image:type", content="image/png")
-        text = _upsert_meta(text, attr="property", key="og:image:width", content=SOCIAL_IMAGE_WIDTH)
-        text = _upsert_meta(text, attr="property", key="og:image:height", content=SOCIAL_IMAGE_HEIGHT)
-    else:
-        # Do not lie about dimensions or MIME type for authentic third-party images.
-        text = _remove_meta(text, attr="property", key="og:image:type")
-        text = _remove_meta(text, attr="property", key="og:image:width")
-        text = _remove_meta(text, attr="property", key="og:image:height")
-    return text
-
-'''
-          text = text[:old_start] + replacement + text[old_end+1:]
-          path.write_text(text, encoding='utf-8')
-
-          models = Path('NextPost/Sources/Models.swift')
-          source = models.read_text(encoding='utf-8')
-          old = 'items.removeAll { ["utm_source", "utm_medium", "utm_campaign", "v"].contains($0.name) }'
-          new = 'items.removeAll { ["utm_source", "utm_medium", "utm_campaign", "v", "card"].contains($0.name) }'
-          if old not in source:
-              raise SystemExit('NextPost social URL cleanup anchor not found')
-          source = source.replace(old, new, 1)
-          campaign = 'items.append(URLQueryItem(name: "utm_campaign", value: "article_share"))'
-          source = source.replace(
-              campaign,
-              campaign + '\n        items.append(URLQueryItem(name: "card", value: "article-v2"))',
-              1,
-          )
-          models.write_text(source, encoding='utf-8')
-          PY
-
-      - name: Regenerate every article route and social card metadata
+      - name: Regenerate all article routes
         run: python3 automation/clean_urls.py
 
-      - name: Validate topic-specific article previews
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          generic = 'https://nextjailbreak.com/assets/brand/next-jailbreak-social-card.png'
-          article_count = 0
-          topic_count = 0
-          generic_articles = []
-          for p in Path('.').glob('*.html'):
-              if p.name in {'index.html','404.html'}:
-                  continue
-              text = p.read_text(encoding='utf-8', errors='ignore')
-              if '<article' not in text.lower():
-                  continue
-              article_count += 1
-              m = re.search(r'<meta\s+property=["\']og:image["\']\s+content=["\']([^"\']+)', text, re.I)
-              if m and m.group(1) != generic:
-                  topic_count += 1
-              else:
-                  generic_articles.append(p.name)
-
-          print(f'Article pages: {article_count}')
-          print(f'Article-specific preview images: {topic_count}')
-          print(f'Generic fallback articles: {len(generic_articles)}')
-          if generic_articles:
-              print('Fallbacks:', ', '.join(generic_articles[:30]))
-
-          sample = Path('photoscore-tweak.html').read_text(encoding='utf-8')
-          if 'https://media.havoc.app/6a868c51324f05e66acdf88b' not in re.search(
-              r'<meta\s+property=["\']og:image["\']\s+content=["\']([^"\']+)', sample, re.I
-          ).group(1):
-              raise SystemExit('PhotosCore did not receive its real topic image')
-
-          models = Path('NextPost/Sources/Models.swift').read_text(encoding='utf-8')
-          if 'card", value: "article-v2"' not in models:
-              raise SystemExit('NextPost cache-busting card parameter is missing')
-          PY
+      - name: Validate article-specific previews
+        run: python3 -c "import base64; exec(base64.b64decode('ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQoKZ2VuZXJpYyA9ICJodHRwczovL25leHRqYWlsYnJlYWsuY29tL2Fzc2V0cy9icmFuZC9uZXh0LWphaWxicmVhay1zb2NpYWwtY2FyZC5wbmciCmFydGljbGVfY291bnQgPSAwCnRvcGljX2NvdW50ID0gMApmYWxsYmFja3MgPSBbXQpwYXR0ZXJuID0gcmUuY29tcGlsZShyJzxtZXRhXHMrcHJvcGVydHk9WyJcJ11vZzppbWFnZVsiXCddXHMrY29udGVudD1bIlwnXShbXiJcJ10rKScsIHJlLkkpCgpmb3IgcCBpbiBQYXRoKCIuIikuZ2xvYigiKi5odG1sIik6CiAgICBpZiBwLm5hbWUgaW4geyJpbmRleC5odG1sIiwgIjQwNC5odG1sIn06CiAgICAgICAgY29udGludWUKICAgIHRleHQgPSBwLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiLCBlcnJvcnM9Imlnbm9yZSIpCiAgICBpZiAiPGFydGljbGUiIG5vdCBpbiB0ZXh0Lmxvd2VyKCk6CiAgICAgICAgY29udGludWUKICAgIGFydGljbGVfY291bnQgKz0gMQogICAgbSA9IHBhdHRlcm4uc2VhcmNoKHRleHQpCiAgICBpZiBtIGFuZCBtLmdyb3VwKDEpICE9IGdlbmVyaWM6CiAgICAgICAgdG9waWNfY291bnQgKz0gMQogICAgZWxzZToKICAgICAgICBmYWxsYmFja3MuYXBwZW5kKHAubmFtZSkKCnByaW50KGYiQXJ0aWNsZSBwYWdlczoge2FydGljbGVfY291bnR9IikKcHJpbnQoZiJBcnRpY2xlLXNwZWNpZmljIHByZXZpZXcgaW1hZ2VzOiB7dG9waWNfY291bnR9IikKcHJpbnQoZiJHZW5lcmljIGZhbGxiYWNrIGFydGljbGVzOiB7bGVuKGZhbGxiYWNrcyl9IikKaWYgZmFsbGJhY2tzOgogICAgcHJpbnQoIkZhbGxiYWNrczoiLCAiLCAiLmpvaW4oZmFsbGJhY2tzWzozMF0pKQoKc2FtcGxlID0gUGF0aCgicGhvdG9zY29yZS10d2Vhay5odG1sIikucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCm0gPSBwYXR0ZXJuLnNlYXJjaChzYW1wbGUpCmlmIG5vdCBtIG9yIG0uZ3JvdXAoMSkgIT0gImh0dHBzOi8vbWVkaWEuaGF2b2MuYXBwLzZhODY4YzUxMzI0ZjA1ZTY2YWNkZjg4YiI6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJQaG90b3NDb3JlIGRpZCBub3QgcmVjZWl2ZCBpdHMgcmVhbCB0b3BpYyBpbWFnZSIpCgptb2RlbHMgPSBQYXRoKCJOZXh0UG9zdC9Tb3VyY2VzL01vZGVscy5zd2lmdCIpLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQppZiAnVVJMUXVlcnlJdGVtKG5hbWU6ICJjYXJkIiwgdmFsdWU6ICJhcnRpY2xlLXYyIiknIG5vdCBpbiBtb2RlbHM6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJOZXh0UG9zdCBjYWNoZS1idXN0aW5nIGNhcmQgcGFyYW1ldGVyIGlzIG1pc3NpbmciKQo='))"
 
       - name: Commit fix
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet && [ -z "$(git status --porcelain --untracked-files=all)" ]; then
-            echo 'No changes required.'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes required.'
+            exit 0
+          fi
           git commit -m 'Use article topic images for NextPost social previews'
           git pull --rebase origin main
           git push origin main
