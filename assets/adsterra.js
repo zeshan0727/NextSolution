@@ -28,13 +28,13 @@
     return;
   }
 
-  // Monetag MultiTag — zone 273339.
-  // Loaded into <head> so every page already using this shared manager switches from Adsterra to Monetag.
+  // Monetag MultiTag — zone 273366.
+  // Loaded into <head> so every page already using this shared manager gets the current Next Jailbreak Monetag configuration.
   if (!document.querySelector('script[data-ns-monetag]') && !document.querySelector('script[src="https://quge5.com/88/tag.min.js"]')) {
     var monetag = document.createElement('script');
     monetag.src = 'https://quge5.com/88/tag.min.js';
     monetag.async = true;
-    monetag.setAttribute('data-zone', '273339');
+    monetag.setAttribute('data-zone', '273366');
     monetag.setAttribute('data-cfasync', 'false');
     monetag.setAttribute('data-ns-monetag', '1');
     document.head.appendChild(monetag);
