@@ -84,21 +84,21 @@ jobs:
           mkdir -p package/Payload
           cp -R "$APP_PATH" package/Payload/
           cd package
-          zip -qry ../NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa Payload
-          cp ../NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa ../NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.ipa
+          zip -qry ../NextMultiBrowser_1.1.10_Device_Category_Modes.tipa Payload
+          cp ../NextMultiBrowser_1.1.10_Device_Category_Modes.tipa ../NextMultiBrowser_1.1.10_Device_Category_Modes.ipa
       - name: Upload TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextMultiBrowser-1.1.9-Main-Random-Environment-Auto-Timer
+          name: NextMultiBrowser-1.1.10-Device-Category-Modes
           path: |
-            apps/next-multi-browser/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa
-            apps/next-multi-browser/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.ipa
+            apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa
+            apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa
           if-no-files-found: error
       - name: Verify package identity and requested features
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa"
+          TIPA="apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
           unzip -tq "$TIPA" >/dev/null
           python3 - "$TIPA" <<'PY'
           import plistlib
@@ -107,30 +107,18 @@ jobs:
 
           with zipfile.ZipFile(sys.argv[1]) as archive:
               names = archive.namelist()
-              host_info = next(
-                  name for name in names
-                  if name.endswith('/Next Multi Browser.app/Info.plist') and name.count('/') == 2
-              )
-              vpn_info = next(
-                  name for name in names
-                  if name.endswith('/PlugIns/NextMultiBrowserVPN.appex/Info.plist')
-              )
-              executable = next(
-                  name for name in names
-                  if name.endswith('/Next Multi Browser.app/Next Multi Browser')
-              )
-              asset_catalog = next(
-                  name for name in names
-                  if name.endswith('/Next Multi Browser.app/Assets.car')
-              )
+              host_info = next(name for name in names if name.endswith('/Next Multi Browser.app/Info.plist') and name.count('/') == 2)
+              vpn_info = next(name for name in names if name.endswith('/PlugIns/NextMultiBrowserVPN.appex/Info.plist'))
+              executable = next(name for name in names if name.endswith('/Next Multi Browser.app/Next Multi Browser'))
+              asset_catalog = next(name for name in names if name.endswith('/Next Multi Browser.app/Assets.car'))
               host = plistlib.loads(archive.read(host_info))
               vpn = plistlib.loads(archive.read(vpn_info))
               binary = archive.read(executable)
               assets = archive.read(asset_catalog)
 
           assert host['CFBundleIdentifier'] == 'com.nextsolution.multibrowser'
-          assert host['CFBundleShortVersionString'] == '1.1.9'
-          assert host['CFBundleVersion'] == '17'
+          assert host['CFBundleShortVersionString'] == '1.1.10'
+          assert host['CFBundleVersion'] == '18'
           assert set(host['UIDeviceFamily']) == {1, 2}
           assert set(host['UISupportedInterfaceOrientations~ipad']) == {
               'UIInterfaceOrientationPortrait',
@@ -139,8 +127,8 @@ jobs:
               'UIInterfaceOrientationLandscapeRight',
           }
           assert vpn['CFBundleIdentifier'] == 'com.nextsolution.multibrowser.vpn'
-          assert vpn['CFBundleShortVersionString'] == '1.1.9'
-          assert vpn['CFBundleVersion'] == '17'
+          assert vpn['CFBundleShortVersionString'] == '1.1.10'
+          assert vpn['CFBundleVersion'] == '18'
           assert len(assets) > 1000
           for feature in (
               b'NextMultiBrowser.importedURLQueue.values',
@@ -152,7 +140,11 @@ jobs:
               b'Randomize All Environments',
               b'Randomize Environment',
               b'NextMultiBrowser.autoRandomizeEnvironmentSeconds',
-              b'Randomize All Now',
+              b'NextMultiBrowser.environmentRandomizationMode',
+              b'iOS Mode',
+              b'Android Mode',
+              b'PC / Mac Mode',
+              b'Mixed Mode',
               b'Auto Randomize',
               b'NMB_MANUAL_DESKTOP_AUTOMATIC_ENVIRONMENT_114',
               b'NMB_APPLE_PASSWORD_AUTOFILL_116',
@@ -184,11 +176,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa"
-          IPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.ipa"
-          DEST_DIR="transfer/files/NextMultiBrowser/1.1.9"
-          FILE_NAME="NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa"
-          IPA_FILE_NAME="NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.ipa"
+          TIPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
+          IPA="$GITHUB_WORKSPACE/apps/next-multi-browser/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa"
+          DEST_DIR="transfer/files/NextMultiBrowser/1.1.10"
+          FILE_NAME="NextMultiBrowser_1.1.10_Device_Category_Modes.tipa"
+          IPA_FILE_NAME="NextMultiBrowser_1.1.10_Device_Category_Modes.ipa"
           mkdir -p "$DEST_DIR"
           cp "$TIPA" "$DEST_DIR/$FILE_NAME"
           cp "$IPA" "$DEST_DIR/$IPA_FILE_NAME"
@@ -214,17 +206,17 @@ jobs:
               current.append(item)
 
           entry = {
-              'id': 'nextmultibrowser-1.1.9-main-random-environment-auto-timer',
-              'name': 'Next Multi Browser 1.1.9 — Main Random Environment Timer',
-              'fileName': 'NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa',
+              'id': 'nextmultibrowser-1.1.10-device-category-modes',
+              'name': 'Next Multi Browser 1.1.10 — Device Category Modes',
+              'fileName': 'NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
               'type': 'tipa',
               'platform': 'TrollStore / RootHide / iOS 15+',
-              'version': '1.1.9 (17)',
-              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.9/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.tipa',
-              'ipaUrl': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.9/NextMultiBrowser_1.1.9_Main_Random_Environment_Auto_Timer.ipa',
+              'version': '1.1.10 (18)',
+              'url': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.tipa',
+              'ipaUrl': 'https://nextsolution.cc/transfer/files/NextMultiBrowser/1.1.10/NextMultiBrowser_1.1.10_Device_Category_Modes.ipa',
               'sha256': sha256,
               'sizeBytes': size,
-              'notes': 'Adds Random Environment directly to the main browser screen with one menu for immediate randomization and automatic 1, 2, 3, 5, or 10 minute randomization. The timer selection is saved across relaunches and pauses while the app is backgrounded. Each run uses the existing global 20-profile environment randomizer, preserving cookies, Google logins, persistent website data, profile isolation, the iPad Pro 12.9 adaptive layout, URL queue, AutoFill, auto refresh, and VPN features.'
+              'notes': 'Adds four global environment device modes to the main Random Environment control: iOS Mode assigns random iPhone presets, Android Mode assigns random Android phones, PC / Mac Mode mixes Windows Chrome and macOS Safari desktop presets, and Mixed Mode combines all categories. Selecting a mode immediately randomizes all 20 profiles, and the saved Auto Randomize timer continues using that selected mode. Cookies, Google logins, persistent website data, profile isolation, iPad Pro layout, URL queue, AutoFill, auto refresh, and VPN features remain intact.'
           }
           data['files'] = [entry] + current
           data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
@@ -236,9 +228,9 @@ jobs:
           python3 -m json.tool transfer/index.json >/dev/null
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          printf '%s\n' "Next Multi Browser 1.1.9 published $(date -u +%Y-%m-%dT%H:%M:%SZ)" > transfer/deploy-trigger.txt
+          printf '%s\n' "Next Multi Browser 1.1.10 published $(date -u +%Y-%m-%dT%H:%M:%SZ)" > transfer/deploy-trigger.txt
           git add transfer/index.json transfer/deploy-trigger.txt "$DEST_DIR/$FILE_NAME" "$DEST_DIR/$IPA_FILE_NAME"
           git diff --cached --stat
-          git commit -m 'Publish Next Multi Browser 1.1.9 to NS Transfer'
+          git commit -m 'Publish Next Multi Browser 1.1.10 to NS Transfer'
           git pull --rebase origin main
           git push origin HEAD:main
