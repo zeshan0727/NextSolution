@@ -12,3 +12,7 @@ with UTM, and exposes a direct **Start Android 11** action.
 The Xcode archive is built without an Apple signing certificate or provisioning
 profile. UTM's standard TrollStore/jailbreak packaging step embeds the runtime
 entitlements needed for JIT execution.
+
+The VM uses 2,048 MiB of guest RAM and a capped 256 MiB JIT translation cache.
+Existing Test 4 configurations are migrated in place without replacing the
+downloaded installer ISO or the persistent Android disk.

@@ -6,6 +6,8 @@ enum NextDroidVMConfiguration {
     static let expectedISOSize: UInt64 = 2_087_714_816
     static let expectedISOSHA256 = "9feb9482e6e5c41c52172a0d42a436ea808de1cfdd6b1e0187dc883b2df9085c"
     static let downloadURL = URL(string: "https://downloads.sourceforge.net/project/blissos-x86/Official/BlissOS14/OpenGApps/Generic/Bliss-v14.10.3-x86_64-OFFICIAL-opengapps-20241012.iso")!
+    static let guestMemoryMiB = 2_048
+    static let jitCacheMiB = 256
 
     static var virtualMachineURL: URL {
         UTMData.defaultStorageUrl.appendingPathComponent(directoryName, isDirectory: true)
@@ -25,6 +27,47 @@ enum NextDroidVMConfiguration {
 
     static var configURL: URL {
         virtualMachineURL.appendingPathComponent("config.plist")
+    }
+
+    /// Repairs the oversized Test 4 cache without replacing the downloaded ISO
+    /// or the user's installed Android disk. UTM's TrollStore profile uses
+    /// split-W^X JIT mappings, so each MiB of cache costs roughly two MiB of
+    /// process address space. Respect any smaller value selected by the user.
+    static func applySafeMemoryProfileIfNeeded() throws {
+        let manager = FileManager.default
+        guard manager.fileExists(atPath: configURL.path) else { return }
+
+        let data = try Data(contentsOf: configURL)
+        guard var configuration = try PropertyListSerialization.propertyList(
+            from: data,
+            options: [],
+            format: nil
+        ) as? [String: Any],
+        var system = configuration["System"] as? [String: Any] else {
+            return
+        }
+
+        var changed = false
+        let currentMemory = (system["MemorySize"] as? NSNumber)?.intValue ?? guestMemoryMiB
+        if currentMemory > guestMemoryMiB {
+            system["MemorySize"] = guestMemoryMiB
+            changed = true
+        }
+
+        let currentCache = (system["JITCacheSize"] as? NSNumber)?.intValue ?? 0
+        if currentCache == 0 || currentCache > jitCacheMiB {
+            system["JITCacheSize"] = jitCacheMiB
+            changed = true
+        }
+
+        guard changed else { return }
+        configuration["System"] = system
+        let updatedData = try PropertyListSerialization.data(
+            fromPropertyList: configuration,
+            format: .xml,
+            options: 0
+        )
+        try updatedData.write(to: configURL, options: .atomic)
     }
 
     static var propertyList: [String: Any] {
@@ -101,8 +144,8 @@ enum NextDroidVMConfiguration {
                 "CPUFlagsAdd": [],
                 "CPUFlagsRemove": [],
                 "ForceMulticore": false,
-                "JITCacheSize": 1024,
-                "MemorySize": 2048,
+                "JITCacheSize": jitCacheMiB,
+                "MemorySize": guestMemoryMiB,
                 "Target": "q35"
             ]
         ]

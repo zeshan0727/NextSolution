@@ -25,6 +25,7 @@ final class NextDroidInstaller: NSObject, ObservableObject, URLSessionDownloadDe
 
     override init() {
         super.init()
+        try? NextDroidVMConfiguration.applySafeMemoryProfileIfNeeded()
         phase = Self.isInstalled ? .ready : .idle
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 120
