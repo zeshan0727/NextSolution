@@ -25,6 +25,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import json
+          import subprocess
 
           src_dir = Path('.github/workflows')
           out_dir = Path('workflow-migration')
@@ -67,15 +68,17 @@ jobs:
 
               staged = out_dir / path.name
               staged.write_text(new, encoding='utf-8')
+              blob_sha = subprocess.check_output(['git', 'hash-object', str(staged)], text=True).strip()
               manifest.append({
                   'target': str(path),
                   'staged': str(staged),
+                  'sha': blob_sha,
               })
 
           (out_dir / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
           print(f'Staged {len(manifest)} workflow files')
           for item in manifest:
-              print(item['target'])
+              print(item['target'], item['sha'])
           PY
 
       - name: Publish staged workflow copies
@@ -88,7 +91,7 @@ jobs:
             echo "No workflow-domain migrations are needed."
             exit 0
           fi
-          git commit -m "Stage workflow link migration for nextjailbreak.com"
+          git commit -m "Record workflow blob SHAs for nextjailbreak.com migration"
           for attempt in 1 2 3 4 5; do
             git pull --rebase origin main || { git rebase --abort || true; sleep 3; continue; }
             if git push origin HEAD:main; then
