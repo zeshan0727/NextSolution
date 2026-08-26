@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
   "purpose": "Request a gated publisher run through the connected GitHub app",
-  "last_trigger_requested_at": "2026-08-26T05:52:57Z",
-  "reason": "Recover missed verified article 1 of 2"
+  "last_trigger_requested_at": "2026-08-26T05:55:55Z",
+  "reason": "Recover missed verified article 2 of 2"
 }
