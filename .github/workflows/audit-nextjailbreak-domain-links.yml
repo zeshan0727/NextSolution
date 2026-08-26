@@ -1,0 +1,53 @@
+name: Audit Next Jailbreak domain links
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-nextjailbreak-domain-links.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Scan every tracked file for legacy website domains
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          old_cc = ("next" + "solution" + "." + "cc").encode()
+          old_app = ("next" + "solution" + "." + "app").encode()
+          patterns = (old_cc, old_app)
+
+          raw = subprocess.check_output(["git", "ls-files", "-z"])
+          files = [Path(item.decode()) for item in raw.split(b"\0") if item]
+          hits = []
+          for path in files:
+              try:
+                  data = path.read_bytes().lower()
+              except OSError:
+                  continue
+              matched = [p.decode() for p in patterns if p in data]
+              if matched:
+                  hits.append((str(path), matched))
+
+          print(f"Tracked files scanned: {len(files)}")
+          print(f"Files containing legacy domains: {len(hits)}")
+          for path, matched in hits:
+              print(f"LEGACY_DOMAIN {path}: {', '.join(matched)}")
+
+          if hits:
+              raise SystemExit(1)
+          print("PASS: no legacy website-domain bytes remain in tracked files.")
+          PY
