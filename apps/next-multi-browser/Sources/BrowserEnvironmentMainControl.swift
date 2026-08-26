@@ -4,6 +4,7 @@ final class BrowserEnvironmentAutoRandomizeCoordinator {
     static let shared = BrowserEnvironmentAutoRandomizeCoordinator()
 
     private static let intervalDefaultsKey = "NextMultiBrowser.autoRandomizeEnvironmentSeconds"
+    private static let modeDefaultsKey = "NextMultiBrowser.environmentRandomizationMode"
     private static let buttonAccessibilityLabel = "Random Environment"
 
     private weak var browserController: BrowserGridViewController?
@@ -13,6 +14,19 @@ final class BrowserEnvironmentAutoRandomizeCoordinator {
     private var interval: TimeInterval? {
         let value = UserDefaults.standard.double(forKey: Self.intervalDefaultsKey)
         return value > 0 ? value : nil
+    }
+
+    private var mode: BrowserEnvironmentRandomizationMode {
+        get {
+            guard let rawValue = UserDefaults.standard.string(forKey: Self.modeDefaultsKey),
+                  let saved = BrowserEnvironmentRandomizationMode(rawValue: rawValue) else {
+                return .mixed
+            }
+            return saved
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: Self.modeDefaultsKey)
+        }
     }
 
     private init() {}
@@ -48,15 +62,33 @@ final class BrowserEnvironmentAutoRandomizeCoordinator {
             menu: makeEnvironmentMenu()
         )
         environmentItem.accessibilityLabel = Self.buttonAccessibilityLabel
-        environmentItem.accessibilityHint = "Randomize all profile environments now or choose an automatic randomize timer."
+        environmentItem.accessibilityHint = "Choose a device category, randomize all profiles now, or set an automatic randomize timer."
 
         currentItems.append(environmentItem)
         controller.navigationItem.leftBarButtonItems = currentItems
     }
 
     private func makeEnvironmentMenu() -> UIMenu {
+        let currentMode = mode
+
+        let modeActions = BrowserEnvironmentRandomizationMode.allCases.map { option in
+            UIAction(
+                title: option.title,
+                subtitle: option.subtitle,
+                image: UIImage(systemName: option.symbolName),
+                state: option == currentMode ? .on : .off
+            ) { [weak self] _ in
+                self?.selectModeAndRandomize(option)
+            }
+        }
+        let modeMenu = UIMenu(
+            title: "Device Mode • \(currentMode.title)",
+            image: UIImage(systemName: "rectangle.3.group"),
+            children: modeActions
+        )
+
         let randomizeNow = UIAction(
-            title: "Randomize All Now",
+            title: "Randomize All Now • \(currentMode.title)",
             image: UIImage(systemName: "shuffle")
         ) { [weak self] _ in
             self?.randomizeAll(showFeedback: true)
@@ -84,14 +116,22 @@ final class BrowserEnvironmentAutoRandomizeCoordinator {
         let currentTitle = currentInterval.map(formatMinutes) ?? "Off"
         let timerMenu = UIMenu(
             title: "Auto Randomize • \(currentTitle)",
+            subtitle: "Uses \(currentMode.title)",
             image: UIImage(systemName: "timer"),
             children: timerActions
         )
 
         return UIMenu(
             title: "Random Environment",
-            children: [randomizeNow, timerMenu]
+            children: [modeMenu, randomizeNow, timerMenu]
         )
+    }
+
+    private func selectModeAndRandomize(_ newMode: BrowserEnvironmentRandomizationMode) {
+        mode = newMode
+        randomizeAll(showFeedback: true)
+        restartTimer()
+        refreshMainButton()
     }
 
     private func setInterval(_ newInterval: TimeInterval?) {
@@ -119,12 +159,23 @@ final class BrowserEnvironmentAutoRandomizeCoordinator {
     }
 
     private func randomizeAll(showFeedback: Bool) {
-        let environments = BrowserProfileStore.shared.randomizeAllEnvironments()
+        let store = BrowserProfileStore.shared
+        let indices = Array(1...BrowserProfileStore.profileCount)
+        let existing = indices.map(store.environment(for:))
+        let environments = mode.randomizedBatch(
+            count: BrowserProfileStore.profileCount,
+            excluding: existing
+        )
+
         guard environments.count == BrowserProfileStore.profileCount else {
             if showFeedback {
                 showRandomizeError()
             }
             return
+        }
+
+        for (index, environment) in zip(indices, environments) {
+            store.setEnvironment(environment, for: index)
         }
 
         if showFeedback {
