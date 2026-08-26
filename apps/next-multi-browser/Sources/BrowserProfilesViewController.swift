@@ -12,6 +12,10 @@ final class BrowserProfilesViewController: UITableViewController {
     private let openProfileHandler: OpenProfileHandler
     private var profileObservation: NSObjectProtocol?
     private var storageRefreshes = Set<Int>()
+    private lazy var sessionTransferController = BrowserSessionTransferController(
+        profileStore: profileStore,
+        presenter: self
+    )
 
     init(profileStore: BrowserProfileStore, openProfileHandler: @escaping OpenProfileHandler) {
         self.profileStore = profileStore
@@ -36,6 +40,12 @@ final class BrowserProfilesViewController: UITableViewController {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 94
         tableView.accessibilityIdentifier = "browserProfilesTable"
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "Transfer",
+            style: .plain,
+            target: self,
+            action: #selector(openSessionTransfer)
+        )
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .refresh,
             target: self,
@@ -159,6 +169,11 @@ final class BrowserProfilesViewController: UITableViewController {
             openProfileHandler: openProfileHandler
         )
         navigationController?.pushViewController(controller, animated: true)
+    }
+
+    @objc private func openSessionTransfer() {
+        guard let item = navigationItem.leftBarButtonItem else { return }
+        sessionTransferController.presentMenu(from: item)
     }
 
     @objc private func refreshStorage() {
