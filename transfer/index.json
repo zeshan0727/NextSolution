@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-26T11:18:28Z",
+  "updatedAt": "2026-08-26T11:18:36Z",
   "files": [
+    {
+      "id": "module-glass-preview-1.1.1",
+      "name": "Module Glass Developer Console 1.1.1",
+      "fileName": "ModuleGlass-Preview-1.1.1.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / Jailbroken iOS 16+",
+      "version": "1.1.1",
+      "url": "https://nextjailbreak.com/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa",
+      "sha256": "6cf30eec233b45814d8b417545fc8b0781056f88fc47f0bfd0d846c065209b67",
+      "notes": "Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured."
+    },
     {
       "id": "nextlock-1.1.5-cpufix-test11-livefeatures-roothide",
       "name": "NextLock 1.1.5 CPU Fix Test 11 Live Features RootHide",
@@ -378,17 +389,6 @@
       "type": "deb",
       "name": "Module Glass 1.1.11 Complete RootHide",
       "url": "https://nextjailbreak.com/transfer/files/ModuleGlass/1.1.11/ModuleGlass_1.1.11_Complete_RootHide.deb"
-    },
-    {
-      "sha256": "eb80d49fbda6fd7ccef5b1cc7cb96ec5ac7483423b90df063a21e4ca5b075f24",
-      "id": "module-glass-preview-1.1.1",
-      "fileName": "ModuleGlass-Preview-1.1.1.tipa",
-      "platform": "TrollStore / Jailbroken iOS 16+",
-      "notes": "Auto Log Collector release. One-tap full Module Glass test enables the real Stable Recovery verbose runtime logger, refreshes tracked Control Center controllers, checks every module image, parses per-module SpringBoard diagnostics, saves .log + .json automatically, and auto-uploads when a Keychain GitHub token is configured.",
-      "version": "1.1.1",
-      "type": "tipa",
-      "name": "Module Glass Developer Console 1.1.1",
-      "url": "https://nextjailbreak.com/transfer/files/ModuleGlassPreview/1.1.1/ModuleGlass-Preview-1.1.1.tipa"
     }
   ]
 }
