@@ -1,0 +1,106 @@
+name: Publish Next Reminder 1.3.30 + NQR 1.0.15 to NS Transfer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextreminder-1330-transfer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      ARTIFACT_ID: '9492620721'
+      APP_DEST_DIR: transfer/files/NextReminder/1.3.30
+      APP_DEST_FILE: NextReminder_1.3.30_Unsigned.tipa
+      APP_SHA: de51f5b3c3390f09657afbe36516f1a46ee000aaa771b11d5db50cbac8c1944d
+      TWEAK_DEST_DIR: transfer/files/NextQuickReminder/1.0.15
+      TWEAK_DEST_FILE: NextQuickReminder_1.0.15_RootHide.deb
+      TWEAK_SHA: e11fd1e8e9889673fa5ec73de67234ec3a69ead605fddf1aa84718d18d16133f
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download exact verified build artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > /tmp/nr1330.zip
+          rm -rf /tmp/nr1330 && mkdir -p /tmp/nr1330
+          unzip -q /tmp/nr1330.zip -d /tmp/nr1330
+          test -f "/tmp/nr1330/${APP_DEST_FILE}"
+          test -f "/tmp/nr1330/${TWEAK_DEST_FILE}"
+          test "$(sha256sum "/tmp/nr1330/${APP_DEST_FILE}" | awk '{print $1}')" = "$APP_SHA"
+          test "$(sha256sum "/tmp/nr1330/${TWEAK_DEST_FILE}" | awk '{print $1}')" = "$TWEAK_SHA"
+
+      - name: Publish both builds and update feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$APP_DEST_DIR" "$TWEAK_DEST_DIR"
+          cp "/tmp/nr1330/${APP_DEST_FILE}" "$APP_DEST_DIR/$APP_DEST_FILE"
+          cp "/tmp/nr1330/${TWEAK_DEST_FILE}" "$TWEAK_DEST_DIR/$TWEAK_DEST_FILE"
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          remove_ids={
+            'nextreminder-1.3.29-manual-pending-reports',
+            'nextreminder-1.3.28-stable-files-rollback',
+            'nextreminder-1.3.27-files-stability-fix',
+            'nextquickreminder-1.0.14-background-pdf-roothide'
+          }
+          data['files']=[x for x in data.get('files',[]) if x.get('id') not in remove_ids]
+          items=[
+            {
+              'id':'nextreminder-1.3.30-automatic-pending-reports',
+              'name':'Next Reminder 1.3.30 — Automatic Pending Reports',
+              'fileName':'NextReminder_1.3.30_Unsigned.tipa',
+              'type':'tipa',
+              'platform':'Unsigned TIPA / iOS 16+',
+              'version':'1.3.30 (40)',
+              'url':'https://nextjailbreak.com/transfer/files/NextReminder/1.3.30/NextReminder_1.3.30_Unsigned.tipa',
+              'sha256':'de51f5b3c3390f09657afbe36516f1a46ee000aaa771b11d5db50cbac8c1944d',
+              'sizeBytes':2197838,
+              'notes':'Adds Automatic Email controls to the standalone Pending Reports screen while keeping the confirmed-stable Files implementation byte-for-byte unchanged. Choose a preset time and any weekdays or Daily. Manual PDF generation, newest-3 retention, sharing, and manual email remain available.'
+            },
+            {
+              'id':'nextquickreminder-1.0.15-automatic-reports-roothide',
+              'name':'Next Quick Reminder 1.0.15 — Automatic Reports RootHide',
+              'fileName':'NextQuickReminder_1.0.15_RootHide.deb',
+              'type':'deb',
+              'platform':'RootHide',
+              'version':'1.0.15',
+              'url':'https://nextjailbreak.com/transfer/files/NextQuickReminder/1.0.15/NextQuickReminder_1.0.15_RootHide.deb',
+              'sha256':'e11fd1e8e9889673fa5ec73de67234ec3a69ead605fddf1aa84718d18d16133f',
+              'sizeBytes':110284,
+              'notes':'Adds a SpringBoard background scheduler for daily or selected-day pending-reminder emails. At the configured time it reads the current Next Reminder database, generates a fresh PDF without opening the app, retains the newest 3 reports, and sends through the existing Gmail bridge. Prevents duplicate same-day sends and retries failures after 15 minutes. Manual Send PDF Report also generates a fresh report.'
+            }
+          ]
+          data['files']=items+data['files']
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
+          PY
+          python3 -m json.tool transfer/index.json >/dev/null
+
+      - name: Commit publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/index.json "$APP_DEST_DIR/$APP_DEST_FILE" "$TWEAK_DEST_DIR/$TWEAK_DEST_FILE"
+          git commit -m 'Publish Next Reminder 1.3.30 and NQR 1.0.15 automatic reports'
+          git push origin HEAD:main

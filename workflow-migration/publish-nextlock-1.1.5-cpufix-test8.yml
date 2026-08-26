@@ -1,0 +1,252 @@
+name: Build and Publish NextLock 1.1.5 CPU Fix Test 8
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-test8.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-cpufix-test8
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Prepare Test 8 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feature/nextlock-photo-content-modes
+          git worktree add "$RUNNER_TEMP/nextlock-feature" FETCH_HEAD
+          P="$RUNNER_TEMP/nextlock-feature/source/NextLockPerfFix"
+          S="$P/TweakTest7.m"
+          test -f "$S"
+          grep -q 'NextLockPerfFix 1.1.5-test7 refined-full-photo' "$S"
+
+          cp "$S" "$P/TweakTest8.m"
+          python3 - "$P/TweakTest8.m" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1]); t=p.read_text()
+
+          t=t.replace('NextLockPerfFix 1.1.5-test7 refined-full-photo 2048px test5-cpu auto-stretch-full-cutcrop',
+                      'NextLockPerfFix 1.1.5-test8 preserve-all-style skip-callback-photo refined-full-picker')
+          t=t.replace('// Test 7 keeps the live-proven Test 5 CPU strategy: suppress only the redundant\n// 120 Hz callback and the duplicate deferred render. Normal layout/render code\n// stays unthrottled so time/date/photo position controls remain functional.',
+                      '// Test 8 keeps the callback itself alive because live device testing proved that\n// time/date position, color, weight, style, glow and shadow rely on that path.\n// Only the redundant photo renderer call made while the callback flag is set is\n// skipped. Normal callback styling + normal layout + preference refresh remain live.')
+          t=t.replace('static void (*NLOriginalHotCallbackBlock)(void *blockObject) = NULL;\n','')
+          t=t.replace('static void NLSuppressHotCallback(void *blockObject) {\n    (void)blockObject;\n}\n\n','')
+
+          anchor='static BOOL NLInstalled = NO;\n'
+          insert='static BOOL NLInstalled = NO;\nstatic volatile uint8_t *NLHotCallbackFlag = NULL; // arm64e LockGlyphTime +0x18EF4\n'
+          if anchor not in t: raise SystemExit('install anchor missing')
+          t=t.replace(anchor,insert,1)
+
+          fn='static void NLPhotosWithContentModes(id host) {\n    if (NLOriginalPhotos == NULL) return;\n'
+          repl='static void NLPhotosWithContentModes(id host) {\n    if (NLOriginalPhotos == NULL) return;\n\n    // The original 120 Hz callback sets +0x18EF4 while it applies live styling.\n    // Preserve updateA/style work, but do not repeat the expensive photo renderer\n    // from that callback. Photos still render from normal layout/global refresh.\n    if (NLHotCallbackFlag != NULL && *NLHotCallbackFlag != 0) return;\n'
+          if fn not in t: raise SystemExit('photos function anchor missing')
+          t=t.replace(fn,repl,1)
+
+          t=t.replace('    uintptr_t callbackOffset = isArm64e ? kArm64eCallbackBlockOffset : kArm64CallbackBlockOffset;\n','')
+          hook='    MSHookFunction((void *)((uintptr_t)mh + callbackOffset),\n                   (void *)&NLSuppressHotCallback,\n                   (void **)&NLOriginalHotCallbackBlock);\n'
+          if hook not in t: raise SystemExit('callback hook block missing')
+          t=t.replace(hook,'')
+
+          after='    uintptr_t contentModeStub = isArm64e ? kArm64eSetContentModeStub : kArm64SetContentModeStub;\n'
+          repl_after=after+'\n    // Verified from the active arm64e callback disassembly: +0x18EF4 is set to 1\n    // immediately before updateA/photos and cleared immediately after.\n    if (isArm64e) NLHotCallbackFlag = (volatile uint8_t *)((uintptr_t)mh + 0x18EF4);\n'
+          if after not in t: raise SystemExit('content stub anchor missing')
+          t=t.replace(after,repl_after,1)
+
+          t=t.replace('        NLOriginalHotCallbackBlock != NULL &&\n','')
+          t=t.replace('Test7 SpringBoard hooks installed (%s): Test5 CPU fix + refined photo modes',
+                      'Test8 SpringBoard hooks installed (%s): full styling callback preserved; callback photo duplicate skipped')
+          t=t.replace('Test7 refined full-photo picker installed','Test8 full-photo no-crop picker installed')
+          t=t.replace('// Test 7 keeps the whole photo visible in the selector and stores the full aspect',
+                      '// Test 8 keeps the whole photo visible in the selector and stores the full aspect')
+
+          # Ensure the old hot-callback suppression is completely gone.
+          if 'NLSuppressHotCallback' in t or 'NLOriginalHotCallbackBlock' in t:
+              raise SystemExit('old callback suppression still present')
+          if 'NLHotCallbackFlag' not in t or '0x18EF4' not in t:
+              raise SystemExit('callback photo guard missing')
+          p.write_text(t)
+          PY
+
+          sed -i '' 's/NextLockPerfFix_FILES = TweakTest7.m/NextLockPerfFix_FILES = TweakTest8.m/' "$P/Makefile"
+          grep -q 'INSTALL_TARGET_PROCESSES = SpringBoard Preferences' "$P/Makefile"
+          grep -q 'com.apple.Preferences' "$P/NextLockPerfFix.plist"
+          grep -q 'preserve-all-style skip-callback-photo' "$P/TweakTest8.m"
+          grep -q 'NLHotCallbackFlag' "$P/TweakTest8.m"
+          ! grep -q 'NLSuppressHotCallback' "$P/TweakTest8.m"
+
+      - name: Build RootHide Test 8 shim
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/nextlock-feature/source/NextLockPerfFix"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          echo "FIX_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Integrate Test 8 into original NextLock 1.1.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb'
+          STAGE="$RUNNER_TEMP/nextlock-stage"
+          FIXSTAGE="$RUNNER_TEMP/fix-stage"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          dpkg-deb -x "$FIX_DEB" "$FIXSTAGE"
+
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          FIX=$(find "$FIXSTAGE" -name NextLockPerfFix.dylib -print -quit)
+          FIXPLIST=$(find "$FIXSTAGE" -name NextLockPerfFix.plist -print -quit)
+          test -n "$LOCK"; test -n "$FIX"; test -n "$FIXPLIST"
+
+          BEFORE=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          DYNDIR=$(dirname "$LOCK")
+          cp "$FIX" "$DYNDIR/NextLockPerfFix.dylib"
+          cp "$FIXPLIST" "$DYNDIR/NextLockPerfFix.plist"
+          test "$BEFORE" = "$(shasum -a 256 "$LOCK" | awk '{print $1}')"
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,sys
+          stage=Path(sys.argv[1])
+          bundle=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+          for i in range(1,5):
+              p=bundle/f'PhotoFrame{i}.plist'
+              with p.open('rb') as f: data=plistlib.load(f)
+              items=[x for x in data['items'] if x.get('key') != f'photoFrame{i}ContentMode']
+              cell={
+                  'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+                  'cell':'PSLinkListCell','default':0,
+                  'defaults':'com.nextsolution.lockglyphtime',
+                  'detail':'PSListItemsController',
+                  'key':f'photoFrame{i}ContentMode',
+                  'label':'Photo Display',
+                  'validTitles':['Auto (Recommended)','Stretch','Full Photo','Cut / Crop'],
+                  'validValues':[0,1,2,3],
+              }
+              items.insert(4 if len(items)>=4 else len(items),cell)
+              data['items']=items
+              with p.open('wb') as f: plistlib.dump(data,f,fmt=plistlib.FMT_XML,sort_keys=False)
+          PY
+
+          python3 - "$STAGE/DEBIAN/control" <<'PY'
+          from pathlib import Path
+          import re,sys
+          p=Path(sys.argv[1]); t=p.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu8', t, flags=re.M)
+          desc='Description: NextLock 1.1.5 CPU-fix Test 8. Restores the complete live time/date styling path including position, color, font weight, style, glow and shadow. Instead of suppressing the 120 Hz callback, Test 8 preserves its styling update and skips only the redundant photo-render call made inside that callback. Also injects the refined picker into Settings so selected photos are saved uncropped/full-aspect, with Auto, Stretch, Full Photo and Cut/Crop chosen later per frame.'
+          t=re.sub(r'^Description: .*$',desc,t,flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
+          p.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "ORIGINAL_LOCK_SHA=$BEFORE" >> "$GITHUB_ENV"
+
+      - name: Validate Test 8 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu8'
+          X=$(mktemp -d)
+          dpkg-deb -x "$OUTDEB" "$X"
+          LOCK=$(find "$X" -name LockGlyphTime.dylib -print -quit)
+          FIX=$(find "$X" -name NextLockPerfFix.dylib -print -quit)
+          PLIST=$(find "$X" -name NextLockPerfFix.plist -print -quit)
+          test -n "$LOCK"; test -n "$FIX"; test -n "$PLIST"
+          test "$(shasum -a 256 "$LOCK" | awk '{print $1}')" = "$ORIGINAL_LOCK_SHA"
+          strings -a "$FIX" | grep -q 'preserve-all-style skip-callback-photo refined-full-picker'
+          strings -a "$FIX" | grep -q 'Test8 full-photo no-crop picker installed'
+          strings -a "$FIX" | grep -q 'Test8 SpringBoard hooks installed'
+          ! strings -a "$FIX" | grep -q 'NLSuppressHotCallback'
+          plutil -p "$PLIST" | grep -q 'com.apple.springboard'
+          plutil -p "$PLIST" | grep -q 'com.apple.Preferences'
+          lipo -info "$FIX" | grep -q 'arm64e'
+          for i in 1 2 3 4; do
+            P="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/PhotoFrame${i}.plist"
+            plutil -p "$P" | grep -q "photoFrame${i}ContentMode"
+          done
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+
+      - name: Publish Test 8 to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-CPUFix-Test8-FullFeatures'
+          DEST="$DEST_DIR/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA
+
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json'); data=json.loads(p.read_text())
+          files=data.get('files',[])
+          remove={x.get('id') for x in files if x.get('id','').startswith('nextlock-1.1.5-cpufix-test')}
+          files=[x for x in files if x.get('id') not in remove]
+          entry={
+            'id':'nextlock-1.1.5-cpufix-test8-fullfeatures-roothide',
+            'name':'NextLock 1.1.5 CPU Fix Test 8 Full Features RootHide',
+            'fileName':'NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test8',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test8-FullFeatures/NextLock_1.1.5_CPUFix_Test8_FullFeatures_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],
+            'notes':'Test 8 restores the complete time/date styling callback required for position, color, font weight, style, glow and shadow. It no longer suppresses that callback; only its redundant photo-render call is skipped while normal photo/layout refresh remains active. The refined picker is now injected into Settings (com.apple.Preferences), so selecting a photo keeps the whole uncropped image; Auto, Stretch, Full Photo and Cut/Crop are chosen later per frame. Original NextLock 1.1.4 feature binary remains unchanged.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 CPU Fix Test 8 full features'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - name: Upload Test 8 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.5-CPUFix-Test8-FullFeatures-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14

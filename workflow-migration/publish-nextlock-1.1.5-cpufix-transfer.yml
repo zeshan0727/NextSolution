@@ -1,0 +1,88 @@
+name: Publish NextLock 1.1.5 CPU Fix Test 1 to Transfer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-transfer.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-cpufix-transfer
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Publish NextLock CPU fix and update Transfer manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC_BRANCH='debug/nextlock-1.1.4-cpu-fix'
+          SRC_PATH='transfer/files/NextLock/1.1.5-CPUFix-Integrated-Test1/NextLock_1.1.5_CPUFix_Test1_RootHide.deb'
+          DEST_DIR='transfer/files/NextLock/1.1.5-CPUFix-Test1'
+          DEST="$DEST_DIR/NextLock_1.1.5_CPUFix_Test1_RootHide.deb"
+          INDEX='transfer/index.json'
+          EXPECTED_SHA='1a9422f8b02d568c4f5f61f9e81f2cea7c97401a0fda40d1cc8cc6f535f3563e'
+
+          test -s "$INDEX"
+          git fetch origin "$SRC_BRANCH"
+          mkdir -p "$DEST_DIR"
+          git show "FETCH_HEAD:$SRC_PATH" > "$DEST"
+          test -s "$DEST"
+
+          SHA256=$(sha256sum "$DEST" | awk '{print $1}')
+          test "$SHA256" = "$EXPECTED_SHA"
+          export SHA256
+
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          index_path = Path('transfer/index.json')
+          data = json.loads(index_path.read_text())
+          files = data.get('files', [])
+          entry_id = 'nextlock-1.1.5-cpufix-test1-roothide'
+          files = [item for item in files if item.get('id') != entry_id]
+          entry = {
+              'id': entry_id,
+              'name': 'NextLock 1.1.5 CPU Fix Test 1 RootHide',
+              'fileName': 'NextLock_1.1.5_CPUFix_Test1_RootHide.deb',
+              'type': 'deb',
+              'platform': 'RootHide',
+              'version': '1.1.5-test1',
+              'url': 'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test1/NextLock_1.1.5_CPUFix_Test1_RootHide.deb',
+              'sha256': os.environ['SHA256'],
+              'notes': 'NextLock 1.1.4 feature-preserving CPU-fix test. Keeps the original LockGlyphTime 1.1.4 runtime and all clock/date, four-frame photo/sticker, sizing, positioning, fonts, colors and shadow features, while adding an exact-result transparency cache to stop repeated full-image CoreGraphics/vImage alpha scans during layout.'
+          }
+          data['files'] = [entry] + files
+          data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          index_path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+          python3 -m json.tool "$INDEX" >/dev/null
+          grep -q 'nextlock-1.1.5-cpufix-test1-roothide' "$INDEX"
+          grep -q "$SHA256" "$INDEX"
+          test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
+
+      - name: Commit Transfer publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/files/NextLock/1.1.5-CPUFix-Test1/NextLock_1.1.5_CPUFix_Test1_RootHide.deb transfer/index.json
+          git commit -m 'Publish NextLock 1.1.5 CPU fix test to Transfer' || true
+          git pull --rebase origin main
+          git push origin HEAD:main

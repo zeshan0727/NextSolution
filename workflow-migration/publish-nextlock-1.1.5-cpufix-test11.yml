@@ -1,0 +1,181 @@
+# Test 11 publisher: validated live Time/Date runtime feature restoration
+name: Build and Publish NextLock 1.1.5 CPU Fix Test 11
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-test11.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'transfer/build-triggers/nextlock-test11-publish.txt'
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-test11.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-cpufix-test11
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Build RootHide feature fixer
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/source/NextLockFeatureFix"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          echo "FIX_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Integrate Test 11 and refine controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb'
+          test -f "$BASE"
+          STAGE="$RUNNER_TEMP/nextlock-test11"
+          FIX="$RUNNER_TEMP/featurefix"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          dpkg-deb -x "$FIX_DEB" "$FIX"
+
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          FDYLIB=$(find "$FIX" -name NextLockFeatureFix.dylib -print -quit)
+          FPLIST=$(find "$FIX" -name NextLockFeatureFix.plist -print -quit)
+          test -n "$LOCK"; test -n "$FDYLIB"; test -n "$FPLIST"
+          cp "$FDYLIB" "$(dirname "$LOCK")/NextLockFeatureFix.dylib"
+          cp "$FPLIST" "$(dirname "$LOCK")/NextLockFeatureFix.plist"
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,re,sys
+          stage=Path(sys.argv[1]); b=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+
+          def refine(path, kind):
+              with path.open('rb') as f: d=plistlib.load(f)
+              xkey='timeOffsetX' if kind=='Time' else 'dateOffsetX'
+              ykey='timeOffsetY' if kind=='Time' else 'dateOffsetY'
+              align='timeAlignment' if kind=='Time' else 'dateAlignment'
+              src=d.get('items',[])
+              out=[]
+              for obj in src:
+                  if obj.get('key')==align: continue
+                  key=obj.get('key')
+                  if key in (xkey,ykey):
+                      direction='LEFT / RIGHT' if key==xkey else 'UP / DOWN'
+                      title=f'{kind.upper()} POSITION — {direction}'
+                      footer=(f'Moves only the {kind.lower()}. ' +
+                              ('Negative = left, positive = right.' if key==xkey else 'Negative = up, positive = down.'))
+                      out.append({'cell':'PSGroupCell','label':title,'footerText':footer})
+                      obj=dict(obj)
+                      obj['label']='Left / Right' if key==xkey else 'Up / Down'
+                      obj['min']=-300; obj['max']=300; obj['showValue']=True
+                  else:
+                      obj=dict(obj)
+                  out.append(obj)
+              d['items']=out
+              with path.open('wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          refine(b/'Time.plist','Time')
+          refine(b/'Date.plist','Date')
+          c=stage/'DEBIAN/control'; t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu11', t, flags=re.M)
+          desc=('Description: NextLock 1.1.5 CPU-fix Test 11. Adds a direct post-render runtime fixer for Time/Date X/Y movement, color and shadow/glow so UIKit layout cannot overwrite them. Slider functions are shown as visible section labels. Keeps Test 10 independent Time/Date fonts and all validated CPU/photo fixes.')
+          t=re.sub(r'^Description: .*$',desc,t,flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
+          c.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu11'
+
+          X=$(mktemp -d); dpkg-deb -x "$OUTDEB" "$X"
+          F=$(find "$X" -name NextLockFeatureFix.dylib -print -quit)
+          strings -a "$F" | grep -q '1.1.5-test11 live-position-color-shadow arm64e'
+          TP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Time.plist"
+          DP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Date.plist"
+          plutil -p "$TP" | grep -q 'TIME POSITION — LEFT / RIGHT'
+          plutil -p "$TP" | grep -q 'TIME POSITION — UP / DOWN'
+          plutil -p "$DP" | grep -q 'DATE POSITION — LEFT / RIGHT'
+          plutil -p "$DP" | grep -q 'DATE POSITION — UP / DOWN'
+          ! plutil -p "$TP" | grep -q 'timeAlignment'
+          ! plutil -p "$DP" | grep -q 'dateAlignment'
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+
+      - name: Publish Test 11 to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B nextlock-test11-publish origin/main
+          DEST_DIR='transfer/files/NextLock/1.1.5-CPUFix-Test11-LiveFeatures'
+          DEST="$DEST_DIR/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA
+
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json'); data=json.loads(p.read_text())
+          files=[x for x in data.get('files',[]) if not x.get('id','').startswith('nextlock-1.1.5-cpufix-test')]
+          entry={
+            'id':'nextlock-1.1.5-cpufix-test11-livefeatures-roothide',
+            'name':'NextLock 1.1.5 CPU Fix Test 11 Live Features RootHide',
+            'fileName':'NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test11',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test11-LiveFeatures/NextLock_1.1.5_CPUFix_Test11_LiveFeatures_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],
+            'notes':'Test 11 keeps the validated CPU/photo fixes and independent Time/Date font controls. It adds a direct post-render runtime fix for both Time and Date position, color and shadow/glow, and adds visible function labels above every Time/Date movement slider.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 CPU Fix Test 11 live features'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test11-LiveFeatures-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14

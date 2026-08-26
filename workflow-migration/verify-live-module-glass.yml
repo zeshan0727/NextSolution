@@ -1,0 +1,71 @@
+name: Verify Live Module Glass
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-live-module-glass.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live nextjailbreak.com package indexes and DEBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://nextjailbreak.com'
+          mkdir -p /tmp/live
+          for f in Release Packages Packages.gz Packages.bz2 Packages.xz Packages.zst; do
+            echo "===== $f ====="
+            curl -fL --retry 3 --retry-delay 2 -A 'Sileo/2 APT-HTTP' "$base/$f?verify=$(date +%s)" -o "/tmp/live/$f"
+            stat -c 'size=%s' "/tmp/live/$f"
+          done
+          cp /tmp/live/Packages /tmp/live/plain
+          gzip -dc /tmp/live/Packages.gz > /tmp/live/from-gz
+          bzip2 -dc /tmp/live/Packages.bz2 > /tmp/live/from-bz2
+          xz -dc /tmp/live/Packages.xz > /tmp/live/from-xz
+          zstd -dcq /tmp/live/Packages.zst > /tmp/live/from-zst
+          for f in from-gz from-bz2 from-xz from-zst; do
+            cmp /tmp/live/plain "/tmp/live/$f"
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/live/plain').read_text()
+          wanted={
+            'com.nextsolution.nextaura.cc-module-backgrounds':'1.0.18',
+            'com.nextsolution.nextaura.runtime.ccbackgrounds':'1.0.14',
+            'com.nextsolution.nextaura.runtime.preferences':'1.0.5',
+          }
+          found={}
+          for stanza in text.strip().split('\n\n'):
+              f={}
+              for line in stanza.splitlines():
+                  if ': ' in line:
+                      k,v=line.split(': ',1); f[k]=v
+              if f.get('Package') in wanted:
+                  print('===== LIVE STANZA =====')
+                  print(stanza)
+                  print()
+                  if f.get('Version') == wanted[f['Package']]:
+                      found[f['Package']]=f
+          assert set(found)==set(wanted), f'missing exact live stanzas: {set(wanted)-set(found)}'
+          for p,f in found.items():
+              print(p, f['Version'], f['Filename'])
+          PY
+          curl -fL --retry 3 --retry-delay 2 -A 'Sileo/2 APT-HTTP' "$base/debfiles/NextAura_cc_module_backgrounds_1.0.18_RootHide.deb?verify=$(date +%s)" -o /tmp/live/module.deb
+          curl -fL --retry 3 --retry-delay 2 -A 'Sileo/2 APT-HTTP' "$base/debfiles/NextAura_Runtime_ccbackgrounds_1.0.14_RootHide.deb?verify=$(date +%s)" -o /tmp/live/runtime.deb
+          curl -fL --retry 3 --retry-delay 2 -A 'Sileo/2 APT-HTTP' "$base/debfiles/NextAura_Runtime_preferences_1.0.5_RootHide.deb?verify=$(date +%s)" -o /tmp/live/prefs.deb
+          echo '===== LIVE MODULE CONTROL ====='
+          dpkg-deb -f /tmp/live/module.deb
+          echo '===== LIVE RUNTIME CONTROL ====='
+          dpkg-deb -f /tmp/live/runtime.deb
+          echo '===== LIVE PREFS CONTROL ====='
+          dpkg-deb -f /tmp/live/prefs.deb
+          test "$(dpkg-deb -f /tmp/live/module.deb Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          test "$(dpkg-deb -f /tmp/live/module.deb Version)" = '1.0.18'
+          test "$(dpkg-deb -f /tmp/live/runtime.deb Package)" = 'com.nextsolution.nextaura.runtime.ccbackgrounds'
+          test "$(dpkg-deb -f /tmp/live/runtime.deb Version)" = '1.0.14'
+          test "$(dpkg-deb -f /tmp/live/prefs.deb Package)" = 'com.nextsolution.nextaura.runtime.preferences'
+          test "$(dpkg-deb -f /tmp/live/prefs.deb Version)" = '1.0.5'
+          echo LIVE_MODULE_GLASS_CHAIN_OK

@@ -1,0 +1,128 @@
+name: Build YouTube Fresh Tweaks roundup
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "video-production/top-8-jailbreak-tweaks-2026/**"
+      - ".github/workflows/build-youtube-fresh-tweaks-roundup.yml"
+      - "NextSolutionRepoIcon.png"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: youtube-fresh-tweaks-roundup
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install render dependency
+        run: python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+
+      - name: Install media tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+
+      - name: Download credited feature screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          assets="video-production/top-8-jailbreak-tweaks-2026/assets"
+          mkdir -p "$assets"
+          fetch() {
+            local url="$1"
+            local output="$2"
+            curl --fail --location --retry 4 --retry-all-errors --connect-timeout 20 --max-time 120 \
+              --user-agent "NextSolutionVideoBuilder/1.0 (+https://nextjailbreak.com)" \
+              --output "$assets/$output" "$url"
+          }
+          fetch "https://media.havoc.app/670de6309d2f1af2966fc7e0" "hello-1.jpg"
+          fetch "https://media.havoc.app/6721992232685ae83f4ccbb1" "hello-2.jpg"
+          fetch "https://media.havoc.app/691e9346174b1c77f3400337" "icontweak2-1.jpg"
+          fetch "https://media.havoc.app/6919e8be2eba311408934f7e" "icontweak2-2.jpg"
+          fetch "https://media.havoc.app/6a76e7680cb765625f224503" "nextup3-1.jpg"
+          fetch "https://media.havoc.app/6a76e7950cb765625f2245bb" "nextup3-2.jpg"
+          fetch "https://tools4hack.santalab.me/media/uploads/2023/07/jbapp-podsgrant-1.jpg" "podsgrant-1.jpg"
+          fetch "https://tools4hack.santalab.me/media/uploads/2023/07/jbapp-podsgrant-2.jpg" "podsgrant-2.jpg"
+          fetch "https://cdn.chariz.cloud/screenshot/swipeextenderx/swipeextenderx-1.jpg" "swipeextenderx-1.jpg"
+          fetch "https://cdn.chariz.cloud/screenshot/swipeextenderx/swipeextenderx-2.jpg" "swipeextenderx-2.jpg"
+          fetch "https://media.havoc.app/6a7ce4670dc6f01051a74211" "reo-1.jpg"
+          fetch "https://media.havoc.app/66839a57b31c69deb54b6c24" "reo-2.jpg"
+          fetch "https://media.havoc.app/68712955577138420bff0e9e" "lslyrics-1.jpg"
+          fetch "https://media.havoc.app/6894e332883fc026adf8b658" "lslyrics-2.jpg"
+          fetch "https://media.havoc.app/6a03ce2ce8e7f6cb1bc1d188" "phonehub-1.jpg"
+          fetch "https://media.havoc.app/6a03ce4be8e7f6cb1bc1d26c" "phonehub-2.jpg"
+
+      - name: Check encrypted OpenAI secret
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY is not configured as an encrypted repository secret." >&2
+            exit 1
+          fi
+
+      - name: Render narrated review package
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python3 video-production/top-8-jailbreak-tweaks-2026/build_video.py \
+            --render \
+            --output video-output/top-8-jailbreak-tweaks-2026
+
+      - name: Validate output
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="video-output/top-8-jailbreak-tweaks-2026"
+          test -s "$output/top-8-jailbreak-tweaks-2026.mp4"
+          test -s "$output/thumbnail.png"
+          test -s "$output/captions.srt"
+          test -s "$output/youtube-metadata.json"
+          test -s "$output/shorts/youtube-shorts-metadata.json"
+          test "$(find "$output/shorts" -maxdepth 1 -name '*.mp4' -type f | wc -l)" -eq 8
+          test "$(find "$output/shorts/covers" -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 8
+          dimensions="$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "$output/top-8-jailbreak-tweaks-2026.mp4")"
+          test "$dimensions" = "1920x1080"
+          for short in "$output"/shorts/*.mp4; do
+            short_dimensions="$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "$short")"
+            test "$short_dimensions" = "1080x1920"
+          done
+          ffprobe -v error \
+            -show_entries stream=codec_name,width,height \
+            -show_entries format=duration,size \
+            -of json \
+            "$output/top-8-jailbreak-tweaks-2026.mp4" \
+            | tee "$output/ffprobe.json"
+
+      - name: Remove intermediate render files
+        run: |
+          output="video-output/top-8-jailbreak-tweaks-2026"
+          rm -f "$output"/scene-*.aac
+          rm -f "$output"/scene-*.mp4
+          rm -f "$output/joined.mp4"
+          rm -f "$output/concat.txt"
+
+      - name: Upload review package
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-top-8-jailbreak-tweaks-2026-${{ github.run_number }}
+          path: video-output/top-8-jailbreak-tweaks-2026/
+          if-no-files-found: error
+          retention-days: 14
+

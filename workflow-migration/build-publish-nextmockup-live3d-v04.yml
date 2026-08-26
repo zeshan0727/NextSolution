@@ -1,0 +1,123 @@
+name: Build and Publish Next Mockup Live 3D v0.4
+# retrigger publication after workflow registration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-publish-nextmockup-live3d-v04.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextmockup-live3d-v04
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Live 3D TIPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC='applications/NextMockupStudio-3D/NextMockupStudio.m'
+          BUILD="$RUNNER_TEMP/nextmockup-live3d"
+          APP="$BUILD/Payload/NextMockupStudio.app"
+          OUT="$BUILD/NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa"
+          rm -rf "$BUILD"
+          mkdir -p "$APP"
+          cp "$SRC" "$BUILD/NextMockupStudio.m"
+          sed -i '' 's/-M_PI_2/-1.57079632679/g' "$BUILD/NextMockupStudio.m"
+
+          cat > "$APP/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>CFBundleDisplayName</key><string>Next Mockup</string>
+            <key>CFBundleExecutable</key><string>NextMockupStudio</string>
+            <key>CFBundleIdentifier</key><string>cc.nextsolution.nextmockup.test</string>
+            <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+            <key>CFBundleName</key><string>NextMockupStudio</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>0.4</string>
+            <key>CFBundleVersion</key><string>4</string>
+            <key>LSRequiresIPhoneOS</key><true/>
+            <key>MinimumOSVersion</key><string>16.0</string>
+            <key>NSPhotoLibraryUsageDescription</key><string>Select screenshots to place on the live 3D phone screen.</string>
+            <key>NSPhotoLibraryAddUsageDescription</key><string>Save rendered mockups to Photos.</string>
+            <key>UILaunchScreen</key><dict/>
+            <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
+            <key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
+          </dict></plist>
+          PLIST
+
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          xcrun --sdk iphoneos clang \
+            -arch arm64 -isysroot "$SDK" -miphoneos-version-min=16.0 \
+            -fobjc-arc -O2 "$BUILD/NextMockupStudio.m" \
+            -framework UIKit -framework Foundation -framework SceneKit -framework QuartzCore \
+            -o "$APP/NextMockupStudio"
+
+          chmod +x "$APP/NextMockupStudio"
+          file "$APP/NextMockupStudio"
+          (cd "$BUILD" && /usr/bin/zip -qry "$OUT" Payload)
+          test -s "$OUT"
+          echo "TIPA_PATH=$OUT" >> "$GITHUB_ENV"
+          echo "TIPA_SHA=$(shasum -a 256 "$OUT" | awk '{print $1}')" >> "$GITHUB_ENV"
+          echo "TIPA_SIZE=$(stat -f%z "$OUT")" >> "$GITHUB_ENV"
+
+      - name: Publish to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextMockupStudio/0.4'
+          DEST="$DEST_DIR/NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa"
+          mkdir -p "$DEST_DIR"
+          cp "$TIPA_PATH" "$DEST"
+          export TIPA_SHA TIPA_SIZE
+
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from datetime import datetime, timezone
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          ids={'nextmockupstudio-0.1-iphone17promax-test','nextmockupstudio-0.2-iphone17promax-test','nextmockupstudio-0.4-live3d'}
+          files=[x for x in data.get('files',[]) if x.get('id') not in ids]
+          entry={
+            'id':'nextmockupstudio-0.4-live3d',
+            'name':'Next Mockup Studio 0.4 — Live 3D iPhone Test',
+            'fileName':'NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa',
+            'type':'tipa',
+            'platform':'TrollStore / iOS 16+',
+            'version':'0.4',
+            'url':'https://nextjailbreak.com/transfer/files/NextMockupStudio/0.4/NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa',
+            'sha256':os.environ['TIPA_SHA'],
+            'sizeBytes':int(os.environ['TIPA_SIZE']),
+            'notes':'Live SceneKit 3D proof build: drag to rotate, pinch to zoom, import a screenshot as the screen texture, switch Silver/Cosmic Orange/Deep Blue materials, and export PNG including transparent-background mode.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+          python3 -m json.tool transfer/index.json >/dev/null
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$TIPA_SHA"
+
+      - name: Commit NS Transfer publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/files/NextMockupStudio/0.4/NextMockupStudio-iPhone17ProMax-Live3D-v0.4.tipa transfer/index.json
+          git commit -m 'Publish Next Mockup Studio 0.4 Live 3D to NS Transfer'
+          git pull --rebase origin main
+          git push origin HEAD:main

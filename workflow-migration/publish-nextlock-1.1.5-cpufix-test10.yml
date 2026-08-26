@@ -1,0 +1,175 @@
+# Test 10 publisher: time/date independent movement + styling controls
+name: Build and Publish NextLock 1.1.5 CPU Fix Test 10
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-test10.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-cpufix-test10
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install package tools
+        run: brew install dpkg
+
+      - name: Build Test 10 from validated Test 9
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.5-CPUFix-Test9-FreePosition/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb'
+          test -f "$BASE"
+          STAGE="$RUNNER_TEMP/nextlock-test10"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib, re, sys
+
+          stage = Path(sys.argv[1])
+          bundle = stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+
+          def tune(path, kind):
+              with path.open('rb') as f:
+                  data = plistlib.load(f)
+              items = []
+              alignment_key = 'timeAlignment' if kind == 'Time' else 'dateAlignment'
+              font_key = 'timeFont' if kind == 'Time' else 'dateFont'
+              weight_key = 'timeFontWeight' if kind == 'Time' else 'dateFontWeight'
+              style_key = 'timeStyle' if kind == 'Time' else 'dateStyle'
+              scale_key = 'timeScale' if kind == 'Time' else 'dateScale'
+              x_key = 'timeOffsetX' if kind == 'Time' else 'dateOffsetX'
+              y_key = 'timeOffsetY' if kind == 'Time' else 'dateOffsetY'
+
+              for obj in data.get('items', []):
+                  if obj.get('key') == alignment_key:
+                      continue
+                  obj = dict(obj)
+                  key = obj.get('key')
+                  if key == font_key:
+                      obj['label'] = f'{kind} Font — {kind} Only'
+                  elif key == weight_key:
+                      obj['label'] = f'{kind} Font Weight'
+                  elif key == style_key:
+                      obj['label'] = f'{kind} Style'
+                  elif key == scale_key:
+                      obj['label'] = f'{kind} Size'
+                  elif key == x_key:
+                      obj['label'] = f'{kind} Horizontal Position — Left / Right'
+                      obj['min'] = -300
+                      obj['max'] = 300
+                      obj['showValue'] = True
+                  elif key == y_key:
+                      obj['label'] = f'{kind} Vertical Position — Up / Down'
+                      obj['min'] = -300
+                      obj['max'] = 300
+                      obj['showValue'] = True
+                  if obj.get('cell') == 'PSGroupCell' and obj.get('label') == 'POSITION':
+                      obj['footerText'] = f'Use these two sliders to move the {kind.lower()} independently. Horizontal: negative = left, positive = right. Vertical: negative = up, positive = down. No fixed alignment is applied.'
+                  if obj.get('cell') == 'PSGroupCell' and obj.get('label') == 'APPEARANCE':
+                      obj['footerText'] = f'{kind} has independent font, weight, style, size and color controls. Changing {kind.lower()} font does not change the other element.'
+                  items.append(obj)
+              data['items'] = items
+              with path.open('wb') as f:
+                  plistlib.dump(data, f, fmt=plistlib.FMT_XML, sort_keys=False)
+
+          tune(bundle/'Time.plist', 'Time')
+          tune(bundle/'Date.plist', 'Date')
+
+          c = stage/'DEBIAN/control'
+          t = c.read_text()
+          t = re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu10', t, flags=re.M)
+          desc = ('Description: NextLock 1.1.5 CPU-fix Test 10. Preserves validated Test 9 CPU/photo behavior. '
+                  'Removes fixed Time/Date alignment controls, clearly labels every Time/Date movement slider, expands movement to -300..300, '
+                  'and keeps Time and Date font, weight, style and size controls fully independent.')
+          t = re.sub(r'^Description: .*$', desc, t, flags=re.M) if re.search(r'^Description: .*$', t, re.M) else t+'\n'+desc+'\n'
+          c.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu10'
+
+          X=$(mktemp -d)
+          dpkg-deb -x "$OUTDEB" "$X"
+          TP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Time.plist"
+          DP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Date.plist"
+          plutil -p "$TP" | grep -q 'timeOffsetX'
+          plutil -p "$TP" | grep -q 'timeOffsetY'
+          plutil -p "$TP" | grep -q 'timeFont'
+          plutil -p "$DP" | grep -q 'dateOffsetX'
+          plutil -p "$DP" | grep -q 'dateOffsetY'
+          plutil -p "$DP" | grep -q 'dateFont'
+          ! plutil -p "$TP" | grep -q 'timeAlignment'
+          ! plutil -p "$DP" | grep -q 'dateAlignment'
+          plutil -p "$TP" | grep -q 'Time Horizontal Position'
+          plutil -p "$DP" | grep -q 'Date Horizontal Position'
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+
+      - name: Publish Test 10 to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders'
+          DEST="$DEST_DIR/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA
+
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from datetime import datetime, timezone
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          files=[x for x in data.get('files',[]) if not x.get('id','').startswith('nextlock-1.1.5-cpufix-test')]
+          entry={
+            'id':'nextlock-1.1.5-cpufix-test10-timedate-sliders-roothide',
+            'name':'NextLock 1.1.5 CPU Fix Test 10 Time Date Sliders RootHide',
+            'fileName':'NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test10',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],
+            'notes':'Test 10 keeps Test 9 CPU fix, free photo positioning and full-photo picker. Time and Date now use clearly labeled independent horizontal/vertical movement sliders (-300 to +300); fixed Alignment controls are removed. Time Font/Weight/Style/Size and Date Font/Weight/Style/Size are explicitly separate controls.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 CPU Fix Test 10 time date sliders'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test10-TimeDateSliders-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14

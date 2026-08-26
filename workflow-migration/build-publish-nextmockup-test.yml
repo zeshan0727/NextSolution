@@ -1,0 +1,214 @@
+name: Build and Publish Next Mockup Studio Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-publish-nextmockup-test.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-publish-nextmockup-test
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build iPhone 17 Pro Max test TIPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC='applications/NextMockupStudio-Test/NextMockupStudio.c'
+          BUILD="$RUNNER_TEMP/nextmockup-build"
+          APP="$BUILD/Payload/NextMockupStudio.app"
+          OUT="$BUILD/NextMockupStudio-iPhone17ProMax-Test-v0.1.tipa"
+          rm -rf "$BUILD"
+          mkdir -p "$APP"
+          test -s "$SRC"
+
+          cat > "$APP/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>CFBundleDisplayName</key><string>Next Mockup</string>
+            <key>CFBundleExecutable</key><string>NextMockupStudio</string>
+            <key>CFBundleIdentifier</key><string>cc.nextsolution.nextmockup.test</string>
+            <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+            <key>CFBundleName</key><string>NextMockupStudio</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>0.1</string>
+            <key>CFBundleVersion</key><string>1</string>
+            <key>LSRequiresIPhoneOS</key><true/>
+            <key>MinimumOSVersion</key><string>16.0</string>
+            <key>NSPhotoLibraryUsageDescription</key><string>Select screenshots to place inside premium device mockups.</string>
+            <key>NSPhotoLibraryAddUsageDescription</key><string>Save exported mockups to your Photos library.</string>
+            <key>UILaunchScreen</key><dict/>
+            <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
+            <key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
+            <key>CFBundleIcons</key><dict><key>CFBundlePrimaryIcon</key><dict><key>CFBundleIconFiles</key><array><string>AppIcon</string></array></dict></dict>
+          </dict></plist>
+          PLIST
+
+          python3 -m pip install --quiet pillow
+          APP_DIR="$APP" python3 - <<'PY'
+          import os
+          from PIL import Image, ImageDraw, ImageFilter
+
+          out = os.environ['APP_DIR']
+          W,H = 3000,6285
+          outer = (38,50,2962,6235)
+          screen = (109,120,2891,6165)
+
+          finishes = {
+              'silver': ((210,214,219),(120,126,134),(245,247,249)),
+              'orange': ((224,116,63),(132,58,29),(255,176,116)),
+              'blue': ((66,91,119),(25,43,66),(117,151,184)),
+          }
+
+          def rounded_mask(box, radius):
+              m=Image.new('L',(W,H),0); d=ImageDraw.Draw(m)
+              d.rounded_rectangle(box,radius=radius,fill=255)
+              return m
+
+          outer_mask=rounded_mask(outer,235)
+          screen_mask=rounded_mask(screen,190)
+          bezel_mask=Image.new('L',(W,H),0)
+          bezel_mask.paste(outer_mask)
+          import PIL.ImageChops as Chops
+          bezel_mask=Chops.subtract(bezel_mask,screen_mask)
+
+          for name,(top,bottom,highlight) in finishes.items():
+              img=Image.new('RGBA',(W,H),(0,0,0,0))
+
+              # soft external shadow
+              shadow=Image.new('RGBA',(W,H),(0,0,0,0))
+              sd=ImageDraw.Draw(shadow)
+              sd.rounded_rectangle((48,65,2952,6240),radius=240,fill=(0,0,0,135))
+              shadow=shadow.filter(ImageFilter.GaussianBlur(34))
+              img=Image.alpha_composite(img,shadow)
+
+              # metallic horizontal gradient
+              grad=Image.new('RGBA',(W,H),(0,0,0,0)); px=grad.load()
+              for x in range(W):
+                  t=x/(W-1)
+                  # bright edges and calmer centre
+                  edge=abs(t-0.5)*2
+                  mix=0.30 + 0.70*edge
+                  r=int(bottom[0]*(1-mix)+top[0]*mix)
+                  g=int(bottom[1]*(1-mix)+top[1]*mix)
+                  b=int(bottom[2]*(1-mix)+top[2]*mix)
+                  for y in range(45,6242): px[x,y]=(r,g,b,255)
+              grad.putalpha(bezel_mask)
+              img=Image.alpha_composite(img,grad)
+
+              d=ImageDraw.Draw(img)
+              # fine inner/outer rim highlights
+              d.rounded_rectangle((49,61,2951,6224),radius=225,outline=highlight+(210,),width=13)
+              d.rounded_rectangle((92,103,2908,6182),radius=202,outline=(18,20,23,245),width=18)
+              # side controls
+              side=bottom+(255,)
+              d.rounded_rectangle((18,1040,48,1510),radius=14,fill=side)
+              d.rounded_rectangle((18,1660,48,2150),radius=14,fill=side)
+              d.rounded_rectangle((2952,1540,2982,2380),radius=14,fill=side)
+              # Dynamic Island sits over screenshot
+              d.rounded_rectangle((1110,170,1890,390),radius=110,fill=(2,2,3,255))
+              d.ellipse((1740,225,1850,335),fill=(10,13,17,255))
+              d.ellipse((1770,255,1820,305),fill=(28,39,55,210))
+              img.save(os.path.join(out,f'iphone17promax_{name}.png'),optimize=True)
+
+          # premium test icon
+          S=1024
+          icon=Image.new('RGB',(S,S),(9,11,18)); d=ImageDraw.Draw(icon)
+          d.rounded_rectangle((245,120,779,904),radius=95,fill=(34,38,48),outline=(232,235,239),width=22)
+          d.rounded_rectangle((278,165,746,860),radius=70,fill=(15,24,42))
+          d.rounded_rectangle((402,192,622,254),radius=31,fill=(0,0,0))
+          d.text((285,905),'NEXT MOCKUP',fill=(235,238,244))
+          icon.save(os.path.join(out,'AppIcon.png'))
+          icon.resize((120,120)).save(os.path.join(out,'AppIcon@2x.png'))
+          icon.resize((180,180)).save(os.path.join(out,'AppIcon@3x.png'))
+          PY
+
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          xcrun --sdk iphoneos clang \
+            -arch arm64 \
+            -isysroot "$SDK" \
+            -miphoneos-version-min=16.0 \
+            -O2 \
+            -Wno-deprecated-declarations \
+            "$SRC" \
+            -framework UIKit -framework Foundation -framework QuartzCore \
+            -lobjc \
+            -o "$APP/NextMockupStudio"
+
+          chmod +x "$APP/NextMockupStudio"
+          /usr/bin/file "$APP/NextMockupStudio"
+          test -s "$APP/iphone17promax_silver.png"
+          test -s "$APP/iphone17promax_orange.png"
+          test -s "$APP/iphone17promax_blue.png"
+
+          (cd "$BUILD" && /usr/bin/zip -qry "$OUT" Payload)
+          test -s "$OUT"
+          echo "TIPA_PATH=$OUT" >> "$GITHUB_ENV"
+          echo "TIPA_SHA=$(shasum -a 256 "$OUT" | awk '{print $1}')" >> "$GITHUB_ENV"
+          echo "TIPA_SIZE=$(stat -f%z "$OUT")" >> "$GITHUB_ENV"
+
+      - name: Publish to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextMockupStudio/0.1'
+          DEST="$DEST_DIR/NextMockupStudio-iPhone17ProMax-Test-v0.1.tipa"
+          INDEX='transfer/index.json'
+          mkdir -p "$DEST_DIR"
+          cp "$TIPA_PATH" "$DEST"
+          export TIPA_SHA TIPA_SIZE
+
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from datetime import datetime, timezone
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          files=data.get('files',[])
+          entry_id='nextmockupstudio-0.1-iphone17promax-test'
+          files=[x for x in files if x.get('id') != entry_id]
+          entry={
+            'id': entry_id,
+            'name': 'Next Mockup Studio 0.1 — iPhone 17 Pro Max Test',
+            'fileName': 'NextMockupStudio-iPhone17ProMax-Test-v0.1.tipa',
+            'type': 'tipa',
+            'platform': 'TrollStore / iOS 16+',
+            'version': '0.1',
+            'url': 'https://nextjailbreak.com/transfer/files/NextMockupStudio/0.1/NextMockupStudio-iPhone17ProMax-Test-v0.1.tipa',
+            'sha256': os.environ['TIPA_SHA'],
+            'sizeBytes': int(os.environ['TIPA_SIZE']),
+            'notes': 'Premium single-device validation build for iPhone 17 Pro Max. Includes Silver, Cosmic Orange and Deep Blue 3000x6285 front frames, screenshot import, fitted screen masking, Dynamic Island, background switching, device scaling and PNG export.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          python3 -m json.tool "$INDEX" >/dev/null
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$TIPA_SHA"
+          grep -q 'nextmockupstudio-0.1-iphone17promax-test' "$INDEX"
+
+      - name: Commit NS Transfer publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/files/NextMockupStudio/0.1/NextMockupStudio-iPhone17ProMax-Test-v0.1.tipa transfer/index.json
+          git commit -m 'Publish Next Mockup Studio 0.1 test to NS Transfer'
+          git pull --rebase origin main
+          git push origin HEAD:main

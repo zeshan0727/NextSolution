@@ -1,0 +1,290 @@
+name: Build and Publish NextLock 1.1.5 CPU Fix Test 9 Free Position
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-test9-freeposition.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-cpufix-test9-freeposition
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Prepare Test 9 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feature/nextlock-photo-content-modes
+          git worktree add "$RUNNER_TEMP/nextlock-feature" FETCH_HEAD
+          P="$RUNNER_TEMP/nextlock-feature/source/NextLockPerfFix"
+          S="$P/TweakTest7.m"
+          cp "$S" "$P/TweakTest9.m"
+          python3 - "$P/TweakTest9.m" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1]); t=p.read_text()
+
+          # Test 8: preserve full live styling callback, skip only its duplicate photo render.
+          t=t.replace('NextLockPerfFix 1.1.5-test7 refined-full-photo 2048px test5-cpu auto-stretch-full-cutcrop',
+                      'NextLockPerfFix 1.1.5-test9 preserve-all-style free-photo-position refined-full-picker')
+          t=t.replace('static const uintptr_t kArm64CallbackBlockOffset   = 0xBC30;\n','')
+          t=t.replace('static const uintptr_t kArm64eCallbackBlockOffset  = 0xBDD4;\n','')
+          t=t.replace('static void (*NLOriginalHotCallbackBlock)(void *blockObject) = NULL;\n','')
+          t=t.replace('static void NLSuppressHotCallback(void *blockObject) {\n    (void)blockObject;\n}\n\n','')
+          t=t.replace('static BOOL NLInstalled = NO;\n',
+                      'static BOOL NLInstalled = NO;\nstatic volatile uint8_t *NLHotCallbackFlag = NULL; // arm64e +0x18EF4\n',1)
+
+          fn='static void NLPhotosWithContentModes(id host) {\n    if (NLOriginalPhotos == NULL) return;\n'
+          repl=fn+'\n    // Keep the styling callback alive; skip only its redundant photo renderer.\n    if (NLHotCallbackFlag != NULL && *NLHotCallbackFlag != 0) return;\n'
+          if fn not in t: raise SystemExit('photos anchor missing')
+          t=t.replace(fn,repl,1)
+          t=t.replace('    uintptr_t callbackOffset = isArm64e ? kArm64eCallbackBlockOffset : kArm64CallbackBlockOffset;\n','')
+          hook='    MSHookFunction((void *)((uintptr_t)mh + callbackOffset),\n                   (void *)&NLSuppressHotCallback,\n                   (void **)&NLOriginalHotCallbackBlock);\n'
+          if hook not in t: raise SystemExit('callback hook missing')
+          t=t.replace(hook,'')
+          after='    uintptr_t contentModeStub = isArm64e ? kArm64eSetContentModeStub : kArm64SetContentModeStub;\n'
+          if after not in t: raise SystemExit('contentMode anchor missing')
+          t=t.replace(after, after+'\n    if (isArm64e) NLHotCallbackFlag = (volatile uint8_t *)((uintptr_t)mh + 0x18EF4);\n',1)
+          t=t.replace('        NLOriginalHotCallbackBlock != NULL &&\n','')
+          t=t.replace('Test7 SpringBoard hooks installed (%s): Test5 CPU fix + refined photo modes',
+                      'Test9 SpringBoard hooks installed (%s): full styling + free photo positioning')
+          t=t.replace('Test7 refined full-photo picker installed','Test9 full-photo no-crop picker installed')
+
+          # Test 9: free screen-relative X/Y for every photo frame.
+          arrays='static BOOL NLFrameHasPhoto[4] = {NO, NO, NO, NO};\n'
+          if arrays not in t: raise SystemExit('frame arrays anchor missing')
+          t=t.replace(arrays, arrays+'static CGFloat NLFreeXPercent[4] = {50, 50, 50, 50};\nstatic CGFloat NLFreeYPercent[4] = {30, 30, 30, 30};\n',1)
+
+          locals_anchor='    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n\n    for (NSUInteger i = 0; i < 4; i++) {'
+          locals_repl='    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n    NSInteger freeX[4] = {50, 50, 50, 50};\n    NSInteger freeY[4] = {30, 30, 30, 30};\n\n    for (NSUInteger i = 0; i < 4; i++) {'
+          if locals_anchor not in t: raise SystemExit('reload locals anchor missing')
+          t=t.replace(locals_anchor,locals_repl,1)
+
+          loop_anchor='        hasPhoto[i] = NLPhotoDataExistsForFrame(i);\n        CFRelease(modeKey);\n        CFRelease(enabledKey);'
+          loop_repl='        hasPhoto[i] = NLPhotoDataExistsForFrame(i);\n        CFStringRef xKey = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("photoFrame%luFreeXPercent"), (unsigned long)(i + 1));\n        CFStringRef yKey = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("photoFrame%luFreeYPercent"), (unsigned long)(i + 1));\n        freeX[i] = MAX(0, MIN(100, NLCopyIntegerPref(xKey, 50)));\n        freeY[i] = MAX(0, MIN(100, NLCopyIntegerPref(yKey, 30)));\n        CFRelease(xKey);\n        CFRelease(yKey);\n        CFRelease(modeKey);\n        CFRelease(enabledKey);'
+          if loop_anchor not in t: raise SystemExit('reload loop anchor missing')
+          t=t.replace(loop_anchor,loop_repl,1)
+
+          store_anchor='        NLFrameHasPhoto[i] = hasPhoto[i];\n'
+          if store_anchor not in t: raise SystemExit('store anchor missing')
+          t=t.replace(store_anchor,store_anchor+'        NLFreeXPercent[i] = (CGFloat)freeX[i];\n        NLFreeYPercent[i] = (CGFloat)freeY[i];\n',1)
+
+          apply_anchor='static void NLPhotosWithContentModes(id host) {'
+          helper='''static void NLApplyFreeScreenPosition(UIImageView *view, CGFloat xPercent, CGFloat yPercent) {
+    if (view == nil || view.superview == nil) return;
+    CGFloat xp = MAX(0.0, MIN(100.0, xPercent)) / 100.0;
+    CGFloat yp = MAX(0.0, MIN(100.0, yPercent)) / 100.0;
+    UIWindow *window = view.window;
+    UIView *superview = view.superview;
+    if (window != nil) {
+        CGRect b = window.bounds;
+        CGPoint windowPoint = CGPointMake(CGRectGetMinX(b) + CGRectGetWidth(b) * xp,
+                                          CGRectGetMinY(b) + CGRectGetHeight(b) * yp);
+        view.center = [superview convertPoint:windowPoint fromView:window];
+    } else {
+        CGRect b = superview.bounds;
+        view.center = CGPointMake(CGRectGetMinX(b) + CGRectGetWidth(b) * xp,
+                                  CGRectGetMinY(b) + CGRectGetHeight(b) * yp);
+    }
+}
+
+'''
+          if apply_anchor not in t: raise SystemExit('apply helper anchor missing')
+          t=t.replace(apply_anchor,helper+apply_anchor,1)
+
+          photo_locals='    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n\n    os_unfair_lock_lock(&NLModeLock);'
+          photo_repl='    BOOL hasPhoto[4] = {NO, NO, NO, NO};\n    CGFloat freeX[4] = {50, 50, 50, 50};\n    CGFloat freeY[4] = {30, 30, 30, 30};\n\n    os_unfair_lock_lock(&NLModeLock);'
+          if photo_locals not in t: raise SystemExit('photo locals anchor missing')
+          t=t.replace(photo_locals,photo_repl,1)
+
+          copy_anchor='        hasPhoto[i] = NLFrameHasPhoto[i];\n'
+          if copy_anchor not in t: raise SystemExit('photo copy anchor missing')
+          t=t.replace(copy_anchor,copy_anchor+'        freeX[i] = NLFreeXPercent[i];\n        freeY[i] = NLFreeYPercent[i];\n',1)
+
+          final_anchor='            NLApplyPhotoModeToView(NLCapturedViews[i], modes[i]);\n'
+          if final_anchor not in t: raise SystemExit('final render anchor missing')
+          t=t.replace(final_anchor,final_anchor+'            NLApplyFreeScreenPosition(NLCapturedViews[i], freeX[i], freeY[i]);\n',1)
+
+          if 'NLSuppressHotCallback' in t or 'NLOriginalHotCallbackBlock' in t:
+              raise SystemExit('old callback suppression remains')
+          if 'NLApplyFreeScreenPosition' not in t or 'photoFrame%luFreeXPercent' not in t:
+              raise SystemExit('free position patch missing')
+          p.write_text(t)
+          PY
+
+          sed -i '' 's/NextLockPerfFix_FILES = TweakTest7.m/NextLockPerfFix_FILES = TweakTest9.m/' "$P/Makefile"
+          grep -q 'INSTALL_TARGET_PROCESSES = SpringBoard Preferences' "$P/Makefile"
+          grep -q 'com.apple.Preferences' "$P/NextLockPerfFix.plist"
+
+      - name: Build RootHide Test 9 shim
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/nextlock-feature/source/NextLockPerfFix"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          sed -i '' 's/^Architecture: iphoneos-arm64$/Architecture: iphoneos-arm64e/' "$P/control"
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          echo "FIX_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Integrate free-position UI and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.4/NextLock_1.1.4_RootHide.deb'
+          STAGE="$RUNNER_TEMP/nextlock-stage"
+          FIXSTAGE="$RUNNER_TEMP/fix-stage"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          dpkg-deb -x "$FIX_DEB" "$FIXSTAGE"
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          FIX=$(find "$FIXSTAGE" -name NextLockPerfFix.dylib -print -quit)
+          FIXPLIST=$(find "$FIXSTAGE" -name NextLockPerfFix.plist -print -quit)
+          BEFORE=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          cp "$FIX" "$(dirname "$LOCK")/NextLockPerfFix.dylib"
+          cp "$FIXPLIST" "$(dirname "$LOCK")/NextLockPerfFix.plist"
+          test "$BEFORE" = "$(shasum -a 256 "$LOCK" | awk '{print $1}')"
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,sys,re
+          stage=Path(sys.argv[1]); bundle=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+          for i in range(1,5):
+              p=bundle/f'PhotoFrame{i}.plist'
+              with p.open('rb') as f: d=plistlib.load(f)
+              remove_keys={f'photoFrame{i}ContentMode',f'photoFrame{i}AnchorTarget',f'photoFrame{i}Position',f'photoFrame{i}OffsetX',f'photoFrame{i}OffsetY',f'photoFrame{i}FreeXPercent',f'photoFrame{i}FreeYPercent'}
+              items=[]
+              position_index=None
+              for item in d['items']:
+                  if item.get('key') in remove_keys: continue
+                  if item.get('label') == 'POSITION' and item.get('cell') == 'PSGroupCell':
+                      item=dict(item)
+                      item['footerText']='Free screen position. The frame is not anchored to Time or Date. X controls left-to-right and Y controls top-to-bottom.'
+                      position_index=len(items)+1
+                  items.append(item)
+              mode={
+                  'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs','cell':'PSLinkListCell','default':0,
+                  'defaults':'com.nextsolution.lockglyphtime','detail':'PSListItemsController',
+                  'key':f'photoFrame{i}ContentMode','label':'Photo Display',
+                  'validTitles':['Auto (Recommended)','Stretch','Full Photo','Cut / Crop'],'validValues':[0,1,2,3]
+              }
+              items.insert(4 if len(items)>=4 else len(items),mode)
+              if position_index is None:
+                  position_index=len(items)
+              # Account for photo-mode insertion when POSITION follows it.
+              if position_index >= 4: position_index += 1
+              def slider(key,label,default):
+                  return {'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs','cell':'PSSliderCell','default':default,
+                          'defaults':'com.nextsolution.lockglyphtime','key':key,'label':label,'min':0,'max':100,'showValue':True}
+              items.insert(position_index,slider(f'photoFrame{i}FreeXPercent','Horizontal Position',50)); position_index+=1
+              items.insert(position_index,slider(f'photoFrame{i}FreeYPercent','Vertical Position',30))
+              d['items']=items
+              with p.open('wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          c=stage/'DEBIAN/control'; t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu9', t, flags=re.M)
+          desc='Description: NextLock 1.1.5 CPU-fix Test 9. Keeps Test 8 full time/date styling and uncropped photo picker, and removes photo-frame dependency on Time/Date anchors. Every frame now uses independent screen-relative Horizontal/Vertical Position sliders (0-100%) so it can be moved freely anywhere on the Lock Screen.'
+          t=re.sub(r'^Description: .*$',desc,t,flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
+          c.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "ORIGINAL_LOCK_SHA=$BEFORE" >> "$GITHUB_ENV"
+
+      - name: Validate Test 9
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu9'
+          X=$(mktemp -d); dpkg-deb -x "$OUTDEB" "$X"
+          LOCK=$(find "$X" -name LockGlyphTime.dylib -print -quit)
+          FIX=$(find "$X" -name NextLockPerfFix.dylib -print -quit)
+          PLIST=$(find "$X" -name NextLockPerfFix.plist -print -quit)
+          test "$(shasum -a 256 "$LOCK" | awk '{print $1}')" = "$ORIGINAL_LOCK_SHA"
+          strings -a "$FIX" | grep -q '1.1.5-test9 preserve-all-style free-photo-position'
+          strings -a "$FIX" | grep -q 'NLApplyFreeScreenPosition'
+          plutil -p "$PLIST" | grep -q 'com.apple.springboard'
+          plutil -p "$PLIST" | grep -q 'com.apple.Preferences'
+          for i in 1 2 3 4; do
+            P="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/PhotoFrame${i}.plist"
+            plutil -p "$P" | grep -q "photoFrame${i}FreeXPercent"
+            plutil -p "$P" | grep -q "photoFrame${i}FreeYPercent"
+            ! plutil -p "$P" | grep -q "photoFrame${i}AnchorTarget"
+            ! plutil -p "$P" | grep -q "photoFrame${i}Position"
+          done
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+
+      - name: Publish Test 9 to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-CPUFix-Test9-FreePosition'
+          DEST="$DEST_DIR/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json'); d=json.loads(p.read_text())
+          files=[x for x in d.get('files',[]) if not x.get('id','').startswith('nextlock-1.1.5-cpufix-test')]
+          entry={'id':'nextlock-1.1.5-cpufix-test9-freeposition-roothide','name':'NextLock 1.1.5 CPU Fix Test 9 Free Position RootHide',
+                 'fileName':'NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb','type':'deb','platform':'RootHide','version':'1.1.5-test9',
+                 'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-CPUFix-Test9-FreePosition/NextLock_1.1.5_CPUFix_Test9_FreePosition_RootHide.deb',
+                 'sha256':os.environ['OUT_SHA'],
+                 'notes':'Test 9 keeps Test 8 full time/date styling, low-CPU callback-photo suppression and uncropped full-photo picker. Photo frames are no longer anchored to Time or Date: Anchor To and Placement are removed, and each of Frames 1-4 gets independent Horizontal/Vertical Position sliders (0-100%) mapped to the whole Lock Screen.'}
+          d['files']=[entry]+files; d['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(d,indent=2)+'\n')
+          PY
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 CPU Fix Test 9 free position'
+          for n in 1 2 3; do
+            git pull --rebase --autostash origin main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Upload Test 9 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-1.1.5-CPUFix-Test9-FreePosition-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14

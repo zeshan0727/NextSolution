@@ -1,0 +1,80 @@
+name: Publish Next Reminder 1.3.31 to NS Transfer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextreminder-1331-transfer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      ARTIFACT_ID: '9554359574'
+      DEST_DIR: transfer/files/NextReminder/1.3.31
+      DEST_FILE: NextReminder_1.3.31_Unsigned.tipa
+      EXPECTED_SHA: 0fc56b2bf9cfc0522a899de7fe261a17fd3010ec101632909313ddbab7b06d55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download exact verified build artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > /tmp/nr1331.zip
+          rm -rf /tmp/nr1331 && mkdir -p /tmp/nr1331
+          unzip -q /tmp/nr1331.zip -d /tmp/nr1331
+          test -f "/tmp/nr1331/${DEST_FILE}"
+          test "$(sha256sum "/tmp/nr1331/${DEST_FILE}" | awk '{print $1}')" = "$EXPECTED_SHA"
+
+      - name: Publish build and update feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$DEST_DIR"
+          cp "/tmp/nr1331/${DEST_FILE}" "$DEST_DIR/$DEST_FILE"
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          data['files']=[x for x in data.get('files',[]) if not str(x.get('id','')).startswith('nextreminder-1.3.')]
+          item={
+            'id':'nextreminder-1.3.31-gmail-report-recovery-fix',
+            'name':'Next Reminder 1.3.31 — Gmail Report Recovery Fix',
+            'fileName':'NextReminder_1.3.31_Unsigned.tipa',
+            'type':'tipa',
+            'platform':'Unsigned TIPA / iOS 16+',
+            'version':'1.3.31 (41)',
+            'url':'https://nextjailbreak.com/transfer/files/NextReminder/1.3.31/NextReminder_1.3.31_Unsigned.tipa',
+            'sha256':'0fc56b2bf9cfc0522a899de7fe261a17fd3010ec101632909313ddbab7b06d55',
+            'sizeBytes':2199353,
+            'notes':'Fixes Pending Reports Send Email when Gmail tests successfully but the file-share request sees a stale connector. Send Report now uses the same secure Gmail recovery mechanism as the working email test path, synchronizes any refreshed connector ID, retries the PDF once, and shows the real HTTP/server error if retry still fails. Stable Files implementation remains unchanged.'
+          }
+          data['files']=[item]+data['files']
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
+          PY
+          python3 -m json.tool transfer/index.json >/dev/null
+
+      - name: Commit publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/index.json "$DEST_DIR/$DEST_FILE"
+          git commit -m 'Publish Next Reminder 1.3.31 Gmail report recovery fix'
+          git push origin HEAD:main

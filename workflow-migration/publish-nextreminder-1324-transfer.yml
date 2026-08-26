@@ -1,0 +1,126 @@
+name: Publish Next Reminder 1.3.24 to NS Transfer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextreminder-1324-transfer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ARTIFACT_ID: '9490030298'
+      APP_DEST_DIR: transfer/files/NextReminder/1.3.24
+      APP_DEST_FILE: NextReminder_1.3.24_Unsigned.tipa
+      TWEAK_DEST_DIR: transfer/files/NextQuickReminder/1.0.13
+      TWEAK_DEST_FILE: NextQuickReminder_1.0.13_RootHide.deb
+      APP_SHA: 84a63fad69bbc9bf2c1cdcaa813efad14e4519d048c6990a934f9f40fddf328d
+      TWEAK_SHA: de0f967c67391ee6474463499221fdb0c7dfa163b68edde669aed3e5996b00a7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download verified build artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > /tmp/nextreminder1324.zip
+          rm -rf /tmp/nextreminder1324
+          mkdir -p /tmp/nextreminder1324
+          unzip -q /tmp/nextreminder1324.zip -d /tmp/nextreminder1324
+          test -f "/tmp/nextreminder1324/${APP_DEST_FILE}"
+          test -f "/tmp/nextreminder1324/${TWEAK_DEST_FILE}"
+
+      - name: Verify exact packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="/tmp/nextreminder1324/${APP_DEST_FILE}"
+          DEB="/tmp/nextreminder1324/${TWEAK_DEST_FILE}"
+          test "$(sha256sum "$APP" | awk '{print $1}')" = "$APP_SHA"
+          test "$(sha256sum "$DEB" | awk '{print $1}')" = "$TWEAK_SHA"
+          unzip -tq "$APP" >/dev/null
+          python3 - "$APP" <<'PY'
+          import plistlib,sys,zipfile
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              info=[n for n in z.namelist() if n.endswith('/NextReminder.app/Info.plist') and n.count('/') == 2][0]
+              p=plistlib.loads(z.read(info))
+              assert p['CFBundleShortVersionString']=='1.3.24'
+              assert p['CFBundleVersion']=='34'
+          PY
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextquickreminder'
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.0.13'
+
+      - name: Publish files and update NS Transfer feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$APP_DEST_DIR" "$TWEAK_DEST_DIR"
+          cp "/tmp/nextreminder1324/${APP_DEST_FILE}" "$APP_DEST_DIR/$APP_DEST_FILE"
+          cp "/tmp/nextreminder1324/${TWEAK_DEST_FILE}" "$TWEAK_DEST_DIR/$TWEAK_DEST_FILE"
+
+          python3 - <<'PY'
+          import json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          ids={'nextreminder-1.3.24-pdf-report-test','nextquickreminder-1.0.13-roothide'}
+          data['files']=[x for x in data.get('files',[]) if x.get('id') not in ids]
+          items=[
+            {
+              'id':'nextreminder-1.3.24-pdf-report-test',
+              'name':'Next Reminder 1.3.24 — PDF Report Test',
+              'fileName':'NextReminder_1.3.24_Unsigned.tipa',
+              'type':'tipa',
+              'platform':'Unsigned TIPA / iOS 16+',
+              'version':'1.3.24 (34)',
+              'url':'https://nextjailbreak.com/transfer/files/NextReminder/1.3.24/NextReminder_1.3.24_Unsigned.tipa',
+              'sha256':'84a63fad69bbc9bf2c1cdcaa813efad14e4519d048c6990a934f9f40fddf328d',
+              'sizeBytes':1966626,
+              'notes':'App-first PDF report test. Files > Pending Reminders Report can generate a PDF, save it locally under Saved Reports, show the preset recipient, and send the saved PDF as an email attachment with visible sending/success/error status.'
+            },
+            {
+              'id':'nextquickreminder-1.0.13-roothide',
+              'name':'Next Quick Reminder 1.0.13 RootHide',
+              'fileName':'NextQuickReminder_1.0.13_RootHide.deb',
+              'type':'deb',
+              'platform':'RootHide',
+              'version':'1.0.13',
+              'url':'https://nextjailbreak.com/transfer/files/NextQuickReminder/1.0.13/NextQuickReminder_1.0.13_RootHide.deb',
+              'sha256':'de0f967c67391ee6474463499221fdb0c7dfa163b68edde669aed3e5996b00a7',
+              'sizeBytes':100364,
+              'notes':'Existing 1.0.13 RootHide test build. No new tweak-side PDF-report integration in this round; included for convenient device installation alongside Next Reminder 1.3.24.'
+            }
+          ]
+          for item in reversed(items):
+              data['files'].insert(0,item)
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
+          PY
+
+          python3 -m json.tool transfer/index.json >/dev/null
+          grep -Fq 'nextreminder-1.3.24-pdf-report-test' transfer/index.json
+          grep -Fq 'nextquickreminder-1.0.13-roothide' transfer/index.json
+
+      - name: Commit NS Transfer publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/index.json "$APP_DEST_DIR/$APP_DEST_FILE" "$TWEAK_DEST_DIR/$TWEAK_DEST_FILE"
+          git diff --cached --stat
+          git commit -m 'Publish Next Reminder 1.3.24 and Quick Reminder 1.0.13 to NS Transfer'
+          git push origin HEAD:main

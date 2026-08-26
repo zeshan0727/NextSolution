@@ -1,0 +1,235 @@
+name: Build and Publish NextLock 1.1.5 Test 19 Preferences Sections
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-test19-preferences-sections.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-test19-preferences-sections
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg
+
+      - name: Rebuild preferences from exact Test 18
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.5-Test18-BatteryFullPhoto/NextLock_1.1.5_Test18_BatteryFullPhoto_RootHide.deb'
+          test -f "$BASE"
+          test "$(shasum -a 256 "$BASE" | awk '{print $1}')" = 'af12049c7d0e720bc4f64a894fb315595b60927976d81fee228919faf7b0a32b'
+
+          STAGE="$RUNNER_TEMP/nextlock-test19"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          PERF=$(find "$STAGE" -name NextLockPerfFix.dylib -print -quit)
+          CLOCK=$(find "$STAGE" -name NextLockCustomClock.dylib -print -quit)
+          HIDE=$(find "$STAGE" -name NextLockHideElements.dylib -print -quit)
+          DATEFIX=$(find "$STAGE" -name NextLockDateFix17.dylib -print -quit)
+          BATTERY=$(find "$STAGE" -name NextLockBatteryItems18.dylib -print -quit)
+          test -n "$LOCK"; test -n "$PERF"; test -n "$CLOCK"; test -n "$HIDE"; test -n "$DATEFIX"; test -n "$BATTERY"
+
+          LOCK_SHA=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          PERF_SHA=$(shasum -a 256 "$PERF" | awk '{print $1}')
+          CLOCK_SHA=$(shasum -a 256 "$CLOCK" | awk '{print $1}')
+          HIDE_SHA=$(shasum -a 256 "$HIDE" | awk '{print $1}')
+          DATEFIX_SHA=$(shasum -a 256 "$DATEFIX" | awk '{print $1}')
+          BATTERY_SHA=$(shasum -a 256 "$BATTERY" | awk '{print $1}')
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,re,sys
+
+          stage=Path(sys.argv[1])
+          root=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Root.plist'
+          with root.open('rb') as f: d=plistlib.load(f)
+          items=d.get('items',[])
+
+          hide_keys={
+            'hideLockScreenTime','hideLockScreenDate','hideLockScreenCamera',
+            'hideLockScreenFlashlight','hideLockScreenStatusBar',
+            'hideLockScreenOtherText','hideLockScreenBars'
+          }
+          battery_keys={
+            'customBatteryPercentEnabled','customBatteryPercentXPercent','customBatteryPercentYPercent','customBatteryPercentSize',
+            'customBatteryIconEnabled','customBatteryIconXPercent','customBatteryIconYPercent','customBatteryIconScale'
+          }
+          old_groups={
+            'HIDE LOCK SCREEN ELEMENTS','HIDE ITEMS','Hide Items','HIDE OPTIONS',
+            'CUSTOM BATTERY ITEMS','Custom Battery Items','BATTERY','BATTERY PERCENTAGE','BATTERY ICON',
+            'PERCENTAGE — HORIZONTAL POSITION','PERCENTAGE — VERTICAL POSITION','PERCENTAGE — TEXT SIZE',
+            'ICON — HORIZONTAL POSITION','ICON — VERTICAL POSITION','ICON — SIZE'
+          }
+          items=[x for x in items if x.get('key') not in hide_keys|battery_keys and x.get('label') not in old_groups]
+
+          def sw(key,label,default=False):
+              return {
+                'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+                'cell':'PSSwitchCell','default':default,
+                'defaults':'com.nextsolution.lockglyphtime','key':key,'label':label
+              }
+          def slider(key,label,default,minv,maxv):
+              return {
+                'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+                'cell':'PSSliderCell','default':default,
+                'defaults':'com.nextsolution.lockglyphtime','key':key,'label':label,
+                'min':minv,'max':maxv,'showValue':True
+              }
+          def group(label,footer):
+              return {'cell':'PSGroupCell','label':label,'footerText':footer}
+
+          hide_section=[
+            group('HIDE OPTIONS','Hide Apple Lock Screen elements independently. Turning a switch off restores that item.'),
+            sw('hideLockScreenTime','Hide Time'),
+            sw('hideLockScreenDate','Hide Date'),
+            sw('hideLockScreenFlashlight','Hide Flashlight Button'),
+            sw('hideLockScreenCamera','Hide Camera Button'),
+            sw('hideLockScreenStatusBar','Hide Status Bar'),
+            sw('hideLockScreenOtherText','Hide Other Lock Screen Text'),
+            sw('hideLockScreenBars','Hide CC / Gesture Bars'),
+          ]
+
+          battery_section=[
+            group('BATTERY','Add independent Battery Percentage and Battery Icon items to the Lock Screen. Both can be moved freely anywhere.'),
+            group('BATTERY PERCENTAGE','Enable the percentage text, then use the labeled controls below to position and size it.'),
+            sw('customBatteryPercentEnabled','Show Battery Percentage'),
+            group('PERCENTAGE — HORIZONTAL POSITION','0 = far left, 50 = center, 100 = far right.'),
+            slider('customBatteryPercentXPercent','Horizontal Position',50,0,100),
+            group('PERCENTAGE — VERTICAL POSITION','0 = top, 100 = bottom.'),
+            slider('customBatteryPercentYPercent','Vertical Position',27,0,100),
+            group('PERCENTAGE — TEXT SIZE','Adjust the battery percentage text size.'),
+            slider('customBatteryPercentSize','Text Size',18,10,60),
+            group('BATTERY ICON','Enable the custom battery icon separately from percentage text.'),
+            sw('customBatteryIconEnabled','Show Battery Icon'),
+            group('ICON — HORIZONTAL POSITION','0 = far left, 50 = center, 100 = far right.'),
+            slider('customBatteryIconXPercent','Horizontal Position',62,0,100),
+            group('ICON — VERTICAL POSITION','0 = top, 100 = bottom.'),
+            slider('customBatteryIconYPercent','Vertical Position',27,0,100),
+            group('ICON — SIZE','Scale the custom battery icon.'),
+            slider('customBatteryIconScale','Icon Size',1.0,0.5,3.0),
+          ]
+
+          insert_at=len(items)
+          for i,obj in enumerate(items):
+              if obj.get('cell')=='PSGroupCell' and obj.get('label')=='MORE':
+                  insert_at=i
+                  break
+          items[insert_at:insert_at]=hide_section+battery_section
+          d['items']=items
+          with root.open('wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          c=stage/'DEBIAN/control'
+          t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu19', t, flags=re.M)
+          desc=('Description: NextLock 1.1.5 Test 19. Preferences-only refinement over validated Test 18. Keeps all runtimes byte-identical, separates Hide Options and Battery into clear sections, and adds visible group labels above every battery position/size slider so no slider appears unlabeled.')
+          t=re.sub(r'^Description: .*$',desc,t,flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
+          c.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu19'
+
+          X=$(mktemp -d)
+          dpkg-deb -x "$OUTDEB" "$X"
+          for pair in \
+            "LockGlyphTime.dylib:$LOCK_SHA" \
+            "NextLockPerfFix.dylib:$PERF_SHA" \
+            "NextLockCustomClock.dylib:$CLOCK_SHA" \
+            "NextLockHideElements.dylib:$HIDE_SHA" \
+            "NextLockDateFix17.dylib:$DATEFIX_SHA" \
+            "NextLockBatteryItems18.dylib:$BATTERY_SHA"; do
+              N=${pair%%:*}; S=${pair#*:}; F=$(find "$X" -name "$N" -print -quit); test -n "$F"; test "$(shasum -a 256 "$F" | awk '{print $1}')" = "$S"
+          done
+
+          RP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Root.plist"
+          python3 - "$RP" <<'PY'
+          import plistlib,sys
+          with open(sys.argv[1],'rb') as f: d=plistlib.load(f)
+          items=d.get('items',[])
+          labels=[x.get('label') for x in items if x.get('cell')=='PSGroupCell']
+          assert labels.count('HIDE OPTIONS') == 1
+          assert labels.count('BATTERY') == 1
+          for label in [
+            'BATTERY PERCENTAGE','PERCENTAGE — HORIZONTAL POSITION','PERCENTAGE — VERTICAL POSITION','PERCENTAGE — TEXT SIZE',
+            'BATTERY ICON','ICON — HORIZONTAL POSITION','ICON — VERTICAL POSITION','ICON — SIZE']:
+              assert labels.count(label) == 1, (label, labels)
+          keys=[x.get('key') for x in items]
+          for key in [
+            'customBatteryPercentEnabled','customBatteryPercentXPercent','customBatteryPercentYPercent','customBatteryPercentSize',
+            'customBatteryIconEnabled','customBatteryIconXPercent','customBatteryIconYPercent','customBatteryIconScale',
+            'hideLockScreenTime','hideLockScreenDate','hideLockScreenCamera','hideLockScreenFlashlight','hideLockScreenStatusBar','hideLockScreenOtherText','hideLockScreenBars']:
+              assert keys.count(key)==1, (key,keys.count(key))
+          PY
+
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+          echo "Test 19 SHA-256: $SHA"
+
+      - name: Publish Test 19 to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-Test19-PreferencesSections'
+          DEST="$DEST_DIR/NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA
+
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json'); data=json.loads(p.read_text())
+          files=[x for x in data.get('files',[]) if not x.get('id','').startswith('nextlock-1.1.5-test18') and not x.get('id','').startswith('nextlock-1.1.5-test19')]
+          entry={
+            'id':'nextlock-1.1.5-test19-preferences-sections-roothide',
+            'name':'NextLock 1.1.5 Test 19 Preferences Sections RootHide',
+            'fileName':'NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test19',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test19-PreferencesSections/NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],
+            'notes':'Preferences-only Test 19. Keeps every Test 18 runtime unchanged, separates Hide Options and Battery into clear sections, and adds visible section labels above every battery horizontal/vertical/size slider so no slider is unlabeled.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 Test 19 preferences sections'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test19-PreferencesSections-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,84 @@
+name: Validate Next Home Lock Tutorial
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "next-home-lock-tweak-ios16.html"
+      - "assets/next-home-lock/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - ".github/scripts/publish-next-home-lock-tutorial.py"
+      - ".github/workflows/publish-next-home-lock-tutorial.yml"
+  push:
+    branches: [main]
+    paths:
+      - "next-home-lock-tweak-ios16.html"
+      - "assets/next-home-lock/**"
+      - "index.html"
+      - "tutorials.html"
+      - "sitemap.xml"
+      - ".github/scripts/publish-next-home-lock-tutorial.py"
+      - ".github/workflows/publish-next-home-lock-tutorial.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run idempotent publisher validation
+        run: python3 .github/scripts/publish-next-home-lock-tutorial.py --check
+
+      - name: Validate HTML, assets and navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARTICLE=next-home-lock-tweak-ios16.html
+          test -s "$ARTICLE"
+          test -s assets/next-home-lock/next-home-lock-hero.svg
+          test -s assets/next-home-lock/next-home-lock-settings.svg
+
+          grep -q 'Next Home Lock 1.0.5' "$ARTICLE"
+          grep -q 'href="./"' "$ARTICLE"
+          grep -q 'href="tutorials.html" aria-current="page"' "$ARTICLE"
+          grep -q 'href="videos.html"' "$ARTICLE"
+          grep -q 'href="./#faq"' "$ARTICLE"
+          grep -q 'NextHomeLock_1.0.5_RootHide.deb' "$ARTICLE"
+          grep -q 'NextHomeLock_1.0.5_Rootless.deb' "$ARTICLE"
+          grep -q 'raw.githubusercontent.com/zeshan0727/NextSolution/main/debfiles/' "$ARTICLE"
+          grep -q 'ca-pub-4770123899731214' "$ARTICLE"
+          test "$(grep -c 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' "$ARTICLE")" -eq 1
+          grep -q '"@type": "TechArticle"' "$ARTICLE"
+          grep -q '<link rel="canonical" href="https://nextjailbreak.com/next-home-lock-tweak-ios16.html">' "$ARTICLE"
+
+          grep -q '<!-- NEXT_HOME_LOCK_RECENT_CARD_START -->' index.html
+          grep -q '<!-- NEXT_HOME_LOCK_RECENT_CARD_END -->' index.html
+          test "$(grep -c '<!-- NEXT_HOME_LOCK_RECENT_CARD_START -->' index.html)" -eq 1
+          grep -q '<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->' tutorials.html
+          grep -q '<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_END -->' tutorials.html
+          test "$(grep -c '<!-- NEXT_HOME_LOCK_TUTORIAL_CARD_START -->' tutorials.html)" -eq 1
+          test "$(grep -c 'https://nextjailbreak.com/next-home-lock-tweak-ios16.html' sitemap.xml)" -eq 1
+
+          ! grep -q 'zeshan0727.github.io' "$ARTICLE"
+          ! grep -q 'Next Home Lock 1.0.4' "$ARTICLE"
+          ! grep -Eq 'SpringBoard Injection|Touch Hook|Test Lock Now|Refresh Diagnostics' "$ARTICLE"
+
+      - name: Validate XML and SVG syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for path in [
+              Path('sitemap.xml'),
+              Path('assets/next-home-lock/next-home-lock-hero.svg'),
+              Path('assets/next-home-lock/next-home-lock-settings.svg'),
+          ]:
+              ET.parse(path)
+              print(f'Validated {path}')
+          PY

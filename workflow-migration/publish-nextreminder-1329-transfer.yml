@@ -1,0 +1,90 @@
+name: Publish Next Reminder 1.3.29 to NS Transfer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextreminder-1329-transfer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ARTIFACT_ID: '9492366291'
+      DEST_DIR: transfer/files/NextReminder/1.3.29
+      DEST_FILE: NextReminder_1.3.29_Unsigned.tipa
+      EXPECTED_SHA: a6fb491eb972d050dccee32a7c075ce04354230f07bde857a72b4e70a34f35d7
+      EXPECTED_SIZE: '2176106'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download exact verified build
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > /tmp/nr1329.zip
+          rm -rf /tmp/nr1329
+          mkdir -p /tmp/nr1329
+          unzip -q /tmp/nr1329.zip -d /tmp/nr1329
+          test -f "/tmp/nr1329/${DEST_FILE}"
+          test "$(sha256sum "/tmp/nr1329/${DEST_FILE}" | awk '{print $1}')" = "$EXPECTED_SHA"
+          test "$(stat -c '%s' "/tmp/nr1329/${DEST_FILE}")" = "$EXPECTED_SIZE"
+
+      - name: Publish and update feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$DEST_DIR"
+          cp "/tmp/nr1329/${DEST_FILE}" "$DEST_DIR/$DEST_FILE"
+          python3 - <<'PY'
+          import json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          remove_ids={
+            'nextreminder-1.3.25-background-pdf',
+            'nextreminder-1.3.26-files-freeze-icon-fix',
+            'nextreminder-1.3.27-files-stability-fix',
+            'nextreminder-1.3.28-stable-files-rollback',
+            'nextreminder-1.3.29-manual-pending-reports'
+          }
+          data['files']=[x for x in data.get('files',[]) if x.get('id') not in remove_ids]
+          item={
+            'id':'nextreminder-1.3.29-manual-pending-reports',
+            'name':'Next Reminder 1.3.29 — Manual Pending Reports',
+            'fileName':'NextReminder_1.3.29_Unsigned.tipa',
+            'type':'tipa',
+            'platform':'Unsigned TIPA / iOS 16+',
+            'version':'1.3.29 (39)',
+            'url':'https://nextjailbreak.com/transfer/files/NextReminder/1.3.29/NextReminder_1.3.29_Unsigned.tipa',
+            'sha256':'a6fb491eb972d050dccee32a7c075ce04354230f07bde857a72b4e70a34f35d7',
+            'sizeBytes':2176106,
+            'notes':'Adds a standalone Pending Reports screen from Reminders while keeping the confirmed-stable 1.3.28 Files implementation byte-for-byte unchanged. Manually generate a PDF of all pending reminders, physically retain only the newest 3 reports, share any saved PDF, or manually send it to the preset default email using the existing Gmail/scheduler connection. Automatic/background sending is intentionally deferred to the next phase.'
+          }
+          data['files'].insert(0,item)
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
+          PY
+          python3 -m json.tool transfer/index.json >/dev/null
+
+      - name: Commit publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/index.json "$DEST_DIR/$DEST_FILE"
+          git commit -m 'Publish Next Reminder 1.3.29 manual pending reports'
+          git push origin HEAD:main

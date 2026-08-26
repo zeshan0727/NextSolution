@@ -1,0 +1,43 @@
+name: Verify Module Glass Preview Transfer
+
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-moduleglass-preview-transfer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify public Transfer manifest and TIPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          INDEX_URL='https://nextjailbreak.com/transfer/index.json'
+          FILE_URL='https://nextjailbreak.com/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa'
+          EXPECTED_SHA='d1682506fd4d0631b768a66190aa30c8f7eb838a6c8d0270769112c63a9b974d'
+          for i in $(seq 1 72); do
+            rm -f /tmp/index.json /tmp/moduleglass.tipa
+            if curl -fsSL --max-time 30 "$INDEX_URL" -o /tmp/index.json \
+              && grep -q '"id": "module-glass-preview-1.0.0"' /tmp/index.json \
+              && grep -q "$EXPECTED_SHA" /tmp/index.json \
+              && curl -fsSL --max-time 60 "$FILE_URL" -o /tmp/moduleglass.tipa; then
+              ACTUAL_SHA=$(sha256sum /tmp/moduleglass.tipa | awk '{print $1}')
+              if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
+                echo "PUBLIC_TRANSFER_VERIFIED"
+                echo "URL=$FILE_URL"
+                echo "SHA256=$ACTUAL_SHA"
+                echo "SIZE=$(stat -c '%s' /tmp/moduleglass.tipa)"
+                exit 0
+              fi
+            fi
+            echo "Waiting for nextjailbreak.com deployment ($i/72)..."
+            sleep 5
+          done
+          echo 'Public Transfer verification timed out.' >&2
+          exit 1

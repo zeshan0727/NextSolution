@@ -1,0 +1,84 @@
+name: Publish Module Glass Preview to Transfer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/publish-moduleglass-preview-transfer.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-moduleglass-preview-transfer
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Publish file and update Transfer manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC='NextWebsiteApp/downloads/ModuleGlass-Preview-1.0.0.tipa'
+          DEST_DIR='transfer/files/ModuleGlassPreview/1.0.0'
+          DEST="$DEST_DIR/ModuleGlass-Preview-1.0.0.tipa"
+          INDEX='transfer/index.json'
+          test -s "$SRC"
+          test -s "$INDEX"
+          mkdir -p "$DEST_DIR"
+          cp "$SRC" "$DEST"
+          SHA256=$(sha256sum "$DEST" | awk '{print $1}')
+          SIZE=$(stat -c '%s' "$DEST")
+          export SHA256 SIZE
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          index_path = Path('transfer/index.json')
+          data = json.loads(index_path.read_text())
+          files = data.get('files', [])
+          before_other_ids = [item.get('id') for item in files if item.get('id') != 'module-glass-preview-1.0.0']
+          files = [item for item in files if item.get('id') != 'module-glass-preview-1.0.0']
+          entry = {
+              'id': 'module-glass-preview-1.0.0',
+              'name': 'Module Glass Preview 1.0.0',
+              'fileName': 'ModuleGlass-Preview-1.0.0.tipa',
+              'type': 'tipa',
+              'platform': 'TrollStore / Jailbroken iOS 15+',
+              'version': '1.0.0',
+              'url': 'https://nextjailbreak.com/transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa',
+              'sha256': os.environ['SHA256'],
+              'notes': 'Live companion app for Module Glass Stable Recovery. Provides Control Center preview, Device Live preference/image changes, Darwin reload notifications, and direct Module Glass log viewing.'
+          }
+          data['files'] = [entry] + files
+          data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          after_other_ids = [item.get('id') for item in data['files'] if item.get('id') != 'module-glass-preview-1.0.0']
+          assert before_other_ids == after_other_ids, 'Existing Transfer entries changed or were removed'
+          index_path.write_text(json.dumps(data, indent=2) + '\n')
+          print('SHA256=' + os.environ['SHA256'])
+          print('SIZE=' + os.environ['SIZE'])
+          print('FILES=' + str(len(data['files'])))
+          PY
+          python3 -m json.tool "$INDEX" >/dev/null
+          grep -q 'module-glass-preview-1.0.0' "$INDEX"
+          grep -q "$SHA256" "$INDEX"
+          test "$(sha256sum "$DEST" | awk '{print $1}')" = "$SHA256"
+
+      - name: Commit Transfer publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/files/ModuleGlassPreview/1.0.0/ModuleGlass-Preview-1.0.0.tipa transfer/index.json
+          git commit -m 'Publish Module Glass Preview 1.0.0 to Transfer' || true
+          git pull --rebase origin main
+          git push origin HEAD:main

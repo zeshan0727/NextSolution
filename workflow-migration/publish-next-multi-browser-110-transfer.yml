@@ -1,0 +1,151 @@
+name: Publish Next Multi Browser 1.1.0 to NS Transfer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-next-multi-browser-110-transfer.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: ns-transfer-next-multi-browser
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ARTIFACT_ID: '9516346827'
+      FILE_NAME: NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa
+      DEST_DIR: transfer/files/NextMultiBrowser/1.1.0
+      EXPECTED_SHA256: 0cfb407cb00b842aa63429abc4c5b502e5cbbf3c690e4c24bc17f1af59dcd53a
+      EXPECTED_SIZE: '4877924'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download exact verified TIPA artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > /tmp/nextmultibrowser-110.zip
+          rm -rf /tmp/nextmultibrowser-110
+          mkdir -p /tmp/nextmultibrowser-110
+          unzip -q /tmp/nextmultibrowser-110.zip -d /tmp/nextmultibrowser-110
+          test -s "/tmp/nextmultibrowser-110/${FILE_NAME}"
+
+      - name: Verify package identity and profile manager
+        shell: bash
+        run: |
+          set -euo pipefail
+          TIPA="/tmp/nextmultibrowser-110/${FILE_NAME}"
+          test "$(sha256sum "$TIPA" | awk '{print $1}')" = "$EXPECTED_SHA256"
+          test "$(stat -c '%s' "$TIPA")" = "$EXPECTED_SIZE"
+          unzip -tq "$TIPA" >/dev/null
+          python3 - "$TIPA" <<'PY'
+          import plistlib
+          import sys
+          import zipfile
+
+          with zipfile.ZipFile(sys.argv[1]) as archive:
+              names = archive.namelist()
+              host_info = next(
+                  name for name in names
+                  if name.endswith('/Next Multi Browser.app/Info.plist') and name.count('/') == 2
+              )
+              vpn_info = next(
+                  name for name in names
+                  if name.endswith('/PlugIns/NextMultiBrowserVPN.appex/Info.plist')
+              )
+              executable = next(
+                  name for name in names
+                  if name.endswith('/Next Multi Browser.app/Next Multi Browser')
+              )
+              host = plistlib.loads(archive.read(host_info))
+              vpn = plistlib.loads(archive.read(vpn_info))
+              binary = archive.read(executable)
+
+          assert host['CFBundleIdentifier'] == 'com.nextsolution.multibrowser'
+          assert host['CFBundleShortVersionString'] == '1.1.0'
+          assert host['CFBundleVersion'] == '8'
+          assert vpn['CFBundleIdentifier'] == 'com.nextsolution.multibrowser.vpn'
+          assert vpn['CFBundleShortVersionString'] == '1.1.0'
+          assert vpn['CFBundleVersion'] == '8'
+          assert b'_WKWebsiteDataStoreConfiguration' in binary
+          assert b'_initWithConfiguration:' in binary
+          assert b'Cookies.binarycookies' in binary
+          assert b'Persistent profile' in binary
+          for feature in (
+              b'Environment Manager',
+              b'Duplicate Profile',
+              b'Developer Information',
+              b'Clear All Website Data',
+          ):
+              assert feature in binary, feature
+          PY
+
+      - name: Publish file and update NS Transfer feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$DEST_DIR"
+          cp "/tmp/nextmultibrowser-110/$FILE_NAME" "$DEST_DIR/$FILE_NAME"
+
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path('transfer/index.json')
+          data = json.loads(path.read_text())
+          current = []
+          for item in data.get('files', []):
+              item_id = str(item.get('id', '')).lower()
+              file_name = str(item.get('fileName', '')).lower()
+              if item_id.startswith('nextmultibrowser-') or file_name.startswith('nextmultibrowser_'):
+                  continue
+              current.append(item)
+
+          entry = {
+              'id': 'nextmultibrowser-1.1.0-profile-environment-manager',
+              'name': 'Next Multi Browser 1.1.0 — Profile Environment Manager',
+              'fileName': 'NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa',
+              'type': 'tipa',
+              'platform': 'TrollStore / RootHide / iOS 15+',
+              'version': '1.1.0 (8)',
+              'url': 'https://nextjailbreak.com/transfer/files/NextMultiBrowser/1.1.0/NextMultiBrowser_1.1.0_Profile_Environment_Manager_iPhone_Test.tipa',
+              'sha256': '0cfb407cb00b842aa63429abc4c5b502e5cbbf3c690e4c24bc17f1af59dcd53a',
+              'sizeBytes': 4877924,
+              'notes': 'Professional 20-profile testing browser with per-profile environment settings, icon and color, user-agent, locale, region, timezone, viewport presets, storage inspection and clearing, permission reset, settings-only duplication into an independent container, backup and restore, and developer information. Preserves the proven isolated persistent WebKit profile architecture and existing Google sessions when installed as an update.'
+          }
+          data['files'] = [entry] + current
+          data['updatedAt'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+          PY
+
+          test "$(sha256sum "$DEST_DIR/$FILE_NAME" | awk '{print $1}')" = "$EXPECTED_SHA256"
+          python3 -m json.tool transfer/index.json >/dev/null
+          grep -Fq 'nextmultibrowser-1.1.0-profile-environment-manager' transfer/index.json
+          grep -Fq "$EXPECTED_SHA256" transfer/index.json
+
+      - name: Commit NS Transfer publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add transfer/index.json "$DEST_DIR/$FILE_NAME"
+          git diff --cached --stat
+          git commit -m 'Publish Next Multi Browser 1.1.0 to NS Transfer'
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -1,0 +1,48 @@
+name: Publish NextLock Article
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-nextlock-article.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-article
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add NextLock to Recent, Original Releases, RSS and sitemap
+        run: python3 automation/publish_nextlock_article.py
+      - name: Validate article links and cards
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f nextlock-tweak.html
+          test -f assets/articles/nextlock/nextlock-hero.jpg
+          test -f assets/articles/nextlock/nextlock-features.jpg
+          grep -q 'NEXTLOCK_RECENT_CARD_START' index.html
+          grep -q 'nextlock-tweak.html' index.html
+          grep -q 'NEXTLOCK_TUTORIAL_CARD_START' tutorials.html
+          grep -q 'NextLock 1.0.1' tutorials.html
+          grep -q 'https://nextjailbreak.com/nextlock-tweak.html' feed.xml
+          grep -q 'https://nextjailbreak.com/nextlock-tweak.html' sitemap.xml
+          ! grep -R 'nextsolution\.app' nextlock-tweak.html index.html tutorials.html feed.xml sitemap.xml || exit 1
+      - name: Commit site updates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email actions@users.noreply.github.com
+          git add index.html tutorials.html feed.xml sitemap.xml
+          git diff --cached --check
+          git commit -m 'Feature NextLock 1.0.1 in Recent and Tweaks' || exit 0
+          git pull --rebase origin main
+          git push origin main

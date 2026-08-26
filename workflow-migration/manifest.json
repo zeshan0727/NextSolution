@@ -1,0 +1,274 @@
+[
+  {
+    "target": ".github/workflows/build-nextlock-test8-pr.yml",
+    "staged": "workflow-migration/build-nextlock-test8-pr.yml"
+  },
+  {
+    "target": ".github/workflows/build-publish-license-admin-tipa.yml",
+    "staged": "workflow-migration/build-publish-license-admin-tipa.yml"
+  },
+  {
+    "target": ".github/workflows/build-publish-moduleglass-preview-tipa.yml",
+    "staged": "workflow-migration/build-publish-moduleglass-preview-tipa.yml"
+  },
+  {
+    "target": ".github/workflows/build-publish-nextmockup-live3d-v04.yml",
+    "staged": "workflow-migration/build-publish-nextmockup-live3d-v04.yml"
+  },
+  {
+    "target": ".github/workflows/build-publish-nextmockup-test.yml",
+    "staged": "workflow-migration/build-publish-nextmockup-test.yml"
+  },
+  {
+    "target": ".github/workflows/build-publish-nextmockup-v02.yml",
+    "staged": "workflow-migration/build-publish-nextmockup-v02.yml"
+  },
+  {
+    "target": ".github/workflows/build-youtube-fresh-tweaks-roundup.yml",
+    "staged": "workflow-migration/build-youtube-fresh-tweaks-roundup.yml"
+  },
+  {
+    "target": ".github/workflows/dopamine3-cluster-publisher.yml",
+    "staged": "workflow-migration/dopamine3-cluster-publisher.yml"
+  },
+  {
+    "target": ".github/workflows/migrate-private-apps-to-r2.yml",
+    "staged": "workflow-migration/migrate-private-apps-to-r2.yml"
+  },
+  {
+    "target": ".github/workflows/nextsigner-library-manage.yml",
+    "staged": "workflow-migration/nextsigner-library-manage.yml"
+  },
+  {
+    "target": ".github/workflows/nextsigner-publish-only.yml",
+    "staged": "workflow-migration/nextsigner-publish-only.yml"
+  },
+  {
+    "target": ".github/workflows/nextsigner-sign-publish.yml",
+    "staged": "workflow-migration/nextsigner-sign-publish.yml"
+  },
+  {
+    "target": ".github/workflows/prepare-nexthometorch-tutorial.yml",
+    "staged": "workflow-migration/prepare-nexthometorch-tutorial.yml"
+  },
+  {
+    "target": ".github/workflows/publish-charge80haptic.yml",
+    "staged": "workflow-migration/publish-charge80haptic.yml"
+  },
+  {
+    "target": ".github/workflows/publish-charging-interrupted-haptic.yml",
+    "staged": "workflow-migration/publish-charging-interrupted-haptic.yml"
+  },
+  {
+    "target": ".github/workflows/publish-full-charge-haptic.yml",
+    "staged": "workflow-migration/publish-full-charge-haptic.yml"
+  },
+  {
+    "target": ".github/workflows/publish-headphone-disconnect-haptic.yml",
+    "staged": "workflow-migration/publish-headphone-disconnect-haptic.yml"
+  },
+  {
+    "target": ".github/workflows/publish-internet-lost-haptic.yml",
+    "staged": "workflow-migration/publish-internet-lost-haptic.yml"
+  },
+  {
+    "target": ".github/workflows/publish-low-battery-haptic-alert-fixed.yml",
+    "staged": "workflow-migration/publish-low-battery-haptic-alert-fixed.yml"
+  },
+  {
+    "target": ".github/workflows/publish-low-battery-haptic-alert.yml",
+    "staged": "workflow-migration/publish-low-battery-haptic-alert.yml"
+  },
+  {
+    "target": ".github/workflows/publish-moduleglass-1.1.17-transfer.yml",
+    "staged": "workflow-migration/publish-moduleglass-1.1.17-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-moduleglass-preview-transfer.yml",
+    "staged": "workflow-migration/publish-moduleglass-preview-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-next-home-lock-tutorial.yml",
+    "staged": "workflow-migration/publish-next-home-lock-tutorial.yml"
+  },
+  {
+    "target": ".github/workflows/publish-next-multi-browser-106-transfer.yml",
+    "staged": "workflow-migration/publish-next-multi-browser-106-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-next-multi-browser-110-transfer.yml",
+    "staged": "workflow-migration/publish-next-multi-browser-110-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-next-multi-browser-111-transfer.yml",
+    "staged": "workflow-migration/publish-next-multi-browser-111-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextdiagnostics-1.0.2.yml",
+    "staged": "workflow-migration/publish-nextdiagnostics-1.0.2.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nexthomelock.yml",
+    "staged": "workflow-migration/publish-nexthomelock.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test10.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test10.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test11.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test11.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test12-customclock.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test12-customclock.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test2.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test2.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test3.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test3.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test4.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test4.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test5.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test5.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test6-photomodes.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test6-photomodes.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test7-refinedphoto.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test7-refinedphoto.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test8.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test8.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-test9-freeposition.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-test9-freeposition.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-cpufix-transfer.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-cpufix-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-1.1.5-test13-hide-elements.yml",
+    "staged": "workflow-migration/publish-nextlock-1.1.5-test13-hide-elements.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-article.yml",
+    "staged": "workflow-migration/publish-nextlock-article.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-test17-date-fix.yml",
+    "staged": "workflow-migration/publish-nextlock-test17-date-fix.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-test18-battery-fullphoto.yml",
+    "staged": "workflow-migration/publish-nextlock-test18-battery-fullphoto.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-test19-preferences-sections.yml",
+    "staged": "workflow-migration/publish-nextlock-test19-preferences-sections.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextlock-test8-final.yml",
+    "staged": "workflow-migration/publish-nextlock-test8-final.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextpost-109-from-artifact.yml",
+    "staged": "workflow-migration/publish-nextpost-109-from-artifact.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextpost-109-now.yml",
+    "staged": "workflow-migration/publish-nextpost-109-now.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextpost-levelplay-test-transfer.yml",
+    "staged": "workflow-migration/publish-nextpost-levelplay-test-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextpost-transfer.yml",
+    "staged": "workflow-migration/publish-nextpost-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1324-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1324-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1325-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1325-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1326-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1326-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1327-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1327-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1328-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1328-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1329-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1329-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1330-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1330-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextreminder-1331-transfer.yml",
+    "staged": "workflow-migration/publish-nextreminder-1331-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nextsigner-transfer.yml",
+    "staged": "workflow-migration/publish-nextsigner-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-nqr-1016-transfer.yml",
+    "staged": "workflow-migration/publish-nqr-1016-transfer.yml"
+  },
+  {
+    "target": ".github/workflows/publish-phoneaura-tutorial.yml",
+    "staged": "workflow-migration/publish-phoneaura-tutorial.yml"
+  },
+  {
+    "target": ".github/workflows/publish-screenshothaptic.yml",
+    "staged": "workflow-migration/publish-screenshothaptic.yml"
+  },
+  {
+    "target": ".github/workflows/publish-thermal-warning-haptic.yml",
+    "staged": "workflow-migration/publish-thermal-warning-haptic.yml"
+  },
+  {
+    "target": ".github/workflows/publish-wifidrophaptic.yml",
+    "staged": "workflow-migration/publish-wifidrophaptic.yml"
+  },
+  {
+    "target": ".github/workflows/recover-full-nextsolution-catalog.yml",
+    "staged": "workflow-migration/recover-full-nextsolution-catalog.yml"
+  },
+  {
+    "target": ".github/workflows/tweak-draft-generator.yml",
+    "staged": "workflow-migration/tweak-draft-generator.yml"
+  },
+  {
+    "target": ".github/workflows/verify-live-module-glass.yml",
+    "staged": "workflow-migration/verify-live-module-glass.yml"
+  },
+  {
+    "target": ".github/workflows/verify-moduleglass-preview-transfer.yml",
+    "staged": "workflow-migration/verify-moduleglass-preview-transfer.yml"
+  }
+]

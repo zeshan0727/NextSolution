@@ -1,0 +1,198 @@
+name: Build and Publish NextLock 1.1.5 Test 14 Hide Items
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-1.1.5-test13-hide-elements.yml'
+      - 'source/NextLockHideElements/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-test14-hide-items
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Build RootHide Hide Items runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/source/NextLockHideElements"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          X=$(mktemp -d); dpkg-deb -x "$D" "$X"
+          F=$(find "$X" -name NextLockHideElements.dylib -print -quit)
+          test -n "$F"
+          strings -a "$F" | grep -q '1.1.5-test14 direct-functional-hide-items'
+          strings -a "$F" | grep -q 'CSQuickActionsView'
+          lipo -info "$F" | grep -q arm64e
+          echo "HIDE_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Integrate Test 14 and rebuild Hide Items section
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.5-Test13-HideElements/NextLock_1.1.5_Test13_HideElements_RootHide.deb'
+          test -f "$BASE"
+          STAGE="$RUNNER_TEMP/nextlock-test14"
+          HIDE="$RUNNER_TEMP/hideitems"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          dpkg-deb -x "$HIDE_DEB" "$HIDE"
+
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          HDYLIB=$(find "$HIDE" -name NextLockHideElements.dylib -print -quit)
+          HPLIST=$(find "$HIDE" -name NextLockHideElements.plist -print -quit)
+          test -n "$LOCK"; test -n "$HDYLIB"; test -n "$HPLIST"
+          ORIGINAL_SHA=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          cp "$HDYLIB" "$(dirname "$LOCK")/NextLockHideElements.dylib"
+          cp "$HPLIST" "$(dirname "$LOCK")/NextLockHideElements.plist"
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,re,sys
+
+          stage=Path(sys.argv[1])
+          root=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Root.plist'
+          with root.open('rb') as f: d=plistlib.load(f)
+          items=d.get('items',[])
+
+          keys={
+            'hideLockScreenTime','hideLockScreenDate','hideLockScreenCamera',
+            'hideLockScreenFlashlight','hideLockScreenStatusBar',
+            'hideLockScreenOtherText','hideLockScreenBars'
+          }
+          old_groups={'HIDE LOCK SCREEN ELEMENTS','HIDE ITEMS','Hide Items'}
+          items=[x for x in items if x.get('key') not in keys and x.get('label') not in old_groups]
+
+          def sw(key,label):
+              return {
+                'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+                'cell':'PSSwitchCell','default':False,
+                'defaults':'com.nextsolution.lockglyphtime','key':key,'label':label
+              }
+
+          hide_items=[
+            {'cell':'PSGroupCell','label':'HIDE ITEMS',
+             'footerText':'Hide individual Lock Screen items. Each switch works independently and applies immediately. Turn a switch off to restore that item.'},
+            sw('hideLockScreenTime','Time'),
+            sw('hideLockScreenDate','Date'),
+            sw('hideLockScreenFlashlight','Flashlight Button'),
+            sw('hideLockScreenCamera','Camera Button'),
+            sw('hideLockScreenStatusBar','Status Bar'),
+            sw('hideLockScreenOtherText','Other Lock Screen Text'),
+            sw('hideLockScreenBars','CC / Gesture Bars'),
+          ]
+
+          insert_at=len(items)
+          for i,obj in enumerate(items):
+              if obj.get('cell')=='PSGroupCell' and obj.get('label')=='MORE':
+                  insert_at=i
+                  break
+          items[insert_at:insert_at]=hide_items
+          d['items']=items
+          with root.open('wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          c=stage/'DEBIAN/control'
+          t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu14', t, flags=re.M)
+          desc=('Description: NextLock 1.1.5 Test 14. Rebuilds the visibility controls as one Hide Items section and fixes runtime functionality using direct Lock Screen hooks for Time/Date and quick actions plus active Lock Screen view matching for Status Bar, text and CC/gesture bars. Keeps Test 12 custom clock, refined photo modes and validated low-CPU fixes.')
+          t=re.sub(r'^Description: .*$',desc,t,flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
+          c.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_Test14_HideItems_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu14'
+
+          X=$(mktemp -d); dpkg-deb -x "$OUTDEB" "$X"
+          LOCK2=$(find "$X" -name LockGlyphTime.dylib -print -quit)
+          PERF=$(find "$X" -name NextLockPerfFix.dylib -print -quit)
+          CLOCK=$(find "$X" -name NextLockCustomClock.dylib -print -quit)
+          HIDE2=$(find "$X" -name NextLockHideElements.dylib -print -quit)
+          test -n "$PERF"; test -n "$CLOCK"; test -n "$HIDE2"
+          test "$(shasum -a 256 "$LOCK2" | awk '{print $1}')" = "$ORIGINAL_SHA"
+          strings -a "$HIDE2" | grep -q '1.1.5-test14 direct-functional-hide-items'
+          RP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Root.plist"
+          for K in hideLockScreenTime hideLockScreenDate hideLockScreenCamera hideLockScreenFlashlight hideLockScreenStatusBar hideLockScreenOtherText hideLockScreenBars; do
+            plutil -p "$RP" | grep -q "$K"
+          done
+          plutil -p "$RP" | grep -q 'HIDE ITEMS'
+          ! plutil -p "$RP" | grep -q 'HIDE LOCK SCREEN ELEMENTS'
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+
+      - name: Publish Test 14 to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-Test14-HideItems'
+          DEST="$DEST_DIR/NextLock_1.1.5_Test14_HideItems_RootHide.deb"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA
+
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json'); data=json.loads(p.read_text())
+          files=[x for x in data.get('files',[]) if not x.get('id','').startswith('nextlock-1.1.5-test13') and not x.get('id','').startswith('nextlock-1.1.5-test14')]
+          entry={
+            'id':'nextlock-1.1.5-test14-hideitems-roothide',
+            'name':'NextLock 1.1.5 Test 14 Hide Items RootHide',
+            'fileName':'NextLock_1.1.5_Test14_HideItems_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test14',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test14-HideItems/NextLock_1.1.5_Test14_HideItems_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],
+            'notes':'Test 14 replaces the non-functional visibility controls with one Hide Items section. Time/Date, Flashlight, Camera, Status Bar, other Lock Screen text and CC/gesture bars are handled by the new direct runtime while Test 12 custom clock, refined photo modes and low-CPU fixes remain intact.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 Test 14 Hide Items'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test14-HideItems-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14

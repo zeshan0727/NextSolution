@@ -1,0 +1,257 @@
+name: Build and Publish NextLock 1.1.5 Test 12 Custom Clock
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-1.1.5-cpufix-test12-customclock.yml'
+      - 'source/NextLockCustomClock/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-test12-customclock
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg ldid
+
+      - name: Build RootHide custom clock runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$GITHUB_WORKSPACE/source/NextLockCustomClock"
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          export THEOS="$T"
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          X=$(mktemp -d); dpkg-deb -x "$D" "$X"
+          F=$(find "$X" -name NextLockCustomClock.dylib -print -quit)
+          test -n "$F"
+          strings -a "$F" | grep -q '1.1.5-test12 replacement-time-date independent-ui'
+          lipo -info "$F" | grep -q arm64e
+          echo "CLOCK_DEB=$D" >> "$GITHUB_ENV"
+
+      - name: Integrate Test 12 and rebuild preferences
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.5-CPUFix-Test10-TimeDateSliders/NextLock_1.1.5_CPUFix_Test10_TimeDateSliders_RootHide.deb'
+          test -f "$BASE"
+          STAGE="$RUNNER_TEMP/nextlock-test12"
+          CLOCK="$RUNNER_TEMP/customclock"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+          dpkg-deb -x "$CLOCK_DEB" "$CLOCK"
+
+          LOCK=$(find "$STAGE" -name LockGlyphTime.dylib -print -quit)
+          CLOCK_DYLIB=$(find "$CLOCK" -name NextLockCustomClock.dylib -print -quit)
+          CLOCK_PLIST=$(find "$CLOCK" -name NextLockCustomClock.plist -print -quit)
+          test -n "$LOCK"; test -n "$CLOCK_DYLIB"; test -n "$CLOCK_PLIST"
+          ORIGINAL_SHA=$(shasum -a 256 "$LOCK" | awk '{print $1}')
+          cp "$CLOCK_DYLIB" "$(dirname "$LOCK")/NextLockCustomClock.dylib"
+          cp "$CLOCK_PLIST" "$(dirname "$LOCK")/NextLockCustomClock.plist"
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,re,sys
+
+          stage=Path(sys.argv[1])
+          bundle=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+
+          def group(label, footer):
+              return {'cell':'PSGroupCell','label':label,'footerText':footer}
+
+          def slider(key,label,default):
+              return {
+                  'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+                  'cell':'PSSliderCell','default':default,
+                  'defaults':'com.nextsolution.lockglyphtime','key':key,
+                  'label':label,'min':0,'max':100,'showValue':True
+              }
+
+          def rebuild_time(path):
+              with path.open('rb') as f: d=plistlib.load(f)
+              items=[]
+              removed={'timeAlignment','timeOffsetX','timeOffsetY','customTimeXPercent','customTimeYPercent','customClockTimeMode','customClockShowSeconds'}
+              inserted_pos=False
+              inserted_format=False
+              for raw in d.get('items',[]):
+                  if raw.get('key') in removed: continue
+                  obj=dict(raw)
+                  if obj.get('key')=='customTimeEnabled':
+                      obj['label']='Show Custom Time'
+                  if obj.get('cell')=='PSGroupCell' and obj.get('label')=='APPEARANCE':
+                      obj['footerText']='Apple lock-screen time is hidden. This section controls the independent NextLock replacement clock.'
+                  if obj.get('cell')=='PSGroupCell' and obj.get('label')=='POSITION':
+                      if not inserted_pos:
+                          items.append(group('TIME POSITION — HORIZONTAL','Moves the custom time freely across the whole Lock Screen. 0 = far left, 50 = center, 100 = far right.'))
+                          items.append(slider('customTimeXPercent','Horizontal Position',50))
+                          items.append(group('TIME POSITION — VERTICAL','Moves the custom time freely from top to bottom. 0 = top, 100 = bottom.'))
+                          items.append(slider('customTimeYPercent','Vertical Position',16))
+                          inserted_pos=True
+                      continue
+                  items.append(obj)
+
+                  if obj.get('key')=='timeScale' and not inserted_format:
+                      items.append(group('TIME FORMAT','The replacement clock can follow the device format or force 12/24-hour display.'))
+                      items.append({
+                          'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+                          'cell':'PSLinkListCell','default':'system',
+                          'defaults':'com.nextsolution.lockglyphtime','detail':'PSListItemsController',
+                          'key':'customClockTimeMode','label':'Clock Format',
+                          'validTitles':['System Default','12 Hour','24 Hour'],
+                          'validValues':['system','12','24']
+                      })
+                      items.append({
+                          'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+                          'cell':'PSSwitchCell','default':False,
+                          'defaults':'com.nextsolution.lockglyphtime','key':'customClockShowSeconds',
+                          'label':'Show Seconds'
+                      })
+                      inserted_format=True
+              if not inserted_pos:
+                  items.extend([
+                      group('TIME POSITION — HORIZONTAL','0 = far left, 50 = center, 100 = far right.'),
+                      slider('customTimeXPercent','Horizontal Position',50),
+                      group('TIME POSITION — VERTICAL','0 = top, 100 = bottom.'),
+                      slider('customTimeYPercent','Vertical Position',16)
+                  ])
+              d['items']=items
+              with path.open('wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          def rebuild_date(path):
+              with path.open('rb') as f: d=plistlib.load(f)
+              items=[]
+              removed={'dateAlignment','dateOffsetX','dateOffsetY','customDateXPercent','customDateYPercent'}
+              inserted_pos=False
+              for raw in d.get('items',[]):
+                  if raw.get('key') in removed: continue
+                  obj=dict(raw)
+                  if obj.get('key')=='customDateEnabled':
+                      obj['label']='Show Custom Date'
+                  if obj.get('cell')=='PSGroupCell' and obj.get('label')=='APPEARANCE':
+                      obj['footerText']='Apple lock-screen date is hidden. Date font, weight, style, size, color and effects are independent from Time.'
+                  if obj.get('cell')=='PSGroupCell' and obj.get('label')=='POSITION':
+                      if not inserted_pos:
+                          items.append(group('DATE POSITION — HORIZONTAL','Moves only the custom date across the whole Lock Screen. 0 = far left, 50 = center, 100 = far right.'))
+                          items.append(slider('customDateXPercent','Horizontal Position',50))
+                          items.append(group('DATE POSITION — VERTICAL','Moves only the custom date from top to bottom. 0 = top, 100 = bottom.'))
+                          items.append(slider('customDateYPercent','Vertical Position',23))
+                          inserted_pos=True
+                      continue
+                  items.append(obj)
+              if not inserted_pos:
+                  items.extend([
+                      group('DATE POSITION — HORIZONTAL','0 = far left, 50 = center, 100 = far right.'),
+                      slider('customDateXPercent','Horizontal Position',50),
+                      group('DATE POSITION — VERTICAL','0 = top, 100 = bottom.'),
+                      slider('customDateYPercent','Vertical Position',23)
+                  ])
+              d['items']=items
+              with path.open('wb') as f: plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          rebuild_time(bundle/'Time.plist')
+          rebuild_date(bundle/'Date.plist')
+
+          c=stage/'DEBIAN/control'
+          t=c.read_text()
+          t=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu12', t, flags=re.M)
+          desc=('Description: NextLock 1.1.5 Test 12. Hides Apple lock-screen time/date text and renders independent custom replacements. Time and Date have separate full-screen X/Y positioning, font, weight, style, size, color, shadow/glow and formatting controls. Keeps validated low-CPU and photo-frame fixes.')
+          t=re.sub(r'^Description: .*$',desc,t,flags=re.M) if re.search(r'^Description: .*$',t,re.M) else t+'\n'+desc+'\n'
+          c.write_text(t)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_Test12_CustomClock_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu12'
+
+          X=$(mktemp -d); dpkg-deb -x "$OUTDEB" "$X"
+          LOCK2=$(find "$X" -name LockGlyphTime.dylib -print -quit)
+          PERF=$(find "$X" -name NextLockPerfFix.dylib -print -quit)
+          CUSTOM=$(find "$X" -name NextLockCustomClock.dylib -print -quit)
+          test -n "$PERF"; test -n "$CUSTOM"
+          test "$(shasum -a 256 "$LOCK2" | awk '{print $1}')" = "$ORIGINAL_SHA"
+          strings -a "$CUSTOM" | grep -q '1.1.5-test12 replacement-time-date independent-ui'
+          test -z "$(find "$X" -name NextLockFeatureFix.dylib -print -quit)"
+          TP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Time.plist"
+          DP="$X/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Date.plist"
+          plutil -p "$TP" | grep -q 'customTimeXPercent'
+          plutil -p "$TP" | grep -q 'customTimeYPercent'
+          plutil -p "$TP" | grep -q 'customClockTimeMode'
+          plutil -p "$DP" | grep -q 'customDateXPercent'
+          plutil -p "$DP" | grep -q 'customDateYPercent'
+          ! plutil -p "$TP" | grep -q 'timeAlignment'
+          ! plutil -p "$DP" | grep -q 'dateAlignment'
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+
+      - name: Publish Test 12 to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-Test12-CustomClock'
+          DEST="$DEST_DIR/NextLock_1.1.5_Test12_CustomClock_RootHide.deb"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA
+
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json'); data=json.loads(p.read_text())
+          files=[x for x in data.get('files',[]) if not x.get('id','').startswith('nextlock-1.1.5-cpufix-test') and not x.get('id','').startswith('nextlock-1.1.5-test12')]
+          entry={
+            'id':'nextlock-1.1.5-test12-customclock-roothide',
+            'name':'NextLock 1.1.5 Test 12 Custom Clock RootHide',
+            'fileName':'NextLock_1.1.5_Test12_CustomClock_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test12',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test12-CustomClock/NextLock_1.1.5_Test12_CustomClock_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],
+            'notes':'Test 12 replaces the Apple Lock Screen time/date text instead of fighting its layout. Native time/date text is hidden while independent NextLock Time and Date labels provide whole-screen X/Y positioning plus separate font, weight, style, size, color, shadow/glow and formatting controls. Keeps the validated CPU/photo fixes.'
+          }
+          data['files']=[entry]+files
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 Test 12 custom clock'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test12-CustomClock-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14
