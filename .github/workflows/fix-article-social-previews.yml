@@ -1,0 +1,239 @@
+name: Fix article social previews
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-article-social-previews.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: fix-article-social-previews
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Make article cards use the real article topic image
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('automation/clean_urls.py')
+          text = path.read_text(encoding='utf-8')
+
+          start = text.index('def stabilize_social_images(text: str) -> str:')
+          end = text.index('\ndef _meta_value(', start)
+          text = text[:start] + '''def stabilize_social_images(text: str) -> str:\n    """Preserve each page's own topic image instead of forcing the site card."""\n    return text\n\n''' + text[end+1:]
+
+          helper_anchor = 'def ensure_social_preview_meta(text: str) -> str:\n'
+          helper = r'''def _absolute_preview_url(value: str) -> str | None:
+    value = html.unescape(value).strip()
+    if not value:
+        return None
+    if value.startswith('https://') or value.startswith('http://'):
+        return value
+    if value.startswith('//'):
+        return 'https:' + value
+    if value.startswith('/'):
+        return SITE + value
+    return SITE + '/' + value.lstrip('/')
+
+
+def _article_preview_image(text: str) -> str:
+    # The publisher stores the authentic feature image in article JSON-LD.
+    # Prefer that because clean-url generation may have already touched OG tags.
+    for script in re.finditer(
+        r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(?P<body>.*?)</script>',
+        text,
+        re.IGNORECASE | re.DOTALL,
+    ):
+        body = html.unescape(script.group('body'))
+        image = re.search(
+            r'"image"\s*:\s*(?:"(?P<single>[^"\\]+)"|\[\s*"(?P<array>[^"\\]+)")',
+            body,
+            re.IGNORECASE,
+        )
+        if image:
+            value = image.group('single') or image.group('array')
+            resolved = _absolute_preview_url(value)
+            if resolved and resolved != SOCIAL_IMAGE:
+                return resolved
+
+    # Fallback to the real lead image used inside the article itself.
+    figure = re.search(
+        r'<figure[^>]*class=["\'][^"\']*(?:article-visual|authentic-media)[^"\']*["\'][^>]*>.*?<img[^>]*src=["\'](?P<src>[^"\']+)["\']',
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if figure:
+        resolved = _absolute_preview_url(figure.group('src'))
+        if resolved:
+            return resolved
+
+    # Older article templates may not use the modern figure classes.
+    article_img = re.search(
+        r'<article\b[^>]*>.*?<img[^>]*src=["\'](?P<src>[^"\']+)["\']',
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if article_img:
+        resolved = _absolute_preview_url(article_img.group('src'))
+        if resolved:
+            return resolved
+
+    # Preserve any pre-existing article-specific OG image as a final fallback.
+    existing = _meta_value(text, attr='property', key='og:image')
+    resolved = _absolute_preview_url(existing) if existing else None
+    if resolved and resolved != SOCIAL_IMAGE:
+        return resolved
+
+    return SOCIAL_IMAGE
+
+
+def _remove_meta(text: str, *, attr: str, key: str) -> str:
+    pattern = re.compile(
+        rf'\s*<meta\s+[^>]*{attr}=["\']{re.escape(key)}["\'][^>]*>\s*',
+        re.IGNORECASE,
+    )
+    return pattern.sub('\n', text)
+
+
+'''
+          if helper_anchor not in text:
+              raise SystemExit('ensure_social_preview_meta anchor not found')
+          text = text.replace(helper_anchor, helper + helper_anchor, 1)
+
+          old_start = text.index('def ensure_social_preview_meta(text: str) -> str:')
+          old_end = text.index('\ndef ensure_legacy_redirect(', old_start)
+          replacement = r'''def ensure_social_preview_meta(text: str) -> str:
+    title = _title_value(text) or "Next Jailbreak | Jailbreaks, Tweaks, Apps & Guides"
+    description = _meta_value(text, attr="name", key="description") or (
+        "Next Jailbreak covers jailbreak news, Cydia and Sileo tweaks, useful apps, tutorials and troubleshooting."
+    )
+    canonical = _canonical_value(text) or SITE + "/"
+    is_homepage = canonical.rstrip("/") == SITE
+    page_type = "website" if is_homepage else ("article" if "<article" in text.lower() else "website")
+    social_image = _article_preview_image(text) if page_type == "article" else SOCIAL_IMAGE
+    image_alt = title if page_type == "article" else "Next Jailbreak — jailbreaks, tweaks, apps and guides"
+
+    values = (
+        ("property", "og:type", page_type),
+        ("property", "og:site_name", "Next Jailbreak"),
+        ("property", "og:url", canonical),
+        ("property", "og:title", title),
+        ("property", "og:description", description),
+        ("property", "og:image", social_image),
+        ("property", "og:image:secure_url", social_image),
+        ("property", "og:image:alt", image_alt),
+        ("name", "twitter:card", "summary_large_image"),
+        ("name", "twitter:site", "@nextjailbreak"),
+        ("name", "twitter:title", title),
+        ("name", "twitter:description", description),
+        ("name", "twitter:image", social_image),
+        ("name", "twitter:image:alt", image_alt),
+    )
+    for attr, key, value in values:
+        text = _upsert_meta(text, attr=attr, key=key, content=value)
+
+    if social_image == SOCIAL_IMAGE:
+        text = _upsert_meta(text, attr="property", key="og:image:type", content="image/png")
+        text = _upsert_meta(text, attr="property", key="og:image:width", content=SOCIAL_IMAGE_WIDTH)
+        text = _upsert_meta(text, attr="property", key="og:image:height", content=SOCIAL_IMAGE_HEIGHT)
+    else:
+        # Do not lie about dimensions or MIME type for authentic third-party images.
+        text = _remove_meta(text, attr="property", key="og:image:type")
+        text = _remove_meta(text, attr="property", key="og:image:width")
+        text = _remove_meta(text, attr="property", key="og:image:height")
+    return text
+
+'''
+          text = text[:old_start] + replacement + text[old_end+1:]
+          path.write_text(text, encoding='utf-8')
+
+          models = Path('NextPost/Sources/Models.swift')
+          source = models.read_text(encoding='utf-8')
+          old = 'items.removeAll { ["utm_source", "utm_medium", "utm_campaign", "v"].contains($0.name) }'
+          new = 'items.removeAll { ["utm_source", "utm_medium", "utm_campaign", "v", "card"].contains($0.name) }'
+          if old not in source:
+              raise SystemExit('NextPost social URL cleanup anchor not found')
+          source = source.replace(old, new, 1)
+          campaign = 'items.append(URLQueryItem(name: "utm_campaign", value: "article_share"))'
+          source = source.replace(
+              campaign,
+              campaign + '\n        items.append(URLQueryItem(name: "card", value: "article-v2"))',
+              1,
+          )
+          models.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Regenerate every article route and social card metadata
+        run: python3 automation/clean_urls.py
+
+      - name: Validate topic-specific article previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          generic = 'https://nextjailbreak.com/assets/brand/next-jailbreak-social-card.png'
+          article_count = 0
+          topic_count = 0
+          generic_articles = []
+          for p in Path('.').glob('*.html'):
+              if p.name in {'index.html','404.html'}:
+                  continue
+              text = p.read_text(encoding='utf-8', errors='ignore')
+              if '<article' not in text.lower():
+                  continue
+              article_count += 1
+              m = re.search(r'<meta\s+property=["\']og:image["\']\s+content=["\']([^"\']+)', text, re.I)
+              if m and m.group(1) != generic:
+                  topic_count += 1
+              else:
+                  generic_articles.append(p.name)
+
+          print(f'Article pages: {article_count}')
+          print(f'Article-specific preview images: {topic_count}')
+          print(f'Generic fallback articles: {len(generic_articles)}')
+          if generic_articles:
+              print('Fallbacks:', ', '.join(generic_articles[:30]))
+
+          sample = Path('photoscore-tweak.html').read_text(encoding='utf-8')
+          if 'https://media.havoc.app/6a868c51324f05e66acdf88b' not in re.search(
+              r'<meta\s+property=["\']og:image["\']\s+content=["\']([^"\']+)', sample, re.I
+          ).group(1):
+              raise SystemExit('PhotosCore did not receive its real topic image')
+
+          models = Path('NextPost/Sources/Models.swift').read_text(encoding='utf-8')
+          if 'card", value: "article-v2"' not in models:
+              raise SystemExit('NextPost cache-busting card parameter is missing')
+          PY
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet && [ -z "$(git status --porcelain --untracked-files=all)" ]; then
+            echo 'No changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Use article topic images for NextPost social previews'
+          git pull --rebase origin main
+          git push origin main
