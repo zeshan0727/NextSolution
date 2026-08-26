@@ -28,13 +28,12 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
-          import shutil
+          import shutil, os
 
           root = Path('.')
-          legacy = Path(__import__('os').environ['RUNNER_TEMP']) / 'legacy-pages'
+          legacy = Path(os.environ['RUNNER_TEMP']) / 'legacy-pages'
+          workflow = '.github/workflows/merge-legacy-github-io-into-main.yml'
 
-          # Main is already the newer canonical repository. Copy only files that
-          # are missing from main, and never import stale workflow/index/domain metadata.
           excluded_top = {
               '.git', '.github', 'CNAME', 'Release', 'Packages', 'Packages.bz2',
               'Packages.gz', 'Packages.xz', 'Packages.zst'
@@ -42,9 +41,7 @@ jobs:
           copied = []
           for src in sorted(legacy.rglob('*')):
               rel = src.relative_to(legacy)
-              if not rel.parts or rel.parts[0] in excluded_top:
-                  continue
-              if src.is_dir():
+              if not rel.parts or rel.parts[0] in excluded_top or src.is_dir():
                   continue
               dst = root / rel
               if dst.exists():
@@ -57,7 +54,6 @@ jobs:
           for item in copied:
               print('  +', item)
 
-          # Retire all live URLs that depend on the legacy zeshan0727.github.io repo.
           replacements = [
               (b'https://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/', b'https://nextjailbreak.com/'),
               (b'http://raw.githubusercontent.com/zeshan0727/zeshan0727.github.io/main/', b'https://nextjailbreak.com/'),
@@ -72,14 +68,12 @@ jobs:
           skip_dirs = {'.git', 'node_modules', 'DerivedData', 'build', '.build'}
           changed = []
           for path in root.rglob('*'):
-              if not path.is_file() or any(part in skip_dirs for part in path.parts):
+              if not path.is_file() or path.as_posix() == workflow or any(part in skip_dirs for part in path.parts):
                   continue
               try:
                   data = path.read_bytes()
               except OSError:
                   continue
-              # Do not rewrite compiled archives/binaries. Their source has been migrated;
-              # the next app/package build will therefore contain the new URLs.
               if b'\0' in data[:8192]:
                   continue
               updated = data
@@ -101,6 +95,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
+          workflow = '.github/workflows/merge-legacy-github-io-into-main.yml'
           patterns = [
               b'https://zeshan0727.github.io',
               b'http://zeshan0727.github.io',
@@ -111,7 +106,7 @@ jobs:
           ]
           hits = []
           for path in Path('.').rglob('*'):
-              if not path.is_file() or '.git' in path.parts:
+              if not path.is_file() or '.git' in path.parts or path.as_posix() == workflow:
                   continue
               try:
                   data = path.read_bytes()
