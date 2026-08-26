@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-26T11:17:42Z",
+  "updatedAt": "2026-08-26T11:17:54Z",
   "files": [
+    {
+      "id": "nextquickreminder-1.0.16-persistent-wake-roothide",
+      "name": "Next Quick Reminder 1.0.16 — Persistent Wake RootHide",
+      "fileName": "NextQuickReminder_1.0.16_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.0.16",
+      "url": "https://nextjailbreak.com/transfer/files/NextQuickReminder/1.0.16/NextQuickReminder_1.0.16_RootHide.deb",
+      "sha256": "22413d82950dafcbc889eed8d3a149379e37a1874f888f8046e643e0bf403ea1",
+      "sizeBytes": 111040,
+      "notes": "Replaces the unreliable 30-second SpringBoard polling scheduler with PCPersistentTimer and system waking enabled for locked-device scheduled sends. Keeps the working fresh pending-reminder PDF generation, newest-3 retention, selected weekdays/time preferences, and Gmail file-share sender unchanged."
+    },
     {
       "id": "nextreminder-1.3.28-stable-files-rollback",
       "name": "Next Reminder 1.3.28 — Stable Files Rollback",
