@@ -11,7 +11,7 @@
 					<key>kind</key>
 					<string>software-package</string>
 					<key>url</key>
-					<string>https://files.nextsolution.cc/apps/ipa/com-nextsolution-tiktok/46.2.0/com-nextsolution-tiktok-46.2.0-462034.ipa</string>
+					<string>https://files.nextjailbreak.com/apps/ipa/com-nextsolution-tiktok/46.2.0/com-nextsolution-tiktok-46.2.0-462034.ipa</string>
 				</dict>
 				<dict>
 					<key>kind</key>
@@ -19,7 +19,7 @@
 					<key>needs-shine</key>
 					<false/>
 					<key>url</key>
-					<string>https://nextsolution.cc/install/icons/com-nextsolution-tiktok-11157ca78549.png</string>
+					<string>https://nextjailbreak.com/install/icons/com-nextsolution-tiktok-11157ca78549.png</string>
 				</dict>
 				<dict>
 					<key>kind</key>
@@ -27,7 +27,7 @@
 					<key>needs-shine</key>
 					<false/>
 					<key>url</key>
-					<string>https://nextsolution.cc/install/icons/com-nextsolution-tiktok-11157ca78549.png</string>
+					<string>https://nextjailbreak.com/install/icons/com-nextsolution-tiktok-11157ca78549.png</string>
 				</dict>
 			</array>
 			<key>metadata</key>

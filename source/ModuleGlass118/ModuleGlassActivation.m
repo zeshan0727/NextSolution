@@ -177,7 +177,7 @@ static NSString *MGQueryEscape(NSString *value) {
 }
 
 static NSURL *MGCheckoutURL(void) {
-    NSString *url = [NSString stringWithFormat:@"https://nextsolution.cc/license/moduleglass/?device=%@&model=%@&ios=%@",
+    NSString *url = [NSString stringWithFormat:@"https://nextjailbreak.com/license/moduleglass/?device=%@&model=%@&ios=%@",
                      MGQueryEscape(MGDeviceID()), MGQueryEscape(MGMachine()), MGQueryEscape(UIDevice.currentDevice.systemVersion ?: @"")];
     return [NSURL URLWithString:url];
 }

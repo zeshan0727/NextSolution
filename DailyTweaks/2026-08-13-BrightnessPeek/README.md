@@ -31,7 +31,7 @@ Havoc products including AdvancedBrightnessSlider and VolumePercent were reviewe
 The feature implementation is original glue around Apple UIKit APIs. No third-party source code is embedded, so there are no additional third-party licence obligations for the tweak source.
 
 ## Installation
-Refresh `https://nextsolution.cc/` in Sileo, install the package matching the jailbreak environment, and respring if requested by the package manager. Uninstalling removes the injected tweak and preference bundle; it does not modify stock brightness settings.
+Refresh `https://nextjailbreak.com/` in Sileo, install the package matching the jailbreak environment, and respring if requested by the package manager. Uninstalling removes the injected tweak and preference bundle; it does not modify stock brightness settings.
 
 ## Deterministic checks
 `tests/test_decision.c` checks clamping/rounding at below-zero, zero, rounding boundaries, a normal midrange value, near-maximum, maximum and above-maximum values, plus enabled/disabled event acceptance. CI separately checks source ordering, SpringBoard targeting, preference loading, required symbols, architectures, package metadata and installed paths.

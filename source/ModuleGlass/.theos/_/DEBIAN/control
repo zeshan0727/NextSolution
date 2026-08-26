@@ -9,7 +9,7 @@ Conflicts: com.nextsolution.unlockvibrate
 Breaks: com.nextsolution.unlockvibrate (<= 4.5.3)
 Replaces: com.nextsolution.unlockvibrate (<= 4.5.3)
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Tag: role::cydia
 Architecture: iphoneos-arm64e
 Version: 1.0.6

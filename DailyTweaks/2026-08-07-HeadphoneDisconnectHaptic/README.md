@@ -85,7 +85,7 @@ The warning is intentionally haptic-only. It does not pause media, alter Bluetoo
 
 ## Installation
 
-Add `https://nextsolution.cc/` to Sileo, refresh sources, search for **Headphone Disconnect Haptic**, and install the package variant matching the jailbreak. Do not install both variants. Respring after installation and open Settings → Headphone Disconnect Haptic.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, search for **Headphone Disconnect Haptic**, and install the package variant matching the jailbreak. Do not install both variants. Respring after installation and open Settings → Headphone Disconnect Haptic.
 
 ## Physical-device test checklist
 

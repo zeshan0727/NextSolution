@@ -49,7 +49,7 @@ Preferences use CFPreferences and a Darwin notification. No physical plist path,
 `tests/test_runtime_logic.py` exercises successful activation plus disabled/no-event rejection cases and validates source invariants for process targeting, observer retention, callback selection, decision ordering, CFPreferences/Darwin usage and absence of an unverified private-view gesture lifecycle.
 
 ## Installation
-Add `https://nextsolution.cc/` to Sileo, refresh sources, install the package matching the jailbreak environment, and allow the package post-install action to restart Preferences and SpringBoard.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, install the package matching the jailbreak environment, and allow the package post-install action to restart Preferences and SpringBoard.
 
 ## Physical-device test checklist
 This release remains labelled build-validated and awaiting device test until completed on the matching device.

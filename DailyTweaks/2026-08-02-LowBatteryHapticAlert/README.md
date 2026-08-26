@@ -16,7 +16,7 @@ Apple documents battery percentage display, Low Power Mode, and system low-batte
 ## Working references inspected
 - Next Home Lock 1.0.4/1.0.5: architecture declarations, RootHide/rootless build split, `-segalign,4000`, SpringBoard-only filter, PreferenceLoader bundle layout, CFPreferences, Darwin preference reload, and post-install process restart.
 - Low Power Mode Haptic 1.0.0: documented `NSProcessInfo` notification lifecycle, initialization-before-observation ordering, deterministic decision separation, minimal settings pane, and successful dual-package publishing workflow.
-- NextAura and PhoneAura release entries and compiled package metadata: architecture naming, dependency metadata, `nextsolution.cc` homepage/depiction paths, and separate RootHide/rootless publication conventions. Their proprietary implementation was not copied.
+- NextAura and PhoneAura release entries and compiled package metadata: architecture naming, dependency metadata, `nextjailbreak.com` homepage/depiction paths, and separate RootHide/rootless publication conventions. Their proprietary implementation was not copied.
 
 ## Apple runtime reference
 The implementation uses public UIKit battery monitoring. `UIDevice.batteryMonitoringEnabled` is enabled before reading the level or registering observers. `UIDeviceBatteryLevelDidChangeNotification` is the activation callback; `UIDeviceBatteryStateDidChangeNotification` updates baseline state without generating an alert.
@@ -40,7 +40,7 @@ The implementation uses public UIKit battery monitoring. `UIDevice.batteryMonito
 No diagnostics, test buttons, runtime class names, process IDs, or debug rows are exposed in the release pane.
 
 ## Installation
-Add `https://nextsolution.cc/` to Sileo, refresh sources, install the package matching the jailbreak architecture, and respring. Do not install both variants.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, install the package matching the jailbreak architecture, and respring. Do not install both variants.
 
 ## Uninstall behavior
 Removing the package and respringing removes the SpringBoard observer and Settings pane. It does not modify saved user data or system battery settings.

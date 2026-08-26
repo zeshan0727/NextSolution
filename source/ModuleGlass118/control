@@ -12,5 +12,5 @@ Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.18), com.next
 Breaks: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.18)
 Replaces: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.18)
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Tag: role::cydia

@@ -40,7 +40,7 @@ Settings -> Internet Lost Haptic contains one user-facing control: **Enable Inte
 
 ## Installation
 
-Add or refresh `https://nextsolution.cc/` in Sileo, install only the package variant matching the jailbreak, then respring. RootHide users must use the RootHide package and standard rootless users must use the rootless package. Do not install both variants.
+Add or refresh `https://nextjailbreak.com/` in Sileo, install only the package variant matching the jailbreak, then respring. RootHide users must use the RootHide package and standard rootless users must use the rootless package. Do not install both variants.
 
 ## Uninstall
 

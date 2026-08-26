@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /install/
 
-Sitemap: https://nextsolution.cc/sitemap.xml
+Sitemap: https://nextjailbreak.com/sitemap.xml

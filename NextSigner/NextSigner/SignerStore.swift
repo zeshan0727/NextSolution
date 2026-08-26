@@ -253,7 +253,7 @@ final class SignerStore: ObservableObject {
                 let service = GitHubService(token: currentToken, configuration: configuration)
                 libraryApps = try await service.fetchPublishedCatalog().apps
             } else {
-                var components = URLComponents(string: "https://nextsolution.cc/install/apps.json")!
+                var components = URLComponents(string: "https://nextjailbreak.com/install/apps.json")!
                 components.queryItems = [URLQueryItem(name: "_", value: String(Int(Date().timeIntervalSince1970)))]
                 guard let url = components.url else { throw NextSignerError.libraryUnavailable }
                 var webRequest = URLRequest(url: url)

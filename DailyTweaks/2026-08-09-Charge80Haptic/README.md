@@ -28,7 +28,7 @@ SpringBoard enables UIKit battery monitoring, snapshots the initial percentage b
 `tests/test_runtime_logic.py` covers successful 79→80/81 transitions, charging/full states, startup suppression, disabled rejection, unplugged rejection, duplicate-edge rejection, already-above rejection, below-threshold rejection and unknown-reading rejection. CI also checks ordering (initial battery snapshot before observer registration), observer retention, process filtering, symbols, package paths, preference resources and architecture metadata.
 
 ## Installation
-Add or refresh `https://nextsolution.cc/` in Sileo and install the package matching the jailbreak environment. Respring after installation if the package manager does not do so automatically.
+Add or refresh `https://nextjailbreak.com/` in Sileo and install the package matching the jailbreak environment. Respring after installation if the package manager does not do so automatically.
 
 ## Uninstall
 Remove Charge 80 Haptic from the package manager and respring. The tweak stores only its enable preference and does not alter system battery policy.

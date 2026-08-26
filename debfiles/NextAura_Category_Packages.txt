@@ -7,71 +7,71 @@ USER-FACING CATEGORIES
 Pulse
   Package: com.nextsolution.nextaura.feedback
   File: NextAura_feedback_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/feedback.png
+  Icon: https://nextjailbreak.com/icons/nextaura/feedback.png
 Therma
   Package: com.nextsolution.nextaura.thermal-sweat
   File: NextAura_thermal_sweat_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
+  Icon: https://nextjailbreak.com/icons/nextaura/thermal-sweat.png
 HomeFlow
   Package: com.nextsolution.nextaura.home-screen
   File: NextAura_home_screen_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/home-screen.png
+  Icon: https://nextjailbreak.com/icons/nextaura/home-screen.png
 DockCraft
   Package: com.nextsolution.nextaura.dock-folders
   File: NextAura_dock_folders_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/dock-folders.png
+  Icon: https://nextjailbreak.com/icons/nextaura/dock-folders.png
 LockCraft
   Package: com.nextsolution.nextaura.lock-screen
   File: NextAura_lock_screen_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/lock-screen.png
+  Icon: https://nextjailbreak.com/icons/nextaura/lock-screen.png
 StatusKit
   Package: com.nextsolution.nextaura.status-bar
   File: NextAura_status_bar_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/status-bar.png
+  Icon: https://nextjailbreak.com/icons/nextaura/status-bar.png
 ControlKit
   Package: com.nextsolution.nextaura.control-center
   File: NextAura_control_center_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/control-center.png
+  Icon: https://nextjailbreak.com/icons/nextaura/control-center.png
 Control Deck
   Package: com.nextsolution.nextaura.cc-second-page
   File: NextAura_cc_second_page_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/cc-second-page.png
+  Icon: https://nextjailbreak.com/icons/nextaura/cc-second-page.png
 Module Glass
   Package: com.nextsolution.nextaura.cc-module-backgrounds
   File: NextAura_cc_module_backgrounds_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
+  Icon: https://nextjailbreak.com/icons/nextaura/cc-module-backgrounds.png
 Notify Island
   Package: com.nextsolution.nextaura.notification-island
   File: NextAura_notification_island_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/notification-island.png
+  Icon: https://nextjailbreak.com/icons/nextaura/notification-island.png
 Notify Glow
   Package: com.nextsolution.nextaura.notification-glow
   File: NextAura_notification_glow_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/notification-glow.png
+  Icon: https://nextjailbreak.com/icons/nextaura/notification-glow.png
 NowPlay
   Package: com.nextsolution.nextaura.now-playing
   File: NextAura_now_playing_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/now-playing.png
+  Icon: https://nextjailbreak.com/icons/nextaura/now-playing.png
 NotifyKit
   Package: com.nextsolution.nextaura.notifications
   File: NextAura_notifications_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/notifications.png
+  Icon: https://nextjailbreak.com/icons/nextaura/notifications.png
 SwitchDeck
   Package: com.nextsolution.nextaura.app-switcher
   File: NextAura_app_switcher_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/app-switcher.png
+  Icon: https://nextjailbreak.com/icons/nextaura/app-switcher.png
 HUDKit
   Package: com.nextsolution.nextaura.system-overlays
   File: NextAura_system_overlays_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/system-overlays.png
+  Icon: https://nextjailbreak.com/icons/nextaura/system-overlays.png
 Motion
   Package: com.nextsolution.nextaura.animations
   File: NextAura_animations_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/animations.png
+  Icon: https://nextjailbreak.com/icons/nextaura/animations.png
 Rescue
   Package: com.nextsolution.nextaura.safety-recovery
   File: NextAura_safety_recovery_1.0.4_RootHide.deb
-  Icon: https://nextsolution.cc/icons/nextaura/safety-recovery.png
+  Icon: https://nextjailbreak.com/icons/nextaura/safety-recovery.png
 
 INTERNAL SHARED RUNTIMES
 Preferences

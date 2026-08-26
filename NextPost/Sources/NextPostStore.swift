@@ -57,7 +57,7 @@ final class NextPostStore: ObservableObject {
             reconcileUsedLinks(with: articles)
             totalArticles = articles.count
             remainingThisCycle = max(0, articles.count - usedLinks.count)
-            statusText = articles.isEmpty ? "No articles found" : "Connected to nextsolution.cc"
+            statusText = articles.isEmpty ? "No articles found" : "Connected to nextjailbreak.com"
         } catch {
             statusText = "Could not refresh articles"
         }

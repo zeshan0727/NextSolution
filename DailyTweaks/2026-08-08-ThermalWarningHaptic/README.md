@@ -39,7 +39,7 @@ No private filesystem preference path is used, so no RootHide path translation i
 Repository history and current package/source structure were reviewed before implementation:
 
 - **Next Aura (`com.nextsolution.unlockvibrate`)**: current RootHide/rootless package metadata and installed-layout expectations in `Packages`; historical Next Home Lock commits explicitly carrying the NextAura-style CFPreferences approach.
-- **PhoneAura (`com.zeshan.phoneaura`)**: current dual-architecture package metadata, dependencies, live `nextsolution.cc` depiction/homepage conventions, and publication-history branches/commits.
+- **PhoneAura (`com.zeshan.phoneaura`)**: current dual-architecture package metadata, dependencies, live `nextjailbreak.com` depiction/homepage conventions, and publication-history branches/commits.
 - **Next Home Lock 1.0.4/1.0.5**: proven SpringBoard process restriction, `arm64 arm64e`, RootHide scheme, `-segalign,4000`, aggregate PreferenceLoader subproject, CFPreferences + Darwin notification pattern, simple release pane, and post-install Preferences/SpringBoard restart.
 - **Headphone Disconnect Haptic 1.0.0**: most recent successful dual-build workflow, package validation, diagnostic compiler artifacts, synchronized index publication, relative `./debfiles/` filenames, retry-on-main-race logic and cleanup pattern.
 
@@ -63,7 +63,7 @@ There are no diagnostic rows, test buttons, runtime class names or debug control
 
 ## Installation
 
-Add `https://nextsolution.cc/` to Sileo, refresh sources, install the RootHide or rootless package matching the jailbreak, then respring if the package manager does not do so automatically.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, install the RootHide or rootless package matching the jailbreak, then respring if the package manager does not do so automatically.
 
 ## Uninstall behavior
 

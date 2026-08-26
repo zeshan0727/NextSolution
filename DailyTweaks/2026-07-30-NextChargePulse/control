@@ -4,7 +4,7 @@ Version: 1.0.0
 Architecture: iphoneos-arm64
 Depends: firmware (>= 15.0), mobilesubstrate
 Description: Gives one clear success haptic when external power is connected. No settings and no background data collection.
-Depiction: https://nextsolution.cc/depictions/com.nextsolution.nextchargepulse/
+Depiction: https://nextjailbreak.com/depictions/com.nextsolution.nextchargepulse/
 Maintainer: Next Jailbreak
 Author: Next Jailbreak
 Section: Tweaks

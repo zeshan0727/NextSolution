@@ -1,7 +1,7 @@
 import Foundation
 
 enum AppData {
-    static let websiteURL = URL(string: "https://nextsolution.cc/")!
+    static let websiteURL = URL(string: "https://nextjailbreak.com/")!
     static let youtubeURL = URL(string: "https://youtube.com/@nextjailbreak")!
     static let xURL = URL(string: "https://x.com/nextjailbreak")!
     static let instagramURL = URL(string: "https://instagram.com/nextjailbreak")!
@@ -18,7 +18,7 @@ enum AppData {
             icon: "phone.fill",
             tags: ["iOS 16+", "RootHide", "Rootless", "Free"],
             heroURL: nil,
-            sourceURL: URL(string: "https://nextsolution.cc/phoneaura-tweak-ios16.html")!,
+            sourceURL: URL(string: "https://nextjailbreak.com/phoneaura-tweak-ios16.html")!,
             featured: true,
             sections: [
                 TutorialSection(
@@ -60,7 +60,7 @@ enum AppData {
             icon: "arrow.triangle.2.circlepath",
             tags: ["Conversion", "Dopamine 2", "palera1n"],
             heroURL: nil,
-            sourceURL: URL(string: "https://nextsolution.cc/convert-rootful-to-rootless.html")!,
+            sourceURL: URL(string: "https://nextjailbreak.com/convert-rootful-to-rootless.html")!,
             featured: false,
             sections: [
                 TutorialSection(
@@ -91,7 +91,7 @@ enum AppData {
             icon: "puzzlepiece.extension.fill",
             tags: ["Free", "iOS 16", "Tweaks"],
             heroURL: nil,
-            sourceURL: URL(string: "https://nextsolution.cc/ios16-rootless-tweaks.html")!,
+            sourceURL: URL(string: "https://nextjailbreak.com/ios16-rootless-tweaks.html")!,
             featured: false,
             sections: [
                 TutorialSection(
@@ -122,7 +122,7 @@ enum AppData {
             icon: "lock.open.fill",
             tags: ["iOS 16", "palera1n", "Guide"],
             heroURL: nil,
-            sourceURL: URL(string: "https://nextsolution.cc/how-to-jailbreak.html")!,
+            sourceURL: URL(string: "https://nextjailbreak.com/how-to-jailbreak.html")!,
             featured: false,
             sections: [
                 TutorialSection(
@@ -153,7 +153,7 @@ enum AppData {
             icon: "battery.50",
             tags: ["Battery", "3uTools", "Guide"],
             heroURL: nil,
-            sourceURL: URL(string: "https://nextsolution.cc/remove-service-message-iphone.html")!,
+            sourceURL: URL(string: "https://nextjailbreak.com/remove-service-message-iphone.html")!,
             featured: false,
             sections: [
                 TutorialSection(

@@ -297,7 +297,7 @@ final class AppModel: ObservableObject {
             handle(url: url)
             return
         }
-        if let url = URL(string: text), url.host == "nextsolution.cc", let components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+        if let url = URL(string: text), url.host == "nextjailbreak.com", let components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
             let values = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") })
             let product = ProductConfig.all.first(where: { $0.name.caseInsensitiveCompare(values["product"] ?? "") == .orderedSame }) ?? .nextLock
             addRequest(product: product, deviceID: values["device"] ?? "", payment: values["payment"] ?? "")

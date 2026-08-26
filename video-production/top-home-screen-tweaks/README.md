@@ -1,7 +1,7 @@
 # Top Home Screen Tweaks video
 
 This package turns the published comparison at
-`https://nextsolution.cc/top-home-screen-tweaks.html` into an original narrated
+`https://nextjailbreak.com/top-home-screen-tweaks.html` into an original narrated
 YouTube video. It produces:
 
 - a 1920×1080 MP4 with burned-in captions;

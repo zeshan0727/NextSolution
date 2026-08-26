@@ -3,10 +3,10 @@ Name: Brightness Peek
 Version: 1.0.0
 Architecture: iphoneos-arm64
 Description: Shows a small exact brightness percentage toast whenever screen brightness changes.
-Maintainer: Next Jailbreak <support@nextsolution.cc>
+Maintainer: Next Jailbreak <support@nextjailbreak.com>
 Author: Next Jailbreak - Zeeshan Barvi
 Section: Tweaks
 Priority: optional
 Depends: mobilesubstrate, preferenceloader
-Homepage: https://nextsolution.cc/
-Depiction: https://nextsolution.cc/depictions/brightnesspeek.html
+Homepage: https://nextjailbreak.com/
+Depiction: https://nextjailbreak.com/depictions/brightnesspeek.html

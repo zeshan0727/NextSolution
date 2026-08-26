@@ -582,7 +582,7 @@ private struct NextSignerLibraryView: View {
     private func absoluteURL(_ value: String?) -> URL? {
         guard let value, !value.isEmpty else { return nil }
         if let absolute = URL(string: value), absolute.scheme != nil { return absolute }
-        return URL(string: value, relativeTo: URL(string: "https://nextsolution.cc")!)?.absoluteURL
+        return URL(string: value, relativeTo: URL(string: "https://nextjailbreak.com")!)?.absoluteURL
     }
 }
 
@@ -625,7 +625,7 @@ private struct NextSignerActivityView: View {
                 }
 
                 Section("Private apps") {
-                    Link(destination: URL(string: "https://nextsolution.cc/install/")!) {
+                    Link(destination: URL(string: "https://nextjailbreak.com/install/")!) {
                         Label("Open Web Library", systemImage: "safari")
                     }
                     Text("Use the Library tab for native browsing, installation and storage cleanup.")

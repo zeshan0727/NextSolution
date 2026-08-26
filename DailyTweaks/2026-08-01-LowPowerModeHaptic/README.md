@@ -24,7 +24,7 @@ The tweak injects only into SpringBoard. It observes Apple's documented `NSProce
 Settings → Low Power Mode Haptic → Enable Low Power Mode Haptic.
 
 ## Installation
-Add `https://nextsolution.cc/` to Sileo, refresh sources, install the package matching the jailbreak architecture, and respring. Do not install both variants.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, install the package matching the jailbreak architecture, and respring. Do not install both variants.
 
 ## Uninstall behavior
 Removing the package and respringing restores stock behavior. The tweak does not modify saved user data or system configuration.

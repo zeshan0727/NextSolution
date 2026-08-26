@@ -3,7 +3,7 @@
 Target runtime: 6–7 minutes  
 Format: 16:9 long-form tutorial  
 Test device visual: real Next Jailbreak iPad Home Screen with Dopamine and Sileo
-Article: https://nextsolution.cc/dopamine-3-jailbreak-ios-17-6-1.html
+Article: https://nextjailbreak.com/dopamine-3-jailbreak-ios-17-6-1.html
 
 ## Accuracy lock before editing
 

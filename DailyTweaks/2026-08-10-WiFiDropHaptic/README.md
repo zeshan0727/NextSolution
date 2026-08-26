@@ -58,7 +58,7 @@ Preferences use CFPreferences with a Darwin notification. No physical preference
 The test also verifies decision ordering, state mutation ordering, monitor retention/startup markers and the expected warning-feedback route.
 
 ## Installation
-Add `https://nextsolution.cc/` to Sileo, refresh sources, install the package matching the jailbreak environment, then allow the package post-install action to restart Preferences and SpringBoard.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, install the package matching the jailbreak environment, then allow the package post-install action to restart Preferences and SpringBoard.
 
 ## Physical-device test checklist
 This release must be labelled build-validated and awaiting device test until tested on a matching device.

@@ -26,7 +26,7 @@ One user-facing option: **Enable Haptic Alert**.
 `tests/test_decision.py` covers capture start, capture stop, disabled rejection, initial-load rejection, and duplicate-state rejection.
 
 ## Installation and uninstall
-Add `https://nextsolution.cc/` to Sileo, install the matching package and respring. Uninstalling removes the tweak and Settings bundle; no user data is collected.
+Add `https://nextjailbreak.com/` to Sileo, install the matching package and respring. Uninstalling removes the tweak and Settings bundle; no user data is collected.
 
 ## Device test checklist
 1. Confirm the Settings pane appears.

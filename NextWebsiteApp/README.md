@@ -1,6 +1,6 @@
 # Next Jailbreak Website App
 
-Native iOS/TrollStore wrapper for **nextsolution.cc**.
+Native iOS/TrollStore wrapper for **nextjailbreak.com**.
 
 ## Tabs
 

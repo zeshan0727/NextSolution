@@ -354,7 +354,7 @@ def render_slide(
         (1288, 166, 1848, 948),
         str(scene["accent"]),
     )
-    draw.text((86, 1012), "NEXTSOLUTION.CC", font=font(24, bold=True), fill=(87, 98, 127, 255))
+    draw.text((86, 1012), "nextjailbreak.com", font=font(24, bold=True), fill=(87, 98, 127, 255))
     progress_left, progress_right = 530, 1240
     draw.rounded_rectangle((progress_left, 1022, progress_right, 1030), radius=4, fill=(204, 211, 230, 255))
     progress = progress_left + round((progress_right - progress_left) * ((index + 1) / count))
@@ -444,7 +444,7 @@ def render_short_slide(
         draw.text((132, fact_y + 17), str(fact), font=font(25, bold=True), fill=(42, 51, 78, 255))
         fact_y += 86
     draw.rounded_rectangle((60, 1670, 1020, 1752), radius=28, fill=(18, 25, 45, 242))
-    draw.text((96, 1694), "FULL TOP 8 GUIDE  •  NEXTSOLUTION.CC", font=font(25, bold=True), fill=(255, 255, 255, 255))
+    draw.text((96, 1694), "FULL TOP 8 GUIDE  •  nextjailbreak.com", font=font(25, bold=True), fill=(255, 255, 255, 255))
     target.parent.mkdir(parents=True, exist_ok=True)
     image.convert("RGB").save(target, quality=95)
 

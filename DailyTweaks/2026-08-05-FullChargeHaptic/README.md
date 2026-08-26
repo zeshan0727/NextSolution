@@ -49,7 +49,7 @@ No diagnostics or test controls are exposed in the release pane.
 
 ## Installation
 
-Add `https://nextsolution.cc/` to Sileo, refresh sources, install the package matching the jailbreak environment, and respring.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, install the package matching the jailbreak environment, and respring.
 
 ## Uninstall
 

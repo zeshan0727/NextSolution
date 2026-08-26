@@ -31,7 +31,7 @@ struct PublishedArticle: Decodable, Identifiable, Hashable {
         }
 
         let trimmed = href.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        return URL(string: "https://nextsolution.cc/\(trimmed)")!
+        return URL(string: "https://nextjailbreak.com/\(trimmed)")!
     }
 
     /// Clean canonical-style URL retained for deduplication/history.

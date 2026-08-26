@@ -263,7 +263,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("Source: https://nextsolution.cc • Cycle \(store.cycleNumber)")
+            Text("Source: https://nextjailbreak.com • Cycle \(store.cycleNumber)")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
         }

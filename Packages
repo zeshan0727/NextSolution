@@ -11,11 +11,11 @@ SHA1: ba58875673dc2b88a6126f72ff413e1f1bd0cc19
 SHA256: da1696de09ab7e50de92f1d3795c1b431dbaeabf44e201c924a7ed2018bf4b8d
 Section: Applications
 Priority: optional
-Homepage: https://nextsolution.cc/applications/
+Homepage: https://nextjailbreak.com/applications/
 Description: Fast personal finance ledger with independent Net Balance and Income account filters, display-only custom summary cards, reports, budgets, backup and AI-assisted insights.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextledger.html
-Icon: https://nextsolution.cc/CydiaIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextledger.html
+Icon: https://nextjailbreak.com/CydiaIcon.png
 Name: Next Ledger
 
 Package: com.nextsolution.dailyledger.smsimport
@@ -47,11 +47,11 @@ MD5sum: df278ca66df86b7c84b8888f5bed4efb
 SHA1: 671f048fbec9b121db96f9cbfaab30b466dbb5f6
 SHA256: 3a5d181776dbb892510f0cd18e02c3dc9aa53baa3403d290b3633ed248d49140
 Section: Tweaks
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: A modern redesign for the iOS 16 Messages app with conversation cards, swipe actions, details, deletion, haptics and animations. Built for RootHide.
 Author: Next Jailbreak - zeshan0727
-Depiction: https://nextsolution.cc/depictions/nextmessage.html
-Icon: https://nextsolution.cc/CydiaIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextmessage.html
+Icon: https://nextjailbreak.com/CydiaIcon.png
 Name: Next Message
 
 Package: com.nextsolution.nextmessage
@@ -66,11 +66,11 @@ MD5sum: 4c3f7e41e2581be203c03301489d353c
 SHA1: 0aa17520b2145c571f41c4e64b3f431e2f2cf3ee
 SHA256: b371c2cecc2c1955e6f8d7d3cddc7e573b3c31574ef907bebac6dc1ad595dae2
 Section: Tweaks
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: A modern redesign for the iOS 16 Messages app with conversation cards, swipe actions, details, deletion, haptics and animations. Built for rootless jailbreaks.
 Author: Next Jailbreak - zeshan0727
-Depiction: https://nextsolution.cc/depictions/nextmessage.html
-Icon: https://nextsolution.cc/CydiaIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextmessage.html
+Icon: https://nextjailbreak.com/CydiaIcon.png
 Name: Next Message
 
 Package: com.nextsolution.shaketorun
@@ -103,11 +103,11 @@ SHA1: fa6485f07085bf29ad2f6409b324968d7f290554
 SHA256: efdbc4e146fde4fd4f49257f28d1ea49228c51e15226fa67bcc46c78b70e630f
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: The complete Next Jailbreak customization suite for iOS 16 with Dynamic Island notifications, Control Center tools, haptics, thermal battery colors and safety recovery controls.
 Author: Next Jailbreak - zeshan0727
-Depiction: https://nextsolution.cc/depictions/nextaura.html
-Icon: https://nextsolution.cc/CydiaIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextaura.html
+Icon: https://nextjailbreak.com/CydiaIcon.png
 Name: NextAura
 
 Package: com.nextsolution.unlockvibrate
@@ -123,11 +123,11 @@ SHA1: 7eaef7d3ceb4220dd7914c5af7ce41ec437af779
 SHA256: 158d1f8b26992b879dbeef36d8c0e49de5a31d2b30b4e2a949d592a55ec437a3
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: The complete Next Jailbreak customization suite for iOS 16 with Dynamic Island notifications, Control Center tools, haptics, thermal battery colors and safety recovery controls.
 Author: Next Jailbreak - zeshan0727
-Depiction: https://nextsolution.cc/depictions/nextaura.html
-Icon: https://nextsolution.cc/CydiaIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextaura.html
+Icon: https://nextjailbreak.com/CydiaIcon.png
 Name: NextAura
 
 Package: com.zeshan.phoneaura
@@ -142,10 +142,10 @@ MD5sum: 0b033f8a7ce252dd6400d1f6dd0a6dab
 SHA1: c2bfdbd4c2506eba0e74ed4f359b34750f972d66
 SHA256: 953d3eadfbc379bc57349cb92ed2cad8fae78d9c35092c33bce437573fe4fbc4
 Section: Tweaks
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: PhoneAura is a free modern redesign of the iOS 16 Phone app with custom Favorites, smart Recents, Contacts, haptics and animations. Built for rootless jailbreaks.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/phoneaura.html
+Depiction: https://nextjailbreak.com/depictions/phoneaura.html
 Name: PhoneAura
 
 Package: com.zeshan.phoneaura
@@ -160,10 +160,10 @@ MD5sum: c28f125b2cdfa68b3fa40fb53c18a616
 SHA1: ffef4e94457bbcd995c8febd014fb44193cafe7b
 SHA256: c5e8f0c0e9e2b46adf82e4456d36853fd758ece9227e55766affebb9e8e90c2d
 Section: Tweaks
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: PhoneAura is a free modern redesign of the iOS 16 Phone app with custom Favorites, smart Recents, Contacts, haptics and animations. Built for RootHide.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/phoneaura.html
+Depiction: https://nextjailbreak.com/depictions/phoneaura.html
 Name: PhoneAura
 
 Package: com.nextsolution.nexthomelock
@@ -213,10 +213,10 @@ SHA1: 14182ee1b561ba460e012bba09b37e18c7dddd1a
 SHA256: 7c464634a3f5baf098b70640c90a812481c2f91119d513586def6245bcc15fc0
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Version 1.0.4 adds verified SpringBoard injection diagnostics, a Settings test command, framework loading, haptic gesture confirmation and multiple flashlight routes.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/nexthometorch.html
+Depiction: https://nextjailbreak.com/depictions/nexthometorch.html
 Name: Home Screen Flashlight
 
 Package: com.nextsolution.nexthometorch
@@ -232,10 +232,10 @@ SHA1: d5a6dfe3211eba27b9ac4551e538411b5c352b28
 SHA256: 08550d59745fcdaede6a4590e5950ead68be4199384c7ddcadc1a838a3cd514a
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Double-tap an empty Home Screen area to toggle the iPhone flashlight. Version 1.0.4 adds verified SpringBoard injection diagnostics, a Settings test command, framework loading, haptic gesture confirmation and multiple flashlight routes.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/nexthometorch.html
+Depiction: https://nextjailbreak.com/depictions/nexthometorch.html
 Name: Home Screen Flashlight
 
 Package: com.nextsolution.lowpowermodehaptic
@@ -251,10 +251,10 @@ SHA1: a353fa6cbc9be2d8b28275edc6df1f5af6d86572
 SHA256: 0df80e733436b460bb273b6182ed3b90a850fb71acbf79f33bafe7d0be0f315a
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays distinct haptic feedback when iPhone Low Power Mode turns on or off. Includes one simple enable switch in Settings.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
+Depiction: https://nextjailbreak.com/depictions/lowpowermodehaptic.html
 Name: Low Power Mode Haptic
 
 Package: com.nextsolution.lowpowermodehaptic
@@ -270,10 +270,10 @@ SHA1: 648ace332cbd0709b52a5ade3cbbb8ced968f0f8
 SHA256: 1365d250296009ef865ee25d8950a8557a8584d4181cc791f335e0b82f3abec9
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays distinct haptic feedback when iPhone Low Power Mode turns on or off. Includes one simple enable switch in Settings.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/lowpowermodehaptic.html
+Depiction: https://nextjailbreak.com/depictions/lowpowermodehaptic.html
 Name: Low Power Mode Haptic
 
 Package: com.nextsolution.headphonedisconnecthaptic
@@ -289,10 +289,10 @@ SHA1: 89d2636ba919591667ede2bd92238c25a7a037df
 SHA256: b5c3d830a1217e244862d9950c69cdf8db5d048d150c9790759f743524add5a9
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
+Depiction: https://nextjailbreak.com/depictions/headphonedisconnecthaptic.html
 Name: Headphone Disconnect Haptic
 
 Package: com.nextsolution.headphonedisconnecthaptic
@@ -308,10 +308,10 @@ SHA1: ac63e73b94b9a093382510209d784ce395dc2620
 SHA256: 3393596944968c526b276aa2c836fc6364480c6160af7503fd3b8d6799b3b2ea
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays a warning haptic when wired or Bluetooth headphones disconnect and audio falls back away from a personal audio route.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/headphonedisconnecthaptic.html
+Depiction: https://nextjailbreak.com/depictions/headphonedisconnecthaptic.html
 Name: Headphone Disconnect Haptic
 
 Package: com.nextsolution.thermalwarninghaptic
@@ -327,10 +327,10 @@ SHA1: 23fd9809b560d2df9067fc3011f1718a2160182a
 SHA256: 52760b899c980c060214f8ccd666e956ecd76f7b2dba56a1f49c06b128cdafd0
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/thermalwarninghaptic.html
+Depiction: https://nextjailbreak.com/depictions/thermalwarninghaptic.html
 Name: Thermal Warning Haptic
 
 Package: com.nextsolution.thermalwarninghaptic
@@ -346,10 +346,10 @@ SHA1: b5c0c35a603974f05f078ebfc3d04ccde365d264
 SHA256: c1ece6c7c2f03d1ea6e0e7579ce0a0e2433c29be01bc1f86ba866f406fd3366b
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one warning haptic when the iPhone newly enters a serious or critical thermal state.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/thermalwarninghaptic.html
+Depiction: https://nextjailbreak.com/depictions/thermalwarninghaptic.html
 Name: Thermal Warning Haptic
 
 Package: com.nextsolution.charge80haptic
@@ -365,10 +365,10 @@ SHA1: 6e7ac67e40d5c6a7c908695ef8210ba833c43904
 SHA256: 11d5ff1fa983d41e07a103e342d383579dfa237c321ece5dbe1e95d0c395bccd
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one success haptic when the iPhone crosses 80% battery while connected to power.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/charge80haptic.html
+Depiction: https://nextjailbreak.com/depictions/charge80haptic.html
 Name: Charge 80 Haptic
 
 Package: com.nextsolution.charge80haptic
@@ -384,10 +384,10 @@ SHA1: 364096329dda1eaec1f582691c8e93e2a6e9815f
 SHA256: b52a692ac0034d0e8f6b0ab07b7beb874bc405581444a2cc2a4cf4fb4f2d858f
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one success haptic when the iPhone crosses 80% battery while connected to power.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/charge80haptic.html
+Depiction: https://nextjailbreak.com/depictions/charge80haptic.html
 Name: Charge 80 Haptic
 
 Package: com.nextsolution.wifidrophaptic
@@ -403,10 +403,10 @@ SHA1: a91e714b360e77bd2c475dfa98a772b60cf3e869
 SHA256: be43a4b028cc96a78d44cba9e716c1075488b0d1bf701d0f4ea93ddde5960b56
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one warning haptic when the active network path leaves Wi-Fi.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/wifidrophaptic.html
+Depiction: https://nextjailbreak.com/depictions/wifidrophaptic.html
 Name: Wi-Fi Drop Haptic
 
 Package: com.nextsolution.wifidrophaptic
@@ -422,10 +422,10 @@ SHA1: 9840168e0d75fd47b454deb144d680be158f15fc
 SHA256: 1ef2cc418db9907d3ce48073c619dcd04bbda9861dc9af387166341eba324fe3
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one warning haptic when the active network path leaves Wi-Fi.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/wifidrophaptic.html
+Depiction: https://nextjailbreak.com/depictions/wifidrophaptic.html
 Name: Wi-Fi Drop Haptic
 
 Package: com.nextsolution.screenshothaptic
@@ -440,10 +440,10 @@ MD5sum: b5cd44db5037759850f38c1dfc5c71ba
 SHA1: db23d804a1136684879931dcd0d644943215ae2e
 SHA256: 8c0decd47514ca99affa27f2374cf8eedaa185651bec9d59698b13ce22a7d3bb
 Section: Tweaks
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one success haptic after iOS confirms a screenshot was taken.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/screenshothaptic.html
+Depiction: https://nextjailbreak.com/depictions/screenshothaptic.html
 Name: Screenshot Haptic
 
 Package: com.nextsolution.screenshothaptic
@@ -458,10 +458,10 @@ MD5sum: 7d23662f843c718aafb760ad1d2f7ff1
 SHA1: a546a9a600c09204483c2883a41753e09b72a816
 SHA256: 24900b809ba48aa77ce6d98fdfa091928cd78ba612ace8f0cd96e56df1db3919
 Section: Tweaks
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one success haptic after iOS confirms a screenshot was taken.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/screenshothaptic.html
+Depiction: https://nextjailbreak.com/depictions/screenshothaptic.html
 Name: Screenshot Haptic
 
 Package: com.nextsolution.internetlosthaptic
@@ -476,10 +476,10 @@ SHA1: 3975287fd3c8291e12adca04bb3e543d1b24e394
 SHA256: b733da65c0feb733ecc5f38c567ac54c1507ddbe06bfcdcc884e92b10823553d
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one warning haptic when a usable network path becomes unavailable.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html
+Depiction: https://nextjailbreak.com/depictions/internetlosthaptic.html
 Name: Internet Lost Haptic
 
 Package: com.nextsolution.internetlosthaptic
@@ -494,10 +494,10 @@ SHA1: 6770e39818a5e603b2ec32af0be5e5cfe927a299
 SHA256: 0a5edebc57f5fe802dd06fb120c444ee51a964e0a4397aa31356fb894779f1ed
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Plays one warning haptic when a usable network path becomes unavailable.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/internetlosthaptic.html
+Depiction: https://nextjailbreak.com/depictions/internetlosthaptic.html
 Name: Internet Lost Haptic
 
 Package: com.nextsolution.cleanhomelabels
@@ -512,10 +512,10 @@ SHA1: 923688454b66bfa8e594e136bc4e60235d770d5a
 SHA256: 196c625fffaa553ea2684033b60327748df532dcb7405340aae17a637fb59b43
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Hides SpringBoard icon names for a cleaner Home Screen while leaving icons and badges intact.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
+Depiction: https://nextjailbreak.com/depictions/cleanhomelabels.html
 Name: Clean Home Labels
 
 Package: com.nextsolution.cleanhomelabels
@@ -530,10 +530,10 @@ SHA1: 79880d33b1356bf9618e5b84231e976dd47cdb93
 SHA256: 9f9628a846c1de271c222124ef9225c5b9553bd4a1214941161046dbf4259bb3
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Hides SpringBoard icon names for a cleaner Home Screen while leaving icons and badges intact.
 Author: Next Jailbreak
-Depiction: https://nextsolution.cc/depictions/cleanhomelabels.html
+Depiction: https://nextjailbreak.com/depictions/cleanhomelabels.html
 Name: Clean Home Labels
 
 Package: com.nextsolution.nextquickreminder
@@ -565,7 +565,7 @@ SHA1: cb568454acb8ccef8652bb2e08f3985c270abca4
 SHA256: 74f48927e549b4b3c3d8190196dd87ec34adb1ee27e84e1bd7de36ad888fece9
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Shared RootHide diagnostic runtime for Next Jailbreak tweaks. Idle until Next Log starts a focused capture, then reports target-process injection and loaded tweak dylibs.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -584,10 +584,10 @@ SHA1: 72c8cb2bb77f441a085bba6728ca16d7b0c2f20a
 SHA256: 25fde159e756d4f7dc4a19c6a1bdb7b7ce5c03b325a1d58bc6584db2f558f18e
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: System animation-speed control.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/animations.png
+Icon: https://nextjailbreak.com/icons/nextaura/animations.png
 Name: Motion
 
 Package: com.nextsolution.nextaura.app-switcher
@@ -603,10 +603,10 @@ SHA1: d3124f29e13e9b04909d6447741b7fa26c851998
 SHA256: 214cb116ae38407b99f42c340b8afdf8118d6104831b8a4ca973051b37ab0cfd
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: App Switcher card scale, opacity, spacing, labels, icons and background controls.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/app-switcher.png
+Icon: https://nextjailbreak.com/icons/nextaura/app-switcher.png
 Name: SwitchDeck
 
 Package: com.nextsolution.nextaura.cc-second-page
@@ -622,10 +622,10 @@ SHA1: 084c21630c872e1badd42fb663dc80fa5cb04ad1
 SHA256: 779e12568d10bd62618ce797466ba991ba41e5469b52e0a3e7d99de46c33f3eb
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Second Control Center page with configurable tiles, spacing, information and haptics.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/cc-second-page.png
+Icon: https://nextjailbreak.com/icons/nextaura/cc-second-page.png
 Name: Control Deck
 
 Package: com.nextsolution.nextaura.control-center
@@ -641,10 +641,10 @@ SHA1: d33cceeccc8d6d23f9548dd5ee3b0d2ce03262ed
 SHA256: 852c083a127f026d3b0034b7ba84706510a961bf65bfbea3a8446a8bfe5e7026
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Control Center labels, module sizing, background appearance and advanced stock-layout controls.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/control-center.png
+Icon: https://nextjailbreak.com/icons/nextaura/control-center.png
 Name: ControlKit
 
 Package: com.nextsolution.nextaura.dock-folders
@@ -660,10 +660,10 @@ SHA1: 1a76fcb42231053ed9cf9b71d63109bc6e946559
 SHA256: 04ab591d0dc6fc7258da3d20a834b810bb29dc4db13538ea95ea38111de0ccaf
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Dock and folder backgrounds, labels, sizing, opacity and advanced layout controls.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/dock-folders.png
+Icon: https://nextjailbreak.com/icons/nextaura/dock-folders.png
 Name: DockCraft
 
 Package: com.nextsolution.nextaura.feedback
@@ -679,10 +679,10 @@ SHA1: cbad77b8d3aa59dc04638180c3370efed6ae3723
 SHA256: 971b58a3b0ed905dfd6c8212e48a0dc4f6b4ca957f3286ff46ca0d298d00003b
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Unlock and call-connect vibration feedback.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/feedback.png
+Icon: https://nextjailbreak.com/icons/nextaura/feedback.png
 Name: Pulse
 
 Package: com.nextsolution.nextaura.home-screen
@@ -698,10 +698,10 @@ SHA1: 7e98e3196194a93d8116e220633f84746e16e948
 SHA256: 293c2493393728322839a852d932b4128b95ae40020c10a7150886c082b06236
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Home Screen labels, badges, icon sizing, opacity and advanced visual controls.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/home-screen.png
+Icon: https://nextjailbreak.com/icons/nextaura/home-screen.png
 Name: HomeFlow
 
 Package: com.nextsolution.nextaura.lock-screen
@@ -717,10 +717,10 @@ SHA1: 9b1dfd6cc6c23f52e1f4fed3d4ec7669a429c6d0
 SHA256: 8464f5a491bbbced35cd3a7cf98bf37aea9488d1115e45b7059e08b134555b30
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Lock Screen clock, quick actions, status elements, charging text and notification-list visuals.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/lock-screen.png
+Icon: https://nextjailbreak.com/icons/nextaura/lock-screen.png
 Name: LockCraft
 
 Package: com.nextsolution.nextaura.notification-glow
@@ -736,10 +736,10 @@ SHA1: bdda13de6644574d2e29bf14b262e0840e177ab5
 SHA256: bca0529ddca83456df2c092543de26034c4cfa56895e5bbc6fc1304ec658765a
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Edge glow, pulse, ripple and lock-screen notification lighting effects.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/notification-glow.png
+Icon: https://nextjailbreak.com/icons/nextaura/notification-glow.png
 Name: Notify Glow
 
 Package: com.nextsolution.nextaura.notification-island
@@ -755,10 +755,10 @@ SHA1: 812120893a7ed93e809a2f7a0a00afdd4f1069fb
 SHA256: ca14eb350d923e5635e7687e7ba84bece489d9133d0692b18eb4855db97183e9
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Notification Island with app icons, privacy, exact-app Open, Dismiss, live preview and layout controls.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/notification-island.png
+Icon: https://nextjailbreak.com/icons/nextaura/notification-island.png
 Name: Notify Island
 
 Package: com.nextsolution.nextaura.notifications
@@ -774,10 +774,10 @@ SHA1: 2285189e8c5dd1d5ca76adaae7904a2fc395d703
 SHA256: 393e670f10720dc2077d436c289d80fa823c54cff9da45a1c431a08d50c57553
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Stock notification icon, app name, time, buttons, scale, opacity and advanced card appearance.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/notifications.png
+Icon: https://nextjailbreak.com/icons/nextaura/notifications.png
 Name: NotifyKit
 
 Package: com.nextsolution.nextaura.now-playing
@@ -793,10 +793,10 @@ SHA1: 5dc0b6141973b21aeed4a6105e7966ac226dde34
 SHA256: d08b5fc74cacd01e58bf4e2b1d6ac8612c78492d81a2141d6b6ccf2e628ce4cc
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Now Playing artwork, title, artist, controls, opacity, scaling and background appearance.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/now-playing.png
+Icon: https://nextjailbreak.com/icons/nextaura/now-playing.png
 Name: NowPlay
 
 Package: com.nextsolution.nextaura.runtime.advanced
@@ -814,7 +814,7 @@ SHA1: 602f19d86aac7673ba411cac5f4f90209f924cdf
 SHA256: 556c484dbf9c269d6589d606cf64efb13284a17be7f09998b2247ffc426194de
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal advanced runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -835,7 +835,7 @@ SHA1: 795b63ceb75347478b573797b56990a7a29b2f6e
 SHA256: 24b1606804d0b6dd019658cdd4e93de58e0494ee3b9018a104d2f12645de9984
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal extended runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -856,7 +856,7 @@ SHA1: 4982dccd1820e361fe362ac2329cfbf1036615c8
 SHA256: be3ec5b288ebf2435fb42f46ffe0f9c2c7e312aef8a110275dfd59bf3812c818
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal feedback runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -877,7 +877,7 @@ SHA1: 9d74330197930219ddf58d828c2c55dd02fa245c
 SHA256: d73884abcb3a78d4893c6a8f6b6b74e5db9804d934139e3532b59fedf6779f03
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal glow runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -898,7 +898,7 @@ SHA1: 126aae9ce61cd15efc7e60265fd5edc3dd4d0365
 SHA256: 3dfe161ea13b295c84d8ccce5f1ff0e91a40379c1f8e73d5b6256c530a0a6949
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal island runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -919,7 +919,7 @@ SHA1: 13c39794c4044f1b676733f5792156672225e8fe
 SHA256: 248418fb32ff48b66fc6344649a95fb354e074e5181018af953a4914781baa2d
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal safe runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -940,7 +940,7 @@ SHA1: bf6774e47e84b6bc43e38afc8e52111c3e4d61bd
 SHA256: 8e037712ce9a54403f3314f2f59530a4a63cda72ce7b864204f77a33b52d8923
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal springboard runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -961,7 +961,7 @@ SHA1: e69dd7c3aaa3b0c2d742df5d1157654dfc70436f
 SHA256: fae6e93da0727a78cd78830819f2d7e6d4d69eb137cd3f9dc119f9755de1b8ac
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal thermal runtime shared by modular NextAura categories.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -980,10 +980,10 @@ SHA1: d3016754a9529430c5fc93e2ff21fbd49808e4c9
 SHA256: 04ef5115b2452363d3c15902b4ca039ae1ef957233b07101e3d1b59ed793a8c0
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Crash-guard recovery and reset tools for advanced visual controls.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/safety-recovery.png
+Icon: https://nextjailbreak.com/icons/nextaura/safety-recovery.png
 Name: Rescue
 
 Package: com.nextsolution.nextaura.status-bar
@@ -999,10 +999,10 @@ SHA1: 5b3285c510468843ec6454b2c269bf6fa2b35bc8
 SHA256: 4f1af20c195d5031e977c1519556c87cba111156f2093d16ae3115ef48884e2e
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Status Bar visibility, opacity, scale, positioning and individual indicator controls.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/status-bar.png
+Icon: https://nextjailbreak.com/icons/nextaura/status-bar.png
 Name: StatusKit
 
 Package: com.nextsolution.nextaura.system-overlays
@@ -1018,10 +1018,10 @@ SHA1: d4531e4d3421bec5638078e93995a1c7012e5944
 SHA256: 3ce671486466dd1555b0471c004b7bd3400e5e5ac1c22fdfe63d83a588ec0113
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Screenshot flash/preview controls plus Volume and Ringer HUD visibility options.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/system-overlays.png
+Icon: https://nextjailbreak.com/icons/nextaura/system-overlays.png
 Name: HUDKit
 
 Package: com.nextsolution.nextaura.thermal-sweat
@@ -1037,10 +1037,10 @@ SHA1: 1d792eeeae9499ed551ce09c77ea405cdcf62bd6
 SHA256: a755eb67e62ad7f34c18bf3b1419eb714c2d1d7b12793d53471b0cbcce62fbf5
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Temperature-aware battery visuals, Sweat My Phone effects and battery percentage tools.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/thermal-sweat.png
+Icon: https://nextjailbreak.com/icons/nextaura/thermal-sweat.png
 Name: Therma
 
 Package: com.nextsolution.nextaura.runtime.preferences
@@ -1058,7 +1058,7 @@ SHA1: 61dae96ee7160bd7b40440e5d3c144d04c52ef9e
 SHA256: fadadf7be5672fc492d6ca45f2c6acdaf342f09fd2509be05251eb128ee67ac6
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal native category Preferences controller shared by modular tweaks, with native Module Glass Volume icon color picker.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -1168,13 +1168,13 @@ MD5sum: 4ae6688ea3d610b3b9d7b075b40d47a6
 SHA1: 807c7b9bd560cc9542cbd0db88b5f1c8319dd50e
 SHA256: 1fbb75b99c25962de10c5982b62e55b85b0f88839ab603e60dd297c0eefd71dd
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.0
@@ -1188,13 +1188,13 @@ MD5sum: 4404635dd92f36d35efe377da30147aa
 SHA1: b4f0d275058fe8d1f74ab4884a5db81ee0a9b5fc
 SHA256: 29605c714355477c6fdacfbe90bac06f9b91d241a66f1c2ab1474e930c1ad22b
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.1
@@ -1208,13 +1208,13 @@ MD5sum: 40ef71c102ba4ca57f92020e2d41d67b
 SHA1: 39bbf1ece4cdc0c548ab0da056819aae276dbb20
 SHA256: 8ef667eb560c134d074652c499d351363bed30c2a8815c3dccffd60271264e60
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.1
@@ -1228,13 +1228,13 @@ MD5sum: 838603a221e5e40b17f424b5fd092732
 SHA1: 2cd3b34b2a1a49dc5ef8d809dac88741cd0a86dd
 SHA256: 53a7eea48a36b06fa0b529e53fc6ec3fde2e73a96d47350ee684f5d33fe2aa48
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.2
@@ -1248,13 +1248,13 @@ MD5sum: db30aab07c5066cc0cb79321b1032991
 SHA1: 3704668317de86426f2bb4f91f3a679b4a304851
 SHA256: bd8d6b5555654ad4b579b58168c63d8c39799846490ecfe7c5c5b0329ce9bb2f
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.2 fixes live clock refresh so customized time updates automatically without respring.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.2
@@ -1268,13 +1268,13 @@ MD5sum: 60770164a5bba6b46ec3778830cc6149
 SHA1: e723107f8b8285d5999dc3c6f3a347a54179c8a6
 SHA256: 8c3b2a24dfedaa91a2d44a9dacf2f8c112474e2582f7b6b0b1408b4be2e0333b
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.2 fixes live clock refresh so customized time updates automatically without respring.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.3
@@ -1288,13 +1288,13 @@ MD5sum: 99526a896893d5b7b6ca047594a77405
 SHA1: 8246af99cc8e34afb0c3ab5d2ff858474c350117
 SHA256: 369c915cf48bae2087ea32714cddf36e69c85676b643a1545ab5c521fcd3495e
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.3 follows Apple's native Lock Screen clock text updates directly, with the timer retained as a fallback.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.3
@@ -1308,13 +1308,13 @@ MD5sum: fd7ce490c2e5300d37ae1c57890186f3
 SHA1: a08d5a961a89a5bbcbdc94d6a65bd97a03473e67
 SHA256: 0b31981ae213933561a94de7d8d4e9fd139257d8b6f309734eb6199f1687372e
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.3 follows Apple's native Lock Screen clock text updates directly, with the timer retained as a fallback.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.4
@@ -1328,13 +1328,13 @@ MD5sum: d1407cb2b544885c6279782056879746
 SHA1: 75106bd58f4502bec80a58360fb6f6b8985cfea6
 SHA256: fc7355239c645804fd83c1ebfc7f3d3098fbbce4e2c3c4d5d8eb0840774b1e46
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.4 adds an independent expandable Custom Photo frame-size control up to 180pt.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.4
@@ -1348,13 +1348,13 @@ MD5sum: b99f0088bbc0228e716acacb6dd32919
 SHA1: 448a48b09e704a5eeaf6460b91a7c608946e2be3
 SHA256: 9e437fda714b932aa633fa7047c1b65de953dbcce793c660bbfbc68318cb1da0
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.4 adds an independent expandable Custom Photo frame-size control up to 180pt.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.5
@@ -1368,13 +1368,13 @@ MD5sum: 7f0167049208d6bdaeed25e763abad89
 SHA1: 8577b598208399bcad49149dc7902ce1aa08d7fc
 SHA256: cefe2d706c1f995ffb900d95941bb121ab878e08ee42362dcfcce7f2c8893984
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.5 adds independent Custom Photo width and height controls up to 600pt.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.0.5
@@ -1388,13 +1388,13 @@ MD5sum: 1a8c1b97e53a86e2d0c4cec1e770ce63
 SHA1: 8e1371a01412180432cb4fc67dc4b8f072834041
 SHA256: 676222e5a73e0d02d5e3b19ecf8d75681b1d04d5336d6c6cbd96e6995bf37a1b
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite for time, date, fonts, colors, positioning, shadows, SF Symbols and custom photos with transparent sticker support. Version 1.0.5 adds independent Custom Photo width and height controls up to 600pt.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.2
@@ -1408,13 +1408,13 @@ MD5sum: 0c9d463b5b8bc5e87ac5d5ce68441acf
 SHA1: ed6598e623243c025daa8347265efb5a45e266b2
 SHA256: e6e44346da51337bbab937539f362ed6df5bf2bb9eafe1ee5b4ef94d22aea695
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.2
@@ -1428,13 +1428,13 @@ MD5sum: f27d2c8e9ad6dc0f46f8f24448caa297
 SHA1: c0a75a4c7920173c313b946f3b729965e235d9bb
 SHA256: 778e50330d095e11d6cc72d17ee0123f41ee52a37d1cbe34c2137d3fc24577f1
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite. Version 1.1.2 adds fast live license refresh, a polished preference icon, and device model/iOS metadata in activation requests.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.3
@@ -1448,13 +1448,13 @@ MD5sum: e347fba309fcac0069e834f8afcfaea9
 SHA1: 4fb9c76a443d117db305551049d2c75bc77ab6f5
 SHA256: b03b77183f4ba3c135b71dfdcf842e3b3e9e11b351f6b1a40950073296de9d5a
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.3
@@ -1468,13 +1468,13 @@ MD5sum: f91af0fe26193bf4dccbc05381416fca
 SHA1: 7c1a155e4ebcdb834413595ebd1a3c6d3ddeb5d4
 SHA256: 3286fa216bd3b53bb342d9db89d00896fa1a81749c89752984769269b074f131
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite. Version 1.1.3 moves the paid Activation section to the bottom of Settings while keeping fast live license checks, polished preference icon, and device model/iOS metadata in activation requests.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.4
@@ -1488,13 +1488,13 @@ MD5sum: 1e07c468d6bccbcecd34c55cde93bcde
 SHA1: 163fe5dcc4eea671d3ba8bb4e2cdf54d7353cc4a
 SHA256: ee542d3030e7ff3ae0e642666ea1c250e6012ee7a6c316c3059dafa23c76f90f
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.lockglyphtime
 Version: 1.1.4
@@ -1508,13 +1508,13 @@ MD5sum: 6c29e40f27bf6fe65b3f48591e676945
 SHA1: 1040daa54c0e05d6d98e575a4fadd8ab8502edd7
 SHA256: 276ee4cc2ae667f4e8e884341d5efdb6d1632958aea0f15489da69822ca09450
 Section: Tweaks
-Homepage: https://nextsolution.cc
+Homepage: https://nextjailbreak.com
 Description: Next Jailbreak lock-screen customization suite. Version 1.1.4 adds four simultaneous custom-photo/sticker frames, each with its own image, width, height, anchor, placement and X/Y position controls.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextlock.html
-Icon: https://nextsolution.cc/NextLockIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextlock.html
+Icon: https://nextjailbreak.com/NextLockIcon.png
 Name: NextLock
-Sileodepiction: https://nextsolution.cc/depictions/nextlock.html
+Sileodepiction: https://nextjailbreak.com/depictions/nextlock.html
 
 Package: com.nextsolution.nextaura.runtime.preferences
 Version: 1.0.4
@@ -1531,7 +1531,7 @@ SHA1: 17272545f25eedac7f0c28c38b9d8c57e46271e6
 SHA256: 20e5842163974ac2c75db979f77743daa990bbf8ecdaa86f37c76e27fd38629c
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Internal native category Preferences controller shared by modular tweaks.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -1549,7 +1549,7 @@ SHA1: be7ad1b73459382abf0ce024eb58e8049680998f
 SHA256: e479b09420fb6eccdf5cb696287db48da29ab488d06255ee070656e628ed8e46
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Shared RootHide diagnostic runtime for Next Jailbreak tweaks. It remains idle until Next Log starts a focused capture, then reports process injection and loaded tweak dylibs.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727
@@ -1602,11 +1602,11 @@ SHA1: 911f87bd756010516c41bc5afd9ba4114c8a0497
 SHA256: 9ea4ab68c2b78a6b95ca6da76ba29581b3dbe9c1d0ef2a6f632b18055a7aa2a3
 Section: Applications
 Priority: optional
-Homepage: https://nextsolution.cc/applications/
+Homepage: https://nextjailbreak.com/applications/
 Description: Fast personal finance ledger with account balances, historical closing-balance cards, reports, budgets, transaction search, backup and AI-assisted insights.
 Author: Next Jailbreak - Zeeshan Barvi
-Depiction: https://nextsolution.cc/depictions/nextledger.html
-Icon: https://nextsolution.cc/CydiaIcon.png
+Depiction: https://nextjailbreak.com/depictions/nextledger.html
+Icon: https://nextjailbreak.com/CydiaIcon.png
 Name: Next Ledger
 
 Package: com.nextsolution.nextquickreminder
@@ -1792,10 +1792,10 @@ SHA1: cf2d71d16b76bd6a15db135c8f3731552e9c19c9
 SHA256: 26a0c38ec576e72546ea8a4a346c1b846d8484e3df9afa72f597641f9a515fc3
 Section: Tweaks
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Rounded Module Glass backgrounds with value-sized Volume artwork matching Brightness behavior and protected compact switch/glyph visibility; all other rendering remains unchanged.
 Author: Next Jailbreak - zeshan0727
-Icon: https://nextsolution.cc/icons/nextaura/cc-module-backgrounds.png
+Icon: https://nextjailbreak.com/icons/nextaura/cc-module-backgrounds.png
 Name: Module Glass
 
 Package: com.nextsolution.nextaura.runtime.ccbackgrounds
@@ -1814,7 +1814,7 @@ SHA1: 45d2bd5fb1101e4ddb9225f70abb6dd82b49633a
 SHA256: 36e4a66845c65f1b2f997059e10746eace798d7e6c27a1579b9f037d2101235d
 Section: System
 Priority: optional
-Homepage: https://nextsolution.cc/
+Homepage: https://nextjailbreak.com/
 Description: Rounded Module Glass runtime with value-sized Volume artwork matching Brightness behavior and protected compact-module foreground switch/glyph visibility.
 Tag: role::cydia
 Author: Next Jailbreak - zeshan0727

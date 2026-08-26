@@ -61,7 +61,7 @@ The release workflow also validates source ordering, retained observer storage, 
 
 ## Installation
 
-Add `https://nextsolution.cc/` to Sileo, refresh sources, locate Charging Interrupted Haptic and install the package matching the jailbreak environment. The package resprings SpringBoard after installation.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources, locate Charging Interrupted Haptic and install the package matching the jailbreak environment. The package resprings SpringBoard after installation.
 
 ## Uninstall behavior
 

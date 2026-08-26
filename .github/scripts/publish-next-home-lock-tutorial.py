@@ -23,7 +23,7 @@ SETTINGS = ROOT / "assets/next-home-lock/next-home-lock-settings.svg"
 ADSENSE_CLIENT = "ca-pub-4770123899731214"
 ROOT_HIDE = "NextHomeLock_1.0.5_RootHide.deb"
 ROOTLESS = "NextHomeLock_1.0.5_Rootless.deb"
-ARTICLE_URL = "https://nextsolution.cc/next-home-lock-tweak-ios16.html"
+ARTICLE_URL = "https://nextjailbreak.com/next-home-lock-tweak-ios16.html"
 
 RECENT_START = "<!-- NEXT_HOME_LOCK_RECENT_CARD_START -->"
 RECENT_END = "<!-- NEXT_HOME_LOCK_RECENT_CARD_END -->"
@@ -89,7 +89,7 @@ def normalize() -> list[Path]:
 
     sitemap = read(SITEMAP)
     entry = (
-        "  <url><loc>https://nextsolution.cc/next-home-lock-tweak-ios16.html</loc>"
+        "  <url><loc>https://nextjailbreak.com/next-home-lock-tweak-ios16.html</loc>"
         "<lastmod>2026-07-30</lastmod><changefreq>monthly</changefreq>"
         "<priority>0.9</priority></url>"
     )

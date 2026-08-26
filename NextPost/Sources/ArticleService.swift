@@ -15,8 +15,8 @@ enum ArticleServiceError: LocalizedError {
 }
 
 struct ArticleService {
-    private let manifestURL = URL(string: "https://nextsolution.cc/automation/published-articles.json")!
-    private let feedURL = URL(string: "https://nextsolution.cc/feed.xml")!
+    private let manifestURL = URL(string: "https://nextjailbreak.com/automation/published-articles.json")!
+    private let feedURL = URL(string: "https://nextjailbreak.com/feed.xml")!
 
     func fetchArticles() async throws -> [PublishedArticle] {
         do {

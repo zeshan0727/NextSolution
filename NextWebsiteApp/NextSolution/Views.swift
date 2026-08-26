@@ -303,7 +303,7 @@ struct TutorialsView: View {
                     title: "Tutorials",
                     subtitle: "Native guides and troubleshooting",
                     trailingIcon: "square.and.arrow.up",
-                    trailingAction: { sharePayload = SharedPayload(items: [URL(string: "https://nextsolution.cc/tutorials.html")!]) }
+                    trailingAction: { sharePayload = SharedPayload(items: [URL(string: "https://nextjailbreak.com/tutorials.html")!]) }
                 )
 
                 VStack(spacing: 0) {

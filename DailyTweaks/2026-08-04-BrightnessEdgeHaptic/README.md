@@ -25,7 +25,7 @@ The tweak observes Apple's documented `UIScreenBrightnessDidChangeNotification` 
 One Enable/Disable switch under Settings > Brightness Edge Haptic.
 
 ## Installation
-Add `https://nextsolution.cc/` to Sileo, refresh sources and install the package matching RootHide or standard rootless.
+Add `https://nextjailbreak.com/` to Sileo, refresh sources and install the package matching RootHide or standard rootless.
 
 ## Uninstall
 Remove the package and respring. No user content is collected or retained.

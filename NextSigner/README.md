@@ -10,7 +10,7 @@ After one-time setup, publishing an app is:
 2. Choose an IPA from Files.
 3. Confirm the app name and a `com.nextsolution.*` bundle identifier.
 4. Tap **Sign & Publish**.
-5. The GitHub workflow signs the IPA, publishes the signed build, creates the OTA manifest, and updates `https://nextsolution.cc/install/` automatically.
+5. The GitHub workflow signs the IPA, publishes the signed build, creates the OTA manifest, and updates `https://nextjailbreak.com/install/` automatically.
 
 No IPA needs to be sent through ChatGPT and no third-party signing app is required.
 
@@ -21,7 +21,7 @@ Next Signer deliberately separates the catalog from large binaries:
 - GitHub repository: source, website, icons, OTA manifests, and `install/apps.json`.
 - GitHub draft release `nextsigner-inbox`: temporary unsigned IPA staging from the iPhone to the signing workflow. Release assets avoid the normal repository/browser file-size limit.
 - Cloudflare R2 bucket `next-signer-apps`: preferred storage for signed IPA files.
-- Public R2 hostname: `https://files.nextsolution.cc`.
+- Public R2 hostname: `https://files.nextjailbreak.com`.
 - GitHub Releases: automatic fallback if the R2 Actions secrets are not configured.
 
 New R2-published builds use immutable versioned object keys such as:
@@ -95,7 +95,7 @@ The workflow:
 
 Production signed IPA downloads use:
 
-`https://files.nextsolution.cc/apps/ipa/<bundle-slug>/<version>/<filename>.ipa`
+`https://files.nextjailbreak.com/apps/ipa/<bundle-slug>/<version>/<filename>.ipa`
 
 Keep manually uploaded test packages separated by type when practical, for example:
 

@@ -80,7 +80,7 @@ struct PublishedApp: Identifiable, Decodable, Equatable {
 
     var isR2Backed: Bool {
         guard let downloadURL else { return false }
-        return downloadURL.hasPrefix("https://files.nextsolution.cc/apps/ipa/")
+        return downloadURL.hasPrefix("https://files.nextjailbreak.com/apps/ipa/")
     }
 }
 
