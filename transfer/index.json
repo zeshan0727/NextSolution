@@ -1,7 +1,18 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-26T11:18:36Z",
+  "updatedAt": "2026-08-26T11:24:41Z",
   "files": [
+    {
+      "id": "ns-admin-1.0.5",
+      "name": "NS Admin 1.0.5",
+      "fileName": "NS-Admin-1.0.5.tipa",
+      "type": "tipa",
+      "platform": "TrollStore / iOS 16+",
+      "version": "1.0.5",
+      "url": "https://nextjailbreak.com/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa",
+      "sha256": "cd1d556f315d5de0411508536675b7c66def1d4cca6690dc711ff8cf262a6ca3",
+      "notes": "Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock."
+    },
     {
       "id": "module-glass-preview-1.1.1",
       "name": "Module Glass Developer Console 1.1.1",
@@ -167,17 +178,6 @@
       "sizeBytes": 925951,
       "storage": "Cloudflare R2",
       "notes": "Library tab, R2 cleanup controls, duplicate signing, custom app icons and dylib/DEB tweak injection."
-    },
-    {
-      "id": "ns-admin-1.0.5",
-      "name": "NS Admin 1.0.5",
-      "fileName": "NS-Admin-1.0.5.tipa",
-      "type": "tipa",
-      "platform": "TrollStore / iOS 16+",
-      "version": "1.0.5",
-      "url": "https://nextjailbreak.com/transfer/files/NextSolutionLicenseAdmin/1.0.5/NS-Admin-1.0.5.tipa",
-      "sha256": "20d648ccfbee5ede879bea08a98f0ff801eedef7ef6714ea2c6495515821360f",
-      "notes": "Adds Module Glass as a selectable $1 license product with the exact package ID, SHA-256 token formula and live licenses/moduleglass.json registry used by tweak 1.1.18. Activate, check, list and revoke now work for both Module Glass and NextLock."
     },
     {
       "id": "nextquickreminder-1.0.16-persistent-wake-roothide",
