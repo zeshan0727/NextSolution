@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "531d2171b8bc91e36bbe0b1372fca132a0c20d855eb7e9a68cfd57740f4d4946",
+      "candidate_fingerprint": "0b8895e071ff916cc2e7e800bd5275cb1a61e67d37ec7f8518d7474b73afc42f",
+      "category": {
+        "id": "media",
+        "label": "Media"
+      },
+      "description": "PhotosCore 1.1.0 lists viewing, thumbnail layout, Search, album, dark appearance, and iPad sidebar controls for Apple Photos.",
+      "href": "photoscore-tweak.html",
+      "image": "https://media.havoc.app/6a868c51324f05e66acdf88b",
+      "media_credit": "PhotosCore official package listing",
+      "media_source_url": "https://havoc.app/package/photoscore",
+      "modified_at": "2026-08-26T06:12:23+00:00",
+      "name": "PhotosCore",
+      "package": "com.zjer.photoscore",
+      "published_at": "2026-08-26T06:12:23+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/photoscore",
+      "source_url": "https://havoc.app/",
+      "title": "PhotosCore 1.1.0: Customize Apple Photos Layouts, Navigation, and Albums",
+      "version": "1.1.0"
+    },
+    {
       "article_sha256": "55b8021636b66414085d54c112f451e7ad015da015acb733e77030549dce0d24",
       "candidate_fingerprint": "8d00ece2cc634273c7978dbc77641173a7b73e4250061205b5e08181ac437d88",
       "category": {
@@ -907,8 +930,17 @@
       "published_at": "2026-08-26T05:54:52+00:00",
       "run_id": "32935800875",
       "version": "1.2"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "0b8895e071ff916cc2e7e800bd5275cb1a61e67d37ec7f8518d7474b73afc42f",
+      "href": "photoscore-tweak.html",
+      "package": "com.zjer.photoscore",
+      "published_at": "2026-08-26T06:12:23+00:00",
+      "run_id": "32937000634",
+      "version": "1.1.0"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-26T05:54:52+00:00"
+  "updated_at": "2026-08-26T06:12:23+00:00"
 }
