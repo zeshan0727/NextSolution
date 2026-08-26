@@ -440,7 +440,14 @@ def update_pending_queue(
             refreshed["change_type"] = queued.get("change_type", "new")
             refreshed["previous_version"] = queued.get("previous_version")
             refreshed["detected_at"] = queued.get("detected_at", generated_at)
-            for key in ("drafted_at", "draft_target", "candidate_fingerprint"):
+            for key in (
+                "drafted_at",
+                "draft_target",
+                "candidate_fingerprint",
+                "draft_rejected_at",
+                "draft_rejection_reason",
+                "draft_rejection_fingerprint",
+            ):
                 if queued.get(key):
                     refreshed[key] = queued[key]
             refreshed["publish_eligible"] = not refreshed.get("blockers")
@@ -506,7 +513,14 @@ def update_evergreen_catalog(
         old = existing.get(release_identity, {})
         refreshed["cataloged_at"] = old.get("cataloged_at", generated_at)
         refreshed["detected_at"] = old.get("detected_at", generated_at)
-        for key in ("drafted_at", "draft_target", "candidate_fingerprint"):
+        for key in (
+            "drafted_at",
+            "draft_target",
+            "candidate_fingerprint",
+            "draft_rejected_at",
+            "draft_rejection_reason",
+            "draft_rejection_fingerprint",
+        ):
             if old.get(key):
                 refreshed[key] = old[key]
         catalog[release_identity] = refreshed

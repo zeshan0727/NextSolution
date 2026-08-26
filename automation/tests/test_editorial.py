@@ -8,6 +8,7 @@ from automation.editorial import (
     classify_category,
     load_json,
     mark_candidate_drafted,
+    mark_candidate_rejected,
     select_candidate,
     slugify,
 )
@@ -136,6 +137,25 @@ class EditorialTests(unittest.TestCase):
             self.assertTrue(
                 all(item.get("drafted_at") for item in state[pool_name].values())
             )
+
+    def test_rejected_version_is_quarantined_without_claiming_publication(self) -> None:
+        state = copy.deepcopy(self.state)
+        candidate = select_candidate(state, self.categories, self.site)
+        mark_candidate_rejected(
+            state,
+            candidate,
+            rejected_at="2026-08-26T06:00:00+00:00",
+            reason="independent verifier rejected incomplete compatibility wording",
+            candidate_fingerprint="def456",
+        )
+        self.assertTrue(
+            all(item.get("draft_rejected_at") for item in state["pending"].values())
+        )
+        self.assertTrue(
+            all(not item.get("drafted_at") for item in state["pending"].values())
+        )
+        with self.assertRaises(NoCandidateError):
+            select_candidate(state, self.categories, self.site)
 
 
 if __name__ == "__main__":

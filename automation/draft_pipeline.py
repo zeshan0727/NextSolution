@@ -21,6 +21,7 @@ from automation.editorial import (
     NoCandidateError,
     load_json,
     mark_candidate_drafted,
+    mark_candidate_rejected,
     select_candidate,
 )
 from automation.openai_api import OpenAIAPIError, structured_response
@@ -701,6 +702,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    state_changed = False
     try:
         state = load_json(args.state)
         categories = load_json(args.categories)
@@ -732,14 +734,60 @@ def main() -> int:
             verifier = {"approved": True, "issues": [], "unsupported_claims": [], "notes": "Fixture validation"}
             metadata = {"fixture": True}
         else:
-            candidate, media_blocked = select_media_ready_candidate(
-                state,
-                categories,
-                site,
-                catalog_path=args.source_media,
-                excluded_packages=excluded_packages,
+            max_attempts = int(
+                site.get("publishing", {}).get("max_candidate_attempts_per_run", 3)
             )
-            article, verifier, metadata = generate_draft(candidate, site)
+            if not 1 <= max_attempts <= 3:
+                raise ValueError(
+                    "max_candidate_attempts_per_run must be between 1 and 3"
+                )
+            excluded_packages = set(excluded_packages or ())
+            media_blocked = []
+            rejected_packages: list[str] = []
+            for _ in range(max_attempts):
+                candidate, skipped = select_media_ready_candidate(
+                    state,
+                    categories,
+                    site,
+                    catalog_path=args.source_media,
+                    excluded_packages=excluded_packages,
+                )
+                media_blocked.extend(skipped)
+                article, verifier, metadata = generate_draft(candidate, site)
+                quality = validate_article(article, candidate)
+                issues = quality.issues + list(verifier.get("issues", [])) + list(
+                    verifier.get("unsupported_claims", [])
+                )
+                if quality.approved and verifier.get("approved") and not issues:
+                    break
+                reason = "; ".join(
+                    dict.fromkeys(str(issue) for issue in issues if str(issue))
+                )
+                if not reason:
+                    reason = "independent verifier rejected the draft without details"
+                mark_candidate_rejected(
+                    state,
+                    candidate,
+                    rejected_at=datetime.now(timezone.utc)
+                    .replace(microsecond=0)
+                    .isoformat(),
+                    reason=reason,
+                    candidate_fingerprint=_fingerprint(candidate),
+                )
+                args.state.write_text(
+                    json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False)
+                    + "\n",
+                    encoding="utf-8",
+                )
+                state_changed = True
+                package = str(candidate["package"])
+                rejected_packages.append(package)
+                excluded_packages.add(package)
+            else:
+                raise NoCandidateError(
+                    "bounded verification rejected "
+                    f"{len(rejected_packages)} candidate(s); quarantine saved for retry"
+                )
         quality = validate_article(article, candidate)
         if not quality.approved or not verifier.get("approved"):
             issues = quality.issues + list(verifier.get("issues", [])) + list(verifier.get("unsupported_claims", []))
@@ -764,6 +812,7 @@ def main() -> int:
                     "status": "draft-created",
                     "slug": candidate["slug"],
                     "source_media_skipped": len(media_blocked),
+                    "state_changed": state_changed,
                     **quality.metrics,
                 },
                 sort_keys=True,
@@ -771,7 +820,15 @@ def main() -> int:
         )
         return 0
     except NoCandidateError as exc:
-        print(json.dumps({"status": "no-candidate", "message": str(exc)}))
+        print(
+            json.dumps(
+                {
+                    "status": "no-candidate",
+                    "message": str(exc),
+                    "state_changed": state_changed,
+                }
+            )
+        )
         return 3
     except (OpenAIAPIError, SourceMediaError, ValueError, json.JSONDecodeError) as exc:
         print(f"draft pipeline error: {exc}", file=sys.stderr)

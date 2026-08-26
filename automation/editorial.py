@@ -184,7 +184,7 @@ def build_candidates(
             continue
         if item.get("source_tier") != "verified" or item.get("source_id") in excluded_sources:
             continue
-        if item.get("drafted_at"):
+        if item.get("drafted_at") or item.get("draft_rejected_at"):
             continue
         required = ("package", "name", "version", "architecture", "description", "author", "sha256")
         if any(not str(item.get(field, "")).strip() for field in required):
@@ -312,3 +312,37 @@ def mark_candidate_drafted(
             marked += 1
     if marked == 0:
         raise ValueError("selected release disappeared from editorial state")
+
+
+def mark_candidate_rejected(
+    state: dict[str, Any],
+    candidate: dict[str, Any],
+    *,
+    rejected_at: str,
+    reason: str,
+    candidate_fingerprint: str,
+) -> None:
+    """Quarantine one exact package version after bounded verification fails."""
+    release_identities = candidate.get("release_identities", [])
+    if not release_identities:
+        raise ValueError("candidate does not contain release identities")
+    package = str(candidate.get("package", ""))
+    version = str(candidate.get("version", ""))
+    marked = 0
+    for pool_name in ("pending", "evergreen"):
+        pool = state.get(pool_name, {})
+        if not isinstance(pool, dict):
+            raise ValueError(f"scanner state {pool_name} must be an object")
+        for queued in pool.values():
+            if not isinstance(queued, dict):
+                continue
+            if str(queued.get("package", "")) != package or str(
+                queued.get("version", "")
+            ) != version:
+                continue
+            queued["draft_rejected_at"] = rejected_at
+            queued["draft_rejection_reason"] = reason[:1000]
+            queued["draft_rejection_fingerprint"] = candidate_fingerprint
+            marked += 1
+    if marked == 0:
+        raise ValueError("rejected release disappeared from editorial state")

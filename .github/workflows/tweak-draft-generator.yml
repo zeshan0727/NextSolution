@@ -140,6 +140,8 @@ jobs:
           set -e
           if [ "$status" -eq 3 ]; then
             echo "drafted=false" >> "$GITHUB_OUTPUT"
+            state_changed=$(python3 -c 'import json; print(str(json.loads(open("automation/out/draft-run.log").read().splitlines()[-1]).get("state_changed", False)).lower())')
+            echo "state_changed=$state_changed" >> "$GITHUB_OUTPUT"
             message=$(python3 -c 'import json; print(json.loads(open("automation/out/draft-run.log").read().splitlines()[-1])["message"])')
             echo "### Publisher" >> "$GITHUB_STEP_SUMMARY"
             echo "$message" >> "$GITHUB_STEP_SUMMARY"
@@ -149,6 +151,13 @@ jobs:
             exit "$status"
           fi
           echo "drafted=true" >> "$GITHUB_OUTPUT"
+
+      - name: Save quarantined candidate state for the next retry
+        if: steps.generate.outputs.drafted == 'false' && steps.generate.outputs.state_changed == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: automation/runtime-state
+          key: tweak-feed-state-v1-${{ github.run_id }}
 
       - name: Publish through deterministic guards
         if: steps.generate.outputs.drafted == 'true'

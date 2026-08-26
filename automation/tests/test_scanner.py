@@ -207,6 +207,31 @@ class ScannerPolicyTests(unittest.TestCase):
         self.assertEqual(refreshed["drafted_at"], old["drafted_at"])
         self.assertEqual(refreshed["candidate_fingerprint"], "abc123")
 
+    def test_verifier_rejection_quarantine_survives_the_next_scan(self) -> None:
+        old = package(version="1.1")
+        old["change_type"] = "updated"
+        old["previous_version"] = "1.0"
+        old["publish_eligible"] = True
+        old["detected_at"] = "2026-08-26T05:00:00+00:00"
+        old["draft_rejected_at"] = "2026-08-26T06:00:00+00:00"
+        old["draft_rejection_reason"] = "independent verifier rejected the draft"
+        old["draft_rejection_fingerprint"] = "abc123"
+        current = package(version="1.1")
+        pending = update_pending_queue(
+            {old["release_identity"]: old},
+            [current],
+            [],
+            "2026-08-26T07:00:00+00:00",
+        )
+        refreshed = pending[old["release_identity"]]
+        self.assertEqual(
+            refreshed["draft_rejected_at"], old["draft_rejected_at"]
+        )
+        self.assertEqual(
+            refreshed["draft_rejection_fingerprint"],
+            old["draft_rejection_fingerprint"],
+        )
+
     def test_verified_release_enters_evergreen_catalog(self) -> None:
         record = package()
         catalog = update_evergreen_catalog(

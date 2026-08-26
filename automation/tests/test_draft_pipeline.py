@@ -230,6 +230,76 @@ class DraftPipelineTests(unittest.TestCase):
         self.assertEqual(skipped[0]["package"], "com.example.blocked")
         self.assertIn("com.example.blocked", selected.call_args_list[1].kwargs["excluded_packages"])
 
+    def test_final_verifier_rejection_quarantines_candidate_and_tries_next(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "state.json"
+            output = root / "draft"
+            state = deepcopy(self.state)
+            next_candidate = deepcopy(self.candidate)
+            next_candidate["package"] = "com.example.nextcards"
+            next_candidate["release_identities"] = [
+                identity.replace("com.example.focuscards", "com.example.nextcards")
+                for identity in next_candidate["release_identities"]
+            ]
+            next_pending = {}
+            for identity, item in list(state["pending"].items()):
+                copied = deepcopy(item)
+                copied["package"] = "com.example.nextcards"
+                copied["identity"] = copied["identity"].replace(
+                    "com.example.focuscards", "com.example.nextcards"
+                )
+                copied["release_identity"] = copied["release_identity"].replace(
+                    "com.example.focuscards", "com.example.nextcards"
+                )
+                next_pending[copied["release_identity"]] = copied
+            state["pending"].update(next_pending)
+            state_path.write_text(json.dumps(state))
+            rejected = {
+                "approved": False,
+                "issues": ["compatibility wording omitted a tested iOS version"],
+                "unsupported_claims": [],
+                "notes": "reject",
+            }
+            approved = {
+                "approved": True,
+                "issues": [],
+                "unsupported_claims": [],
+                "notes": "approved",
+            }
+            argv = [
+                "draft_pipeline",
+                "--state",
+                str(state_path),
+                "--output",
+                str(output),
+            ]
+            with (
+                patch.object(sys, "argv", argv),
+                patch(
+                    "automation.draft_pipeline.select_media_ready_candidate",
+                    side_effect=[(self.candidate, []), (next_candidate, [])],
+                ),
+                patch(
+                    "automation.draft_pipeline.generate_draft",
+                    side_effect=[
+                        (self.article, rejected, {"attempt": 1}),
+                        (self.article, approved, {"attempt": 2}),
+                    ],
+                ),
+                redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(main(), 0)
+            saved = json.loads(state_path.read_text())
+            rejected_items = [
+                item
+                for item in saved["pending"].values()
+                if item["package"] == self.candidate["package"]
+            ]
+            self.assertTrue(all(item.get("draft_rejected_at") for item in rejected_items))
+            manifest = json.loads((output / "manifest.json").read_text())
+            self.assertEqual(manifest["candidate"]["package"], "com.example.nextcards")
+
     def test_cli_marks_fixture_release_and_does_not_repeat_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
