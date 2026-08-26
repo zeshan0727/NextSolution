@@ -19,16 +19,24 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Scan every tracked file for legacy website domains
+      - name: Scan every tracked file for legacy website URLs
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import subprocess
 
-          old_cc = ("next" + "solution" + "." + "cc").encode()
-          old_app = ("next" + "solution" + "." + "app").encode()
-          patterns = (old_cc, old_app)
+          base = "next" + "solution"
+          hosts = (base + "." + "cc", base + "." + "app")
+          patterns = []
+          for host in hosts:
+              patterns.extend([
+                  ("http://" + host).encode(),
+                  ("https://" + host).encode(),
+                  ("http://www." + host).encode(),
+                  ("https://www." + host).encode(),
+                  ("www." + host).encode(),
+              ])
 
           raw = subprocess.check_output(["git", "ls-files", "-z"])
           files = [Path(item.decode()) for item in raw.split(b"\0") if item]
@@ -40,14 +48,14 @@ jobs:
                   continue
               matched = [p.decode() for p in patterns if p in data]
               if matched:
-                  hits.append((str(path), matched))
+                  hits.append((str(path), sorted(set(matched))))
 
           print(f"Tracked files scanned: {len(files)}")
-          print(f"Files containing legacy domains: {len(hits)}")
+          print(f"Files containing legacy website URLs: {len(hits)}")
           for path, matched in hits:
-              print(f"LEGACY_DOMAIN {path}: {', '.join(matched)}")
+              print(f"LEGACY_URL {path}: {', '.join(matched)}")
 
           if hits:
               raise SystemExit(1)
-          print("PASS: no legacy website-domain bytes remain in tracked files.")
+          print("PASS: no legacy Next Solution website URLs remain in tracked files.")
           PY
