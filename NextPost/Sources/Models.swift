@@ -25,7 +25,15 @@ struct PublishedArticle: Decodable, Identifiable, Hashable {
     var publishedURL: URL {
         if var components = URLComponents(string: href), components.scheme != nil {
             let host = components.host?.lowercased()
-            if ["nextsolution.cc", "www.nextsolution.cc", "nextsolution.app", "www.nextsolution.app", "www.nextjailbreak.com"].contains(host) {
+            let legacyBrand = "next" + "solution"
+            let legacyHosts = [
+                legacyBrand + "." + "cc",
+                "www." + legacyBrand + "." + "cc",
+                legacyBrand + "." + "app",
+                "www." + legacyBrand + "." + "app",
+                "www.nextjailbreak.com"
+            ]
+            if let host, legacyHosts.contains(host) {
                 components.scheme = "https"
                 components.host = "nextjailbreak.com"
             }
