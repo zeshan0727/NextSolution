@@ -1,0 +1,59 @@
+name: Build Eagle IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/build-eagle-ipa.yml
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Eagle source
+        uses: actions/checkout@v4
+        with:
+          repository: leonardob8777-bit/Eagle
+          ref: main
+          path: Eagle
+          fetch-depth: 1
+
+      - name: Show build environment
+        run: |
+          sw_vers
+          xcodebuild -version
+
+      - name: Install ldid
+        run: |
+          brew update
+          brew install ldid
+          ldid -v || true
+
+      - name: Build unsigned Eagle IPA
+        working-directory: Eagle
+        run: |
+          chmod +x scripts/build_ipa.sh
+          ./scripts/build_ipa.sh
+          test -f build/Eagle.ipa
+          ls -lh build/Eagle.ipa
+
+      - name: Upload Eagle IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Eagle-IPA
+          path: Eagle/build/Eagle.ipa
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Eagle-build-log
+          path: Eagle/build/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
