@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "4a5b4b2d38cf2c7b68af6e826f2572eaa08c2a6fba481fd79e8af33afab0280d",
+      "candidate_fingerprint": "e3eba90241fc810d03cd9e4e7ee507c1d65cc512ee628445c5cbc844f86e30e3",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Review the confirmed details for Stella 1.2, including its description, architectures, version history, and listed dependencies.",
+      "href": "stella-tweak.html",
+      "image": "https://media.havoc.app/639335fd9a34e526d6979ce9",
+      "media_credit": "Stella official package listing",
+      "media_source_url": "https://havoc.app/package/stella",
+      "modified_at": "2026-08-27T14:31:42+00:00",
+      "name": "Stella",
+      "package": "com.yan.stella",
+      "published_at": "2026-08-27T14:31:42+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/stella",
+      "source_url": "https://havoc.app/",
+      "title": "Stella 1.2: Package Details and Verification Guide",
+      "version": "1.2"
+    },
+    {
       "article_sha256": "52367ce62b804f597bdb20cf4e9336162e6e552058b4729e16a4dc41a09e743d",
       "candidate_fingerprint": "50515c04a9ff0b85c8e30fff4620dcdc2f3772140e7c1dae23530330ebf21170",
       "category": {
@@ -1005,8 +1028,17 @@
       "published_at": "2026-08-27T03:29:31+00:00",
       "run_id": "33036378951",
       "version": "1.0.3"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "e3eba90241fc810d03cd9e4e7ee507c1d65cc512ee628445c5cbc844f86e30e3",
+      "href": "stella-tweak.html",
+      "package": "com.yan.stella",
+      "published_at": "2026-08-27T14:31:42+00:00",
+      "run_id": "33082549114",
+      "version": "1.2"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-27T03:29:31+00:00"
+  "updated_at": "2026-08-27T14:31:42+00:00"
 }
