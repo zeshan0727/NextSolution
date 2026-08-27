@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "52367ce62b804f597bdb20cf4e9336162e6e552058b4729e16a4dc41a09e743d",
+      "candidate_fingerprint": "50515c04a9ff0b85c8e30fff4620dcdc2f3772140e7c1dae23530330ebf21170",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "AniTime 1.0.3 is a package described as displaying animated anime characters as clock digits. Review its package details, architectures, dependency, and listed setup",
+      "href": "anitime-tweak.html",
+      "image": "https://media.havoc.app/67eaef0bcbcf7b7e971e0233",
+      "media_credit": "AniTime official package listing",
+      "media_source_url": "https://havoc.app/package/anitime",
+      "modified_at": "2026-08-27T03:29:31+00:00",
+      "name": "AniTime",
+      "package": "com.yan.anitime",
+      "published_at": "2026-08-27T03:29:31+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/anitime",
+      "source_url": "https://havoc.app/",
+      "title": "AniTime 1.0.3: Animated Anime Characters as Clock Digits",
+      "version": "1.0.3"
+    },
+    {
       "article_sha256": "f4cdbd0b9664d6398a9cc5350976bc458c1ed603b2b638358d38dbca86e17610",
       "candidate_fingerprint": "94e5a264724481715741c578bcc5b50d2e2e174b7657750ae4a00d2fd403644e",
       "category": {
@@ -973,8 +996,17 @@
       "published_at": "2026-08-26T06:57:38+00:00",
       "run_id": "32940411555",
       "version": "3.x"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "50515c04a9ff0b85c8e30fff4620dcdc2f3772140e7c1dae23530330ebf21170",
+      "href": "anitime-tweak.html",
+      "package": "com.yan.anitime",
+      "published_at": "2026-08-27T03:29:31+00:00",
+      "run_id": "33036378951",
+      "version": "1.0.3"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-26T06:57:38+00:00"
+  "updated_at": "2026-08-27T03:29:31+00:00"
 }
