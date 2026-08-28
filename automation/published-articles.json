@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "fe704648718517a8b108f6b64ec044607f88003d3314b0ea178bd28149d2b08c",
+      "candidate_fingerprint": "8b5ccbe6e2d25ecb600276025041dfd7232a8830229706c05ee9762720c2c883",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Learn what rootless means in Dopamine 3, how filesystem limits affect tweaks, and why compatibility and compilation checks matter before installation.",
+      "entry_type": "cluster",
+      "href": "dopamine-3-rootless-jailbreak-explained.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Jailbreak real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextjailbreak.com/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-28T00:11:18+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-rootless-explained",
+      "published_at": "2026-08-28T00:11:18+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://ellekit.space/dopamine/",
+      "source_url": "https://ellekit.space/dopamine/",
+      "title": "Dopamine 3 Jailbreak: What Rootless Means and How to Check Tweak Compatibility",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "4a5b4b2d38cf2c7b68af6e826f2572eaa08c2a6fba481fd79e8af33afab0280d",
       "candidate_fingerprint": "e3eba90241fc810d03cd9e4e7ee507c1d65cc512ee628445c5cbc844f86e30e3",
       "category": {
@@ -1037,8 +1061,18 @@
       "published_at": "2026-08-27T14:31:42+00:00",
       "run_id": "33082549114",
       "version": "1.2"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "8b5ccbe6e2d25ecb600276025041dfd7232a8830229706c05ee9762720c2c883",
+      "channel": "dopamine-cluster",
+      "href": "dopamine-3-rootless-jailbreak-explained.html",
+      "package": "editorial.dopamine3.dopamine3-rootless-explained",
+      "published_at": "2026-08-28T00:11:18+00:00",
+      "run_id": "33128879647",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-27T14:31:42+00:00"
+  "updated_at": "2026-08-28T00:11:18+00:00"
 }

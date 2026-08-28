@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "status": "error",
-  "exit_code": 2,
-  "run_id": "33098731979",
-  "run_number": "27",
-  "recorded_at": "2026-08-27T17:31:58+00:00",
-  "diagnostic_tail": "Dopamine cluster publisher error: Dopamine cluster draft rejected: The documented A12/A13 compatibility information is incomplete. The source facts state that the 3.x README lists both iOS 15.0–18.7.1 and iOS 26.0–26.0.1 for A12/A13 devices, but the article omits the iOS 26.0–26.0.1 range throughout its compatibility section, FAQ, key takeaways, and summary.; Because the article presents its A12/A13 bullets and prose as the documented compatibility ranges, omitting the separately listed iOS 26 range makes the compatibility overview misleading and incomplete.\n"
-}

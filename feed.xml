@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Dopamine 3 Jailbreak: What Rootless Means and How to Check Tweak Compatibility</title>
+      <link>https://nextjailbreak.com/dopamine-3-rootless-jailbreak-explained.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/dopamine-3-rootless-jailbreak-explained.html</guid>
+      <pubDate>Fri, 28 Aug 2026 00:11:18 GMT</pubDate>
+      <description>Learn what rootless means in Dopamine 3, how filesystem limits affect tweaks, and why compatibility and compilation checks matter before installation.</description>
+      <category>Jailbreak</category>
+    </item>
+    <item>
       <title>Stella 1.2: Package Details and Verification Guide</title>
       <link>https://nextjailbreak.com/stella-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/stella-tweak.html</guid>
@@ -236,14 +244,6 @@
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>LSLyrics 2.0 displays time-synced lyrics on the iPhone or iPad Lock Screen. See real screenshots, full-screen mode, pricing, and compatibility.</description>
       <category>Lock Screen</category>
-    </item>
-    <item>
-      <title>Phonehub Adds Caller ID, Auto Redial and Smarter Call Controls to iPhone</title>
-      <link>https://nextjailbreak.com/phonehub-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/phonehub-tweak.html</guid>
-      <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
-      <description>Phonehub 1.1.3 overhauls the jailbroken iPhone Phone app with caller ID, auto redial, dual-SIM selection, and practical call controls.</description>
-      <category>Messages &amp; Phone</category>
     </item>
   </channel>
 </rss>

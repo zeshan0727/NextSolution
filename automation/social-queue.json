@@ -55,6 +55,14 @@
       "title": "Dopamine 3 vs TrollStore: Jailbreak, IPA Installation, and Compatibility",
       "topic_id": "dopamine3-trollstore",
       "url": "https://nextjailbreak.com/dopamine-3-vs-trollstore.html"
+    },
+    {
+      "created_at": "2026-08-28T00:11:18+00:00",
+      "post": "Dopamine 3 is rootless, so tweaks may require updates or recompilation. Check rootless support, compilation status, and the official device/iOS compatibility ranges before installing anything. https://nextjailbreak.com/dopamine-3-rootless-jailbreak-explained.html",
+      "status": "pending",
+      "title": "Dopamine 3 Jailbreak: What Rootless Means and How to Check Tweak Compatibility",
+      "topic_id": "dopamine3-rootless-explained",
+      "url": "https://nextjailbreak.com/dopamine-3-rootless-jailbreak-explained.html"
     }
   ],
   "schema_version": 1

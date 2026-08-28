@@ -34,6 +34,11 @@
       "path": "dopamine-3-vs-trollstore.html",
       "published_at": "2026-08-26T06:57:38+00:00",
       "topic_id": "dopamine3-trollstore"
+    },
+    {
+      "path": "dopamine-3-rootless-jailbreak-explained.html",
+      "published_at": "2026-08-28T00:11:18+00:00",
+      "topic_id": "dopamine3-rootless-explained"
     }
   ],
   "published": {
@@ -324,6 +329,46 @@
       "path": "dopamine-3-jailbreak.html",
       "published_at": "2026-08-19T15:46:56+00:00",
       "title": "Dopamine 3 Compatibility: Supported iOS Versions by Device Category"
+    },
+    "dopamine3-rootless-explained": {
+      "api": {
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0702894298eae092016a90d23deb2087d0b0768a6cf714abc0",
+          "usage": {
+            "input_tokens": 3132,
+            "input_tokens_details": {
+              "cache_write_tokens": 3129,
+              "cached_tokens": 0
+            },
+            "output_tokens": 328,
+            "output_tokens_details": {
+              "reasoning_tokens": 234
+            },
+            "total_tokens": 3460
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0c3d7b45710202bb016a90d227d16887d0b0770ce6b8a1fb25",
+          "usage": {
+            "input_tokens": 1034,
+            "input_tokens_details": {
+              "cache_write_tokens": 1031,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2299,
+            "output_tokens_details": {
+              "reasoning_tokens": 70
+            },
+            "total_tokens": 3333
+          }
+        }
+      },
+      "fingerprint": "8b5ccbe6e2d25ecb600276025041dfd7232a8830229706c05ee9762720c2c883",
+      "path": "dopamine-3-rootless-jailbreak-explained.html",
+      "published_at": "2026-08-28T00:11:18+00:00",
+      "title": "Dopamine 3 Jailbreak: What Rootless Means and How to Check Tweak Compatibility"
     },
     "dopamine3-sileo": {
       "api": {
