@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "article_sha256": "b266e040ac08820f8249f67ef9a6b76357f629600df324b1f56754d75dc217be",
+      "candidate_fingerprint": "056a5e50b247d69b35c4b2bac9c8b6e9b8444c8cab8b68360b59f3d5beaf2805",
+      "category": {
+        "id": "jailbreak",
+        "label": "Jailbreak"
+      },
+      "description": "Learn the documented Dopamine 3 arm64 support range for A8–A11 devices, including the supported iOS versions and how arm64 differs from arm64e.",
+      "entry_type": "cluster",
+      "href": "dopamine-3-arm64-a8-a11-guide.html",
+      "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
+      "media_credit": "Next Jailbreak real Dopamine 3 test-device visual",
+      "media_source_url": "https://nextjailbreak.com/dopamine-3-jailbreak-ios-17-6-1/",
+      "modified_at": "2026-08-28T18:27:31+00:00",
+      "name": "Dopamine 3",
+      "package": "editorial.dopamine3.dopamine3-arm64-a8-a11",
+      "published_at": "2026-08-28T18:27:31+00:00",
+      "selection_pool": "dopamine-cluster",
+      "source_name": "Dopamine 3 official sources",
+      "source_page_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "source_url": "https://github.com/opa334/Dopamine/blob/3.x/README.md",
+      "title": "Dopamine 3 arm64 Support Range for A8–A11 Devices",
+      "version": "3.x"
+    },
+    {
       "article_sha256": "fe704648718517a8b108f6b64ec044607f88003d3314b0ea178bd28149d2b08c",
       "candidate_fingerprint": "8b5ccbe6e2d25ecb600276025041dfd7232a8830229706c05ee9762720c2c883",
       "category": {
@@ -1071,8 +1095,18 @@
       "published_at": "2026-08-28T00:11:18+00:00",
       "run_id": "33128879647",
       "version": "3.x"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "056a5e50b247d69b35c4b2bac9c8b6e9b8444c8cab8b68360b59f3d5beaf2805",
+      "channel": "dopamine-cluster",
+      "href": "dopamine-3-arm64-a8-a11-guide.html",
+      "package": "editorial.dopamine3.dopamine3-arm64-a8-a11",
+      "published_at": "2026-08-28T18:27:31+00:00",
+      "run_id": "33199248652",
+      "version": "3.x"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-28T00:11:18+00:00"
+  "updated_at": "2026-08-28T18:27:31+00:00"
 }

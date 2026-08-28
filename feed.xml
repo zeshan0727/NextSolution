@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Dopamine 3 arm64 Support Range for A8–A11 Devices</title>
+      <link>https://nextjailbreak.com/dopamine-3-arm64-a8-a11-guide.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/dopamine-3-arm64-a8-a11-guide.html</guid>
+      <pubDate>Fri, 28 Aug 2026 18:27:31 GMT</pubDate>
+      <description>Learn the documented Dopamine 3 arm64 support range for A8–A11 devices, including the supported iOS versions and how arm64 differs from arm64e.</description>
+      <category>Jailbreak</category>
+    </item>
+    <item>
       <title>Dopamine 3 Jailbreak: What Rootless Means and How to Check Tweak Compatibility</title>
       <link>https://nextjailbreak.com/dopamine-3-rootless-jailbreak-explained.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/dopamine-3-rootless-jailbreak-explained.html</guid>
@@ -236,14 +244,6 @@
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>Compare eight Home Screen jailbreak tweaks with real feature screenshots, source links, compatibility notes, and a complete video walkthrough.</description>
       <category>Home Screen</category>
-    </item>
-    <item>
-      <title>LSLyrics Places Time-Synced Song Lyrics on the iPhone Lock Screen</title>
-      <link>https://nextjailbreak.com/lslyrics-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/lslyrics-tweak.html</guid>
-      <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
-      <description>LSLyrics 2.0 displays time-synced lyrics on the iPhone or iPad Lock Screen. See real screenshots, full-screen mode, pricing, and compatibility.</description>
-      <category>Lock Screen</category>
     </item>
   </channel>
 </rss>

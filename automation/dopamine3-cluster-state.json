@@ -39,9 +39,86 @@
       "path": "dopamine-3-rootless-jailbreak-explained.html",
       "published_at": "2026-08-28T00:11:18+00:00",
       "topic_id": "dopamine3-rootless-explained"
+    },
+    {
+      "path": "dopamine-3-arm64-a8-a11-guide.html",
+      "published_at": "2026-08-28T18:27:31+00:00",
+      "topic_id": "dopamine3-arm64-a8-a11"
     }
   ],
   "published": {
+    "dopamine3-arm64-a8-a11": {
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_07fb626e28ce29d8016a91d327f8f887d19a5f13a53edf3c3a",
+          "usage": {
+            "input_tokens": 3168,
+            "input_tokens_details": {
+              "cache_write_tokens": 3165,
+              "cached_tokens": 0
+            },
+            "output_tokens": 366,
+            "output_tokens_details": {
+              "reasoning_tokens": 261
+            },
+            "total_tokens": 3534
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0f2187f0da250102016a91d32d573887d1b2fd5b5b9f855af5",
+          "usage": {
+            "input_tokens": 3216,
+            "input_tokens_details": {
+              "cache_write_tokens": 3213,
+              "cached_tokens": 0
+            },
+            "output_tokens": 1839,
+            "output_tokens_details": {
+              "reasoning_tokens": 62
+            },
+            "total_tokens": 5055
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_07f5778a91618f2a016a91d33a8bf487d1be8d4bb369a115f4",
+          "usage": {
+            "input_tokens": 2686,
+            "input_tokens_details": {
+              "cache_write_tokens": 2683,
+              "cached_tokens": 0
+            },
+            "output_tokens": 324,
+            "output_tokens_details": {
+              "reasoning_tokens": 221
+            },
+            "total_tokens": 3010
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_076e95bb63e2d0fa016a91d3144c3087d1872ac2e16f503b52",
+          "usage": {
+            "input_tokens": 1050,
+            "input_tokens_details": {
+              "cache_write_tokens": 1047,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2305,
+            "output_tokens_details": {
+              "reasoning_tokens": 55
+            },
+            "total_tokens": 3355
+          }
+        }
+      },
+      "fingerprint": "056a5e50b247d69b35c4b2bac9c8b6e9b8444c8cab8b68360b59f3d5beaf2805",
+      "path": "dopamine-3-arm64-a8-a11-guide.html",
+      "published_at": "2026-08-28T18:27:31+00:00",
+      "title": "Dopamine 3 arm64 Support Range for A8–A11 Devices"
+    },
     "dopamine3-darksword": {
       "api": {
         "initial_verifier": {

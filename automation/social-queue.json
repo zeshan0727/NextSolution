@@ -63,6 +63,14 @@
       "title": "Dopamine 3 Jailbreak: What Rootless Means and How to Check Tweak Compatibility",
       "topic_id": "dopamine3-rootless-explained",
       "url": "https://nextjailbreak.com/dopamine-3-rootless-jailbreak-explained.html"
+    },
+    {
+      "created_at": "2026-08-28T18:27:31+00:00",
+      "post": "Dopamine 3.x lists arm64 support from iOS 15.0 through iOS 18.7.1. The official website associates arm64 with A8–A11 devices, while arm64e has a separate endpoint at iOS 17.3.1. Check architecture and firmware together. https://nextjailbreak.com/dopamine-3-arm64-a8-a11-guide.html",
+      "status": "pending",
+      "title": "Dopamine 3 arm64 Support Range for A8–A11 Devices",
+      "topic_id": "dopamine3-arm64-a8-a11",
+      "url": "https://nextjailbreak.com/dopamine-3-arm64-a8-a11-guide.html"
     }
   ],
   "schema_version": 1
