@@ -1,0 +1,67 @@
+name: Refresh Sileo repo indexes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/refresh-repo-indexes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Regenerate indexes and bump Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Packages
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+          xz -9 -c Packages > Packages.xz
+
+          python3 - <<'PY'
+          from pathlib import Path
+          from datetime import datetime, timezone
+          p = Path('Release')
+          lines = p.read_text().splitlines()
+          out=[]
+          version_done=False
+          date_done=False
+          for line in lines:
+              if line.startswith('Version:'):
+                  old=line.split(':',1)[1].strip()
+                  parts=old.split('.')
+                  try:
+                      parts[-1]=str(int(parts[-1])+1)
+                      line='Version: '+'.'.join(parts)
+                  except Exception:
+                      line='Version: '+old
+                  version_done=True
+              elif line.startswith('Date:'):
+                  line='Date: '+datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC')
+                  date_done=True
+              out.append(line)
+          if not version_done:
+              out.append('Version: 1.1.16')
+          if not date_done:
+              out.append('Date: '+datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S UTC'))
+          p.write_text('\n'.join(out)+'\n')
+          PY
+
+      - name: Commit refreshed repository metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Packages.gz Packages.bz2 Packages.xz Release
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git commit -m 'Regenerate Sileo package indexes'
+          git push
