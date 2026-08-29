@@ -44,6 +44,11 @@
       "path": "dopamine-3-arm64-a8-a11-guide.html",
       "published_at": "2026-08-28T18:27:31+00:00",
       "topic_id": "dopamine3-arm64-a8-a11"
+    },
+    {
+      "path": "dopamine-3-official-download-guide.html",
+      "published_at": "2026-08-29T18:06:15+00:00",
+      "topic_id": "dopamine3-official-download"
     }
   ],
   "published": {
@@ -406,6 +411,78 @@
       "path": "dopamine-3-jailbreak.html",
       "published_at": "2026-08-19T15:46:56+00:00",
       "title": "Dopamine 3 Compatibility: Supported iOS Versions by Device Category"
+    },
+    "dopamine3-official-download": {
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0c57a3194e4c7fdd016a931fb12cb887d0890b7af66e28b793",
+          "usage": {
+            "input_tokens": 3380,
+            "input_tokens_details": {
+              "cache_write_tokens": 3377,
+              "cached_tokens": 0
+            },
+            "output_tokens": 641,
+            "output_tokens_details": {
+              "reasoning_tokens": 516
+            },
+            "total_tokens": 4021
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_02c52aa5b0f2d9b5016a931fb9a18487d0bd9e6840cab0da5f",
+          "usage": {
+            "input_tokens": 3488,
+            "input_tokens_details": {
+              "cache_write_tokens": 3485,
+              "cached_tokens": 0
+            },
+            "output_tokens": 1821,
+            "output_tokens_details": {
+              "reasoning_tokens": 236
+            },
+            "total_tokens": 5309
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_06c4c7a93cecedbe016a931fc9351887d0b9d390b385d67f0b",
+          "usage": {
+            "input_tokens": 2471,
+            "input_tokens_details": {
+              "cache_write_tokens": 2468,
+              "cached_tokens": 0
+            },
+            "output_tokens": 495,
+            "output_tokens_details": {
+              "reasoning_tokens": 378
+            },
+            "total_tokens": 2966
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0e0ef22d4fc20e90016a931f98ce2c87d0875a39ed539b377c",
+          "usage": {
+            "input_tokens": 1034,
+            "input_tokens_details": {
+              "cache_write_tokens": 1031,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2569,
+            "output_tokens_details": {
+              "reasoning_tokens": 94
+            },
+            "total_tokens": 3603
+          }
+        }
+      },
+      "fingerprint": "bdd1b16f94beef963676e714de40fe1d2200ff6df9970f506c159aa8629241ad",
+      "path": "dopamine-3-official-download-guide.html",
+      "published_at": "2026-08-29T18:06:15+00:00",
+      "title": "Dopamine 3 Jailbreak: Official Project Pages and Compatibility Guide"
     },
     "dopamine3-rootless-explained": {
       "api": {

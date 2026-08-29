@@ -71,6 +71,14 @@
       "title": "Dopamine 3 arm64 Support Range for A8–A11 Devices",
       "topic_id": "dopamine3-arm64-a8-a11",
       "url": "https://nextjailbreak.com/dopamine-3-arm64-a8-a11-guide.html"
+    },
+    {
+      "created_at": "2026-08-29T18:06:15+00:00",
+      "post": "Looking for Dopamine 3 information? Start with the official Dopamine website named in the 3.x README and the opa334/Dopamine GitHub repository. Check your device architecture or chip family alongside the exact iOS range, https://nextjailbreak.com/dopamine-3-official-download-guide.html",
+      "status": "pending",
+      "title": "Dopamine 3 Jailbreak: Official Project Pages and Compatibility Guide",
+      "topic_id": "dopamine3-official-download",
+      "url": "https://nextjailbreak.com/dopamine-3-official-download-guide.html"
     }
   ],
   "schema_version": 1

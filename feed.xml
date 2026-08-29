@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Dopamine 3 Jailbreak: Official Project Pages and Compatibility Guide</title>
+      <link>https://nextjailbreak.com/dopamine-3-official-download-guide.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/dopamine-3-official-download-guide.html</guid>
+      <pubDate>Sat, 29 Aug 2026 18:06:15 GMT</pubDate>
+      <description>Learn where the Dopamine 3 project publishes its official information and how to read its architecture-specific iOS compatibility ranges.</description>
+      <category>Jailbreak</category>
+    </item>
+    <item>
       <title>SetupManager 1.2: Import and Export Your Own Setups</title>
       <link>https://nextjailbreak.com/setupmanager-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/setupmanager-tweak.html</guid>
@@ -235,14 +243,6 @@
       <guid isPermaLink="true">https://nextjailbreak.com/podsgrant-tweak.html</guid>
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>PodsGrant can enable newer AirPods and Beats identification on older jailbroken devices. Read the important 0.5.4 and iOS 17 warnings first.</description>
-      <category>System &amp; Utilities</category>
-    </item>
-    <item>
-      <title>SwipeExtenderX Assigns Powerful Swipe Actions to iPhone Keyboard Keys</title>
-      <link>https://nextjailbreak.com/swipeextenderx-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/swipeextenderx-tweak.html</guid>
-      <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
-      <description>SwipeExtenderX adds 27 swipe and long-press actions to iOS keyboard keys. See official screenshots, compatibility, limitations, and source details.</description>
       <category>System &amp; Utilities</category>
     </item>
   </channel>
