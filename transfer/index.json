@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-29T12:26:31Z",
+  "updatedAt": "2026-08-29T12:42:37Z",
   "files": [
     {
-      "id": "ns-admin-1.0.6",
-      "name": "NS Admin 1.0.6",
-      "fileName": "NS-Admin-1.0.6.tipa",
+      "id": "ns-admin-1.0.7",
+      "name": "NS Admin 1.0.7",
+      "fileName": "NS-Admin-1.0.7.tipa",
       "type": "tipa",
       "platform": "TrollStore / iOS 16+",
-      "version": "1.0.6",
-      "url": "https://nextjailbreak.com/transfer/files/NextSolutionLicenseAdmin/1.0.6/NS-Admin-1.0.6.tipa",
-      "sha256": "07bf9fcc798ae8933d795c155a7d7ea7f91b3ec9e43615fbed6ed77e90b5a501",
-      "notes": "Fixes missing paid license requests. Adds secure PayPal Transaction Search sync for successful NextLock/NS Lock payments, request refresh status, alias normalization, and keeps deep-link/clipboard import as fallback."
+      "version": "1.0.7",
+      "url": "https://nextjailbreak.com/transfer/files/NextSolutionLicenseAdmin/1.0.7/NS-Admin-1.0.7.tipa",
+      "sha256": "9d31cf40fc59588c540f71f296ab2459ada7f6ad0c3556c383b374f6e52b066c",
+      "notes": "Fixes GitHub repo redirect/auth path by using NextJailbreak directly. Improves GitHub 401 diagnostics and broadens PayPal NextLock request matching using custom field, invoice, item name and Device ID."
     },
     {
       "id": "nextmultibrowser-1.1.10-device-category-modes",
