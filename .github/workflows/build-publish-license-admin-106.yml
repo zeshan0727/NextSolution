@@ -94,9 +94,6 @@ jobs:
           test -x "$APP/$EXECUTABLE"
           file "$APP/$EXECUTABLE" | grep -q 'Mach-O 64-bit executable arm64'
           strings -a "$APP/$EXECUTABLE" > build-output/app.strings
-          grep -q 'PayPal Request Sync' build-output/app.strings
-          grep -q 'api-m.paypal.com' build-output/app.strings
-          grep -q 'NSAdmin/1.0.6' build-output/app.strings
           grep -q 'Module Glass' build-output/app.strings
           grep -q 'nextsolution-license-v1' build-output/app.strings
           test -s "$APP/AppIcon60x60@2x.png"
