@@ -1,0 +1,162 @@
+name: Build and Publish NS Admin 1.0.7
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/patch_license_admin_107.py'
+      - '.github/workflows/build-publish-license-admin-107.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextsolution-license-admin-107
+  cancel-in-progress: true
+
+jobs:
+  build_publish:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install build tools
+        run: |
+          brew install xcodegen
+          python3 -m pip install --break-system-packages pillow
+
+      - name: Apply NS Admin patches through 1.0.7
+        run: |
+          set -euo pipefail
+          python3 scripts/patch_license_admin_102.py
+          python3 scripts/patch_license_admin_103.py
+          python3 scripts/patch_license_admin_104.py
+          python3 scripts/patch_license_admin_105.py
+          python3 scripts/patch_license_admin_106.py
+          python3 scripts/patch_license_admin_107.py
+          SRC=NextSolutionLicenseAdmin/Sources/NextSolutionLicenseAdminApp.swift
+          grep -q 'let repo = "NextJailbreak"' "$SRC"
+          grep -q 'struct PayPalTransactionAPI' "$SRC"
+          grep -q 'let invoiceId: String?' "$SRC"
+          grep -q 'PayPal Request Sync' "$SRC"
+          grep -q 'NSAdmin/1.0.7' "$SRC"
+          grep -q 'LabeledContent("Version", value: "1.0.7")' "$SRC"
+          grep -q 'MARKETING_VERSION: "1.0.7"' NextSolutionLicenseAdmin/project.yml
+          grep -q 'CURRENT_PROJECT_VERSION: "107"' NextSolutionLicenseAdmin/project.yml
+
+      - name: Generate icon assets
+        run: |
+          set -euo pipefail
+          python3 scripts/generate_ns_admin_icon.py
+          test -s NextSolutionLicenseAdmin/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+
+      - name: Generate Xcode project
+        working-directory: NextSolutionLicenseAdmin
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        working-directory: NextSolutionLicenseAdmin
+        run: |
+          set -o pipefail
+          rm -rf build build-output Payload
+          mkdir -p build-output
+          xcodebuild \
+            -project NextSolutionLicenseAdmin.xcodeproj \
+            -scheme NextSolutionLicenseAdmin \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build-output/xcodebuild.log
+
+      - name: Validate and ad-hoc sign
+        working-directory: NextSolutionLicenseAdmin
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release-iphoneos/NextSolutionLicenseAdmin.app"
+          test -d "$APP"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "com.nextsolution.licenseadmin"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" = "1.0.7"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")" = "107"
+          EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")"
+          file "$APP/$EXECUTABLE" | grep -q 'Mach-O 64-bit executable arm64'
+          /usr/bin/codesign --force --sign - --entitlements NextSolutionLicenseAdmin.entitlements --generate-entitlement-der "$APP"
+          /usr/bin/codesign --verify --verbose=2 "$APP"
+
+      - name: Package TIPA
+        working-directory: NextSolutionLicenseAdmin
+        run: |
+          set -euo pipefail
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/NextSolutionLicenseAdmin.app Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload NS-Admin-1.0.7.tipa
+          cp NS-Admin-1.0.7.tipa build-output/
+          shasum -a 256 NS-Admin-1.0.7.tipa | tee build-output/NS-Admin-1.0.7.sha256
+          unzip -l NS-Admin-1.0.7.tipa | grep -q 'Payload/NextSolutionLicenseAdmin.app/NextSolutionLicenseAdmin'
+
+      - name: Publish to NS Transfer
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          git config user.name "Next Jailbreak Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          cp NextSolutionLicenseAdmin/NS-Admin-1.0.7.tipa /tmp/NS-Admin-1.0.7.tipa
+          cp NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.7.sha256 /tmp/NS-Admin-1.0.7.sha256
+          cp NextSolutionLicenseAdmin/build-output/xcodebuild.log /tmp/NS-Admin-xcodebuild.log
+          git reset --hard HEAD
+          git clean -fd NextSolutionLicenseAdmin
+          git pull --rebase origin main
+          mkdir -p NextSolutionLicenseAdmin/build-output
+          cp /tmp/NS-Admin-1.0.7.tipa NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.7.tipa
+          cp /tmp/NS-Admin-1.0.7.sha256 NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.7.sha256
+          cp /tmp/NS-Admin-xcodebuild.log NextSolutionLicenseAdmin/build-output/xcodebuild.log
+          DEST="transfer/files/NextSolutionLicenseAdmin/1.0.7/NS-Admin-1.0.7.tipa"
+          mkdir -p "$(dirname "$DEST")"
+          cp /tmp/NS-Admin-1.0.7.tipa "$DEST"
+          SHA=$(shasum -a 256 "$DEST" | awk '{print $1}')
+          python3 - "$SHA" <<'PY'
+          import json,sys
+          from datetime import datetime,timezone
+          from pathlib import Path
+          sha=sys.argv[1]
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text()) if p.exists() else {'version':1,'files':[]}
+          entry={
+            'id':'ns-admin-1.0.7',
+            'name':'NS Admin 1.0.7',
+            'fileName':'NS-Admin-1.0.7.tipa',
+            'type':'tipa',
+            'platform':'TrollStore / iOS 16+',
+            'version':'1.0.7',
+            'url':'https://nextjailbreak.com/transfer/files/NextSolutionLicenseAdmin/1.0.7/NS-Admin-1.0.7.tipa',
+            'sha256':sha,
+            'notes':'Fixes GitHub repo redirect/auth path by using NextJailbreak directly. Improves GitHub 401 diagnostics and broadens PayPal NextLock request matching using custom field, invoice, item name and Device ID.'
+          }
+          files=[x for x in data.get('files',[]) if not (x.get('id','').startswith('nextsolution-license-admin-') or x.get('id','').startswith('ns-admin-'))]
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          data['files']=[entry]+files
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+          git add -f "$DEST" NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.7.tipa NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.7.sha256 NextSolutionLicenseAdmin/build-output/xcodebuild.log transfer/index.json
+          git commit -m "Publish NS Admin 1.0.7"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
+            sleep $((attempt*3))
+          done
+          exit 1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NS-Admin-1.0.7
+          path: |
+            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.7.tipa
+            NextSolutionLicenseAdmin/build-output/NS-Admin-1.0.7.sha256
+            NextSolutionLicenseAdmin/build-output/xcodebuild.log
+          if-no-files-found: error
