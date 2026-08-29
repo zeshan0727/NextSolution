@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "8fb750b494ecfda5ab51a65eaf8641133e11b5928718ac152684a809e6fd0798",
+      "candidate_fingerprint": "63d915fe5eb1cbe26afcec03b89e799a6ae63430b85da5e0ef82654043b55015",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Review the supplied release facts for Circle to Search 0.6.0, an iOS port listed for iphoneos-arm64 devices with MobileSubstrate and PreferenceLoader dependencies.",
+      "href": "circle-to-search-tweak.html",
+      "image": "https://media.havoc.app/6a871062324f05e66ad20b82",
+      "media_credit": "Circle to Search official package listing",
+      "media_source_url": "https://havoc.app/package/circletosearch",
+      "modified_at": "2026-08-29T03:16:26+00:00",
+      "name": "Circle to Search",
+      "package": "com.chloe.circlesearch",
+      "published_at": "2026-08-29T03:16:26+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/circletosearch",
+      "source_url": "https://havoc.app/",
+      "title": "Circle to Search 0.6.0 for iOS: Release Details and Installation Notes",
+      "version": "0.6.0"
+    },
+    {
       "article_sha256": "b266e040ac08820f8249f67ef9a6b76357f629600df324b1f56754d75dc217be",
       "candidate_fingerprint": "056a5e50b247d69b35c4b2bac9c8b6e9b8444c8cab8b68360b59f3d5beaf2805",
       "category": {
@@ -1105,8 +1128,17 @@
       "published_at": "2026-08-28T18:27:31+00:00",
       "run_id": "33199248652",
       "version": "3.x"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "63d915fe5eb1cbe26afcec03b89e799a6ae63430b85da5e0ef82654043b55015",
+      "href": "circle-to-search-tweak.html",
+      "package": "com.chloe.circlesearch",
+      "published_at": "2026-08-29T03:16:26+00:00",
+      "run_id": "33230904824",
+      "version": "0.6.0"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-28T18:27:31+00:00"
+  "updated_at": "2026-08-29T03:16:26+00:00"
 }
