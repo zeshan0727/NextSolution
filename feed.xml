@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>SetupManager 1.2: Import and Export Your Own Setups</title>
+      <link>https://nextjailbreak.com/setupmanager-tweak.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/setupmanager-tweak.html</guid>
+      <pubDate>Sat, 29 Aug 2026 15:12:09 GMT</pubDate>
+      <description>SetupManager 1.2 by Mysteryexe is listed as a System &amp; Utilities tweak for importing and exporting your own setups. Review its architectures and dependencies before,</description>
+      <category>System &amp; Utilities</category>
+    </item>
+    <item>
       <title>Circle to Search 0.6.0 for iOS: Release Details and Installation Notes</title>
       <link>https://nextjailbreak.com/circle-to-search-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/circle-to-search-tweak.html</guid>
@@ -236,14 +244,6 @@
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>SwipeExtenderX adds 27 swipe and long-press actions to iOS keyboard keys. See official screenshots, compatibility, limitations, and source details.</description>
       <category>System &amp; Utilities</category>
-    </item>
-    <item>
-      <title>Reo Replaces the iPhone Lock Screen Music Player with a Custom Layout</title>
-      <link>https://nextjailbreak.com/reo-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/reo-tweak.html</guid>
-      <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
-      <description>Reo 4.0.1 is a customizable Lock Screen music player for jailbroken iPhones. View real layouts, preferences, price, and supported iOS versions.</description>
-      <category>Media</category>
     </item>
   </channel>
 </rss>

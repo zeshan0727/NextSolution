@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "22edb575b92fd4467c51e99e4f987e6fffa011841e18a97740c981fce46550fa",
+      "candidate_fingerprint": "ef4751a9f27a086efe4a288f9afa8d9f4b3eb8225b9700931492e90c24264fb1",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "SetupManager 1.2 by Mysteryexe is listed as a System & Utilities tweak for importing and exporting your own setups. Review its architectures and dependencies before,",
+      "href": "setupmanager-tweak.html",
+      "image": "https://media.havoc.app/69a2927d8a1a1189920b5c27",
+      "media_credit": "SetupManager official package listing",
+      "media_source_url": "https://havoc.app/package/setupmanager",
+      "modified_at": "2026-08-29T15:12:09+00:00",
+      "name": "SetupManager",
+      "package": "com.mystery.setupmanager",
+      "published_at": "2026-08-29T15:12:09+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/setupmanager",
+      "source_url": "https://havoc.app/",
+      "title": "SetupManager 1.2: Import and Export Your Own Setups",
+      "version": "1.2"
+    },
+    {
       "article_sha256": "8fb750b494ecfda5ab51a65eaf8641133e11b5928718ac152684a809e6fd0798",
       "candidate_fingerprint": "63d915fe5eb1cbe26afcec03b89e799a6ae63430b85da5e0ef82654043b55015",
       "category": {
@@ -1137,8 +1160,17 @@
       "published_at": "2026-08-29T03:16:26+00:00",
       "run_id": "33230904824",
       "version": "0.6.0"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "ef4751a9f27a086efe4a288f9afa8d9f4b3eb8225b9700931492e90c24264fb1",
+      "href": "setupmanager-tweak.html",
+      "package": "com.mystery.setupmanager",
+      "published_at": "2026-08-29T15:12:09+00:00",
+      "run_id": "33259532976",
+      "version": "1.2"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-29T03:16:26+00:00"
+  "updated_at": "2026-08-29T15:12:09+00:00"
 }
