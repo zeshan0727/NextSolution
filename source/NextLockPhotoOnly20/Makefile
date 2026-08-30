@@ -15,7 +15,7 @@ BUNDLE_NAME = NextLockPhotoOnlyPrefs
 NextLockPhotoOnlyPrefs_FILES = PhotoPrefs.m
 NextLockPhotoOnlyPrefs_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
 NextLockPhotoOnlyPrefs_FRAMEWORKS = Foundation UIKit CoreFoundation
-NextLockPhotoOnlyPrefs_PRIVATE_FRAMEWORKS = Preferences
+NextLockPhotoOnlyPrefs_LDFLAGS = -Wl,-undefined,dynamic_lookup
 NextLockPhotoOnlyPrefs_INSTALL_PATH = /Library/PreferenceBundles
 
 include $(THEOS_MAKE_PATH)/tweak.mk
