@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-30T12:23:52Z",
+  "updatedAt": "2026-08-30T12:35:56Z",
   "files": [
+    {
+      "id": "nextlock-1.1.5-test20.1-clean-photo-only-roothide",
+      "name": "NextLock 1.1.5 Test 20.1 Clean Photo Only RootHide",
+      "fileName": "NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "1.1.5-test20.1",
+      "url": "https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test20.1-CleanPhotoOnly/NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb",
+      "sha256": "d9a6e0accf70f91b2e785114161418b1cd995d36f8c0b2e62a66a798853ebe7f",
+      "sizeBytes": 12630,
+      "notes": "Corrected source-built photo-only runtime. Contains only four independent photo/sticker frames, image selection/edit/removal, display modes, size, native Time/Date anchoring, placement and offsets. The legacy shared LockGlyphTime binary, licensing client, custom Time/Date renderer, icon renderer, battery and hide-element code are completely absent. Active by default."
+    },
     {
       "id": "nextlock-1.1.5-test20-photo-only-roothide",
       "name": "NextLock 1.1.5 Test 20 Photo Only RootHide",
