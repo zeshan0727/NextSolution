@@ -1,7 +1,55 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-30T12:52:40Z",
+  "updatedAt": "2026-08-30T13:02:00Z",
   "files": [
+    {
+      "id": "lockglyphtime-0.2.1-roothide",
+      "name": "LockGlyphTime 0.2.1 RootHide",
+      "fileName": "LockGlyphTime_0.2.1_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "0.2.1",
+      "url": "https://nextjailbreak.com/transfer/files/LockGlyphTime/0.2.1/LockGlyphTime_0.2.1_RootHide.deb",
+      "sha256": "b6a6c7f454a29a9f15d731ed916456a73b1fcebd1d20a4135ef05ad2723cbace",
+      "sizeBytes": 33314,
+      "notes": "Original LockGlyphTime 0.2.1 build for RootHide (iphoneos-arm64e). Published unchanged."
+    },
+    {
+      "id": "lockglyphtime-0.2.1-rootless",
+      "name": "LockGlyphTime 0.2.1 Rootless",
+      "fileName": "LockGlyphTime_0.2.1_Rootless.deb",
+      "type": "deb",
+      "platform": "Rootless",
+      "version": "0.2.1",
+      "url": "https://nextjailbreak.com/transfer/files/LockGlyphTime/0.2.1/LockGlyphTime_0.2.1_Rootless.deb",
+      "sha256": "ba022abd0b32666289665a1922462a1f26702854ea2ce44c39ef873433845563",
+      "sizeBytes": 33274,
+      "notes": "Original LockGlyphTime 0.2.1 build for Rootless (iphoneos-arm64). Published unchanged."
+    },
+    {
+      "id": "lockglyphtime-0.2.2-roothide",
+      "name": "LockGlyphTime 0.2.2 RootHide",
+      "fileName": "LockGlyphTime_0.2.2_RootHide.deb",
+      "type": "deb",
+      "platform": "RootHide",
+      "version": "0.2.2",
+      "url": "https://nextjailbreak.com/transfer/files/LockGlyphTime/0.2.2/LockGlyphTime_0.2.2_RootHide.deb",
+      "sha256": "f661c8ad21e41de3c6a1a6b47b809335ed117316d7e5b03569351e7c3fec9782",
+      "sizeBytes": 41474,
+      "notes": "Original LockGlyphTime 0.2.2 build for RootHide (iphoneos-arm64e). Published unchanged."
+    },
+    {
+      "id": "lockglyphtime-0.2.2-rootless",
+      "name": "LockGlyphTime 0.2.2 Rootless",
+      "fileName": "LockGlyphTime_0.2.2_Rootless.deb",
+      "type": "deb",
+      "platform": "Rootless",
+      "version": "0.2.2",
+      "url": "https://nextjailbreak.com/transfer/files/LockGlyphTime/0.2.2/LockGlyphTime_0.2.2_Rootless.deb",
+      "sha256": "8442c1174e7a38a2067f2cadda77193eeae81107ec6adb93a9f221c834b55b82",
+      "sizeBytes": 41544,
+      "notes": "Original LockGlyphTime 0.2.2 build for Rootless (iphoneos-arm64). Published unchanged."
+    },
     {
       "id": "lockglyphtime-0.2.0-roothide",
       "name": "LockGlyphTime 0.2.0 RootHide",
