@@ -11,7 +11,7 @@ on:
           - activate
           - revoke
       device_id:
-        description: Module Glass Device ID shown in Settings (NS-XXXX-XXXX-XXXX-XXXX)
+        description: Module Glass hardware ID (NJ-...) or legacy Device ID (NS-...)
         required: true
         type: string
 
@@ -41,7 +41,7 @@ jobs:
           import datetime, hashlib, json, os, pathlib, re
           action=os.environ['LICENSE_ACTION'].strip().lower()
           device=re.sub(r'\s+','',os.environ['DEVICE_ID'].strip().upper())
-          if not re.fullmatch(r'NS-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}',device):
+          if not re.fullmatch(r'(?:NJ-[A-F0-9]{4}(?:-[A-F0-9]{4}){5}|NS-[A-F0-9]{4}(?:-[A-F0-9]{4}){3})',device):
               raise SystemExit('Invalid Device ID')
           if action not in {'activate','revoke'}: raise SystemExit('Invalid action')
           package='com.nextsolution.nextaura.cc-module-backgrounds'

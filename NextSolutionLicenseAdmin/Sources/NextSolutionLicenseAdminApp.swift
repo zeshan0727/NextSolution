@@ -19,7 +19,15 @@ struct ProductConfig: Identifiable, Hashable {
         price: "$1.00"
     )
 
-    static let all: [ProductConfig] = [.nextLock]
+    static let moduleGlass = ProductConfig(
+        id: "moduleglass",
+        name: "Module Glass",
+        packageID: "com.nextsolution.nextaura.cc-module-backgrounds",
+        registryPath: "licenses/moduleglass.json",
+        price: "$1.00"
+    )
+
+    static let all: [ProductConfig] = [.nextLock, .moduleGlass]
 }
 
 enum RequestState: String, Codable {
@@ -73,7 +81,7 @@ enum LicenseAdminError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingToken: return "GitHub token is not configured."
-        case .invalidDevice: return "Enter a valid Device ID in NS-XXXX-XXXX-XXXX-XXXX format."
+        case .invalidDevice: return "Enter a valid NJ hardware ID or legacy NS Device ID."
         case .invalidResponse: return "GitHub returned an invalid response."
         case .api(let code, let message): return "GitHub error \(code): \(message)"
         case .invalidRegistry: return "The license registry could not be decoded."
@@ -133,7 +141,7 @@ struct LicenseTokenStore {
 
 struct GitHubLicenseAPI {
     let owner = "zeshan0727"
-    let repo = "NextSolution"
+    let repo = "NextJailbreak"
     let branch = "main"
 
     private func encodedPath(_ path: String) -> String {
@@ -224,7 +232,7 @@ struct GitHubLicenseAPI {
     }
 
     static func validDevice(_ value: String) -> Bool {
-        value.range(of: #"^NS-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$"#, options: .regularExpression) != nil
+        value.range(of: #"^(NS-[A-F0-9]{4}(-[A-F0-9]{4}){3}|NJ-[A-F0-9]{4}(-[A-F0-9]{4}){5})$"#, options: .regularExpression) != nil
     }
 }
 
@@ -303,7 +311,7 @@ final class AppModel: ObservableObject {
             addRequest(product: product, deviceID: values["device"] ?? "", payment: values["payment"] ?? "")
             return
         }
-        let pattern = #"NS-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}"#
+        let pattern = #"(NJ-[A-F0-9]{4}(-[A-F0-9]{4}){5}|NS-[A-F0-9]{4}(-[A-F0-9]{4}){3})"#
         if let range = text.uppercased().range(of: pattern, options: .regularExpression) {
             addRequest(product: .nextLock, deviceID: String(text.uppercased()[range]))
         } else {
@@ -564,7 +572,7 @@ struct ActivationView: View {
                             Text("\(product.name) · \(product.price)").tag(product)
                         }
                     }
-                    TextField("NS-XXXX-XXXX-XXXX-XXXX", text: $model.deviceID)
+                    TextField("NJ-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX", text: $model.deviceID)
                         .font(.system(.body, design: .monospaced))
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()

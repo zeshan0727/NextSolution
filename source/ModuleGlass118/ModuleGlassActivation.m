@@ -13,6 +13,7 @@ static NSString * const MGPackageID = @"com.nextsolution.nextaura.cc-module-back
 static NSString * const MGLicenseDomain = @"com.nextsolution.moduleglass";
 static NSString * const MGRegistryURL = @"https://raw.githubusercontent.com/zeshan0727/NextJailbreak/main/licenses/moduleglass.json";
 static NSString * const MGLicenseSalt = @"nextsolution-license-v1";
+static NSString * const MGDeviceIDSalt = @"nextjailbreak-hardware-id-v2";
 
 static NSString *MGHexSHA256(NSString *input) {
     NSData *data = [input dataUsingEncoding:NSUTF8StringEncoding];
@@ -29,7 +30,7 @@ static NSUserDefaults *MGLicenseDefaults(void) {
 
 static BOOL MGValidDeviceID(NSString *value) {
     if (![value isKindOfClass:NSString.class]) return NO;
-    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^NS-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$" options:0 error:nil];
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^(NS-[A-F0-9]{4}(-[A-F0-9]{4}){3}|NJ-[A-F0-9]{4}(-[A-F0-9]{4}){5})$" options:0 error:nil];
     return [regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)] != nil;
 }
 
@@ -68,30 +69,30 @@ static NSString *MGDeviceID(void) {
     dispatch_once(&onceToken, ^{
         NSUserDefaults *defaults = MGLicenseDefaults();
         NSString *stored = [[defaults stringForKey:@"licenseDeviceID"] uppercaseString];
-        if (!MGValidDeviceID(stored)) stored = [[defaults stringForKey:@"deviceIDDisplay"] uppercaseString];
-        if (MGValidDeviceID(stored)) {
+        if ([stored hasPrefix:@"NJ-"] && MGValidDeviceID(stored)) {
             cached = stored;
             return;
         }
 
         NSString *udid = MGGestaltString(CFSTR("UniqueDeviceID"));
-        NSString *serial = MGGestaltString(CFSTR("SerialNumber"));
-        NSString *raw = [NSString stringWithFormat:@"%@|%@|%@|%@", udid ?: @"", serial ?: @"", MGMachine(), MGPackageID];
-        if (!(udid.length || serial.length)) {
-            NSString *vendor = UIDevice.currentDevice.identifierForVendor.UUIDString ?: [NSUUID UUID].UUIDString;
-            raw = [NSString stringWithFormat:@"%@|%@|%@", vendor, MGMachine(), MGPackageID];
-        }
+        if (!udid.length) return;
+        NSString *legacy = [[defaults stringForKey:@"licenseDeviceID"] uppercaseString];
+        if ([legacy hasPrefix:@"NS-"] && MGValidDeviceID(legacy)) [defaults setObject:legacy forKey:@"legacyLicenseDeviceID"];
+        NSString *raw = [NSString stringWithFormat:@"%@|%@", MGDeviceIDSalt, udid.uppercaseString];
         NSString *hex = [MGHexSHA256(raw) uppercaseString];
-        cached = [NSString stringWithFormat:@"NS-%@-%@-%@-%@",
+        cached = [NSString stringWithFormat:@"NJ-%@-%@-%@-%@-%@-%@",
                   [hex substringWithRange:NSMakeRange(0, 4)],
                   [hex substringWithRange:NSMakeRange(4, 4)],
                   [hex substringWithRange:NSMakeRange(8, 4)],
-                  [hex substringWithRange:NSMakeRange(12, 4)]];
+                  [hex substringWithRange:NSMakeRange(12, 4)],
+                  [hex substringWithRange:NSMakeRange(16, 4)],
+                  [hex substringWithRange:NSMakeRange(20, 4)]];
     });
     return cached;
 }
 
 static NSString *MGLicenseToken(void) {
+    if (!MGDeviceID().length) return nil;
     return MGHexSHA256([NSString stringWithFormat:@"%@|%@|%@", MGDeviceID(), MGPackageID, MGLicenseSalt]);
 }
 
@@ -111,8 +112,13 @@ static void MGPostLicenseChange(void) {
 static void MGPrepareDisplayValues(void) {
     NSUserDefaults *defaults = MGLicenseDefaults();
     BOOL active = MGStoredActive();
-    [defaults setObject:MGDeviceID() forKey:@"licenseDeviceID"];
-    [defaults setObject:MGDeviceID() forKey:@"deviceIDDisplay"];
+    NSString *device = MGDeviceID();
+    if (device.length) {
+        [defaults setObject:device forKey:@"licenseDeviceID"];
+        [defaults setObject:device forKey:@"deviceIDDisplay"];
+    } else {
+        [defaults setObject:@"Unavailable — real hardware ID could not be read" forKey:@"deviceIDDisplay"];
+    }
     if (![defaults stringForKey:@"licenseStatusDisplay"]) {
         [defaults setObject:(active ? @"Activated" : @"Unactivated") forKey:@"licenseStatusDisplay"];
     }
@@ -124,8 +130,10 @@ static void MGPrepareDisplayValues(void) {
 
 static void MGStoreActivation(BOOL active) {
     NSUserDefaults *defaults = MGLicenseDefaults();
-    [defaults setObject:MGDeviceID() forKey:@"licenseDeviceID"];
-    [defaults setObject:MGDeviceID() forKey:@"deviceIDDisplay"];
+    NSString *device = MGDeviceID();
+    if (!device.length) return;
+    [defaults setObject:device forKey:@"licenseDeviceID"];
+    [defaults setObject:device forKey:@"deviceIDDisplay"];
     [defaults setObject:(active ? @"Activated" : @"Unactivated") forKey:@"licenseStatusDisplay"];
     [defaults setBool:active forKey:@"licenseActive"];
     [defaults setBool:active forKey:@"licenseActivated"];
@@ -136,6 +144,11 @@ static void MGStoreActivation(BOOL active) {
 }
 
 static void MGCheckActivation(void (^completion)(BOOL active, NSError *error)) {
+    if (!MGDeviceID().length) {
+        NSError *error = [NSError errorWithDomain:@"ModuleGlassLicense" code:3 userInfo:@{NSLocalizedDescriptionKey: @"The real hardware identity could not be read. No temporary or random ID was generated."}];
+        if (completion) dispatch_async(dispatch_get_main_queue(), ^{ completion(MGStoredActive(), error); });
+        return;
+    }
     NSString *urlText = [NSString stringWithFormat:@"%@?t=%.0f", MGRegistryURL, NSDate.date.timeIntervalSince1970];
     NSURL *url = [NSURL URLWithString:urlText];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:15.0];
@@ -177,6 +190,7 @@ static NSString *MGQueryEscape(NSString *value) {
 }
 
 static NSURL *MGCheckoutURL(void) {
+    if (!MGDeviceID().length) return nil;
     NSString *url = [NSString stringWithFormat:@"https://nextjailbreak.com/license/moduleglass/?device=%@&model=%@&ios=%@",
                      MGQueryEscape(MGDeviceID()), MGQueryEscape(MGMachine()), MGQueryEscape(UIDevice.currentDevice.systemVersion ?: @"")];
     return [NSURL URLWithString:url];
@@ -204,13 +218,20 @@ static void MGReloadSpecifiers(id controller) {
 }
 
 static void MGCopyLicenseDeviceIDAction(id controller, SEL command) {
+    if (!MGDeviceID().length) {
+        MGShowResult(controller, @"Device ID Unavailable", @"Module Glass could not read the real hardware identity. No temporary or random ID was generated.");
+        return;
+    }
     UIPasteboard.generalPasteboard.string = MGDeviceID();
     MGShowResult(controller, @"Device ID Copied", MGDeviceID());
 }
 
 static void MGBuyLicenseAction(id controller, SEL command) {
     NSURL *url = MGCheckoutURL();
-    if (!url) return;
+    if (!url) {
+        MGShowResult(controller, @"Cannot Open Checkout", @"The real hardware identity could not be read. Checkout was stopped to prevent an unstable licence.");
+        return;
+    }
     UIApplication *application = UIApplication.sharedApplication;
     if ([application respondsToSelector:@selector(openURL:options:completionHandler:)]) {
         [application openURL:url options:@{} completionHandler:nil];
