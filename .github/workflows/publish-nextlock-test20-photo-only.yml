@@ -1,0 +1,205 @@
+name: Build and Publish NextLock 1.1.5 Test 20 Photo Only
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-nextlock-test20-photo-only.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-1.1.5-test20-photo-only
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install dpkg
+
+      - name: Create lightweight photo-only package
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='transfer/files/NextLock/1.1.5-Test19-PreferencesSections/NextLock_1.1.5_Test19_PreferencesSections_RootHide.deb'
+          test -f "$BASE"
+
+          STAGE="$RUNNER_TEMP/nextlock-test20"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          dpkg-deb -R "$BASE" "$STAGE"
+
+          # Remove Test 19 runtime add-ons that only implement Time, Date,
+          # Hide Elements and Battery features. Keep the validated core
+          # LockGlyphTime runtime and all four photo-frame functions.
+          find "$STAGE" -type f \( \
+            -name 'NextLockPerfFix.dylib' -o -name 'NextLockPerfFix.plist' -o \
+            -name 'NextLockCustomClock.dylib' -o -name 'NextLockCustomClock.plist' -o \
+            -name 'NextLockHideElements.dylib' -o -name 'NextLockHideElements.plist' -o \
+            -name 'NextLockDateFix17.dylib' -o -name 'NextLockDateFix17.plist' -o \
+            -name 'NextLockBatteryItems18.dylib' -o -name 'NextLockBatteryItems18.plist' \
+          \) -delete
+
+          python3 - "$STAGE" <<'PY'
+          from pathlib import Path
+          import plistlib,re,sys
+
+          stage=Path(sys.argv[1])
+          bundle=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+          root=bundle/'Root.plist'
+
+          def group(label, footer=''):
+              item={'cell':'PSGroupCell','label':label}
+              if footer: item['footerText']=footer
+              return item
+
+          items=[
+            group('PHOTO-ONLY RECOVERY','Temporary lightweight Test 20. Only the four Custom Photo frames and their controls are exposed. NextLock starts enabled by default.'),
+            {
+              'PostNotification':'com.nextsolution.lockglyphtime/ReloadPrefs',
+              'cell':'PSSwitchCell','default':True,
+              'defaults':'com.nextsolution.lockglyphtime','key':'enabled',
+              'label':'Enable Photo Frames'
+            },
+            {'action':'applyNow','cell':'PSButtonCell','label':'Apply Changes'},
+            group('CUSTOM PHOTOS','Use up to four independent photos or transparent stickers. Existing saved photos and frame positions are preserved.'),
+            {'cell':'PSLinkCell','detail':'LGTPhotoController','label':'Photo Frames'},
+            group('', 'NextLock Test 20 Photo Only • Activation temporarily removed • Active by default')
+          ]
+          with root.open('wb') as f:
+              plistlib.dump({'items':items,'title':'NextLock Photo Only'},f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          # Remove every preferences page outside the photo workflow.
+          for name in ['Time.plist','Date.plist','Icon.plist','Advanced.plist','About.plist']:
+              (bundle/name).unlink(missing_ok=True)
+
+          # Keep all four photo pages and normalize their wording.
+          photo=bundle/'Photo.plist'
+          with photo.open('rb') as f: d=plistlib.load(f)
+          d['title']='Photo Frames'
+          with photo.open('wb') as f:
+              plistlib.dump(d,f,fmt=plistlib.FMT_XML,sort_keys=False)
+
+          # Package version and description.
+          control=stage/'DEBIAN/control'
+          text=control.read_text()
+          text=re.sub(r'^Version: .*$', 'Version: 1.1.5~cpu20', text, flags=re.M)
+          desc=('Description: NextLock 1.1.5 Test 20 Photo Only. Temporary lightweight recovery build that keeps the core four-photo frame system, photo selection, transparent stickers, independent size, anchor, placement and X/Y controls. Time, Date, Icon, Hide Elements, Battery and Activation settings are removed; the tweak is enabled by default.')
+          text=re.sub(r'^Description: .*$',desc,text,flags=re.M) if re.search(r'^Description: .*$',text,re.M) else text+'\n'+desc+'\n'
+          control.write_text(text)
+
+          # Ensure a clean install starts enabled. Existing photo settings remain untouched.
+          postinst=stage/'DEBIAN/postinst'
+          old=postinst.read_text() if postinst.exists() else '#!/bin/sh\n'
+          marker='# NextLock Test 20 photo-only defaults'
+          if marker not in old:
+              old += f'''\n{marker}
+          PREF="/var/mobile/Library/Preferences/com.nextsolution.lockglyphtime.plist"
+          if command -v plutil >/dev/null 2>&1; then
+            plutil -replace enabled -bool true "$PREF" >/dev/null 2>&1 || plutil -insert enabled -bool true "$PREF" >/dev/null 2>&1 || true
+          fi
+          exit 0
+          '''
+          postinst.write_text(old)
+          postinst.chmod(0o755)
+          PY
+
+          OUTDEB="$OUT/NextLock_1.1.5_Test20_PhotoOnly_RootHide.deb"
+          dpkg-deb -b "$STAGE" "$OUTDEB"
+
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu20'
+
+          CHECK="$RUNNER_TEMP/check"
+          dpkg-deb -x "$OUTDEB" "$CHECK"
+          ROOT="$CHECK/Library/PreferenceBundles/LockGlyphTimePrefs.bundle/Root.plist"
+          python3 - "$ROOT" "$CHECK" <<'PY'
+          import plistlib,sys
+          from pathlib import Path
+          root=Path(sys.argv[1]); stage=Path(sys.argv[2])
+          with root.open('rb') as f: d=plistlib.load(f)
+          labels=[str(x.get('label','')) for x in d.get('items',[])]
+          details=[str(x.get('detail','')) for x in d.get('items',[])]
+          assert 'Photo Frames' in labels
+          assert 'LGTPhotoController' in details
+          forbidden=['Time','Date','Icon','Activation','Battery','Hide']
+          assert not any(any(word.lower() in label.lower() for word in forbidden) for label in labels)
+          bundle=stage/'Library/PreferenceBundles/LockGlyphTimePrefs.bundle'
+          for name in ['Photo.plist','PhotoFrame1.plist','PhotoFrame2.plist','PhotoFrame3.plist','PhotoFrame4.plist']:
+              assert (bundle/name).is_file(), name
+          for name in ['Time.plist','Date.plist','Icon.plist','Advanced.plist','About.plist']:
+              assert not (bundle/name).exists(), name
+          mobile=stage/'Library/MobileSubstrate/DynamicLibraries'
+          assert (mobile/'LockGlyphTime.dylib').is_file()
+          for name in ['NextLockPerfFix.dylib','NextLockCustomClock.dylib','NextLockHideElements.dylib','NextLockDateFix17.dylib','NextLockBatteryItems18.dylib']:
+              assert not (mobile/name).exists(), name
+          PY
+
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          SIZE=$(stat -f%z "$OUTDEB")
+          echo "OUTDEB=$OUTDEB" >> "$GITHUB_ENV"
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+          echo "OUT_SIZE=$SIZE" >> "$GITHUB_ENV"
+          echo "Test 20 SHA-256: $SHA"
+          echo "Test 20 size: $SIZE bytes"
+
+      - name: Publish Test 20 separately to NS Transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-Test20-PhotoOnly'
+          DEST="$DEST_DIR/NextLock_1.1.5_Test20_PhotoOnly_RootHide.deb"
+          test ! -e "$DEST"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          test "$(shasum -a 256 "$DEST" | awk '{print $1}')" = "$OUT_SHA"
+          export OUT_SHA OUT_SIZE
+
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json')
+          data=json.loads(p.read_text())
+          ident='nextlock-1.1.5-test20-photo-only-roothide'
+          if any(x.get('id')==ident for x in data.get('files',[])):
+              raise SystemExit('Test 20 entry already exists; refusing to overwrite it')
+          entry={
+            'id':ident,
+            'name':'NextLock 1.1.5 Test 20 Photo Only RootHide',
+            'fileName':'NextLock_1.1.5_Test20_PhotoOnly_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test20',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test20-PhotoOnly/NextLock_1.1.5_Test20_PhotoOnly_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],'sizeBytes':int(os.environ['OUT_SIZE']),
+            'notes':'Temporary lightweight photo-only recovery build. Keeps four independent photo/sticker frames with selection, removal, width, height, Time/Date anchoring, placement and X/Y controls. Removes Time, Date, Icon, Hide Elements, Battery and Activation settings and their Test 19 add-on runtimes. Enabled by default. Test 19 and all previous packages remain unchanged.'
+          }
+          data['files']=[entry]+data.get('files',[])
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish NextLock 1.1.5 Test 20 photo-only recovery'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test20-PhotoOnly-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14
