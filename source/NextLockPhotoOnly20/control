@@ -1,0 +1,12 @@
+Package: com.nextsolution.lockglyphtime
+Name: NextLock Photo Only
+Version: 1.1.5~cpu20.1
+Architecture: iphoneos-arm64e
+Description: Clean NextLock Test 20.1 photo-only recovery build. Contains only the four-photo renderer and photo preferences. No activation, custom time/date, icon, battery or hide-elements implementation is included.
+Maintainer: Next Jailbreak
+Author: Next Jailbreak
+Section: Tweaks
+Depends: firmware (>= 16.0), mobilesubstrate, preferenceloader
+Priority: optional
+Homepage: https://nextjailbreak.com/
+Tag: role::cydia

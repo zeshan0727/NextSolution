@@ -1,0 +1,136 @@
+name: Build and Publish NextLock Test 20.1 Clean Photo Only
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'source/NextLockPhotoOnly20/**'
+      - '.github/workflows/publish-nextlock-test20-clean-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nextlock-test20-clean-source
+  cancel-in-progress: false
+
+jobs:
+  build-publish:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install package tools
+        run: brew install dpkg ldid
+
+      - name: Install pinned RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          T="$RUNNER_TEMP/theos-rh"
+          git init "$T"
+          git -C "$T" remote add origin https://github.com/roothide/theos.git
+          git -C "$T" fetch --depth 1 origin 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" checkout --detach 88506b2c22e9e07dd4ed055f23c9e398a117a2c7
+          git -C "$T" submodule update --init --recursive --depth 1
+          echo "THEOS=$T" >> "$GITHUB_ENV"
+
+      - name: Compile clean photo-only source
+        shell: bash
+        run: |
+          set -euo pipefail
+          P='source/NextLockPhotoOnly20'
+          export THEOS_PACKAGE_SCHEME=roothide
+          rm -rf "$P/.theos" "$P/packages"
+          make -C "$P" clean package FINALPACKAGE=1
+          D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
+          test -n "$D"
+          OUT="$RUNNER_TEMP/NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb"
+          cp "$D" "$OUT"
+          echo "OUTDEB=$OUT" >> "$GITHUB_ENV"
+
+      - name: Prove removed code is absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu20.1'
+          X="$RUNNER_TEMP/verify"
+          dpkg-deb -x "$OUTDEB" "$X"
+
+          # The legacy shared runtime and every Test 19 add-on must be absent.
+          test -z "$(find "$X" -name 'LockGlyphTime.dylib' -print -quit)"
+          for name in NextLockPerfFix NextLockCustomClock NextLockHideElements NextLockDateFix17 NextLockBatteryItems18; do
+            test -z "$(find "$X" -name "$name.dylib" -print -quit)"
+          done
+
+          RUNTIME=$(find "$X" -name 'NextLockPhotoOnly20.dylib' -print -quit)
+          PREFS=$(find "$X" -name 'NextLockPhotoOnlyPrefs' -type f -print -quit)
+          test -n "$RUNTIME"; test -n "$PREFS"
+          lipo -info "$RUNTIME" | grep -q 'arm64e'
+          strings -a "$RUNTIME" | grep -q 'PhotoOnly Test20.1 four-frame renderer no-license'
+          strings -a "$RUNTIME" | grep -q 'NextLockPhotoFrame'
+
+          # These symbols/keys belonged to the deleted implementations.
+          ! strings -a "$RUNTIME" | grep -Eiq 'licenseDeviceID|checkActivation|buyLicense|customTimeEnabled|customDateEnabled|customBattery|hideLockScreen|NLCustomTimeLabel|NLCustomDateLabel'
+          ! strings -a "$PREFS" | grep -Eiq 'licenseDeviceID|checkActivation|buyLicense|customTimeEnabled|customDateEnabled|customBattery|hideLockScreen'
+
+          # Only two project binaries are installed: photo renderer + photo preferences.
+          COUNT=$(find "$X" -type f \( -name '*.dylib' -o -name 'NextLockPhotoOnlyPrefs' \) | wc -l | tr -d ' ')
+          test "$COUNT" = '2'
+          SHA=$(shasum -a 256 "$OUTDEB" | awk '{print $1}')
+          SIZE=$(stat -f%z "$OUTDEB")
+          echo "OUT_SHA=$SHA" >> "$GITHUB_ENV"
+          echo "OUT_SIZE=$SIZE" >> "$GITHUB_ENV"
+
+      - name: Publish corrected build separately
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST_DIR='transfer/files/NextLock/1.1.5-Test20.1-CleanPhotoOnly'
+          DEST="$DEST_DIR/NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb"
+          test ! -e "$DEST"
+          mkdir -p "$DEST_DIR"
+          cp "$OUTDEB" "$DEST"
+          export OUT_SHA OUT_SIZE
+
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          from datetime import datetime,timezone
+          p=Path('transfer/index.json'); data=json.loads(p.read_text())
+          ident='nextlock-1.1.5-test20.1-clean-photo-only-roothide'
+          if any(x.get('id')==ident for x in data.get('files',[])):
+              raise SystemExit('Corrected Test 20.1 already exists; refusing overwrite')
+          entry={
+            'id':ident,
+            'name':'NextLock 1.1.5 Test 20.1 Clean Photo Only RootHide',
+            'fileName':'NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test20.1',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test20.1-CleanPhotoOnly/NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb',
+            'sha256':os.environ['OUT_SHA'],'sizeBytes':int(os.environ['OUT_SIZE']),
+            'notes':'Corrected source-built photo-only runtime. Contains only four independent photo/sticker frames, image selection/edit/removal, display modes, size, native Time/Date anchoring, placement and offsets. The legacy shared LockGlyphTime binary, licensing client, custom Time/Date renderer, icon renderer, battery and hide-element code are completely absent. Active by default.'
+          }
+          data['files']=[entry]+data.get('files',[])
+          data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          p.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          git config user.name 'Next Jailbreak Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$DEST" transfer/index.json
+          git diff --cached --check
+          git commit -m 'Publish corrected NextLock Test 20.1 clean photo-only build'
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NextLock-Test20.1-CleanPhotoOnly-RootHide
+          path: ${{ env.OUTDEB }}
+          if-no-files-found: error
+          retention-days: 14
