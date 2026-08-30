@@ -11,7 +11,7 @@ static NSMapTable<UIView *, NSMutableArray<UIImageView *> *> *NLViews;
 static void (*NLOrigLayout)(UIView *, SEL);
 static void (*NLOrigMove)(UIView *, SEL);
 
-__attribute__((used)) static const char *NLMarker = "NextLock PhotoOnly Test20.1 four-frame renderer no-license";
+__attribute__((used)) static const char *NLMarker = "NextLock PhotoOnly Test20.2 four-frame renderer no-license";
 
 static CFTypeRef NLCopy(NSString *key) {
     return CFPreferencesCopyAppValue((__bridge CFStringRef)key, NLPrefs);

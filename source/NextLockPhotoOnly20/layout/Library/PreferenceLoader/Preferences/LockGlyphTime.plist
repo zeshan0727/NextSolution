@@ -4,7 +4,6 @@
 <dict>
   <key>bundle</key><string>NextLockPhotoOnlyPrefs</string>
   <key>cell</key><string>PSLinkCell</string>
-  <key>detail</key><string>NLPhotoRootController</string>
   <key>label</key><string>NextLock Photo Only</string>
 </dict>
 </plist>

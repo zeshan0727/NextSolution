@@ -39,13 +39,13 @@ static PSSpecifier *NLGroup(NSString *title, NSString *footer) {
 - (NSArray *)specifiers {
     if (_specifiers) return _specifiers;
     NSMutableArray *a=[NSMutableArray array];
-    [a addObject:NLGroup(@"PHOTO-ONLY RECOVERY",@"Clean Test 20.1 contains only the four-photo renderer and these photo controls. It has no activation system and starts active by default.")];
+    [a addObject:NLGroup(@"PHOTO-ONLY RECOVERY",@"Clean Test 20.2 contains only the four-photo renderer and these photo controls. It has no activation system and starts active by default.")];
     PSSpecifier *enabled=[PSSpecifier preferenceSpecifierNamed:@"Enable Photo Frames" target:self set:@selector(setValue:specifier:) get:@selector(readValue:) detail:nil cell:PSSwitchCell edit:nil];
     [enabled setProperty:@"enabled" forKey:@"key"]; [enabled setProperty:@YES forKey:@"default"]; [a addObject:enabled];
     [a addObject:NLGroup(@"PHOTO FRAMES",@"Each photo or transparent sticker has independent selection, size, anchor, placement and X/Y position.")];
     NSArray *classes=@[NLPhotoFrame1Controller.class,NLPhotoFrame2Controller.class,NLPhotoFrame3Controller.class,NLPhotoFrame4Controller.class];
     for (NSInteger i=0;i<4;i++) [a addObject:[PSSpecifier preferenceSpecifierNamed:[NSString stringWithFormat:@"Frame %ld",(long)i+1] target:self set:nil get:nil detail:classes[i] cell:PSLinkCell edit:nil]];
-    [a addObject:NLGroup(@"",@"NextLock Test 20.1 Photo Only • Active by default")];
+    [a addObject:NLGroup(@"",@"NextLock Test 20.2 Photo Only • Active by default")];
     _specifiers=[a copy]; return _specifiers;
 }
 - (id)readValue:(PSSpecifier *)s { return (__bridge_transfer id)CFPreferencesCopyAppValue((__bridge CFStringRef)[s propertyForKey:@"key"],(__bridge CFStringRef)NLDomain) ?: [s propertyForKey:@"default"]; }

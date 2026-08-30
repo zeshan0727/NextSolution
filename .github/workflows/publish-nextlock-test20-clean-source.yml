@@ -1,4 +1,4 @@
-name: Build and Publish NextLock Test 20.1 Clean Photo Only
+name: Build and Publish NextLock Test 20.2 Clean Photo Only
 
 on:
   push:
@@ -49,7 +49,7 @@ jobs:
           make -C "$P" clean package FINALPACKAGE=1
           D=$(find "$P/packages" -type f -name '*.deb' -print -quit)
           test -n "$D"
-          OUT="$RUNNER_TEMP/NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb"
+          OUT="$RUNNER_TEMP/NextLock_1.1.5_Test20.2_CleanPhotoOnly_PrefsFix_RootHide.deb"
           cp "$D" "$OUT"
           echo "OUTDEB=$OUT" >> "$GITHUB_ENV"
 
@@ -58,9 +58,16 @@ jobs:
         run: |
           set -euo pipefail
           test "$(dpkg-deb -f "$OUTDEB" Package)" = 'com.nextsolution.lockglyphtime'
-          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu20.1'
+          test "$(dpkg-deb -f "$OUTDEB" Version)" = '1.1.5~cpu20.2'
           X="$RUNNER_TEMP/verify"
           dpkg-deb -x "$OUTDEB" "$X"
+
+          # PreferenceLoader must use the proven legacy entry identity and bundle loading path.
+          LOADER=$(find "$X" -path '*/Library/PreferenceLoader/Preferences/LockGlyphTime.plist' -print -quit)
+          test -n "$LOADER"
+          test -z "$(find "$X" -name 'NextLockPhotoOnly.plist' -print -quit)"
+          plutil -extract bundle raw "$LOADER" | grep -qx 'NextLockPhotoOnlyPrefs'
+          ! plutil -p "$LOADER" | grep -q '"detail"'
 
           # The legacy shared runtime and every Test 19 add-on must be absent.
           test -z "$(find "$X" -name 'LockGlyphTime.dylib' -print -quit)"
@@ -72,7 +79,7 @@ jobs:
           PREFS=$(find "$X" -name 'NextLockPhotoOnlyPrefs' -type f -print -quit)
           test -n "$RUNTIME"; test -n "$PREFS"
           lipo -info "$RUNTIME" | grep -q 'arm64e'
-          strings -a "$RUNTIME" | grep -q 'PhotoOnly Test20.1 four-frame renderer no-license'
+          strings -a "$RUNTIME" | grep -q 'PhotoOnly Test20.2 four-frame renderer no-license'
           strings -a "$RUNTIME" | grep -q 'NextLockPhotoFrame'
 
           # These symbols/keys belonged to the deleted implementations.
@@ -91,8 +98,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          DEST_DIR='transfer/files/NextLock/1.1.5-Test20.1-CleanPhotoOnly'
-          DEST="$DEST_DIR/NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb"
+          DEST_DIR='transfer/files/NextLock/1.1.5-Test20.2-CleanPhotoOnly'
+          DEST="$DEST_DIR/NextLock_1.1.5_Test20.2_CleanPhotoOnly_PrefsFix_RootHide.deb"
           test ! -e "$DEST"
           mkdir -p "$DEST_DIR"
           cp "$OUTDEB" "$DEST"
@@ -103,17 +110,17 @@ jobs:
           from pathlib import Path
           from datetime import datetime,timezone
           p=Path('transfer/index.json'); data=json.loads(p.read_text())
-          ident='nextlock-1.1.5-test20.1-clean-photo-only-roothide'
+          ident='nextlock-1.1.5-test20.2-clean-photo-only-roothide'
           if any(x.get('id')==ident for x in data.get('files',[])):
-              raise SystemExit('Corrected Test 20.1 already exists; refusing overwrite')
+              raise SystemExit('Corrected Test 20.2 already exists; refusing overwrite')
           entry={
             'id':ident,
-            'name':'NextLock 1.1.5 Test 20.1 Clean Photo Only RootHide',
-            'fileName':'NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb',
-            'type':'deb','platform':'RootHide','version':'1.1.5-test20.1',
-            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test20.1-CleanPhotoOnly/NextLock_1.1.5_Test20.1_CleanPhotoOnly_RootHide.deb',
+            'name':'NextLock 1.1.5 Test 20.2 Clean Photo Only RootHide',
+            'fileName':'NextLock_1.1.5_Test20.2_CleanPhotoOnly_PrefsFix_RootHide.deb',
+            'type':'deb','platform':'RootHide','version':'1.1.5-test20.2',
+            'url':'https://nextjailbreak.com/transfer/files/NextLock/1.1.5-Test20.2-CleanPhotoOnly/NextLock_1.1.5_Test20.2_CleanPhotoOnly_PrefsFix_RootHide.deb',
             'sha256':os.environ['OUT_SHA'],'sizeBytes':int(os.environ['OUT_SIZE']),
-            'notes':'Corrected source-built photo-only runtime. Contains only four independent photo/sticker frames, image selection/edit/removal, display modes, size, native Time/Date anchoring, placement and offsets. The legacy shared LockGlyphTime binary, licensing client, custom Time/Date renderer, icon renderer, battery and hide-element code are completely absent. Active by default.'
+            'notes':'PreferenceLoader visibility fix using the original LockGlyphTime loader identity. Corrected source-built photo-only runtime. Contains only four independent photo/sticker frames, image selection/edit/removal, display modes, size, native Time/Date anchoring, placement and offsets. The legacy shared LockGlyphTime binary, licensing client, custom Time/Date renderer, icon renderer, battery and hide-element code are completely absent. Active by default.'
           }
           data['files']=[entry]+data.get('files',[])
           data['updatedAt']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
@@ -124,13 +131,13 @@ jobs:
           git config user.email 'actions@users.noreply.github.com'
           git add "$DEST" transfer/index.json
           git diff --cached --check
-          git commit -m 'Publish corrected NextLock Test 20.1 clean photo-only build'
+          git commit -m 'Publish corrected NextLock Test 20.2 clean photo-only build'
           git pull --rebase --autostash origin main
           git push origin HEAD:main
 
       - uses: actions/upload-artifact@v4
         with:
-          name: NextLock-Test20.1-CleanPhotoOnly-RootHide
+          name: NextLock-Test20.2-CleanPhotoOnly-RootHide
           path: ${{ env.OUTDEB }}
           if-no-files-found: error
           retention-days: 14
