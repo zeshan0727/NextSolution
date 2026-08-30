@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Bloom 1.4: Animated Notifications Package Overview</title>
+      <link>https://nextjailbreak.com/bloom-tweak.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/bloom-tweak.html</guid>
+      <pubDate>Sun, 30 Aug 2026 14:42:46 GMT</pubDate>
+      <description>Review Bloom 1.4, a Notifications-category tweak described as providing animated notifications, with its listed architectures and dependencies.</description>
+      <category>Notifications</category>
+    </item>
+    <item>
       <title>XXTouch Elite 5.4.6: Automation Tool Package Overview</title>
       <link>https://nextjailbreak.com/xxtouch-elite-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/xxtouch-elite-tweak.html</guid>
@@ -236,14 +244,6 @@
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>See how HelloKeyboardAI adds configurable AI gestures to the iPhone keyboard, with real screenshots, supported iOS versions, price, and source links.</description>
       <category>System &amp; Utilities</category>
-    </item>
-    <item>
-      <title>IconTweak2: Open a Control Menu by Swiping Home Screen Icons</title>
-      <link>https://nextjailbreak.com/icontweak2-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/icontweak2-tweak.html</guid>
-      <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
-      <description>IconTweak2 adds a swipe-activated control menu to Home Screen app icons. View real screenshots, compatibility, pricing, and the official package source.</description>
-      <category>Home Screen</category>
     </item>
   </channel>
 </rss>

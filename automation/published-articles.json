@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "29d7d2d3ac5b456a0149cab5fc2f019c489dcf7b6e2ad6b974ef7336961a617b",
+      "candidate_fingerprint": "b42b027f8a9ec453aa94c1efeeda1d61ac3ff8baa2e8e02a343aa087aa94f94d",
+      "category": {
+        "id": "notifications",
+        "label": "Notifications"
+      },
+      "description": "Review Bloom 1.4, a Notifications-category tweak described as providing animated notifications, with its listed architectures and dependencies.",
+      "href": "bloom-tweak.html",
+      "image": "https://media.havoc.app/66146485f290ffddc2a30df8",
+      "media_credit": "Bloom official package listing",
+      "media_source_url": "https://havoc.app/package/bloom",
+      "modified_at": "2026-08-30T14:42:46+00:00",
+      "name": "Bloom",
+      "package": "com.yan.bloom",
+      "published_at": "2026-08-30T14:42:46+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/bloom",
+      "source_url": "https://havoc.app/",
+      "title": "Bloom 1.4: Animated Notifications Package Overview",
+      "version": "1.4"
+    },
+    {
       "article_sha256": "5d23a23cdaccb0d7d8e32a2ad5f6c9b7c9fa87ce255b93d52095cdd6fb830c7d",
       "candidate_fingerprint": "a3aad3d4f7fc156b031ec43947b9705c95bffa977b0122e14410749d38bc283e",
       "category": {
@@ -1235,8 +1258,17 @@
       "published_at": "2026-08-30T03:54:14+00:00",
       "run_id": "33291254329",
       "version": "5.4.6"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "b42b027f8a9ec453aa94c1efeeda1d61ac3ff8baa2e8e02a343aa087aa94f94d",
+      "href": "bloom-tweak.html",
+      "package": "com.yan.bloom",
+      "published_at": "2026-08-30T14:42:46+00:00",
+      "run_id": "33317550099",
+      "version": "1.4"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-30T03:54:14+00:00"
+  "updated_at": "2026-08-30T14:42:46+00:00"
 }
