@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>XXTouch Elite 5.4.6: Automation Tool Package Overview</title>
+      <link>https://nextjailbreak.com/xxtouch-elite-tweak.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/xxtouch-elite-tweak.html</guid>
+      <pubDate>Sun, 30 Aug 2026 03:54:14 GMT</pubDate>
+      <description>Review the supplied package facts for XXTouch Elite 5.4.6, including its automation description, architectures, dependencies, and release information.</description>
+      <category>Productivity</category>
+    </item>
+    <item>
       <title>Dopamine 3 Jailbreak: Official Project Pages and Compatibility Guide</title>
       <link>https://nextjailbreak.com/dopamine-3-official-download-guide.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/dopamine-3-official-download-guide.html</guid>
@@ -236,14 +244,6 @@
       <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
       <description>IconTweak2 adds a swipe-activated control menu to Home Screen app icons. View real screenshots, compatibility, pricing, and the official package source.</description>
       <category>Home Screen</category>
-    </item>
-    <item>
-      <title>PodsGrant Adds Newer AirPods Support to Older Jailbroken iPhones</title>
-      <link>https://nextjailbreak.com/podsgrant-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/podsgrant-tweak.html</guid>
-      <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
-      <description>PodsGrant can enable newer AirPods and Beats identification on older jailbroken devices. Read the important 0.5.4 and iOS 17 warnings first.</description>
-      <category>System &amp; Utilities</category>
     </item>
   </channel>
 </rss>

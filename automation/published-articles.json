@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "5d23a23cdaccb0d7d8e32a2ad5f6c9b7c9fa87ce255b93d52095cdd6fb830c7d",
+      "candidate_fingerprint": "a3aad3d4f7fc156b031ec43947b9705c95bffa977b0122e14410749d38bc283e",
+      "category": {
+        "id": "productivity",
+        "label": "Productivity"
+      },
+      "description": "Review the supplied package facts for XXTouch Elite 5.4.6, including its automation description, architectures, dependencies, and release information.",
+      "href": "xxtouch-elite-tweak.html",
+      "image": "https://media.havoc.app/68a46eb588e3b697ec719579",
+      "media_credit": "XXTouch Elite official package listing",
+      "media_source_url": "https://havoc.app/package/xxtouchelite",
+      "modified_at": "2026-08-30T03:54:14+00:00",
+      "name": "XXTouch Elite",
+      "package": "ch.xxtou.xxtouch",
+      "published_at": "2026-08-30T03:54:14+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/xxtouchelite",
+      "source_url": "https://havoc.app/",
+      "title": "XXTouch Elite 5.4.6: Automation Tool Package Overview",
+      "version": "5.4.6"
+    },
+    {
       "article_sha256": "036c23b86299058b9d826d9aff9db95f1d82843f8bc83ed38ca6d21efb359ef1",
       "candidate_fingerprint": "bdd1b16f94beef963676e714de40fe1d2200ff6df9970f506c159aa8629241ad",
       "category": {
@@ -1203,8 +1226,17 @@
       "published_at": "2026-08-29T18:06:15+00:00",
       "run_id": "33267338141",
       "version": "3.x"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "a3aad3d4f7fc156b031ec43947b9705c95bffa977b0122e14410749d38bc283e",
+      "href": "xxtouch-elite-tweak.html",
+      "package": "ch.xxtou.xxtouch",
+      "published_at": "2026-08-30T03:54:14+00:00",
+      "run_id": "33291254329",
+      "version": "5.4.6"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-29T18:06:15+00:00"
+  "updated_at": "2026-08-30T03:54:14+00:00"
 }
