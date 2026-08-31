@@ -1,6 +1,31 @@
 {
   "entries": [
     {
+      "article_sha256": "5926d650a221e237c718352ba823d6f46cde0c0f4a239b295f622cad25a89a26",
+      "candidate_fingerprint": "45dc8ee08a8e89d7d981a7c7414b5e23feb01aea864c2a0378a1a8481d492dba",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "YouPiP 1.12.14 updates PoomSmart’s native YouTube Picture-in-Picture tweak with a new MLPIPControllerImpl hook and refined automatic PiP handling.",
+      "entry_type": "source-news",
+      "href": "youpip-1-12-14-update/",
+      "image": "https://opengraph.githubassets.com/1/PoomSmart/YouPiP",
+      "media_credit": "PoomSmart YouPiP official GitHub source",
+      "media_source_url": "https://github.com/PoomSmart/YouPiP",
+      "modified_at": "2026-08-31T11:17:14+00:00",
+      "name": "YouPiP",
+      "package": "com.ps.youpip",
+      "published_at": "2026-08-31T11:17:14+00:00",
+      "selection_pool": "source-news",
+      "source_name": "PoomSmart",
+      "source_page_url": "https://poomsmart.github.io/repo/depictions/youpip.html",
+      "source_url": "https://github.com/PoomSmart/YouPiP",
+      "source_visual_url": "https://opengraph.githubassets.com/1/PoomSmart/YouPiP",
+      "title": "YouPiP 1.12.14 Updates YouTube Picture-in-Picture Handling",
+      "version": "1.12.14"
+    },
+    {
       "article_sha256": "0d82143ca2484afa21dcc75f02ee3a256ed173b69741a8cff41e4a5526a0b9db",
       "candidate_fingerprint": "4e73cd6c072ca8988e8fefcd26a4aeec68e40ecce850561ec6461f2027bb70f0",
       "category": {
