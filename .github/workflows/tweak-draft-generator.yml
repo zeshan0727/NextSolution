@@ -152,6 +152,13 @@ jobs:
           fi
           echo "drafted=true" >> "$GITHUB_OUTPUT"
 
+      - name: Enforce 9 out of 10 editorial quality
+        if: steps.generate.outputs.drafted == 'true'
+        run: |
+          python3 -m automation.quality_gate \
+            --repository-root . \
+            --manifest automation/out/draft/manifest.json
+
       - name: Save quarantined candidate state for the next retry
         if: steps.generate.outputs.drafted == 'false' && steps.generate.outputs.state_changed == 'true'
         uses: actions/cache/save@v4
@@ -187,6 +194,8 @@ jobs:
           echo "- Page: https://nextjailbreak.com/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
           echo "- Publication count today: **${{ steps.publication.outputs.publication_number }} of ${{ steps.publication.outputs.max_today }}**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Independent verifier: **approved**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- High-value quality gate: **9/10 floor passed**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Authentic source media: **required**" >> "$GITHUB_STEP_SUMMARY"
           echo "- ShrinkMe: **disabled**" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Record duplicate recovery
