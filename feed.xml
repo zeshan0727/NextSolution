@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Polyfills 2.32.0 Adds More Modern Web APIs to Older iOS</title>
+      <link>https://nextjailbreak.com/polyfills-2-32-0-update/</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/polyfills-2-32-0-update/</guid>
+      <pubDate>Mon, 31 Aug 2026 09:54:27 GMT</pubDate>
+      <description>Polyfills 2.32.0 adds fetch, URLSearchParams, TextEncoder, AbortSignal methods and more to improve modern web compatibility on older jailbroken iOS versions.</description>
+      <category>System &amp; Utilities</category>
+    </item>
+    <item>
       <title>Prism 1.2.0-2: Capture, Annotate, and Pin On-Screen Content</title>
       <link>https://nextjailbreak.com/prism-tweak/</link>
       <guid isPermaLink="true">https://nextjailbreak.com/prism-tweak/</guid>

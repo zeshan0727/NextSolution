@@ -1,6 +1,31 @@
 {
   "entries": [
     {
+      "article_sha256": "0d82143ca2484afa21dcc75f02ee3a256ed173b69741a8cff41e4a5526a0b9db",
+      "candidate_fingerprint": "4e73cd6c072ca8988e8fefcd26a4aeec68e40ecce850561ec6461f2027bb70f0",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Polyfills 2.32.0 adds fetch, URLSearchParams, TextEncoder, AbortSignal methods and more to improve modern web compatibility on older jailbroken iOS versions.",
+      "entry_type": "source-news",
+      "href": "polyfills-2-32-0-update/",
+      "image": "https://opengraph.githubassets.com/1/PoomSmart/Polyfills",
+      "media_credit": "PoomSmart Polyfills official GitHub source",
+      "media_source_url": "https://github.com/PoomSmart/Polyfills",
+      "modified_at": "2026-08-31T09:54:27+00:00",
+      "name": "Polyfills",
+      "package": "com.ps.polyfills",
+      "published_at": "2026-08-31T09:54:27+00:00",
+      "selection_pool": "source-news",
+      "source_name": "PoomSmart",
+      "source_page_url": "https://poomsmart.github.io/repo/depictions/polyfills.html",
+      "source_url": "https://github.com/PoomSmart/Polyfills",
+      "source_visual_url": "https://raw.githubusercontent.com/PoomSmart/Polyfills/main/icon.png",
+      "title": "Polyfills 2.32.0 Adds More Modern Web APIs to Older iOS",
+      "version": "2.32.0"
+    },
+    {
       "article_sha256": "b10986985703cba5d5fb5897cd410fad7c251e64e69ddfe9a65289aab25cdbef",
       "candidate_fingerprint": "56931e1c5c06a741007a3ab934ced1d81abb704e6e9bca7881f07d4a0dc44c55",
       "category": {
@@ -1299,8 +1324,17 @@
       "published_at": "2026-08-31T03:56:49+00:00",
       "run_id": "33355376810",
       "version": "1.2.0-2"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "4e73cd6c072ca8988e8fefcd26a4aeec68e40ecce850561ec6461f2027bb70f0",
+      "channel": "source-news",
+      "href": "polyfills-2-32-0-update/",
+      "package": "com.ps.polyfills",
+      "published_at": "2026-08-31T09:54:27+00:00",
+      "version": "2.32.0"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-31T03:56:49+00:00"
+  "updated_at": "2026-08-31T09:54:27+00:00"
 }
