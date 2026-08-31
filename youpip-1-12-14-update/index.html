@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f5f6">
+  <title>YouPiP 1.12.14 Updates YouTube Picture-in-Picture Handling | Next Jailbreak</title>
+  <meta name="description" content="YouPiP 1.12.14 updates PoomSmart's native YouTube Picture-in-Picture tweak with new PiP controller handling. We checked the exact source commit, package metadata and official project documentation.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="author" content="Zeeshan Barvi">
+  <link rel="canonical" href="https://nextjailbreak.com/youpip-1-12-14-update/">
+  <link rel="alternate" type="application/rss+xml" title="Next Jailbreak articles" href="/feed.xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/brand/next-jailbreak-mark.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Next Jailbreak">
+  <meta property="og:url" content="https://nextjailbreak.com/youpip-1-12-14-update/">
+  <meta property="og:title" content="YouPiP 1.12.14 Updates YouTube Picture-in-Picture Handling">
+  <meta property="og:description" content="A source-verified look at YouPiP 1.12.14, including the new MLPIPControllerImpl hook and what it changes for native YouTube PiP behavior.">
+  <meta property="og:image" content="https://opengraph.githubassets.com/1/PoomSmart/YouPiP">
+  <meta property="og:image:alt" content="PoomSmart YouPiP official GitHub project preview">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nextjailbreak">
+  <meta name="twitter:title" content="YouPiP 1.12.14 Updates YouTube Picture-in-Picture Handling">
+  <meta name="twitter:description" content="Verified from PoomSmart's original source: what changed in YouPiP 1.12.14 and what users should know before updating.">
+  <meta name="twitter:image" content="https://opengraph.githubassets.com/1/PoomSmart/YouPiP">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"YouPiP 1.12.14 Updates YouTube Picture-in-Picture Handling","description":"A source-verified look at YouPiP 1.12.14 and its updated Picture-in-Picture controller logic for the iOS YouTube app.","datePublished":"2026-08-31","dateModified":"2026-08-31","author":{"@type":"Person","name":"Zeeshan Barvi"},"publisher":{"@type":"Organization","name":"Next Jailbreak","url":"https://nextjailbreak.com"},"mainEntityOfPage":"https://nextjailbreak.com/youpip-1-12-14-update/","image":"https://opengraph.githubassets.com/1/PoomSmart/YouPiP","about":["YouPiP","PoomSmart","YouTube Picture in Picture","iOS jailbreak tweaks"]}</script>
+  <style>
+    .news-source-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.62fr);gap:clamp(26px,5vw,64px);align-items:center;padding:clamp(30px,6vw,64px);border:1px solid var(--line);border-radius:30px;background:linear-gradient(135deg,#f9fbff,#edf5ff 50%,#f2edff);box-shadow:0 22px 70px rgba(34,45,90,.10);margin:32px 0}
+    .news-source-hero h1{font-size:clamp(2.5rem,6vw,5.1rem);letter-spacing:-.055em;margin:.3rem 0 1rem;line-height:.98}
+    .news-source-hero p{font-size:1.08rem;max-width:780px;color:var(--muted)}
+    .source-visual{display:grid;place-items:center;min-height:300px;padding:18px;border:1px solid rgba(20,30,60,.10);border-radius:26px;background:#fff;overflow:hidden}
+    .source-visual img{width:100%;height:auto;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.12)}
+    .source-caption{font-size:.78rem;color:var(--quiet);margin-top:14px;text-align:center}
+    .update-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0}
+    .update-card{padding:20px;border:1px solid var(--line);border-radius:18px;background:#fff}
+    .update-card strong{display:block;margin-bottom:6px}
+    .source-evidence{padding:24px;border-radius:20px;background:#101522;color:#f7f8ff;margin:26px 0}
+    .source-evidence code{color:#b9dbff}
+    .source-buttons{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 6px}
+    .source-buttons a{display:inline-flex;padding:11px 15px;border-radius:999px;text-decoration:none;font-weight:800;border:1px solid var(--line-dark);background:#fff;color:var(--ink)}
+    .source-buttons a:first-child{background:var(--ink);color:#fff}
+    .article-content h2{margin-top:2.2rem}
+    .article-content li{margin:.45rem 0}
+    .editor-note{padding:18px 20px;border-left:4px solid #6d5dfc;background:#f5f3ff;border-radius:0 16px 16px 0}
+    @media(max-width:760px){.news-source-hero{grid-template-columns:1fr}.source-visual{min-height:220px}.update-grid{grid-template-columns:1fr}}
+  </style>
+  <!-- google-analytics-auto:start -->
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3JPKHN1068"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-3JPKHN1068');
+  </script>
+  <!-- google-analytics-auto:end -->
+  <meta name="google-adsense-account" content="ca-pub-4770123899731214">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="topline"><div class="topline-inner"><span>iPhone jailbreak guides, tweak reviews and practical fixes</span><span class="topline-status"><i aria-hidden="true"></i> Original sources checked</span></div></div>
+  <header class="site-header"><div class="nav-shell"><a class="brand" href="/" aria-label="Next Jailbreak home"><img class="brand-logo" src="/assets/brand/next-jailbreak-mark.svg" alt="" width="52" height="52"><span class="brand-name"><strong>Next</strong> Jailbreak</span></a><nav aria-label="Primary navigation"><ul class="nav-links"><li><a href="/">Blog</a></li><li><a href="/tutorials/#verified-articles" aria-current="page">Tweaks</a></li><li><a href="/tutorials/#jailbreak-guides">Jailbreak</a></li><li><a href="/videos/">Videos</a></li></ul></nav></div></header>
+
+  <main class="container article-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/tutorials/#verified-articles">Tweaks</a><span aria-hidden="true">/</span><span>YouPiP 1.12.14</span></nav>
+
+    <section class="news-source-hero">
+      <div>
+        <span class="article-kicker">Latest tweak update · August 29, 2026 · Source verified</span>
+        <h1>YouPiP 1.12.14 updates YouTube Picture-in-Picture handling</h1>
+        <p>PoomSmart has updated YouPiP to version 1.12.14. We checked the developer's package metadata, official documentation and the exact source commit that raised the version from 1.12.13 to 1.12.14. The change adds handling for YouTube's <code>MLPIPControllerImpl</code> path and adjusts automatic PiP behavior when YouPiP's dedicated buttons are being used.</p>
+        <div class="source-buttons">
+          <a href="https://github.com/PoomSmart/YouPiP" rel="nofollow noopener noreferrer">Official GitHub</a>
+          <a href="https://poomsmart.github.io/repo/depictions/youpip.html" rel="nofollow noopener noreferrer">Official depiction</a>
+          <a href="https://github.com/PoomSmart/YouPiP/commit/787806b3a88a02aecdd59b6dc2906c935cc1744d" rel="nofollow noopener noreferrer">1.12.14 source commit</a>
+        </div>
+      </div>
+      <figure class="source-visual">
+        <img src="https://opengraph.githubassets.com/1/PoomSmart/YouPiP" alt="Official GitHub project preview for PoomSmart YouPiP" width="1200" height="600" fetchpriority="high">
+        <figcaption class="source-caption">Official GitHub project preview generated from PoomSmart's original YouPiP repository.</figcaption>
+      </figure>
+    </section>
+
+    <div class="article-layout">
+      <article class="article-content">
+        <p><strong>YouPiP 1.12.14</strong> is the latest source update to PoomSmart's long-running jailbreak tweak for enabling native Picture-in-Picture in the iOS YouTube app. The official package control file now identifies version 1.12.14 and describes the package as enabling native PiP in YouTube. PoomSmart remains listed as both author and maintainer.</p>
+
+        <p>The important part of this release is not only the version bump. The same official commit adds a new hook for <code>MLPIPControllerImpl</code>, a YouTube-side PiP controller implementation, and applies the same automatic-PiP restrictions that YouPiP already manages elsewhere. That makes 1.12.14 a compatibility-oriented code change rather than a metadata-only update.</p>
+
+        <h2>What changed in YouPiP 1.12.14</h2>
+        <p>The August 29 source commit adds an import for <code>MLPIPControllerImpl</code> and hooks its <code>activatePiPController</code> method. After YouTube activates the controller, YouPiP retrieves the underlying <code>AVPictureInPictureController</code> and conditionally changes whether Picture-in-Picture may start automatically.</p>
+
+        <div class="update-grid">
+          <div class="update-card"><strong>New controller path</strong>The tweak now hooks <code>MLPIPControllerImpl</code> in addition to its existing PiP handling code.</div>
+          <div class="update-card"><strong>Automatic inline PiP</strong>When YouPiP is configured around its dedicated PiP buttons, automatic inline PiP is disabled for that controller path.</div>
+          <div class="update-card"><strong>Background behavior</strong>The same condition controls whether the PiP controller may start automatically when the app enters the background.</div>
+          <div class="update-card"><strong>Version confirmation</strong>The official package file is changed from 1.12.13 to 1.12.14 in the exact same source commit.</div>
+        </div>
+
+        <h2>Why this controller change matters</h2>
+        <p>YouTube changes its internal classes and playback structure regularly. Jailbreak tweaks that hook the YouTube app therefore need to follow those internal changes to keep behavior consistent. A feature can stop working even when Apple's public Picture-in-Picture framework itself has not changed, simply because the YouTube app starts routing an action through a different internal controller.</p>
+
+        <p>The new <code>MLPIPControllerImpl</code> hook suggests that YouPiP now accounts for another implementation path in recent YouTube builds. The source code is explicit about what the tweak does after activation: it evaluates whether the user has chosen the PiP overlay button or video-tab-bar button rather than the mode that allows every PiP activation method, then applies matching automatic-start settings to the underlying AVKit controller.</p>
+
+        <div class="source-evidence">
+          <strong>Verified directly in PoomSmart's August 29 commit</strong>
+          <p>The new code calculates a <code>blockPiP</code> condition from YouPiP's existing settings and then updates <code>canStartPictureInPictureAutomaticallyFromInline</code> and <code>canStartAutomaticallyWhenEnteringBackground</code> on the real <code>AVPictureInPictureController</code>.</p>
+        </div>
+
+        <p>That detail is more useful than a generic “compatibility improvements” description because it tells us what the release is actually targeting: how automatic Picture-in-Picture starts when YouPiP's explicit controls are enabled.</p>
+
+        <h2>How YouPiP normally works</h2>
+        <p>PoomSmart's official README describes YouPiP as a native Picture-in-Picture tweak for the iOS YouTube app. Depending on the settings, users can activate PiP by playing a video and dismissing the YouTube app, by tapping a PiP button in the video tab bar, or by using the PiP button added to the video control overlay.</p>
+
+        <p>This flexibility is important because YouPiP is not simply forcing one behavior. Recent versions have gradually added settings that let users decide which PiP activation paths should be available. Version 1.11.0, for example, introduced a setting that allows PiP to activate from the overlay button, video-tab-bar button or app dismissal at the same time. Version 1.12.7 later changed behavior so PiP should no longer activate automatically when either dedicated button option is enabled. The 1.12.14 source change extends that logic to another controller implementation.</p>
+
+        <h2>Compatibility: iOS and YouTube versions</h2>
+        <p>The official depiction lists YouPiP as compatible with iOS 11.0 and later. It also says the tweak best supports the latest YouTube version and that users may downgrade as far as YouTube 16.29.4; older YouTube releases are not expected to be fully supported.</p>
+
+        <p>The package control file contains more detailed dependency logic. It requires MobileSubstrate, YTVideoOverlay 2.0.0 or later, and firmware 11.0 or newer. For some device/firmware combinations it also relies on iOS 14+, iPad behavior, or ForceInPicture 1.0.1 or later. Because dependency resolution varies by device and jailbreak packaging, the safest approach is to install from PoomSmart's official repository and let the package manager resolve the required packages rather than manually removing dependencies.</p>
+
+        <h2>YTVideoOverlay remains an important dependency</h2>
+        <p>YouPiP depends on PoomSmart's separate <strong>YTVideoOverlay</strong> tweak. The official README is especially clear for sideloaded YouTube builds: if YouPiP is being injected into a sideloaded IPA, YTVideoOverlay must also be injected because YouPiP depends on it to work.</p>
+
+        <p>For ordinary jailbreak installation through a package manager, the dependency should be handled by the repository package metadata. For manually built or sideloaded YouTube IPAs, it is something users can easily miss. If the PiP buttons or overlay integration are absent after sideloading, checking that YTVideoOverlay was included is more useful than repeatedly reinstalling YouPiP alone.</p>
+
+        <h2>What about older iOS versions?</h2>
+        <p>YouPiP continues to carry specific compatibility code for older iOS releases. The official README explains that on iOS 11 through iOS 13, the tweak can force a legacy PiP path. That path also forces the YouTube player to use <code>AVPlayer</code>, which relies on HLS playlists.</p>
+
+        <p>PoomSmart documents a known consequence: on those old systems, some accounts can encounter a “No stream, tap to retry” message when YouTube does not provide HLS data for a video. The developer notes that this behavior can be account-based, meaning it may happen on one YouTube account but not another. AirPlay can be affected for the same AVPlayer-related reason.</p>
+
+        <p>This older-iOS limitation is not presented as something 1.12.14 fixes. It remains part of the project's documented compatibility behavior and is worth understanding before assuming every playback failure is caused by the newest update.</p>
+
+        <h2>Should existing YouPiP users update?</h2>
+        <p>For users already running a recent YouTube build with YouPiP, 1.12.14 is a sensible update because it adds handling for an additional PiP controller path in the app. The change is focused and directly tied to PiP activation behavior. It does not introduce a new user-facing feature that requires relearning the tweak.</p>
+
+        <p>As with any YouTube tweak, compatibility depends on both the tweak version and the YouTube app version. If your current setup is stable and you use a deliberately older YouTube release, it is reasonable to confirm that your package manager is offering the official PoomSmart build before updating. The project's own documentation says the latest YouTube version receives the best support.</p>
+
+        <h2>Installation and source verification</h2>
+        <p>The safest installation source is PoomSmart's own repository. The official package identifier is <code>com.ps.youpip</code>, the package name is YouPiP, and the current source metadata reports version 1.12.14. Users should verify those details in their package manager before installing.</p>
+
+        <p>We do not recommend downloading random repackaged DEB files when the developer maintains an active repository. Repackaging can make it difficult to know whether dependencies, code or version metadata have been altered. Using the developer's original source also makes future updates easier to verify.</p>
+
+        <div class="editor-note">
+          <strong>Next Jailbreak editorial note:</strong> this article uses PoomSmart's original GitHub repository, source commit, package control file and official depiction as its factual sources. The package-index site that surfaced the update is not used as the public source for any technical claim.
+        </div>
+
+        <h2>Bottom line</h2>
+        <p>YouPiP 1.12.14 is a small but technically meaningful update. PoomSmart has added a hook for another YouTube Picture-in-Picture controller implementation and extended YouPiP's existing logic for controlling automatic PiP activation when dedicated PiP buttons are enabled.</p>
+
+        <p>The update does not radically redesign YouPiP, and that is a good thing for an established compatibility tweak. Its value is in keeping native Picture-in-Picture behavior aligned with current YouTube internals while preserving the activation choices users already have.</p>
+
+        <h2>Original sources</h2>
+        <ul>
+          <li><a href="https://github.com/PoomSmart/YouPiP" rel="nofollow noopener noreferrer">PoomSmart / YouPiP — official GitHub repository</a></li>
+          <li><a href="https://github.com/PoomSmart/YouPiP/commit/787806b3a88a02aecdd59b6dc2906c935cc1744d" rel="nofollow noopener noreferrer">Official 1.12.14 source commit — “Hook MLPIPControllerImpl”</a></li>
+          <li><a href="https://poomsmart.github.io/repo/depictions/youpip.html" rel="nofollow noopener noreferrer">YouPiP official depiction and compatibility notes</a></li>
+          <li><a href="https://github.com/PoomSmart/YouPiP/blob/main/README.md" rel="nofollow noopener noreferrer">YouPiP official README</a></li>
+        </ul>
+      </article>
+
+      <aside class="article-sidebar">
+        <div class="sidebar-card"><span class="sidebar-label">Package</span><strong>YouPiP 1.12.14</strong><p>Developer: PoomSmart<br>Package: <code>com.ps.youpip</code><br>Category: Tweaks</p></div>
+        <div class="sidebar-card"><span class="sidebar-label">What it does</span><p>Enables native Picture-in-Picture in the iOS YouTube app with optional dedicated PiP controls.</p></div>
+        <div class="sidebar-card"><span class="sidebar-label">Source status</span><p>Version and code change independently verified from PoomSmart's original repository.</p></div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer"><div class="container footer-inner"><div><strong>Next Jailbreak</strong><p>Practical jailbreak guides, tweak coverage and source-verified updates.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/feed.xml">RSS</a></div></div></footer>
+  <script defer src="/assets/site-runtime.js" data-ns-site-runtime="1"></script>
+</body>
+</html>
