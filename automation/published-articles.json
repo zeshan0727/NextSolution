@@ -1,6 +1,29 @@
 {
   "entries": [
     {
+      "article_sha256": "b10986985703cba5d5fb5897cd410fad7c251e64e69ddfe9a65289aab25cdbef",
+      "candidate_fingerprint": "56931e1c5c06a741007a3ab934ced1d81abb704e6e9bca7881f07d4a0dc44c55",
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Learn what Prism 1.2.0-2 lists as its features, architecture, and dependencies, and follow a verification checklist before installing this jailbreak tweak.",
+      "href": "prism-tweak.html",
+      "image": "https://media.havoc.app/6a7835029e5377f2c5170dce",
+      "media_credit": "Prism official package listing",
+      "media_source_url": "https://havoc.app/package/prism",
+      "modified_at": "2026-08-31T03:56:49+00:00",
+      "name": "Prism",
+      "package": "com.blacknoisy.prism",
+      "published_at": "2026-08-31T03:56:49+00:00",
+      "selection_pool": "pending",
+      "source_name": "Havoc",
+      "source_page_url": "https://havoc.app/package/prism",
+      "source_url": "https://havoc.app/",
+      "title": "Prism 1.2.0-2: Capture, Annotate, and Pin On-Screen Content",
+      "version": "1.2.0-2"
+    },
+    {
       "article_sha256": "29d7d2d3ac5b456a0149cab5fc2f019c489dcf7b6e2ad6b974ef7336961a617b",
       "candidate_fingerprint": "b42b027f8a9ec453aa94c1efeeda1d61ac3ff8baa2e8e02a343aa087aa94f94d",
       "category": {
@@ -1267,8 +1290,17 @@
       "published_at": "2026-08-30T14:42:46+00:00",
       "run_id": "33317550099",
       "version": "1.4"
+    },
+    {
+      "action": "create",
+      "candidate_fingerprint": "56931e1c5c06a741007a3ab934ced1d81abb704e6e9bca7881f07d4a0dc44c55",
+      "href": "prism-tweak.html",
+      "package": "com.blacknoisy.prism",
+      "published_at": "2026-08-31T03:56:49+00:00",
+      "run_id": "33355376810",
+      "version": "1.2.0-2"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-30T14:42:46+00:00"
+  "updated_at": "2026-08-31T03:56:49+00:00"
 }

@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Prism 1.2.0-2: Capture, Annotate, and Pin On-Screen Content</title>
+      <link>https://nextjailbreak.com/prism-tweak.html</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/prism-tweak.html</guid>
+      <pubDate>Mon, 31 Aug 2026 03:56:49 GMT</pubDate>
+      <description>Learn what Prism 1.2.0-2 lists as its features, architecture, and dependencies, and follow a verification checklist before installing this jailbreak tweak.</description>
+      <category>System &amp; Utilities</category>
+    </item>
+    <item>
       <title>Bloom 1.4: Animated Notifications Package Overview</title>
       <link>https://nextjailbreak.com/bloom-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/bloom-tweak.html</guid>
@@ -236,14 +244,6 @@
       <pubDate>Sat, 15 Aug 2026 00:02:56 GMT</pubDate>
       <description>CustomizeCC 1.4.3 lists Control Center options for glyph, module, toggle, launcher, background, border, overlay, and glow customization on iOS 15.</description>
       <category>Control Center</category>
-    </item>
-    <item>
-      <title>HelloKeyboardAI: Add AI Actions and Gestures to the iPhone Keyboard</title>
-      <link>https://nextjailbreak.com/hellokeyboardai-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/hellokeyboardai-tweak.html</guid>
-      <pubDate>Fri, 14 Aug 2026 14:59:33 GMT</pubDate>
-      <description>See how HelloKeyboardAI adds configurable AI gestures to the iPhone keyboard, with real screenshots, supported iOS versions, price, and source links.</description>
-      <category>System &amp; Utilities</category>
     </item>
   </channel>
 </rss>
