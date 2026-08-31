@@ -1,4 +1,4 @@
-/* Next Jailbreak — Monetag site-wide loader (legacy filename kept for existing pages) */
+/* Next Jailbreak — Google AdSense site-wide loader (legacy filename kept for existing pages) */
 (function () {
   'use strict';
 
@@ -19,24 +19,23 @@
     document.head.appendChild(contentScript);
   }
 
-  var path = window.location.pathname || '/';
-
-  // Keep ads off repository depictions, legal/support pages and app-internal pages.
-  var blockedPrefixes = ['/depictions/', '/applications/', '/DailyLedger/', '/DailyTweaks/', '/Diagnostics/', '/ModuleGlassPreview/', '/NextPDF/', '/NextPost/'];
-  var blockedExact = ['/privacy/', '/privacy.html', '/terms/', '/terms.html', '/next-ledger-support.html'];
-  if (blockedExact.indexOf(path) !== -1 || blockedPrefixes.some(function (prefix) { return path.indexOf(prefix) === 0; })) {
-    return;
+  // Google AdSense account verification for legacy/static pages using this shared loader.
+  var accountMeta = document.querySelector('meta[name="google-adsense-account"]');
+  if (!accountMeta) {
+    accountMeta = document.createElement('meta');
+    accountMeta.name = 'google-adsense-account';
+    document.head.appendChild(accountMeta);
   }
+  accountMeta.content = 'ca-pub-4770123899731214';
 
-  // Monetag MultiTag — zone 273366.
-  // Loaded into <head> so every page already using this shared manager gets the current Next Jailbreak Monetag configuration.
-  if (!document.querySelector('script[data-ns-monetag]') && !document.querySelector('script[src="https://quge5.com/88/tag.min.js"]')) {
-    var monetag = document.createElement('script');
-    monetag.src = 'https://quge5.com/88/tag.min.js';
-    monetag.async = true;
-    monetag.setAttribute('data-zone', '273366');
-    monetag.setAttribute('data-cfasync', 'false');
-    monetag.setAttribute('data-ns-monetag', '1');
-    document.head.appendChild(monetag);
+  // Google AdSense only. Do not load Monetag, Adsterra, pop-under, push, or other ad-network scripts here.
+  var adsenseSelector = 'script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]';
+  if (!document.querySelector(adsenseSelector)) {
+    var adsense = document.createElement('script');
+    adsense.async = true;
+    adsense.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214';
+    adsense.crossOrigin = 'anonymous';
+    adsense.setAttribute('data-ns-adsense', '1');
+    document.head.appendChild(adsense);
   }
 }());
