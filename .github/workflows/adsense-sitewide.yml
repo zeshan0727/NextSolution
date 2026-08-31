@@ -7,7 +7,7 @@ on:
       - "**/*.html"
       - "automation/**/*.py"
       - "automation/site.json"
-      - "assets/adsterra.js"
+      - "assets/site-runtime.js"
       - ".github/workflows/adsense-sitewide.yml"
   workflow_dispatch:
 
@@ -36,6 +36,7 @@ jobs:
           publisher = 'pub-4770123899731214'
           account_meta = f'<meta name="google-adsense-account" content="{client}">'
           adsense_script = f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={client}" crossorigin="anonymous"></script>'
+          runtime_script = '  <script defer src="/assets/site-runtime.js" data-ns-site-runtime="1"></script>'
 
           monetag_meta_re = re.compile(
               r'\s*<meta\s+name=["\']monetag["\']\s+content=["\'][^"\']*["\']\s*/?>\s*',
@@ -53,16 +54,16 @@ jobs:
               r'\s*<script[^>]+src=["\']/assets/adsterra\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>\s*',
               re.I,
           )
+          runtime_re = re.compile(
+              r'\s*<script[^>]+src=["\']/assets/site-runtime\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>\s*',
+              re.I,
+          )
 
-          # These are package/app-internal surfaces rather than editorial website pages.
+          # Package/app-internal HTML is not part of the public editorial site inventory.
           blocked_prefixes = (
               'depictions/', 'applications/', 'DailyLedger/', 'DailyTweaks/',
               'Diagnostics/', 'ModuleGlassPreview/', 'NextPDF/', 'NextPost/'
           )
-          blocked_files = {
-              'privacy.html', 'terms.html', 'next-ledger-support.html',
-              'privacy/index.html', 'terms/index.html'
-          }
 
           changed = []
           for path in sorted(Path('.').rglob('*.html')):
@@ -75,18 +76,28 @@ jobs:
               updated = adsense_meta_re.sub('\n', updated)
               updated = adsense_script_re.sub('\n', updated)
               updated = legacy_loader_re.sub('\n', updated)
+              updated = runtime_re.sub('\n', updated)
 
-              blocked = rel in blocked_files or rel.startswith(blocked_prefixes)
+              blocked = rel.startswith(blocked_prefixes)
               if not blocked:
-                  insertion = f'  {account_meta}\n  {adsense_script}\n'
+                  head_insertion = f'  {account_meta}\n  {adsense_script}\n'
                   updated, count = re.subn(
                       r'(?i)</head\s*>',
-                      insertion + '</head>',
+                      head_insertion + '</head>',
                       updated,
                       count=1,
                   )
                   if not count:
                       raise SystemExit(f'Missing </head> in eligible HTML page: {rel}')
+
+                  updated, body_count = re.subn(
+                      r'(?i)</body\s*>',
+                      runtime_script + '\n</body>',
+                      updated,
+                      count=1,
+                  )
+                  if not body_count:
+                      raise SystemExit(f'Missing </body> in eligible HTML page: {rel}')
 
               if updated != text:
                   path.write_text(updated, encoding='utf-8')
@@ -99,7 +110,7 @@ jobs:
               ads_path.write_text(ads_text, encoding='utf-8')
               changed.append('ads.txt')
 
-          # Keep privacy disclosure aligned with the only ad network now used by the site.
+          # Keep privacy disclosure aligned with Google AdSense as the only ad network.
           for privacy_path in (Path('privacy.html'), Path('privacy/index.html')):
               if not privacy_path.exists():
                   continue
