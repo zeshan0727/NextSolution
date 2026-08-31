@@ -59,7 +59,8 @@ def _normalized(value: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9 ]+", " ", value.lower()).split())
 
 
-def _similar_pairs(items: list[str], threshold: float = 0.84) -> int:
+def _similar_pairs(items: list[str], threshold: float = 0.94) -> int:
+    """Count near-duplicate blocks, not merely blocks sharing editorial structure."""
     normalized = [_normalized(item) for item in items if word_count(item) >= 12]
     pairs = 0
     for index, left in enumerate(normalized):
