@@ -15,10 +15,13 @@ on:
   pull_request:
     paths:
       - "automation/dopamine_cluster.py"
+      - "automation/dopamine_cluster_quality.py"
+      - "automation/source_visuals.py"
       - "automation/dopamine3-cluster.json"
       - "automation/dopamine3-cluster-state.json"
       - "automation/social-queue.json"
       - "automation/tests/test_dopamine_cluster.py"
+      - "automation/tests/test_source_visuals.py"
       - ".github/workflows/dopamine3-cluster-publisher.yml"
 
 permissions:
@@ -67,7 +70,7 @@ jobs:
             echo "OPENAI_API_KEY is not configured as an encrypted repository secret." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Generate and publish next Dopamine 3 cluster page
+      - name: Generate source-grounded 9 out of 10 cluster page
         if: steps.api.outputs.enabled == 'true'
         id: cluster
         env:
@@ -76,7 +79,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python3 -m automation.dopamine_cluster \
+          python3 -m automation.dopamine_cluster_quality \
             --repository-root . \
             --run-id "$GITHUB_RUN_ID" \
             --confirm-live \
@@ -96,7 +99,6 @@ jobs:
 
           log_path = Path("dopamine-cluster-run.log")
           log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
-          # Keep only a bounded diagnostic tail and never persist environment variables or secrets.
           tail = log[-6000:]
           payload = {
               "schema_version": 1,
@@ -113,8 +115,6 @@ jobs:
           )
           PY
           fi
-
-          # Deliberately return success here so the next step can persist a failure diagnostic.
           exit 0
 
       - name: Commit approved cluster publication
@@ -137,14 +137,18 @@ jobs:
             sitemap.xml \
             automation/published-articles.json \
             automation/dopamine3-cluster-state.json \
-            automation/social-queue.json
-          git commit -m "Publish Dopamine 3 guide: $ARTICLE_TITLE"
+            automation/social-queue.json \
+            automation/source-visual-registry.json \
+            assets/articles/source-media
+          git commit -m "Publish source-grounded Dopamine 3 guide: $ARTICLE_TITLE"
           git push origin HEAD:main
           echo "### Dopamine 3 article published" >> "$GITHUB_STEP_SUMMARY"
           echo "- Topic: **$TOPIC_ID**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Page: https://nextjailbreak.com/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Editorial floor: **9/10**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Unique visual from cited source: **required and verified**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Generic repeated hero fallback: **disabled**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Social post queued: **yes**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Stale failure diagnostic cleared: **yes**" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Persist publisher error diagnostic
         if: steps.api.outputs.enabled == 'true' && steps.cluster.outputs.reason == 'publisher-error'
