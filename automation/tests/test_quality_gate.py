@@ -21,19 +21,41 @@ class QualityGateTests(unittest.TestCase):
                 "block_malformed_copy": True,
             }
         }
-        sentence = (
-            "This section explains the practical behavior a reader can verify, why the detail matters on a jailbroken device, "
-            "what limitation to keep in mind, and which source fact supports the explanation before installation. "
-        )
+
+        def paragraph(topic: str, detail: str) -> str:
+            return (
+                f"For {topic}, this passage explains {detail} in practical terms for the reader. "
+                "It explains why the behavior matters, which limitation deserves attention, how source evidence should be interpreted, "
+                "and what should be verified before making a change. The wording adds editorial guidance instead of merely repeating metadata."
+            )
+
         self.article = {
-            "summary": sentence * 3,
-            "what_it_does": [sentence * 2 for _ in range(5)],
-            "compatibility_note": sentence * 3,
-            "installation_steps": [sentence * 2 for _ in range(5)],
-            "safety_notes": [sentence * 2 for _ in range(3)],
+            "summary": paragraph("the overall package", "the main purpose, intended audience, strongest benefit, and important limitation") * 2,
+            "what_it_does": [
+                paragraph("interface behavior", "the visible change and when it is useful"),
+                paragraph("daily workflow", "how the feature changes a common interaction"),
+                paragraph("configuration", "which preferences affect the experience"),
+                paragraph("system integration", "where the feature interacts with the operating system"),
+                paragraph("practical value", "who benefits most and who may not need the feature"),
+            ],
+            "compatibility_note": paragraph("compatibility", "confirmed architecture information, dependency limits, and environment checks") * 2,
+            "installation_steps": [
+                paragraph("source verification", "how to confirm the original listing"),
+                paragraph("device preparation", "why a backup and known-good state matter"),
+                paragraph("package review", "how to inspect dependencies and compatibility"),
+                paragraph("installation", "what to watch during the installation step"),
+                paragraph("post-install check", "how to verify the expected feature without assuming unsupported behavior"),
+            ],
+            "safety_notes": [
+                paragraph("backup safety", "why important data and a recovery path should exist first"),
+                paragraph("dependency safety", "why dependencies and conflicts deserve verification"),
+                paragraph("source trust", "why the original developer or repository page should remain the reference"),
+            ],
             "faq": [
-                {"question": f"Useful question {index}?", "answer": sentence * 4 + f" Answer focus {index}."}
-                for index in range(4)
+                {"question": "What should I verify before installing?", "answer": paragraph("pre-install verification", "the source, architecture, dependencies, and current release notes") * 2},
+                {"question": "How do I judge whether the feature is useful?", "answer": paragraph("feature usefulness", "the workflow improvement, limits, and intended audience") * 2},
+                {"question": "What compatibility information can I rely on?", "answer": paragraph("compatibility evidence", "only facts supported by the current source and package metadata") * 2},
+                {"question": "What should I do if something goes wrong?", "answer": paragraph("recovery planning", "backups, rollback options, and returning to a known-good state") * 2},
             ],
         }
         self.manifest = {
@@ -51,9 +73,7 @@ class QualityGateTests(unittest.TestCase):
     def test_thin_metadata_article_is_rejected(self) -> None:
         manifest = deepcopy(self.manifest)
         manifest["article"]["summary"] = "Review the supplied package facts and listed dependencies."
-        manifest["article"]["what_it_does"] = [
-            "Review the supplied package facts and listed architectures."
-        ] * 5
+        manifest["article"]["what_it_does"] = ["Review the supplied package facts and listed architectures."] * 5
         report = evaluate_manifest(manifest, self.site)
         self.assertFalse(report["approved"])
         joined = " ".join(report["issues"])
