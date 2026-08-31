@@ -9,6 +9,7 @@ on:
       - "automation/ios_repo_news.py"
       - "automation/ios_repo_news_hardened.py"
       - "automation/ios_repo_news.json"
+      - "automation/tests/test_ios_repo_news.py"
       - "automation/source_visuals.py"
       - ".github/workflows/ios-repo-original-source-news.yml"
   schedule:
@@ -21,6 +22,7 @@ on:
       - "automation/ios_repo_news.py"
       - "automation/ios_repo_news_hardened.py"
       - "automation/ios_repo_news.json"
+      - "automation/tests/test_ios_repo_news.py"
       - "automation/source_visuals.py"
       - ".github/workflows/ios-repo-original-source-news.yml"
 
@@ -45,8 +47,10 @@ jobs:
         run: |
           python3 -m py_compile automation/ios_repo_news.py automation/ios_repo_news_hardened.py automation/source_visuals.py automation/publisher.py automation/openai_api.py
 
-      - name: Run content automation tests
-        run: python3 -m unittest discover -s automation/tests -v
+      - name: Run original-source news tests
+        run: |
+          python3 -m unittest automation.tests.test_ios_repo_news -v
+          python3 -m unittest automation.tests.test_source_visuals -v
 
   publish:
     if: github.event_name != 'pull_request'
