@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f5f6">
+  <title>Polyfills 2.32.0 Adds More Modern Web APIs to Older iOS | Next Jailbreak</title>
+  <meta name="description" content="Polyfills 2.32.0 expands older iOS WebKit compatibility with fetch, URLSearchParams, TextEncoder, AbortSignal APIs and more, verified from PoomSmart's source.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="author" content="Zeeshan Barvi">
+  <link rel="canonical" href="https://nextjailbreak.com/polyfills-2-32-0-update/">
+  <link rel="alternate" type="application/rss+xml" title="Next Jailbreak articles" href="/feed.xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/brand/next-jailbreak-mark.svg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Next Jailbreak">
+  <meta property="og:url" content="https://nextjailbreak.com/polyfills-2-32-0-update/">
+  <meta property="og:title" content="Polyfills 2.32.0 Adds More Modern Web APIs to Older iOS">
+  <meta property="og:description" content="A source-verified look at PoomSmart's Polyfills 2.32.0 update and the modern Web APIs it adds to older iOS WebKit environments.">
+  <meta property="og:image" content="https://opengraph.githubassets.com/1/PoomSmart/Polyfills">
+  <meta property="og:image:alt" content="PoomSmart Polyfills official GitHub project preview">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nextjailbreak">
+  <meta name="twitter:title" content="Polyfills 2.32.0 Adds More Modern Web APIs to Older iOS">
+  <meta name="twitter:description" content="Verified from PoomSmart's original source: what changed in Polyfills 2.32.0 and which older iOS versions benefit.">
+  <meta name="twitter:image" content="https://opengraph.githubassets.com/1/PoomSmart/Polyfills">
+  <meta name="google-adsense-account" content="ca-pub-4770123899731214">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4770123899731214" crossorigin="anonymous"></script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Polyfills 2.32.0 Adds More Modern Web APIs to Older iOS","description":"A source-verified look at PoomSmart's Polyfills 2.32.0 update and the modern Web APIs it adds to older iOS WebKit environments.","datePublished":"2026-08-31","dateModified":"2026-08-31","author":{"@type":"Person","name":"Zeeshan Barvi"},"publisher":{"@type":"Organization","name":"Next Jailbreak","url":"https://nextjailbreak.com"},"mainEntityOfPage":"https://nextjailbreak.com/polyfills-2-32-0-update/","image":"https://opengraph.githubassets.com/1/PoomSmart/Polyfills","about":["Polyfills","PoomSmart","iOS jailbreak tweaks","WebKit compatibility"]}</script>
+  <style>
+    .news-source-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.55fr);gap:clamp(26px,5vw,64px);align-items:center;padding:clamp(30px,6vw,64px);border:1px solid var(--line);border-radius:30px;background:linear-gradient(135deg,#f8fbff,#eef0ff 55%,#f4eefe);box-shadow:0 22px 70px rgba(34,45,90,.10);margin:32px 0}
+    .news-source-hero h1{font-size:clamp(2.5rem,6vw,5.2rem);letter-spacing:-.055em;margin:.3rem 0 1rem;line-height:.98}
+    .news-source-hero p{font-size:1.08rem;max-width:780px;color:var(--muted)}
+    .source-visual{display:grid;place-items:center;min-height:300px;padding:28px;border:1px solid rgba(20,30,60,.10);border-radius:26px;background:#fff}
+    .source-visual img{width:min(240px,80%);height:auto;border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.14)}
+    .source-caption{font-size:.78rem;color:var(--quiet);margin-top:14px;text-align:center}
+    .update-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0}
+    .update-card{padding:20px;border:1px solid var(--line);border-radius:18px;background:#fff}
+    .update-card strong{display:block;margin-bottom:6px}
+    .source-evidence{padding:24px;border-radius:20px;background:#101522;color:#f7f8ff;margin:26px 0}
+    .source-evidence code{color:#b9dbff}
+    .source-buttons{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 6px}
+    .source-buttons a{display:inline-flex;padding:11px 15px;border-radius:999px;text-decoration:none;font-weight:800;border:1px solid var(--line-dark);background:#fff;color:var(--ink)}
+    .source-buttons a:first-child{background:var(--ink);color:#fff}
+    .article-content h2{margin-top:2.2rem}
+    .article-content li{margin:.45rem 0}
+    .editor-note{padding:18px 20px;border-left:4px solid #6d5dfc;background:#f5f3ff;border-radius:0 16px 16px 0}
+    @media(max-width:760px){.news-source-hero{grid-template-columns:1fr}.source-visual{min-height:220px}.update-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="topline"><div class="topline-inner"><span>iPhone jailbreak guides, tweak reviews and practical fixes</span><span class="topline-status"><i aria-hidden="true"></i> Original sources checked</span></div></div>
+  <header class="site-header"><div class="nav-shell"><a class="brand" href="/" aria-label="Next Jailbreak home"><img class="brand-logo" src="/assets/brand/next-jailbreak-mark.svg" alt="" width="52" height="52"><span class="brand-name"><strong>Next</strong> Jailbreak</span></a><nav aria-label="Primary navigation"><ul class="nav-links"><li><a href="/">Blog</a></li><li><a href="/tutorials/#verified-articles" aria-current="page">Tweaks</a></li><li><a href="/tutorials/#jailbreak-guides">Jailbreak</a></li><li><a href="/videos/">Videos</a></li></ul></nav></div></header>
+  <main class="container article-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/tutorials/#verified-articles">Tweaks</a><span aria-hidden="true">/</span><span>Polyfills 2.32.0</span></nav>
+
+    <section class="news-source-hero">
+      <div>
+        <span class="article-kicker">Latest tweak update · August 30, 2026 · Source verified</span>
+        <h1>Polyfills 2.32.0 expands modern web compatibility on older iOS</h1>
+        <p>PoomSmart's latest Polyfills release adds another set of JavaScript and Web API compatibility layers for older iOS WebKit environments. We checked the developer's package metadata, official depiction, GitHub repository and the exact source commit behind version 2.32.0.</p>
+        <div class="source-buttons">
+          <a href="https://github.com/PoomSmart/Polyfills" rel="nofollow noopener noreferrer">Official GitHub</a>
+          <a href="https://poomsmart.github.io/repo/depictions/polyfills.html" rel="nofollow noopener noreferrer">Official depiction</a>
+          <a href="https://github.com/PoomSmart/Polyfills/commit/d4da678f3f7cd20bc00a7c8a8fdd7a4da67d46bc" rel="nofollow noopener noreferrer">2.32.0 source commit</a>
+        </div>
+      </div>
+      <figure class="source-visual">
+        <img src="https://raw.githubusercontent.com/PoomSmart/Polyfills/main/icon.png" alt="Polyfills official project icon from PoomSmart's GitHub repository" width="512" height="512" fetchpriority="high">
+        <figcaption class="source-caption">Official Polyfills project artwork from PoomSmart's original GitHub repository.</figcaption>
+      </figure>
+    </section>
+
+    <div class="article-layout">
+      <article class="article-content">
+        <p><strong>Polyfills 2.32.0</strong> is a new update to PoomSmart's jailbreak tweak for bringing newer JavaScript and Web API behavior to older iOS WebKit environments. The official package metadata now lists version 2.32.0, supports iOS 8.0 and later, and describes the tweak as injecting JavaScript polyfills into iOS web views.</p>
+
+        <p>The update is especially relevant to people who continue using older jailbroken iPhones and iPads for web browsing. Modern websites increasingly assume that browsers provide APIs introduced long after early versions of Mobile Safari shipped. A polyfill does not replace Safari or WebKit; instead, it supplies JavaScript implementations for selected missing browser features so a site has a better chance of running as intended.</p>
+
+        <h2>What's new in Polyfills 2.32.0</h2>
+        <p>PoomSmart's official changelog for 2.32.0 adds another group of APIs across several generations of iOS. The version thresholds matter because the project is designed to add these implementations only where the corresponding WebKit environment needs them.</p>
+
+        <div class="update-grid">
+          <div class="update-card"><strong>URL and network APIs</strong>URLSearchParams plus fetch, Headers, Request and Response polyfills for systems earlier than iOS 10.3.</div>
+          <div class="update-card"><strong>Text encoding</strong>TextEncoder and TextDecoder before iOS 10.3, plus TextEncoder.encodeInto before iOS 14.5.</div>
+          <div class="update-card"><strong>DOM and task APIs</strong>Element.replaceChildren before iOS 14.0 and queueMicrotask before iOS 12.1.</div>
+          <div class="update-card"><strong>Promise and abort APIs</strong>AggregateError/Promise.any behavior before iOS 14.0 and newer AbortSignal static methods with separate cutoffs.</div>
+        </div>
+
+        <p>The release also adds <code>WeakMap.getOrInsert</code> and <code>WeakMap.getOrInsertComputed</code> for iOS versions before 26.2. That makes this release broader than a compatibility patch aimed only at very old iPhones: the project is also tracking newer JavaScript APIs that are absent from comparatively recent WebKit versions.</p>
+
+        <h2>Why the fetch and URLSearchParams additions matter</h2>
+        <p>Among the larger additions in 2.32.0 are the fetch family and URLSearchParams. The official changelog lists <code>fetch</code>, <code>Headers</code>, <code>Request</code> and <code>Response</code> for versions earlier than iOS 10.3. These interfaces form a common way for modern JavaScript applications to make network requests and work with responses. URLSearchParams provides a standardized interface for reading and constructing URL query parameters.</p>
+
+        <p>Older Safari releases predate these interfaces or lack the behavior newer sites expect. When a site assumes those objects exist and does not ship its own fallback, JavaScript can fail before the rest of the page has a chance to run. Polyfills attempts to fill selected gaps at the WebKit level on a jailbroken device.</p>
+
+        <h2>TextEncoder, queueMicrotask and DOM compatibility</h2>
+        <p>Version 2.32.0 also adds TextEncoder and TextDecoder for systems before iOS 10.3, while <code>TextEncoder.encodeInto</code> is covered on versions before iOS 14.5. These APIs convert between strings and encoded byte representations and are increasingly assumed by web libraries that process binary or structured data.</p>
+
+        <p>The release adds <code>queueMicrotask</code> before iOS 12.1 and <code>Element.replaceChildren</code> before iOS 14.0. These are smaller APIs than fetch, but modern frameworks and utility libraries can still expect them to exist. A missing method can be enough to break a specific workflow even when most of a website renders correctly.</p>
+
+        <h2>Promise.any, AggregateError and AbortSignal</h2>
+        <p>Another part of 2.32.0 focuses on Promise and cancellation-related APIs. The official changelog says Polyfills adds AggregateError and makes <code>Promise.any</code> reject with AggregateError on systems before iOS 14.0.</p>
+
+        <p>It also adds the static <code>AbortSignal.abort</code>, <code>AbortSignal.timeout</code> and <code>AbortSignal.any</code> methods with different cutoffs: before iOS 15.0, iOS 16.0 and iOS 17.4 respectively. Keeping those cutoffs separate is important; the update is not simply injecting every script into every version of iOS.</p>
+
+        <h2>An interesting source-code detail: a ChatGPT-specific blacklist</h2>
+        <div class="source-evidence">
+          <strong>Verified directly in the August 30 source commit</strong>
+          <p>The 2.32.0 commit adds <code>chatgpt.com</code> to the blacklist for <code>oklch-fallback.js</code>. The source commit does not provide a user-facing explanation for the exclusion, so we are not assigning a reason that the developer did not state.</p>
+        </div>
+
+        <p>This is a useful example of why we are using original sources for these articles rather than repeating package-index text. The code itself confirms that Polyfills can selectively avoid applying a particular compatibility script on a specific website. PoomSmart's broader project documentation also describes website and polyfill blacklisting as part of the tweak's design.</p>
+
+        <h2>How Polyfills works</h2>
+        <p>According to the official GitHub README, Polyfills targets Mobile Safari, Safari View Services and general WebKit-based views. The project organizes scripts into normal, priority and post-load groups. Priority scripts can run at document start before other polyfills, normal scripts can run at document start, and post scripts can wait until the document has loaded.</p>
+
+        <p>The project can also place scripts inside version-specific folders so they are used only on iOS versions at or below a defined threshold. That approach is important for a compatibility tweak: adding a workaround where the browser already has a complete native implementation can be unnecessary or create conflicts.</p>
+
+        <h2>Will this make every modern website work on an old iPhone?</h2>
+        <p>No. PoomSmart's own README is careful about this point. Polyfills can help when a website depends on JavaScript features or APIs that can realistically be recreated in JavaScript, but it cannot turn an old WebKit build into a completely current browser engine.</p>
+
+        <p>Some modern web standards depend on browser-engine behavior, CSS features, media codecs or APIs that do not have a practical JavaScript replacement. The project therefore describes website compatibility as case-dependent rather than promising that every broken website will be fixed.</p>
+
+        <h2>Compatibility and dependencies</h2>
+        <p>The current official package control file identifies the package as <code>com.ps.polyfills</code>, lists PoomSmart as author and maintainer, and sets the version to 2.32.0. The package declares firmware 8.0 or later and depends on MobileSubstrate, PreferenceLoader and the separate RegExp Polyfills package. The package metadata also contains a conditional dependency involving Custom Sec Headers.</p>
+
+        <p class="editor-note"><strong>Before installing or updating:</strong> verify the package identifier, developer, version and dependencies in your package manager against PoomSmart's official source. Next Jailbreak is not mirroring the package or linking to an unofficial copy.</p>
+
+        <h2>Who should care about 2.32.0?</h2>
+        <p>For people on very old iOS versions, the most significant additions are likely the fetch family, URLSearchParams and TextEncoder/TextDecoder because these are common building blocks in modern web applications. For users on later iOS releases, the update still includes targeted additions such as newer AbortSignal methods and WeakMap methods.</p>
+
+        <p>The key point is the version-specific approach. Polyfills 2.32.0 is not a blanket injection of the same compatibility code everywhere. The official changelog assigns different cutoffs to different APIs, and the source code contains logic for mapping related constructors and scripts to the environments that need them.</p>
+
+        <h2>Next Jailbreak assessment</h2>
+        <p>This is a useful release to cover because the source is unusually transparent. The current version is visible in the developer's package control file, the official depiction lists the full 2.32.0 changelog, and the August 30 GitHub commit shows the actual additions behind the version bump. That gives us much stronger evidence than simply reporting that a package index changed from 2.31.0 to 2.32.0.</p>
+
+        <p>If you already use Polyfills, read the official changelog before updating so you know which compatibility layers are new. If you do not use it, the tweak is mainly relevant when an older jailbroken device remains in service and websites fail because their JavaScript expects APIs that its WebKit version does not provide.</p>
+
+        <h2>Original sources</h2>
+        <ul>
+          <li><a href="https://github.com/PoomSmart/Polyfills" rel="nofollow noopener noreferrer">PoomSmart/Polyfills official GitHub repository</a></li>
+          <li><a href="https://poomsmart.github.io/repo/depictions/polyfills.html" rel="nofollow noopener noreferrer">Official Polyfills depiction and changelog</a></li>
+          <li><a href="https://github.com/PoomSmart/Polyfills/commit/d4da678f3f7cd20bc00a7c8a8fdd7a4da67d46bc" rel="nofollow noopener noreferrer">August 30, 2026 source commit for version 2.32.0</a></li>
+        </ul>
+        <p class="article-footnote">Source-checked editorial article · Published August 31, 2026 · Next Jailbreak</p>
+      </article>
+
+      <aside class="article-sidebar" aria-label="Article verification">
+        <h2>Verified release</h2>
+        <p><strong>Polyfills</strong><br>Version 2.32.0<br>Developer: PoomSmart<br>Package: com.ps.polyfills</p>
+        <p>The version and package identity were checked against the developer's current GitHub control file. Feature changes were checked against the official depiction and source commit.</p>
+        <div class="button-stack"><a class="button button-primary" href="https://github.com/PoomSmart/Polyfills" rel="nofollow noopener noreferrer">View original source</a><a class="button" href="https://poomsmart.github.io/repo/depictions/polyfills.html" rel="nofollow noopener noreferrer">Read official changelog</a></div>
+      </aside>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="footer-shell"><div class="footer-brand"><a class="brand" href="/"><img class="brand-logo" src="/assets/brand/next-jailbreak-mark.svg" alt="" width="52" height="52"><span class="brand-name"><strong>Next</strong> Jailbreak</span></a><p>Jailbreak news, useful tweak information, practical guides, and original videos.</p></div><div class="footer-column"><strong>Read</strong><a href="/#latest">Latest articles</a><a href="/tutorials/#verified-articles">Tweaks</a><a href="/tutorials/#jailbreak-guides">Jailbreak news &amp; guides</a><a href="/videos/">Videos</a></div><div class="footer-column"><strong>Follow</strong><a href="/feed.xml">RSS feed</a></div><div class="footer-column"><strong>Legal</strong><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="footer-bottom"><div class="container"><span>© 2026 Next Jailbreak</span><span>iPhone jailbreak guides, tweaks &amp; videos</span></div></div></footer>
+  <script defer src="/assets/site-runtime.js" data-ns-site-runtime="1"></script>
+</body>
+</html>
