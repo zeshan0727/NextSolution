@@ -1,6 +1,31 @@
 {
   "entries": [
     {
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Physpringboard brings shake-based physics to SpringBoard and Control Center icons. Here is what version 1.9.14 includes, what changed, and what users should verify.",
+      "entry_type": "source-news",
+      "href": "physpringboard-1-9-14-update/",
+      "image": "assets/articles/source-media/physpringboard-1-9-14-update-e66e3f05f1.png",
+      "media_credit": "Source visual from havoc.app",
+      "media_source_url": "https://havoc.app/depiction/physpringboard",
+      "modified_at": "2026-08-31T21:44:37+00:00",
+      "name": "Physpringboard",
+      "package": "com.chloe.physpringboard",
+      "published_at": "2026-08-31T21:44:37+00:00",
+      "quality_target": 9,
+      "selection_pool": "ios-repo-discovery-original-source",
+      "source_name": "havoc.app",
+      "source_page_url": "https://havoc.app/Packages",
+      "source_url": "https://havoc.app/Packages",
+      "source_visual_origin": "img",
+      "source_visual_url": "https://media.havoc.app/6a826fb5fd9eaa8115535b64?w=3840&q=75",
+      "title": "Physpringboard 1.9.14 update: configurable physics for SpringBoard icons on rootless Dopamine",
+      "version": "1.9.14"
+    },
+    {
       "article_sha256": "0e457587a238a9f7fc8c22f03e57925eae40ff676fc8ab19e8f3966c8ca30ab8",
       "candidate_fingerprint": "a231699794e46895971b27884c58e12bf1d9fb31e061a2f80ba54cd1c69b3948",
       "category": {
@@ -1408,8 +1433,17 @@
       "package": "com.ps.polyfills",
       "published_at": "2026-08-31T09:54:27+00:00",
       "version": "2.32.0"
+    },
+    {
+      "action": "create",
+      "channel": "ios-repo-discovery-original-source",
+      "href": "physpringboard-1-9-14-update/",
+      "package": "com.chloe.physpringboard",
+      "published_at": "2026-08-31T21:44:37+00:00",
+      "run_id": "33442841097",
+      "version": "1.9.14"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-31T09:54:27+00:00"
+  "updated_at": "2026-08-31T21:44:37+00:00"
 }

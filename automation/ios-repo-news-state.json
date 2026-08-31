@@ -1,0 +1,61 @@
+{
+  "attempts": {
+    "https://www.ios-repo-updates.com/repository/bigboss/package/me.liuming.apphider/": {
+      "checked_at": "2026-08-31T21:44:37.665418+00:00",
+      "package": "me.liuming.apphider",
+      "reason": "resolved source does not independently identify the discovered package",
+      "status": "failed"
+    },
+    "https://www.ios-repo-updates.com/repository/havoc/package/com.chloe.physpringboard/": {
+      "checked_at": "2026-08-31T21:44:37+00:00",
+      "package": "com.chloe.physpringboard",
+      "status": "published",
+      "target_path": "physpringboard-1-9-14-update/",
+      "version": "1.9.14"
+    }
+  },
+  "events": [
+    {
+      "action": "published",
+      "api": {
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0b7d90d1606e8c26016a95f5ea077087d09b219f67ef8ba406",
+          "usage": {
+            "input_tokens": 58030,
+            "input_tokens_details": {
+              "cache_write_tokens": 58027,
+              "cached_tokens": 0
+            },
+            "output_tokens": 480,
+            "output_tokens_details": {
+              "reasoning_tokens": 379
+            },
+            "total_tokens": 58510
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0f4c0cbed3a1675b016a95f5d0e85887d085748f313c4cbd32",
+          "usage": {
+            "input_tokens": 56072,
+            "input_tokens_details": {
+              "cache_write_tokens": 56069,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2241,
+            "output_tokens_details": {
+              "reasoning_tokens": 70
+            },
+            "total_tokens": 58313
+          }
+        }
+      },
+      "at": "2026-08-31T21:44:37+00:00",
+      "package": "com.chloe.physpringboard",
+      "target_path": "physpringboard-1-9-14-update/",
+      "version": "1.9.14"
+    }
+  ],
+  "schema_version": 1
+}
