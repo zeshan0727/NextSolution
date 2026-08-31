@@ -10,6 +10,19 @@
   "excluded_source_ids": [
     "nextsolution"
   ],
+  "quality": {
+    "target_score": 9,
+    "minimum_editorial_words": 500,
+    "minimum_summary_words": 45,
+    "minimum_feature_words": 110,
+    "minimum_compatibility_words": 35,
+    "minimum_installation_words": 100,
+    "minimum_safety_words": 60,
+    "minimum_faq_answer_words": 160,
+    "require_authentic_source_media": true,
+    "block_metadata_heavy_copy": true,
+    "block_malformed_copy": true
+  },
   "traffic_ranking": {
     "enabled": true,
     "max_bonus": 100,
