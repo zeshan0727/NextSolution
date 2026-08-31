@@ -1,0 +1,112 @@
+name: Index Rocket for Instagram 4.14.3 manual article
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/index-rocket-4-14-3-manual.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextsolution-content-state
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out production
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Add article to live index, RSS and sitemap
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          from datetime import datetime, timezone
+          from email.utils import format_datetime
+          import xml.etree.ElementTree as ET
+
+          root = pathlib.Path('.')
+          target = 'rocket-instagram-4-14-3-update/'
+          article_path = root / target / 'index.html'
+          article_bytes = article_path.read_bytes()
+          now = datetime.now(timezone.utc).replace(microsecond=0)
+          iso = now.isoformat()
+          title = 'Rocket for Instagram 4.14.3: Recommended Bug-Fix Update'
+          description = 'Rocket for Instagram 4.14.3 is a recommended maintenance update with bug fixes and improvements, with iOS 15+ support and official rootful, rootless and RootHide distribution.'
+          url = 'https://nextjailbreak.com/' + target
+
+          index_path = root / 'automation/published-articles.json'
+          data = json.loads(index_path.read_text(encoding='utf-8'))
+          entries = [e for e in data.get('entries', []) if e.get('href') != target and e.get('package') != 'me.alfhaily.rocket']
+          entry = {
+            'article_sha256': hashlib.sha256(article_bytes).hexdigest(),
+            'candidate_fingerprint': hashlib.sha256(b'me.alfhaily.rocket|4.14.3|manual-source-news').hexdigest(),
+            'category': {'id': 'tweaks', 'label': 'Tweaks'},
+            'description': description,
+            'entry_type': 'source-news',
+            'href': target,
+            'image': 'https://opengraph.githubassets.com/1/RocketTweak/RocketTweak',
+            'media_credit': 'Rocket for Instagram official GitHub project',
+            'media_source_url': 'https://github.com/RocketTweak/RocketTweak',
+            'modified_at': iso,
+            'name': 'Rocket for Instagram',
+            'package': 'me.alfhaily.rocket',
+            'published_at': iso,
+            'selection_pool': 'source-news',
+            'source_name': 'Rocket',
+            'source_page_url': 'https://apt.getrocketapp.io',
+            'source_url': 'https://github.com/RocketTweak/RocketTweak',
+            'source_visual_url': 'https://opengraph.githubassets.com/1/RocketTweak/RocketTweak',
+            'title': title,
+            'version': '4.14.3'
+          }
+          data['entries'] = [entry] + entries
+          index_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          feed_path = root / 'feed.xml'
+          tree = ET.parse(feed_path)
+          channel = tree.getroot().find('channel')
+          for old in list(channel.findall('item')):
+            link = old.findtext('link') or ''
+            if link.rstrip('/') == url.rstrip('/'):
+              channel.remove(old)
+          item = ET.Element('item')
+          for tag, text in [('title', title), ('link', url), ('guid', url), ('pubDate', format_datetime(now)), ('description', description), ('category', 'Tweaks')]:
+            node = ET.SubElement(item, tag)
+            node.text = text
+            if tag == 'guid': node.set('isPermaLink', 'true')
+          first = channel.find('item')
+          if first is None: channel.append(item)
+          else: channel.insert(list(channel).index(first), item)
+          ET.indent(tree, space='  ')
+          tree.write(feed_path, encoding='utf-8', xml_declaration=True)
+
+          sitemap_path = root / 'sitemap.xml'
+          stree = ET.parse(sitemap_path)
+          sroot = stree.getroot()
+          ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+          if not any((u.findtext('s:loc', default='', namespaces=ns)).rstrip('/') == url.rstrip('/') for u in sroot.findall('s:url', ns)):
+            u = ET.SubElement(sroot, '{http://www.sitemaps.org/schemas/sitemap/0.9}url')
+            ET.SubElement(u, '{http://www.sitemaps.org/schemas/sitemap/0.9}loc').text = url
+            ET.SubElement(u, '{http://www.sitemaps.org/schemas/sitemap/0.9}lastmod').text = now.date().isoformat()
+            ET.SubElement(u, '{http://www.sitemaps.org/schemas/sitemap/0.9}changefreq').text = 'monthly'
+            ET.SubElement(u, '{http://www.sitemaps.org/schemas/sitemap/0.9}priority').text = '0.8'
+          ET.indent(stree, space='  ')
+          stree.write(sitemap_path, encoding='utf-8', xml_declaration=True)
+          PY
+
+      - name: Commit indexed article
+        run: |
+          git config user.name "nextsolution-publisher[bot]"
+          git config user.email "nextsolution-publisher[bot]@users.noreply.github.com"
+          git rm --ignore-unmatch .github/workflows/index-rocket-4-14-3-manual.yml
+          git add automation/published-articles.json feed.xml sitemap.xml
+          git commit -m "Publish Rocket for Instagram 4.14.3 to live article feeds"
+          git push origin HEAD:main
