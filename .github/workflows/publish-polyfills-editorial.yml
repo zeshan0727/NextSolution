@@ -1,0 +1,147 @@
+name: Index Polyfills 2.32.0 editorial article
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/publish-polyfills-editorial.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextsolution-content-state
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Add source-verified article to indexes
+        run: |
+          python3 - <<'PY'
+          from __future__ import annotations
+          from datetime import datetime, timezone
+          from email.utils import format_datetime
+          import hashlib
+          import json
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          now = datetime.now(timezone.utc).replace(microsecond=0)
+          published_at = now.isoformat()
+          date = now.date().isoformat()
+          href = "polyfills-2-32-0-update/"
+          canonical = "https://nextjailbreak.com/" + href
+          article_path = Path("polyfills-2-32-0-update/index.html")
+          article_bytes = article_path.read_bytes()
+
+          entry = {
+              "article_sha256": hashlib.sha256(article_bytes).hexdigest(),
+              "candidate_fingerprint": hashlib.sha256(b"PoomSmart/Polyfills:2.32.0:2026-08-30").hexdigest(),
+              "category": {"id": "system-utilities", "label": "System & Utilities"},
+              "description": "Polyfills 2.32.0 adds fetch, URLSearchParams, TextEncoder, AbortSignal methods and more to improve modern web compatibility on older jailbroken iOS versions.",
+              "entry_type": "source-news",
+              "href": href,
+              "image": "https://opengraph.githubassets.com/1/PoomSmart/Polyfills",
+              "media_credit": "PoomSmart Polyfills official GitHub source",
+              "media_source_url": "https://github.com/PoomSmart/Polyfills",
+              "modified_at": published_at,
+              "name": "Polyfills",
+              "package": "com.ps.polyfills",
+              "published_at": published_at,
+              "selection_pool": "source-news",
+              "source_name": "PoomSmart",
+              "source_page_url": "https://poomsmart.github.io/repo/depictions/polyfills.html",
+              "source_url": "https://github.com/PoomSmart/Polyfills",
+              "source_visual_url": "https://raw.githubusercontent.com/PoomSmart/Polyfills/main/icon.png",
+              "title": "Polyfills 2.32.0 Adds More Modern Web APIs to Older iOS",
+              "version": "2.32.0"
+          }
+
+          audit_path = Path("automation/published-articles.json")
+          audit = json.loads(audit_path.read_text(encoding="utf-8"))
+          entries = [
+              item for item in audit.get("entries", [])
+              if not (isinstance(item, dict) and (item.get("href") == href or (item.get("package") == "com.ps.polyfills" and item.get("version") == "2.32.0")))
+          ]
+          entries.insert(0, entry)
+          audit["entries"] = entries
+          audit["updated_at"] = published_at
+          audit.setdefault("schema_version", 1)
+          events = audit.setdefault("events", [])
+          events.append({
+              "published_at": published_at,
+              "action": "create",
+              "package": "com.ps.polyfills",
+              "version": "2.32.0",
+              "href": href,
+              "candidate_fingerprint": entry["candidate_fingerprint"],
+              "channel": "source-news"
+          })
+          audit_path.write_text(json.dumps(audit, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          feed_path = Path("feed.xml")
+          feed_tree = ET.parse(feed_path)
+          feed_root = feed_tree.getroot()
+          channel = feed_root.find("channel")
+          if channel is None:
+              raise RuntimeError("RSS channel missing")
+          for item in list(channel.findall("item")):
+              link = item.find("link")
+              if link is not None and (link.text or "").strip() == canonical:
+                  channel.remove(item)
+          item = ET.Element("item")
+          ET.SubElement(item, "title").text = entry["title"]
+          ET.SubElement(item, "link").text = canonical
+          guid = ET.SubElement(item, "guid", {"isPermaLink": "true"})
+          guid.text = canonical
+          ET.SubElement(item, "pubDate").text = format_datetime(now, usegmt=True)
+          ET.SubElement(item, "description").text = entry["description"]
+          ET.SubElement(item, "category").text = entry["category"]["label"]
+          first_item = next((child for child in list(channel) if child.tag == "item"), None)
+          if first_item is None:
+              channel.append(item)
+          else:
+              channel.insert(list(channel).index(first_item), item)
+          ET.indent(feed_root, space="  ")
+          feed_path.write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(feed_root, encoding="unicode") + "\n", encoding="utf-8")
+
+          sitemap_path = Path("sitemap.xml")
+          sitemap_tree = ET.parse(sitemap_path)
+          sitemap_root = sitemap_tree.getroot()
+          namespace = ""
+          if sitemap_root.tag.startswith("{"):
+              namespace = sitemap_root.tag.split("}", 1)[0][1:]
+              ET.register_namespace("", namespace)
+          def tag(name: str) -> str:
+              return f"{{{namespace}}}{name}" if namespace else name
+          for url_node in list(sitemap_root.findall(tag("url"))):
+              loc = url_node.find(tag("loc"))
+              if loc is not None and (loc.text or "").strip() == canonical:
+                  sitemap_root.remove(url_node)
+          url_node = ET.SubElement(sitemap_root, tag("url"))
+          ET.SubElement(url_node, tag("loc")).text = canonical
+          ET.SubElement(url_node, tag("lastmod")).text = date
+          ET.SubElement(url_node, tag("changefreq")).text = "monthly"
+          ET.SubElement(url_node, tag("priority")).text = "0.8"
+          ET.indent(sitemap_root, space="  ")
+          sitemap_path.write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(sitemap_root, encoding="unicode") + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit live article indexes
+        run: |
+          git config user.name "nextjailbreak-editorial[bot]"
+          git config user.email "nextjailbreak-editorial[bot]@users.noreply.github.com"
+          git add -- automation/published-articles.json feed.xml sitemap.xml
+          git rm -f -- .github/workflows/publish-polyfills-editorial.yml
+          git commit -m "Index Polyfills 2.32.0 source-verified article"
+          git push origin HEAD:main
