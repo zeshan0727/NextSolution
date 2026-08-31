@@ -1,0 +1,145 @@
+name: iOS Repo discovery original-source news
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 08:30 UTC = 11:30 Qatar
+    - cron: "30 8 * * *"
+    # 17:00 UTC = 20:00 Qatar
+    - cron: "0 17 * * *"
+  pull_request:
+    paths:
+      - "automation/ios_repo_news.py"
+      - "automation/ios_repo_news.json"
+      - "automation/source_visuals.py"
+      - ".github/workflows/ios-repo-original-source-news.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextsolution-content-state
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compile publisher
+        run: |
+          python3 -m py_compile automation/ios_repo_news.py automation/source_visuals.py automation/publisher.py automation/openai_api.py
+
+      - name: Run content automation tests
+        run: python3 -m unittest discover -s automation/tests -v
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - name: Check out production branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Check OpenAI secret
+        id: api
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -n "${OPENAI_API_KEY:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "### Original-source news publisher paused" >> "$GITHUB_STEP_SUMMARY"
+            echo "OPENAI_API_KEY is not configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Discover latest package and publish from original source
+        if: steps.api.outputs.enabled == 'true'
+        id: news
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5.6-luna
+        shell: bash
+        run: |
+          set +e
+          python3 -m automation.ios_repo_news \
+            --repository-root . \
+            --run-id "$GITHUB_RUN_ID" \
+            --confirm-live \
+            --github-output "$GITHUB_OUTPUT" 2>&1 | tee ios-repo-original-source-run.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "reason=publisher-error" >> "$GITHUB_OUTPUT"
+            echo "target_path=" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+
+      - name: Commit approved publication
+        if: steps.news.outputs.published == 'true'
+        env:
+          TARGET_PATH: ${{ steps.news.outputs.target_path }}
+          ARTICLE_TITLE: ${{ steps.news.outputs.title }}
+          PACKAGE_ID: ${{ steps.news.outputs.package }}
+          VERSION: ${{ steps.news.outputs.version }}
+        run: |
+          git config user.name "nextsolution-publisher[bot]"
+          git config user.email "nextsolution-publisher[bot]@users.noreply.github.com"
+          git add -- \
+            "$TARGET_PATH" \
+            feed.xml \
+            sitemap.xml \
+            automation/published-articles.json \
+            automation/ios-repo-news-state.json \
+            automation/source-visual-registry.json \
+            assets/articles/source-media
+          git commit -m "Publish original-source update: $ARTICLE_TITLE"
+          git push origin HEAD:main
+          echo "### Original-source article published" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Package: **$PACKAGE_ID $VERSION**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Page: https://nextjailbreak.com/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Discovery feed cited publicly: **no**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Original developer/repository source required: **yes**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Unique original-source visual required: **yes**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Editorial quality target: **9/10**" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Persist safe discovery state on no-op
+        if: steps.api.outputs.enabled == 'true' && steps.news.outputs.published != 'true' && steps.news.outputs.reason != 'publisher-error'
+        run: |
+          git config user.name "nextsolution-publisher[bot]"
+          git config user.email "nextsolution-publisher[bot]@users.noreply.github.com"
+          if [ -f automation/ios-repo-news-state.json ]; then
+            git add -- automation/ios-repo-news-state.json
+            if ! git diff --cached --quiet; then
+              git commit -m "Update original-source news discovery state"
+              git push origin HEAD:main
+            fi
+          fi
+          echo "### Original-source news publisher" >> "$GITHUB_STEP_SUMMARY"
+          echo "No article was published." >> "$GITHUB_STEP_SUMMARY"
+          echo "Reason: **${{ steps.news.outputs.reason }}**" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail after publisher error
+        if: steps.api.outputs.enabled == 'true' && steps.news.outputs.reason == 'publisher-error'
+        run: exit 1
+
+      - name: Upload publisher log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-repo-original-source-${{ github.run_number }}
+          path: ios-repo-original-source-run.log
+          if-no-files-found: ignore
+          retention-days: 14
