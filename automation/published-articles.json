@@ -1,6 +1,31 @@
 {
   "entries": [
     {
+      "article_sha256": "0ad2dd89d31988bd1e4ca20696107fc92ead9f2b677929a28ebf4d6fdd23ab7d",
+      "candidate_fingerprint": "a666545a36199dfd9aaa54d3ecc2301c0fd6a72d65f187c1fdf40c843bc5ebab",
+      "category": {
+        "id": "tweaks",
+        "label": "Tweaks"
+      },
+      "description": "Rocket for Instagram 4.14.3 is a recommended maintenance update with bug fixes and improvements, with iOS 15+ support and official rootful, rootless and RootHide distribution.",
+      "entry_type": "source-news",
+      "href": "rocket-instagram-4-14-3-update/",
+      "image": "https://opengraph.githubassets.com/1/RocketTweak/RocketTweak",
+      "media_credit": "Rocket for Instagram official GitHub project",
+      "media_source_url": "https://github.com/RocketTweak/RocketTweak",
+      "modified_at": "2026-08-31T12:21:46+00:00",
+      "name": "Rocket for Instagram",
+      "package": "me.alfhaily.rocket",
+      "published_at": "2026-08-31T12:21:46+00:00",
+      "selection_pool": "source-news",
+      "source_name": "Rocket",
+      "source_page_url": "https://apt.getrocketapp.io",
+      "source_url": "https://github.com/RocketTweak/RocketTweak",
+      "source_visual_url": "https://opengraph.githubassets.com/1/RocketTweak/RocketTweak",
+      "title": "Rocket for Instagram 4.14.3: Recommended Bug-Fix Update",
+      "version": "4.14.3"
+    },
+    {
       "article_sha256": "5926d650a221e237c718352ba823d6f46cde0c0f4a239b295f622cad25a89a26",
       "candidate_fingerprint": "45dc8ee08a8e89d7d981a7c7414b5e23feb01aea864c2a0378a1a8481d492dba",
       "category": {

@@ -1,10 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <rss version="2.0">
   <channel>
     <title>Next Jailbreak</title>
     <link>https://nextjailbreak.com</link>
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
+    <item>
+      <title>Rocket for Instagram 4.14.3: Recommended Bug-Fix Update</title>
+      <link>https://nextjailbreak.com/rocket-instagram-4-14-3-update/</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/rocket-instagram-4-14-3-update/</guid>
+      <pubDate>Mon, 31 Aug 2026 12:21:46 +0000</pubDate>
+      <description>Rocket for Instagram 4.14.3 is a recommended maintenance update with bug fixes and improvements, with iOS 15+ support and official rootful, rootless and RootHide distribution.</description>
+      <category>Tweaks</category>
+    </item>
     <item>
       <title>YouPiP 1.12.14 Updates YouTube Picture-in-Picture Handling</title>
       <link>https://nextjailbreak.com/youpip-1-12-14-update/</link>
