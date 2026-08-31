@@ -1,0 +1,62 @@
+name: Quarantine legacy low value content
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "automation/quarantine_low_value.py"
+      - "automation/quality_gate.py"
+      - "automation/site.json"
+      - ".github/workflows/content-quality-quarantine.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nextsolution-content-state
+  cancel-in-progress: false
+
+jobs:
+  quarantine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out production branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Run deterministic tests before changing public content
+        run: python3 -m unittest discover -s automation/tests -v
+
+      - name: Quarantine known low value legacy pages
+        id: audit
+        run: |
+          python3 -m automation.quarantine_low_value | tee content-quality-quarantine.log
+          held=$(python3 -c 'import json; print(json.load(open("automation/content-quality-holds.json"))["held_count"])')
+          removed=$(python3 -c 'import json; print(json.load(open("automation/content-quality-holds.json"))["removed_from_active_index_count"])')
+          echo "held=$held" >> "$GITHUB_OUTPUT"
+          echo "removed=$removed" >> "$GITHUB_OUTPUT"
+
+      - name: Commit quality cleanup
+        run: |
+          if git diff --quiet && [ -z "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "No legacy quality problems required changes."
+            exit 0
+          fi
+          git config user.name "nextsolution-quality[bot]"
+          git config user.email "nextsolution-quality[bot]@users.noreply.github.com"
+          git add -- '*.html' index.html tutorials.html feed.xml sitemap.xml automation/published-articles.json automation/content-quality-holds.json
+          git commit -m "Quarantine legacy low value articles from AdSense review surface"
+          git push origin HEAD:main
+
+      - name: Summarize cleanup
+        run: |
+          echo "### Legacy content quality cleanup" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Pages held for editorial rewrite: **${{ steps.audit.outputs.held }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Removed from active generated article index: **${{ steps.audit.outputs.removed }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Held pages: **noindex + nofollow**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- RSS and sitemap: **cleaned**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Future automated posts: **9/10 gate applies before publication**" >> "$GITHUB_STEP_SUMMARY"
