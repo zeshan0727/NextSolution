@@ -8,6 +8,7 @@ on:
       - 'feed.xml'
       - 'sitemap.xml'
       - 'automation/clean_urls.py'
+      - 'automation/legacy_route_policy.py'
       - '.github/workflows/generate-clean-urls.yml'
   workflow_dispatch:
 
@@ -28,8 +29,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate clean routes
-        run: python3 automation/clean_urls.py
+      - name: Generate one indexable clean route per page
+        run: |
+          python3 -m automation.legacy_route_policy prepare --repository-root .
+          python3 automation/clean_urls.py
+          python3 -m automation.legacy_route_policy finalize --repository-root .
 
       - name: Commit generated routes
         id: commit
