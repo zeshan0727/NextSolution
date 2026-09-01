@@ -1,0 +1,38 @@
+name: Refresh editorial article indexes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "automation/published-articles.json"
+      - "automation/apply_site_category_fix.py"
+      - ".github/workflows/refresh-editorial-index.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-editorial-index-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Rebuild static homepage and article archives
+        run: python3 automation/apply_site_category_fix.py
+      - name: Commit synchronized editorial indexes
+        run: |
+          if git diff --quiet; then
+            echo "Editorial indexes already synchronized."
+            exit 0
+          fi
+          git config user.name "nextsolution-content[bot]"
+          git config user.email "nextsolution-content[bot]@users.noreply.github.com"
+          git add -- index.html tutorials.html tutorials/index.html automation/publisher.py assets/site-content.js
+          git commit -m "Sync homepage and article archives with published content"
+          git pull --rebase origin main
+          git push origin HEAD:main
