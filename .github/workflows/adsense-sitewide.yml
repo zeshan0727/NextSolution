@@ -25,7 +25,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Enforce Google AdSense and remove legacy ad-network tags
+      - name: Enforce Google AdSense on editorial inventory only
         shell: bash
         run: |
           python3 - <<'PY'
@@ -38,39 +38,30 @@ jobs:
           adsense_script = f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={client}" crossorigin="anonymous"></script>'
           runtime_script = '  <script defer src="/assets/site-runtime.js" data-ns-site-runtime="1"></script>'
 
-          monetag_meta_re = re.compile(
-              r'\s*<meta\s+name=["\']monetag["\']\s+content=["\'][^"\']*["\']\s*/?>\s*',
-              re.I,
-          )
-          adsense_meta_re = re.compile(
-              r'\s*<meta\s+name=["\']google-adsense-account["\']\s+content=["\'][^"\']*["\']\s*/?>\s*',
-              re.I,
-          )
-          adsense_script_re = re.compile(
-              r'\s*<script\s+async\s+src=["\']https://pagead2\.googlesyndication\.com/pagead/js/adsbygoogle\.js\?client=[^"\']+["\']\s+crossorigin=["\']anonymous["\']\s*>\s*</script>\s*',
-              re.I,
-          )
-          legacy_loader_re = re.compile(
-              r'\s*<script[^>]+src=["\']/assets/adsterra\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>\s*',
-              re.I,
-          )
-          runtime_re = re.compile(
-              r'\s*<script[^>]+src=["\']/assets/site-runtime\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>\s*',
-              re.I,
-          )
+          monetag_meta_re = re.compile(r'\s*<meta\s+name=["\']monetag["\']\s+content=["\'][^"\']*["\']\s*/?>\s*', re.I)
+          adsense_meta_re = re.compile(r'\s*<meta\s+name=["\']google-adsense-account["\']\s+content=["\'][^"\']*["\']\s*/?>\s*', re.I)
+          adsense_script_re = re.compile(r'\s*<script\s+async\s+src=["\']https://pagead2\.googlesyndication\.com/pagead/js/adsbygoogle\.js\?client=[^"\']+["\']\s+crossorigin=["\']anonymous["\']\s*>\s*</script>\s*', re.I)
+          legacy_loader_re = re.compile(r'\s*<script[^>]+src=["\']/assets/adsterra\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>\s*', re.I)
+          runtime_re = re.compile(r'\s*<script[^>]+src=["\']/assets/site-runtime\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>\s*', re.I)
+          noindex_re = re.compile(r'<meta[^>]+name=["\']robots["\'][^>]+content=["\'][^"\']*noindex', re.I)
 
-          # Package/app-internal HTML is not part of the public editorial site inventory.
           blocked_prefixes = (
               'depictions/', 'applications/', 'DailyLedger/', 'DailyTweaks/',
-              'Diagnostics/', 'ModuleGlassPreview/', 'NextPDF/', 'NextPost/'
+              'Diagnostics/', 'ModuleGlassPreview/', 'NextPDF/', 'NextPost/',
+              'license/', 'install/', 'support/', 'payment/', 'request/'
           )
+          blocked_exact = {
+              'about.html', 'about/index.html', 'contact.html', 'contact/index.html',
+              'privacy.html', 'privacy/index.html', 'terms.html', 'terms/index.html',
+              'repo.html', 'repo/index.html', 'videos.html', 'videos/index.html',
+              'next-ledger-support.html', 'article1.html'
+          }
 
           changed = []
           for path in sorted(Path('.').rglob('*.html')):
               rel = path.as_posix().lstrip('./')
               if any(part in {'.git', 'node_modules'} for part in path.parts):
                   continue
-
               text = path.read_text(encoding='utf-8')
               updated = monetag_meta_re.sub('\n', text)
               updated = adsense_meta_re.sub('\n', updated)
@@ -78,24 +69,13 @@ jobs:
               updated = legacy_loader_re.sub('\n', updated)
               updated = runtime_re.sub('\n', updated)
 
-              blocked = rel.startswith(blocked_prefixes)
+              blocked = rel in blocked_exact or rel.startswith(blocked_prefixes) or bool(noindex_re.search(text))
               if not blocked:
-                  head_insertion = f'  {account_meta}\n  {adsense_script}\n'
-                  updated, count = re.subn(
-                      r'(?i)</head\s*>',
-                      head_insertion + '</head>',
-                      updated,
-                      count=1,
-                  )
+                  insertion = f'  {account_meta}\n  {adsense_script}\n'
+                  updated, count = re.subn(r'(?i)</head\s*>', insertion + '</head>', updated, count=1)
                   if not count:
                       raise SystemExit(f'Missing </head> in eligible HTML page: {rel}')
-
-                  updated, body_count = re.subn(
-                      r'(?i)</body\s*>',
-                      runtime_script + '\n</body>',
-                      updated,
-                      count=1,
-                  )
+                  updated, body_count = re.subn(r'(?i)</body\s*>', runtime_script + '\n</body>', updated, count=1)
                   if not body_count:
                       raise SystemExit(f'Missing </body> in eligible HTML page: {rel}')
 
@@ -103,27 +83,18 @@ jobs:
                   path.write_text(updated, encoding='utf-8')
                   changed.append(rel)
 
-          # Keep the root ads.txt declaration exact for this AdSense publisher.
           ads_path = Path('ads.txt')
           ads_text = f'google.com, {publisher}, DIRECT, f08c47fec0942fa0\n'
           if not ads_path.exists() or ads_path.read_text(encoding='utf-8') != ads_text:
               ads_path.write_text(ads_text, encoding='utf-8')
               changed.append('ads.txt')
 
-          # Keep privacy disclosure aligned with Google AdSense as the only ad network.
           for privacy_path in (Path('privacy.html'), Path('privacy/index.html')):
               if not privacy_path.exists():
                   continue
               text = privacy_path.read_text(encoding='utf-8')
-              updated = text
-              updated = updated.replace(
-                  'Third-party services such as Adsterra and YouTube may process information according to their own privacy policies.',
-                  'Third-party services such as Google AdSense and YouTube may process information according to their own privacy policies.'
-              )
-              updated = updated.replace(
-                  'Adsterra and its advertising partners may use cookies, device identifiers, or similar technologies to deliver, measure, and protect advertisements. They may process information such as device and browser details, approximate location, and interactions with ads according to their own policies.',
-                  'Google AdSense and its advertising partners may use cookies, device identifiers, or similar technologies to deliver, measure, and personalize advertisements. They may process information such as device and browser details, approximate location, and interactions with ads according to their own policies.'
-              )
+              updated = text.replace('Third-party services such as Adsterra and YouTube may process information according to their own privacy policies.', 'Third-party services such as Google AdSense and YouTube may process information according to their own privacy policies.')
+              updated = updated.replace('Adsterra and its advertising partners may use cookies, device identifiers, or similar technologies to deliver, measure, and protect advertisements. They may process information such as device and browser details, approximate location, and interactions with ads according to their own policies.', 'Google AdSense and its advertising partners may use cookies, device identifiers, or similar technologies to deliver, measure, and personalize advertisements. They may process information such as device and browser details, approximate location, and interactions with ads according to their own policies.')
               if updated != text:
                   privacy_path.write_text(updated, encoding='utf-8')
                   changed.append(privacy_path.as_posix())
@@ -135,13 +106,12 @@ jobs:
         shell: bash
         run: |
           if git diff --quiet; then
-            echo "Google AdSense is already configured on eligible website pages."
+            echo "Google AdSense placement is already compliant."
             exit 0
           fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --all
-          git commit -m "Apply Google AdSense monetization across website pages"
+          git commit -m "Restrict AdSense to editorial content pages"
           git pull --rebase origin main
           git push
