@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 from urllib.parse import urlparse
 from typing import Any
 
@@ -31,6 +32,40 @@ def _candidate_hint_links(candidate: base.Candidate) -> list[str]:
     return safe
 
 
+def _numeric_version(value: str) -> tuple[int, ...] | None:
+    match = re.search(r"(?<!\d)(\d+(?:\.\d+){1,3})(?!\d)", value or "")
+    if not match:
+        return None
+    return tuple(int(part) for part in match.group(1).split("."))
+
+
+def _reject_if_original_source_is_newer(candidate_version: str, evidence: str) -> None:
+    current = _numeric_version(candidate_version)
+    if not current or len(current) < 2:
+        return
+
+    # Compare only versions sharing the package's major/minor family. This avoids
+    # mistaking unrelated iOS versions or dates in the source page for tweak versions.
+    prefix = current[:2]
+    observed: set[tuple[int, ...]] = set()
+    for raw in re.findall(r"(?<!\d)\d+(?:\.\d+){1,3}(?!\d)", evidence):
+        parsed = _numeric_version(raw)
+        if parsed and len(parsed) >= 2 and parsed[:2] == prefix:
+            observed.add(parsed)
+
+    if not observed:
+        return
+    newest = max(observed)
+    padded_current = current + (0,) * (len(newest) - len(current))
+    padded_newest = newest + (0,) * (len(current) - len(newest))
+    if padded_newest > padded_current:
+        newest_text = ".".join(str(part) for part in newest)
+        raise ValueError(
+            f"stale discovery rejected: candidate {candidate_version} is older than "
+            f"original-source version {newest_text}"
+        )
+
+
 def resolve_original_source(candidate: base.Candidate, config: dict[str, Any]) -> dict[str, Any]:
     source = _original_resolve(candidate, config)
     source_urls = [
@@ -44,15 +79,19 @@ def resolve_original_source(candidate: base.Candidate, config: dict[str, Any]) -
     evidence = str(source.get("source_text", "")).lower()
     package_id = candidate.package_id.lower()
     package_name = str(source.get("name", "")).strip().lower()
-    version = str(source.get("version", "")).strip().lower()
+    version = str(source.get("version", "")).strip()
 
     identity_confirmed = package_id in evidence
     if not identity_confirmed and package_name and package_name != package_id:
         identity_confirmed = package_name in evidence
     if not identity_confirmed:
         raise ValueError("resolved source does not independently identify the discovered package")
-    if version and version not in evidence:
+    if version and version.lower() not in evidence:
         raise ValueError("resolved original source does not confirm the package version")
+
+    effective_version = version or str(getattr(candidate, "version", "") or "").strip()
+    if effective_version:
+        _reject_if_original_source_is_newer(effective_version, evidence)
 
     source["source_urls"] = source_urls
     return source
