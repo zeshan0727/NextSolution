@@ -5,6 +5,31 @@
         "id": "system-utilities",
         "label": "System & Utilities"
       },
+      "description": "HelloKeyboardAI 2.1.0-1 is listed as an iPhoneOS ARM tweak with keyboard, copy, and screenshot AI actions. Review its documented features, dependencies, and release-",
+      "entry_type": "source-news",
+      "href": "hellokeyboardai-2-1-0-1-update/",
+      "image": "assets/articles/source-media/hellokeyboardai-2-1-0-1-update-205ba79a45.png",
+      "media_credit": "Source visual from havoc.app",
+      "media_source_url": "https://havoc.app/depiction/hellokeyboardai",
+      "modified_at": "2026-09-01T19:45:43+00:00",
+      "name": "HelloKeyboardAI",
+      "package": "com.zqbb.hello.keyboard.ai",
+      "published_at": "2026-09-01T19:45:43+00:00",
+      "quality_target": 9,
+      "selection_pool": "ios-repo-discovery-original-source",
+      "source_name": "havoc.app",
+      "source_page_url": "https://havoc.app/Packages",
+      "source_url": "https://havoc.app/Packages",
+      "source_visual_origin": "img",
+      "source_visual_url": "https://media.havoc.app/670de6309d2f1af2966fc7e0?w=3840&q=75",
+      "title": "HelloKeyboardAI 2.1.0-1: Documented AI Triggers, Dependencies, and Version Caveats",
+      "version": "2.1.0-1"
+    },
+    {
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
       "description": "Regram for Instagram 6.0.1 updates compatibility with Instagram 443.1 and fixes Reels auto-advance, DM tracking, mark-seen controls, and iOS 14/15 action menus.",
       "entry_type": "source-news",
       "href": "regram-for-instagram-6-0-1-update/",
@@ -1451,8 +1476,17 @@
       "published_at": "2026-09-01T13:38:03+00:00",
       "run_id": "33514503562",
       "version": "6.0.1"
+    },
+    {
+      "action": "create",
+      "channel": "ios-repo-discovery-original-source",
+      "href": "hellokeyboardai-2-1-0-1-update/",
+      "package": "com.zqbb.hello.keyboard.ai",
+      "published_at": "2026-09-01T19:45:43+00:00",
+      "run_id": "33551339279",
+      "version": "2.1.0-1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-09-01T13:38:03+00:00"
+  "updated_at": "2026-09-01T19:45:43+00:00"
 }

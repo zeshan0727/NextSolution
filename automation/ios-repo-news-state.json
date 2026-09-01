@@ -1,23 +1,35 @@
 {
   "attempts": {
     "https://www.ios-repo-updates.com/repository/bigboss/package/me.liuming.apphider/": {
-      "checked_at": "2026-08-31T21:44:37.665418+00:00",
+      "checked_at": "2026-09-01T19:45:43.990554+00:00",
       "package": "me.liuming.apphider",
       "reason": "resolved source does not independently identify the discovered package",
       "status": "failed"
     },
     "https://www.ios-repo-updates.com/repository/fouad-s/package/com.fouadraheb.regram/": {
-      "checked_at": "2026-09-01T13:38:03+00:00",
+      "checked_at": "2026-09-01T19:45:43.990554+00:00",
       "package": "com.fouadraheb.regram",
-      "status": "published",
-      "target_path": "regram-for-instagram-6-0-1-update/",
+      "status": "duplicate",
       "version": "6.0.1"
+    },
+    "https://www.ios-repo-updates.com/repository/fouad-s/package/com.fouadraheb.watusi3/": {
+      "checked_at": "2026-09-01T19:45:43.990554+00:00",
+      "package": "com.fouadraheb.watusi3",
+      "status": "duplicate",
+      "version": "1.3.22"
     },
     "https://www.ios-repo-updates.com/repository/havoc/package/com.chloe.physpringboard/": {
       "checked_at": "2026-09-01T13:38:03.706288+00:00",
       "package": "com.chloe.physpringboard",
       "reason": "stale discovery rejected: candidate 1.9.14 is older than original-source version 1.9.23",
       "status": "failed"
+    },
+    "https://www.ios-repo-updates.com/repository/havoc/package/com.zqbb.hello.keyboard.ai/": {
+      "checked_at": "2026-09-01T19:45:43+00:00",
+      "package": "com.zqbb.hello.keyboard.ai",
+      "status": "published",
+      "target_path": "hellokeyboardai-2-1-0-1-update/",
+      "version": "2.1.0-1"
     }
   },
   "events": [
@@ -102,6 +114,79 @@
       "package": "com.fouadraheb.regram",
       "target_path": "regram-for-instagram-6-0-1-update/",
       "version": "6.0.1"
+    },
+    {
+      "action": "published",
+      "api": {
+        "initial_verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_02d578c3bf15c9fd016a972b9c391487d2b50db727414ffc1b",
+          "usage": {
+            "input_tokens": 43869,
+            "input_tokens_details": {
+              "cache_write_tokens": 43866,
+              "cached_tokens": 0
+            },
+            "output_tokens": 564,
+            "output_tokens_details": {
+              "reasoning_tokens": 358
+            },
+            "total_tokens": 44433
+          }
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0ebfaec95a94e74c016a972ba4948c87d2963c79a06aec6346",
+          "usage": {
+            "input_tokens": 44026,
+            "input_tokens_details": {
+              "cache_write_tokens": 44023,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2426,
+            "output_tokens_details": {
+              "reasoning_tokens": 59
+            },
+            "total_tokens": 46452
+          }
+        },
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_048211998ff3784a016a972bbcdc4087d2a4ad89a0d63d8ad7",
+          "usage": {
+            "input_tokens": 43878,
+            "input_tokens_details": {
+              "cache_write_tokens": 43875,
+              "cached_tokens": 0
+            },
+            "output_tokens": 320,
+            "output_tokens_details": {
+              "reasoning_tokens": 193
+            },
+            "total_tokens": 44198
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_086f5ef15b91bf1f016a972b8ad59087d28853562b8544b7bf",
+          "usage": {
+            "input_tokens": 41706,
+            "input_tokens_details": {
+              "cache_write_tokens": 41703,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2465,
+            "output_tokens_details": {
+              "reasoning_tokens": 107
+            },
+            "total_tokens": 44171
+          }
+        }
+      },
+      "at": "2026-09-01T19:45:43+00:00",
+      "package": "com.zqbb.hello.keyboard.ai",
+      "target_path": "hellokeyboardai-2-1-0-1-update/",
+      "version": "2.1.0-1"
     }
   ],
   "schema_version": 1
