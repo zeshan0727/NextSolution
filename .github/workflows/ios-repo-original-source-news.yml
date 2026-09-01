@@ -13,9 +13,7 @@ on:
       - "automation/source_visuals.py"
       - ".github/workflows/ios-repo-original-source-news.yml"
   schedule:
-    # 08:30 UTC = 11:30 Qatar
     - cron: "30 8 * * *"
-    # 17:00 UTC = 20:00 Qatar
     - cron: "0 17 * * *"
   pull_request:
     paths:
@@ -42,11 +40,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Compile publisher
         run: |
           python3 -m py_compile automation/ios_repo_news.py automation/ios_repo_news_hardened.py automation/source_visuals.py automation/publisher.py automation/openai_api.py
-
       - name: Run original-source news tests
         run: |
           python3 -m unittest automation.tests.test_ios_repo_news -v
@@ -64,7 +60,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-
       - name: Check OpenAI secret
         id: api
         env:
@@ -77,7 +72,6 @@ jobs:
             echo "### Original-source news publisher paused" >> "$GITHUB_STEP_SUMMARY"
             echo "OPENAI_API_KEY is not configured." >> "$GITHUB_STEP_SUMMARY"
           fi
-
       - name: Discover latest package and publish from original source
         if: steps.api.outputs.enabled == 'true'
         id: news
@@ -100,7 +94,6 @@ jobs:
             echo "target_path=" >> "$GITHUB_OUTPUT"
           fi
           exit 0
-
       - name: Commit approved publication
         if: steps.news.outputs.published == 'true'
         env:
@@ -113,6 +106,9 @@ jobs:
           git config user.email "nextsolution-publisher[bot]@users.noreply.github.com"
           git add -- \
             "$TARGET_PATH" \
+            index.html \
+            tutorials.html \
+            tutorials/index.html \
             feed.xml \
             sitemap.xml \
             automation/published-articles.json \
@@ -124,12 +120,7 @@ jobs:
           echo "### Original-source article published" >> "$GITHUB_STEP_SUMMARY"
           echo "- Package: **$PACKAGE_ID $VERSION**" >> "$GITHUB_STEP_SUMMARY"
           echo "- Page: https://nextjailbreak.com/$TARGET_PATH" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Discovery feed cited publicly: **no**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Original developer/repository source required: **yes**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Package identity/version independently confirmed: **yes**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Unique original-source visual required: **yes**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Editorial quality target: **9/10**" >> "$GITHUB_STEP_SUMMARY"
-
+          echo "- Homepage/archive refresh committed: **yes**" >> "$GITHUB_STEP_SUMMARY"
       - name: Persist safe discovery state on no-op
         if: steps.api.outputs.enabled == 'true' && steps.news.outputs.published != 'true' && steps.news.outputs.reason != 'publisher-error'
         run: |
@@ -142,14 +133,9 @@ jobs:
               git push origin HEAD:main
             fi
           fi
-          echo "### Original-source news publisher" >> "$GITHUB_STEP_SUMMARY"
-          echo "No article was published." >> "$GITHUB_STEP_SUMMARY"
-          echo "Reason: **${{ steps.news.outputs.reason }}**" >> "$GITHUB_STEP_SUMMARY"
-
       - name: Fail after publisher error
         if: steps.api.outputs.enabled == 'true' && steps.news.outputs.reason == 'publisher-error'
         run: exit 1
-
       - name: Upload publisher log
         if: always()
         uses: actions/upload-artifact@v4
