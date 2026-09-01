@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "automation/published-articles.json"
-      - "automation/apply_site_category_fix.py"
+      - "automation/sync_editorial_indexes.py"
       - ".github/workflows/refresh-editorial-index.yml"
   workflow_dispatch:
 
@@ -23,7 +23,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Rebuild static homepage and article archives
-        run: python3 automation/apply_site_category_fix.py
+        run: python3 automation/sync_editorial_indexes.py
       - name: Commit synchronized editorial indexes
         run: |
           if git diff --quiet; then
@@ -32,7 +32,7 @@ jobs:
           fi
           git config user.name "nextsolution-content[bot]"
           git config user.email "nextsolution-content[bot]@users.noreply.github.com"
-          git add -- index.html tutorials.html tutorials/index.html automation/publisher.py assets/site-content.js
+          git add -- index.html tutorials.html tutorials/index.html
           git commit -m "Sync homepage and article archives with published content"
           git pull --rebase origin main
           git push origin HEAD:main
