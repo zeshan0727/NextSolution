@@ -1,6 +1,31 @@
 {
   "entries": [
     {
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
+      "description": "Regram for Instagram 6.0.1 updates compatibility with Instagram 443.1 and fixes Reels auto-advance, DM tracking, mark-seen controls, and iOS 14/15 action menus.",
+      "entry_type": "source-news",
+      "href": "regram-for-instagram-6-0-1-update/",
+      "image": "assets/articles/source-media/regram-for-instagram-6-0-1-update-b8658a3128.png",
+      "media_credit": "Source visual from github.com",
+      "media_source_url": "https://github.com/orgs/community/discussions",
+      "modified_at": "2026-09-01T13:38:03+00:00",
+      "name": "Regram for Instagram",
+      "package": "com.fouadraheb.regram",
+      "published_at": "2026-09-01T13:38:03+00:00",
+      "quality_target": 9,
+      "selection_pool": "ios-repo-discovery-original-source",
+      "source_name": "apt.fouadraheb.com",
+      "source_page_url": "https://apt.fouadraheb.com/Packages",
+      "source_url": "https://apt.fouadraheb.com/Packages",
+      "source_visual_origin": "og:image",
+      "source_visual_url": "https://github.githubassets.com/assets/github-mark-57519b92ca4e.png",
+      "title": "Regram for Instagram 6.0.1 Fixes Instagram 443.1 Issues and Repairs Reels, DMs, and iOS 14/15 Menus",
+      "version": "6.0.1"
+    },
+    {
       "article_sha256": "0e457587a238a9f7fc8c22f03e57925eae40ff676fc8ab19e8f3966c8ca30ab8",
       "candidate_fingerprint": "a231699794e46895971b27884c58e12bf1d9fb31e061a2f80ba54cd1c69b3948",
       "category": {
@@ -1417,8 +1442,17 @@
       "published_at": "2026-08-31T21:44:37+00:00",
       "run_id": "33442841097",
       "version": "1.9.14"
+    },
+    {
+      "action": "create",
+      "channel": "ios-repo-discovery-original-source",
+      "href": "regram-for-instagram-6-0-1-update/",
+      "package": "com.fouadraheb.regram",
+      "published_at": "2026-09-01T13:38:03+00:00",
+      "run_id": "33514503562",
+      "version": "6.0.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-31T21:44:37+00:00"
+  "updated_at": "2026-09-01T13:38:03+00:00"
 }

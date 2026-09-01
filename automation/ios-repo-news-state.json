@@ -6,12 +6,18 @@
       "reason": "resolved source does not independently identify the discovered package",
       "status": "failed"
     },
-    "https://www.ios-repo-updates.com/repository/havoc/package/com.chloe.physpringboard/": {
-      "checked_at": "2026-08-31T21:44:37+00:00",
-      "package": "com.chloe.physpringboard",
+    "https://www.ios-repo-updates.com/repository/fouad-s/package/com.fouadraheb.regram/": {
+      "checked_at": "2026-09-01T13:38:03+00:00",
+      "package": "com.fouadraheb.regram",
       "status": "published",
-      "target_path": "physpringboard-1-9-14-update/",
-      "version": "1.9.14"
+      "target_path": "regram-for-instagram-6-0-1-update/",
+      "version": "6.0.1"
+    },
+    "https://www.ios-repo-updates.com/repository/havoc/package/com.chloe.physpringboard/": {
+      "checked_at": "2026-09-01T13:38:03.706288+00:00",
+      "package": "com.chloe.physpringboard",
+      "reason": "stale discovery rejected: candidate 1.9.14 is older than original-source version 1.9.23",
+      "status": "failed"
     }
   },
   "events": [
@@ -55,6 +61,47 @@
       "package": "com.chloe.physpringboard",
       "target_path": "physpringboard-1-9-14-update/",
       "version": "1.9.14"
+    },
+    {
+      "action": "published",
+      "api": {
+        "verifier": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_011bcf450342676b016a96d5631c0887d0b0fd1cd6659dc7f9",
+          "usage": {
+            "input_tokens": 24431,
+            "input_tokens_details": {
+              "cache_write_tokens": 24428,
+              "cached_tokens": 0
+            },
+            "output_tokens": 387,
+            "output_tokens_details": {
+              "reasoning_tokens": 259
+            },
+            "total_tokens": 24818
+          }
+        },
+        "writer": {
+          "model": "gpt-5.6-luna",
+          "response_id": "resp_0300f4107c87d89f016a96d547a98c87d0a0bd7c9f2bda82ed",
+          "usage": {
+            "input_tokens": 22082,
+            "input_tokens_details": {
+              "cache_write_tokens": 22079,
+              "cached_tokens": 0
+            },
+            "output_tokens": 2629,
+            "output_tokens_details": {
+              "reasoning_tokens": 80
+            },
+            "total_tokens": 24711
+          }
+        }
+      },
+      "at": "2026-09-01T13:38:03+00:00",
+      "package": "com.fouadraheb.regram",
+      "target_path": "regram-for-instagram-6-0-1-update/",
+      "version": "6.0.1"
     }
   ],
   "schema_version": 1
