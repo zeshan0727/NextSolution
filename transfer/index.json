@@ -1,7 +1,20 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-30T13:02:00Z",
+  "updatedAt": "2026-09-02T10:26:00Z",
   "files": [
+    {
+      "id": "aspire-maintenance-1.1.4-dashboard-test",
+      "name": "Aspire Maintenance 1.1.4 — Dashboard Test",
+      "fileName": "AspireMaintenance-1.1.4-unsigned.ipa",
+      "type": "ipa",
+      "platform": "iOS 16+ / Test",
+      "version": "1.1.4 (7)",
+      "url": "https://nextjailbreak.com/transfer/files/AspireMaintenance/1.1.4/AspireMaintenance-1.1.4-unsigned.ipa",
+      "tipaUrl": "https://nextjailbreak.com/transfer/files/AspireMaintenance/1.1.4/AspireMaintenance-1.1.4.tipa",
+      "sha256": "502719e9a5245f50858339457fee12391b8591c1422f2d56006d117f73f7c5e9",
+      "sizeBytes": 2122978,
+      "notes": "Test build for the Aspire Maintenance dashboard redesign with six selectable dashboard styles and Monthly Visits Progress."
+    },
     {
       "id": "lockglyphtime-0.2.1-roothide",
       "name": "LockGlyphTime 0.2.1 RootHide",
