@@ -22,7 +22,9 @@ if [ "$STATE" = "running" ]; then
   echo "CURRENT_STAGE=$STAGE" >> "$GITHUB_ENV"
 fi
 
-STATUS_FILE="$RUNNER_TEMP/status-$REQUEST_ID.json"
+STAMP="$(date +%s%N)"
+STATUS_NAME="status-$REQUEST_ID-$STAMP.json"
+STATUS_FILE="$RUNNER_TEMP/$STATUS_NAME"
 python3 - "$REQUEST_ID" "$STATE" "$STAGE" "$MESSAGE" "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY" "$STATUS_FILE" <<'PY'
 import json, sys
 from datetime import datetime, timezone
@@ -39,4 +41,12 @@ with open(path, "w", encoding="utf-8") as f:
     json.dump(payload, f, separators=(",", ":"))
 PY
 
-gh release upload "$INBOX_TAG" "$STATUS_FILE" --clobber >/dev/null
+# Upload each status as an immutable snapshot. This avoids the brief BlobNotFound
+# window caused by `gh release upload --clobber` deleting and recreating one asset.
+gh release upload "$INBOX_TAG" "$STATUS_FILE" >/dev/null
+
+# Keep a legacy exact-name copy for older Next Signer builds. Failure here must not
+# affect the real signing job because current builds read the immutable snapshots.
+LEGACY_FILE="$RUNNER_TEMP/status-$REQUEST_ID.json"
+cp "$STATUS_FILE" "$LEGACY_FILE"
+gh release upload "$INBOX_TAG" "$LEGACY_FILE" --clobber >/dev/null 2>&1 || true
