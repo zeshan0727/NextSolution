@@ -23,7 +23,7 @@ class FakeResponse:
 
 class OpenAIClientTests(unittest.TestCase):
     def test_article_schema_enforces_deterministic_collection_limits(self) -> None:
-        self.assertEqual(ARTICLE_SCHEMA["properties"]["what_it_does"]["minItems"], 3)
+        self.assertEqual(ARTICLE_SCHEMA["properties"]["what_it_does"]["minItems"], 5)
         self.assertEqual(ARTICLE_SCHEMA["properties"]["faq"]["minItems"], 3)
         self.assertEqual(ARTICLE_SCHEMA["properties"]["youtube_chapters"]["maxItems"], 9)
         self.assertEqual(ARTICLE_SCHEMA["properties"]["youtube_title"]["maxLength"], 100)
