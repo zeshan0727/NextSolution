@@ -1,0 +1,36 @@
+name: AspireEmployee
+options:
+  bundleIdPrefix: com.nextsolution
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.7"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    SUPPORTS_MACCATALYST: "NO"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+  configs:
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      SWIFT_COMPILATION_MODE: wholemodule
+      ENABLE_TESTABILITY: "NO"
+targets:
+  AspireEmployee:
+    type: application
+    platform: iOS
+    sources:
+      - path: AspireEmployee
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.aspireemployee
+        PRODUCT_NAME: Aspire Employee
+        INFOPLIST_FILE: AspireEmployee/Info.plist
+        CODE_SIGN_ENTITLEMENTS: AspireEmployee/AspireEmployee.entitlements
+        GENERATE_INFOPLIST_FILE: "NO"
+    scheme:
+      shared: true
+      gatherCoverageData: false
