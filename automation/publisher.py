@@ -90,8 +90,8 @@ def _policy(site: dict[str, Any]) -> tuple[dict[str, Any], ZoneInfo]:
     publishing = site.get("publishing")
     if not isinstance(publishing, dict):
         raise PublishingError("site publishing policy is missing")
-    if publishing.get("max_per_day") != 3:
-        raise PublishingError("publishing.max_per_day must remain exactly 3 for the regular schedule")
+    if publishing.get("max_per_day") != 4:
+        raise PublishingError("publishing.max_per_day must remain exactly 4 for the regular six-hour schedule")
     windows = publishing.get("windows_local_hours")
     if (
         not isinstance(windows, list)
@@ -100,7 +100,7 @@ def _policy(site: dict[str, Any]) -> tuple[dict[str, Any], ZoneInfo]:
         or windows != sorted(set(windows))
     ):
         raise PublishingError(
-            "publishing.windows_local_hours must contain three unique sorted local hours"
+            "publishing.windows_local_hours must contain four unique sorted local hours"
         )
     if not isinstance(publishing.get("boost_max_per_day"), int) or not 1 <= publishing["boost_max_per_day"] <= 8:
         raise PublishingError("publishing.boost_max_per_day must be between 1 and 8")
