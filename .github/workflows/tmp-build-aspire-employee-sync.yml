@@ -1,0 +1,94 @@
+name: Temporary Build Aspire Employee Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/triggers/build-aspire-employee-sync.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/aspire-employee-sync
+
+      - name: Install XcodeGen
+        shell: bash
+        run: brew install xcodegen
+
+      - name: Build Aspire Maintenance 1.1.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd AspireMaintenance114Source
+          xcodegen generate
+          xcodebuild \
+            -project AspireMaintenance.xcodeproj \
+            -scheme AspireMaintenance \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/AspireAdmin" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package Aspire Maintenance 1.1.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/AspireAdmin/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' | head -n1)"
+          test -n "$APP_PATH"
+          rm -rf "$RUNNER_TEMP/admin-package"
+          mkdir -p "$RUNNER_TEMP/admin-package/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/admin-package/Payload/AspireMaintenance.app"
+          cd "$RUNNER_TEMP/admin-package"
+          /usr/bin/zip -qry "$RUNNER_TEMP/AspireMaintenance-1.1.5.tipa" Payload
+          unzip -t "$RUNNER_TEMP/AspireMaintenance-1.1.5.tipa" >/dev/null
+
+      - name: Build Aspire Employee 1.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd AspireEmployee
+          xcodegen generate
+          xcodebuild \
+            -project AspireEmployee.xcodeproj \
+            -scheme AspireEmployee \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/AspireEmployee" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package Aspire Employee 1.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/AspireEmployee/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' | head -n1)"
+          test -n "$APP_PATH"
+          rm -rf "$RUNNER_TEMP/employee-package"
+          mkdir -p "$RUNNER_TEMP/employee-package/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/employee-package/Payload/AspireEmployee.app"
+          cd "$RUNNER_TEMP/employee-package"
+          /usr/bin/zip -qry "$RUNNER_TEMP/AspireEmployee-1.0.0.tipa" Payload
+          unzip -t "$RUNNER_TEMP/AspireEmployee-1.0.0.tipa" >/dev/null
+
+      - name: Upload verified builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aspire-Employee-Sync-Builds
+          path: |
+            ${{ runner.temp }}/AspireMaintenance-1.1.5.tipa
+            ${{ runner.temp }}/AspireEmployee-1.0.0.tipa
+          if-no-files-found: error
+          retention-days: 30
