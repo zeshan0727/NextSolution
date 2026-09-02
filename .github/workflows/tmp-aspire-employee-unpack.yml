@@ -1,0 +1,50 @@
+name: Temporary Aspire Employee Source Unpack
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/triggers/aspire-employee-unpack.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_BRANCH: feature/aspire-employee-sync
+      SOURCE_BRANCH: agent/aspire-maintenance-1.1.4
+    steps:
+      - name: Checkout Aspire 1.1.4 source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Unpack archived Swift source and create working branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat AspireMaintenanceSourceChunks/part-* | base64 --decode > "$RUNNER_TEMP/aspire-source.zip"
+          rm -rf "$RUNNER_TEMP/unpacked"
+          mkdir -p "$RUNNER_TEMP/unpacked"
+          unzip -q "$RUNNER_TEMP/aspire-source.zip" -d "$RUNNER_TEMP/unpacked"
+          test -d "$RUNNER_TEMP/unpacked/AspireMaintenance"
+
+          git switch -C "$TARGET_BRANCH"
+          rm -rf AspireMaintenance114Source
+          mkdir -p AspireMaintenance114Source
+          cp -R "$RUNNER_TEMP/unpacked/AspireMaintenance/." AspireMaintenance114Source/
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add AspireMaintenance114Source
+          git commit -m 'Unpack Aspire Maintenance 1.1.4 source for employee sync'
+          git push --force-with-lease origin "$TARGET_BRANCH"
+
+      - name: Verify source files
+        shell: bash
+        run: |
+          find AspireMaintenance114Source -maxdepth 2 -type f -print | sort
