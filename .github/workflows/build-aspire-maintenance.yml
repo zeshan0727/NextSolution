@@ -1,11 +1,10 @@
-# source refresh for dashboard redesign
-name: Build Aspire Maintenance 1.1.3
+name: Build Aspire Maintenance 1.1.4
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - agent/aspire-maintenance-1.1.3
+      - agent/aspire-maintenance-1.1.4
     paths:
       - "AspireMaintenanceSourceChunks/**"
       - "AspireMaintenancePatchScript101/**"
@@ -13,12 +12,7 @@ on:
       - "AspireMaintenanceRelease110/**"
       - "AspireMaintenanceRelease112Final/**"
       - "AspireMaintenanceRelease113/**"
-      - ".github/workflows/build-aspire-maintenance.yml"
-  pull_request:
-    branches:
-      - agent/aspire-maintenance-1.1.3
-    paths:
-      - "AspireMaintenanceRelease113/**"
+      - "AspireMaintenanceRelease114/**"
       - ".github/workflows/build-aspire-maintenance.yml"
 
 permissions:
@@ -80,8 +74,19 @@ jobs:
           Path("/tmp/aspire113.patch").write_bytes(gzip.decompress(base64.b64decode(encoded)))
           PY
           patch --batch -p2 -d AspireMaintenance < /tmp/aspire113.patch
-          grep -q 'MARKETING_VERSION: "1.1.3"' AspireMaintenance/project.yml
-          grep -q 'CURRENT_PROJECT_VERSION: "6"' AspireMaintenance/project.yml
+
+      - name: Apply Aspire 1.1.4 dashboard redesign
+        run: |
+          cat AspireMaintenanceRelease114/part-* > /tmp/aspire114.b64
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+          encoded = Path("/tmp/aspire114.b64").read_text().strip()
+          Path("/tmp/aspire114.patch").write_bytes(gzip.decompress(base64.b64decode(encoded)))
+          PY
+          patch --batch -p2 -d AspireMaintenance < /tmp/aspire114.patch
+          grep -q 'MARKETING_VERSION: "1.1.4"' AspireMaintenance/project.yml
+          grep -q 'CURRENT_PROJECT_VERSION: "7"' AspireMaintenance/project.yml
 
       - name: Validate Swift syntax
         run: |
@@ -111,31 +116,35 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: AspireMaintenance-Compiler-Log-1.1.3
+          name: AspireMaintenance-Compiler-Log-1.1.4
           path: aspire-maintenance-build.log
           if-no-files-found: ignore
 
-      - name: Package unsigned IPA
+      - name: Package unsigned IPA and TIPA
         run: |
           APP_PATH="$(find build-aspire-maintenance/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
           test -n "$APP_PATH"
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          ditto -c -k --sequesterRsrc --keepParent Payload AspireMaintenance-1.1.3-unsigned.ipa
-          shasum -a 256 AspireMaintenance-1.1.3-unsigned.ipa > AspireMaintenance-1.1.3-unsigned.ipa.sha256
+          ditto -c -k --sequesterRsrc --keepParent Payload AspireMaintenance-1.1.4-unsigned.ipa
+          cp AspireMaintenance-1.1.4-unsigned.ipa AspireMaintenance-1.1.4.tipa
+          shasum -a 256 AspireMaintenance-1.1.4-unsigned.ipa > AspireMaintenance-1.1.4-unsigned.ipa.sha256
+          shasum -a 256 AspireMaintenance-1.1.4.tipa > AspireMaintenance-1.1.4.tipa.sha256
 
       - name: Package source
         run: |
           rm -rf AspireMaintenance/AspireMaintenance.xcodeproj
-          ditto -c -k --sequesterRsrc --keepParent AspireMaintenance AspireMaintenance-1.1.3-source.zip
+          ditto -c -k --sequesterRsrc --keepParent AspireMaintenance AspireMaintenance-1.1.4-source.zip
 
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: AspireMaintenance-1.1.3-Build
+          name: AspireMaintenance-1.1.4-Build
           path: |
-            AspireMaintenance-1.1.3-unsigned.ipa
-            AspireMaintenance-1.1.3-unsigned.ipa.sha256
-            AspireMaintenance-1.1.3-source.zip
+            AspireMaintenance-1.1.4-unsigned.ipa
+            AspireMaintenance-1.1.4-unsigned.ipa.sha256
+            AspireMaintenance-1.1.4.tipa
+            AspireMaintenance-1.1.4.tipa.sha256
+            AspireMaintenance-1.1.4-source.zip
           if-no-files-found: error
