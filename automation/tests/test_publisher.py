@@ -26,7 +26,7 @@ class PublisherTests(unittest.TestCase):
         cls.site = deepcopy(base_site)
         cls.site["base_url"] = "https://nextjailbreak.com"
         cls.site["publishing"]["enabled"] = True
-        cls.site["publishing"]["max_per_day"] = 3
+        cls.site["publishing"]["max_per_day"] = 4
         cls.site["publishing"]["timezone"] = "Asia/Qatar"
         cls.site["shortener"]["enabled"] = False
         cls.candidate = select_candidate(state, categories, cls.site)
@@ -135,9 +135,9 @@ class PublisherTests(unittest.TestCase):
         ready = preflight(self.site, audit, now=after_boost)
         self.assertTrue(ready.allowed)
         self.assertFalse(ready.boost_active)
-        self.assertEqual(ready.max_today, 3)
+        self.assertEqual(ready.max_today, 4)
 
-        audit["events"].append({"published_at": "2026-08-17T19:10:00+00:00"})
+        audit["events"].extend([{"published_at": "2026-08-17T15:10:00+00:00"}, {"published_at": "2026-08-17T19:10:00+00:00"}])
         blocked = preflight(self.site, audit, now=after_boost)
         self.assertFalse(blocked.allowed)
         self.assertEqual(blocked.reason, "publication-limit-reached")
@@ -162,8 +162,11 @@ class PublisherTests(unittest.TestCase):
         self.assertTrue(first_due.allowed)
 
         audit = self.empty_audit()
-        audit["events"].append(
-            {"action": "create", "published_at": "2026-08-26T03:12:00+00:00"}
+        audit["events"].extend(
+            [
+                {"action": "create", "published_at": "2026-08-26T00:12:00+00:00"},
+                {"action": "create", "published_at": "2026-08-26T03:12:00+00:00"},
+            ]
         )
         satisfied = preflight(
             self.site,
@@ -190,8 +193,8 @@ class PublisherTests(unittest.TestCase):
             now=before_first_window,
             trigger_schedule=self.site["publishing"]["normal_cron"],
         )
-        self.assertFalse(result.allowed)
-        self.assertEqual(result.reason, "no-publishing-window-due")
+        self.assertTrue(result.allowed)
+        self.assertEqual(result.reason, "ready")
 
     def test_preflight_does_not_count_existing_page_updates_as_new_posts(self) -> None:
         after_boost = datetime(2026, 8, 17, 20, 30, tzinfo=timezone.utc)
@@ -215,7 +218,7 @@ class PublisherTests(unittest.TestCase):
         ready = preflight(self.site, audit, now=after_boost)
         self.assertTrue(ready.allowed)
         self.assertEqual(ready.published_today, 0)
-        self.assertEqual(ready.max_today, 3)
+        self.assertEqual(ready.max_today, 4)
 
     def test_publish_writes_article_cards_feed_sitemap_and_audit(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
