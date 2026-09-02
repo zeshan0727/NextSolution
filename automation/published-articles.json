@@ -5,7 +5,7 @@
         "id": "system-utilities",
         "label": "System & Utilities"
       },
-      "description": "Regram for Instagram 6.1 updates compatibility for Instagram 445, adds original-resolution photo downloads, confirmation prompts, download browsing and bulk call-rec",
+      "description": "Regram for Instagram 6.1 updates compatibility for Instagram 445, adds original-resolution photo downloads, confirmation prompts.",
       "entry_type": "source-news",
       "href": "regram-for-instagram-6-1-update/",
       "image": "assets/articles/source-media/regram-for-instagram-6-1-update-f324ecea6a.png",
@@ -275,7 +275,7 @@
         "id": "system-utilities",
         "label": "System & Utilities"
       },
-      "description": "SetupManager 1.2 by Mysteryexe is listed as a System & Utilities tweak for importing and exporting your own setups. Review its architectures and dependencies before,",
+      "description": "SetupManager 1.2 by Mysteryexe is listed as a System & Utilities tweak for importing and exporting your own setups. Review its architectures and dependencies before,.",
       "href": "setupmanager-tweak.html",
       "image": "https://media.havoc.app/69a2927d8a1a1189920b5c27",
       "media_credit": "SetupManager official package listing",
@@ -392,7 +392,7 @@
         "id": "system-utilities",
         "label": "System & Utilities"
       },
-      "description": "AniTime 1.0.3 is a package described as displaying animated anime characters as clock digits. Review its package details, architectures, dependency, and listed setup",
+      "description": "AniTime 1.0.3 is a package described as displaying animated anime characters as clock digits. Review its package details, architectures, dependency, and listed setup.",
       "href": "anitime-tweak.html",
       "image": "https://media.havoc.app/67eaef0bcbcf7b7e971e0233",
       "media_credit": "AniTime official package listing",
@@ -531,7 +531,7 @@
         "id": "jailbreak",
         "label": "Jailbreak"
       },
-      "description": "Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and",
+      "description": "Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and.",
       "entry_type": "cluster",
       "href": "dopamine-3-vs-dopamine-2.html",
       "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
@@ -651,7 +651,7 @@
         "id": "media",
         "label": "Media"
       },
-      "description": "NextUp 3 v1.1.2 lists upcoming-track display and skip controls for Apple Music, Apple Podcasts, YouTube, YouTube Music, and Spotify across three now-playing UI areas",
+      "description": "NextUp 3 v1.1.2 lists upcoming-track display and skip controls for Apple Music, Apple Podcasts, YouTube, YouTube Music, and Spotify across three now-playing UI areas.",
       "href": "nextup-3-tweak.html",
       "image": "https://media.havoc.app/6a76e7680cb765625f224503",
       "media_credit": "NextUp 3 official Havoc listing",
