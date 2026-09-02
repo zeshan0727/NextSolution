@@ -11,6 +11,7 @@ on:
       - "automation/ios_repo_news.json"
       - "automation/tests/test_ios_repo_news.py"
       - "automation/source_visuals.py"
+      - "automation/sync_editorial_indexes.py"
       - ".github/workflows/ios-repo-original-source-news.yml"
   schedule:
     - cron: "30 8 * * *"
@@ -22,6 +23,7 @@ on:
       - "automation/ios_repo_news.json"
       - "automation/tests/test_ios_repo_news.py"
       - "automation/source_visuals.py"
+      - "automation/sync_editorial_indexes.py"
       - ".github/workflows/ios-repo-original-source-news.yml"
 
 permissions:
@@ -42,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Compile publisher
         run: |
-          python3 -m py_compile automation/ios_repo_news.py automation/ios_repo_news_hardened.py automation/source_visuals.py automation/publisher.py automation/openai_api.py
+          python3 -m py_compile automation/ios_repo_news.py automation/ios_repo_news_hardened.py automation/source_visuals.py automation/publisher.py automation/openai_api.py automation/sync_editorial_indexes.py
       - name: Run original-source news tests
         run: |
           python3 -m unittest automation.tests.test_ios_repo_news -v
@@ -94,6 +96,12 @@ jobs:
             echo "target_path=" >> "$GITHUB_OUTPUT"
           fi
           exit 0
+      - name: Synchronize public editorial indexes
+        if: steps.news.outputs.published == 'true'
+        run: |
+          python3 automation/sync_editorial_indexes.py
+          test -n "${{ steps.news.outputs.target_path }}"
+          grep -q "${{ steps.news.outputs.target_path }}" index.html
       - name: Commit approved publication
         if: steps.news.outputs.published == 'true'
         env:
