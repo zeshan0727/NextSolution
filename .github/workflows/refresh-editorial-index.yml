@@ -30,20 +30,23 @@ jobs:
           sed -i 's/contain three unique sorted local hours/contain four unique sorted local hours/' automation/publisher.py
           sed -i 's/cls.site\["publishing"\]\["max_per_day"\] = 3/cls.site["publishing"]["max_per_day"] = 4/' automation/tests/test_publisher.py
           sed -i 's/self.assertEqual(ready.max_today, 3)/self.assertEqual(ready.max_today, 4)/g' automation/tests/test_publisher.py
-          python3 -c "from pathlib import Path; p=Path('automation/tests/test_publisher.py'); s=p.read_text(); s=s.replace('audit[\"events\"].append({\"published_at\": \"2026-08-17T19:10:00+00:00\"})\n        blocked = preflight(self.site, audit, now=after_boost)','audit[\"events\"].extend([{\"published_at\": \"2026-08-17T15:10:00+00:00\"}, {\"published_at\": \"2026-08-17T19:10:00+00:00\"}])\n        blocked = preflight(self.site, audit, now=after_boost)',1); s=s.replace('audit[\"events\"].append(\n            {\"action\": \"create\", \"published_at\": \"2026-08-26T03:12:00+00:00\"}\n        )','audit[\"events\"].extend(\n            [\n                {\"action\": \"create\", \"published_at\": \"2026-08-26T00:12:00+00:00\"},\n                {\"action\": \"create\", \"published_at\": \"2026-08-26T03:12:00+00:00\"},\n            ]\n        )',1); s=s.replace('self.assertFalse(result.allowed)\n        self.assertEqual(result.reason, \"no-publishing-window-due\")','self.assertTrue(result.allowed)\n        self.assertEqual(result.reason, \"ready\")',1); p.write_text(s)"
           python3 -m py_compile automation/publisher.py automation/tests/test_publisher.py
           python3 -m unittest automation.tests.test_publisher -v
-      - name: Rebuild static homepage and article archives
-        run: python3 automation/sync_editorial_indexes.py
-      - name: Commit synchronized editorial indexes and publisher repair
+      - name: Rebuild and quality-clean public editorial indexes
+        run: |
+          python3 automation/sync_editorial_indexes.py
+          grep -q 'regram-for-instagram-6-1-update' index.html
+          ! grep -q 'release-</p>' index.html
+          test "$(grep -o 'https://nextjailbreak.com/nextlock-tweak/' index.html | wc -l)" -le 2
+      - name: Commit synchronized editorial indexes and quality cleanup
         run: |
           if git diff --quiet; then
-            echo "Editorial indexes and publisher policy already synchronized."
+            echo "Editorial indexes already synchronized."
             exit 0
           fi
           git config user.name "nextsolution-content[bot]"
           git config user.email "nextsolution-content[bot]@users.noreply.github.com"
-          git add -- index.html tutorials.html tutorials/index.html automation/publisher.py automation/tests/test_publisher.py
-          git commit -m "Align publisher tests with four Qatar windows"
+          git add -- index.html tutorials.html tutorials/index.html automation/published-articles.json automation/publisher.py automation/tests/test_publisher.py
+          git commit -m "Sync latest articles and clean editorial indexes"
           git pull --rebase origin main
           git push origin HEAD:main
