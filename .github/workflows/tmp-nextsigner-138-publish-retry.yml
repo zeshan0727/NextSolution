@@ -1,0 +1,48 @@
+name: Temporary Next Signer 1.3.8 Publish Retry
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  actions: write
+  issues: write
+  contents: read
+
+jobs:
+  retry:
+    if: github.event.issue.title == '[NEXTSIGNER-1.3.8-PUBLISH-RETRY]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - name: Dispatch current publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          BEFORE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow publish-nextsigner-transfer.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run publish-nextsigner-transfer.yml --repo "$GITHUB_REPOSITORY" --ref main -f version='1.3.8'
+          RUN_ID=''
+          for attempt in $(seq 1 30); do
+            CANDIDATE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow publish-nextsigner-transfer.yml --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [ "$CANDIDATE" != "0" ] && [ "$CANDIDATE" != "$BEFORE" ]; then RUN_ID="$CANDIDATE"; break; fi
+            sleep 2
+          done
+          test -n "$RUN_ID" || exit 1
+          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_8_RETRY_STARTED run=$RUN_ID"
+
+      - name: Wait for publisher
+        shell: bash
+        run: gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 6
+
+      - name: Report success
+        if: success()
+        shell: bash
+        run: gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_8_RETRY_PUBLISHED run=$RUN_ID"
+
+      - name: Report failure
+        if: failure()
+        shell: bash
+        run: gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "NEXTSIGNER_1_3_8_RETRY_FAILED run=${RUN_ID:-unknown}"
