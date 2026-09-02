@@ -150,6 +150,8 @@ struct CustomersView: View {
         guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return store.customers }
         return store.customers.filter {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
+            ($0.villaNumber ?? "").localizedCaseInsensitiveContains(searchText) ||
+            ($0.area ?? "").localizedCaseInsensitiveContains(searchText) ||
             $0.email.localizedCaseInsensitiveContains(searchText) ||
             $0.phone.localizedCaseInsensitiveContains(searchText)
         }
@@ -204,6 +206,14 @@ struct CustomerRow: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(customer.name).font(.headline)
+                if !(customer.villaNumber ?? "").isEmpty || !(customer.area ?? "").isEmpty {
+                    Text([
+                        (customer.villaNumber ?? "").isEmpty ? nil : "Villa \(customer.villaNumber ?? "")",
+                        (customer.area ?? "").isEmpty ? nil : customer.area
+                    ].compactMap { $0 }.joined(separator: " • "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Text(customer.email.isEmpty ? customer.phone : customer.email)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -263,6 +273,8 @@ struct CustomerDetailView: View {
 
                         VStack(alignment: .leading, spacing: 10) {
                             SectionHeader(title: "Contact & Site", subtitle: nil)
+                            LabeledValue(icon: "house.fill", value: (customer.villaNumber ?? "").isEmpty ? "Villa number not set" : "Villa \(customer.villaNumber ?? "")")
+                            LabeledValue(icon: "map.fill", value: (customer.area ?? "").isEmpty ? "Area not set" : (customer.area ?? ""))
                             LabeledValue(icon: "mappin.and.ellipse", value: customer.address.isEmpty ? "No address" : customer.address)
                             LabeledValue(icon: "phone.fill", value: customer.phone.isEmpty ? "No phone" : customer.phone)
                             LabeledValue(icon: "envelope.fill", value: customer.email.isEmpty ? "No email" : customer.email)
@@ -342,6 +354,8 @@ struct CustomerEditorView: View {
 
     @State private var name = ""
     @State private var address = ""
+    @State private var villaNumber = ""
+    @State private var area = ""
     @State private var email = ""
     @State private var phone = ""
     @State private var monthlyRate = 0.0
@@ -354,6 +368,8 @@ struct CustomerEditorView: View {
             Form {
                 Section("Customer") {
                     TextField("Customer name", text: $name)
+                    TextField("Villa number", text: $villaNumber)
+                    TextField("Area", text: $area)
                     TextField("Site address", text: $address, axis: .vertical).lineLimit(2...4)
                     TextField("Email", text: $email).textInputAutocapitalization(.never).keyboardType(.emailAddress)
                     TextField("Phone", text: $phone).keyboardType(.phonePad)
@@ -379,6 +395,8 @@ struct CustomerEditorView: View {
                 guard let existing else { return }
                 name = existing.name
                 address = existing.address
+                villaNumber = existing.villaNumber ?? ""
+                area = existing.area ?? ""
                 email = existing.email
                 phone = existing.phone
                 monthlyRate = existing.monthlyRate
@@ -394,6 +412,8 @@ struct CustomerEditorView: View {
             id: existing?.id ?? UUID(),
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
             address: address.trimmingCharacters(in: .whitespacesAndNewlines),
+            villaNumber: villaNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : villaNumber.trimmingCharacters(in: .whitespacesAndNewlines),
+            area: area.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : area.trimmingCharacters(in: .whitespacesAndNewlines),
             email: email.trimmingCharacters(in: .whitespacesAndNewlines),
             phone: phone.trimmingCharacters(in: .whitespacesAndNewlines),
             monthlyRate: max(0, monthlyRate),

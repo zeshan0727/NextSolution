@@ -47,6 +47,8 @@ struct Customer: Identifiable, Codable, Hashable {
     var id: UUID = UUID()
     var name: String
     var address: String
+    var villaNumber: String? = nil
+    var area: String? = nil
     var email: String
     var phone: String
     var monthlyRate: Double

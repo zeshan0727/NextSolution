@@ -1,6 +1,6 @@
 name: AspireMaintenance
 options:
-  bundleIdPrefix: com.aspiregroup
+  bundleIdPrefix: com.nextsolution
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
@@ -11,8 +11,8 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     SUPPORTS_MACCATALYST: "NO"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.1.5"
+    CURRENT_PROJECT_VERSION: "8"
   configs:
     Release:
       SWIFT_OPTIMIZATION_LEVEL: "-O"
@@ -30,9 +30,10 @@ targets:
           - Scripts
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.aspiregroup.maintenance
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.aspire
         PRODUCT_NAME: Aspire Maintenance
         INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: AspireMaintenance.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         GENERATE_INFOPLIST_FILE: "NO"
