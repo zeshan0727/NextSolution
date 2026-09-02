@@ -30,7 +30,7 @@
         "id": "system-utilities",
         "label": "System & Utilities"
       },
-      "description": "HelloKeyboardAI 2.1.0-1 is listed as an iPhoneOS ARM tweak with keyboard, copy, and screenshot AI actions. Review its documented features, dependencies, and release-",
+      "description": "HelloKeyboardAI 2.1.0-1 is listed as an iPhoneOS ARM tweak with keyboard, copy, and screenshot AI actions.",
       "entry_type": "source-news",
       "href": "hellokeyboardai-2-1-0-1-update/",
       "image": "assets/articles/source-media/hellokeyboardai-2-1-0-1-update-205ba79a45.png",
@@ -531,7 +531,7 @@
         "id": "jailbreak",
         "label": "Jailbreak"
       },
-      "description": "Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and ",
+      "description": "Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and",
       "entry_type": "cluster",
       "href": "dopamine-3-vs-dopamine-2.html",
       "image": "assets/articles/dopamine-3-ios-17-6-1-hero.jpg",
