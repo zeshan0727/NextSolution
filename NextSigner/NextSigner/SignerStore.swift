@@ -25,11 +25,22 @@ final class SignerStore: ObservableObject {
     private var duplicateBaseName: String?
 
     init() {
+        let defaults = UserDefaults.standard
+        let savedOwner = defaults.string(forKey: "githubOwner") ?? "zeshan0727"
+        let savedRepository = defaults.string(forKey: "githubRepository") ?? "NextJailbreak"
+        let migratedRepository = savedRepository.caseInsensitiveCompare("NextSolution") == .orderedSame
+            ? "NextJailbreak"
+            : savedRepository
+
+        if migratedRepository != savedRepository {
+            defaults.set(migratedRepository, forKey: "githubRepository")
+        }
+
         configuration = GitHubConfiguration(
-            owner: UserDefaults.standard.string(forKey: "githubOwner") ?? "zeshan0727",
-            repository: UserDefaults.standard.string(forKey: "githubRepository") ?? "NextSolution",
-            branch: UserDefaults.standard.string(forKey: "githubBranch") ?? "main",
-            workflowFile: UserDefaults.standard.string(forKey: "githubWorkflow") ?? "nextsigner-sign-publish.yml"
+            owner: savedOwner,
+            repository: migratedRepository,
+            branch: defaults.string(forKey: "githubBranch") ?? "main",
+            workflowFile: defaults.string(forKey: "githubWorkflow") ?? "nextsigner-sign-publish.yml"
         )
         let stored = KeychainStore.load(account: tokenAccount) ?? ""
         token = stored
@@ -295,8 +306,6 @@ final class SignerStore: ObservableObject {
             case .cleanOldVersions:
                 libraryMessage = "Cleanup requested for \(app.name). GitHub will keep the current build and remove older R2 versions."
             case .deleteApp:
-                // Remove immediately from the visible list, then verify against the repository
-                // catalog until the background workflow has committed the deletion.
                 libraryApps.removeAll { $0.id == app.id }
                 libraryMessage = "Deleting \(app.name)… waiting for GitHub and Cloudflare R2."
 
