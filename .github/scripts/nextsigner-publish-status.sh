@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# files.nextjailbreak.com is not yet configured in Cloudflare DNS/R2 custom domains.
+# Override the workflow-level value at runtime so signing/publish steps use the
+# existing public R2 hostname that currently resolves and serves this bucket.
+if [ -n "${GITHUB_ENV:-}" ]; then
+  echo "R2_PUBLIC_BASE=https://files.nextsolution.cc" >> "$GITHUB_ENV"
+fi
+
 STATE="${1:-running}"
 STAGE="${2:-Unknown}"
 MESSAGE="${3:-Working}"
