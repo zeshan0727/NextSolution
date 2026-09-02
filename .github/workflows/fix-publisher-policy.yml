@@ -21,6 +21,7 @@ jobs:
       - name: Patch policy
         shell: bash
         run: |
+          echo "Applying four-window Qatar publisher policy"
           sed -i 's/max_per_day") != 3/max_per_day") != 4/' automation/publisher.py
           sed -i 's/must remain exactly 3 for the regular schedule/must remain exactly 4 for the regular six-hour schedule/' automation/publisher.py
           sed -i 's/contain three unique sorted local hours/contain four unique sorted local hours/' automation/publisher.py
