@@ -5,6 +5,31 @@
         "id": "system-utilities",
         "label": "System & Utilities"
       },
+      "description": "Regram for Instagram 6.1 updates compatibility for Instagram 445, adds original-resolution photo downloads, confirmation prompts, download browsing and bulk call-rec",
+      "entry_type": "source-news",
+      "href": "regram-for-instagram-6-1-update/",
+      "image": "assets/articles/source-media/regram-for-instagram-6-1-update-f324ecea6a.png",
+      "media_credit": "Source visual from github.com",
+      "media_source_url": "https://github.com/orgs/community/discussions",
+      "modified_at": "2026-09-02T12:55:04+00:00",
+      "name": "Regram for Instagram",
+      "package": "com.fouadraheb.regram",
+      "published_at": "2026-09-02T12:55:04+00:00",
+      "quality_target": 9,
+      "selection_pool": "ios-repo-discovery-original-source",
+      "source_name": "apt.fouadraheb.com",
+      "source_page_url": "https://apt.fouadraheb.com/Packages",
+      "source_url": "https://apt.fouadraheb.com/Packages",
+      "source_visual_origin": "og:image",
+      "source_visual_url": "https://github.githubassets.com/assets/github-octocat-13c86b8b336d.png",
+      "title": "Regram for Instagram 6.1 Adds Original Photo Downloads and Safer Feed Controls",
+      "version": "6.1"
+    },
+    {
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
       "description": "HelloKeyboardAI 2.1.0-1 is listed as an iPhoneOS ARM tweak with keyboard, copy, and screenshot AI actions. Review its documented features, dependencies, and release-",
       "entry_type": "source-news",
       "href": "hellokeyboardai-2-1-0-1-update/",
@@ -1485,8 +1510,17 @@
       "published_at": "2026-09-01T19:45:43+00:00",
       "run_id": "33551339279",
       "version": "2.1.0-1"
+    },
+    {
+      "action": "create",
+      "channel": "ios-repo-discovery-original-source",
+      "href": "regram-for-instagram-6-1-update/",
+      "package": "com.fouadraheb.regram",
+      "published_at": "2026-09-02T12:55:04+00:00",
+      "run_id": "33632589889",
+      "version": "6.1"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-09-01T19:45:43+00:00"
+  "updated_at": "2026-09-02T12:55:04+00:00"
 }

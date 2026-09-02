@@ -6,6 +6,14 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Regram for Instagram 6.1 Adds Original Photo Downloads and Safer Feed Controls</title>
+      <link>https://nextjailbreak.com/regram-for-instagram-6-1-update/</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/regram-for-instagram-6-1-update/</guid>
+      <pubDate>Wed, 02 Sep 2026 12:55:04 GMT</pubDate>
+      <description>Regram for Instagram 6.1 updates compatibility for Instagram 445, adds original-resolution photo downloads, confirmation prompts, download browsing and bulk call-rec</description>
+      <category>System &amp; Utilities</category>
+    </item>
+    <item>
       <title>HelloKeyboardAI 2.1.0-1: Documented AI Triggers, Dependencies, and Version Caveats</title>
       <link>https://nextjailbreak.com/hellokeyboardai-2-1-0-1-update/</link>
       <guid isPermaLink="true">https://nextjailbreak.com/hellokeyboardai-2-1-0-1-update/</guid>
@@ -235,14 +243,6 @@
       <guid isPermaLink="true">https://nextjailbreak.com/ifetch-tweak.html</guid>
       <pubDate>Wed, 19 Aug 2026 03:42:29 GMT</pubDate>
       <description>Explore iFetch 6.0.0, an iPhoneOS arm64 package offering system diagnostics, process monitoring, and CLI fetch for supported rootless and RootHide jailbreak devices.</description>
-      <category>System &amp; Utilities</category>
-    </item>
-    <item>
-      <title>Crane Lite 1.3.18-2: Multiple Containers for One Application</title>
-      <link>https://nextjailbreak.com/crane-lite-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/crane-lite-tweak.html</guid>
-      <pubDate>Tue, 18 Aug 2026 03:40:24 GMT</pubDate>
-      <description>Learn what Crane Lite 1.3.18-2 lists, including its description, architectures, dependencies, and the checks to complete before installation.</description>
       <category>System &amp; Utilities</category>
     </item>
   </channel>
