@@ -50,3 +50,5 @@ jobs:
           git commit -m "Sync latest articles and clean editorial indexes"
           git pull --rebase origin main
           git push origin HEAD:main
+
+# Manual repair trigger: 2026-09-02T18:25+03:00
