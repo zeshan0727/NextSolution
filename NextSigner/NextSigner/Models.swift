@@ -29,7 +29,7 @@ struct SignRequest: Equatable {
 
 struct GitHubConfiguration: Equatable {
     var owner: String = "zeshan0727"
-    var repository: String = "NextSolution"
+    var repository: String = "NextJailbreak"
     var branch: String = "main"
     var workflowFile: String = "nextsigner-sign-publish.yml"
 
