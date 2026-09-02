@@ -1,0 +1,40 @@
+name: Fix publisher policy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/fix-publisher-policy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch policy
+        shell: bash
+        run: |
+          sed -i 's/max_per_day") != 3/max_per_day") != 4/' automation/publisher.py
+          sed -i 's/must remain exactly 3 for the regular schedule/must remain exactly 4 for the regular six-hour schedule/' automation/publisher.py
+          sed -i 's/contain three unique sorted local hours/contain four unique sorted local hours/' automation/publisher.py
+          python3 -m py_compile automation/publisher.py
+          grep -F 'max_per_day") != 4' automation/publisher.py
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "nextsolution-schedule[bot]"
+          git config user.email "nextsolution-schedule[bot]@users.noreply.github.com"
+          git add automation/publisher.py
+          git commit -m "Allow four daily publishing windows"
+          git pull --rebase origin main
+          git push origin HEAD:main
