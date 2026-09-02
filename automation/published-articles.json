@@ -5,6 +5,31 @@
         "id": "system-utilities",
         "label": "System & Utilities"
       },
+      "description": "Rocket for Instagram 4.15.0 adds a Safari extension for opening Instagram web links in the sideloaded app, alongside fixes for DMs, the tab bar, and Stories.",
+      "entry_type": "source-news",
+      "href": "rocket-for-instagram-3-8-38-update/",
+      "image": "assets/articles/source-media/rocket-for-instagram-3-8-38-update-6dd0c74c1f.jpg",
+      "media_credit": "Source visual from apt.getrocketapp.io",
+      "media_source_url": "https://apt.getrocketapp.io/depiction/4EYOXC",
+      "modified_at": "2026-09-02T15:32:01+00:00",
+      "name": "Rocket for Instagram",
+      "package": "me.alfhaily.rocket",
+      "published_at": "2026-09-02T15:32:01+00:00",
+      "quality_target": 9,
+      "selection_pool": "ios-repo-discovery-original-source",
+      "source_name": "apt.getrocketapp.io",
+      "source_page_url": "https://apt.getrocketapp.io/Packages",
+      "source_url": "https://apt.getrocketapp.io/Packages",
+      "source_visual_origin": "og:image",
+      "source_visual_url": "https://getrocketapp.io/assets/optimized/rocket-social-banner.jpg",
+      "title": "Rocket for Instagram 4.15.0 Adds Safari “Open in” Support for Sideloaded Builds",
+      "version": "3.8.38"
+    },
+    {
+      "category": {
+        "id": "system-utilities",
+        "label": "System & Utilities"
+      },
       "description": "Regram for Instagram 6.1 updates compatibility for Instagram 445, adds original-resolution photo downloads, confirmation prompts.",
       "entry_type": "source-news",
       "href": "regram-for-instagram-6-1-update/",
@@ -1519,8 +1544,17 @@
       "published_at": "2026-09-02T12:55:04+00:00",
       "run_id": "33632589889",
       "version": "6.1"
+    },
+    {
+      "action": "create",
+      "channel": "ios-repo-discovery-original-source",
+      "href": "rocket-for-instagram-3-8-38-update/",
+      "package": "me.alfhaily.rocket",
+      "published_at": "2026-09-02T15:32:01+00:00",
+      "run_id": "33649093694",
+      "version": "3.8.38"
     }
   ],
   "schema_version": 1,
-  "updated_at": "2026-09-02T12:55:04+00:00"
+  "updated_at": "2026-09-02T15:32:01+00:00"
 }

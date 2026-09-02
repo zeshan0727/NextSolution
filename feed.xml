@@ -6,11 +6,19 @@
     <description>Verified-source jailbreak tweak information and Next Jailbreak guides.</description>
     <language>en</language>
     <item>
+      <title>Rocket for Instagram 4.15.0 Adds Safari “Open in” Support for Sideloaded Builds</title>
+      <link>https://nextjailbreak.com/rocket-for-instagram-3-8-38-update/</link>
+      <guid isPermaLink="true">https://nextjailbreak.com/rocket-for-instagram-3-8-38-update/</guid>
+      <pubDate>Wed, 02 Sep 2026 15:32:01 GMT</pubDate>
+      <description>Rocket for Instagram 4.15.0 adds a Safari extension for opening Instagram web links in the sideloaded app, alongside fixes for DMs, the tab bar, and Stories.</description>
+      <category>System &amp; Utilities</category>
+    </item>
+    <item>
       <title>Regram for Instagram 6.1 Adds Original Photo Downloads and Safer Feed Controls</title>
       <link>https://nextjailbreak.com/regram-for-instagram-6-1-update/</link>
       <guid isPermaLink="true">https://nextjailbreak.com/regram-for-instagram-6-1-update/</guid>
       <pubDate>Wed, 02 Sep 2026 12:55:04 GMT</pubDate>
-      <description>Regram for Instagram 6.1 updates compatibility for Instagram 445, adds original-resolution photo downloads, confirmation prompts, download browsing and bulk call-rec</description>
+      <description>Regram for Instagram 6.1 updates compatibility for Instagram 445, adds original-resolution photo downloads, confirmation prompts.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
@@ -18,7 +26,7 @@
       <link>https://nextjailbreak.com/hellokeyboardai-2-1-0-1-update/</link>
       <guid isPermaLink="true">https://nextjailbreak.com/hellokeyboardai-2-1-0-1-update/</guid>
       <pubDate>Tue, 01 Sep 2026 19:45:43 GMT</pubDate>
-      <description>HelloKeyboardAI 2.1.0-1 is listed as an iPhoneOS ARM tweak with keyboard, copy, and screenshot AI actions. Review its documented features, dependencies, and release-</description>
+      <description>HelloKeyboardAI 2.1.0-1 is listed as an iPhoneOS ARM tweak with keyboard, copy, and screenshot AI actions.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
@@ -98,7 +106,7 @@
       <link>https://nextjailbreak.com/setupmanager-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/setupmanager-tweak.html</guid>
       <pubDate>Sat, 29 Aug 2026 15:12:09 GMT</pubDate>
-      <description>SetupManager 1.2 by Mysteryexe is listed as a System &amp; Utilities tweak for importing and exporting your own setups. Review its architectures and dependencies before,</description>
+      <description>SetupManager 1.2 by Mysteryexe is listed as a System &amp; Utilities tweak for importing and exporting your own setups. Review its architectures and dependencies before,.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
@@ -138,7 +146,7 @@
       <link>https://nextjailbreak.com/anitime-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/anitime-tweak.html</guid>
       <pubDate>Thu, 27 Aug 2026 03:29:31 GMT</pubDate>
-      <description>AniTime 1.0.3 is a package described as displaying animated anime characters as clock digits. Review its package details, architectures, dependency, and listed setup</description>
+      <description>AniTime 1.0.3 is a package described as displaying animated anime characters as clock digits. Review its package details, architectures, dependency, and listed setup.</description>
       <category>System &amp; Utilities</category>
     </item>
     <item>
@@ -186,7 +194,7 @@
       <link>https://nextjailbreak.com/dopamine-3-vs-dopamine-2.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/dopamine-3-vs-dopamine-2.html</guid>
       <pubDate>Mon, 24 Aug 2026 15:33:22 GMT</pubDate>
-      <description>Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and </description>
+      <description>Compare the documented Dopamine 3 and Dopamine 2 compatibility ranges by iOS version, architecture, and chip family, including the limits of arm64e, arm64, A12, and.</description>
       <category>Jailbreak</category>
     </item>
     <item>
@@ -226,7 +234,7 @@
       <link>https://nextjailbreak.com/nextup-3-tweak.html</link>
       <guid isPermaLink="true">https://nextjailbreak.com/nextup-3-tweak.html</guid>
       <pubDate>Fri, 21 Aug 2026 03:47:10 GMT</pubDate>
-      <description>NextUp 3 v1.1.2 lists upcoming-track display and skip controls for Apple Music, Apple Podcasts, YouTube, YouTube Music, and Spotify across three now-playing UI areas</description>
+      <description>NextUp 3 v1.1.2 lists upcoming-track display and skip controls for Apple Music, Apple Podcasts, YouTube, YouTube Music, and Spotify across three now-playing UI areas.</description>
       <category>Media</category>
     </item>
     <item>
@@ -236,14 +244,6 @@
       <pubDate>Wed, 19 Aug 2026 15:46:56 GMT</pubDate>
       <description>Review the documented Dopamine 3 compatibility ranges for arm64e, A12/A13, and arm64 devices, including the separate A12/A13 iOS 26 range.</description>
       <category>Jailbreak</category>
-    </item>
-    <item>
-      <title>iFetch 6.0.0: System Diagnostics and CLI Fetch for iOS 14–17 Jailbreak Devices</title>
-      <link>https://nextjailbreak.com/ifetch-tweak.html</link>
-      <guid isPermaLink="true">https://nextjailbreak.com/ifetch-tweak.html</guid>
-      <pubDate>Wed, 19 Aug 2026 03:42:29 GMT</pubDate>
-      <description>Explore iFetch 6.0.0, an iPhoneOS arm64 package offering system diagnostics, process monitoring, and CLI fetch for supported rootless and RootHide jailbreak devices.</description>
-      <category>System &amp; Utilities</category>
     </item>
   </channel>
 </rss>
