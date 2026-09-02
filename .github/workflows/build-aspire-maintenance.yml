@@ -23,7 +23,7 @@ on:
       - "AspireMaintenanceBuildTrigger114/**"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -155,3 +155,98 @@ jobs:
             AspireMaintenance-1.1.4.tipa.sha256
             AspireMaintenance-1.1.4-source.zip
           if-no-files-found: error
+
+      - name: Publish Aspire 1.1.4 to NS Transfer
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ASSET="aspiremaintenance-1-1-4-1.1.4-7.ipa"
+          cp AspireMaintenance-1.1.4-unsigned.ipa "$ASSET"
+          if ! gh release view private-apps >/dev/null 2>&1; then
+            gh release create private-apps --title "Private Apps" --notes "Private app builds used by NS Transfer"
+          fi
+          gh release upload private-apps "$ASSET" --clobber
+
+          git fetch origin main
+          git checkout -B ns-transfer-publish origin/main
+          mkdir -p install/manifests
+          cat > install/manifests/aspiremaintenance-1-1-4.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>items</key>
+            <array>
+              <dict>
+                <key>assets</key>
+                <array>
+                  <dict>
+                    <key>kind</key>
+                    <string>software-package</string>
+                    <key>url</key>
+                    <string>https://github.com/zeshan0727/NextJailbreak/releases/download/private-apps/aspiremaintenance-1-1-4-1.1.4-7.ipa</string>
+                  </dict>
+                </array>
+                <key>metadata</key>
+                <dict>
+                  <key>bundle-identifier</key>
+                  <string>com.aspiregroup.maintenance</string>
+                  <key>bundle-version</key>
+                  <string>7</string>
+                  <key>kind</key>
+                  <string>software</string>
+                  <key>title</key>
+                  <string>Aspire Maintenance 1.1.4</string>
+                </dict>
+              </dict>
+            </array>
+          </dict>
+          </plist>
+          PLIST
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('install/apps.json')
+          data = json.loads(path.read_text())
+          apps = data.get('apps', [])
+          item = {
+              'available': True,
+              'build': '7',
+              'bundleId': 'com.aspiregroup.maintenance',
+              'icon': '/logo.png',
+              'id': 'aspiremaintenance-1-1-4',
+              'manifest': '/install/manifests/aspiremaintenance-1-1-4.plist',
+              'minimumOS': 'iOS 16.0+',
+              'name': 'Aspire Maintenance 1.1.4',
+              'platform': 'iPhone',
+              'status': 'Ready to install',
+              'version': '1.1.4'
+          }
+          replaced = False
+          new_apps = []
+          for app in apps:
+              if str(app.get('id','')).startswith('aspiremaintenance-'):
+                  if not replaced:
+                      new_apps.append(item)
+                      replaced = True
+                  continue
+              new_apps.append(app)
+          if not replaced:
+              insert_at = 2 if len(new_apps) >= 2 else len(new_apps)
+              new_apps.insert(insert_at, item)
+          data['apps'] = new_apps
+          data['updated'] = '2026-09-02'
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add install/apps.json install/manifests/aspiremaintenance-1-1-4.plist
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish Aspire Maintenance 1.1.4 to NS Transfer"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
