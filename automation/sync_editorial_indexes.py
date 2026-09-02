@@ -71,15 +71,25 @@ def clean_description(value):
     if not text:
         return fallback
 
-    # Generated metadata should never expose an obviously chopped word such as "release-".
-    if text.endswith(("-", "–", "—")):
+    # Never expose visibly chopped generated metadata such as "release-" or "call-rec".
+    chopped_hyphen_token = re.search(r"\b[A-Za-z][A-Za-z0-9]{2,}-[A-Za-z]{1,4}$", text)
+    if text.endswith(("-", "–", "—")) or chopped_hyphen_token:
         last_sentence = max(text.rfind(". "), text.rfind("! "), text.rfind("? "))
         if last_sentence >= 0:
             text = text[: last_sentence + 1].strip()
         else:
-            text = text.rsplit(" ", 1)[0].rstrip("-–—,;:").strip()
+            # Prefer dropping the final list fragment rather than publishing a guessed word.
+            last_break = max(text.rfind(", "), text.rfind("; "))
+            if last_break >= max(40, len(text) // 2):
+                text = text[:last_break].rstrip(" ,;:-–—").strip()
+            else:
+                text = text.rsplit(" ", 1)[0].rstrip("-–—,;:").strip()
             if text and text[-1] not in ".!?":
                 text += "."
+
+    # Metadata cards should end as complete sentences. Preserve the text; only add punctuation.
+    if text and text[-1] not in ".!?":
+        text += "."
     return text or fallback
 
 
