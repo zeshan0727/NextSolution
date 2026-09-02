@@ -22,14 +22,17 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Repair four-window publisher policy
+      - name: Repair four-window publisher policy and tests
         shell: bash
         run: |
           sed -i 's/max_per_day") != 3/max_per_day") != 4/' automation/publisher.py
           sed -i 's/must remain exactly 3 for the regular schedule/must remain exactly 4 for the regular six-hour schedule/' automation/publisher.py
           sed -i 's/contain three unique sorted local hours/contain four unique sorted local hours/' automation/publisher.py
-          python3 -m py_compile automation/publisher.py
-          grep -F 'max_per_day") != 4' automation/publisher.py
+          sed -i 's/cls.site\["publishing"\]\["max_per_day"\] = 3/cls.site["publishing"]["max_per_day"] = 4/' automation/tests/test_publisher.py
+          sed -i 's/self.assertEqual(ready.max_today, 3)/self.assertEqual(ready.max_today, 4)/g' automation/tests/test_publisher.py
+          python3 -c "from pathlib import Path; p=Path('automation/tests/test_publisher.py'); s=p.read_text(); s=s.replace('audit[\"events\"].append({\"published_at\": \"2026-08-17T19:10:00+00:00\"})\n        blocked = preflight(self.site, audit, now=after_boost)','audit[\"events\"].extend([{\"published_at\": \"2026-08-17T15:10:00+00:00\"}, {\"published_at\": \"2026-08-17T19:10:00+00:00\"}])\n        blocked = preflight(self.site, audit, now=after_boost)',1); s=s.replace('audit[\"events\"].append(\n            {\"action\": \"create\", \"published_at\": \"2026-08-26T03:12:00+00:00\"}\n        )','audit[\"events\"].extend(\n            [\n                {\"action\": \"create\", \"published_at\": \"2026-08-26T00:12:00+00:00\"},\n                {\"action\": \"create\", \"published_at\": \"2026-08-26T03:12:00+00:00\"},\n            ]\n        )',1); s=s.replace('self.assertFalse(result.allowed)\n        self.assertEqual(result.reason, \"no-publishing-window-due\")','self.assertTrue(result.allowed)\n        self.assertEqual(result.reason, \"ready\")',1); p.write_text(s)"
+          python3 -m py_compile automation/publisher.py automation/tests/test_publisher.py
+          python3 -m unittest automation.tests.test_publisher -v
       - name: Rebuild static homepage and article archives
         run: python3 automation/sync_editorial_indexes.py
       - name: Commit synchronized editorial indexes and publisher repair
@@ -40,7 +43,7 @@ jobs:
           fi
           git config user.name "nextsolution-content[bot]"
           git config user.email "nextsolution-content[bot]@users.noreply.github.com"
-          git add -- index.html tutorials.html tutorials/index.html automation/publisher.py
-          git commit -m "Sync editorial indexes and four-window publisher policy"
+          git add -- index.html tutorials.html tutorials/index.html automation/publisher.py automation/tests/test_publisher.py
+          git commit -m "Align publisher tests with four Qatar windows"
           git pull --rebase origin main
           git push origin HEAD:main
