@@ -1,0 +1,122 @@
+name: Temporary Aspire Employee Sync Patch
+
+on:
+  push:
+    branches: [feature/aspire-employee-sync]
+    paths:
+      - '.github/triggers/aspire-employee-sync-patch.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/aspire-employee-sync
+          fetch-depth: 0
+
+      - name: Patch Aspire Maintenance 1.1.5 employee sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('AspireMaintenance114Source')
+
+          # 1) Backward-compatible privacy-safe site fields.
+          model = root / 'ModelsAndStore.swift'
+          text = model.read_text()
+          old = '''    var name: String\n    var address: String\n    var email: String\n'''
+          new = '''    var name: String\n    var address: String\n    var villaNumber: String? = nil\n    var area: String? = nil\n    var email: String\n'''
+          if 'var villaNumber: String?' not in text:
+              if old not in text: raise SystemExit('Customer field anchor not found')
+              text = text.replace(old, new, 1)
+          model.write_text(text)
+
+          # 2) Admin app foreground/periodic employee visit sync.
+          app = root / 'AspireMaintenanceApp.swift'
+          text = app.read_text()
+          old = '''        WindowGroup {\n            AppRootView()\n                .environmentObject(store)\n        }\n        .onChange(of: scenePhase) { phase in\n            if phase == .active {\n                Task { await store.refreshOverdueNotifications() }\n            }\n        }\n'''
+          new = '''        WindowGroup {\n            AppRootView()\n                .environmentObject(store)\n                .task {\n                    await store.syncEmployeeVisitCloud()\n                    while !Task.isCancelled {\n                        try? await Task.sleep(nanoseconds: 20_000_000_000)\n                        await store.syncEmployeeVisitCloud()\n                    }\n                }\n        }\n        .onChange(of: scenePhase) { phase in\n            if phase == .active {\n                Task {\n                    await store.refreshOverdueNotifications()\n                    await store.syncEmployeeVisitCloud()\n                }\n            }\n        }\n'''
+          if 'await store.syncEmployeeVisitCloud()' not in text:
+              if old not in text: raise SystemExit('App sync anchor not found')
+              text = text.replace(old, new, 1)
+          app.write_text(text)
+
+          # 3) Customer admin UI: search, site display and editor fields.
+          views = root / 'Views.swift'
+          text = views.read_text()
+
+          old = '''        return store.customers.filter {\n            $0.name.localizedCaseInsensitiveContains(searchText) ||\n            $0.email.localizedCaseInsensitiveContains(searchText) ||\n            $0.phone.localizedCaseInsensitiveContains(searchText)\n        }\n'''
+          new = '''        return store.customers.filter {\n            $0.name.localizedCaseInsensitiveContains(searchText) ||\n            ($0.villaNumber ?? "").localizedCaseInsensitiveContains(searchText) ||\n            ($0.area ?? "").localizedCaseInsensitiveContains(searchText) ||\n            $0.email.localizedCaseInsensitiveContains(searchText) ||\n            $0.phone.localizedCaseInsensitiveContains(searchText)\n        }\n'''
+          if '($0.villaNumber ?? "").localizedCaseInsensitiveContains(searchText)' not in text:
+              if old not in text: raise SystemExit('Customer search anchor not found')
+              text = text.replace(old, new, 1)
+
+          old = '''                            LabeledValue(icon: "mappin.and.ellipse", value: customer.address.isEmpty ? "No address" : customer.address)\n                            LabeledValue(icon: "phone.fill", value: customer.phone.isEmpty ? "No phone" : customer.phone)\n'''
+          new = '''                            LabeledValue(icon: "house.fill", value: (customer.villaNumber ?? "").isEmpty ? "Villa number not set" : "Villa \\(customer.villaNumber ?? "")")\n                            LabeledValue(icon: "map.fill", value: (customer.area ?? "").isEmpty ? "Area not set" : (customer.area ?? ""))\n                            LabeledValue(icon: "mappin.and.ellipse", value: customer.address.isEmpty ? "No address" : customer.address)\n                            LabeledValue(icon: "phone.fill", value: customer.phone.isEmpty ? "No phone" : customer.phone)\n'''
+          if 'value: (customer.villaNumber ?? "").isEmpty ? "Villa number not set"' not in text:
+              if old not in text: raise SystemExit('Customer site detail anchor not found')
+              text = text.replace(old, new, 1)
+
+          old = '''    @State private var name = ""\n    @State private var address = ""\n    @State private var email = ""\n'''
+          new = '''    @State private var name = ""\n    @State private var address = ""\n    @State private var villaNumber = ""\n    @State private var area = ""\n    @State private var email = ""\n'''
+          if '@State private var villaNumber = ""' not in text:
+              if old not in text: raise SystemExit('Customer editor state anchor not found')
+              text = text.replace(old, new, 1)
+
+          old = '''                    TextField("Customer name", text: $name)\n                    TextField("Site address", text: $address, axis: .vertical).lineLimit(2...4)\n                    TextField("Email", text: $email).textInputAutocapitalization(.never).keyboardType(.emailAddress)\n'''
+          new = '''                    TextField("Customer name", text: $name)\n                    TextField("Villa number", text: $villaNumber)\n                    TextField("Area", text: $area)\n                    TextField("Site address", text: $address, axis: .vertical).lineLimit(2...4)\n                    TextField("Email", text: $email).textInputAutocapitalization(.never).keyboardType(.emailAddress)\n'''
+          if 'TextField("Villa number", text: $villaNumber)' not in text:
+              if old not in text: raise SystemExit('Customer editor field anchor not found')
+              text = text.replace(old, new, 1)
+
+          old = '''                name = existing.name\n                address = existing.address\n                email = existing.email\n'''
+          new = '''                name = existing.name\n                address = existing.address\n                villaNumber = existing.villaNumber ?? ""\n                area = existing.area ?? ""\n                email = existing.email\n'''
+          if 'villaNumber = existing.villaNumber ?? ""' not in text:
+              if old not in text: raise SystemExit('Customer editor load anchor not found')
+              text = text.replace(old, new, 1)
+
+          old = '''            name: name.trimmingCharacters(in: .whitespacesAndNewlines),\n            address: address.trimmingCharacters(in: .whitespacesAndNewlines),\n            email: email.trimmingCharacters(in: .whitespacesAndNewlines),\n'''
+          new = '''            name: name.trimmingCharacters(in: .whitespacesAndNewlines),\n            address: address.trimmingCharacters(in: .whitespacesAndNewlines),\n            villaNumber: villaNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : villaNumber.trimmingCharacters(in: .whitespacesAndNewlines),\n            area: area.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : area.trimmingCharacters(in: .whitespacesAndNewlines),\n            email: email.trimmingCharacters(in: .whitespacesAndNewlines),\n'''
+          if 'villaNumber: villaNumber.trimmingCharacters' not in text:
+              if old not in text: raise SystemExit('Customer save anchor not found')
+              text = text.replace(old, new, 1)
+
+          # Add villa/area to the compact admin customer row without replacing name.
+          old = '''                Text(customer.email.isEmpty ? customer.phone : customer.email)\n                    .font(.caption)\n                    .foregroundStyle(.secondary)\n                Text("\\(customer.plannedVisitsPerMonth) visits/month")\n'''
+          new = '''                if !(customer.villaNumber ?? "").isEmpty || !(customer.area ?? "").isEmpty {\n                    Text([\n                        (customer.villaNumber ?? "").isEmpty ? nil : "Villa \\(customer.villaNumber ?? "")",\n                        (customer.area ?? "").isEmpty ? nil : customer.area\n                    ].compactMap { $0 }.joined(separator: " • "))\n                        .font(.caption)\n                        .foregroundStyle(.secondary)\n                }\n                Text(customer.email.isEmpty ? customer.phone : customer.email)\n                    .font(.caption)\n                    .foregroundStyle(.secondary)\n                Text("\\(customer.plannedVisitsPerMonth) visits/month")\n'''
+          if '].compactMap { $0 }.joined(separator: " • ")' not in text:
+              if old not in text: raise SystemExit('Customer row anchor not found')
+              text = text.replace(old, new, 1)
+
+          views.write_text(text)
+
+          # 4) Align the extracted project with the published 1.1.4 lineage.
+          project = root / 'project.yml'
+          text = project.read_text()
+          text = text.replace('bundleIdPrefix: com.aspiregroup', 'bundleIdPrefix: com.nextsolution')
+          text = text.replace('MARKETING_VERSION: "1.0.0"', 'MARKETING_VERSION: "1.1.5"')
+          text = text.replace('CURRENT_PROJECT_VERSION: "1"', 'CURRENT_PROJECT_VERSION: "8"')
+          text = text.replace('PRODUCT_BUNDLE_IDENTIFIER: com.aspiregroup.maintenance', 'PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.aspire')
+          if 'CODE_SIGN_ENTITLEMENTS: AspireMaintenance.entitlements' not in text:
+              text = text.replace('        INFOPLIST_FILE: Info.plist\n', '        INFOPLIST_FILE: Info.plist\n        CODE_SIGN_ENTITLEMENTS: AspireMaintenance.entitlements\n', 1)
+          project.write_text(text)
+          PY
+
+          grep -q 'var villaNumber: String?' AspireMaintenance114Source/ModelsAndStore.swift
+          grep -q 'syncEmployeeVisitCloud' AspireMaintenance114Source/AspireMaintenanceApp.swift
+          grep -q 'TextField("Villa number"' AspireMaintenance114Source/Views.swift
+          grep -q 'MARKETING_VERSION: "1.1.5"' AspireMaintenance114Source/project.yml
+          grep -q 'PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.aspire' AspireMaintenance114Source/project.yml
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add AspireMaintenance114Source
+          git commit -m 'Aspire Maintenance 1.1.5 employee visit sync'
+          git push origin HEAD:feature/aspire-employee-sync
