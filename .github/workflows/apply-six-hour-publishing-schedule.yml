@@ -29,10 +29,12 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import json
+          import re
 
           site_path = Path('automation/site.json')
           site = json.loads(site_path.read_text(encoding='utf-8'))
           p = site['publishing']
+          p['enabled'] = True
           p['max_per_day'] = 4
           p['timezone'] = 'Asia/Qatar'
           p['normal_cron'] = '*/30 * * * *'
@@ -41,16 +43,17 @@ jobs:
 
           publisher_path = Path('automation/publisher.py')
           text = publisher_path.read_text(encoding='utf-8')
-          replacements = {
-              'if publishing.get("max_per_day") != 3:\n        raise PublishingError("publishing.max_per_day must remain exactly 3 for the regular schedule")':
-              'if publishing.get("max_per_day") != 4:\n        raise PublishingError("publishing.max_per_day must remain exactly 4 for the regular six-hour schedule")',
-              '"publishing.windows_local_hours must contain three unique sorted local hours"':
+          old_policy = 'if publishing.get("max_per_day") != 3:\n        raise PublishingError("publishing.max_per_day must remain exactly 3 for the regular schedule")'
+          new_policy = 'if publishing.get("max_per_day") != 4:\n        raise PublishingError("publishing.max_per_day must remain exactly 4 for the regular six-hour schedule")'
+          if old_policy in text:
+              text = text.replace(old_policy, new_policy, 1)
+          elif new_policy not in text:
+              raise SystemExit('publisher max-per-day policy anchor not found')
+          text = text.replace(
+              '"publishing.windows_local_hours must contain three unique sorted local hours"',
               '"publishing.windows_local_hours must contain four unique sorted local hours"',
-          }
-          for old, new in replacements.items():
-              if old not in text:
-                  raise SystemExit(f'publisher patch anchor not found: {old[:80]}')
-              text = text.replace(old, new, 1)
+              1,
+          )
           publisher_path.write_text(text, encoding='utf-8')
 
           workflow_path = Path('.github/workflows/tweak-draft-generator.yml')
@@ -61,31 +64,92 @@ jobs:
           )
           workflow_path.write_text(workflow, encoding='utf-8')
 
-          original_path = Path('.github/workflows/ios-repo-original-source-news.yml')
-          original = original_path.read_text(encoding='utf-8')
-          old_schedule = '''  schedule:\n    - cron: "30 8 * * *"\n    - cron: "0 17 * * *"\n'''
-          if old_schedule not in original:
-              old_schedule = '''  schedule:\n    # 08:30 UTC = 11:30 Qatar\n    - cron: "30 8 * * *"\n    # 17:00 UTC = 20:00 Qatar\n    - cron: "0 17 * * *"\n'''
-          if old_schedule in original:
-              original = original.replace(old_schedule, '', 1)
-          else:
-              raise SystemExit('original-source schedule block not found')
-          original_path.write_text(original, encoding='utf-8')
-
           test_path = Path('automation/tests/test_publisher.py')
           tests = test_path.read_text(encoding='utf-8')
           tests = tests.replace('cls.site["publishing"]["max_per_day"] = 3', 'cls.site["publishing"]["max_per_day"] = 4')
+          timezone_line = 'cls.site["publishing"]["timezone"] = "Asia/Qatar"'
+          windows_line = 'cls.site["publishing"]["windows_local_hours"] = [0, 6, 12, 18]'
+          if windows_line not in tests:
+              tests = tests.replace(timezone_line, timezone_line + '\n        ' + windows_line, 1)
           tests = tests.replace('def test_preflight_allows_three_per_day_after_boost', 'def test_preflight_allows_four_per_day_after_boost')
           tests = tests.replace('self.assertEqual(ready.max_today, 3)', 'self.assertEqual(ready.max_today, 4)')
-          tests = tests.replace('self.assertEqual(ready.max_today, 3)', 'self.assertEqual(ready.max_today, 4)')
-          # Add a fourth create before checking the daily limit in the post-boost test.
-          anchor = 'audit["events"].append({"published_at": "2026-08-17T19:10:00+00:00"})\n        blocked = preflight(self.site, audit, now=after_boost)'
-          if anchor in tests:
-              tests = tests.replace(
-                  anchor,
-                  'audit["events"].append({"published_at": "2026-08-17T15:10:00+00:00"})\n        still_ready = preflight(self.site, audit, now=after_boost)\n        self.assertTrue(still_ready.allowed)\n\n        audit["events"].append({"published_at": "2026-08-17T19:10:00+00:00"})\n        blocked = preflight(self.site, audit, now=after_boost)',
-                  1,
-              )
+
+          old_limit = '''        audit["events"].append({"published_at": "2026-08-17T19:10:00+00:00"})
+        blocked = preflight(self.site, audit, now=after_boost)
+        self.assertFalse(blocked.allowed)
+        self.assertEqual(blocked.reason, "publication-limit-reached")'''
+          new_limit = '''        audit["events"].append({"published_at": "2026-08-17T15:10:00+00:00"})
+        still_ready = preflight(self.site, audit, now=after_boost)
+        self.assertTrue(still_ready.allowed)
+
+        audit["events"].append({"published_at": "2026-08-17T19:10:00+00:00"})
+        blocked = preflight(self.site, audit, now=after_boost)
+        self.assertFalse(blocked.allowed)
+        self.assertEqual(blocked.reason, "publication-limit-reached")'''
+          if old_limit in tests:
+              tests = tests.replace(old_limit, new_limit, 1)
+
+          retry_pattern = re.compile(
+              r'    def test_scheduled_retry_only_allows_an_unmet_local_window\(self\) -> None:\n.*?(?=\n    def test_scheduled_retry_waits_until_first_local_window)',
+              re.S,
+          )
+          retry_replacement = '''    def test_scheduled_retry_only_allows_an_unmet_local_window(self) -> None:
+        after_boost = datetime(2026, 8, 26, 5, 30, tzinfo=timezone.utc)
+        schedule = self.site["publishing"]["normal_cron"]
+        first_due = preflight(
+            self.site,
+            self.empty_audit(),
+            now=after_boost,
+            trigger_schedule=schedule,
+        )
+        self.assertTrue(first_due.allowed)
+
+        audit = self.empty_audit()
+        audit["events"].extend(
+            [
+                {"action": "create", "published_at": "2026-08-26T00:12:00+00:00"},
+                {"action": "create", "published_at": "2026-08-26T03:12:00+00:00"},
+            ]
+        )
+        satisfied = preflight(
+            self.site,
+            audit,
+            now=after_boost,
+            trigger_schedule=schedule,
+        )
+        self.assertFalse(satisfied.allowed)
+        self.assertEqual(satisfied.reason, "scheduled-window-already-satisfied")
+
+        third_due = preflight(
+            self.site,
+            audit,
+            now=datetime(2026, 8, 26, 11, 30, tzinfo=timezone.utc),
+            trigger_schedule=schedule,
+        )
+        self.assertTrue(third_due.allowed)
+'''
+          tests, count = retry_pattern.subn(retry_replacement, tests, count=1)
+          if count != 1:
+              raise SystemExit('scheduled retry test block not found')
+
+          midnight_pattern = re.compile(
+              r'    def test_scheduled_retry_waits_until_first_local_window\(self\) -> None:\n.*?(?=\n    def test_preflight_does_not_count_existing_page_updates_as_new_posts)',
+              re.S,
+          )
+          midnight_replacement = '''    def test_midnight_window_is_due_at_start_of_local_day(self) -> None:
+        shortly_after_midnight_qatar = datetime(2026, 8, 25, 21, 30, tzinfo=timezone.utc)
+        result = preflight(
+            self.site,
+            self.empty_audit(),
+            now=shortly_after_midnight_qatar,
+            trigger_schedule=self.site["publishing"]["normal_cron"],
+        )
+        self.assertTrue(result.allowed)
+        self.assertEqual(result.reason, "ready")
+'''
+          tests, count = midnight_pattern.subn(midnight_replacement, tests, count=1)
+          if count != 1:
+              raise SystemExit('midnight schedule test block not found')
           test_path.write_text(tests, encoding='utf-8')
 
           readme_path = Path('automation/README.md')
@@ -111,7 +175,7 @@ jobs:
           fi
           git config user.name "nextsolution-schedule[bot]"
           git config user.email "nextsolution-schedule[bot]@users.noreply.github.com"
-          git add -- automation/site.json automation/publisher.py automation/tests/test_publisher.py automation/README.md .github/workflows/tweak-draft-generator.yml .github/workflows/ios-repo-original-source-news.yml
+          git add -- automation/site.json automation/publisher.py automation/tests/test_publisher.py automation/README.md .github/workflows/tweak-draft-generator.yml
           git commit -m "Publish on four six-hour Qatar windows"
           git pull --rebase origin main
           git push origin HEAD:main
