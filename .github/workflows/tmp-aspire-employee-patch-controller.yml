@@ -1,0 +1,40 @@
+name: Temporary Aspire Employee Patch Controller
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/triggers/aspire-employee-patch-controller.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/aspire-employee-sync
+          fetch-depth: 0
+
+      - name: Apply source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 AspireMaintenance114Source/Scripts/apply_employee_sync_patch.py
+          grep -q 'var villaNumber: String?' AspireMaintenance114Source/ModelsAndStore.swift
+          grep -q 'syncEmployeeVisitCloud' AspireMaintenance114Source/AspireMaintenanceApp.swift
+          grep -q 'TextField("Villa number"' AspireMaintenance114Source/Views.swift
+          grep -q 'MARKETING_VERSION: "1.1.5"' AspireMaintenance114Source/project.yml
+          grep -q 'PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.aspire' AspireMaintenance114Source/project.yml
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add AspireMaintenance114Source
+          if ! git diff --cached --quiet; then
+            git commit -m 'Aspire Maintenance 1.1.5 employee visit sync'
+            git push origin HEAD:feature/aspire-employee-sync
+          fi
