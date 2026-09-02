@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
   "purpose": "Request a gated publisher run through the connected GitHub app",
-  "last_trigger_requested_at": "2026-09-02T09:54:13Z",
-  "reason": "Catch up missed 00:00, 06:00 and 12:00 Qatar publication windows after schedule repair"
+  "last_trigger_requested_at": "2026-09-02T09:57:00Z",
+  "reason": "Retry catch-up after four-window publisher policy and tests passed"
 }
