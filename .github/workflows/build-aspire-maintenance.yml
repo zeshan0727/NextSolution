@@ -14,6 +14,13 @@ on:
       - "AspireMaintenanceRelease113/**"
       - "AspireMaintenanceRelease114/**"
       - ".github/workflows/build-aspire-maintenance.yml"
+  pull_request:
+    branches:
+      - agent/aspire-maintenance-1.1.4
+    paths:
+      - "AspireMaintenanceRelease114/**"
+      - ".github/workflows/build-aspire-maintenance.yml"
+      - "AspireMaintenanceBuildTrigger114/**"
 
 permissions:
   contents: read
