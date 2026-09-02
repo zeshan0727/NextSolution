@@ -23,10 +23,9 @@ struct EmployeeRootView: View {
                     if store.assignments.isEmpty && store.isRefreshing {
                         ProgressView("Loading visits…")
                     } else if filteredAssignments.isEmpty {
-                        ContentUnavailableView(
-                            searchText.isEmpty ? "No Assigned Villas" : "No Results",
-                            systemImage: "house.and.flag",
-                            description: Text(searchText.isEmpty ? "The administrator has not synced any active maintenance villas yet." : "Try another villa number or area.")
+                        EmployeeEmptyState(
+                            title: searchText.isEmpty ? "No Assigned Villas" : "No Results",
+                            message: searchText.isEmpty ? "The administrator has not synced any active maintenance villas yet." : "Try another villa number or area."
                         )
                     } else {
                         List {
@@ -97,6 +96,28 @@ struct EmployeeRootView: View {
         } message: {
             Text(store.lastError ?? "Unable to sync visits.")
         }
+    }
+}
+
+struct EmployeeEmptyState: View {
+    let title: String
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "house.and.flag")
+                .font(.system(size: 44))
+                .foregroundStyle(.secondary)
+            Text(title)
+                .font(.title3.bold())
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 30)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 }
 
