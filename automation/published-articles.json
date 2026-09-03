@@ -7,7 +7,7 @@
       },
       "description": "Rocket for Instagram 4.15.0 adds a Safari extension for opening Instagram web links in the sideloaded app, alongside fixes for DMs, the tab bar, and Stories.",
       "entry_type": "source-news",
-      "href": "rocket-for-instagram-3-8-38-update/",
+      "href": "rocket-for-instagram-4-15-0-update/",
       "image": "assets/articles/source-media/rocket-for-instagram-3-8-38-update-6dd0c74c1f.jpg",
       "media_credit": "Source visual from apt.getrocketapp.io",
       "media_source_url": "https://apt.getrocketapp.io/depiction/4EYOXC",
@@ -23,7 +23,7 @@
       "source_visual_origin": "og:image",
       "source_visual_url": "https://getrocketapp.io/assets/optimized/rocket-social-banner.jpg",
       "title": "Rocket for Instagram 4.15.0 Adds Safari “Open in” Support for Sideloaded Builds",
-      "version": "3.8.38"
+      "version": "4.15.0"
     },
     {
       "category": {
@@ -1553,6 +1553,15 @@
       "published_at": "2026-09-02T15:32:01+00:00",
       "run_id": "33649093694",
       "version": "3.8.38"
+    },
+    {
+      "action": "repair-version-metadata",
+      "from_href": "rocket-for-instagram-3-8-38-update/",
+      "from_version": "3.8.38",
+      "package": "me.alfhaily.rocket",
+      "reason": "official depiction/headline used 4.15.0 while manifest and slug used older package stanza version",
+      "to_href": "rocket-for-instagram-4-15-0-update/",
+      "to_version": "4.15.0"
     }
   ],
   "schema_version": 1,
