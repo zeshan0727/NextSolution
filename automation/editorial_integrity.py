@@ -5,8 +5,13 @@ import json
 import re
 from pathlib import Path
 
+from automation.publisher import _render_feed, _update_sitemap
+
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / "automation" / "published-articles.json"
+SITE = ROOT / "automation" / "site.json"
+FEED = ROOT / "feed.xml"
+SITEMAP = ROOT / "sitemap.xml"
 VERSION_RE = re.compile(r"(?<![A-Za-z0-9])v?(\d+(?:\.\d+){1,4}(?:[-.]\d+)?)(?![A-Za-z0-9])", re.I)
 ADSENSE_META_RE = re.compile(r'\s*<meta\s+name=["\']google-adsense-account["\'][^>]*>\s*', re.I)
 ADSENSE_SCRIPT_RE = re.compile(r'\s*<script\b[^>]*pagead2\.googlesyndication\.com/pagead/js/adsbygoogle\.js[^>]*>\s*</script>\s*', re.I | re.S)
@@ -80,7 +85,6 @@ def repair_rocket_415() -> bool:
 
     entry["href"] = new_href
     entry["version"] = "4.15.0"
-    # Keep the already-downloaded source image path; it is an asset identifier, not canonical metadata.
     data.setdefault("events", []).append({
         "action": "repair-version-metadata",
         "package": entry.get("package"),
@@ -92,8 +96,6 @@ def repair_rocket_415() -> bool:
     })
     AUDIT.write_text(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
 
-    # Preserve the old URL without duplicate indexed content or ads.
-    old = old_path.read_text(encoding="utf-8")
     title = "Rocket for Instagram article moved | Next Jailbreak"
     canonical = "https://nextjailbreak.com/" + new_href
     old = f'''<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><meta name="robots" content="noindex,nofollow"><link rel="canonical" href="{canonical}"><link rel="stylesheet" href="/assets/site.css"></head><body><main class="container article-main"><article><header class="article-hero"><h1>Rocket for Instagram 4.15.0</h1><p class="article-summary">This article URL was corrected because the previous path used conflicting package-version metadata.</p><p><a class="button button-primary" href="/{new_href}">Open the corrected article</a></p></header></article></main></body></html>\n'''
@@ -101,9 +103,18 @@ def repair_rocket_415() -> bool:
     return True
 
 
+def rebuild_feed_and_sitemap() -> None:
+    data = json.loads(AUDIT.read_text(encoding="utf-8"))
+    site = json.loads(SITE.read_text(encoding="utf-8"))
+    entries = data.get("entries") or []
+    FEED.write_text(_render_feed(entries, site), encoding="utf-8")
+    SITEMAP.write_text(_update_sitemap(SITEMAP.read_text(encoding="utf-8"), entries, site), encoding="utf-8")
+
+
 def main() -> None:
     repaired = repair_rocket_415()
     quarantined = enforce_manifest_consistency()
+    rebuild_feed_and_sitemap()
     print(f"editorial integrity: repaired_rocket_415={repaired} quarantined={quarantined}")
 
 
