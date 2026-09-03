@@ -6,6 +6,7 @@ on:
     paths:
       - "automation/published-articles.json"
       - "automation/sync_editorial_indexes.py"
+      - "automation/editorial_integrity.py"
       - ".github/workflows/refresh-editorial-index.yml"
   workflow_dispatch:
 
@@ -32,12 +33,15 @@ jobs:
           sed -i 's/self.assertEqual(ready.max_today, 3)/self.assertEqual(ready.max_today, 4)/g' automation/tests/test_publisher.py
           python3 -m py_compile automation/publisher.py automation/tests/test_publisher.py
           python3 -m unittest automation.tests.test_publisher -v
+      - name: Enforce editorial version integrity
+        run: |
+          python3 automation/editorial_integrity.py
       - name: Rebuild and quality-clean public editorial indexes
         run: |
           python3 automation/sync_editorial_indexes.py
-          grep -q 'regram-for-instagram-6-1-update' index.html
           ! grep -q 'release-</p>' index.html
           test "$(grep -o 'https://nextjailbreak.com/nextlock-tweak/' index.html | wc -l)" -le 2
+          ! grep -q 'rocket-for-instagram-3-8-38-update/' index.html
       - name: Commit synchronized editorial indexes and quality cleanup
         run: |
           if git diff --quiet; then
@@ -46,9 +50,9 @@ jobs:
           fi
           git config user.name "nextsolution-content[bot]"
           git config user.email "nextsolution-content[bot]@users.noreply.github.com"
-          git add -- index.html tutorials.html tutorials/index.html automation/published-articles.json automation/publisher.py automation/tests/test_publisher.py
-          git commit -m "Sync latest articles and clean editorial indexes"
+          git add --all index.html tutorials.html tutorials/index.html automation/published-articles.json automation/publisher.py automation/tests/test_publisher.py feed.xml sitemap.xml rocket-for-instagram-3-8-38-update rocket-for-instagram-4-15-0-update
+          git commit -m "Repair article metadata and enforce editorial integrity"
           git pull --rebase origin main
           git push origin HEAD:main
 
-# Manual repair trigger: 2026-09-02T18:25+03:00
+# Manual repair trigger: 2026-09-03T08:44+03:00
