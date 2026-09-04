@@ -245,5 +245,5 @@ final class TunnelManager: ObservableObject {
 }
 
 enum AppConfig {
-    static let providerBundleIdentifier = "cc.nextsolution.NextProxy.PacketTunnel"
+    static let providerBundleIdentifier = "com.nextsolution.NextProxy.PacketTunnel"
 }
