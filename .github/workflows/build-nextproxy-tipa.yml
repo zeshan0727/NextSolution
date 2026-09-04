@@ -1,0 +1,83 @@
+name: Build NextProxy TIPA
+
+on:
+  push:
+    branches:
+      - build-nextproxy-tipa
+    paths:
+      - 'apps/next-proxy/**'
+      - '.github/workflows/build-nextproxy-tipa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nextproxy-tipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: apps/next-proxy
+        run: xcodegen generate
+
+      - name: Build unsigned device app
+        working-directory: apps/next-proxy
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project NextProxy.xcodeproj \
+            -scheme NextProxy \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/NextProxyDerived" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Ad-hoc sign extension and host
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextProxyDerived/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name 'NextProxy.app' | head -n1)"
+          test -n "$APP_PATH"
+          EXT_PATH="$APP_PATH/PlugIns/PacketTunnel.appex"
+          test -d "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der \
+            --entitlements apps/next-proxy/PacketTunnel/PacketTunnel.entitlements "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der \
+            --entitlements apps/next-proxy/NextProxy/NextProxy.entitlements "$APP_PATH"
+          /usr/bin/codesign --verify --deep --strict "$APP_PATH"
+
+      - name: Package IPA and TIPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextProxyDerived/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name 'NextProxy.app' | head -n1)"
+          rm -rf "$RUNNER_TEMP/NextProxyPackage"
+          mkdir -p "$RUNNER_TEMP/NextProxyPackage/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/NextProxyPackage/Payload/NextProxy.app"
+          cd "$RUNNER_TEMP/NextProxyPackage"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextProxy-1.0.0-placeholder.tipa" Payload
+          cp "$RUNNER_TEMP/NextProxy-1.0.0-placeholder.tipa" "$RUNNER_TEMP/NextProxy-1.0.0-placeholder.ipa"
+          unzip -t "$RUNNER_TEMP/NextProxy-1.0.0-placeholder.tipa" >/dev/null
+          shasum -a 256 "$RUNNER_TEMP/NextProxy-1.0.0-placeholder.tipa"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextProxy-1.0.0-placeholder
+          path: |
+            ${{ runner.temp }}/NextProxy-1.0.0-placeholder.tipa
+            ${{ runner.temp }}/NextProxy-1.0.0-placeholder.ipa
+          if-no-files-found: error
+          retention-days: 7
