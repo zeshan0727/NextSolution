@@ -51,6 +51,8 @@ targets:
     sources:
       - path: PacketTunnel
       - path: Shared
+    resources:
+      - path: PacketTunnel/Resources
     info:
       path: PacketTunnel/Info.plist
       properties:
