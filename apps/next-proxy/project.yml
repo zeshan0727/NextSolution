@@ -12,6 +12,8 @@ settings:
     SWIFT_VERSION: 5.9
     IPHONEOS_DEPLOYMENT_TARGET: 16.0
     CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: 1.1.0
+    CURRENT_PROJECT_VERSION: 2
 
 targets:
   NextProxy:
@@ -24,6 +26,8 @@ targets:
       path: NextProxy/Info.plist
       properties:
         CFBundleDisplayName: Next Proxy
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "2"
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
@@ -51,6 +55,8 @@ targets:
       path: PacketTunnel/Info.plist
       properties:
         CFBundleDisplayName: Next Proxy Tunnel
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "2"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
