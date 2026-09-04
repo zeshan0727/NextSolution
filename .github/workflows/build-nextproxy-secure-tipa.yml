@@ -1,0 +1,139 @@
+name: Build NextProxy Secure TIPA
+
+on:
+  push:
+    branches:
+      - build-nextproxy-tipa
+    paths:
+      - '.github/workflows/build-nextproxy-secure-tipa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: build-nextproxy-tipa
+          fetch-depth: 0
+
+      - name: Generate ephemeral encryption key
+        run: |
+          set -euo pipefail
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$RUNNER_TEMP/nextproxy-private.pem" >/dev/null 2>&1
+          openssl pkey -in "$RUNNER_TEMP/nextproxy-private.pem" -pubout -out "$RUNNER_TEMP/nextproxy-public.pem"
+
+      - name: Upload ephemeral public key
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextProxy-Secret-Public-Key
+          path: ${{ runner.temp }}/nextproxy-public.pem
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Wait for encrypted credential payload
+        run: |
+          set -euo pipefail
+          FOUND=0
+          for i in {1..90}; do
+            git fetch origin build-nextproxy-tipa >/dev/null 2>&1 || true
+            if git show origin/build-nextproxy-tipa:apps/next-proxy/secret.enc.b64 > "$RUNNER_TEMP/secret.enc.b64" 2>/dev/null; then
+              FOUND=1
+              break
+            fi
+            sleep 3
+          done
+          test "$FOUND" = "1" || { echo "Encrypted credential payload not received"; exit 1; }
+          base64 --decode "$RUNNER_TEMP/secret.enc.b64" > "$RUNNER_TEMP/secret.enc"
+
+      - name: Decrypt credentials and generate build-only Swift
+        run: |
+          set -euo pipefail
+          openssl pkeyutl -decrypt \
+            -inkey "$RUNNER_TEMP/nextproxy-private.pem" \
+            -in "$RUNNER_TEMP/secret.enc" \
+            -out "$RUNNER_TEMP/secret.json" \
+            -pkeyopt rsa_padding_mode:oaep
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          secret = json.loads(Path(__import__('os').environ['RUNNER_TEMP'], 'secret.json').read_text())
+          def esc(v):
+              return str(v).replace('\\', '\\\\').replace('"', '\\"')
+          swift = f'''import Foundation
+
+          enum ProxySecrets {{
+              static let host = "{esc(secret["host"])}"
+              static let port = {int(secret["port"])}
+              static let username = "{esc(secret["username"])}"
+              static let password = "{esc(secret["password"])}"
+
+              static var isConfigured: Bool {{
+                  !username.isEmpty && !password.isEmpty
+              }}
+          }}
+          '''
+          Path('apps/next-proxy/Shared/ProxySecrets.swift').write_text(swift)
+          PY
+          rm -f "$RUNNER_TEMP/secret.json" "$RUNNER_TEMP/secret.enc" "$RUNNER_TEMP/secret.enc.b64"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: apps/next-proxy
+        run: xcodegen generate
+
+      - name: Build unsigned device app
+        working-directory: apps/next-proxy
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project NextProxy.xcodeproj \
+            -scheme NextProxy \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/NextProxySecureDerived" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Ad-hoc sign extension and host
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextProxySecureDerived/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name 'NextProxy.app' | head -n1)"
+          test -n "$APP_PATH"
+          EXT_PATH="$APP_PATH/PlugIns/PacketTunnel.appex"
+          test -d "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der \
+            --entitlements apps/next-proxy/PacketTunnel/PacketTunnel.entitlements "$EXT_PATH"
+          /usr/bin/codesign --force --sign - --timestamp=none --generate-entitlement-der \
+            --entitlements apps/next-proxy/NextProxy/NextProxy.entitlements "$APP_PATH"
+          /usr/bin/codesign --verify --deep --strict "$APP_PATH"
+
+      - name: Package final TIPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$RUNNER_TEMP/NextProxySecureDerived/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name 'NextProxy.app' | head -n1)"
+          rm -rf "$RUNNER_TEMP/NextProxyFinal"
+          mkdir -p "$RUNNER_TEMP/NextProxyFinal/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/NextProxyFinal/Payload/NextProxy.app"
+          cd "$RUNNER_TEMP/NextProxyFinal"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextProxy-1.0.0-Webshare.tipa" Payload
+          unzip -t "$RUNNER_TEMP/NextProxy-1.0.0-Webshare.tipa" >/dev/null
+          shasum -a 256 "$RUNNER_TEMP/NextProxy-1.0.0-Webshare.tipa"
+
+      - name: Upload final TIPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NextProxy-1.0.0-Webshare-TIPA
+          path: ${{ runner.temp }}/NextProxy-1.0.0-Webshare.tipa
+          if-no-files-found: error
+          retention-days: 7
