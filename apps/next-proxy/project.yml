@@ -1,6 +1,6 @@
 name: NextProxy
 options:
-  bundleIdPrefix: cc.nextsolution
+  bundleIdPrefix: com.nextsolution
   deploymentTarget:
     iOS: "16.0"
 packages:
@@ -12,8 +12,8 @@ settings:
     SWIFT_VERSION: 5.9
     IPHONEOS_DEPLOYMENT_TARGET: 16.0
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: 1.1.0
-    CURRENT_PROJECT_VERSION: 2
+    MARKETING_VERSION: 1.1.1
+    CURRENT_PROJECT_VERSION: 3
 
 targets:
   NextProxy:
@@ -26,22 +26,26 @@ targets:
       path: NextProxy/Info.plist
       properties:
         CFBundleDisplayName: Next Proxy
-        CFBundleShortVersionString: "1.1.0"
-        CFBundleVersion: "2"
+        CFBundleShortVersionString: "1.1.1"
+        CFBundleVersion: "3"
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
     entitlements:
       path: NextProxy/NextProxy.entitlements
       properties:
+        application-identifier: T52CDY8W32.com.nextsolution.NextProxy
+        com.apple.developer.team-identifier: T52CDY8W32
         com.apple.developer.networking.networkextension:
           - packet-tunnel-provider
+        keychain-access-groups:
+          - T52CDY8W32.com.nextsolution.NextProxy
     dependencies:
       - target: PacketTunnel
         embed: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: cc.nextsolution.NextProxy
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.NextProxy
         TARGETED_DEVICE_FAMILY: "1,2"
 
   PacketTunnel:
@@ -57,19 +61,23 @@ targets:
       path: PacketTunnel/Info.plist
       properties:
         CFBundleDisplayName: Next Proxy Tunnel
-        CFBundleShortVersionString: "1.1.0"
-        CFBundleVersion: "2"
+        CFBundleShortVersionString: "1.1.1"
+        CFBundleVersion: "3"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
     entitlements:
       path: PacketTunnel/PacketTunnel.entitlements
       properties:
+        application-identifier: T52CDY8W32.com.nextsolution.NextProxy.PacketTunnel
+        com.apple.developer.team-identifier: T52CDY8W32
         com.apple.developer.networking.networkextension:
           - packet-tunnel-provider
+        keychain-access-groups:
+          - T52CDY8W32.com.nextsolution.NextProxy.PacketTunnel
     dependencies:
       - package: Tun2SocksKit
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: cc.nextsolution.NextProxy.PacketTunnel
+        PRODUCT_BUNDLE_IDENTIFIER: com.nextsolution.NextProxy.PacketTunnel
         APPLICATION_EXTENSION_API_ONLY: YES
