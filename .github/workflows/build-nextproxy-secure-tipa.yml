@@ -126,14 +126,14 @@ jobs:
           mkdir -p "$RUNNER_TEMP/NextProxyFinal/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/NextProxyFinal/Payload/NextProxy.app"
           cd "$RUNNER_TEMP/NextProxyFinal"
-          /usr/bin/zip -qry "$RUNNER_TEMP/NextProxy-1.0.0-Webshare.tipa" Payload
-          unzip -t "$RUNNER_TEMP/NextProxy-1.0.0-Webshare.tipa" >/dev/null
-          shasum -a 256 "$RUNNER_TEMP/NextProxy-1.0.0-Webshare.tipa"
+          /usr/bin/zip -qry "$RUNNER_TEMP/NextProxy-1.1.0-Webshare-Privacy.tipa" Payload
+          unzip -t "$RUNNER_TEMP/NextProxy-1.1.0-Webshare-Privacy.tipa" >/dev/null
+          shasum -a 256 "$RUNNER_TEMP/NextProxy-1.1.0-Webshare-Privacy.tipa"
 
       - name: Upload final TIPA
         uses: actions/upload-artifact@v4
         with:
-          name: NextProxy-1.0.0-Webshare-TIPA
-          path: ${{ runner.temp }}/NextProxy-1.0.0-Webshare.tipa
+          name: NextProxy-1.1.0-Webshare-Privacy-TIPA
+          path: ${{ runner.temp }}/NextProxy-1.1.0-Webshare-Privacy.tipa
           if-no-files-found: error
           retention-days: 7
