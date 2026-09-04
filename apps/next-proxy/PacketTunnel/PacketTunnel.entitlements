@@ -2,9 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>application-identifier</key>
+    <string>T52CDY8W32.com.nextsolution.NextProxy.PacketTunnel</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>T52CDY8W32</string>
     <key>com.apple.developer.networking.networkextension</key>
     <array>
         <string>packet-tunnel-provider</string>
+    </array>
+    <key>keychain-access-groups</key>
+    <array>
+        <string>T52CDY8W32.com.nextsolution.NextProxy.PacketTunnel</string>
     </array>
 </dict>
 </plist>
