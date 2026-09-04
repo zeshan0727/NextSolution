@@ -86,20 +86,6 @@ final class TunnelManager: ObservableObject {
             proto.serverAddress = "Webshare Residential Proxy"
             proto.disconnectOnSleep = false
 
-            // Strict routing while the tunnel is connected.
-            proto.includeAllNetworks = true
-            proto.excludeLocalNetworks = false
-            proto.enforceRoutes = true
-
-            if #available(iOS 16.4, *) {
-                proto.excludeAPNs = false
-                proto.excludeCellularServices = false
-            }
-
-            if #available(iOS 17.4, *) {
-                proto.excludeDeviceCommunication = false
-            }
-
             mgr.protocolConfiguration = proto
             mgr.localizedDescription = "Next Proxy"
             mgr.isEnabled = true
@@ -245,5 +231,5 @@ final class TunnelManager: ObservableObject {
 }
 
 enum AppConfig {
-    static let providerBundleIdentifier = "com.nextsolution.NextProxy.PacketTunnel"
+    static let providerBundleIdentifier = "cc.nextsolution.NextProxy.PacketTunnel"
 }
