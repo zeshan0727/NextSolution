@@ -1,0 +1,67 @@
+name: NextProxy
+options:
+  bundleIdPrefix: cc.nextsolution
+  deploymentTarget:
+    iOS: "16.0"
+packages:
+  Tun2SocksKit:
+    url: https://github.com/EbrahimTahernejad/Tun2SocksKit.git
+    branch: main
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    IPHONEOS_DEPLOYMENT_TARGET: 16.0
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  NextProxy:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: NextProxy
+    info:
+      path: NextProxy/Info.plist
+      properties:
+        CFBundleDisplayName: Next Proxy
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+    entitlements:
+      path: NextProxy/NextProxy.entitlements
+      properties:
+        com.apple.developer.networking.networkextension:
+          - packet-tunnel-provider
+    dependencies:
+      - target: PacketTunnel
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cc.nextsolution.NextProxy
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  PacketTunnel:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: PacketTunnel
+      - path: Shared
+    info:
+      path: PacketTunnel/Info.plist
+      properties:
+        CFBundleDisplayName: Next Proxy Tunnel
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
+    entitlements:
+      path: PacketTunnel/PacketTunnel.entitlements
+      properties:
+        com.apple.developer.networking.networkextension:
+          - packet-tunnel-provider
+    dependencies:
+      - package: Tun2SocksKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cc.nextsolution.NextProxy.PacketTunnel
+        APPLICATION_EXTENSION_API_ONLY: YES
