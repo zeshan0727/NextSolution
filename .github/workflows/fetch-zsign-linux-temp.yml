@@ -1,0 +1,32 @@
+name: Fetch zsign Linux Temp
+
+on:
+  push:
+    branches:
+      - build-nextproxy-tipa
+    paths:
+      - '.github/workflows/fetch-zsign-linux-temp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch zsign 1.1.2 Linux x86_64
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 \
+            https://github.com/zhlynn/zsign/releases/download/v1.1.2/zsign-linux-x86_64.tar.gz \
+            -o "$RUNNER_TEMP/zsign-linux-x86_64.tar.gz"
+          echo "d55e6a8650949a260892a9687ac1dfe4a9c79c2e3ecfe00a0eeb09b7b694282e  $RUNNER_TEMP/zsign-linux-x86_64.tar.gz" | sha256sum -c -
+
+      - name: Upload zsign
+        uses: actions/upload-artifact@v4
+        with:
+          name: zsign-linux-x86_64-1.1.2
+          path: ${{ runner.temp }}/zsign-linux-x86_64.tar.gz
+          if-no-files-found: error
+          retention-days: 1
