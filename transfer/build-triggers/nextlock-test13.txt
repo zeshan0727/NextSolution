@@ -1,0 +1,1 @@
+validate NextLock Test 13 hide elements runtime
