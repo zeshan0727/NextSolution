@@ -1,0 +1,222 @@
+name: Build Module Glass 1.1.13 Non-Destructive Transition
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.13-nondestructive-transition
+    paths:
+      - '.github/workflows/moduleglass-1.1.13-nondestructive-transition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moduleglass-1.1.13-nondestructive-transition
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 25
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reconstruct verified 1.1.12 base and patch exact 1.1.13 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin build/moduleglass-1.1.12-transition-recovery:refs/remotes/origin/mg112
+          : > /tmp/moduleglass112-runtime.b64
+          for i in 00 01 02 03 04; do
+            git show "refs/remotes/origin/mg112:.moduleglass-build/moduleglass-1.1.12.part${i}" >> /tmp/moduleglass112-runtime.b64
+          done
+          test "$(wc -c < /tmp/moduleglass112-runtime.b64 | tr -d ' ')" = "24396"
+          python3 - <<'PY'
+          import base64, hashlib, pathlib
+          encoded = pathlib.Path('/tmp/moduleglass112-runtime.b64').read_text().strip()
+          payload = base64.b64decode(encoded, validate=True)
+          expected = '780b1da230768f1c65cbe68074ae6afb540cf7834f594e51b6942defe18f122b'
+          actual = hashlib.sha256(payload).hexdigest()
+          assert actual == expected, (actual, expected)
+          pathlib.Path('/tmp/moduleglass112-runtime.tar.gz').write_bytes(payload)
+          PY
+          mkdir -p buildsrc
+          tar -xzf /tmp/moduleglass112-runtime.tar.gz -C buildsrc
+          test -f buildsrc/Runtime/Tweak.m
+          test -f buildsrc/Runtime/control
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('buildsrc/Runtime/Tweak.m')
+          s = p.read_text()
+          anchor = '''static void MGCleanupControllerVisuals(id controller, NSString *source) {'''
+          insert = '''static void MGSetTaggedImagesHiddenRecursive(UIView *root, BOOL hidden) {
+              if (!root) return;
+              for (UIView *view in root.subviews.copy) {
+                  if (view.tag == MGImageTag) {
+                      view.hidden = hidden;
+                      continue;
+                  }
+                  if (view.tag == MGVolumeIconOverlayTag) {
+                      view.hidden = hidden;
+                      continue;
+                  }
+                  MGSetTaggedImagesHiddenRecursive(view, hidden);
+              }
+          }
+
+          static void MGSuspendControllerVisualsNonDestructive(id controller, NSString *source) {
+              if (!controller || ![controller respondsToSelector:@selector(view)]) return;
+              UIView *root=nil;
+              @try { root=[controller view]; } @catch (__unused NSException *e) { return; }
+              if (!root) return;
+
+              // CRITICAL: never add/remove UIKit views while Apple's Control Center expansion
+              // transition is being prepared or animated. Only restore native presentation
+              // properties and hide our already-existing overlays in place.
+              MGSetTaggedImagesHiddenRecursive(root, YES);
+              MGRestoreVolumeColorPresentation(root);
+              MGRestoreVolumeVisuals(root);
+              MGRestoreBrightnessLayers(root.layer);
+              MGRestoreModuleBlurVisuals(root);
+              MGRestoreConnectivityActiveBackgrounds(root);
+
+              if (MGVerboseDiagnosticsEnabled()) MGLog(@"transition-suspend-nondestructive source=%@ controller=%@ frame=%@",source?:@"<nil>",NSStringFromClass([controller class]),NSStringFromCGRect(root.frame));
+          }
+
+          '''
+          assert anchor in s
+          assert 'MGSetTaggedImagesHiddenRecursive' not in s
+          s = s.replace(anchor, insert + anchor, 1)
+          old = '''    // One-shot cleanup only. Never mutate Apple's hierarchy repeatedly while a transition is running.\n    MGCleanupControllerVisuals(controller,source);'''
+          new = '''    // Never structurally mutate Apple's hierarchy at transition start. Removing a\n    // custom image/shell here can invalidate Control Center's expansion snapshot and\n    // leave the module/container stuck after lock/unlock. Hide in place instead.\n    MGSuspendControllerVisualsNonDestructive(controller,source);'''
+          assert old in s
+          s = s.replace(old, new, 1)
+          old = '''    // Suspend for both directions. On expand this removes our visuals before Apple's layout starts;\n    // on collapse it simply keeps the renderer passive until compact geometry is stable.'''
+          new = '''    // Suspend for both directions without changing the UIKit hierarchy. On expand we\n    // hide custom presentation in place; on collapse we keep the renderer passive\n    // until compact geometry is stable.'''
+          assert old in s
+          s = s.replace(old, new, 1)
+          old = 'MGLog(@"ModuleGlassRuntime 1.1.12 One-Shot Transition Recovery Renderer loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));'
+          new = 'MGLog(@"ModuleGlassRuntime 1.1.13 Non-Destructive Transition Renderer loaded SpringBoard=%@ prefsEnabled=%d", NSBundle.mainBundle.bundleIdentifier, MGBoolPreference(@"CCModuleBackgroundsEnabled", YES));'
+          assert old in s
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          c = Path('buildsrc/Runtime/control')
+          t = c.read_text()
+          replacements = {
+              'Version: 1.1.12':'Version: 1.1.13',
+              'Description: RootHide Module Glass 1.1.12 with one-shot expansion suspension and stable compact-state recovery; keeps the validated transparent unified slider renderer.':'Description: RootHide Module Glass 1.1.13 with non-destructive expansion suspension; preserves compact renderer features while avoiding UIKit hierarchy mutation during Apple Control Center transitions.',
+              'Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.12)':'Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.13)',
+              'Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.11), com.nextsolution.unlockvibrate':'Conflicts: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.12), com.nextsolution.unlockvibrate',
+              'Breaks: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.11)':'Breaks: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.12)',
+              'Replaces: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.11)':'Replaces: com.nextsolution.nextaura.runtime.ccbackgrounds (<= 1.1.12)',
+          }
+          for old,new in replacements.items():
+              assert old in t, old
+              t = t.replace(old,new,1)
+          c.write_text(t)
+          PY
+          echo '21fdfc4c192c09e1193b5da20c50e82fce61fcae66a41128787f6a185c2a2fca  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
+          echo '322d574c689ee83a94f5f1f0f6c4325c25d40779ca98d5d2b737256dcd784ee6  buildsrc/Runtime/control' | shasum -a 256 -c -
+          mkdir -p output/source-stage
+          cp -R buildsrc/Runtime output/source-stage/ModuleGlass-1.1.13-Complete-Source
+          ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.13-Complete-Source output/ModuleGlass_1.1.13_Complete_Source.zip
+
+      - name: Install RootHide build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install dpkg ldid xz
+          mkdir -p "$THEOS"
+          curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
+          bash /tmp/install-theos
+          test -f "$THEOS/makefiles/common.mk"
+          mkdir -p "$THEOS/sdks"
+          if ! ls "$THEOS"/sdks/iPhoneOS*.sdk >/dev/null 2>&1; then
+            curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/sdk.tar.xz
+            tar -xJf /tmp/sdk.tar.xz -C "$THEOS/sdks"
+          fi
+
+      - name: Build RootHide arm64 and arm64e package
+        id: compile
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          mkdir -p "${{ github.workspace }}/output"
+          cd buildsrc/Runtime
+          status=0
+          make clean > "${{ github.workspace }}/output/build.log" 2>&1 || status=$?
+          if [ "$status" -eq 0 ]; then
+            make package FINALPACKAGE=1 >> "${{ github.workspace }}/output/build.log" 2>&1 || status=$?
+          fi
+          echo "$status" > "${{ github.workspace }}/output/build-status.txt"
+          cat "${{ github.workspace }}/output/build.log"
+          if [ "$status" -eq 0 ]; then
+            DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+            if [ -n "$DEB" ]; then
+              cp "$DEB" "${{ github.workspace }}/output/ModuleGlass_1.1.13_NonDestructiveTransition_RootHide.deb"
+            else
+              echo 'No DEB produced' >> "${{ github.workspace }}/output/build.log"
+              echo 98 > "${{ github.workspace }}/output/build-status.txt"
+              status=98
+            fi
+          fi
+          exit "$status"
+
+      - name: Upload compiler diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.13-Build-Diagnostics
+          path: |
+            output/build.log
+            output/build-status.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Require successful compilation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f output/build-status.txt
+          test "$(cat output/build-status.txt)" = '0'
+
+      - name: Verify package
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEB=output/ModuleGlass_1.1.13_NonDestructiveTransition_RootHide.deb
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.13'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          rm -rf verify && mkdir -p verify
+          dpkg-deb -x "$DEB" verify
+          DYLIB="$(find verify -type f -name CCModuleBackgrounds.dylib -print -quit)"
+          PLIST="$(find verify -type f -name CCModuleBackgrounds.plist -print -quit)"
+          ARCHS="$(lipo -archs "$DYLIB")"
+          [[ " $ARCHS " == *' arm64 '* ]]
+          [[ " $ARCHS " == *' arm64e '* ]]
+          otool -L "$DYLIB" > output/otool.txt
+          grep -Fq '@loader_path/.jbroot/' output/otool.txt
+          strings "$DYLIB" > output/dylib.strings
+          grep -Fq 'ModuleGlassRuntime 1.1.13 Non-Destructive Transition Renderer' output/dylib.strings
+          grep -Fq 'transition-suspend-nondestructive' output/dylib.strings
+          grep -Fq SpringBoard "$PLIST"
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.13_Complete_Source.zip | tee output/SHA256SUMS.txt
+
+      - name: Upload verified test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.13-Non-Destructive-Transition-Test
+          path: |
+            output/ModuleGlass_1.1.13_NonDestructiveTransition_RootHide.deb
+            output/ModuleGlass_1.1.13_Complete_Source.zip
+            output/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7

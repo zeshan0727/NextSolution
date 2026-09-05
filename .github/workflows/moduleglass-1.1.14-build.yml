@@ -1,0 +1,122 @@
+name: Build Module Glass 1.1.14 Global Transition Quarantine
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.14-global-transition-quarantine
+    paths:
+      - '.moduleglass-build/mg114_patch.py'
+      - '.github/workflows/moduleglass-1.1.14-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moduleglass-1.1.14-global-transition-quarantine
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 25
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reconstruct verified 1.1.13 source and apply exact 1.1.14 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin build/moduleglass-1.1.12-transition-recovery:refs/remotes/origin/mg112
+          : > /tmp/mg112.b64
+          for i in 00 01 02 03 04; do
+            git show "refs/remotes/origin/mg112:.moduleglass-build/moduleglass-1.1.12.part${i}" >> /tmp/mg112.b64
+          done
+          test "$(wc -c < /tmp/mg112.b64 | tr -d ' ')" = '24396'
+          python3 - <<'PY'
+          import base64,hashlib,pathlib
+          e=pathlib.Path('/tmp/mg112.b64').read_text().strip()
+          p=base64.b64decode(e,validate=True)
+          assert hashlib.sha256(p).hexdigest()=='780b1da230768f1c65cbe68074ae6afb540cf7834f594e51b6942defe18f122b'
+          pathlib.Path('/tmp/mg112.tar.gz').write_bytes(p)
+          PY
+          mkdir -p buildsrc output/source-stage
+          tar -xzf /tmp/mg112.tar.gz -C buildsrc
+          python3 .moduleglass-build/mg113_patch.py buildsrc/Runtime
+          echo 'd37c4a4c8243ca391dafecaa5fe55c6c614222ba881932cfcd3d1a3c0c3cd26c  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
+          echo '322d574c689ee83a94f5f1f0f6c4325c25d40779ca98d5d2b737256dcd784ee6  buildsrc/Runtime/control' | shasum -a 256 -c -
+          python3 .moduleglass-build/mg114_patch.py
+          echo 'e886522b0beafcccf99788f999a271d2e692d6420717fc723ad055c0e4dba349  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
+          echo '8177186656dffc8d83d9b1221206138f4a0a9a38cd0f08e0c40c2246858b6737  buildsrc/Runtime/control' | shasum -a 256 -c -
+          grep -Fq 'MGGlobalTransitionQuarantine' buildsrc/Runtime/Tweak.m
+          grep -Fq 'transition-global-quarantine' buildsrc/Runtime/Tweak.m
+          grep -Fq 'transition-global-resume' buildsrc/Runtime/Tweak.m
+          grep -Fq 'if (MGGlobalTransitionQuarantine) return;' buildsrc/Runtime/Tweak.m
+          cp -R buildsrc/Runtime output/source-stage/ModuleGlass-1.1.14-Complete-Source
+          ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.14-Complete-Source output/ModuleGlass_1.1.14_Complete_Source.zip
+
+      - name: Install RootHide build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install dpkg ldid xz
+          mkdir -p "$THEOS"
+          curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
+          bash /tmp/install-theos
+          test -f "$THEOS/makefiles/common.mk"
+          mkdir -p "$THEOS/sdks"
+          if ! ls "$THEOS"/sdks/iPhoneOS*.sdk >/dev/null 2>&1; then
+            curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/sdk.tar.xz
+            tar -xJf /tmp/sdk.tar.xz -C "$THEOS/sdks"
+          fi
+
+      - name: Build RootHide arm64 and arm64e package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd buildsrc/Runtime
+          make clean
+          make package FINALPACKAGE=1
+          DEB="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$DEB"
+          cp "$DEB" "${{ github.workspace }}/output/ModuleGlass_1.1.14_GlobalTransitionQuarantine_RootHide.deb"
+
+      - name: Verify package
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEB=output/ModuleGlass_1.1.14_GlobalTransitionQuarantine_RootHide.deb
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.14'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          rm -rf verify && mkdir -p verify
+          dpkg-deb -x "$DEB" verify
+          DYLIB="$(find verify -type f -name CCModuleBackgrounds.dylib -print -quit)"
+          PLIST="$(find verify -type f -name CCModuleBackgrounds.plist -print -quit)"
+          test -n "$DYLIB" && test -n "$PLIST"
+          ARCHS="$(lipo -archs "$DYLIB")"
+          [[ " $ARCHS " == *' arm64 '* ]]
+          [[ " $ARCHS " == *' arm64e '* ]]
+          otool -L "$DYLIB" > output/otool.txt
+          grep -Fq '@loader_path/.jbroot/' output/otool.txt
+          strings "$DYLIB" > output/dylib.strings
+          grep -Fq 'ModuleGlassRuntime 1.1.14 Global Transition Quarantine Renderer' output/dylib.strings
+          grep -Fq 'transition-global-quarantine' output/dylib.strings
+          grep -Fq 'transition-global-resume' output/dylib.strings
+          grep -Fq SpringBoard "$PLIST"
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.14_Complete_Source.zip | tee output/SHA256SUMS.txt
+
+      - name: Upload verified test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.14-Global-Transition-Quarantine-Test
+          path: |
+            output/ModuleGlass_1.1.14_GlobalTransitionQuarantine_RootHide.deb
+            output/ModuleGlass_1.1.14_Complete_Source.zip
+            output/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7

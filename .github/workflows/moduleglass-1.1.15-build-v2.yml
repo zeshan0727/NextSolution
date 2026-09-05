@@ -1,0 +1,272 @@
+name: Build Module Glass 1.1.17 Self-Contained Preferences
+
+on:
+  push:
+    branches:
+      - build/moduleglass-1.1.15-external-host-isolation
+    paths:
+      - '.github/workflows/moduleglass-1.1.15-build-v2.yml'
+      - '.moduleglass-build/mg115_patch.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/moduleglass-1.1.15-build-v2.yml'
+      - '.moduleglass-build/mg115_patch.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moduleglass-1.1.17-self-contained-preferences-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 30
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_PACKAGE_SCHEME: roothide
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install packaging tools
+        run: brew install dpkg ldid xz
+
+      - name: Reconstruct and verify exact 1.1.15 isolation source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin build/moduleglass-1.1.12-transition-recovery:refs/remotes/origin/mg112
+          : > /tmp/mg112.b64
+          for i in 00 01 02 03 04; do git show "refs/remotes/origin/mg112:.moduleglass-build/moduleglass-1.1.12.part${i}" >> /tmp/mg112.b64; done
+          python3 - <<'PY'
+          import base64,hashlib,pathlib
+          e=pathlib.Path('/tmp/mg112.b64').read_text().strip(); p=base64.b64decode(e,validate=True)
+          assert hashlib.sha256(p).hexdigest()=='780b1da230768f1c65cbe68074ae6afb540cf7834f594e51b6942defe18f122b'
+          pathlib.Path('/tmp/mg112.tar.gz').write_bytes(p)
+          PY
+          mkdir -p buildsrc output/source-stage
+          tar -xzf /tmp/mg112.tar.gz -C buildsrc
+          python3 .moduleglass-build/mg113_patch.py buildsrc/Runtime
+          echo 'd37c4a4c8243ca391dafecaa5fe55c6c614222ba881932cfcd3d1a3c0c3cd26c  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
+          python3 .moduleglass-build/mg114_patch.py
+          echo 'e886522b0beafcccf99788f999a271d2e692d6420717fc723ad055c0e4dba349  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
+          python3 .moduleglass-build/mg115_patch.py
+          echo '8d009761262f533ada13eb1b63d668b17417f28ef525318e95e766f7facd3424  buildsrc/Runtime/Tweak.m' | shasum -a 256 -c -
+          echo '8ef3196cbe530f162527ec825cbc8ead52d75b0e00a3d68b59c0d0b48b0d4393  buildsrc/Runtime/control' | shasum -a 256 -c -
+          ! grep -q '^static UIView \*MGSliderShellInScope' buildsrc/Runtime/Tweak.m
+          grep -Fq 'external-host-live-fill-no-apple-mutation' buildsrc/Runtime/Tweak.m
+          grep -Fq 'connectivity-native-toggle-state' buildsrc/Runtime/Tweak.m
+          grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' buildsrc/Runtime/Tweak.m
+
+      - name: Embed current Aura preferences directly into Module Glass
+        shell: bash
+        run: |
+          set -euo pipefail
+          P=buildsrc/Runtime
+          PREFDEB=debfiles/NextAura_Runtime_preferences_1.0.5_RootHide.deb
+          test -f "$PREFDEB"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('buildsrc/Runtime/control')
+          t=p.read_text()
+          t=t.replace('Version: 1.1.15','Version: 1.1.17')
+          t=t.replace('Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.15)','Provides: com.nextsolution.nextaura.runtime.ccbackgrounds (= 1.1.17)')
+          t=t.replace('<= 1.1.14','<= 1.1.16')
+          t=re.sub(r',\s*com\.nextsolution\.nextaura\.runtime\.preferences \(>= 1\.0\.5\)', '', t)
+          old='Description: RootHide Module Glass 1.1.15 expansion-isolation test. Volume/Brightness custom images are hosted outside Apple slider internals and Connectivity keeps native toggle colors so expandable Apple-owned views are not mutated.'
+          new='Description: Module Glass 1.1.17 keeps the validated 1.1.15 ExternalHostIsolation Control Center runtime and embeds the current Aura Settings preference bundle directly in the same package.'
+          t=t.replace(old,new)
+          p.write_text(t)
+          PY
+          grep -q '^Package: com.nextsolution.nextaura.cc-module-backgrounds$' "$P/control"
+          grep -q '^Version: 1.1.17$' "$P/control"
+          ! grep -q 'com.nextsolution.nextaura.runtime.preferences' "$P/control"
+          grep -q 'preferenceloader' "$P/control"
+
+          rm -rf /tmp/moduleglass-prefs-runtime
+          mkdir -p /tmp/moduleglass-prefs-runtime
+          dpkg-deb -x "$PREFDEB" /tmp/moduleglass-prefs-runtime
+
+          SRC_BUNDLE="$(find /tmp/moduleglass-prefs-runtime -type d -name 'AuraPrefs.bundle' -print -quit)"
+          test -n "$SRC_BUNDLE"
+          test -f "$SRC_BUNDLE/Info.plist"
+          test -f "$SRC_BUNDLE/CCModuleBackgrounds.plist"
+          grep -q 'CCModuleVolumeIconColorEnabled' "$SRC_BUNDLE/CCModuleBackgrounds.plist"
+          grep -q 'chooseVolumeIconColor:' "$SRC_BUNDLE/CCModuleBackgrounds.plist"
+
+          EXEC_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$SRC_BUNDLE/Info.plist")"
+          test -n "$EXEC_NAME"
+          test -f "$SRC_BUNDLE/$EXEC_NAME"
+          strings -a "$SRC_BUNDLE/$EXEC_NAME" > /tmp/moduleglass-pref-exec.strings
+          grep -Fq 'AuraCategoryListController' /tmp/moduleglass-pref-exec.strings
+
+          DEST="$P/layout/Library/PreferenceBundles/ModuleGlassPrefs.bundle"
+          rm -rf "$DEST"
+          mkdir -p "$(dirname "$DEST")"
+          cp -R "$SRC_BUNDLE" "$DEST"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.nextsolution.moduleglass.preferences' "$DEST/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleName Module Glass' "$DEST/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString 1.1.17' "$DEST/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleVersion 1.1.17' "$DEST/Info.plist"
+          plutil -lint "$DEST/Info.plist"
+          plutil -lint "$DEST/CCModuleBackgrounds.plist"
+
+          EXT_DYLIB="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.dylib' -print -quit)"
+          EXT_PLIST="$(find /tmp/moduleglass-prefs-runtime -type f -name 'ModuleGlassPrefsExtension.plist' -print -quit)"
+          test -n "$EXT_DYLIB"
+          test -n "$EXT_PLIST"
+          mkdir -p "$P/layout/Library/MobileSubstrate/DynamicLibraries"
+          cp "$EXT_DYLIB" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib"
+          cp "$EXT_PLIST" "$P/layout/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist"
+
+          mkdir -p "$P/layout/Library/PreferenceLoader/Preferences"
+          cat > "$P/layout/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>entry</key>
+              <dict>
+                  <key>bundle</key>
+                  <string>ModuleGlassPrefs</string>
+                  <key>cell</key>
+                  <string>PSLinkCell</string>
+                  <key>detail</key>
+                  <string>AuraCategoryListController</string>
+                  <key>isController</key>
+                  <true/>
+                  <key>icon</key>
+                  <string>NextAura-cc-module-backgrounds.png</string>
+                  <key>label</key>
+                  <string>Module Glass</string>
+                  <key>plist</key>
+                  <string>CCModuleBackgrounds</string>
+              </dict>
+          </dict>
+          </plist>
+          PLIST
+          plutil -lint "$P/layout/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist"
+
+          cp -R "$P" output/source-stage/ModuleGlass-1.1.17-Complete-Source
+          ditto -c -k --sequesterRsrc --keepParent output/source-stage/ModuleGlass-1.1.17-Complete-Source output/ModuleGlass_1.1.17_Complete_Source.zip
+
+      - name: Install RootHide Theos
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$THEOS"
+          curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos -o /tmp/install-theos
+          bash /tmp/install-theos
+          test -f "$THEOS/makefiles/common.mk"
+          mkdir -p "$THEOS/sdks"
+          if ! ls "$THEOS"/sdks/iPhoneOS*.sdk >/dev/null 2>&1; then
+            curl -fL https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz -o /tmp/sdk.tar.xz
+            tar -xJf /tmp/sdk.tar.xz -C "$THEOS/sdks"
+          fi
+
+      - name: Build RootHide package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd buildsrc/Runtime
+          make clean
+          make package FINALPACKAGE=1
+          RAW="$(find packages -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$RAW"
+
+          STAGE="${{ github.workspace }}/output/package-stage"
+          rm -rf "$STAGE"
+          dpkg-deb -R "$RAW" "$STAGE"
+          cat > "$STAGE/DEBIAN/postinst" <<'SH'
+          #!/bin/sh
+          killall -9 Preferences 2>/dev/null || true
+          killall -9 SpringBoard 2>/dev/null || true
+          exit 0
+          SH
+          chmod 0755 "$STAGE/DEBIAN/postinst"
+          dpkg-deb -b "$STAGE" "${{ github.workspace }}/output/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb"
+
+      - name: Verify full self-contained package
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEB=output/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb
+          test "$(dpkg-deb -f "$DEB" Package)" = 'com.nextsolution.nextaura.cc-module-backgrounds'
+          test "$(dpkg-deb -f "$DEB" Version)" = '1.1.17'
+          test "$(dpkg-deb -f "$DEB" Architecture)" = 'iphoneos-arm64e'
+          DEPENDS="$(dpkg-deb -f "$DEB" Depends)"
+          [[ "$DEPENDS" != *'com.nextsolution.nextaura.runtime.preferences'* ]]
+          [[ "$DEPENDS" == *'preferenceloader'* ]]
+
+          rm -rf verify && mkdir verify
+          dpkg-deb -x "$DEB" verify
+          LOADER=verify/Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist
+          BUNDLE=verify/Library/PreferenceBundles/ModuleGlassPrefs.bundle
+          test -f "$LOADER"
+          test -d "$BUNDLE"
+          test -f "$BUNDLE/Info.plist"
+          test -f "$BUNDLE/CCModuleBackgrounds.plist"
+          grep -Fq 'CCModuleVolumeIconColorEnabled' "$BUNDLE/CCModuleBackgrounds.plist"
+          grep -Fq 'chooseVolumeIconColor:' "$BUNDLE/CCModuleBackgrounds.plist"
+          plutil -lint "$LOADER"
+          plutil -lint "$BUNDLE/Info.plist"
+          plutil -lint "$BUNDLE/CCModuleBackgrounds.plist"
+          grep -Fq '<string>ModuleGlassPrefs</string>' "$LOADER"
+          grep -Fq '<string>AuraCategoryListController</string>' "$LOADER"
+          grep -Fq '<string>CCModuleBackgrounds</string>' "$LOADER"
+          PREF_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUNDLE/Info.plist")"
+          test "$PREF_ID" = 'com.nextsolution.moduleglass.preferences'
+
+          PREF_EXEC="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$BUNDLE/Info.plist")"
+          test -f "$BUNDLE/$PREF_EXEC"
+          PREF_ARCHS="$(lipo -archs "$BUNDLE/$PREF_EXEC")"
+          [[ " $PREF_ARCHS " == *' arm64 '* && " $PREF_ARCHS " == *' arm64e '* ]]
+          strings -a "$BUNDLE/$PREF_EXEC" > output/pref-exec.strings
+          grep -Fq 'AuraCategoryListController' output/pref-exec.strings
+
+          PREF_EXT=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib
+          PREF_EXT_FILTER=verify/Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.plist
+          test -f "$PREF_EXT"
+          test -f "$PREF_EXT_FILTER"
+          EXT_ARCHS="$(lipo -archs "$PREF_EXT")"
+          [[ " $EXT_ARCHS " == *' arm64 '* && " $EXT_ARCHS " == *' arm64e '* ]]
+          strings -a "$PREF_EXT" > output/pref-ext.strings
+          grep -Fq 'chooseVolumeIconColor:' output/pref-ext.strings
+          grep -Fq 'UIColorPickerViewController' output/pref-ext.strings
+
+          DYLIB="$(find verify -type f -name CCModuleBackgrounds.dylib -print -quit)"
+          test -n "$DYLIB"
+          ARCHS="$(lipo -archs "$DYLIB")"
+          [[ " $ARCHS " == *' arm64 '* && " $ARCHS " == *' arm64e '* ]]
+          otool -L "$DYLIB" > output/runtime.otool
+          grep -Fq '@loader_path/.jbroot/' output/runtime.otool
+          strings "$DYLIB" > output/dylib.strings
+          grep -Fq 'ModuleGlassRuntime 1.1.15 External Host Isolation Renderer' output/dylib.strings
+
+          echo '=== MODULE GLASS 1.1.17 PACKAGE CONTENTS ==='
+          dpkg-deb -c "$DEB" > output/PACKAGE-CONTENTS.txt
+          cat output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/PreferenceBundles/ModuleGlassPrefs.bundle/' output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/PreferenceLoader/Preferences/NextAura-cc-module-backgrounds.plist' output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/MobileSubstrate/DynamicLibraries/CCModuleBackgrounds.dylib' output/PACKAGE-CONTENTS.txt
+          grep -Fq './Library/MobileSubstrate/DynamicLibraries/ModuleGlassStandalonePrefsExtension.dylib' output/PACKAGE-CONTENTS.txt
+          shasum -a 256 "$DEB" output/ModuleGlass_1.1.17_Complete_Source.zip > output/SHA256SUMS.txt
+          cat output/SHA256SUMS.txt
+
+      - name: Upload verified artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModuleGlass-1.1.17-Self-Contained-Preferences-RootHide
+          path: |
+            output/ModuleGlass_1.1.17_SelfContainedPrefs_RootHide.deb
+            output/ModuleGlass_1.1.17_Complete_Source.zip
+            output/SHA256SUMS.txt
+            output/PACKAGE-CONTENTS.txt
+          if-no-files-found: error
+          retention-days: 7
